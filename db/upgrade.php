@@ -139,49 +139,6 @@ function xmldb_reader_upgrade($oldversion) {
         upgrade_mod_savepoint(true, "$newversion", 'reader');
     }
 
-    $newversion = 2011010708;
-    if ($result && $oldversion < $newversion) {
-
-        $tables = array(
-            // $tablename => $fields
-            'reader' => array(
-                // change name of "ignoredate" field to "ignoredate"
-                'ignoredate' => new xmldb_field('ignordate', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'attemptsofday'),
-            ),
-            'reader_attempts' => array(
-                // change name of "persent/percentgrade" field to "grade" and change type from CHAR to INTEGER
-                'percentgrade' => array(
-                    new xmldb_field('persent', XMLDB_TYPE_INTEGER, '6', null, XMLDB_NOTNULL, null, '0', 'sumgrades'),
-                    new xmldb_field('percent', XMLDB_TYPE_INTEGER, '6', null, XMLDB_NOTNULL, null, '0', 'sumgrades')
-                )
-            ),
-        );
-
-        foreach ($tables as $tablename => $fields) {
-            $table = new xmldb_table($tablename);
-            foreach ($fields as $newfieldname => $newfields) {
-                if (is_object($newfields)) {
-                    $newfields = array($newfields);
-                }
-                foreach ($newfields as $field) {
-                    if ($dbman->field_exists($table, $field)) {
-                        xmldb_reader_fix_previous_field($dbman, $table, $field);
-                        if ($field->getNotNull()) {
-                            $default = $field->getDefault();
-                            $oldfieldname = $field->getName();
-                            $DB->set_field_select($tablename, $oldfieldname, $default, "$oldfieldname IS NULL");
-                        }
-                        $dbman->change_field_type($table, $field);
-                        if ($oldfieldname != $newfieldname) {
-                            $dbman->rename_field($table, $field, $newfieldname);
-                        }
-                    }
-                }
-            }
-        }
-        upgrade_mod_savepoint(true, "$newversion", 'reader');
-    }
-
     $newversion = 2011010709;
     if ($result && $oldversion < $newversion) {
 
@@ -244,6 +201,49 @@ function xmldb_reader_upgrade($oldversion) {
         $where  = "name LIKE '%\\\\%'";
         $DB->execute("UPDATE $update SET $set WHERE $where");
 
+        upgrade_mod_savepoint(true, "$newversion", 'reader');
+    }
+
+    $newversion = 2011010711;
+    if ($result && $oldversion < $newversion) {
+
+        $tables = array(
+            // $tablename => $fields
+            'reader' => array(
+                // change name of "ignoredate" field to "ignoredate"
+                'ignoredate' => new xmldb_field('ignordate', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'attemptsofday'),
+            ),
+            'reader_attempts' => array(
+                // change name of "persent/percentgrade" field to "grade" and change type from CHAR to INTEGER
+                'percentgrade' => array(
+                    new xmldb_field('persent', XMLDB_TYPE_INTEGER, '6', null, XMLDB_NOTNULL, null, '0', 'sumgrades'),
+                    new xmldb_field('percent', XMLDB_TYPE_INTEGER, '6', null, XMLDB_NOTNULL, null, '0', 'sumgrades')
+                )
+            ),
+        );
+
+        foreach ($tables as $tablename => $fields) {
+            $table = new xmldb_table($tablename);
+            foreach ($fields as $newfieldname => $newfields) {
+                if (is_object($newfields)) {
+                    $newfields = array($newfields);
+                }
+                foreach ($newfields as $field) {
+                    if ($dbman->field_exists($table, $field)) {
+                        xmldb_reader_fix_previous_field($dbman, $table, $field);
+                        if ($field->getNotNull()) {
+                            $default = $field->getDefault();
+                            $oldfieldname = $field->getName();
+                            $DB->set_field_select($tablename, $oldfieldname, $default, "$oldfieldname IS NULL");
+                        }
+                        $dbman->change_field_type($table, $field);
+                        if ($oldfieldname != $newfieldname) {
+                            $dbman->rename_field($table, $field, $newfieldname);
+                        }
+                    }
+                }
+            }
+        }
         upgrade_mod_savepoint(true, "$newversion", 'reader');
     }
 

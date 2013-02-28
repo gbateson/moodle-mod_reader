@@ -565,14 +565,13 @@ function reader_create_new_quiz($targetcourseid, $sectionnum, $quizmodule, $quiz
     );
 
     //$newquiz->instance = quiz_add_instance($newquiz);
-    if (! $newquiz->id = $DB->insert_record('quiz', $newquiz)) {
+    if (! $newquiz->instance = $DB->insert_record('quiz', $newquiz)) {
         return false;
     }
-    $newquiz->instance = $newquiz->id;
-
     if (! $newquiz->coursemodule = add_course_module($newquiz) ) {
         error('Could not add a new course module');
     }
+    $newquiz->id = $newquiz->coursemodule;
     if (! $sectionid = add_mod_to_section($newquiz) ) {
         error('Could not add the new course module to that section');
     }
@@ -613,7 +612,7 @@ function reader_create_restore_object($targetcourse) {
 
     $restore = (object)array(
         'backup_unique_code'   => time(),
-        'backup_name'          => 'moodle',
+        'backup_name'          => 'moodle.zip',
         'restoreto'            => 1,
         'metacourse'           => 0,
         'users'                => 0,
