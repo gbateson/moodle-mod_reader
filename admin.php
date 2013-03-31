@@ -3522,119 +3522,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
 
 } else if ($act == 'setbookinstances' && has_capability('mod/reader:selectquizzestomakeavailabletostudents', $contextmodule)) {
 
-    if ($reader->bookinstances == 0) {
-        echo '<div>'.get_string('coursespecificquizselection', 'reader').'</div>';
-    }
-
-    $quizzes = array();
-    $data = $DB->get_records_sql ("SELECT * FROM {reader_books} where hidden=? order by publisher, name", array(0));
-    foreach ($data as $data_) {
-        $quizzes[$data_->publisher][$data_->level][$data_->id] = $data_->name;
-    }
-
-    $allquestionscount = 0;
-    foreach ($quizzes as $key =>$value) {
-        foreach ($value as $key2 => $value2) {
-            foreach ($value2 as $key3 => $value3) {
-                $allquestionscount++;
-
-                $checkboxdatapublishers[$key][] = $allquestionscount;
-                $checkboxdatalevels[$key][$key2][] = $allquestionscount;
-                $quizzescountid[$key3] = $allquestionscount;
-            }
-        }
-    }
-
-    $currentbooksarray = array();
-
-    $currentbooks = $DB->get_records_sql ("SELECT * FROM {reader_book_instances} WHERE readerid = ?", array($reader->id));
-    if (is_array($currentbooks)) {
-        foreach ($currentbooks as $currentbook) {
-            $currentbooksarray[$currentbook->bookid] = $currentbook->readerid;
-        }
-    }
-
-    echo $OUTPUT->box_start('generalbox');
-    require_once('js/hide.js');
-
-    echo '<script type="text/javascript">'."\n";
-    echo '//<![CDATA['."\n";
-    echo 'function setChecked(obj,from,to) {'."\n";
-    echo '    for (var i=from; i<=to; i++) {'."\n";
-    echo     '    if (document.getElementById("quiz_" + i)) {'."\n";
-    echo '            document.getElementById("quiz_" + i).checked = obj.checked;'."\n";
-    echo '        }'."\n";
-    echo '    }'."\n";
-    echo '}'."\n";
-    echo '//]]>'."\n";
-    echo '</script>'."\n";
-
-    echo '<form action="admin.php?a=admin&id='.$id.'&act=setbookinstances" method="post" id="mform1">';
-    echo '<div style="width:600px">';
-    echo '<a href="#" onclick="expandall();return false;">Show All</a>';
-    echo ' / ';
-    echo '<a href="#" onclick="collapseall();return false;">Hide All</a>';
-    echo '<br />';
-
-    //vivod
-    $cp = 0;
-
-    if (! empty($quizzes)) {
-        foreach ($quizzes as $publiher => $datas) {
-            $cp++;
-            echo '<br /><a href="#" onclick="toggle(\'comments_'.$cp.'\');return false">
-                  <span id="comments_'.$cp.'indicator"><img src="'.$CFG->wwwroot.'/mod/reader/pix/open.gif" alt="Opened folder" /></span></a> ';
-            echo ' <b>'.$publiher.' &nbsp;</b>';
-
-            echo '<span id="comments_'.$cp.'"><input type="checkbox" name="installall['.$cp.']" onclick="setChecked(this,'.$checkboxdatapublishers[$publiher][0].','.end($checkboxdatapublishers[$publiher]).')" value="" /><span id="seltext_'.$cp.'">Select All</span>';
-            $topsubmitonclick = $cp;
-            foreach ($datas as $level => $quizzesdata) {
-                $cp++;
-
-                echo '<div style="padding-left:40px;padding-top:10px;padding-bottom:10px;"><a href="#" onclick="toggle(\'comments_'.$cp.'\');return false">
-                      <span id="comments_'.$cp.'indicator"><img src="'.$CFG->wwwroot.'/mod/reader/pix/open.gif" alt="Opened folder" /></span></a> ';
-
-                echo '<b>'.$level.' &nbsp;</b>';
-                echo '<span id="comments_'.$cp.'"><input type="checkbox" name="installall['.$cp.']" onclick="setChecked(this,'.$checkboxdatalevels[$publiher][$level][0].','.end($checkboxdatalevels[$publiher][$level]).')" value="" /><span id="seltext_'.$cp.'">Select All</span>';
-                foreach ($quizzesdata as $quizid => $quiztitle) {
-                    echo '<div style="padding-left:20px;"><input type="checkbox" name="quiz[]" id="quiz_'.$quizzescountid[$quizid].'" value="'.$quizid.'"';
-                    if (isset($currentbooksarray[$quizid])) {
-                        echo " checked=\"checked\" ";
-                        $submitonclick[$cp] = 1;
-                        $submitonclicktop[$topsubmitonclick] = 1;
-                    }
-                    echo ' /> &nbsp; '.$quiztitle.'</div>';
-                }
-                echo '</span></div>';
-            }
-            echo '</span>';
-        }
-
-        echo '<div style="margin-top:40px;margin-left:200px;"><input type="submit" name="showquizzes" value="Show Students Selected Quizzes" /></div>';
-    }
-
-    echo '<input type="hidden" name="step" value="1" />';
-
-    echo '</div>';
-    echo '</form>';
-
-    echo '<script type="text/javascript">'."\n";
-    echo '//<![CDATA['."\n";
-
-    echo 'var vh_numspans = '.$cp.';'."\n";
-    echo 'collapseall();'."\n";
-
-    foreach ((array) $submitonclicktop as $key => $value) {
-        echo 'expand("comments_'.$key.'");'."\n";
-    }
-    foreach ((array) $submitonclick as $key => $value) {
-        echo 'expand("comments_'.$key.'");'."\n";
-    }
-
-    echo '//]]>'."\n";
-    echo '</script>'."\n";
-
-    echo $OUTPUT->box_end();
+        reader_setbookinstances($id, $reader);
 
 } else if ($act == 'viewlogsuspiciousactivity' && has_capability('mod/reader:readerviewreports', $contextmodule)) {
     $table = new html_table();
@@ -4326,4 +4214,157 @@ function reader_ajax_textbox_title($has_capability, $book, $type, $id, $act) {
         $title = $book->$type;
     }
     return $title;
+}
+
+/**
+ * reader_setbookinstances
+ *
+ * @param xxx $id
+ * @param xxx $reader
+ * @todo Finish documenting this function
+ */
+function reader_setbookinstances($cmid, $reader) {
+    global $CFG, $DB, $OUTPUT;
+
+    if ($reader->bookinstances == 0) {
+        echo '<div>'.get_string('coursespecificquizselection', 'reader').'</div>';
+    }
+
+    $currentbooks = array();
+    if ($books = $DB->get_records('reader_book_instances', array('readerid' => $reader->id), 'id', 'id, bookid, readerid')) {
+        foreach ($books as $book) {
+            $currentbooks[$book->bookid] = true;
+        }
+    }
+
+    $publishers = array();
+    if ($books = $DB->get_records('reader_books', array(), 'publisher, name', 'id, publisher, level, name')) {
+        foreach ($books as $book) {
+            if (empty($publishers[$book->publisher])) {
+                $publishers[$book->publisher] = array();
+            }
+            if (empty($publishers[$book->publisher][$book->level])) {
+                $publishers[$book->publisher][$book->level] = array();
+            }
+            $book->checked = isset($currentbooks[$book->id]);
+            $publishers[$book->publisher][$book->level][$book->id] = $book;
+        }
+    }
+    unset($currentbooks, $books, $book);
+
+    $uniqueid = 0;
+    $uniqueids = array();
+
+    $checked = new stdClass();
+    $checked->publishers = array();
+    $checked->levels     = array();
+
+    foreach ($publishers as $publisher => $levels) {
+        foreach ($levels as $level => $bookids) {
+            foreach ($bookids as $bookid => $bookname) {
+                $uniqueid++;
+                $uniqueids[$bookid] = $uniqueid;
+
+                if (empty($checked->publishers[$publisher])) {
+                    $checked->publishers[$publisher] = array();
+                }
+                $checked->publishers[$publisher][] = $uniqueid;
+
+                if (empty($checked->levels[$publisher])) {
+                    $checked->levels[$publisher] = array();
+                }
+                if (empty($checked->levels[$publisher][$level])) {
+                    $checked->levels[$publisher][$level] = array();
+                }
+                $checked->levels[$publisher][$level][] = $uniqueid;
+            }
+        }
+    }
+
+    echo $OUTPUT->box_start('generalbox');
+    require_once('js/hide.js');
+
+    echo '<script type="text/javascript">'."\n";
+    echo '//<![CDATA['."\n";
+    echo 'function setChecked(obj,from,to) {'."\n";
+    echo '    for (var i=from; i<=to; i++) {'."\n";
+    echo     '    if (document.getElementById("quiz_" + i)) {'."\n";
+    echo '            document.getElementById("quiz_" + i).checked = obj.checked;'."\n";
+    echo '        }'."\n";
+    echo '    }'."\n";
+    echo '}'."\n";
+    echo '//]]>'."\n";
+    echo '</script>'."\n";
+
+    echo '<form action="admin.php?a=admin&id='.$cmid.'&act=setbookinstances" method="post" id="mform1">';
+    echo '<div style="width:600px">';
+    echo '<a href="#" onclick="expandall();return false;">Show All</a>';
+    echo ' / ';
+    echo '<a href="#" onclick="collapseall();return false;">Hide All</a>';
+    echo '<br />';
+
+    //vivod
+    $count = 0;
+
+    $submitonclick = array();
+    $submitonclicktop = array();
+
+    if (! empty($publishers)) {
+        foreach ($publishers as $publisher => $levels) {
+            $count++;
+            echo '<br /><a href="#" onclick="toggle(\'comments_'.$count.'\');return false">
+                  <span id="comments_'.$count.'indicator"><img src="'.$CFG->wwwroot.'/mod/reader/pix/open.gif" alt="Opened folder" /></span></a> ';
+            echo ' <b>'.$publisher.' &nbsp;</b>';
+
+            echo '<span id="comments_'.$count.'"><input type="checkbox" name="installall['.$count.']" onclick="setChecked(this,'.$checked->publishers[$publisher][0].','.end($checked->publishers[$publisher]).')" value="" /><span id="seltext_'.$count.'">Select All</span>';
+
+            $topsubmitonclick = $count;
+            foreach ($levels as $level => $bookids) {
+                $count++;
+
+                echo '<div style="padding-left:40px;padding-top:10px;padding-bottom:10px;"><a href="#" onclick="toggle(\'comments_'.$count.'\');return false">
+                      <span id="comments_'.$count.'indicator"><img src="'.$CFG->wwwroot.'/mod/reader/pix/open.gif" alt="Opened folder" /></span></a> ';
+
+                echo '<b>'.$level.' &nbsp;</b>';
+                echo '<span id="comments_'.$count.'"><input type="checkbox" name="installall['.$count.']" onclick="setChecked(this,'.$checked->levels[$publisher][$level][0].','.end($checked->levels[$publisher][$level]).')" value="" /><span id="seltext_'.$count.'">Select All</span>';
+
+                foreach ($bookids as $bookid => $book) {
+                    echo '<div style="padding-left:20px;"><input type="checkbox" name="quiz[]" id="quiz_'.$uniqueids[$bookid].'" value="'.$bookid.'"';
+                    if ($book->checked) {
+                        echo ' checked="checked"';
+                        $submitonclick[$count] = 1;
+                        $submitonclicktop[$topsubmitonclick] = 1;
+                    }
+                    echo ' /> &nbsp; '.$book->name.'</div>';
+                }
+                echo '</span></div>';
+            }
+            echo '</span>';
+        }
+
+        echo '<div style="margin-top:40px;margin-left:200px;"><input type="submit" name="showquizzes" value="Show Students Selected Quizzes" /></div>';
+    }
+
+    echo '<input type="hidden" name="step" value="1" />';
+
+    echo '</div>';
+    echo '</form>';
+
+    echo '<script type="text/javascript">'."\n";
+    echo '//<![CDATA['."\n";
+
+    echo 'var vh_numspans = '.$count.';'."\n";
+    echo 'collapseall();'."\n";
+
+    foreach ($submitonclicktop as $key => $value) {
+        echo 'expand("comments_'.$key.'");'."\n";
+    }
+    foreach ($submitonclick as $key => $value) {
+        echo 'expand("comments_'.$key.'");'."\n";
+    }
+
+    echo '//]]>'."\n";
+    echo '</script>'."\n";
+
+    echo $OUTPUT->box_end();
 }

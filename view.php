@@ -81,8 +81,6 @@ if ($unset) {
     unset ($_SESSION['SESSION']->reader_lastuserfrom);
 }
 
-
-
 if ($reader->shuffleanswers == 0) {
     $DB->set_field('reader', 'shuffleanswers', 1, array('id' => $reader->id));
     $reader->shuffleanswers = 1;

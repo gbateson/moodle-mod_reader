@@ -43,7 +43,7 @@ function xmldb_reader_upgrade($oldversion) {
 
     $dbman = $DB->get_manager();
 
-    $newversion = 2011010701;
+    $newversion = 2013033101;
     if ($result && $oldversion < $newversion) {
 
         // in "reader" table, add "introformat" field after "intro" field
@@ -63,13 +63,13 @@ function xmldb_reader_upgrade($oldversion) {
         upgrade_mod_savepoint(true, "$newversion", 'reader');
     }
 
-    $newversion = 2011010702;
+    $newversion = 2013033102;
     if ($result && $oldversion < $newversion) {
         update_capabilities('mod/reader');
         upgrade_mod_savepoint(true, "$newversion", 'reader');
     }
 
-    $newversion = 2011010703;
+    $newversion = 2013033103;
     if ($result && $oldversion < $newversion) {
 
         // recreate backup_ids table
@@ -94,7 +94,7 @@ function xmldb_reader_upgrade($oldversion) {
         upgrade_mod_savepoint(true, "$newversion", 'reader');
     }
 
-    $newversion = 2011010704;
+    $newversion = 2013033104;
     if ($result && $oldversion < $newversion) {
 
         // rename tables "reader_publisher" and "reader_individual_books"
@@ -126,20 +126,20 @@ function xmldb_reader_upgrade($oldversion) {
         upgrade_mod_savepoint(true, "$newversion", 'reader');
     }
 
-    $newversion = 2011010705;
+    $newversion = 2013033105;
     if ($result && $oldversion < $newversion) {
         xmldb_reader_check_stale_files();
         upgrade_mod_savepoint(true, "$newversion", 'reader');
     }
 
-    $newversion = 2011010706;
+    $newversion = 2013033106;
     if ($result && $oldversion < $newversion) {
         // fix incorrectly set version of "readerview" block (it is one digit too long !)
         $DB->set_field('block', 'version', 2012011910, array('name'=>'readerview', 'version'=>'20120119101'));
         upgrade_mod_savepoint(true, "$newversion", 'reader');
     }
 
-    $newversion = 2011010709;
+    $newversion = 2013033107;
     if ($result && $oldversion < $newversion) {
 
         if ($courseid = get_config('reader', 'reader_usecourse')) {
@@ -180,7 +180,7 @@ function xmldb_reader_upgrade($oldversion) {
         upgrade_mod_savepoint(true, "$newversion", 'reader');
     }
 
-    $newversion = 2011010710;
+    $newversion = 2013033108;
     if ($result && $oldversion < $newversion) {
 
         // remove slashes from reader log records
@@ -204,7 +204,7 @@ function xmldb_reader_upgrade($oldversion) {
         upgrade_mod_savepoint(true, "$newversion", 'reader');
     }
 
-    $newversion = 2011010711;
+    $newversion = 2013033109;
     if ($result && $oldversion < $newversion) {
 
         $tables = array(

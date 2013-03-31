@@ -371,7 +371,7 @@ function reader_get_stlevel_data($reader) {
         $studentlevel = $DB->get_record('reader_levels', array('userid' => $USER->id, 'readerid' => $reader->id));
     }
 
-    $attemptsofbook = $DB->get_records_sql('SELECT ra.*,rp.difficulty,rp.id as rpid FROM {reader_attempts} ra INNER JOIN {reader_books} rp ON rp.quizid = ra.quizid WHERE ra.userid= ?  and ra.reader= ?  and ra.timefinish> ?  ORDER BY ra.timemodified', array($USER->id, $reader->id, $reader->ignoredate));
+    $attemptsofbook = $DB->get_records_sql('SELECT ra.*,rp.difficulty,rp.id as rpid FROM {reader_attempts} ra INNER JOIN {reader_books} rp ON rp.quizid = ra.quizid WHERE ra.userid= ?  AND ra.reader= ?  AND ra.timefinish> ?  ORDER BY ra.timemodified', array($USER->id, $reader->id, $reader->ignoredate));
 
     foreach ($attemptsofbook as $attemptsofbook_) {
         if (reader_get_reader_difficulty($reader, $attemptsofbook_->rpid) == $studentlevel->currentlevel) {
@@ -1156,7 +1156,7 @@ function reader_get_student_attempts($userid, $reader, $allreaders = false, $boo
     $select = 'ra.timefinish,ra.userid,ra.attempt,ra.percentgrade,ra.id,ra.quizid,ra.sumgrades,ra.passed,ra.checkbox,ra.preview,'.
               'rp.name,rp.publisher,rp.level,rp.length,rp.image,rp.difficulty,rp.words,rp.sametitle,rp.id as rpid';
     $from   = '{reader_attempts} ra LEFT JOIN {reader_books} rp ON rp.quizid = ra.quizid';
-    $where  = 'ra.preview != 1 and ra.userid= :userid and ra.timefinish > :readerignoredate';
+    $where  = 'ra.preview != 1 AND ra.userid= :userid AND ra.timefinish > :readerignoredate';
     $params = array('userid'=>$userid, 'readerignoredate'=>$reader->ignoredate);
     if (! $allreaders) {
         $where .= ' AND ra.reader = :readerid';
@@ -1169,7 +1169,7 @@ function reader_get_student_attempts($userid, $reader, $allreaders = false, $boo
     $select = 'ra.timefinish,ra.userid,ra.attempt,ra.percentgrade,ra.id,ra.quizid,ra.sumgrades,ra.passed,ra.checkbox,ra.preview,'.
               'rp.name,rp.publisher,rp.level,rp.length,rp.image,rp.difficulty,rp.words,rp.sametitle,rp.id as rpid';
     $from   = '{reader_attempts} ra LEFT JOIN {reader_noquiz} rp ON rp.quizid = ra.quizid';
-    $where  = 'ra.preview = 1 and ra.userid= :userid and ra.timefinish > :readerignoredate';
+    $where  = 'ra.preview = 1 AND ra.userid= :userid AND ra.timefinish > :readerignoredate';
     $params = array('userid'=>$userid, 'readerignoredate'=>$reader->ignoredate);
     if (! $allreaders) {
         $where .= ' AND ra.reader = :readerid';
