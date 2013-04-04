@@ -145,7 +145,7 @@ foreach ($quizitems as $sectionname => $items) {
 
         // if the $item is already a quiz in this section of the course, skip it
         if (reader_download_instance_exists($targetcourseid, $sectionnum, 'quiz', $itemname)) {
-            $a = (object)array('coursename'  => format_text($targetcourse->shortname),
+            $a = (object)array('coursename'  => format_text($targetcourse->shortname, FORMAT_PLAIN),
                                'sectionnum'  => $sectionnum,
                                'sectionname' => $sectionname,
                                'quizname'    => $itemname);
@@ -568,11 +568,16 @@ function reader_create_new_quiz($targetcourseid, $sectionnum, $quizmodule, $quiz
     if (! $newquiz->instance = $DB->insert_record('quiz', $newquiz)) {
         return false;
     }
-    if (! $newquiz->coursemodule = add_course_module($newquiz) ) {
+    if (! $newquiz->coursemodule = add_course_module($newquiz) ) { // $mod
         error('Could not add a new course module');
     }
-    $newquiz->id = $newquiz->coursemodule;
-    if (! $sectionid = add_mod_to_section($newquiz) ) {
+    $newquiz->id = $newquiz->coursemodule; // $cmid
+    if (function_exists('course_add_cm_to_section')) {
+        $sectionid = course_add_cm_to_section($targetcourseid, $newquiz->coursemodule, $sectionnum);
+    } else {
+        $sectionid = add_mod_to_section($newquiz);
+    }
+    if (! $sectionid) {
         error('Could not add the new course module to that section');
     }
     if (! $DB->set_field('course_modules', 'section',  $sectionid, array('id' => $newquiz->coursemodule))) {
@@ -894,10 +899,10 @@ function reader_download_bookcover($readercfg, $imagepath, $itemid, $targetcours
     if (empty($imagepath)) {
         return; // nothing to do
     }
-    make_upload_directory($targetcourseid.'/images');
+    make_upload_directory('reader/images');
     $imageurl = new moodle_url($readercfg->reader_serverlink.'/getfile.php', array('imageid' => $itemid));
     $image = file_get_contents($imageurl);
-    if ($fp = @fopen($CFG->dataroot.'/'.$targetcourseid.'/images/'.$imagepath, 'w+')) {
+    if ($fp = @fopen($CFG->dataroot.'/reader/images/'.$imagepath, 'w+')) {
         @fwrite($fp, $image);
         @fclose($fp);
     }

@@ -118,7 +118,7 @@ class reader_uploadbooks_form extends moodleform {
         $t = 0;
         $selectorsection = '<select name="selectorsection">';
         foreach ($sections as $section) {
-            if ($t <= $tocourse->numsections) {
+            if ($t <= reader_get_numsections($tocourse)) {
                 $sectionname = trim(strip_tags($section->name));
                 if (empty($sectionname)) {
                     $sectionname = 'Section '.$section->section;

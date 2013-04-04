@@ -245,10 +245,10 @@ if (has_capability('mod/reader:manage', $contextmodule) && $quizesid) {
         if (is_uploaded_file($_FILES['userimage']['tmp_name'])) {
             $ext = substr($_FILES['userimage']['name'], 1 + strrpos($_FILES['userimage']['name'], '.'));
             if (in_array(strtolower($ext), array('jpg', 'jpeg', 'gif'))) {
-                if (! make_upload_directory($cm->course.'/images')) {
+                if (! make_upload_directory('reader/images')) {
                     //return false;
                 }
-                if (file_exists ($CFG->dataroot.'/'.$cm->course.'/images/'.$_FILES['userimage']['name'])) {
+                if (file_exists ($CFG->dataroot.'/reader/images/'.$_FILES['userimage']['name'])) {
                     list ($imgname, $imgtype) = explode ('.', $_FILES['userimage']['name']);
                     $newimagename = $imgname.rand (9999,9999999);
                     $newimagename .= '.'.$ext;
@@ -256,7 +256,7 @@ if (has_capability('mod/reader:manage', $contextmodule) && $quizesid) {
                 } else {
                     $newimagename = $_FILES['userimage']['name'];
                 }
-                @move_uploaded_file($_FILES['userimage']['tmp_name'], $CFG->dataroot.'/'.$cm->course.'/images/'.$newimagename);
+                @move_uploaded_file($_FILES['userimage']['tmp_name'], $CFG->dataroot.'/reader/images/'.$newimagename);
             }
         }
     }
@@ -2755,7 +2755,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
 
 } else if ($act == 'makepix_t' && has_capability('mod/reader:createcoversetsbypublisherlevel', $contextmodule)) {
     $allbooks = $DB->get_records_sql('SELECT * FROM {reader_books}  where hidden = 0 ORDER BY publisher ASC, level ASC');
-    $prehtml = "<img width='110'  height='160'  border='0' src='{$CFG->wwwroot}/file.php/{$reader->usecourse}/images/";
+    $prehtml = "<img width='110'  height='160'  border='0' src='{$CFG->wwwroot}/file.php/reader/images/";
     $posthtml = '/> ';
     $nowpub = "";
     $nowlevel = "";
@@ -2789,7 +2789,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
 
 } else if ($act == 'makepix_l' && has_capability('mod/reader:createcoversetsbypublisherlevel', $contextmodule)) {
     $allbooks = $DB->get_records_sql('SELECT * FROM {reader_books}  where hidden = 0 ORDER BY difficulty, publisher, level, name');
-    $prehtml = "<img width='110'  height='160'  border='0' src='{$CFG->wwwroot}/file.php/{$reader->usecourse}/images/";
+    $prehtml = "<img width='110'  height='160'  border='0' src='{$CFG->wwwroot}/file.php/reader/images/";
     $posthtml = '/> ';
     $nowpub = "";
     $nowlevel = "";

@@ -168,7 +168,7 @@ if ($reader->bookcovers == 1) {
                 continue; // shouldn't happen !!
             }
             if ($attempt->passed == 'true' || $attempt->passed == 'TRUE') {
-                $src = new moodle_url('/mod/reader/images.php/'.$reader->usecourse.'/images/'.$attempt->bookimage);
+                $src = new moodle_url('/mod/reader/images.php/reader/images/'.$attempt->bookimage);
                 $bookcoversinprevterm .= html_writer::empty_tag('img', array('src' => $src, 'border' => 0, 'alt' => $attempt->bookname, 'height' => 150, 'width' => 100));
             }
         }
@@ -185,7 +185,7 @@ if (list($attemptdata, $summaryattemptdata) = reader_get_student_attempts($USER-
         $alreadyansweredbooksid[] = $attemptdata_['quizid'];
 
         if ($reader->bookcovers == 1 && $attemptdata_['status'] == 'correct') {
-            $bookcoversinthisterm .= '<img src="'.$CFG->wwwroot.'/mod/reader/images.php/'.$reader->usecourse.'/images/'.$attemptdata_['image'].'" border="0" alt="'.$attemptdata_['booktitle'].'" height="150" width="100" /> ';
+            $bookcoversinthisterm .= '<img src="'.$CFG->wwwroot.'/mod/reader/images.php/reader/images/'.$attemptdata_['image'].'" border="0" alt="'.$attemptdata_['booktitle'].'" height="150" width="100" /> ';
         }
 
         if ($attemptdata_['statustext'] == 'Passed' || $attemptdata_['statustext'] == 'Credit'){

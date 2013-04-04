@@ -35,11 +35,7 @@ require_login($id);
 $course = $DB->get_record('course', array('id'=>$id));
 if ($sections = $DB->get_records('course_sections', array('course' => $id))) {
 
-    if (isset($course->numsections)) {
-        $numsections = $course->numsections; // Moodle <= 2.3
-    } else {
-        $numsections = $DB->get_field('course_format_options', 'value', array('courseid'=>$id, 'format'=>$course->format, 'name'=>'numsections'));
-    }
+    $numsections = reader_get_numsections($course);
 
     if ($course->format=='weeks' || $course->format=='weekscss') {
         $sectiontype = 'week';

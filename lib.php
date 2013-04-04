@@ -2687,14 +2687,15 @@ function reader_textlib() {
  */
 function reader_get_numsections($course) {
     global $DB;
-    if (empty($course) || empty($course->id)) {
-        return 0;
+    if ($course && isset($course->id)) {
+        if (isset($course->numsections)) {
+            return $course->numsections; // Moodle >= 2.3
+        }
+        if (isset($course->format)) {
+            return $DB->get_field('course_format_options', 'value', array('courseid' => $course->id, 'format' => $course->format, 'name' => 'numsections'));
+        }
     }
-    if (isset($course->numsections)) {
-        return $course->numsections; // Moodle >= 2.3
-    } else {
-        return $DB->get_field('course_format_options', 'value', array('courseid' => $id, 'format' => $course->format, 'name' => 'numsections'));
-    }
+    return 0; // shouldn't happen !!
 }
 
 /**

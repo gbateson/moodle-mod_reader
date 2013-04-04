@@ -982,7 +982,9 @@ define('RESTORE_GROUPS_GROUPINGS', 3);
             $course->guest = addslashes($course_header->course_guest);
             $course->startdate = addslashes($course_header->course_startdate);
             $course->startdate += $restore->course_startdateoffset;
-            $course->numsections = addslashes($course_header->course_numsections);
+            if (isset($course_header->course_numsections)) {
+                $course->numsections = addslashes($course_header->course_numsections);
+            }
             //$course->showrecent = addslashes($course_header->course_showrecent);   INFO: This is out in 1.3
             $course->maxbytes = addslashes($course_header->course_maxbytes);
             $course->showreports = addslashes($course_header->course_showreports);
