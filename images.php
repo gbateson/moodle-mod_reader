@@ -28,14 +28,21 @@
 /** Include required files */
 require_once('../../config.php');
 
-list($a, $req)  =  explode('images.php', $_SERVER['REQUEST_URI']);
+$filepath = preg_replace('/^.*images.php/', '', $FULLME);
+$fullpath = $CFG->dataroot.$filepath;
 
-if ($fp = fopen($CFG->dataroot.$req, 'r')) {
-    header('Content-type: image/jpeg');
-    fpassthru($fp);
-    fclose($fp);
-} else {
+if (! file_exists($fullpath) || ! $fh = @fopen($fullpath, 'r')) {
     //header('HTTP/1.1 500 Internal Server Error');
-    header('Content-type: application/octet-stream');
-    echo 'File no found';
+    echo 'File not found: '.$filepath;
+    die;
 }
+
+if ($filepath=='/reader/script.txt') {
+    $header = 'Content-type: application/javascript';
+} else {
+    $header = 'Content-type: image/jpeg';
+}
+
+header($header);
+fpassthru($fh);
+fclose($fh);

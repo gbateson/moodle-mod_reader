@@ -247,6 +247,36 @@ function xmldb_reader_upgrade($oldversion) {
         upgrade_mod_savepoint(true, "$newversion", 'reader');
     }
 
+    $newversion = 2013040400;
+    if ($result && $oldversion < $newversion) {
+
+        // create "reader" folder within Moodle data folder
+        make_upload_directory('reader');
+
+        // set new/old location for Reader "images" folder
+        $courseid = get_config('reader', 'reader_usecourse');
+        $oldname = $CFG->dataroot."/$courseid/images";
+        $newname = $CFG->dataroot.'/reader/images';
+
+        // move "images" folder to new location
+        if (file_exists($newname)) {
+            // do nothing
+        } else if (file_exists($oldname)) {
+            @rename($oldname, $newname);
+        }
+
+        // remove old "images" folder (if necessary)
+        if (file_exists($oldname)) {
+            remove_dir($oldname, false); // in "lib/moodlelib.php"
+        }
+
+        // remove old "script.txt" file (if necessary)
+        $oldname = $CFG->dirroot.'/blocks/readerview/script.txt';
+        if (file_exists($oldname)) {
+            @unlink($oldname);
+        }
+    }
+
     return $result;
 }
 
