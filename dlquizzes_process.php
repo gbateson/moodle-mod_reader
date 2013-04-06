@@ -441,8 +441,8 @@ function reader_download_sectionnum(&$targetcourse, $sectionname, $sectionchoosi
             break;
 
         case READER_SORTED_SECTION:
-            $select = 'course = :courseid AND (name = :name OR summary = :name)';
-            $params = array('course' => $targetcourse->id, 'name' => $sectionname);
+            $select = 'course = ? AND (name = ? OR summary = ?)';
+            $params = array($targetcourse->id, $sectionname, $sectionname);
             if ($coursesections = $DB->get_records_select('course_sections', $select, $params, 'section', '*', 0, 1)) {
                 $coursesection = reset($coursesections);
                 $sectionnum = $coursesection->section;
