@@ -95,16 +95,25 @@ $PAGE->set_heading($course->fullname);
 
 echo $OUTPUT->header();
 
-echo '<script type="text/javascript" src="js/ajax.js"></script>';
-
 //Check time [open/close]
 $timenow = time();
 if (! empty($reader->timeopen) && $reader->timeopen > $timenow) {
-    error (get_string('quizopens', 'quiz').': '.userdate($reader->timeopen));
+    $msg = 'notopenyet';
+} else if (! empty($reader->timeclose) && $reader->timeclose < $timenow) {
+    $msg = 'alreadyclosed';
+} else {
+    $msg = '';
 }
-if (! empty($reader->timeclose) && $reader->timeclose < $timenow) {
-    error (get_string('quizcloses', 'quiz').': '.userdate($reader->timeclose));
+if ($msg) {
+    $url = new moodle_url('/course/view.php', array('id' => $course->id));
+    $msg = get_string($msg, 'reader', userdate($reader->timeopen));
+    $msg .= html_writer::tag('p', $OUTPUT->continue_button($url));
+    echo $OUTPUT->box($msg, 'generalbox', 'notice');
+    echo $OUTPUT->footer();
+    exit;
 }
+
+echo '<script type="text/javascript" src="js/ajax.js"></script>';
 
 $alreadyansweredbooksid = array();
 

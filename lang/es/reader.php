@@ -126,14 +126,14 @@ $string['youmusttakequiz'] = ' Usted puede tomar $a más exámen ';
 $string['youmusttakequizzes'] = ' Usted puede tomar $a más exámenes ';
 $string['yourcurrentlevel'] = 'Su nivel actual';
 $string['yourteacherhasstopped'] = ' Su profesor le ha suspendido la promoción automática.';
-
-/* ==================================================
+\n/* ==================================================
 ** these strings are also used by the Reader module
 ** ==================================================
 $string['all'] = 'All';
 $string['allbooks'] = 'All books available to the Reader module';
 $string['alldone'] = 'All done';
 $string['allparticipants'] = 'All participants';
+$string['alreadyclosed'] = 'Sorry, this activity is no longer available. It closed {$a}.';
 $string['attemptscoremanagement'] = 'Attempt and score management';
 $string['best'] = 'Best';
 $string['bookquiznumber'] = 'Book quiz number';
@@ -154,7 +154,9 @@ $string['modulename_link'] = '"mod/reader"/view';
 $string['mybooks'] = 'Only books already installed on this site';
 $string['needtocheckupdates'] = 'This site has not checked for quiz updates in ({$a} days). Check now?';
 $string['noquizzesfound'] = 'No quizzes found';
+$string['noreaders'] = 'No Reader activities found in this course';
 $string['nothavepermissioncreateinstance'] = 'Sorry you do not have permission to do this.';
+$string['notopenyet'] = 'Sorry, this activity is not available yet. It will open {$a}.';
 $string['onlybookswithmorethan'] = 'Only books with more than';
 $string['pluginadministration'] = 'Reader Administration';
 $string['pluginname'] = 'Reader';
@@ -209,6 +211,7 @@ $string['separategroups'] = 'Separate groups';
 $string['setuniformgoalinpoints'] = 'Set uniform goal in points';
 $string['setuniformgoalinwords'] = 'Set uniform goal in words';
 $string['showlevel'] = 'Show Level';
+$string['skipquizdownload'] = 'Quiz "{$a->quizname}" already exists in section {$a->sectionnum}, "{$a->sectionname}", of "{$a->coursename}", and has been skipped';
 $string['studentuserid'] = 'Student user ID';
 $string['studentusername'] = 'Student username';
 $string['term'] = 'Term';
