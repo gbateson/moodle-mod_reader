@@ -135,7 +135,7 @@ $quizids = array();
 foreach ($quizitems as $sectionname => $items) {
 
     // get section number for these items
-    $sectionnum = reader_download_sectionnum($targetcourse, $sectionname, $sectionchoosing);
+    $sectionnum = reader_download_sectionnum($targetcourse, $sectionname, $sectionchoosing, $section);
 
     // add all items in this section
     foreach ($items as $i => $item) {
@@ -424,7 +424,7 @@ function reader_create_targetcourse($numsections=1) {
  * @return xxx
  * @todo Finish documenting this function
  */
-function reader_download_sectionnum(&$targetcourse, $sectionname, $sectionchoosing) {
+function reader_download_sectionnum(&$targetcourse, $sectionname, $sectionchoosing, $section) {
     global $DB;
 
     $sectionnum = 0;
@@ -441,8 +441,9 @@ function reader_download_sectionnum(&$targetcourse, $sectionname, $sectionchoosi
             break;
 
         case READER_SORTED_SECTION:
+            $select = 'course = :courseid AND (name = :name OR summary = :name)';
             $params = array('course' => $targetcourse->id, 'name' => $sectionname);
-            if ($coursesections = $DB->get_records('course_sections', $params, 'section', '*', 0, 1)) {
+            if ($coursesections = $DB->get_records_select('course_sections', $select, $params, 'section', '*', 0, 1)) {
                 $coursesection = reset($coursesections);
                 $sectionnum = $coursesection->section;
             }
@@ -459,19 +460,27 @@ function reader_download_sectionnum(&$targetcourse, $sectionname, $sectionchoosi
 
     // create a new section, if necessary
     if ($sectionnum==0) {
-        $numsections = reader_get_numsections($targetcourse);
-        $sectionnum = $numsections + 1; // = last section
-        $numsections = $numsections + 1;
-        reader_set_numsections($targetcourse, $numsections);
+
+        $sql = "SELECT MAX(section) FROM {course_sections} WHERE course = ?";
+        if ($sectionnum = $DB->get_field_sql($sql, array($targetcourse->id))) {
+            $sectionnum ++;
+        } else {
+            $sectionnum = 1;
+        }
 
         $newsection = (object)array(
             'course'        => $targetcourse->id,
             'section'       => $sectionnum,
             'name'          => $sectionname,
             'summary'       => '',
-            'summaryformat' => FORMAT_HTML
+            'summaryformat' => FORMAT_HTML,
+
         );
         $newsection->id = $DB->insert_record('course_sections', $newsection);
+
+        if ($sectionnum > reader_get_numsections($targetcourse)) {
+            reader_set_numsections($targetcourse, $sectionnum);
+        }
     }
 
     return $sectionnum;
