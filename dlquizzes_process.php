@@ -53,23 +53,23 @@ $end             = optional_param('end', 0, PARAM_INT);
 
 if ($id) {
     if (! $cm = get_coursemodule_from_id('reader', $id)) {
-        error('Course Module ID was incorrect');
+        throw new reader_exception('Course Module ID was incorrect');
     }
     if (! $course = $DB->get_record('course', array('id' => $cm->course))) {
-        error('Course is misconfigured');
+        throw new reader_exception('Course is misconfigured');
     }
     if (! $reader = $DB->get_record('reader', array('id' => $cm->instance))) {
-        error('Course module is incorrect');
+        throw new reader_exception('Course module is incorrect');
     }
 } else {
     if (! $reader = $DB->get_record('reader', array('id' => $a))) {
-        error('Course module is incorrect');
+        throw new reader_exception('Course module is incorrect');
     }
     if (! $course = $DB->get_record('course', array('id' => $reader->course))) {
-        error('Course is misconfigured');
+        throw new reader_exception('Course is misconfigured');
     }
     if (! $cm = get_coursemodule_from_instance('reader', $reader->id, $course->id)) {
-        error('Course Module ID was incorrect');
+        throw new reader_exception('Course Module ID was incorrect');
     }
 }
 
@@ -458,17 +458,31 @@ function reader_download_sectionnum(&$targetcourse, $sectionname, $sectionchoosi
             break;
     }
 
+    // reuse an empty section, if possible
+    if ($sectionnum==0) {
+        $select = 'course = ? AND section > ?'.
+                  ' AND (name IS NULL OR name = ?)'.
+                  ' AND (summary IS NULL OR summary = ?)'.
+                  ' AND (sequence IS NULL OR sequence = ?)';
+        $params = array($targetcourse->id, 0, '', '', '');
+
+        if ($coursesections = $DB->get_records_select('course_sections', $select, $params, 'section', '*', 0, 1)) {
+            $coursesection = reset($coursesections);
+            $sectionnum = $coursesection->section;
+            $coursesection->name = $sectionname;
+            $DB->update_record('course_sections', $coursesection);
+        }
+    }
+
     // create a new section, if necessary
     if ($sectionnum==0) {
-
         $sql = "SELECT MAX(section) FROM {course_sections} WHERE course = ?";
         if ($sectionnum = $DB->get_field_sql($sql, array($targetcourse->id))) {
             $sectionnum ++;
         } else {
             $sectionnum = 1;
         }
-
-        $newsection = (object)array(
+        $coursesection = (object)array(
             'course'        => $targetcourse->id,
             'section'       => $sectionnum,
             'name'          => $sectionname,
@@ -476,11 +490,11 @@ function reader_download_sectionnum(&$targetcourse, $sectionname, $sectionchoosi
             'summaryformat' => FORMAT_HTML,
 
         );
-        $newsection->id = $DB->insert_record('course_sections', $newsection);
+        $newsection->id = $DB->insert_record('course_sections', $coursesection);
+    }
 
-        if ($sectionnum > reader_get_numsections($targetcourse)) {
-            reader_set_numsections($targetcourse, $sectionnum);
-        }
+    if ($sectionnum > reader_get_numsections($targetcourse)) {
+        reader_set_numsections($targetcourse, $sectionnum);
     }
 
     return $sectionnum;
@@ -578,7 +592,7 @@ function reader_create_new_quiz($targetcourseid, $sectionnum, $quizmodule, $quiz
         return false;
     }
     if (! $newquiz->coursemodule = add_course_module($newquiz) ) { // $mod
-        error('Could not add a new course module');
+        throw new reader_exception('Could not add a new course module');
     }
     $newquiz->id = $newquiz->coursemodule; // $cmid
     if (function_exists('course_add_cm_to_section')) {
@@ -587,10 +601,10 @@ function reader_create_new_quiz($targetcourseid, $sectionnum, $quizmodule, $quiz
         $sectionid = add_mod_to_section($newquiz);
     }
     if (! $sectionid) {
-        error('Could not add the new course module to that section');
+        throw new reader_exception('Could not add the new course module to that section');
     }
     if (! $DB->set_field('course_modules', 'section',  $sectionid, array('id' => $newquiz->coursemodule))) {
-        error('Could not update the course module with the correct section');
+        throw new reader_exception('Could not update the course module with the correct section');
     }
 
     // if the section is hidden, we should also hide the new quiz activity

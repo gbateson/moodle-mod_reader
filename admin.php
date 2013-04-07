@@ -199,23 +199,23 @@ if (! $perpage) {
 
 if ($id) {
     if (! $cm = get_coursemodule_from_id('reader', $id)) {
-        error('Course Module ID was incorrect');
+        throw new reader_exception('Course Module ID was incorrect');
     }
     if (! $course = $DB->get_record('course', array('id'=>$cm->course))) {
-        error('Course is misconfigured');
+        throw new reader_exception('Course is misconfigured');
     }
     if (! $reader = $DB->get_record('reader', array('id'=> $cm->instance))) {
-        error('Course module is incorrect');
+        throw new reader_exception('Course module is incorrect');
     }
 } else {
     if (! $reader = $DB->get_record('reader', array('id'=> $a))) {
-        error('Course module is incorrect');
+        throw new reader_exception('Course module is incorrect');
     }
     if (! $course = $DB->get_record('course', array('id'=> $reader->course))) {
-        error('Course is misconfigured');
+        throw new reader_exception('Course is misconfigured');
     }
     if (! $cm = get_coursemodule_from_instance('reader', $reader->id, $course->id)) {
-        error('Course Module ID was incorrect');
+        throw new reader_exception('Course Module ID was incorrect');
     }
 }
 
@@ -720,7 +720,7 @@ if (has_capability('mod/reader:manage', $contextmodule) && $act == 'awardextrapo
             $attempt->ip = getremoteaddr();
             // Save the attempt
             if (! $attempt->id = $DB->insert_record('reader_attempts', $attempt)) {
-                error('Could not create new attempt');
+                throw new reader_exception('Could not create new attempt');
             }
 
             $totalgrade = 0;

@@ -41,23 +41,23 @@ $likebook  = optional_param('likebook', NULL, PARAM_CLEAN);
 
 if ($id) {
     if (! $cm = get_coursemodule_from_id('reader', $id)) {
-        error('Course Module ID was incorrect');
+        throw new reader_exception('Course Module ID was incorrect');
     }
     if (! $course = $DB->get_record('course', array('id' => $cm->course))) {
-        error('Course is misconfigured');
+        throw new reader_exception('Course is misconfigured');
     }
     if (! $reader = $DB->get_record('reader', array('id' => $cm->instance))) {
-        error('Course module is incorrect');
+        throw new reader_exception('Course module is incorrect');
     }
 } else {
     if (! $reader = $DB->get_record('reader', array('id' => $a))) {
-        error('Course module is incorrect');
+        throw new reader_exception('Course module is incorrect');
     }
     if (! $course = $DB->get_record('course', array('id' => $reader->course))) {
-        error('Course is misconfigured');
+        throw new reader_exception('Course is misconfigured');
     }
     if (! $cm = get_coursemodule_from_instance('reader', $reader->id, $course->id)) {
-        error('Course Module ID was incorrect');
+        throw new reader_exception('Course Module ID was incorrect');
     }
 }
 
@@ -122,7 +122,7 @@ if (has_capability('mod/reader:manage', $contextmodule)) {
 } else {
 /// Check subnet access
     if ($reader->subnet && !address_in_subnet(getremoteaddr(), $reader->subnet)) {
-        error(get_string('subneterror', 'quiz'), 'view.php?id='.$id);
+        throw new reader_exception(get_string('subneterror', 'quiz'), 'view.php?id='.$id);
     }
 }
 

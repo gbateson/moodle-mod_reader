@@ -33,13 +33,13 @@ $id = optional_param('id', 0, PARAM_INT); // course module id
 $uid = optional_param('uid', 0, PARAM_INT); // user id
 
 if (! $cm = get_coursemodule_from_id('reader', $id)) {
-    error('Course Module ID was incorrect');
+    throw new reader_exception('Course Module ID was incorrect');
 }
 if (! $course = $DB->get_record('course', array('id' => $cm->course))) {
-    error('Course is misconfigured');
+    throw new reader_exception('Course is misconfigured');
 }
 if (! $reader = $DB->get_record('reader', array('id' => $cm->instance))) {
-    error('Course module is incorrect');
+    throw new reader_exception('Course module is incorrect');
 }
 
 require_login($course->id);

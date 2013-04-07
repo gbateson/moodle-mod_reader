@@ -42,7 +42,7 @@ if (! isset($idh)) {
 
 if (! isset($cm)) {
     if (! $cm = $DB->get_record('course_modules', array('id' => $idh))) {
-        error('Course Module ID was incorrect');
+        throw new reader_exception('Course Module ID was incorrect');
     }
 }
 

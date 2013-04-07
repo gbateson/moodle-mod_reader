@@ -79,6 +79,7 @@ $string['createcoversets_l'] = 'Create Cover Sets by Level & Publisher';
 $string['createcoversets_t'] = 'Create Cover Sets by Publisher &amp; Level';
 $string['downloadexcel'] = 'Download Excel';
 $string['editquiztoreader'] = 'Delete quizzes.';
+$string['error'] = 'Error: {$a}';
 $string['exportstudentrecords'] = 'Export student records';
 $string['fix_bookcovers'] = 'Detect and fix missing book covers';
 $string['fixslashesinnames'] = 'Remove slashes in book titles';

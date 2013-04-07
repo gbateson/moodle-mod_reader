@@ -43,23 +43,23 @@ $checker           = optional_param('checker', 0, PARAM_INT);
 
 if ($id) {
     if (! $cm = get_coursemodule_from_id('reader', $id)) {
-        error('Course Module ID was incorrect');
+        throw new reader_exception('Course Module ID was incorrect');
     }
     if (! $course = $DB->get_record('course', array('id' => $cm->course))) {
-        error('Course is misconfigured');
+        throw new reader_exception('Course is misconfigured');
     }
     if (! $reader = $DB->get_record('reader', array('id' => $cm->instance))) {
-        error('Course module is incorrect');
+        throw new reader_exception('Course module is incorrect');
     }
 } else {
     if (! $reader = $DB->get_record('reader', array('id' => $a))) {
-        error('Course module is incorrect');
+        throw new reader_exception('Course module is incorrect');
     }
     if (! $course = $DB->get_record('course', array('id' => $reader->course))) {
-        error('Course is misconfigured');
+        throw new reader_exception('Course is misconfigured');
     }
     if (! $cm = get_coursemodule_from_instance('reader', $reader->id, $course->id)) {
-        error('Course Module ID was incorrect');
+        throw new reader_exception('Course Module ID was incorrect');
     }
 }
 
@@ -71,7 +71,7 @@ $readercfg->reader_last_update -= (31 * 24 * 3600);
 $context = reader_get_context(CONTEXT_COURSE, $course->id);
 $contextmodule = reader_get_context(CONTEXT_MODULE, $cm->id);
 if (! has_capability('mod/reader:manage', $contextmodule)) {
-    error('You should be Admin');
+    throw new reader_exception('You should be Admin');
 }
 
 add_to_log($course->id, 'reader', 'Download Quizzes Process', "dlquizzes.php?id=$id", "$cm->instance");

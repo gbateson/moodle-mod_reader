@@ -42,23 +42,23 @@ $step       = optional_param('step', NULL, PARAM_CLEAN);
 
 if ($id) {
     if (! $cm = get_coursemodule_from_id('reader', $id)) {
-        error('Course Module ID was incorrect');
+        throw new reader_exception('Course Module ID was incorrect');
     }
     if (! $course = $DB->get_record('course', array('id' => $cm->course))) {
-        error('Course is misconfigured');
+        throw new reader_exception('Course is misconfigured');
     }
     if (! $reader = $DB->get_record('reader', array('id' => $cm->instance))) {
-        error('Course module is incorrect');
+        throw new reader_exception('Course module is incorrect');
     }
 } else {
     if (! $reader = $DB->get_record('reader', array('id' => $a))) {
-        error('Course module is incorrect');
+        throw new reader_exception('Course module is incorrect');
     }
     if (! $course = $DB->get_record('course', array('id' => $reader->course))) {
-        error('Course is misconfigured');
+        throw new reader_exception('Course is misconfigured');
     }
     if (! $cm = get_coursemodule_from_instance('reader', $reader->id, $course->id)) {
-        error('Course Module ID was incorrect');
+        throw new reader_exception('Course Module ID was incorrect');
     }
 }
 
@@ -85,7 +85,7 @@ echo $OUTPUT->header();
 require_once('js/hide.js');
 
 if (! function_exists('file')) {
-   error('FILE function unavailable. ');
+   throw new reader_exception('FILE function unavailable. ');
 }
 
 $params = array('a'        => 'publishers',
@@ -158,7 +158,7 @@ require_once ($CFG->dirroot.'/mod/reader/tabs_dl.php');
 $context = reader_get_context(CONTEXT_COURSE, $course->id);
 $contextmodule = reader_get_context(CONTEXT_MODULE, $cm->id);
 if (! has_capability('mod/reader:manage', $contextmodule)) {
-    error("You should be an 'Editing' Teacher");
+    throw new reader_exception("You should be an 'Editing' Teacher");
 }
 
 if (empty($quiz)) {
@@ -184,7 +184,7 @@ echo $OUTPUT->box_start('generalbox');
 if ($printerrormessage) {
     echo html_writer::tag('p', $publishersurl);
     $href = new moodle_url('http://moodlereader.org/moodle/course/view.php', array('id' => 15));
-    error("In order to download quizzes, you need to be registered on the  'Moodle Reader Users' course on ".
+    throw new reader_exception("In order to download quizzes, you need to be registered on the  'Moodle Reader Users' course on ".
           html_writer::tag('a', 'MoodleReader.org', array('href' => $href)).' '.
           'Please contact the system administrator ( admin@moodlereader.org ) to register yourself, '.
           'providing information on your school, your position, the reading grade level of your students '.

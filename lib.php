@@ -2747,3 +2747,17 @@ function reader_optional_param_array($name, $default, $type) {
     }
     return $optional_param_array($name, $default, $type);
 }
+
+/**
+ * Exception for reporting error in Reader module.
+ *
+ */
+class reader_exception extends moodle_exception {
+    /**
+     * Constructor
+     * @param string $debuginfo some detailed information
+     */
+    function __construct($debuginfo=null) {
+        parent::__construct('error', 'reader', '', null, $debuginfo);
+    }
+}
