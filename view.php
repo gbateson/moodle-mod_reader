@@ -98,15 +98,14 @@ echo $OUTPUT->header();
 //Check time [open/close]
 $timenow = time();
 if (! empty($reader->timeopen) && $reader->timeopen > $timenow) {
-    $msg = 'notopenyet';
+    $msg = get_string('notopenyet', 'reader', userdate($reader->timeopen));
 } else if (! empty($reader->timeclose) && $reader->timeclose < $timenow) {
-    $msg = 'alreadyclosed';
+    $msg = get_string('alreadyclosed', 'reader', userdate($reader->timeclose));
 } else {
     $msg = '';
 }
 if ($msg) {
     $url = new moodle_url('/course/view.php', array('id' => $course->id));
-    $msg = get_string($msg, 'reader', userdate($reader->timeopen));
     $msg .= html_writer::tag('p', $OUTPUT->continue_button($url));
     echo $OUTPUT->box($msg, 'generalbox', 'notice');
     echo $OUTPUT->footer();
