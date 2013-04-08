@@ -336,6 +336,6 @@ echo '    $("#id_section").click( function(){'."\n";
 echo '        $("input[name=sectionchoosing]").attr("checked", true);'."\n";
 echo '    });'."\n";
 echo '});'."\n";
-echo '</script>;'."\n";
+echo '</script>'."\n";
 
 echo $OUTPUT->footer();
