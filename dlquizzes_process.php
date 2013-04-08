@@ -490,7 +490,7 @@ function reader_download_sectionnum(&$targetcourse, $sectionname, $sectionchoosi
             'summaryformat' => FORMAT_HTML,
 
         );
-        $newsection->id = $DB->insert_record('course_sections', $coursesection);
+        $coursesection->id = $DB->insert_record('course_sections', $coursesection);
     }
 
     if ($sectionnum > reader_get_numsections($targetcourse)) {
