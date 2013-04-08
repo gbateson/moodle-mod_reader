@@ -250,20 +250,20 @@ if (list($attemptdata, $summaryattemptdata) = reader_get_student_attempts($USER-
     }
 }
 
-$select = 'ra.timefinish, ra.userid, ra.attempt, ra.percentgrade, ra.id, ra.quizid, ra.sumgrades, ra.passed, '.
-          'rb.name, rb.publisher, rb.level, rb.length, rb.image, rb.difficulty, rb.words, rb.id as rbid';
+$select = 'ra.id AS raid, ra.timefinish, ra.userid, ra.attempt, ra.percentgrade, ra.id, ra.quizid, ra.sumgrades, ra.passed, '.
+          'rb.name, rb.publisher, rb.level, rb.length, rb.image, rb.difficulty, rb.words, rb.id AS rbid';
 $from   = '{reader_attempts} ra LEFT JOIN {reader_books} rb ON rb.quizid = ra.quizid';
-$where  = 'ra.preview != 1 and ra.userid= ?';
-$params = array($USER->id);
+$where  = 'ra.preview != ? and ra.userid = ?';
+$params = array(1, $USER->id);
 if (! $studentattempts_p = $DB->get_records_sql("SELECT $select FROM $from WHERE $where", $params)) {
     $studentattempts_p = array();
 }
 
-$select = 'ra.timefinish, ra.userid, ra.attempt, ra.percentgrade, ra.id, ra.quizid, ra.sumgrades, ra.passed, '.
+$select = 'ra.id AS raid, ra.timefinish, ra.userid, ra.attempt, ra.percentgrade, ra.id, ra.quizid, ra.sumgrades, ra.passed, '.
           'rb.name, rb.publisher, rb.level, rb.length, rb.image, rb.difficulty, rb.words, rb.id as rbid';
 $from   = '{reader_attempts} ra LEFT JOIN {reader_noquiz} rb ON rb.quizid = ra.quizid';
-$where  = 'ra.preview = 1 and ra.userid= ?';
-$params = array($USER->id);
+$where  = 'ra.preview = ? and ra.userid = ?';
+$params = array(1, $USER->id);
 if (! $studentattempts_n = $DB->get_records_sql("SELECT $select FROM $from WHERE $where", $params)) {
     $studentattempts_n = array();
 }
