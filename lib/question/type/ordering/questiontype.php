@@ -68,7 +68,7 @@ class back_ordering_qtype  {
             $in_first = true;
             $tok = @strtok($ordering->answers,",");
             while ($tok) {
-                //Get the answer from backup_ids
+                //Get the answer from reader_backup_ids
                 $answer = backup_getid($restore->backup_unique_code,"question_answers",$tok);
                 if ($answer) {
                     if ($in_first) {

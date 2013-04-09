@@ -180,7 +180,7 @@
         //Skip empty categories (some backups can contain them)
 
         if (! empty($category->id)) {
-            //Get record from backup_ids
+            //Get record from reader_backup_ids
             $data = backup_getid($restore->backup_unique_code, "question_categories", $category->id);
 
             if ($data) {
@@ -252,7 +252,7 @@
                 //start with questions
                 //echo "Adding questions start ".$question_cat->id."<br />";
                 if ($question_cat->id) {
-                    //We have the newid, update backup_ids
+                    //We have the newid, update reader_backup_ids
                     //Now restore question
                     //print_r ($info);
                     $status = restore_questions($category->id, $question_cat, $info, $restore);
@@ -284,7 +284,7 @@
         $status = true;
         //Now we have to recode the parent field of each restored category
         $categories = $DB->get_records_sql("SELECT old_id, new_id
-                                       FROM {backup_ids}
+                                       FROM {reader_backup_ids}
                                        WHERE backup_code = ? AND
                                              table_name = 'question_categories'", array($restore->backup_unique_code));
         if ($categories) {
@@ -463,7 +463,7 @@
 
             //Save newid to backup tables
             if ($question->id) {
-                //We have the newid, update backup_ids
+                //We have the newid, update reader_backup_ids
                 backup_putid($restore->backup_unique_code, "question", $oldid, $question->id);
             }
 
@@ -623,7 +623,7 @@
                   }
 
                   if ($newid) {
-                      //We have the newid, update backup_ids
+                      //We have the newid, update reader_backup_ids
                       backup_putid($restore->backup_unique_code,"question_answers",$oldid,
                                    $newid);
                   } else {
@@ -680,7 +680,7 @@
             //If we are in this method is because the question exists in DB, so its
             //answers must exist too.
             //Now, we are going to look for that answer in DB and to create the
-            //mappings in backup_ids to use them later where restoring states (user level).
+            //mappings in reader_backup_ids to use them later where restoring states (user level).
 
             //Get the answer from DB (by question and answer)
             $db_answer = $DB->get_record_sql('SELECT * FROM {question_answers} WHERE `question` = ? AND `answer` = ?', array($new_question_id, $answer->answer));
@@ -697,7 +697,7 @@
             }
 
             if ($db_answer) {
-                //We have the database answer, update backup_ids
+                //We have the database answer, update reader_backup_ids
                 backup_putid($restore->backup_unique_code,"question_answers",$oldid,
                              $db_answer->id);
             } else {
@@ -995,7 +995,7 @@
             }
 
             if ($newid) {
-                //We have the newid, update backup_ids
+                //We have the newid, update reader_backup_ids
                 backup_putid($restore->backup_unique_code, 'question_states', $oldid, $newid);
             } else {
                 $status = false;

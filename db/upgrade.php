@@ -69,31 +69,6 @@ function xmldb_reader_upgrade($oldversion) {
         upgrade_mod_savepoint(true, "$newversion", 'reader');
     }
 
-    $newversion = 2013033103;
-    if ($result && $oldversion < $newversion) {
-
-        // recreate backup_ids table
-        $table = new xmldb_table('backup_ids');
-        if (! $dbman->table_exists($table)) {
-            $table->add_field('id',          XMLDB_TYPE_INTEGER, '10',     XMLDB_UNSIGNED, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
-            $table->add_field('backup_code', XMLDB_TYPE_INTEGER, '12',     XMLDB_UNSIGNED, XMLDB_NOTNULL, null, '0');
-            $table->add_field('table_name',  XMLDB_TYPE_CHAR,    '30',     null,           XMLDB_NOTNULL);
-            $table->add_field('old_id',      XMLDB_TYPE_INTEGER, '10',     XMLDB_UNSIGNED, XMLDB_NOTNULL, null, '0');
-            $table->add_field('new_id',      XMLDB_TYPE_INTEGER, '10',     XMLDB_UNSIGNED, XMLDB_NOTNULL, null, '0');
-            $table->add_field('info',        XMLDB_TYPE_TEXT,    'medium', null,           XMLDB_NOTNULL);
-
-            // Add keys to table backup_ids
-            $table->add_key('primary', XMLDB_KEY_PRIMARY, array('id'));
-
-            // Add indexes to table backup_ids
-            $table->add_index('backids_bactabold_uix', XMLDB_INDEX_UNIQUE, array('backup_code', 'table_name', 'old_id'));
-
-            $dbman->create_table($table);
-        }
-
-        upgrade_mod_savepoint(true, "$newversion", 'reader');
-    }
-
     $newversion = 2013033104;
     if ($result && $oldversion < $newversion) {
 
@@ -276,6 +251,38 @@ function xmldb_reader_upgrade($oldversion) {
             @unlink($oldname);
         }
     }
+
+    $newversion = 2013040900;
+    if ($result && $oldversion < $newversion) {
+
+        // remove backup_ids table
+        $table = new xmldb_table('backup_ids');
+        if ($dbman->table_exists($table)) {
+            $dbman->drop_table($table);
+        }
+
+        // create reader_backup_ids table
+        $table = new xmldb_table('reader_backup_ids');
+        if (! $dbman->table_exists($table)) {
+            $table->add_field('id',          XMLDB_TYPE_INTEGER, '10',     XMLDB_UNSIGNED, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+            $table->add_field('backup_code', XMLDB_TYPE_INTEGER, '12',     XMLDB_UNSIGNED, XMLDB_NOTNULL, null, '0');
+            $table->add_field('table_name',  XMLDB_TYPE_CHAR,    '30',     null,           XMLDB_NOTNULL);
+            $table->add_field('old_id',      XMLDB_TYPE_INTEGER, '10',     XMLDB_UNSIGNED, XMLDB_NOTNULL, null, '0');
+            $table->add_field('new_id',      XMLDB_TYPE_INTEGER, '10',     XMLDB_UNSIGNED, XMLDB_NOTNULL, null, '0');
+            $table->add_field('info',        XMLDB_TYPE_TEXT,    'medium', null,           XMLDB_NOTNULL);
+
+            // Add keys to table reader_backup_ids
+            $table->add_key('primary', XMLDB_KEY_PRIMARY, array('id'));
+
+            // Add indexes to table reader_backup_ids
+            $table->add_index('readbackids_bactabold_uix', XMLDB_INDEX_UNIQUE, array('backup_code', 'table_name', 'old_id'));
+
+            $dbman->create_table($table);
+        }
+
+        upgrade_mod_savepoint(true, "$newversion", 'reader');
+    }
+
 
     return $result;
 }

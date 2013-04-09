@@ -468,7 +468,7 @@ define('RESTORE_GROUPS_GROUPINGS', 3);
         return $info;
     }
 //This function read the xml file and store its data from the users in
-    //backup_ids->info db (and user's id in $info)
+    //reader_backup_ids->info db (and user's id in $info)
 
     /**
      * restore_read_xml_users
@@ -486,7 +486,7 @@ define('RESTORE_GROUPS_GROUPINGS', 3);
         return $info;
     }
 //This function read the xml file and store its data from the messages in
-    //backup_ids->message backup_ids->message_read and backup_ids->contact and db (and their counters in info)
+    //reader_backup_ids->message reader_backup_ids->message_read and reader_backup_ids->contact and db (and their counters in info)
 
     /**
      * restore_read_xml_messages
@@ -504,7 +504,7 @@ define('RESTORE_GROUPS_GROUPINGS', 3);
         return $info;
     }
 //This function read the xml file and store its data from the blogs in
-    //backup_ids->blog and backup_ids->blog_tag and db (and their counters in info)
+    //reader_backup_ids->blog and reader_backup_ids->blog_tag and db (and their counters in info)
 
     /**
      * restore_read_xml_blogs
@@ -522,7 +522,7 @@ define('RESTORE_GROUPS_GROUPINGS', 3);
         return $info;
     }
 //This function read the xml file and store its data from the questions in
-    //backup_ids->info db (and category's id in $info)
+    //reader_backup_ids->info db (and category's id in $info)
 
     /**
      * restore_read_xml_questions
@@ -540,7 +540,7 @@ define('RESTORE_GROUPS_GROUPINGS', 3);
         return $info;
     }
 //This function read the xml file and store its data from the scales in
-    //backup_ids->info db (and scale's id in $info)
+    //reader_backup_ids->info db (and scale's id in $info)
 
     /**
      * restore_read_xml_scales
@@ -558,7 +558,7 @@ define('RESTORE_GROUPS_GROUPINGS', 3);
         return $info;
     }
 //This function read the xml file and store its data from the groups in
-    //backup_ids->info db (and group's id in $info)
+    //reader_backup_ids->info db (and group's id in $info)
 
     /**
      * restore_read_xml_groups
@@ -576,7 +576,7 @@ define('RESTORE_GROUPS_GROUPINGS', 3);
         return $info;
     }
 //This function read the xml file and store its data from the groupings in
-    //backup_ids->info db (and grouping's id in $info)
+    //reader_backup_ids->info db (and grouping's id in $info)
 
     /**
      * restore_read_xml_groupings
@@ -594,7 +594,7 @@ define('RESTORE_GROUPS_GROUPINGS', 3);
         return $info;
     }
 //This function read the xml file and store its data from the groupings in
-    //backup_ids->info db (and grouping's id in $info)
+    //reader_backup_ids->info db (and grouping's id in $info)
 
     /**
      * restore_read_xml_groupings_groups
@@ -612,7 +612,7 @@ define('RESTORE_GROUPS_GROUPINGS', 3);
         return $info;
     }
 //This function read the xml file and store its data from the events (course) in
-    //backup_ids->info db (and event's id in $info)
+    //reader_backup_ids->info db (and event's id in $info)
 
     /**
      * restore_read_xml_events
@@ -630,7 +630,7 @@ define('RESTORE_GROUPS_GROUPINGS', 3);
         return $info;
     }
 //This function read the xml file and store its data from the modules in
-    //backup_ids->info
+    //reader_backup_ids->info
 
     /**
      * restore_read_xml_modules
@@ -648,7 +648,7 @@ define('RESTORE_GROUPS_GROUPINGS', 3);
         return $info;
     }
 //This function read the xml file and store its data from the logs in
-    //backup_ids->info
+    //reader_backup_ids->info
 
     /**
      * restore_read_xml_logs
@@ -1296,7 +1296,7 @@ define('RESTORE_GROUPS_GROUPINGS', 3);
     }
 //This function creates all the course_sections and course_modules from xml
     //when restoring in a new course or simply checks sections and create records
-    //in backup_ids when restoring in a existing course
+    //in reader_backup_ids when restoring in a existing course
 
     /**
      * restore_create_sections
@@ -1692,12 +1692,12 @@ define('RESTORE_GROUPS_GROUPINGS', 3);
                 echo '<li>'.get_string('gradeletters','grades').'</li>';
             }
             // Fetch recordset_size records in each iteration
-            $recs = get_records_select("backup_ids","table_name = 'grade_letter' AND backup_code = $restore->backup_unique_code",
+            $recs = get_records_select("reader_backup_ids","table_name = 'grade_letter' AND backup_code = $restore->backup_unique_code",
                                         "",
                                         "old_id");
             if ($recs) {
                 foreach ($recs as $rec) {
-                    // Get the full record from backup_ids
+                    // Get the full record from reader_backup_ids
                     $data = backup_getid($restore->backup_unique_code,'grade_letter',$rec->old_id);
                     if ($data) {
                         $info = $data->info;
@@ -1715,13 +1715,13 @@ define('RESTORE_GROUPS_GROUPINGS', 3);
             echo '<li>'.get_string('categories','grades').'</li>';
         }
         //Fetch recordset_size records in each iteration
-        $recs = get_records_select("backup_ids","table_name = 'grade_category' AND backup_code = $restore->backup_unique_code",
+        $recs = get_records_select("reader_backup_ids","table_name = 'grade_category' AND backup_code = $restore->backup_unique_code",
                                    "old_id",
                                    "old_id");
         $cat_count = count($recs);
         if ($recs) {
             foreach ($recs as $rec) {
-                //Get the full record from backup_ids
+                //Get the full record from reader_backup_ids
                 $data = backup_getid($restore->backup_unique_code,'grade_category',$rec->old_id);
                 if ($data) {
                     //Now get completed xmlized object
@@ -1866,7 +1866,7 @@ define('RESTORE_GROUPS_GROUPINGS', 3);
             unset($prev_grade_cats);
 
             if ($restoreall) {
-                if ($recs = get_records_select("backup_ids","table_name = 'grade_items' AND backup_code = $restore->backup_unique_code", "", "old_id")) {
+                if ($recs = get_records_select("reader_backup_ids","table_name = 'grade_items' AND backup_code = $restore->backup_unique_code", "", "old_id")) {
                     foreach ($recs as $rec) {
                         if ($data = backup_getid($restore->backup_unique_code,'grade_items',$rec->old_id)) {
 
@@ -1910,12 +1910,12 @@ define('RESTORE_GROUPS_GROUPINGS', 3);
                 echo '<li>'.get_string('gradeletters','grades').'</li>';
             }
             // Fetch recordset_size records in each iteration
-            $recs = get_records_select("backup_ids","table_name = 'grade_letters' AND backup_code = $restore->backup_unique_code",
+            $recs = get_records_select("reader_backup_ids","table_name = 'grade_letters' AND backup_code = $restore->backup_unique_code",
                                         "",
                                         "old_id");
             if ($recs) {
                 foreach ($recs as $rec) {
-                    // Get the full record from backup_ids
+                    // Get the full record from reader_backup_ids
                     $data = backup_getid($restore->backup_unique_code,'grade_letters',$rec->old_id);
                     if ($data) {
                         $info = $data->info;
@@ -1934,12 +1934,12 @@ define('RESTORE_GROUPS_GROUPINGS', 3);
             if (! defined('RESTORE_SILENTLY')) {
                 echo '<li>'.get_string('gradeoutcomes','grades').'</li>';
             }
-            $recs = get_records_select("backup_ids","table_name = 'grade_outcomes' AND backup_code = '$restore->backup_unique_code'",
+            $recs = get_records_select("reader_backup_ids","table_name = 'grade_outcomes' AND backup_code = '$restore->backup_unique_code'",
                                         "",
                                         "old_id");
             if ($recs) {
                 foreach ($recs as $rec) {
-                    //Get the full record from backup_ids
+                    //Get the full record from reader_backup_ids
                     $data = backup_getid($restore->backup_unique_code,'grade_outcomes',$rec->old_id);
                     if ($data) {
                         $info = $data->info;
@@ -2007,13 +2007,13 @@ define('RESTORE_GROUPS_GROUPINGS', 3);
             $counter = 0;
 
             //Fetch recordset_size records in each iteration
-            $recs = get_records_select("backup_ids","table_name = 'grade_items' AND backup_code = '$restore->backup_unique_code'",
+            $recs = get_records_select("reader_backup_ids","table_name = 'grade_items' AND backup_code = '$restore->backup_unique_code'",
                                         "id", // restore in the backup order
                                         "old_id");
 
             if ($recs) {
                 foreach ($recs as $rec) {
-                    //Get the full record from backup_ids
+                    //Get the full record from reader_backup_ids
                     $data = backup_getid($restore->backup_unique_code,'grade_items',$rec->old_id);
                     if ($data) {
                         $info = $data->info;
@@ -2273,10 +2273,10 @@ define('RESTORE_GROUPS_GROUPINGS', 3);
         if ($status and !$importing and $restore_histories) {
             /// following code is very inefficient
 
-            $gchcount = count_records ('backup_ids', 'backup_code', $restore->backup_unique_code, 'table_name', 'grade_categories_history');
-            $gghcount = count_records ('backup_ids', 'backup_code', $restore->backup_unique_code, 'table_name', 'grade_grades_history');
-            $gihcount = count_records ('backup_ids', 'backup_code', $restore->backup_unique_code, 'table_name', 'grade_items_history');
-            $gohcount = count_records ('backup_ids', 'backup_code', $restore->backup_unique_code, 'table_name', 'grade_outcomes_history');
+            $gchcount = count_records ('reader_backup_ids', 'backup_code', $restore->backup_unique_code, 'table_name', 'grade_categories_history');
+            $gghcount = count_records ('reader_backup_ids', 'backup_code', $restore->backup_unique_code, 'table_name', 'grade_grades_history');
+            $gihcount = count_records ('reader_backup_ids', 'backup_code', $restore->backup_unique_code, 'table_name', 'grade_items_history');
+            $gohcount = count_records ('reader_backup_ids', 'backup_code', $restore->backup_unique_code, 'table_name', 'grade_outcomes_history');
 
             // Number of records to get in every chunk
             $recordset_size = 2;
@@ -2289,14 +2289,14 @@ define('RESTORE_GROUPS_GROUPINGS', 3);
                 $counter = 0;
                 while ($counter < $gchcount) {
                     //Fetch recordset_size records in each iteration
-                    $recs = get_records_select("backup_ids","table_name = 'grade_categories_history' AND backup_code = '$restore->backup_unique_code'",
+                    $recs = get_records_select("reader_backup_ids","table_name = 'grade_categories_history' AND backup_code = '$restore->backup_unique_code'",
                                                 "old_id",
                                                 "old_id",
                                                 $counter,
                                                 $recordset_size);
                     if ($recs) {
                         foreach ($recs as $rec) {
-                            //Get the full record from backup_ids
+                            //Get the full record from reader_backup_ids
                             $data = backup_getid($restore->backup_unique_code,'grade_categories_history',$rec->old_id);
                             if ($data) {
                                 //Now get completed xmlized object
@@ -2387,14 +2387,14 @@ define('RESTORE_GROUPS_GROUPINGS', 3);
                 $counter = 0;
                 while ($counter < $gghcount) {
                     //Fetch recordset_size records in each iteration
-                    $recs = get_records_select("backup_ids","table_name = 'grade_grades_history' AND backup_code = '$restore->backup_unique_code'",
+                    $recs = get_records_select("reader_backup_ids","table_name = 'grade_grades_history' AND backup_code = '$restore->backup_unique_code'",
                                                 "old_id",
                                                 "old_id",
                                                 $counter,
                                                 $recordset_size);
                     if ($recs) {
                         foreach ($recs as $rec) {
-                            //Get the full record from backup_ids
+                            //Get the full record from reader_backup_ids
                             $data = backup_getid($restore->backup_unique_code,'grade_grades_history',$rec->old_id);
                             if ($data) {
                                 //Now get completed xmlized object
@@ -2479,14 +2479,14 @@ define('RESTORE_GROUPS_GROUPINGS', 3);
                 $counter = 0;
                 while ($counter < $gihcount) {
                     //Fetch recordset_size records in each iteration
-                    $recs = get_records_select("backup_ids","table_name = 'grade_items_history' AND backup_code = '$restore->backup_unique_code'",
+                    $recs = get_records_select("reader_backup_ids","table_name = 'grade_items_history' AND backup_code = '$restore->backup_unique_code'",
                                                 "old_id",
                                                 "old_id",
                                                 $counter,
                                                 $recordset_size);
                     if ($recs) {
                         foreach ($recs as $rec) {
-                            //Get the full record from backup_ids
+                            //Get the full record from reader_backup_ids
                             $data = backup_getid($restore->backup_unique_code,'grade_items_history',$rec->old_id);
                             if ($data) {
                                 //Now get completed xmlized object
@@ -2620,14 +2620,14 @@ define('RESTORE_GROUPS_GROUPINGS', 3);
                 $counter = 0;
                 while ($counter < $gohcount) {
                     //Fetch recordset_size records in each iteration
-                    $recs = get_records_select("backup_ids","table_name = 'grade_outcomes_history' AND backup_code = '$restore->backup_unique_code'",
+                    $recs = get_records_select("reader_backup_ids","table_name = 'grade_outcomes_history' AND backup_code = '$restore->backup_unique_code'",
                                                 "old_id",
                                                 "old_id",
                                                 $counter,
                                                 $recordset_size);
                     if ($recs) {
                         foreach ($recs as $rec) {
-                            //Get the full record from backup_ids
+                            //Get the full record from reader_backup_ids
                             $data = backup_getid($restore->backup_unique_code,'grade_outcomes_history',$rec->old_id);
                             if ($data) {
                                 //Now get completed xmlized object
@@ -2711,11 +2711,11 @@ define('RESTORE_GROUPS_GROUPINGS', 3);
         //Get info from xml
         if ($status) {
             //info will contain the old_id of every user
-            //in backup_ids->info will be the real info (serialized)
+            //in reader_backup_ids->info will be the real info (serialized)
             $info = restore_read_xml_users($restore,$xml_file);
         }
 
-        //Now, get evey user_id from $info and user data from $backup_ids
+        //Now, get evey user_id from $info and user data from $reader_backup_ids
         //and create the necessary db structures
 
         if (! empty($info->users)) {
@@ -2823,7 +2823,7 @@ define('RESTORE_GROUPS_GROUPINGS', 3);
 
                 //If we are restoring course users and it isn't a course user
                 if ($restore->users == 1 and !$is_course_user) {
-                    //If only restoring course_users and user isn't a course_user, inform to $backup_ids
+                    //If only restoring course_users and user isn't a course_user, inform to $reader_backup_ids
                     $status = backup_putid($restore->backup_unique_code,"user",$userid,null,'notincourse');
                     $create_user = false;
                     $create_roles = false;
@@ -2833,7 +2833,7 @@ define('RESTORE_GROUPS_GROUPINGS', 3);
                 }
 
                 if ($user_exists and $create_user) {
-                    //If user exists mark its newid in backup_ids (the same than old)
+                    //If user exists mark its newid in reader_backup_ids (the same than old)
                     $status = backup_putid($restore->backup_unique_code,"user",$userid,$newid,'exists');
                     $create_user = false;
                     $create_custom_profile_fields = false;
@@ -2894,34 +2894,34 @@ define('RESTORE_GROUPS_GROUPINGS', 3);
                 ///      Someday we'll drop support for them and this section will be safely deleted (2.0?)
                 //Here, if create_roles, do it as necessary
                 if ($create_roles) {
-                    //Get the newid and current info from backup_ids
+                    //Get the newid and current info from reader_backup_ids
                     $data = backup_getid($restore->backup_unique_code,"user",$userid);
                     $newid = $data->new_id;
                     $currinfo = $data->info.",";
 
                     //Now, depending of the role, create records in user_studentes and user_teacher
-                    //and/or mark it in backup_ids
+                    //and/or mark it in reader_backup_ids
 
                     if ($is_admin) {
                         //If the record (user_admins) doesn't exists
-                        //Only put status in backup_ids
+                        //Only put status in reader_backup_ids
                         $currinfo = $currinfo."admin,";
                         $status = backup_putid($restore->backup_unique_code,"user",$userid,$newid,$currinfo);
                     }
                     if ($is_coursecreator) {
                         //If the record (user_coursecreators) doesn't exists
-                        //Only put status in backup_ids
+                        //Only put status in reader_backup_ids
                         $currinfo = $currinfo."coursecreator,";
                         $status = backup_putid($restore->backup_unique_code,"user",$userid,$newid,$currinfo);
                     }
                     if ($is_needed) {
-                        //Only put status in backup_ids
+                        //Only put status in reader_backup_ids
                         $currinfo = $currinfo."needed,";
                         $status = backup_putid($restore->backup_unique_code,"user",$userid,$newid,$currinfo);
                     }
                     if ($is_teacher) {
                         //If the record (teacher) doesn't exists
-                        //Put status in backup_ids
+                        //Put status in reader_backup_ids
                         $currinfo = $currinfo."teacher,";
                         $status = backup_putid($restore->backup_unique_code,"user",$userid,$newid,$currinfo);
                         //Set course and user
@@ -2967,7 +2967,7 @@ define('RESTORE_GROUPS_GROUPINGS', 3);
                     }
                     if ($is_student) {
 
-                        //Put status in backup_ids
+                        //Put status in reader_backup_ids
                         $currinfo = $currinfo."student,";
                         $status = backup_putid($restore->backup_unique_code,"user",$userid,$newid,$currinfo);
                         //Set course and user
@@ -3001,7 +3001,7 @@ define('RESTORE_GROUPS_GROUPINGS', 3);
                     if (! $is_course_user) {
                         //If the record (user) doesn't exists
                         if (! record_exists("user","id",$newid)) {
-                            //Put status in backup_ids
+                            //Put status in reader_backup_ids
                             $currinfo = $currinfo."user,";
                             $status = backup_putid($restore->backup_unique_code,"user",$userid,$newid,$currinfo);
                         }
@@ -3105,15 +3105,15 @@ define('RESTORE_GROUPS_GROUPINGS', 3);
         if ($status) {
             //info will contain the id and name of every table
             //(message, message_read and message_contacts)
-            //in backup_ids->info will be the real info (serialized)
+            //in reader_backup_ids->info will be the real info (serialized)
             $info = restore_read_xml_messages($restore,$xml_file);
 
             //If we have info, then process messages & contacts
             if ($info > 0) {
                 //Count how many we have
-                $unreadcount = count_records ('backup_ids', 'backup_code', $restore->backup_unique_code, 'table_name', 'message');
-                $readcount = count_records ('backup_ids', 'backup_code', $restore->backup_unique_code, 'table_name', 'message_read');
-                $contactcount = count_records ('backup_ids', 'backup_code', $restore->backup_unique_code, 'table_name', 'message_contacts');
+                $unreadcount = count_records ('reader_backup_ids', 'backup_code', $restore->backup_unique_code, 'table_name', 'message');
+                $readcount = count_records ('reader_backup_ids', 'backup_code', $restore->backup_unique_code, 'table_name', 'message_read');
+                $contactcount = count_records ('reader_backup_ids', 'backup_code', $restore->backup_unique_code, 'table_name', 'message_contacts');
                 if ($unreadcount || $readcount || $contactcount) {
                     //Start ul
                     if (! defined('RESTORE_SILENTLY')) {
@@ -3130,10 +3130,10 @@ define('RESTORE_GROUPS_GROUPINGS', 3);
                         $counter = 0;
                         while ($counter < $unreadcount) {
                             //Fetch recordset_size records in each iteration
-                            $recs = get_records_select("backup_ids","table_name = 'message' AND backup_code = '$restore->backup_unique_code'","old_id","old_id",$counter,$recordset_size);
+                            $recs = get_records_select("reader_backup_ids","table_name = 'message' AND backup_code = '$restore->backup_unique_code'","old_id","old_id",$counter,$recordset_size);
                             if ($recs) {
                                 foreach ($recs as $rec) {
-                                    //Get the full record from backup_ids
+                                    //Get the full record from reader_backup_ids
                                     $data = backup_getid($restore->backup_unique_code,"message",$rec->old_id);
                                     if ($data) {
                                         //Now get completed xmlized object
@@ -3196,10 +3196,10 @@ define('RESTORE_GROUPS_GROUPINGS', 3);
                         $counter = 0;
                         while ($counter < $readcount) {
                             //Fetch recordset_size records in each iteration
-                            $recs = get_records_select("backup_ids","table_name = 'message_read' AND backup_code = '$restore->backup_unique_code'","old_id","old_id",$counter,$recordset_size);
+                            $recs = get_records_select("reader_backup_ids","table_name = 'message_read' AND backup_code = '$restore->backup_unique_code'","old_id","old_id",$counter,$recordset_size);
                             if ($recs) {
                                 foreach ($recs as $rec) {
-                                    //Get the full record from backup_ids
+                                    //Get the full record from reader_backup_ids
                                     $data = backup_getid($restore->backup_unique_code,"message_read",$rec->old_id);
                                     if ($data) {
                                         //Now get completed xmlized object
@@ -3263,10 +3263,10 @@ define('RESTORE_GROUPS_GROUPINGS', 3);
                         $counter = 0;
                         while ($counter < $contactcount) {
                             //Fetch recordset_size records in each iteration
-                            $recs = get_records_select("backup_ids","table_name = 'message_contacts' AND backup_code = '$restore->backup_unique_code'","old_id","old_id",$counter,$recordset_size);
+                            $recs = get_records_select("reader_backup_ids","table_name = 'message_contacts' AND backup_code = '$restore->backup_unique_code'","old_id","old_id",$counter,$recordset_size);
                             if ($recs) {
                                 foreach ($recs as $rec) {
-                                    //Get the full record from backup_ids
+                                    //Get the full record from reader_backup_ids
                                     $data = backup_getid($restore->backup_unique_code,"message_contacts",$rec->old_id);
                                     if ($data) {
                                         //Now get completed xmlized object
@@ -3349,13 +3349,13 @@ define('RESTORE_GROUPS_GROUPINGS', 3);
         //Get info from xml
         if ($status) {
             //info will contain the number of blogs in the backup file
-            //in backup_ids->info will be the real info (serialized)
+            //in reader_backup_ids->info will be the real info (serialized)
             $info = restore_read_xml_blogs($restore,$xml_file);
 
             //If we have info, then process blogs & blog_tags
             if ($info > 0) {
                 //Count how many we have
-                $blogcount = count_records ('backup_ids', 'backup_code', $restore->backup_unique_code, 'table_name', 'blog');
+                $blogcount = count_records ('reader_backup_ids', 'backup_code', $restore->backup_unique_code, 'table_name', 'blog');
                 if ($blogcount) {
                     //Number of records to get in every chunk
                     $recordset_size = 4;
@@ -3365,10 +3365,10 @@ define('RESTORE_GROUPS_GROUPINGS', 3);
                         $counter = 0;
                         while ($counter < $blogcount) {
                             //Fetch recordset_size records in each iteration
-                            $recs = get_records_select("backup_ids","table_name = 'blog' AND backup_code = '$restore->backup_unique_code'","old_id","old_id",$counter,$recordset_size);
+                            $recs = get_records_select("reader_backup_ids","table_name = 'blog' AND backup_code = '$restore->backup_unique_code'","old_id","old_id",$counter,$recordset_size);
                             if ($recs) {
                                 foreach ($recs as $rec) {
-                                    //Get the full record from backup_ids
+                                    //Get the full record from reader_backup_ids
                                     $data = backup_getid($restore->backup_unique_code,"blog",$rec->old_id);
                                     if ($data) {
                                         //Now get completed xmlized object
@@ -3481,7 +3481,7 @@ define('RESTORE_GROUPS_GROUPINGS', 3);
         //Get info from xml
         if ($status) {
             //info will contain the old_id of every category
-            //in backup_ids->info will be the real info (serialized)
+            //in reader_backup_ids->info will be the real info (serialized)
             $info = restore_read_xml_questions($restore,$xml_file);
         }
         //Now, if we have anything in info, we have to restore that
@@ -3520,7 +3520,7 @@ define('RESTORE_GROUPS_GROUPINGS', 3);
         //Get info from xml
         if ($status) {
             //scales will contain the old_id of every scale
-            //in backup_ids->info will be the real info (serialized)
+            //in reader_backup_ids->info will be the real info (serialized)
             $scales = restore_read_xml_scales($restore,$xml_file);
         }
         //Now, if we have anything in scales, we have to restore that
@@ -3532,7 +3532,7 @@ define('RESTORE_GROUPS_GROUPINGS', 3);
             if ($scales !== true) {
                 //Iterate over each scale
                 foreach ($scales as $scale) {
-                    //Get record from backup_ids
+                    //Get record from reader_backup_ids
                     $data = backup_getid($restore->backup_unique_code,"scale",$scale->id);
                     //Init variables
                     $create_scale = false;
@@ -3592,7 +3592,7 @@ define('RESTORE_GROUPS_GROUPINGS', 3);
                             $newid = $sca_db->id;
                         }
                         if ($newid) {
-                            //We have the newid, update backup_ids
+                            //We have the newid, update reader_backup_ids
                             backup_putid($restore->backup_unique_code,"scale",
                                          $scale->id, $newid);
                         }
@@ -3655,7 +3655,7 @@ define('RESTORE_GROUPS_GROUPINGS', 3);
         //Get info from xml
         if (! $groups = restore_read_xml_groups($restore,$xml_file)) {
             //groups will contain the old_id of every group
-            //in backup_ids->info will be the real info (serialized)
+            //in reader_backup_ids->info will be the real info (serialized)
             return false;
 
         } else if ($groups === true) {
@@ -3666,7 +3666,7 @@ define('RESTORE_GROUPS_GROUPINGS', 3);
 
         //Iterate over each group
         foreach ($groups as $group) {
-            //Get record from backup_ids
+            //Get record from reader_backup_ids
             $data = backup_getid($restore->backup_unique_code,"groups",$group->id);
 
             if ($data) {
@@ -3713,7 +3713,7 @@ define('RESTORE_GROUPS_GROUPINGS', 3);
                 }
 
                 if ($newid) {
-                    //We have the newid, update backup_ids
+                    //We have the newid, update reader_backup_ids
                     backup_putid($restore->backup_unique_code,"groups", $group->id, $newid);
                 } else {
 
@@ -3860,7 +3860,7 @@ define('RESTORE_GROUPS_GROUPINGS', 3);
                     }
                 }
 
-                //We have the newid, update backup_ids
+                //We have the newid, update reader_backup_ids
                 backup_putid($restore->backup_unique_code,"groupings",
                              $grouping->id, $newid);
             }
@@ -3962,7 +3962,7 @@ define('RESTORE_GROUPS_GROUPINGS', 3);
         //Get info from xml
         if ($status) {
             //events will contain the old_id of every event
-            //in backup_ids->info will be the real info (serialized)
+            //in reader_backup_ids->info will be the real info (serialized)
             $events = restore_read_xml_events($restore,$xml_file);
         }
 
@@ -3976,7 +3976,7 @@ define('RESTORE_GROUPS_GROUPINGS', 3);
             if ($events !== true) {
                 //Iterate over each event
                 foreach ($events as $event) {
-                    //Get record from backup_ids
+                    //Get record from reader_backup_ids
                     $data = backup_getid($restore->backup_unique_code,"event",$event->id);
                     //Init variables
                     $create_event = false;
@@ -4064,7 +4064,7 @@ define('RESTORE_GROUPS_GROUPINGS', 3);
                             $newid = $eve_db->id;
                         }
                         if ($newid) {
-                            //We have the newid, update backup_ids
+                            //We have the newid, update reader_backup_ids
                             backup_putid($restore->backup_unique_code,"event",
                                          $event->id, $newid);
                         }
@@ -4165,8 +4165,8 @@ define('RESTORE_GROUPS_GROUPINGS', 3);
             }
 
             foreach ($userlist as $olduserid => $backup_location) {
-                //Look for dir like username in backup_ids
-                //If that user exists in backup_ids
+                //Look for dir like username in reader_backup_ids
+                //If that user exists in reader_backup_ids
                 if ($user = backup_getid($restore->backup_unique_code,"user",$olduserid)) {
                     //Only if user has been created now or if it existed previously, but he hasn't got an image (see bug 1123)
                     $newuserdir = make_user_directory($user->new_id, true); // Doesn't create the folder, just returns the location
@@ -4233,11 +4233,11 @@ define('RESTORE_GROUPS_GROUPINGS', 3);
                 //Iterate
                 $counter = 0;
                 foreach ($list as $dir) {
-                    //Look for dir like groupid in backup_ids
-                    $data = $DB->get_record ("backup_ids",array('backup_code' => $restore->backup_unique_code,
+                    //Look for dir like groupid in reader_backup_ids
+                    $data = $DB->get_record ("reader_backup_ids",array('backup_code' => $restore->backup_unique_code,
                                                      'table_name' => "groups",
                                                      'old_id' => $dir));
-                    //If that group exists in backup_ids
+                    //If that group exists in reader_backup_ids
                     if ($data) {
                         if (! file_exists($dest_dir."/".$data->new_id)) {
                             $status = backup_copy_file($rootdir."/".$dir, $dest_dir."/".$data->new_id,true);
@@ -4409,11 +4409,11 @@ define('RESTORE_GROUPS_GROUPINGS', 3);
         //Get info from xml
         if ($status) {
             //info will contain the id and modtype of every module
-            //in backup_ids->info will be the real info (serialized)
+            //in reader_backup_ids->info will be the real info (serialized)
             $info = restore_read_xml_modules($restore,$xml_file);
         }
         //Now, if we have anything in info, we have to restore that mods
-        //from backup_ids (calling every mod restore function)
+        //from reader_backup_ids (calling every mod restore function)
         if ($info) {
             if ($info !== true) {
                 if (! defined('RESTORE_SILENTLY')) {
@@ -4477,12 +4477,12 @@ define('RESTORE_GROUPS_GROUPINGS', 3);
         //Get info from xml
         if ($status) {
             //count_logs will contain the number of logs entries to process
-            //in backup_ids->info will be the real info (serialized)
+            //in reader_backup_ids->info will be the real info (serialized)
             $count_logs = restore_read_xml_logs($restore,$xml_file);
         }
 
         //Now, if we have records in count_logs, we have to restore that logs
-        //from backup_ids. This piece of code makes calls to:
+        //from reader_backup_ids. This piece of code makes calls to:
         // - restore_log_course() if it's a course log
         // - restore_log_user() if it's a user log
         // - restore_log_module() if it's a module log.
@@ -4491,12 +4491,12 @@ define('RESTORE_GROUPS_GROUPINGS', 3);
             while ($counter < $count_logs) {
                 //Get a chunk of records
                 //Take old_id twice to avoid adodb limitation
-                $logs = get_records_select("backup_ids","table_name = 'log' AND backup_code = '$restore->backup_unique_code'","old_id","old_id",$counter,$recordset_size);
+                $logs = get_records_select("reader_backup_ids","table_name = 'log' AND backup_code = '$restore->backup_unique_code'","old_id","old_id",$counter,$recordset_size);
                 //We have logs
                 if ($logs) {
                     //Iterate
                     foreach ($logs as $log) {
-                        //Get the full record from backup_ids
+                        //Get the full record from reader_backup_ids
                         $data = backup_getid($restore->backup_unique_code,"log",$log->old_id);
                         if ($data) {
                             //Now get completed xmlized object
@@ -4881,9 +4881,9 @@ define('RESTORE_GROUPS_GROUPINGS', 3);
 
         $status = true;
 
-        //We are going to iterate over each course_module saved in backup_ids
+        //We are going to iterate over each course_module saved in reader_backup_ids
         $course_modules = $DB->get_records_sql("SELECT old_id,new_id
-                                           FROM {backup_ids}
+                                           FROM {reader_backup_ids}
                                            WHERE backup_code = ? AND
                                                  table_name = 'course_modules'", array($restore->backup_unique_code));
         if ($course_modules) {
@@ -4897,7 +4897,7 @@ define('RESTORE_GROUPS_GROUPINGS', 3);
                     $type = $DB->get_record('modules',array('id' => $module->module));
                     if ($type) {
                         //We know the type name and the old_id. Get its new_id
-                        //from backup_ids. It's the instance !!!
+                        //from reader_backup_ids. It's the instance !!!
                         $instance =  backup_getid($restore->backup_unique_code,$type->name,$cm_module->info);
                         if ($instance) {
                             //We have the new instance, so update the record in course_modules
@@ -8478,7 +8478,7 @@ define('RESTORE_GROUPS_GROUPINGS', 3);
 
             //Now print info about the work done
             if ($status) {
-                $recs = $DB->get_records_sql("select old_id, new_id from {backup_ids}
+                $recs = $DB->get_records_sql("select old_id, new_id from {reader_backup_ids}
                                      where backup_code = ? and
                                      table_name = 'user'",array($restore->backup_unique_code));
                 //We've records
@@ -9426,7 +9426,7 @@ define('RESTORE_GROUPS_GROUPINGS', 3);
         }
         $info = restore_read_xml_users($restore, $xmlfile);
         if (! empty($info->users) && !$isimport) { // no need to restore user assignments for imports (same course)
-            //For each user, take its info from backup_ids
+            //For each user, take its info from reader_backup_ids
             foreach ($info->users as $userid) {
                 $rec = backup_getid($restore->backup_unique_code,"user",$userid);
                 if (isset($rec->info->roleassignments)) {

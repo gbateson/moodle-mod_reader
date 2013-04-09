@@ -634,7 +634,7 @@ class back_match_qtype {
             }
 
             if ($newid) {
-                //We have the newid, update backup_ids
+                //We have the newid, update reader_backup_ids
                 backup_putid($restore->backup_unique_code,"question_match_sub",$oldid,
                              $newid);
                 //We have a new match_sub, append it to subquestions_field
@@ -715,7 +715,7 @@ class back_match_qtype {
             //If we are in this method is because the question exists in DB, so its
             //match_sub must exist too.
             //Now, we are going to look for that match_sub in DB and to create the
-            //mappings in backup_ids to use them later where restoring states (user level).
+            //mappings in reader_backup_ids to use them later where restoring states (user level).
 
             //Get the match_sub from DB (by question, questiontext and answertext)
             $db_match_sub = $DB->get_record ("question_match_sub",array('question' => $new_question_id,
@@ -732,9 +732,9 @@ class back_match_qtype {
                 backup_flush(300);
             }
 
-            //We have the database match_sub, so update backup_ids
+            //We have the database match_sub, so update reader_backup_ids
             if ($db_match_sub) {
-                //We have the newid, update backup_ids
+                //We have the newid, update reader_backup_ids
                 backup_putid($restore->backup_unique_code,"question_match_sub",$oldid,
                              $db_match_sub->id);
             } else {
@@ -764,7 +764,7 @@ class back_match_qtype {
             $exploded = explode('-',$tok);
             $match_question_id = $exploded[0];
             $match_answer_id = $exploded[1];
-            //Get the match_sub from backup_ids (for the question)
+            //Get the match_sub from reader_backup_ids (for the question)
             if (! $match_que = backup_getid($restore->backup_unique_code,"question_match_sub",$match_question_id)) {
                 echo 'Could not recode question in question_match_sub '.$match_question_id.'<br />';
             } else {

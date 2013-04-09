@@ -203,7 +203,7 @@ foreach ($quizitems as $sectionname => $items) {
         }
 
         $newcmid = $DB->get_field('course_modules', 'id', array('course' => $targetcourseid, 'module' => $quizmodule->id, 'instance' => $quizid));
-        reader_store_backup_ids($restore, 'course_modules', $oldcmid, $newcmid, 's:0:"",');
+        reader_store_reader_backup_ids($restore, 'course_modules', $oldcmid, $newcmid, 's:0:"",');
 
         $restore->course_startdateoffset = -1900800;
         $restore->restore_restorecatto   = 3;
@@ -805,7 +805,7 @@ function reader_download_old_cmid($xml) {
 }
 
 /**
- * reader_store_backup_ids
+ * reader_store_reader_backup_ids
  *
  * @uses $DB
  * @param xxx $restore
@@ -815,16 +815,16 @@ function reader_download_old_cmid($xml) {
  * @param xxx $info
  * @todo Finish documenting this function
  */
-function reader_store_backup_ids($restore, $type, $oldid, $newid, $info) {
+function reader_store_reader_backup_ids($restore, $type, $oldid, $newid, $info) {
     global $DB;
-    $backup_ids = (object)array(
+    $reader_backup_ids = (object)array(
         'backup_code' => $restore->backup_unique_code,
         'table_name'  => $type,
         'old_id'      => $oldid,
         'new_id'      => $newid,
         'info'        => $info,
     );
-    $DB->insert_record('backup_ids', $backup_ids);
+    $DB->insert_record('reader_backup_ids', $reader_backup_ids);
 }
 
 /**

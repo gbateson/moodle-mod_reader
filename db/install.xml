@@ -65,7 +65,7 @@
         <INDEX NAME="course_key" UNIQUE="false" FIELDS="course"/>
       </INDEXES>
     </TABLE>
-    <TABLE NAME="reader_attempts" COMMENT="reader_attempts table retrofitted from MySQL" PREVIOUS="reader" NEXT="reader_books">
+    <TABLE NAME="reader_attempts" COMMENT="reader_attempts table retrofitted from MySQL" PREVIOUS="reader" NEXT="reader_backup_ids">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="true" NEXT="uniqueid"/>
         <FIELD NAME="uniqueid" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" PREVIOUS="id" NEXT="reader"/>
@@ -97,7 +97,21 @@
         <INDEX NAME="quizid_key" UNIQUE="false" FIELDS="quizid" PREVIOUS="timefinish_key"/>
       </INDEXES>
     </TABLE>
-    <TABLE NAME="reader_books" COMMENT="reader_books table retrofitted from MySQL" PREVIOUS="reader_attempts" NEXT="reader_noquiz">
+    <TABLE NAME="reader_backup_ids" COMMENT="To store and convert ids in backup/restore" PREVIOUS="reader_attempts" NEXT="reader_books">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" NEXT="backup_code"/>
+        <FIELD NAME="backup_code" TYPE="int" LENGTH="12" NOTNULL="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="id" NEXT="table_name"/>
+        <FIELD NAME="table_name" TYPE="char" LENGTH="30" NOTNULL="true" SEQUENCE="false" PREVIOUS="backup_code" NEXT="old_id"/>
+        <FIELD NAME="old_id" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="table_name" NEXT="new_id"/>
+        <FIELD NAME="new_id" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="old_id" NEXT="info"/>
+        <FIELD NAME="info" TYPE="text" LENGTH="medium" NOTNULL="true" SEQUENCE="false" PREVIOUS="new_id"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id" NEXT="backup_code-table_name-old_id"/>
+        <KEY NAME="backup_code-table_name-old_id" TYPE="unique" FIELDS="backup_code, table_name, old_id" PREVIOUS="primary"/>
+      </KEYS>
+    </TABLE>
+    <TABLE NAME="reader_books" COMMENT="reader_books table retrofitted from MySQL" PREVIOUS="reader_backup_ids" NEXT="reader_noquiz">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="11" NOTNULL="false" SEQUENCE="true" NEXT="publisher"/>
         <FIELD NAME="publisher" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" PREVIOUS="id" NEXT="series"/>

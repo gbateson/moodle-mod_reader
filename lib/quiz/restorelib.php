@@ -73,7 +73,7 @@
             return quiz_restore_pre15_mods($mod,$restore);
         }
 
-        //Get record from backup_ids
+        //Get record from reader_backup_ids
         $data = backup_getid($restore->backup_unique_code,$mod->modtype,$mod->id);
 
         if ($data) {
@@ -128,7 +128,7 @@
             backup_flush(300);
 
             if ($newid) {
-                //We have the newid, update backup_ids
+                //We have the newid, update reader_backup_ids
                 backup_putid($restore->backup_unique_code,$mod->modtype,
                              $mod->id, $newid);
                 //We have to restore the question_instances now (course level table)
@@ -217,7 +217,7 @@
             }
 
             if ($newid) {
-                //We have the newid, update backup_ids
+                //We have the newid, update reader_backup_ids
                 backup_putid($restore->backup_unique_code,"quiz_question_instances",$oldid,
                              $newid);
             } else {
@@ -266,7 +266,7 @@
                 $newid = insert_record('quiz_feedback', $feedback);
 
                 if ($newid) {
-                    //We have the newid, update backup_ids
+                    //We have the newid, update reader_backup_ids
                     backup_putid($restore->backup_unique_code, 'quiz_feedback', $oldid, $newid);
                 } else {
                     $status = false;
@@ -369,7 +369,7 @@
             }
 
             if ($newid) {
-                //We have the newid, update backup_ids
+                //We have the newid, update reader_backup_ids
                 backup_putid($restore->backup_unique_code,"quiz_question_versions",$oldid,
                              $newid);
             } else {
@@ -454,7 +454,7 @@
             }
 
             if ($newid) {
-                //We have the newid, update backup_ids
+                //We have the newid, update reader_backup_ids
                 backup_putid($restore->backup_unique_code,"quiz_attempts",$oldid,
                              $newid);
                 //Now process question_states
@@ -531,7 +531,7 @@
             }
 
             if ($newid) {
-                //We have the newid, update backup_ids
+                //We have the newid, update reader_backup_ids
                 backup_putid($restore->backup_unique_code,"quiz_grades",$oldid,
                              $newid);
             } else {
@@ -709,7 +709,7 @@
         //Convert question->questiontext
         if ($records = get_records_sql ("SELECT q.id, q.questiontext, q.questiontextformat
                                          FROM {$CFG->prefix}question q,
-                                              {$CFG->prefix}backup_ids b
+                                              {$CFG->prefix}reader_backup_ids b
                                          WHERE b.backup_code = $restore->backup_unique_code AND
                                                b.table_name = 'question' AND
                                                q.id = b.new_id AND

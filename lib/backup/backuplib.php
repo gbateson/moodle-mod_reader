@@ -22,7 +22,7 @@
     /**
      * This function calculates the users to be added to backup based in the
      * settings defined at backup. All the resulting user ids are sent to
-     * backup_ids for later usage.
+     * reader_backup_ids for later usage.
      * @param int $courseid id of the course to backup
      * @param int $backup_unique_code unique code of the backup being executed
      * @param int $backup_unique_code setting specifying what users to export (0=all, 1=needed, 2=none)
@@ -83,8 +83,8 @@
             /// TODO: Change this call inserting to a standard backup_putid() call
             /// And read data acordingly with backup_getid() when needed.
             /// TODO: Also analyse it the "needed" info is really needed for anything. Drop if not.
-            /// Insert the user to the backup_ids table. backup_user_info() will use that info
-                $status = insert_record('backup_ids', $backupids_rec, false);
+            /// Insert the user to the reader_backup_ids table. backup_user_info() will use that info
+                $status = insert_record('reader_backup_ids', $backupids_rec, false);
                 $count_users++;
             }
         /// Do some output
@@ -276,7 +276,7 @@
         global $CFG;
         $count = 0;
 
-        $backup_users = get_recordset_select("backup_ids",
+        $backup_users = get_recordset_select("reader_backup_ids",
             "backup_code='$backup_unique_code' AND table_name='user'", "", "id, old_id");
 
         while ($user = rs_fetch_next_record($backup_users)) {
@@ -299,7 +299,7 @@
     /**
      * Calculate the number of course files to backup
      * under $CFG->dataroot/$course, except $CFG->moddata, and backupdata
-     * and put them (their path) in backup_ids
+     * and put them (their path) in reader_backup_ids
      * Return an array of info (name,value)
      */
     function course_files_check_backup($course, $backup_unique_code) {
@@ -347,7 +347,7 @@
     /**
      * Calculate the number of site files to backup
      * under $CFG->dataroot/SITEID
-     * Their path is already in backup_ids, put there by modules check_backup functions.
+     * Their path is already in reader_backup_ids, put there by modules check_backup functions.
      * Modules only put in paths of files that are used.
      *
      * Return an array of info (name,value)
@@ -648,7 +648,7 @@
         }
         //Indicate if it includes external MNET users
         $sql = "SELECT b.old_id
-                   FROM   {$CFG->prefix}backup_ids b
+                   FROM   {$CFG->prefix}reader_backup_ids b
                      JOIN {$CFG->prefix}user       u ON b.old_id=u.id
                    WHERE b.backup_code = '$preferences->backup_unique_code'
                          AND b.table_name = 'user' AND u.mnethostid != '{$CFG->mnet_localhost_id}'";
@@ -1464,7 +1464,7 @@
 
                //Print mod info from course_modules
                fwrite ($bf,start_tag("MOD",5,true));
-               //Save neccesary info to backup_ids
+               //Save neccesary info to reader_backup_ids
                fwrite ($bf,full_tag("ID",6,false,$tok));
                fwrite ($bf,full_tag("TYPE",6,false,$moduletype));
                fwrite ($bf,full_tag("INSTANCE",6,false,$course_module->instance));
@@ -1496,7 +1496,7 @@
         return $status;
     }
 //Print users to xml
-    //Only users previously calculated in backup_ids will output
+    //Only users previously calculated in reader_backup_ids will output
     //
 
     /**
@@ -1524,7 +1524,7 @@
         // cause more troubles. Eloy - MDL-16879
         $users = get_recordset_sql("SELECT b.old_id, b.table_name, b.info,
                                            u.*, m.wwwroot
-                                    FROM   {$CFG->prefix}backup_ids b
+                                    FROM   {$CFG->prefix}reader_backup_ids b
                                       JOIN {$CFG->prefix}user       u ON b.old_id=u.id
                                       LEFT JOIN {$CFG->prefix}mnet_host  m ON u.mnethostid=m.id
                                     WHERE b.backup_code = '$preferences->backup_unique_code' AND
@@ -2517,7 +2517,7 @@
         //Get groups_members that are being included in backup
         $groups_members = get_records_sql("SELECT gm.*
                                            FROM {$CFG->prefix}groups_members gm,
-                                                {$CFG->prefix}backup_ids bi
+                                                {$CFG->prefix}reader_backup_ids bi
                                            WHERE gm.groupid = $groupid
                                              AND bi.backup_code = $preferences->backup_unique_code
                                              AND bi.table_name = 'user'
@@ -2836,7 +2836,7 @@
         //in temp/backup/$backup_code  dir
         $status = check_and_create_user_files_dir($preferences->backup_unique_code);
         //now get a list of users that we need for this backup.
-        $backup_users = get_recordset_select("backup_ids",
+        $backup_users = get_recordset_select("reader_backup_ids",
             "backup_code='$preferences->backup_unique_code' AND table_name='user'", "", "id, old_id");
         while ($user = rs_fetch_next_record($backup_users)) {
             //If this user's directory exists, copy it
@@ -3247,7 +3247,7 @@
         // add all roles assigned at user context
         if ($preferences->backup_users) {
             if ($users = get_records_sql("SELECT u.old_id, u.table_name,u.info
-                                            FROM {$CFG->prefix}backup_ids u
+                                            FROM {$CFG->prefix}reader_backup_ids u
                                             WHERE u.backup_code = '$preferences->backup_unique_code' AND
                                             u.table_name = 'user'")) {
                 foreach ($users as $user) {
@@ -3541,7 +3541,7 @@
             }
 
             //If we have selected to backup quizzes or other modules that use questions
-            //we've already added ids of categories and questions to backup to backup_ids table
+            //we've already added ids of categories and questions to backup to reader_backup_ids table
             if ($status) {
                 if (! defined('BACKUP_SILENTLY')) {
                     echo "<li>".get_string('writingcategoriesandquestions').'</li>';

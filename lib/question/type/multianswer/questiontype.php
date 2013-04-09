@@ -56,7 +56,7 @@ class back_multianswer_qtype {
             $tok = explode(',', $multianswer->sequence);
             while (list($key,$value) = each($tok)) {
               if (! empty($value)) {
-                //Get the answer from backup_ids
+                //Get the answer from reader_backup_ids
                 $question = backup_getid($restore->backup_unique_code,"question",$value);
                 if ($question) {
                     if ($in_first) {
@@ -74,7 +74,7 @@ class back_multianswer_qtype {
 
             $newid = $DB->insert_record('question_multianswer', $multianswer);
 
-            //Save ids in backup_ids
+            //Save ids in reader_backup_ids
             if ($newid) {
                 backup_putid($restore->backup_unique_code,"question_multianswer",
                              $oldid, $newid);
@@ -129,7 +129,7 @@ class back_multianswer_qtype {
             //If we are in this method is because the question exists in DB, so its
             //multianswer must exist too.
             //Now, we are going to look for that multianswer in DB and to create the
-            //mappings in backup_ids to use them later where restoring states (user level).
+            //mappings in reader_backup_ids to use them later where restoring states (user level).
 
             //Get the multianswer from DB (by question and positionkey)
             $db_multianswer = $DB->get_record ("question_multianswer",array('question' => $new_question_id,
@@ -145,9 +145,9 @@ class back_multianswer_qtype {
                 backup_flush(300);
             }
 
-            //We have the database multianswer, so update backup_ids
+            //We have the database multianswer, so update reader_backup_ids
             if ($db_multianswer) {
-                //We have the newid, update backup_ids
+                //We have the newid, update reader_backup_ids
                 backup_putid($restore->backup_unique_code,"question_multianswer",$oldid,
                              $db_multianswer->id);
             } else {

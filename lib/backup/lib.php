@@ -81,7 +81,7 @@
         $seconds = $hours * 60 * 60;
         $delete_from = time()-$seconds;
         //Now delete from tables
-        $status = $DB->execute('DELETE FROM {backup_ids}
+        $status = $DB->execute('DELETE FROM {reader_backup_ids}
                                WHERE backup_code < ?',array($delete_from));
         if ($status) {
             $status = $DB->execute('DELETE FROM {backup_files}
@@ -349,7 +349,7 @@
         //true->do it, false->don't do it. To debug if necessary.
         if (true) {
             //Now delete from tables
-            $status = $DB->execute('DELETE FROM {backup_ids}
+            $status = $DB->execute('DELETE FROM {reader_backup_ids}
                                    WHERE backup_code = ?',array($preferences->backup_unique_code));
             if ($status) {
                 $status = $DB->execute('DELETE FROM {backup_files}
@@ -566,7 +566,7 @@
         }
         upgrade_log_finish();
     }
-//This function is used to insert records in the backup_ids table
+//This function is used to insert records in the reader_backup_ids table
     //If the info field is greater than max_db_storage, then its info
     //is saved to filesystem
 
@@ -622,13 +622,13 @@
             $rec->new_id = ($new_id === null? 0 : $new_id);
             $rec->info = $info_to_save;
 
-            if (! $DB->insert_record('backup_ids', $rec, false)) {
+            if (! $DB->insert_record('reader_backup_ids', $rec, false)) {
                 $status = false;
             }
         }
         return $status;
     }
-//This function is used to delete recods from the backup_ids table
+//This function is used to delete recods from the reader_backup_ids table
     //If the info field is "infile" then the file is deleted too
 
     /**
@@ -648,13 +648,13 @@
 
         $status = true;
 
-        $status = $DB->execute('DELETE FROM {backup_ids}
+        $status = $DB->execute('DELETE FROM {reader_backup_ids}
                                WHERE backup_code = ? AND
                                      table_name = ? AND
                                      old_id = ?',array($backup_unique_code,$table,$old_id));
         return $status;
     }
-//This function is used to get a record from the backup_ids table
+//This function is used to get a record from the reader_backup_ids table
     //If the info field is "infile" then its info
     //is read from filesystem
 
@@ -676,7 +676,7 @@
         $status = true;
         $status2 = true;
 
-        $status = $DB->get_record ("backup_ids",array('backup_code' => $backup_unique_code,
+        $status = $DB->get_record ("reader_backup_ids",array('backup_code' => $backup_unique_code,
                                            'table_name' => $table,
                                            'old_id' => $old_id));
 
