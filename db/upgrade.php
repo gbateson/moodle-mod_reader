@@ -185,11 +185,11 @@ function xmldb_reader_upgrade($oldversion) {
         $tables = array(
             // $tablename => $fields
             'reader' => array(
-                // change name of "ignoredate" field to "ignoredate"
+                // change name of "ignordate" field to "ignoredate"
                 'ignoredate' => new xmldb_field('ignordate', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'attemptsofday'),
             ),
             'reader_attempts' => array(
-                // change name of "persent/percentgrade" field to "grade" and change type from CHAR to INTEGER
+                // change name of "persent/percent" field to "percentgrade" and change type from CHAR to INTEGER
                 'percentgrade' => array(
                     new xmldb_field('persent', XMLDB_TYPE_INTEGER, '6', null, XMLDB_NOTNULL, null, '0', 'sumgrades'),
                     new xmldb_field('percent', XMLDB_TYPE_INTEGER, '6', null, XMLDB_NOTNULL, null, '0', 'sumgrades')

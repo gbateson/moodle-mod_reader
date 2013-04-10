@@ -943,11 +943,10 @@ function reader_download_bookcover($readercfg, $imagepath, $itemid, $targetcours
 function reader_add_book($item, $quizid) {
     global $DB;
 
-    $publisher = $item['publisher'];
-    $level     = $item['level'];
+    // required fields
     $book = (object)array(
-        'publisher'  => $publisher,
-        'level'      => $level,
+        'publisher'  => $item['publisher'],
+        'level'      => $item['level'],
         'difficulty' => $item['difficulty'],
         'name'       => $item['title'],
         'words'      => $item['words'],
@@ -959,6 +958,7 @@ function reader_add_book($item, $quizid) {
         'time'       => time(),
     );
 
+    // optional fields
     $fields = array('genre', 'fiction', 'maxtime');
     foreach ($fields as $field) {
         if (! empty($item[$field])) {
@@ -966,6 +966,7 @@ function reader_add_book($item, $quizid) {
         }
     }
 
+    // add new $book
     if ($book->id = $DB->insert_record('reader_books', $book)) {
         return $book;
     } else {
