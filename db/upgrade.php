@@ -283,6 +283,22 @@ function xmldb_reader_upgrade($oldversion) {
         upgrade_mod_savepoint(true, "$newversion", 'reader');
     }
 
+    $newversion = 2013041701;
+    if ($result && $oldversion < $newversion) {
+
+        // unset all missing parent question ids
+        // (the "parent" question is the old version of a question that was edited)
+
+        $select = 'q1.id, q1.parent';
+        $from   = '{question} q1 LEFT JOIN {question} q2 ON q1.parent = q2.id';
+        $where  = 'q1.parent > 0 AND q2.id IS NULL';
+        if ($questions = $DB->get_records_sql("SELECT $select FROM $from WHERE $where")) {
+            list($select, $params) = $DB->get_in_or_equal(array_keys($questions));
+            $DB->set_field_select('question', 'parent', 0, 'id '.$select, $params);
+        }
+        upgrade_mod_savepoint(true, "$newversion", 'reader');
+    }
+
     return $result;
 }
 
