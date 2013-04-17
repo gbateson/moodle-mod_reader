@@ -507,8 +507,11 @@
                             }
                         }
                     } else {
-                        echo 'Could not recode parent '.$question->parent.' for question '.$oldid.'<br />';
-                        $status = false;
+                        echo 'Reset parent id ('.$question->parent.') for question '.$oldid.' (newid='.$newid.') to zero<br />';
+                        $DB->set_field('question', 'parent', 0, array('id' => $newid));
+                        $restored_questions[$i]->parent = 0;
+                        $question->parent = 0;
+                        // Note: we can continue, so do not set status to false
                     }
                 }
 
