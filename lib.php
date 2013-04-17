@@ -352,23 +352,27 @@ function reader_get_user_attempt_unfinished($readerid, $userid) {
  * @return xxx
  * @todo Finish documenting this function
  */
-function reader_get_stlevel_data($reader) {
-    global $USER, $CFG,$DB;
+function reader_get_stlevel_data($reader, $userid=0) {
+    global $USER, $CFG, $DB;
 
     $counter['countlevel'] = 0;
     $counter['prevlevel'] = 0;
     $counter['nextlevel'] = 0;
 
-    if (! $studentlevel = $DB->get_record('reader_levels', array('userid' => $USER->id, 'readerid' => $reader->id))) {
+    if ($userid==0) {
+        $userid = $USER->id;
+    }
+
+    if (! $studentlevel = $DB->get_record('reader_levels', array('userid' => $userid, 'readerid' => $reader->id))) {
         $createlevel = new object;
-        $createlevel->userid = $USER->id;
+        $createlevel->userid = $userid;
         $createlevel->startlevel = 0;
         $createlevel->currentlevel = 0;
         $createlevel->readerid = $reader->id;
         $createlevel->promotionstop = $reader->promotionstop;
         $createlevel->time = time();
         $DB->insert_record('reader_levels', $createlevel);
-        $studentlevel = $DB->get_record('reader_levels', array('userid' => $USER->id, 'readerid' => $reader->id));
+        $studentlevel = $DB->get_record('reader_levels', array('userid' => $userid, 'readerid' => $reader->id));
     }
 
     $attemptsofbook = $DB->get_records_sql('SELECT ra.*,rp.difficulty,rp.id as rpid FROM {reader_attempts} ra INNER JOIN {reader_books} rp ON rp.quizid = ra.quizid WHERE ra.userid= ?  AND ra.reader= ?  AND ra.timefinish> ?  ORDER BY ra.timemodified', array($USER->id, $reader->id, $reader->ignoredate));
@@ -2564,27 +2568,34 @@ function reader_nicetime2($session_time) {
  * @todo Finish documenting this function
  */
 function reader_forcedtimedelay_check($cleartime, $reader, $studentlevel, $lasttime) {
-    global $USER, $course,$DB;
+    global $DB, $USER, $course;
 
-    $data = $DB->get_record('reader_forcedtimedelay', array('readerid' => $reader->id,  'level' => 99,  'groupid' => 0));
+    $data = false;
 
-    if ($data2 = $DB->get_record('reader_forcedtimedelay', array('readerid' => $reader->id,  'level' => $studentlevel,  'groupid' => 0))) {
-        $data = $data2;
-    }
-
-    if ($usergroups = groups_get_all_groups($course->id, $USER->id)){
-        foreach ($usergroups as $group){
-            $data = $DB->get_record('reader_forcedtimedelay', array('readerid' => $reader->id,  'level' => $studentlevel,  'groupid' => $group->id));
+    if (isset($reader->id)) {
+        if ($usergroups = groups_get_all_groups($course->id, $USER->id)){
+            foreach ($usergroups as $group) {
+                if (isset($group->id)) {
+                    $params = array('readerid' => $reader->id,  'level' => $studentlevel,  'groupid' => $group->id);
+                    $data = $DB->get_record('reader_forcedtimedelay', $params);
+                }
+            }
+        }
+        if (empty($data)) {
+            $params = array('readerid' => $reader->id,  'level' => $studentlevel,  'groupid' => 0);
+            $data = $DB->get_record('reader_forcedtimedelay', $params);
+        }
+        if (empty($data)) {
+            $params = array('readerid' => $reader->id,  'level' => 99,  'groupid' => 0);
+            $data = $DB->get_record('reader_forcedtimedelay', $params);
         }
     }
 
-    //echo $data->delay + $lasttime."??";
-
-    if ($data->delay) {
-        return $data->delay + $lasttime;
-    } else {
-        return $cleartime;
+    if (empty($data->delay)) {
+        return $cleartime; // no delay $data found in database
     }
+
+    return $data->delay + $lasttime;
 }
 
 /**

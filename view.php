@@ -184,6 +184,7 @@ if ($reader->bookcovers == 1) {
 }
 
 $bookcoversinthisterm = '';
+$lastattemptdate = 0;
 
 if (list($attemptdata, $summaryattemptdata) = reader_get_student_attempts($USER->id, $reader)) {
     foreach ($attemptdata as $attemptdata_) {

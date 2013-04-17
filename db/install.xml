@@ -43,9 +43,9 @@
         <FIELD NAME="pointreport" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="0" SEQUENCE="false" PREVIOUS="quiznextlevel" NEXT="questionmark"/>
         <FIELD NAME="questionmark" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="0" SEQUENCE="false" PREVIOUS="pointreport" NEXT="bookcovers"/>
         <FIELD NAME="bookcovers" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="0" SEQUENCE="false" PREVIOUS="questionmark" NEXT="attemptsofday"/>
-        <FIELD NAME="attemptsofday" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="0" SEQUENCE="false" PREVIOUS="bookcovers" NEXT="ignordate"/>
-        <FIELD NAME="ignordate" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" PREVIOUS="attemptsofday" NEXT="goal"/>
-        <FIELD NAME="goal" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" PREVIOUS="ignordate" NEXT="wordsorpoints"/>
+        <FIELD NAME="attemptsofday" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="0" SEQUENCE="false" PREVIOUS="bookcovers" NEXT="ignoredate"/>
+        <FIELD NAME="ignoredate" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" PREVIOUS="attemptsofday" NEXT="goal"/>
+        <FIELD NAME="goal" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" PREVIOUS="ignoredate" NEXT="wordsorpoints"/>
         <FIELD NAME="wordsorpoints" TYPE="char" LENGTH="30" NOTNULL="false" DEFAULT="words" SEQUENCE="false" PREVIOUS="goal" NEXT="secmeass"/>
         <FIELD NAME="secmeass" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" PREVIOUS="wordsorpoints" NEXT="promotionstop"/>
         <FIELD NAME="promotionstop" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="99" SEQUENCE="false" PREVIOUS="secmeass" NEXT="levelcheck"/>
