@@ -1047,23 +1047,14 @@ global $USER, $CFG;
 /**
  * reader_sort_table_data
  *
- * @uses $CFG
- * @uses $USER
- * @param xxx $data
+ * @param xxx $table
  * @param xxx $columns
  * @param xxx $sortdirection
  * @param xxx $sortcolumn
  * @return xxx
  * @todo Finish documenting this function
  */
-function reader_sort_table_data($data, $columns, $sortdirection, $sortcolumn) {
-
-    global $USER, $CFG;
-
-    $finaldata = array();
-    if (empty($data)) {
-        return $finaldata;
-    }
+function reader_sort_table(&$table, $columns, $sortdirection, $sortcolumn) {
 
     $sortindex = 0; // default is first column
     if ($sortcolumn) {
@@ -1076,42 +1067,22 @@ function reader_sort_table_data($data, $columns, $sortdirection, $sortcolumn) {
         }
     }
 
-    $i = 0;
-    $sorted = array();
-    foreach ($data as $datakey => $datavalue) {
-        $key = '';
-        if (isset($datavalue[$sortindex])) {
-            if (is_array($datavalue[$sortindex])) {
-                $key = $datavalue[$sortindex][1];
-            } else {
-                $key = $datavalue[$sortindex];
-            }
-        }
-
-        for ($j=0; $j < count($datavalue); $j++) {
-            if (is_array($datavalue[$j])) {
-                $sorted["$key"][$i][$j] = $datavalue[$j][0];
-            } else {
-                $sorted["$key"][$i][$j] = $datavalue[$j];
-            }
-        }
-        $i++;
+    $values = array();
+    foreach ($table->data as $r => $row) {
+        $values[$r] = $row->cells[$sortindex]->text;
     }
 
     if (empty($sortdirection) || $sortdirection=='ASC') {
-        ksort($sorted);
+        asort($values);
     } else {
-        krsort($sorted);
+        arsort($values);
     }
 
-    reset($sorted);
-    foreach (array_keys($sorted) as $key) {
-        foreach (array_keys($sorted[$key]) as $i) {
-            $finaldata[] = array_values($sorted[$key][$i]);
-        }
+    $data = array();
+    foreach (array_keys($values) as $r) {
+        $data[] = $table->data[$r];
     }
-
-    return $finaldata;
+    $table->data = $data;
 }
 
 /**

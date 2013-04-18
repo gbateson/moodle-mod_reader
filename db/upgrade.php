@@ -240,7 +240,23 @@ function xmldb_reader_upgrade($oldversion) {
         upgrade_mod_savepoint(true, "$newversion", 'reader');
     }
 
-    $newversion = 2013041700;
+    $newversion = 2013041701;
+    if ($result && $oldversion < $newversion) {
+
+        // unset all missing parent question ids
+        // (the "parent" question is the old version of a question that was edited)
+
+        $select = 'q1.id, q1.parent';
+        $from   = '{question} q1 LEFT JOIN {question} q2 ON q1.parent = q2.id';
+        $where  = 'q1.parent > 0 AND q2.id IS NULL';
+        if ($questions = $DB->get_records_sql("SELECT $select FROM $from WHERE $where")) {
+            list($select, $params) = $DB->get_in_or_equal(array_keys($questions));
+            $DB->set_field_select('question', 'parent', 0, 'id '.$select, $params);
+        }
+        upgrade_mod_savepoint(true, "$newversion", 'reader');
+    }
+
+    $newversion = 2013041703;
     if ($result && $oldversion < $newversion) {
 
         $tables = array(
@@ -252,8 +268,8 @@ function xmldb_reader_upgrade($oldversion) {
             'reader_attempts' => array(
                 // change name of "persent/percent" field to "percentgrade" and change type from CHAR to INTEGER
                 'percentgrade' => array(
-                    new xmldb_field('persent', XMLDB_TYPE_INTEGER, '6', null, XMLDB_NOTNULL, null, '0', 'sumgrades'),
-                    new xmldb_field('percent', XMLDB_TYPE_INTEGER, '6', null, XMLDB_NOTNULL, null, '0', 'sumgrades')
+                    new xmldb_field('persent', XMLDB_TYPE_FLOAT, '6,2', null, XMLDB_NOTNULL, null, '0', 'sumgrades'),
+                    new xmldb_field('percent', XMLDB_TYPE_FLOAT, '6,2', null, XMLDB_NOTNULL, null, '0', 'sumgrades')
                 )
             ),
         );
@@ -267,10 +283,14 @@ function xmldb_reader_upgrade($oldversion) {
                 foreach ($newfields as $field) {
                     if ($dbman->field_exists($table, $field)) {
                         xmldb_reader_fix_previous_field($dbman, $table, $field);
+                        $type = $field->getType();
+                        $default = $field->getDefault();
+                        $oldfieldname = $field->getName();
                         if ($field->getNotNull()) {
-                            $default = $field->getDefault();
-                            $oldfieldname = $field->getName();
                             $DB->set_field_select($tablename, $oldfieldname, $default, "$oldfieldname IS NULL");
+                        }
+                        if ($type==XMLDB_TYPE_INTEGER || $type==XMLDB_TYPE_FLOAT || $type==XMLDB_TYPE_NUMBER) {
+                            $DB->set_field_select($tablename, $oldfieldname, $default, "$oldfieldname = ''");
                         }
                         $dbman->change_field_type($table, $field);
                         if ($oldfieldname != $newfieldname) {
@@ -279,22 +299,6 @@ function xmldb_reader_upgrade($oldversion) {
                     }
                 }
             }
-        }
-        upgrade_mod_savepoint(true, "$newversion", 'reader');
-    }
-
-    $newversion = 2013041701;
-    if ($result && $oldversion < $newversion) {
-
-        // unset all missing parent question ids
-        // (the "parent" question is the old version of a question that was edited)
-
-        $select = 'q1.id, q1.parent';
-        $from   = '{question} q1 LEFT JOIN {question} q2 ON q1.parent = q2.id';
-        $where  = 'q1.parent > 0 AND q2.id IS NULL';
-        if ($questions = $DB->get_records_sql("SELECT $select FROM $from WHERE $where")) {
-            list($select, $params) = $DB->get_in_or_equal(array_keys($questions));
-            $DB->set_field_select('question', 'parent', 0, 'id '.$select, $params);
         }
         upgrade_mod_savepoint(true, "$newversion", 'reader');
     }
