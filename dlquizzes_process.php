@@ -143,14 +143,21 @@ foreach ($quizitems as $sectionname => $items) {
         $itemid = $item['id'];
         $itemname = $item['title'];
 
-        // if the $item is already a quiz in this section of the course, skip it
-        if (reader_download_instance_exists($targetcourseid, $sectionnum, 'quiz', $itemname)) {
-            $a = (object)array('coursename'  => format_text($targetcourse->shortname, FORMAT_PLAIN),
-                               'sectionnum'  => $sectionnum,
-                               'sectionname' => $sectionname,
-                               'quizname'    => $itemname);
-            echo html_writer::tag('p', get_string('skipquizdownload', 'reader', $a));
-            unset($quizitems[$sectionname][$i]);
+        // check to see if the $item is already a quiz in this section of the course
+        if ($cm = reader_download_instance_exists($targetcourseid, $sectionnum, 'quiz', $itemname)) {
+            if ($DB->record_exists('reader_books', array('quizid' => $cm->instance))) {
+                $a = (object)array('coursename'  => format_text($targetcourse->shortname, FORMAT_PLAIN),
+                                   'sectionnum'  => $sectionnum,
+                                   'sectionname' => $sectionname,
+                                   'quizname'    => $itemname);
+                echo html_writer::tag('p', get_string('skipquizdownload', 'reader', $a));
+                unset($quizitems[$sectionname][$i]);
+            } else {
+                // the quiz exists, but we don't have the book, so we continue
+                // but we set "quizexistsalready", so that questions are not duplicated
+                $quizids[$itemid] = $cm->instance;
+                $quizitems[$sectionname][$i]['quizexistsalready'] = true;
+            }
         } else {
             // add a new quiz course module for this $item
             $cm = reader_create_new_quiz($targetcourseid, $sectionnum, $quizmodule, $itemname);
@@ -226,7 +233,9 @@ foreach ($quizitems as $sectionname => $items) {
         reader_remove_directory($tempdir);
 
         // add the questions for this quiz
-        reader_restore_questions($restore, $xml, $quizid);
+        if (empty($item['quizexistsalready'])) {
+            reader_restore_questions($restore, $xml, $quizid);
+        }
 
         // add the book cover for this item
         $imagepath = (empty($item['image']) ? '' : $item['image']);
@@ -520,7 +529,11 @@ function reader_download_instance_exists($targetcourseid, $sectionnum, $modname,
               'LEFT JOIN {'.$modname.'} x ON cm.instance = x.id';
     $where  = 'cm.course = ? AND cs.section = ? AND m.name = ? AND x.name = ?';
     $params = array($targetcourseid, $sectionnum, $modname, $instancename);
-    return $DB->record_exists_sql("SELECT $select FROM $from WHERE $where", $params);
+    if ($records = $DB->get_records_sql("SELECT $select FROM $from WHERE $where", $params)) {
+        return reset($records); // return first record - should only be one !!
+    } else {
+        return false;
+    }
 }
 
 /**

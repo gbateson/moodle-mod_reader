@@ -311,7 +311,7 @@ if (isset($_SESSION['SESSION']->reader_changetostudentview) && $_SESSION['SESSIO
     $params = array('a' => 'admin', 'id' => $id, 'act' => 'reports');
     if (isset($_SESSION['SESSION']->reader_changetostudentviewlink)) {
         // NOTE: "reader_changetostudentviewlink" is set in "admin.php" to something like this:
-        // grid={$grid}&searchtext={$searchtext}&page={$page}&sort={$sort}&orderby={$orderby}
+        // gid={$gid}&searchtext={$searchtext}&page={$page}&sort={$sort}&orderby={$orderby}
         parse_str($_SESSION['SESSION']->reader_changetostudentviewlink, $more_params);
         $params = array_merge($params, $more_params);
     }

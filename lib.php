@@ -1262,24 +1262,24 @@ function reader_get_student_attempts($userid, $reader, $allreaders = false, $boo
  *
  * @uses $CFG
  * @uses $COURSE
- * @uses $grid
+ * @uses $gid
  * @param xxx $courseid
  * @param xxx $link
  * @return xxx
  * @todo Finish documenting this function
  */
 function reader_print_group_select_box($courseid, $link) {
-    global $CFG, $COURSE, $grid;
+    global $CFG, $COURSE, $gid;
 
     $groups = groups_get_all_groups ($courseid);
 
     if ($groups) {
         echo '<table style="width:100%"><tr><td align="right">';
         echo '<form action="" method="post" id="mform_gr"><select onchange="document.getElementById(\'mform_gr\').action = document.getElementById(\'mform_gr\').level.options[document.getElementById(\'mform_gr\').level.selectedIndex].value;document.getElementById(\'mform_gr\').submit(); return true;" name="level" id="id_level">';
-        echo '<option value="'.$link.'&grid=0">'.get_string('allgroups', 'reader').'</option>';
+        echo '<option value="'.$link.'&gid=0">'.get_string('allgroups', 'reader').'</option>';
         foreach ($groups as $groupkey => $groupvalue) {
-            echo '<option value="'.$link.'&grid='.$groupkey.'" ';
-            if ($groupkey == $grid) { echo 'selected="selected"'; }
+            echo '<option value="'.$link.'&gid='.$groupkey.'" ';
+            if ($groupkey == $gid) { echo 'selected="selected"'; }
                 echo ' >'.$groupvalue->name.'</option>';
         }
         echo '</select></form>';
@@ -1319,63 +1319,79 @@ function reader_get_pages($table, $page, $perpage) {
 }
 
 /**
- * reader_user_link_t
+ * reader_username_link
  *
  * @uses $CFG
  * @uses $COURSE
  * @param xxx $userdata
+ * @param xxx $courseid
+ * @param xxx $nolink (optional, default = false)
  * @return xxx
  * @todo Finish documenting this function
  */
-function reader_user_link_t($userdata) {
-    global $CFG, $COURSE;
-
-    if (empty($userdata->userid)) {
-        $userdata->userid = $userdata->id;
+function reader_username_link($userdata, $courseid, $nolink=false) {
+    $username = $userdata->username;
+    if ($nolink) {
+        return $username; // e.g. for excel
     }
-
-    return array('<a href="'.$CFG->wwwroot.'/user/view.php?id='.$userdata->userid.'&course='.$COURSE->id.'">'.$userdata->username.'</a>', $userdata->username);
+    if (isset($userdata->userid)) {
+        $userid = $userdata->userid;
+    } else {
+        $userid = $userdata->id;
+    }
+    $params = array('id' => $userid, 'course' => $courseid);
+    $params = array('href' => new moodle_url('/user/view.php', $params));
+    return html_writer::tag('a', $username, $params);
 }
 
 /**
  * reader_fullname_link_viewasstudent
  *
- * @uses $CFG
- * @uses $COURSE
- * @uses $act
- * @uses $id
  * @param xxx $userdata
- * @param xxx $link
+ * @param xxx $id
+ * @param xxx $nolink (optional, default=false)
  * @return xxx
  * @todo Finish documenting this function
  */
-function reader_fullname_link_viewasstudent($userdata, $link) {
-    global $CFG, $COURSE, $id,$act;
-
-    if (! isset($userdata->userid)) {
-        $userdata->userid = $userdata->id;
+function reader_fullname_link_viewasstudent($userdata, $id, $nolink=false) {
+    $fullname = $userdata->firstname.' '.$userdata->lastname;
+    if ($nolink) {
+        return $fullname;
     }
-
-    return array('<a href="?a=admin&id='.$id.'&act='.$act.'&viewasstudent='.$userdata->id.'&'.$link.'">'.$userdata->firstname.' '.$userdata->lastname.'</a>', $userdata->firstname.' '.$userdata->lastname);
+    if (isset($userdata->userid)) {
+        $userid = $userdata->userid;
+    } else {
+        $userid = $userdata->id;
+    }
+    $params = array('id' => $id, 'viewasstudent' => $userid);
+    $params = array('href' => new moodle_url('/mod/reader/admin.php', $params));
+    return html_writer::tag('a', $fullname, $params);
 }
 
 /**
- * reader_fullname_link_t
+ * reader_fullname_link
  *
  * @uses $CFG
  * @uses $COURSE
  * @param xxx $userdata
+ * @param xxx $courseid
+ * @param xxx $nolink (optional, default=false)
  * @return xxx
  * @todo Finish documenting this function
  */
-function reader_fullname_link_t($userdata) {
-    global $CFG, $COURSE;
-
-    if (! $userdata->userid) {
-        $userdata->userid = $userdata->id;
+function reader_fullname_link($userdata, $courseid, $nolink=false) {
+    $fullname = $userdata->firstname.' '.$userdata->lastname;
+    if ($nolink) {
+        return $fullname;
     }
-
-    return array('<a href="'.$CFG->wwwroot.'/user/view.php?id='.$userdata->userid.'&course='.$COURSE->id.'">'.$userdata->firstname.' '.$userdata->lastname.'</a>', $userdata->firstname.' '.$userdata->lastname);
+    if (isset($userdata->userid)) {
+        $userid = $userdata->userid;
+    } else {
+        $userid = $userdata->id;
+    }
+    $params = array('id' => $userid, 'course' => $courseid);
+    $params = array('href' => new moodle_url('/user/view.php', $params));
+    return html_writer::tag('a', $fullname, $params);
 }
 
 /**
@@ -1389,30 +1405,35 @@ function reader_fullname_link_t($userdata) {
  * @param xxx $act
  * @param xxx $sort
  * @param xxx $orderby
- * @param xxx $grid
+ * @param xxx $gid
  * @todo Finish documenting this function
  */
-function reader_select_perpage($id, $act, $sort, $orderby, $grid) {
-    global $CFG, $COURSE, $_SESSION, $book;
+function reader_select_perpage($id, $act, $sort, $orderby, $gid) {
+    global $CFG, $COURSE, $_SESSION;
 
-    $pages = array(30,60,100,200,500);
+    $perpages = array(30,60,100,200,500);
 
-    echo '<table style="width:100%"><tr><td align="right"><form action="admin.php?a=admin&id='.$id.'" method="get"  id="chooseperpage" class="popupform">';
-    echo 'Perpage <select id="choose_perpage" name="perpage" onchange="self.location=document.getElementById(\'chooseperpage\').perpage.options[document.getElementById(\'chooseperpage\').perpage.selectedIndex].value;">';
+    $book = optional_param('book', NULL, PARAM_CLEAN);
 
-    foreach ($pages as $page) {
-        if ($book) {
-          echo '<option value="admin.php?a=admin&id='.$id.'&act='.$act.'&sort='.$sort.'&orderby='.$orderby.'&book='.$book.'&grid='.$grid.'&perpage='.$page.'" ';
-        } else {
-          echo '<option value="admin.php?a=admin&id='.$id.'&act='.$act.'&sort='.$sort.'&orderby='.$orderby.'&grid='.$grid.'&perpage='.$page.'" ';
-        }
+    echo '<table style="width:100%"><tr><td align="right">';
+    echo '<form action="admin.php?a=admin&id='.$id.'" method="get"  id="chooseperpage" class="popupform">';
+    echo 'Perpage ';
+    echo '<select id="choose_perpage" name="perpage" onchange="self.location=document.getElementById(\'chooseperpage\').perpage.options[document.getElementById(\'chooseperpage\').perpage.selectedIndex].value;">';
+
+    foreach ($perpages as $perpage) {
+        $params = array('a' => 'admin', 'id' => $id, 'act' => $act,
+                        'sort' => $sort, 'orderby' => $orderby,
+                        'book' => $book, 'gid' => $gid, 'perpage' => $perpage);
+        $params = array('value' => new moodle_url('/mod/reader/admin.php', $params));
         if ($_SESSION['SESSION']->reader_perpage == $page) {
-            echo ' selected="selected" ';
+            $params['selected'] = 'selected';
         }
-        echo '>'.$page.'</option>';
+        echo html_writer::tag('option', $perpage, $params);
     }
 
-    echo '</select></form></td></tr></table>';
+    echo '</select>';
+    echo '</form>';
+    echo '</td></tr></table>';
 }
 
 /**
@@ -1428,29 +1449,37 @@ function reader_select_perpage($id, $act, $sort, $orderby, $grid) {
  * @param xxx $act
  * @todo Finish documenting this function
  */
-function reader_print_search_form($id, $act) {
-    global $CFG, $COURSE, $_SESSION, $searchtext, $book;
+function reader_print_search_form($id='', $act='', $book='') {
+    global $OUTPUT;
 
-    $searchtext = str_replace('\"', '"', $searchtext);
+    $id = optional_param('id', 0, PARAM_INT);
+    $act = optional_param('act', NULL, PARAM_CLEAN);
+    $book = optional_param('book', NULL, PARAM_CLEAN);
+    $searchtext = optional_param('searchtext', NULL, PARAM_CLEAN);
+    $searchtext = str_replace('\\"', '"', $searchtext);
 
-    echo '<table style="width:100%"><tr><td align="right">';
-    if ($book) {
-      echo '<form action="admin.php?a=admin&id='.$id.'&act='.$act.'&book='.$book.'" method="post" id="mform1">';
-    } else {
-      echo '<form action="admin.php?a=admin&id='.$id.'&act='.$act.'" method="post" id="mform1">';
-    }
-    echo '<input type="text" name="searchtext" value=\''.$searchtext.'\' style="width:120px;" />';
-    echo '<input type="submit" name="submit" value="'.get_string('search', 'reader').'" />';
-    echo '</form>';
-    $options            = array();
-    //$options["a"]       = $a;
-    $options["act"]     = $act;
-    $options["id"]    = $id;
+    $output = '';
+
+    $params = array('a' => 'admin', 'id' => $id, 'act' => $act, 'book' => $book);
+    $action = new moodle_url('/mod/reader/admin.php', $params);
+
+    $params = array('action' => $action, 'method' => 'post', 'id' => 'mform1');
+    $output .= html_writer::start_tag('form', $params);
+
+    $params = array('type' => 'text', 'name' => 'searchtext', 'value' => $searchtext, 'style' => 'width:120px;');
+    $output .= html_writer::empty_tag('input', $params);
+
+    $params = array('type' => 'submit', 'name' => 'submit', 'value' => get_string('search', 'reader'));
+    $output .= html_writer::empty_tag('input', $params);
+
+    $output .= html_writer::end_tag('form');
+
     if ($searchtext) {
-        global $OUTPUT;
-        echo $OUTPUT->single_button(new moodle_url('admin.php', $options), get_string('showall', 'reader'), 'post', $options);
+        $params = array('id' => $id, 'act' => $act);
+        $output .= $OUTPUT->single_button(new moodle_url('/mod/reader/admin.php', $params), get_string('showall', 'reader'), 'post', $params);
     }
-    echo '</td></tr></table>';
+
+    echo '<table style="width:100%"><tr><td align="right">'.$output.'</td></tr></table>';
 }
 
 /**
@@ -1567,7 +1596,7 @@ function reader_check_search_text_quiz($searchtext, $book) {
  * @uses $COURSE
  * @uses $_SESSION
  * @uses $act
- * @uses $grid
+ * @uses $gid
  * @uses $id
  * @uses $orderby
  * @uses $page
@@ -1579,7 +1608,7 @@ function reader_check_search_text_quiz($searchtext, $book) {
  * @todo Finish documenting this function
  */
 function reader_selectlevel_form($userid, $leveldata, $level) {
-    global $CFG, $COURSE, $_SESSION, $id, $act, $grid, $sort, $orderby, $page;
+    global $CFG, $COURSE, $_SESSION, $id, $act, $gid, $sort, $orderby, $page;
 
     if (! isset($leveldata)) {
         $leveldata = new stdClass();
@@ -1616,7 +1645,7 @@ function reader_selectlevel_form($userid, $leveldata, $level) {
  * @uses $COURSE
  * @uses $_SESSION
  * @uses $act
- * @uses $grid
+ * @uses $gid
  * @uses $id
  * @uses $orderby
  * @uses $page
@@ -1629,7 +1658,7 @@ function reader_selectlevel_form($userid, $leveldata, $level) {
  * @todo Finish documenting this function
  */
 function reader_promotion_stop_box($userid, $data, $field, $rand) {
-    global $CFG, $COURSE, $_SESSION, $id, $act, $grid, $sort, $orderby, $page;
+    global $CFG, $COURSE, $_SESSION, $id, $act, $gid, $sort, $orderby, $page;
 
     $levels = array(0,1,2,3,4,5,6,7,8,9,10,12,99);
     $patch = "_stoppr_".$rand."_".$userid;
@@ -1658,7 +1687,7 @@ function reader_promotion_stop_box($userid, $data, $field, $rand) {
  * @uses $DB
  * @uses $_SESSION
  * @uses $act
- * @uses $grid
+ * @uses $gid
  * @uses $id
  * @uses $orderby
  * @uses $page
@@ -1672,7 +1701,7 @@ function reader_promotion_stop_box($userid, $data, $field, $rand) {
  * @todo Finish documenting this function
  */
 function reader_goal_box($userid, $dataoflevel, $field, $rand, $reader) {
-    global $CFG, $COURSE, $_SESSION, $id, $act, $grid, $sort, $orderby, $page,$DB;
+    global $CFG, $COURSE, $_SESSION, $id, $act, $gid, $sort, $orderby, $page,$DB;
 
     $goal = 0;
 
@@ -1750,7 +1779,7 @@ function reader_goal_box($userid, $dataoflevel, $field, $rand, $reader) {
  * @uses $COURSE
  * @uses $_SESSION
  * @uses $act
- * @uses $grid
+ * @uses $gid
  * @uses $id
  * @uses $orderby
  * @uses $page
@@ -1763,7 +1792,7 @@ function reader_goal_box($userid, $dataoflevel, $field, $rand, $reader) {
  * @todo Finish documenting this function
  */
 function reader_yes_no_box($userid, $data, $field, $rand) {
-    global $CFG, $COURSE, $_SESSION, $id, $act, $grid, $sort, $orderby, $page;
+    global $CFG, $COURSE, $_SESSION, $id, $act, $gid, $sort, $orderby, $page;
 
     $levels[0] = "Promo";
     $levels[1] = "NoPromo";
@@ -1794,7 +1823,7 @@ function reader_yes_no_box($userid, $data, $field, $rand) {
  * @uses $DB
  * @uses $_SESSION
  * @uses $act
- * @uses $grid
+ * @uses $gid
  * @uses $id
  * @uses $orderby
  * @uses $page
@@ -1805,7 +1834,7 @@ function reader_yes_no_box($userid, $data, $field, $rand) {
  * @todo Finish documenting this function
  */
 function reader_selectip_form($userid, $reader) {
-    global $CFG, $COURSE, $_SESSION, $id, $act, $grid, $sort, $orderby, $page,$DB;
+    global $CFG, $COURSE, $_SESSION, $id, $act, $gid, $sort, $orderby, $page,$DB;
 
     $levels = array(0=>"No",1=>"Yes");
 
@@ -1837,7 +1866,7 @@ function reader_selectip_form($userid, $reader) {
  * @uses $DB
  * @uses $_SESSION
  * @uses $act
- * @uses $grid
+ * @uses $gid
  * @uses $id
  * @uses $orderby
  * @uses $page
@@ -1849,7 +1878,7 @@ function reader_selectip_form($userid, $reader) {
  * @todo Finish documenting this function
  */
 function reader_select_difficulty_form($difficulty, $bookid, $reader) {
-    global $CFG, $COURSE, $_SESSION, $id, $act, $grid, $sort, $orderby, $page,$DB;
+    global $CFG, $COURSE, $_SESSION, $id, $act, $gid, $sort, $orderby, $page,$DB;
 
     $levels = array(0,1,2,3,4,5,6,7,8,9,10,12,13,14);
 
@@ -1879,7 +1908,7 @@ function reader_select_difficulty_form($difficulty, $bookid, $reader) {
  * @uses $COURSE
  * @uses $_SESSION
  * @uses $act
- * @uses $grid
+ * @uses $gid
  * @uses $id
  * @uses $orderby
  * @uses $page
@@ -1891,7 +1920,7 @@ function reader_select_difficulty_form($difficulty, $bookid, $reader) {
  * @todo Finish documenting this function
  */
 function reader_select_length_form($length, $bookid, $reader) {
-    global $CFG, $COURSE, $_SESSION, $id, $act, $grid, $sort, $orderby, $page;
+    global $CFG, $COURSE, $_SESSION, $id, $act, $gid, $sort, $orderby, $page;
 
     //$levels = array(0.50,0.60,0.70,0.80,0.90,1.00,1.10,1.20,1.30,1.40,1.50,1.60,1.70,1.80,1.90,2.00);
     $levels = array(0.50,0.60,0.70,0.80,0.90,1.00,1.10,1.20,1.30,1.40,1.50,1.60,1.70,1.80,1.90,2.00,3.00,4.00,5.00,6.00,7.00,8.00,9.00,10.00,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100,110,120,130,140,150,160,170,175,180,190,200,225,250,275,300,350,400);
@@ -2570,43 +2599,36 @@ function reader_forcedtimedelay_check($cleartime, $reader, $studentlevel, $lastt
 }
 
 /**
- * reader_put_to_quiz_attempt
+ * reader_copy_to_quizattempt
  *
  * @uses $DB
- * @param xxx $attemptid
+ * @param xxx $readerattempt
  * @return xxx
  * @todo Finish documenting this function
  */
-function reader_put_to_quiz_attempt($attemptid) {
-  global $DB;
-
-  if ($data = $DB->get_record('reader_attempts', array('id' => $attemptid))) {
-    if ($datapub = $DB->get_record('reader_books', array('quizid' => $data->quizid))) {
-      //$lastattemptid = $DB->get_field_sql('SELECT uniqueid FROM {quiz_attempts} ORDER BY uniqueid DESC LIMIT 1');
-      //$lastattemptid + 1;
-
-      $add = array();
-      $add['uniqueid']             = $data->uniqueid;
-      $add['quiz']                 = $datapub->quizid;
-      $add['userid']               = $data->userid;
-      $add['attempt']              = $data->attempt;
-      $add['sumgrades']            = $data->sumgrades;
-      $add['timestart']            = $data->timestart;
-      $add['timefinish']           = $data->timefinish;
-      $add['timemodified']         = $data->timemodified;
-      $add['layout']               = $data->layout;
-      $add['preview']              = 0;
-      $add['needsupgradetonewqe']  = 0;
-
-      $DB->delete_records('quiz_attempts', array('uniqueid' => $data->uniqueid));
-
-      $id = $DB->insert_record('quiz_attempts', $add);
-    } else
-      return false;
-  } else
-    return false;
-
+function reader_copy_to_quizattempt($readerattempt) {
+    global $DB;
+    $DB->delete_records('quiz_attempts', array('uniqueid' => $readerattempt->uniqueid));
+    $quizattempt = (object)array(
+        'uniqueid'             => $readerattempt->uniqueid,
+        'quiz'                 => $readerattempt->quizid,
+        'userid'               => $readerattempt->userid,
+        'attempt'              => $readerattempt->attempt,
+        'sumgrades'            => $readerattempt->sumgrades,
+        'timestart'            => $readerattempt->timestart,
+        'timefinish'           => $readerattempt->timefinish,
+        'timemodified'         => $readerattempt->timemodified,
+        'layout'               => $readerattempt->layout,
+        'preview'              => 0,
+        'needsupgradetonewqe'  => 0
+    );
+    if ($quizattempt->id = $DB->insert_record('quiz_attempts', $quizattempt)) {
+        return true;
+    } else {
+        return false;
+    }
 }
+
 
 /**
  * context

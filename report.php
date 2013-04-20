@@ -29,20 +29,18 @@
 require_once('../../config.php');
 require_once($CFG->dirroot.'/mod/reader/lib.php');
 
-$b = optional_param('b', 0, PARAM_INT);
-
-if (! empty($b)) {
-    if ($data = $DB->get_records('reader_attempts', array('quizid' => $b))) {
-        if ($datapub = $DB->get_record('reader_books', array('id' => $b))) {
-            $quizid = $datapub->quizid;
-        }
-        while (list($key,$value) = each($data)) {
-            reader_put_to_quiz_attempt($value->id);
+$quizid = 0;
+if ($b = optional_param('b', 0, PARAM_INT)) {
+    $book = $DB->get_record('reader_books', array('id' => $b));
+    if ($readerattempts = $DB->get_records('reader_attempts', array('quizid' => $book->quizid))) {
+        foreach ($readerattempts as $readerattempt) {
+            reader_copy_to_quizattempt($readerattempt);
         }
     }
+    $quizid = $book->quizid;
 }
 
-if (! empty($quizid)) {
+if ($quizid) {
     if ($cm = get_coursemodule_from_instance('quiz', $quizid)) {
         $quiz_report = new moodle_url('/mod/quiz/report.php', array('id' => $cm->id, 'mode' => 'responses'));
         echo '<script type="text/javascript">',"\n";
@@ -52,5 +50,7 @@ if (! empty($quizid)) {
         echo '</script>';
     }
 } else {
+    $OUTPUT->header;
     echo '<h1>No attempts found</h1>';
+    $OUTPUT->footer;
 }

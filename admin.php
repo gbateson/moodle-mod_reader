@@ -49,7 +49,7 @@ $topublisher            = optional_param('topublisher', NULL, PARAM_CLEAN);
 $levelex                = optional_param('levelex', NULL, PARAM_CLEAN);
 $length                 = optional_param('length', NULL, PARAM_CLEAN);
 $tolength               = optional_param('tolength', NULL, PARAM_CLEAN);
-$grid                   = optional_param('grid', NULL, PARAM_CLEAN);
+$gid                   = optional_param('gid', NULL, PARAM_CLEAN);
 $excel                  = optional_param('excel', NULL, PARAM_CLEAN);
 $del                    = optional_param('del', NULL, PARAM_CLEAN);
 $attemptid              = optional_param('attemptid', NULL, PARAM_CLEAN);
@@ -143,10 +143,10 @@ if (isset($_SESSION['SESSION']->reader_changetostudentview) && $_SESSION['SESSIO
     }
 }
 if ((isset($_SESSION['SESSION']->reader_page) && $_SESSION['SESSION']->reader_page == 'view') || (isset($_SESSION['SESSION']->reader_lasttime) && $_SESSION['SESSION']->reader_lasttime < (time() - 300))) {
-    unset ($_SESSION['SESSION']->reader_page);
-    unset ($_SESSION['SESSION']->reader_lasttime);
-    unset ($_SESSION['SESSION']->reader_lastuser);
-    unset ($_SESSION['SESSION']->reader_lastuserfrom);
+    unset($_SESSION['SESSION']->reader_page);
+    unset($_SESSION['SESSION']->reader_lasttime);
+    unset($_SESSION['SESSION']->reader_lastuser);
+    unset($_SESSION['SESSION']->reader_lastuserfrom);
 }
 
 if (($ct || $ct == 0) && $ct != "") {
@@ -163,16 +163,16 @@ if (($ct || $ct == 0) && $ct != "") {
 //    $ct = $_SESSION['SESSION']->reader_values_ct;
 //    echo 'SET!';
 //}
-//if (isset($grid)) {
-//    $_SESSION['SESSION']->reader_values_grid = $grid;
+//if (isset($gid)) {
+//    $_SESSION['SESSION']->reader_values_gid = $gid;
 //} else {
-//    $grid = $_SESSION['SESSION']->reader_values_grid;
+//    $gid = $_SESSION['SESSION']->reader_values_gid;
 //}
 
-if (($grid || $grid == 0) && $grid != "") {
-    $_SESSION['SESSION']->reader_values_grid = $grid;
-} else if (isset($_SESSION['SESSION']->reader_values_grid)) {
-    $grid = $_SESSION['SESSION']->reader_values_grid;
+if (($gid || $gid == 0) && $gid != "") {
+    $_SESSION['SESSION']->reader_values_gid = $gid;
+} else if (isset($_SESSION['SESSION']->reader_values_gid)) {
+    $gid = $_SESSION['SESSION']->reader_values_gid;
 }
 
 $row = 3; // Start row for Excel file
@@ -240,13 +240,13 @@ if (empty($deletebook) || empty($deletequiz)) {
 
 if (has_capability('mod/reader:manage', $contextmodule) && $quizesid) {
     if (empty($publisher) && ($publisherex == '0')) {
-        error ('Please choose publisher', 'admin.php?a=admin&id='.$id.'&act=addquiz');
+        error('Please choose publisher', 'admin.php?a=admin&id='.$id.'&act=addquiz');
     }
     else if (! isset($difficulty) && $difficulty != 0 && $difficultyex != 0 && !$difficultyex) {
-        error ('Please choose Reading Level', 'admin.php?a=admin&id='.$id.'&act=addquiz');
+        error('Please choose Reading Level', 'admin.php?a=admin&id='.$id.'&act=addquiz');
     }
     else if (! isset($level) && ($levelex == '0')) {
-        error ('Please choose level', 'admin.php?a=admin&id='.$id.'&act=addquiz');
+        error('Please choose level', 'admin.php?a=admin&id='.$id.'&act=addquiz');
     }
 
     if ($_FILES['userimage']) {
@@ -256,9 +256,9 @@ if (has_capability('mod/reader:manage', $contextmodule) && $quizesid) {
                 if (! make_upload_directory('reader/images')) {
                     //return false;
                 }
-                if (file_exists ($CFG->dataroot.'/reader/images/'.$_FILES['userimage']['name'])) {
-                    list ($imgname, $imgtype) = explode ('.', $_FILES['userimage']['name']);
-                    $newimagename = $imgname.rand (9999,9999999);
+                if (file_exists($CFG->dataroot.'/reader/images/'.$_FILES['userimage']['name'])) {
+                    list($imgname, $imgtype) = explode('.', $_FILES['userimage']['name']);
+                    $newimagename = $imgname.rand(9999,9999999);
                     $newimagename .= '.'.$ext;
                     $newimagename = strtolower($newimagename);
                 } else {
@@ -312,7 +312,7 @@ if (has_capability('mod/reader:manage', $contextmodule) && $quizesid) {
         $newquiz->quizid = $quizesid_;
         $newquiz->private = $private;
 
-        $DB->insert_record ('reader_books', $newquiz);
+        $DB->insert_record('reader_books', $newquiz);
     }
 
     $message_forteacher = '<center><h3>'.get_string('quizzesadded', 'reader').'</h3></center><br /><br />';
@@ -324,24 +324,24 @@ if (has_capability('mod/reader:deletereaderattempts', $contextmodule) && $act ==
     //if (authenticate_user_login($USER->username, $upassword)) {
         $attemptdata = $DB->get_record('reader_attempts', array('id' => $attemptid));
         unset($attemptdata->id);
-        $DB->insert_record ('reader_deleted_attempts', $attemptdata);
-        $DB->delete_records ('reader_attempts', array('id' => $attemptid));
+        $DB->insert_record('reader_deleted_attempts', $attemptdata);
+        $DB->delete_records('reader_attempts', array('id' => $attemptid));
         add_to_log($course->id, 'reader', 'AA-reader_deleted_attempts', 'admin.php?id='.$id, $cm->instance);
     //}
 }
 
 if (has_capability('mod/reader:deletereaderattempts', $contextmodule) && $act == 'viewattempts' && $bookquiznumber) {
     if (empty($studentuserid)) {
-      $data = $DB->get_record('user', array('username' => $studentusername));
-      $studentuserid = $data->id;
+        $data = $DB->get_record('user', array('username' => $studentusername));
+        $studentuserid = $data->id;
     }
 
     if (! empty($studentuserid)) {
-      $attemptdata = $DB->get_record('reader_deleted_attempts', array('userid' => $studentuserid, 'quizid' => $bookquiznumber));
-      unset($attemptdata->id);
-      $DB->insert_record ('reader_attempts', $attemptdata);
-      $DB->delete_records ('reader_deleted_attempts', array('userid' => $studentuserid, 'quizid' => $bookquiznumber));
-      add_to_log($course->id, 'reader', 'AA-reader_restore_attempts', 'admin.php?id='.$id, $cm->instance);
+        $attemptdata = $DB->get_record('reader_deleted_attempts', array('userid' => $studentuserid, 'quizid' => $bookquiznumber));
+        unset($attemptdata->id);
+        $DB->insert_record('reader_attempts', $attemptdata);
+        $DB->delete_records('reader_deleted_attempts', array('userid' => $studentuserid, 'quizid' => $bookquiznumber));
+        add_to_log($course->id, 'reader', 'AA-reader_restore_attempts', 'admin.php?id='.$id, $cm->instance);
     }
 }
 
@@ -452,7 +452,7 @@ if (has_capability('mod/reader:manage', $contextmodule) && ($changelevel || $cha
     add_to_log($course->id, 'reader', substr("AA-Student Level Changed ({$userid} {$slevel} to {$changelevel})", 0, 39), 'admin.php?id='.$id, $cm->instance);
     if ($ajax == 'true') {
         $studentlevel = $DB->get_record('reader_levels', array('userid' => $userid,  'readerid' => $reader->id));
-        echo reader_selectlevel_form ($userid, $studentlevel, $slevel);
+        echo reader_selectlevel_form($userid, $studentlevel, $slevel);
         //echo "set {$changelevel}";
         die;
     }
@@ -500,19 +500,20 @@ if (has_capability('mod/reader:manage', $contextmodule) && $length && $tolength 
 
 if (has_capability('mod/reader:manage', $contextmodule) && $act == 'changereaderlevel' && ($difficulty || $difficulty == 0) && empty($length)) {
   if ($reader->bookinstances == 0) {
-    if ($DB->get_record('reader_books', array('id' => $bookid))) {
-        $DB->set_field('reader_books',  'difficulty',  $difficulty, array('id' => $bookid));
+    $params = array('id' => $bookid);
+    if ($DB->get_record('reader_books', $params)) {
+        $DB->set_field('reader_books',  'difficulty',  $difficulty, $params);
     }
   } else {
-    if ($DB->get_record('reader_book_instances', array('readerid' => $reader->id, 'bookid' => $bookid))) {
-        $DB->set_field('reader_book_instances',  'difficulty',  $difficulty, array('readerid' => $reader->id,  'bookid' => $bookid));
+    $params = array('readerid' => $reader->id, 'bookid' => $bookid);
+    if ($DB->get_record('reader_book_instances', $params)) {
+        $DB->set_field('reader_book_instances',  'difficulty',  $difficulty, $params);
     }
-
     add_to_log($course->id, 'reader', substr("AA-Change difficulty individual ({$bookid} {$slevel} to {$difficulty})", 0, 39), 'admin.php?id='.$id, $cm->instance);
   }
   if ($ajax == 'true') {
       $book = $DB->get_record('reader_books', array('id' => $bookid));
-      echo reader_select_difficulty_form (reader_get_reader_difficulty($reader, $bookid), $book->id, $reader);
+      echo reader_select_difficulty_form(reader_get_reader_difficulty($reader, $bookid), $book->id, $reader);
       die;
   }
 }
@@ -533,7 +534,7 @@ if (has_capability('mod/reader:manage', $contextmodule) && $act == 'changereader
   }
   if ($ajax == 'true') {
       $book = $DB->get_record('reader_books', array('id' => $bookid));
-      echo reader_select_length_form (reader_get_reader_length($reader, $bookid), $book->id, $reader);
+      echo reader_select_length_form(reader_get_reader_length($reader, $bookid), $book->id, $reader);
       die;
   }
 }
@@ -542,7 +543,7 @@ if (has_capability('mod/reader:manage', $contextmodule) && $act == 'changereader
 
 if (has_capability('mod/reader:viewstudentreaderscreens', $contextmodule) && $viewasstudent > 1) {
     $_SESSION['SESSION']->reader_changetostudentview = $USER->id;
-    $_SESSION['SESSION']->reader_changetostudentviewlink = "grid={$grid}&searchtext={$searchtext}&page={$page}&sort={$sort}&orderby={$orderby}";
+    $_SESSION['SESSION']->reader_changetostudentviewlink = "gid={$gid}&searchtext={$searchtext}&page={$page}&sort={$sort}&orderby={$orderby}";
     $USER = $DB->get_record('user', array('id' => $viewasstudent));
     unset($_SESSION['SESSION']->reader_teacherview);
     header("Location: view.php?a=quizes&id=".$id);
@@ -567,7 +568,7 @@ if (has_capability('mod/reader:manage', $contextmodule) && $act == 'studentsleve
     add_to_log($course->id, 'reader', "AA-Change Student Goal ({$setgoal})", 'admin.php?id='.$id, $cm->instance);
     if ($ajax == 'true') {
         $data = $DB->get_record('reader_levels', array('id' => $data->id));
-        echo reader_goal_box ($userid, $data, 'goal', 3, $reader);
+        echo reader_goal_box($userid, $data, 'goal', 3, $reader);
         die;
     }
 }
@@ -581,7 +582,7 @@ if (has_capability('mod/reader:manage', $contextmodule) && isset($nopromote) && 
     add_to_log($course->id, 'reader', substr("AA-Student NoPromote Changed ({$userid} set to {$nopromote})",0,39), 'admin.php?id='.$id, $cm->instance);
     if ($ajax == 'true') {
         $studentlevel = $DB->get_record('reader_levels', array('userid' => $userid,  'readerid' => $reader->id));
-        echo reader_yes_no_box ($userid, $studentlevel, 'nopromote', 1);
+        echo reader_yes_no_box($userid, $studentlevel, 'nopromote', 1);
         die;
     }
 }
@@ -596,7 +597,7 @@ if (has_capability('mod/reader:manage', $contextmodule) && isset($promotionstop)
     if ($ajax == 'true') {
         //echo "set {$promotionstop}";
         $studentlevel = $DB->get_record('reader_levels', array('userid' => $userid,  'readerid' => $reader->id));
-        echo reader_promotion_stop_box ($userid, $studentlevel, 'promotionstop', 2);
+        echo reader_promotion_stop_box($userid, $studentlevel, 'promotionstop', 2);
         die;
     }
 }
@@ -616,7 +617,7 @@ if (has_capability('mod/reader:manage', $contextmodule) && $setip) {
     }
     add_to_log($course->id, 'reader', substr("AA-Student check ip Changed ({$userid} {$needip})",0,39), 'admin.php?id='.$id, $cm->instance);
     if ($ajax == 'true') {
-        echo reader_selectip_form ($userid, $reader);
+        echo reader_selectip_form($userid, $reader);
         die;
     }
 }
@@ -624,7 +625,7 @@ if (has_capability('mod/reader:manage', $contextmodule) && $setip) {
 
 
 if (has_capability('mod/reader:manage', $contextmodule) && $changeallstartlevel >= 0) {
-    $coursestudents = get_enrolled_users($context, NULL, $grid);
+    $coursestudents = get_enrolled_users($context, NULL, $gid);
     foreach ($coursestudents as $coursestudent) {
         if ($DB->get_record('reader_levels', array('userid' => $coursestudent->id, 'readerid' => $reader->id))) {
             $DB->set_field('reader_levels',  'startlevel',  $changeallstartlevel, array('userid' => $coursestudent->id,  'readerid' => $reader->id));
@@ -643,7 +644,7 @@ if (has_capability('mod/reader:manage', $contextmodule) && $changeallstartlevel 
 }
 
 if (has_capability('mod/reader:manage', $contextmodule) &&  $changeallcurrentlevel >= 0) {
-    $coursestudents = get_enrolled_users($context, NULL, $grid);
+    $coursestudents = get_enrolled_users($context, NULL, $gid);
     foreach ($coursestudents as $coursestudent) {
         if ($DB->get_record('reader_levels', array('userid' => $coursestudent->id, 'readerid' => $reader->id))) {
             $DB->set_field('reader_levels',  'currentlevel',  $changeallcurrentlevel, array('userid' => $coursestudent->id,  'readerid' => $reader->id));
@@ -664,7 +665,7 @@ if (has_capability('mod/reader:manage', $contextmodule) &&  $changeallcurrentlev
 
 
 if (has_capability('mod/reader:manage', $contextmodule) && $changeallpromo) {
-    $coursestudents = get_enrolled_users($context, NULL, $grid);
+    $coursestudents = get_enrolled_users($context, NULL, $gid);
     foreach ($coursestudents as $coursestudent) {
         if ($DB->get_record('reader_levels', array('userid' => $coursestudent->id, 'readerid' => $reader->id))) {
             if (strtolower($changeallpromo) == 'promo') {$nopromote = 0;} else {$nopromote = 1;}
@@ -674,8 +675,8 @@ if (has_capability('mod/reader:manage', $contextmodule) && $changeallpromo) {
     }
 }
 
-if (has_capability('mod/reader:manage', $contextmodule) && $changeallstoppromo >= 0 && $grid) {
-    $coursestudents = get_enrolled_users($context, NULL, $grid);
+if (has_capability('mod/reader:manage', $contextmodule) && $changeallstoppromo >= 0 && $gid) {
+    $coursestudents = get_enrolled_users($context, NULL, $gid);
     foreach ($coursestudents as $coursestudent) {
         if ($DB->get_record('reader_levels', array('userid' => $coursestudent->id, 'readerid' => $reader->id))) {
             $DB->set_field('reader_levels',  'promotionstop',  $changeallstoppromo, array('userid' => $coursestudent->id,  'readerid' => $reader->id));
@@ -687,7 +688,7 @@ if (has_capability('mod/reader:manage', $contextmodule) && $changeallstoppromo >
 
 
 if (has_capability('mod/reader:manage', $contextmodule) && $changeallcurrentgoal) {
-    $coursestudents = get_enrolled_users($context, NULL, $grid);
+    $coursestudents = get_enrolled_users($context, NULL, $gid);
     foreach ($coursestudents as $coursestudent) {
         if ($data = $DB->get_record('reader_levels', array('userid' => $coursestudent->id, 'readerid' => $reader->id))) {
             $DB->set_field('reader_levels',  'goal',  $changeallcurrentgoal, array('id' => $data->id));
@@ -779,7 +780,7 @@ if (has_capability('mod/reader:manage', $contextmodule) && $cheated) {
     $data->status    = 'cheated';
     $data->date      = time();
 
-    //print_r ($data);
+    //print_r($data);
 
     $DB->insert_record('reader_cheated_log', $data);
 
@@ -865,7 +866,7 @@ if (has_capability('mod/reader:manage', $contextmodule) && $act == 'setgoal') {
 }
 
 if (has_capability('mod/reader:manage', $contextmodule) && $act == 'setbookinstances' && is_array($quiz)) {
-    $DB->delete_records ('reader_book_instances', array('readerid' => $reader->id));
+    $DB->delete_records('reader_book_instances', array('readerid' => $reader->id));
     foreach ($quiz as $quiz_) {
         $oldbookdata = $DB->get_record('reader_books', array('id' => $quiz_));
         $data           = new object;
@@ -879,7 +880,7 @@ if (has_capability('mod/reader:manage', $contextmodule) && $act == 'setbookinsta
 }
 
 if (has_capability('mod/reader:manage', $contextmodule) && $act == 'forcedtimedelay' && is_array($levelc)) {
-    $DB->delete_records ('reader_forcedtimedelay', array('readerid' => $reader->id, 'groupid' => $separategroups));
+    $DB->delete_records('reader_forcedtimedelay', array('readerid' => $reader->id, 'groupid' => $separategroups));
     foreach ($levelc as $key => $value) {
       if ($value != 0) {
         $data             = new object;
@@ -973,8 +974,8 @@ if ($excel) {
     $formatbc = $workbook->add_format();
     $formatbc->set_bold(1);
 
-    if (! empty($grid)) {
-        $grname = groups_get_group_name($grid);
+    if (! empty($gid)) {
+        $grname = groups_get_group_name($gid);
     } else {
         $grname = 'all';
     }
@@ -1011,7 +1012,7 @@ $alreadyansweredbooksid = array();
 
 if (has_capability('mod/reader:manage', $contextmodule)) {
     if (! $excel) {
-        require_once ('tabs.php');
+        require_once('tabs.php');
     }
 } else {
     die;
@@ -1104,7 +1105,7 @@ $options['id']         = $id;
 $options['act']        = $act;
 $options['sort']       = $sort;
 $options['orderby']    = $orderby;
-$options['grid']       = $grid;
+$options['gid']       = $gid;
 $options['ct']         = $ct;
 $options['searchtext'] = $searchtext;
 $options['excel']      = 1;
@@ -1232,7 +1233,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
     }
     $table = new html_table();
 
-    $titlesarray = Array (''=>'', 'Title'=>'title', 'Publisher'=>'publisher', 'Level'=>'level', 'Reading Level'=>'rlevel', 'Length'=>'length', 'Times Quiz Taken'=>'qtaken', 'Average Points'=>'apoints', 'Options'=>'');
+    $titlesarray = array(''=>'', 'Title'=>'title', 'Publisher'=>'publisher', 'Level'=>'level', 'Reading Level'=>'rlevel', 'Length'=>'length', 'Times Quiz Taken'=>'qtaken', 'Average Points'=>'apoints', 'Options'=>'');
 
     $table->head = reader_make_table_headers($titlesarray, $orderby, $sort, '?a=admin&id='.$id.'&act='.$act);
     $table->align = array('center', 'left', 'left', 'center', 'center', 'center', 'center', 'center', 'center');
@@ -1253,26 +1254,26 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
 
         $i = 0;
 
-        $attemptsofbook = $DB->get_records_sql('SELECT * FROM {reader_attempts} WHERE quizid= ?  and reader= ? ', array($book->id, $reader->id));
-        foreach ($attemptsofbook as $attemptsofbook_) {
-            $i++;
-            if ($totalgrade==0) {
-                $totalpoints = 0;
-            } else {
-                $totalpoints = round(($attemptsofbook_->sumgrades / $totalgrade) * 100, 2);
-            }
-            $totalpointsaverage += $totalpoints;
-
-            if ($totalpoints >= $reader->percentforreading) {
-                $correctpoints += 1;
+        $params = array('quizid' => $book->quizid, 'reader' => $reader->id);
+        if ($readerattempts = $DB->get_records('reader_attempts', $params)) {
+            foreach ($readerattempts as $readerattempt) {
+                $i++;
+                if ($totalgrade==0) {
+                    $totalpoints = 0;
+                } else {
+                    $totalpoints = round(($readerattempt->sumgrades / $totalgrade) * 100, 2);
+                }
+                $totalpointsaverage += $totalpoints;
+                if ($totalpoints >= $reader->percentforreading) {
+                    $correctpoints += 1;
+                }
             }
         }
-        if ($i != 0) {
-          $averagepoint = round($totalpointsaverage / $i);
+        if ($i==0) {
+            $averagepoints = 0;
         } else {
-          $averagepoint = 0;
+            $averagepoints = round($totalpointsaverage / $i);
         }
-
         $timesoftaken = $i;
 
         if ($book->hidden == 1) {
@@ -1288,7 +1289,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
             reader_get_reader_difficulty($reader, $book->id),
             reader_get_reader_length($reader, $book->id),
             $timesoftaken,
-            $averagepoint.'%',
+            $averagepoints.'%',
             $deletelink
         ));
     }
@@ -1297,8 +1298,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
 
     if (! isset($needdeleteattemptsfirst)) {
         echo '<form action="admin.php?a=admin&id='.$id.'&act=editquiz" method="post">';
-
-        if ($table) {
+        if (isset($table) && count($table->data)) {
             echo html_writer::table($table);
         }
         echo '<input type="button" value="Select all" onclick="checkall();" /> <input type="button" value="Deselect all" onclick="checknone();" /><br /><br />';
@@ -1348,9 +1348,9 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
 } else if ($act == 'reports' && has_capability('mod/reader:readerviewreports', $contextmodule)) {
     $table = new html_table();
 
-    $titlesarray = Array ('Image'=>'', 'Username'=>'username', 'Fullname<br />Click to view screen'=>'fullname', 'Start level'=>'startlevel', 'Current level'=>'currentlevel', 'Taken Quizzes'=>'tquizzes', 'Passed<br /> Quizzes'=>'cquizzes', 'Failed<br /> Quizzes'=>'iquizzes', 'Total Points'=>'totalpoints', 'Total words<br /> this term'=>'totalwordsthisterm', 'Total words<br /> all terms'=>'totalwordsallterms');
+    $titlesarray = array('Image'=>'', 'Username'=>'username', 'Fullname<br />Click to view screen'=>'fullname', 'Start level'=>'startlevel', 'Current level'=>'currentlevel', 'Taken Quizzes'=>'tquizzes', 'Passed<br /> Quizzes'=>'cquizzes', 'Failed<br /> Quizzes'=>'iquizzes', 'Total Points'=>'totalpoints', 'Total words<br /> this term'=>'totalwordsthisterm', 'Total words<br /> all terms'=>'totalwordsallterms');
 
-    $table->head = reader_make_table_headers($titlesarray, $orderby, $sort, '?a=admin&id='.$id.'&act=reports&grid='.$grid.'&searchtext='.$searchtext.'&page='.$page);
+    $table->head = reader_make_table_headers($titlesarray, $orderby, $sort, '?a=admin&id='.$id.'&act=reports&gid='.$gid.'&searchtext='.$searchtext.'&page='.$page);
     $table->align = array('center', 'left', 'left', 'center', 'center', 'center', 'center', 'center', 'center', 'center', 'center');
     $table->width = '100%';
 
@@ -1374,11 +1374,11 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
         $myxls->write_string(2, 10, 'Total words all terms',$formatbc);
     }
 
-    if (! $grid) {
-        $grid = NULL;
+    if (! $gid) {
+        $gid = NULL;
     }
 
-    $coursestudents = get_enrolled_users($context, NULL, $grid);
+    $coursestudents = get_enrolled_users($context, NULL, $gid);
 
     foreach ($coursestudents as $coursestudent) {
         if (reader_check_search_text($searchtext, $coursestudent)) {
@@ -1394,7 +1394,9 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
 
             $data = array('totalwordsthisterm' => 0, 'totalwordsallterms' => 0);
 
-            if ($attempts = $DB->get_records_sql('SELECT * FROM {reader_attempts} WHERE userid= ?  and reader= ?  and timefinish > ?', array($coursestudent->id, $reader->id, $reader->ignoredate))) {
+            $select = 'userid= ? AND reader= ? AND timefinish > ?';
+            $params = array($coursestudent->id, $reader->id, $reader->ignoredate);
+            if ($attempts = $DB->get_records_select('reader_attempts', $select, $params)) {
                 foreach ($attempts as $attempt) {
                     if (strtolower($attempt->passed) == 'true') {
                         if ($attempt->preview == 0) {
@@ -1425,14 +1427,14 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
             }
 
             if (has_capability('mod/reader:viewstudentreaderscreens', $contextmodule)) {
-                $link = reader_fullname_link_viewasstudent($coursestudent, "grid={$grid}&searchtext={$searchtext}&page={$page}&sort={$sort}&orderby={$orderby}");
+                $link = reader_fullname_link_viewasstudent($coursestudent, $id, $excel);
             } else {
-                $link = reader_fullname_link_t($coursestudent);
+                $link = reader_fullname_link($coursestudent, $course->id, $excel);
             }
             if ($attemptdata = reader_get_student_attempts($coursestudent->id, $reader)) {
                 $table->data[] = new html_table_row(array(
                         $picture,
-                        reader_user_link_t($coursestudent),
+                        reader_username_link($coursestudent, $course->id, $excel),
                         $link,
                         $attemptdata[1]['startlevel'],
                         $attemptdata[1]['currentlevel'],
@@ -1444,7 +1446,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
                         $data['totalwordsallterms']
                 ));
             } else {
-                $table->data[] = new html_table_row(array($picture, reader_user_link_t($coursestudent), $link, 0,0,0,0,0,0,0,0));
+                $table->data[] = new html_table_row(array($picture, reader_username_link($coursestudent, $course->id, $excel), $link, 0,0,0,0,0,0,0,0));
             }
         }
     }
@@ -1477,49 +1479,49 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
     echo $OUTPUT->single_button(new moodle_url('admin.php',$options), get_string('downloadexcel', 'reader'), 'post', $options);
     echo '</td></tr></table>';
 
-    reader_print_search_form ($id, $act);
+    reader_print_search_form();
 
-    $groups = groups_get_all_groups ($course->id);
+    $groups = groups_get_all_groups($course->id);
 
     if ($groups) {
         reader_print_group_select_box($course->id, 'admin.php?a=admin&id='.$id.'&act=reports&sort='.$sort.'&orderby='.$orderby);
     }
 
-    reader_select_perpage($id, $act, $sort, $orderby, $grid);
+    reader_select_perpage($id, $act, $sort, $orderby, $gid);
     list($totalcount, $table->data, $startrec, $finishrec, $options['page']) = reader_get_pages($table->data, $page, $perpage);
-    //print_paging_bar($totalcount, $page, $perpage, "admin.php?a=admin&id={$id}&act={$act}&sort={$sort}&orderby={$orderby}&grid={$grid}&amp;");
-    $pagingbar = new paging_bar($totalcount, $page, $perpage, "admin.php?a=admin&id={$id}&act={$act}&sort={$sort}&orderby={$orderby}&grid={$grid}&amp;");
+    //print_paging_bar($totalcount, $page, $perpage, "admin.php?a=admin&id={$id}&act={$act}&sort={$sort}&orderby={$orderby}&gid={$gid}&amp;");
+    $pagingbar = new paging_bar($totalcount, $page, $perpage, "admin.php?a=admin&id={$id}&act={$act}&sort={$sort}&orderby={$orderby}&gid={$gid}&amp;");
     echo $OUTPUT->render($pagingbar);
 
-    if ($table) {
+    if (isset($table) && count($table->data)) {
         echo html_writer::table($table);
     }
 
-    //print_paging_bar($totalcount, $page, $perpage, "admin.php?a=admin&id={$id}&act={$act}&sort={$sort}&orderby={$orderby}&grid={$grid}&amp;");
-    $pagingbar = new paging_bar($totalcount, $page, $perpage, "admin.php?a=admin&id={$id}&act={$act}&sort={$sort}&orderby={$orderby}&grid={$grid}&amp;");
+    //print_paging_bar($totalcount, $page, $perpage, "admin.php?a=admin&id={$id}&act={$act}&sort={$sort}&orderby={$orderby}&gid={$gid}&amp;");
+    $pagingbar = new paging_bar($totalcount, $page, $perpage, "admin.php?a=admin&id={$id}&act={$act}&sort={$sort}&orderby={$orderby}&gid={$gid}&amp;");
     echo $OUTPUT->render($pagingbar);
 
 } else if ($act == 'fullreports' && has_capability('mod/reader:readerviewreports', $contextmodule)) {
     $table = new html_table();
     if ($reader->wordsorpoints == 'words') {
         if ($reader->checkbox == 1) {
-            $titlesarray = Array ('Image'=>'', 'Username'=>'username', 'Fullname<br />Click to view screen'=>'fullname', 'Check'=>'', 'Date'=>'date', 'S-Level'=>'slevel', 'B-Level'=>'blevel', 'Title'=>'title', 'Score'=>'', 'P/F/C'=>'', 'Words'=>'', 'Total Words'=>'');
+            $titlesarray = array('Image'=>'', 'Username'=>'username', 'Fullname<br />Click to view screen'=>'fullname', 'Check'=>'', 'Date'=>'date', 'S-Level'=>'slevel', 'B-Level'=>'blevel', 'Title'=>'title', 'Score'=>'', 'P/F/C'=>'', 'Words'=>'', 'Total Words'=>'');
             $table->align = array('center', 'left', 'left', 'center', 'center', 'center', 'center', 'left', 'center', 'center', 'center', 'center');
         } else {
-            $titlesarray = Array ('Image'=>'', 'Username'=>'username', 'Fullname<br />Click to view screen'=>'fullname', 'Date'=>'date', 'S-Level'=>'slevel', 'B-Level'=>'blevel', 'Title'=>'title', 'Score'=>'', 'P/F/C'=>'', 'Words'=>'', 'Total Words'=>'');
+            $titlesarray = array('Image'=>'', 'Username'=>'username', 'Fullname<br />Click to view screen'=>'fullname', 'Date'=>'date', 'S-Level'=>'slevel', 'B-Level'=>'blevel', 'Title'=>'title', 'Score'=>'', 'P/F/C'=>'', 'Words'=>'', 'Total Words'=>'');
             $table->align = array('center', 'left', 'left', 'center', 'center', 'center', 'left', 'center', 'center',  'center');
         }
     } else {
         if ($reader->checkbox == 1) {
-            $titlesarray = Array ('Image'=>'', 'Username'=>'username', 'Fullname<br />Click to view screen'=>'fullname', 'Check'=>'', 'Date'=>'date', 'S-Level'=>'slevel', 'B-Level'=>'blevel', 'Title'=>'title', 'Score'=>'', 'P/F/C'=>'', 'Points'=>'', 'Length'=>'', 'Total Points'=>'');
+            $titlesarray = array('Image'=>'', 'Username'=>'username', 'Fullname<br />Click to view screen'=>'fullname', 'Check'=>'', 'Date'=>'date', 'S-Level'=>'slevel', 'B-Level'=>'blevel', 'Title'=>'title', 'Score'=>'', 'P/F/C'=>'', 'Points'=>'', 'Length'=>'', 'Total Points'=>'');
             $table->align = array('center', 'left', 'left', 'center', 'center', 'center', 'center', 'left', 'center', 'center', 'center', 'center', 'center');
         } else {
-            $titlesarray = Array ('Image'=>'', 'Username'=>'username', 'Fullname<br />Click to view screen'=>'fullname', 'Date'=>'date', 'S-Level'=>'slevel', 'B-Level'=>'blevel', 'Title'=>'title', 'Score'=>'', 'P/F/C'=>'', 'Points'=>'', 'Length'=>'', 'Total Points'=>'');
+            $titlesarray = array('Image'=>'', 'Username'=>'username', 'Fullname<br />Click to view screen'=>'fullname', 'Date'=>'date', 'S-Level'=>'slevel', 'B-Level'=>'blevel', 'Title'=>'title', 'Score'=>'', 'P/F/C'=>'', 'Points'=>'', 'Length'=>'', 'Total Points'=>'');
             $table->align = array('center', 'left', 'left', 'center', 'center', 'center', 'left', 'center', 'center', 'center', 'center', 'center');
         }
     }
 
-    $table->head = reader_make_table_headers($titlesarray, $orderby, $sort, '?a=admin&id='.$id.'&act=fullreports&grid='.$grid.'&searchtext='.$searchtext.'&page='.$page.'&ct='.$ct);
+    $table->head = reader_make_table_headers($titlesarray, $orderby, $sort, '?a=admin&id='.$id.'&act=fullreports&gid='.$gid.'&searchtext='.$searchtext.'&page='.$page.'&ct='.$ct);
     $table->width = '100%';
 
     if ($excel) {
@@ -1579,14 +1581,14 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
         }
     }
 
-    if (! $grid) {
-        $grid = NULL;
+    if (! $gid) {
+        $gid = NULL;
     }
 
     if ($sort != 'username' && $sort != 'firstname') {
-        $coursestudents = get_enrolled_users($context, NULL, $grid);
+        $coursestudents = get_enrolled_users($context, NULL, $gid);
     } else {
-        $coursestudents = get_enrolled_users($context, NULL, $grid);
+        $coursestudents = get_enrolled_users($context, NULL, $gid);
     }
 
     foreach ($coursestudents as $coursestudent) {
@@ -1635,18 +1637,16 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
                         $attemptbooktime = date('Y/m/d', $attemptdata_['timefinish']);
                     }
                     if (($totable['first'] || $sort == 'slevel' || $sort == 'blevel' || $sort == 'title' || $sort == 'date') || $excel) {
-                        list($linkusername, $username) = reader_user_link_t($coursestudent);
-                        if ($excel) {
-                            $linkusername = $username;
-                        }
-                        list($linkfullname, $username) = reader_fullname_link_t($coursestudent);
-                        //print_r ($linkfullname);
+                        $linkusername = reader_username_link($coursestudent, $course->id, $excel);
                         if (has_capability('mod/reader:viewstudentreaderscreens', $contextmodule)) {
-                            list($linkfullname) = reader_fullname_link_viewasstudent($coursestudent, "grid={$grid}&searchtext={$searchtext}&page={$page}&sort={$sort}&orderby={$orderby}");
+                            $linkfullname = reader_fullname_link_viewasstudent($coursestudent, $id, $excel);
+                        } else {
+                            $linkfullname = reader_fullname_link($coursestudent, $course->id, $excel);
                         }
 
                         if ($reader->checkbox == 1) {
-                            $table->data[] = new html_table_row(array($picture,
+                            $table->data[] = new html_table_row(array(
+                                                $picture,
                                                 $linkusername,
                                                 $linkfullname,
                                                 reader_ra_checkbox($attemptdata_),
@@ -1660,7 +1660,8 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
                                                 $totalwords));
 
                         } else {
-                            $table->data[] = new html_table_row(array($picture,
+                            $table->data[] = new html_table_row(array(
+                                                $picture,
                                                 $linkusername,
                                                 $linkfullname,
                                                 $attemptbooktime,
@@ -1675,7 +1676,10 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
                         $totable['first'] = false;
                     } else {
                         if ($reader->checkbox == 1) {
-                            $table->data[] = new html_table_row(array('','','',
+                            $table->data[] = new html_table_row(array(
+                                               '', // picture
+                                               '', // username
+                                               '', // fullname
                                                reader_ra_checkbox($attemptdata_),
                                                $attemptbooktime,
                                                $attemptdata_['userlevel'],
@@ -1686,7 +1690,10 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
                                                $attemptdata_['words'],
                                                $totalwords));
                         } else {
-                            $table->data[] = new html_table_row(array('','','',
+                            $table->data[] = new html_table_row(array(
+                                               '', // picture
+                                               '', // username
+                                               '', // fullname
                                                $attemptbooktime,
                                                $attemptdata_['userlevel'],
                                                $attemptdata_['bookdiff'],
@@ -1720,13 +1727,11 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
                         $attemptbooktime = date('Y/m/d', $attemptdata_['timefinish']);
                     }
                     if (($totable['first'] || $sort == 'slevel' || $sort == 'blevel' || $sort == 'title' || $sort == 'date') || $excel) {
-                        list($linkusername, $username) = reader_user_link_t($coursestudent);
-                        if ($excel) {
-                            $linkusername = $username;
-                        }
-                        list($linkfullname, $username) = reader_fullname_link_t($coursestudent);
+                        $linkusername = reader_username_link($coursestudent, $course->id, $excel);
                         if (has_capability('mod/reader:viewstudentreaderscreens', $contextmodule)) {
-                            list($linkfullname) = reader_fullname_link_viewasstudent($coursestudent, "grid={$grid}&searchtext={$searchtext}&page={$page}&sort={$sort}&orderby={$orderby}");
+                            $linkfullname = reader_fullname_link_viewasstudent($coursestudent, $id, $excel);
+                        } else {
+                            $linkfullname = reader_fullname_link($coursestudent, $course->id, $excel);
                         }
                         if ($reader->checkbox == 1) {
                             $table->data[] = new html_table_row(array(
@@ -1844,35 +1849,35 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
     echo $OUTPUT->single_button(new moodle_url('admin.php',$options), get_string('downloadexcel', 'reader'), 'post', $options);
     echo '</td></tr></table>';
 
-    reader_print_search_form ($id, $act);
+    reader_print_search_form();
 
-    $groups = groups_get_all_groups ($course->id);
+    $groups = groups_get_all_groups($course->id);
 
     if ($groups) {
         reader_print_group_select_box($course->id, 'admin.php?a=admin&id='.$id.'&act=fullreports&sort='.$sort.'&orderby='.$orderby.'&ct='.$ct);
     }
 
-    echo '<div style="text-align:right"><form action="" method="post" id="mform_ct"><select onchange="document.getElementById(\'mform_ct\').action = document.getElementById(\'mform_ct\').level.options[document.getElementById(\'mform_ct\').level.selectedIndex].value;document.getElementById(\'mform_ct\').submit(); return true;" name="level" id="id_level"><option value="admin.php?a=admin&id='.$id.'&act='.$act.'&sort='.$sort.'&grid='.$grid.'&orderby='.$orderby.'&ct=0" ';
+    echo '<div style="text-align:right"><form action="" method="post" id="mform_ct"><select onchange="document.getElementById(\'mform_ct\').action = document.getElementById(\'mform_ct\').level.options[document.getElementById(\'mform_ct\').level.selectedIndex].value;document.getElementById(\'mform_ct\').submit(); return true;" name="level" id="id_level"><option value="admin.php?a=admin&id='.$id.'&act='.$act.'&sort='.$sort.'&gid='.$gid.'&orderby='.$orderby.'&ct=0" ';
     if (empty($ct)) {
         echo ' selected="selected" ';
     }
-    echo ' >All terms</option><option value="admin.php?a=admin&id='.$id.'&act='.$act.'&sort='.$sort.'&grid='.$grid.'&orderby='.$orderby.'&ct=1" ';
+    echo ' >All terms</option><option value="admin.php?a=admin&id='.$id.'&act='.$act.'&sort='.$sort.'&gid='.$gid.'&orderby='.$orderby.'&ct=1" ';
     if (! empty($ct)) {
         echo ' selected="selected" ';
     }
     echo ' >Current term</option></select></form></div>';
 
-    reader_select_perpage($id, $act, $sort, $orderby, $grid);
+    reader_select_perpage($id, $act, $sort, $orderby, $gid);
     list($totalcount, $table->data, $startrec, $finishrec, $options['page']) = reader_get_pages($table->data, $page, $perpage);
-    //print_paging_bar($totalcount, $page, $perpage, "admin.php?a=admin&id={$id}&act={$act}&sort={$sort}&orderby={$orderby}&grid={$grid}&ct={$ct}&amp;");
-    $pagingbar = new paging_bar($totalcount, $page, $perpage, "admin.php?a=admin&id={$id}&act={$act}&sort={$sort}&orderby={$orderby}&grid={$grid}&ct={$ct}&amp;");
+    //print_paging_bar($totalcount, $page, $perpage, "admin.php?a=admin&id={$id}&act={$act}&sort={$sort}&orderby={$orderby}&gid={$gid}&ct={$ct}&amp;");
+    $pagingbar = new paging_bar($totalcount, $page, $perpage, "admin.php?a=admin&id={$id}&act={$act}&sort={$sort}&orderby={$orderby}&gid={$gid}&ct={$ct}&amp;");
     echo $OUTPUT->render($pagingbar);
 
-    if ($table) {
+    if (isset($table) && count($table->data)) {
         echo html_writer::table($table);
     }
 
-    $pagingbar = new paging_bar($totalcount, $page, $perpage, "admin.php?a=admin&id={$id}&act={$act}&sort={$sort}&orderby={$orderby}&grid={$grid}&ct={$ct}&amp;");
+    $pagingbar = new paging_bar($totalcount, $page, $perpage, "admin.php?a=admin&id={$id}&act={$act}&sort={$sort}&orderby={$orderby}&gid={$gid}&ct={$ct}&amp;");
     echo $OUTPUT->render($pagingbar);
 
 } else if ($act == 'summarybookreports' && has_capability('mod/reader:readerviewreports', $contextmodule)) {
@@ -1880,9 +1885,9 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
         $sort = 'title';
     }
     $table = new html_table();
-    $titlesarray = Array ('Title'=>'title', 'Publisher'=>'publisher', 'Level'=>'level', 'Reading Level'=>'rlevel', 'Length'=>'length', 'Times Quiz Taken'=>'qtaken', 'Average Points'=>'apoints', 'Passed'=>'passed', 'Failed'=>'failed', 'Pass Rate'=>'prate');
+    $titlesarray = array('Title'=>'title', 'Publisher'=>'publisher', 'Level'=>'level', 'Reading Level'=>'rlevel', 'Length'=>'length', 'Times Quiz Taken'=>'qtaken', 'Average Points'=>'apoints', 'Passed'=>'passed', 'Failed'=>'failed', 'Pass Rate'=>'prate');
 
-    $table->head = reader_make_table_headers($titlesarray, $orderby, $sort, '?a=admin&id='.$id.'&act=summarybookreports&grid='.$grid.'&searchtext='.$searchtext.'&page='.$page);
+    $table->head = reader_make_table_headers($titlesarray, $orderby, $sort, '?a=admin&id='.$id.'&act=summarybookreports&gid='.$gid.'&searchtext='.$searchtext.'&page='.$page);
     $table->align = array('left', 'left', 'center', 'center', 'center', 'center', 'center', 'center', 'center', 'center');
     $table->width = '100%';
 
@@ -1905,48 +1910,50 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
         $myxls->write_string(2, 8, 'Pass Rate',$formatbc);
     }
 
-    $books = $DB->get_records_sql ("SELECT * FROM {reader_books} WHERE hidden=? and private IN(0,?)", array(0, $reader->id));
-    while(list($bookkey, $book) = each($books)) {
-      if (reader_check_search_text($searchtext, '', $book)) {
-        $totalgrade = 0;
-        $totalpointsaverage = 0;
-        $correctpoints = 0;
+    $select = 'hidden = ? AND private IN (0, ?)';
+    $params = array(0, $reader->id);
+    if ($books = $DB->get_records_select('reader_books', $select, $params)) {
+        foreach ($books as $book) {
+            if (reader_check_search_text($searchtext, '', $book)) {
+                $totalgrade = 0;
+                $totalpointsaverage = 0;
+                $correctpoints = 0;
+                $i = 0;
+                if ($readerattempts = $DB->get_records('reader_attempts', array('quizid' => $book->quizid))) {
+                    foreach ($readerattempts as $readerattempt) {
+                        $i++;
+                        $totalpointsaverage += $readerattempt->percentgrade;
+                        if (strtolower($readerattempt->passed) == 'true') {
+                            $correctpoints += 1;
+                        }
+                    }
+                }
+                if ($i) {
+                  $averagepoints = round($totalpointsaverage / $i);
+                  $prate         = round(($correctpoints/$i) * 100);
+                } else {
+                  $averagepoints = 0;
+                  $prate         = 0;
+                }
 
-        $i = 0;
-
-        $attemptsofbook = $DB->get_records_sql('SELECT * FROM {reader_attempts} WHERE quizid= ? ', array($book->id));
-        while(list($attemptsofbookkey, $attemptsofbook_) = each($attemptsofbook)) {
-            $i++;
-            $totalpointsaverage += $attemptsofbook_->percentgrade;
-
-            if (strtolower($attemptsofbook_->passed) == 'true') {
-                $correctpoints += 1;
+                $timesoftaken = $i;
+                //$params = array('b' => $book->id, 'idh' => $id, 'q'=> $book->quizid, 'mode' => 'analysis', 'b' => $book->id);
+                $bookreportlink = html_writer::tag('a', $book->name, array('href' => new moodle_url('/mod/reader/report.php', array('b' => $book->id))));
+                $table->data[] = new html_table_row(array(
+                    $bookreportlink,
+                    $book->publisher,
+                    $book->level,
+                    reader_get_reader_difficulty($reader, $book->id),
+                    reader_get_reader_length($reader, $book->id),
+                    $timesoftaken,
+                    $averagepoints.'%',
+                    $correctpoints,
+                    ($timesoftaken - $correctpoints),
+                    $prate.'%')
+                );
             }
         }
-        if ($i != 0) {
-          $averagepoint = round($totalpointsaverage / $i);
-          $prate = round(($correctpoints/$i) * 100);
-        } else {
-          $averagepoint = 0;
-          $prate        = 0;
-        }
-
-        $timesoftaken = $i;
-        //$table->data[] = array(array('<a href="report.php?idh='.$id.'&q='.$book->quizid.'&mode=analysis&b='.$book->id.'">'.$book->name.'</a>', $book->name),
-        $table->data[] = new html_table_row(array(
-            array('<a href="report.php?b='.$book->id.'">'.$book->name.'</a>', $book->name),
-            $book->publisher,
-            $book->level,
-            reader_get_reader_difficulty($reader, $book->id),
-            reader_get_reader_length($reader, $book->id),
-            $timesoftaken,
-            $averagepoint.'%',
-            $correctpoints,
-            ($timesoftaken - $correctpoints),
-            $prate.'%'));
-      }
     }
-    //reset($books);
 
     reader_sort_table($table, $titlesarray, $orderby, $sort);
 
@@ -1975,18 +1982,18 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
     echo $OUTPUT->single_button(new moodle_url('admin.php',$options), get_string('downloadexcel', 'reader'), 'post', $options);
     echo '</td></tr></table>';
 
-    reader_print_search_form ($id, $act);
+    reader_print_search_form();
 
-    reader_select_perpage($id, $act, $sort, $orderby, $grid);
+    reader_select_perpage($id, $act, $sort, $orderby, $gid);
     list($totalcount, $table->data, $startrec, $finishrec, $options['page']) = reader_get_pages($table->data, $page, $perpage);
-    $pagingbar = new paging_bar($totalcount, $page, $perpage, "admin.php?a=admin&id={$id}&act={$act}&sort={$sort}&orderby={$orderby}&grid={$grid}&amp;");
+    $pagingbar = new paging_bar($totalcount, $page, $perpage, "admin.php?a=admin&id={$id}&act={$act}&sort={$sort}&orderby={$orderby}&gid={$gid}&amp;");
     echo $OUTPUT->render($pagingbar);
 
-    if ($table) {
+    if (isset($table) && count($table->data)) {
         echo html_writer::table($table);
     }
 
-    $pagingbar = new paging_bar($totalcount, $page, $perpage, "admin.php?a=admin&id={$id}&act={$act}&sort={$sort}&orderby={$orderby}&grid={$grid}&amp;");
+    $pagingbar = new paging_bar($totalcount, $page, $perpage, "admin.php?a=admin&id={$id}&act={$act}&sort={$sort}&orderby={$orderby}&gid={$gid}&amp;");
     echo $OUTPUT->render($pagingbar);
 
 } else if ($act == 'fullbookreports' && has_capability('mod/reader:readerviewreports', $contextmodule)) {
@@ -1995,7 +2002,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
     }
     $table = new html_table();
 
-    $titlesarray = Array ('Title'=>'title', 'Publisher'=>'publisher', 'Level'=>'level', 'Reading Level'=>'rlevel', 'Student Name'=>'sname', 'Student ID'=>'studentid', 'Passed/Failed'=>'');
+    $titlesarray = array('Title'=>'title', 'Publisher'=>'publisher', 'Level'=>'level', 'Reading Level'=>'rlevel', 'Student Name'=>'sname', 'Student ID'=>'studentid', 'Passed/Failed'=>'');
 
     if ($excel) {
         $myxls->write_string(0, 0, 'Full Report by Book Title',$formatbc);
@@ -2013,20 +2020,20 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
         $myxls->write_string(2, 6, 'Passed/Failed',$formatbc);
     }
 
-    $table->head = reader_make_table_headers($titlesarray, $orderby, $sort, '?a=admin&id='.$id.'&act=fullbookreports&grid='.$grid.'&searchtext='.$searchtext.'&page='.$page);
+    $table->head = reader_make_table_headers($titlesarray, $orderby, $sort, '?a=admin&id='.$id.'&act=fullbookreports&gid='.$gid.'&searchtext='.$searchtext.'&page='.$page);
     $table->align = array('left', 'left', 'center', 'center', 'left', 'left', 'center');
     $table->width = '100%';
 
     $books = $DB->get_records('reader_books');
 
     $usegroupidsql = "";
-    if ($grid) {
-        $groupstudents = groups_get_members($grid);
+    if ($gid) {
+        $groupstudents = groups_get_members($gid);
         foreach ($groupstudents as $groupstudents_) {
             $allids .= $groupstudents_->id.",";
         }
         $allids = substr($allids, 0, -1);
-        $usegroupidsql = 'and ra.userid IN ({$allids})';
+        $usegroupidsql = ' AND ra.userid IN ({$allids})';
     }
 
     while(list($bookkey, $book) = each($books)) {
@@ -2034,17 +2041,22 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
       if (reader_check_search_text($searchtext, '', $book)) {
         $totalgrade = 0;
 
-        $attemptsofbook = $DB->get_records_sql('SELECT *,u.username,u.firstname,u.lastname FROM {reader_attempts} ra INNER JOIN {user} u ON u.id = ra.userid WHERE ra.quizid= ?  and ra.reader= ?  {$usegroupidsql}', array($book->id, $reader->id));
-        while(list($attemptsofbookkey, $attemptsofbook_) = each($attemptsofbook)) {
-        //foreach ($attemptsofbook as $attemptsofbook_) {
+        $select = 'ra.*, u.username, u.firstname, u.lastname';
+        $from   = '{reader_attempts} ra INNER JOIN {user} u ON u.id = ra.userid';
+        $where  = 'ra.quizid= ? AND ra.reader= ? '.$usegroupidsql;
+        $params = array($book->quizid, $reader->id);
+        $readerattempts = $DB->get_records_sql("SELECT $select FROM $from WHERE $where", $params);
+        while(list($readerattemptskey, $readerattempt) = each($readerattempts)) {
+        //foreach ($readerattempts as $readerattempt) {
             $table->data[] = new html_table_row(array(
-                array('<a href="report.php?idh='.$id.'&q='.$book->quizid.'&mode=analysis&b='.$book->id.'">'.$book->name.'</a>', $book->name),
+                //array('<a href="report.php?idh='.$id.'&q='.$book->quizid.'&mode=analysis&b='.$book->id.'">'.$book->name.'</a>', $book->name),
+                html_writer::tag('a', $book->name, array('href' => new moodle_url('/mod/reader/report.php', array('idh' => $id, 'q' => $book->quizid, 'mode' => 'analysis', 'b' => $book->id)))),
                 $book->publisher,
                 $book->level,
                 reader_get_reader_difficulty($reader, $book->id),
-                reader_fullname_link_t($attemptsofbook_),
-                reader_user_link_t($attemptsofbook_),
-                $attemptsofbook_->passed));
+                reader_fullname_link($readerattempt, $course->id, $excel),
+                reader_username_link($readerattempt, $course->id, $excel),
+                $readerattempt->passed));
         }
       }
     }
@@ -2073,40 +2085,40 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
     echo $OUTPUT->single_button(new moodle_url('admin.php',$options), get_string('downloadexcel', 'reader'), 'post', $options);
     echo '</td></tr></table>';
 
-    reader_print_search_form ($id, $act);
+    reader_print_search_form();
 
-    $groups = groups_get_all_groups ($course->id);
+    $groups = groups_get_all_groups($course->id);
 
     if ($groups) {
         reader_print_group_select_box($course->id, 'admin.php?a=admin&id='.$id.'&act='.$act.'&sort='.$sort.'&orderby='.$orderby);
     }
 
-    reader_select_perpage($id, $act, $sort, $orderby, $grid);
+    reader_select_perpage($id, $act, $sort, $orderby, $gid);
     list($totalcount, $table->data, $startrec, $finishrec, $options['page']) = reader_get_pages($table->data, $page, $perpage);
-    $pagingbar = new paging_bar($totalcount, $page, $perpage, "admin.php?a=admin&id={$id}&act={$act}&sort={$sort}&orderby={$orderby}&grid={$grid}&amp;");
+    $pagingbar = new paging_bar($totalcount, $page, $perpage, "admin.php?a=admin&id={$id}&act={$act}&sort={$sort}&orderby={$orderby}&gid={$gid}&amp;");
     echo $OUTPUT->render($pagingbar);
 
-    if ($table) {
+    if (isset($table) && count($table->data)) {
         echo html_writer::table($table);
     }
 
-    $pagingbar = new paging_bar($totalcount, $page, $perpage, "admin.php?a=admin&id={$id}&act={$act}&sort={$sort}&orderby={$orderby}&grid={$grid}&amp;");
+    $pagingbar = new paging_bar($totalcount, $page, $perpage, "admin.php?a=admin&id={$id}&act={$act}&sort={$sort}&orderby={$orderby}&gid={$gid}&amp;");
     echo $OUTPUT->render($pagingbar);
 
 } else if ($act == 'viewattempts' && has_capability('mod/reader:viewanddeleteattempts', $contextmodule)) {
 
     $table = new html_table();
 
-    if (! $searchtext && !$grid) {
+    if (! $searchtext && !$gid) {
       echo "<center><h2><font color=\"red\">".get_string('pleasespecifyyourclassgroup', 'reader').'</font></h2></center>';
     } else {
         if (has_capability('mod/reader:deletereaderattempts', $contextmodule)) {
-            $titlesarray = Array ('Username'=>'username', 'Fullname'=>'fullname', 'Book Name'=>'bname', 'AttemptID'=>'attemptid', 'Score'=>'score', 'P/F/C'=>'', 'Finishtime'=>'timefinish', 'Option' => '');
+            $titlesarray = array('Username'=>'username', 'Fullname'=>'fullname', 'Book Name'=>'bname', 'AttemptID'=>'attemptid', 'Score'=>'score', 'P/F/C'=>'', 'Finishtime'=>'timefinish', 'Option' => '');
         } else {
-            $titlesarray = Array ('Username'=>'username', 'Fullname'=>'fullname', 'Book Name'=>'bname', 'AttemptID'=>'attemptid', 'Score'=>'score', 'P/F/C'=>'', 'Finishtime'=>'timefinish');
+            $titlesarray = array('Username'=>'username', 'Fullname'=>'fullname', 'Book Name'=>'bname', 'AttemptID'=>'attemptid', 'Score'=>'score', 'P/F/C'=>'', 'Finishtime'=>'timefinish');
         }
 
-        $table->head = reader_make_table_headers($titlesarray, $orderby, $sort, '?a=admin&id='.$id.'&act=viewattempts&page='.$page.'&grid='.$grid.'&searchtext='.$searchtext);
+        $table->head = reader_make_table_headers($titlesarray, $orderby, $sort, '?a=admin&id='.$id.'&act=viewattempts&page='.$page.'&gid='.$gid.'&searchtext='.$searchtext);
         $table->align = array('left', 'left', 'left', 'center', 'center', 'center', 'center', 'center');
         $table->width = '100%';
 
@@ -2126,8 +2138,8 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
             $myxls->write_string(2, 6, 'P/F/C',$formatbc);
         }
 
-        if (! $searchtext && $grid) {
-            $groupstudents = groups_get_members($grid);
+        if (! $searchtext && $gid) {
+            $groupstudents = groups_get_members($gid);
             $allids = "";
             foreach ($groupstudents as $groupstudents_) {
                 $allids .= $groupstudents_->id.',';
@@ -2211,8 +2223,8 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
             if (has_capability('mod/reader:deletereaderattempts', $contextmodule)) {
                 $deletelink = '<a href="admin.php?a=admin&id='.$id.'&act=viewattempts&page='.$page.'&sort='.$sort.'&orderby='.$orderby.'&attemptid='.$attemptdata->id.'" onclick="alert(\'`'.$attemptdata->name.'` quiz  for `'.$attemptdata->username.' ('.$attemptdata->firstname.' '.$attemptdata->lastname.')` has been deleted\');">Delete</a>';
                 $table->data[] = new html_table_row(array(
-                    reader_user_link_t($attemptdata),
-                    reader_fullname_link_t($attemptdata),
+                    reader_username_link($attemptdata, $course->id, $excel),
+                    reader_fullname_link($attemptdata, $course->id, $excel),
                     $attemptdata->name,
                     $attemptdata->attempt,
                     $attemptdata->percentgrade.'%',
@@ -2221,8 +2233,8 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
                     $deletelink));
             } else {
                 $table->data[] = new html_table_row(array(
-                    reader_user_link_t($attemptdata),
-                    reader_fullname_link_t($attemptdata),
+                    reader_username_link($attemptdata, $course->id, $excel),
+                    reader_fullname_link($attemptdata, $course->id, $excel),
                     $attemptdata->name,
                     $attemptdata->attempt,
                     $attemptdata->percentgrade.'%',
@@ -2255,28 +2267,28 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
         echo $OUTPUT->single_button(new moodle_url('admin.php',$options), get_string('downloadexcel', 'reader'), 'post', $options);
         echo '</td></tr></table>';
     }
-    reader_print_search_form ($id, $act);
+    reader_print_search_form();
 
-    $groups = groups_get_all_groups ($course->id);
+    $groups = groups_get_all_groups($course->id);
 
     if ($groups) {
         reader_print_group_select_box($course->id, 'admin.php?a=admin&id='.$id.'&act=viewattempts&sort='.$sort.'&orderby='.$orderby);
     }
 
-    reader_select_perpage($id, $act, $sort, $orderby, $grid);
+    reader_select_perpage($id, $act, $sort, $orderby, $gid);
     list($totalcount, $table->data, $startrec, $finishrec, $options['page']) = reader_get_pages($table->data, $page, $perpage);
-    $pagingbar = new paging_bar($totalcount, $page, $perpage, "admin.php?a=admin&id={$id}&act={$act}&sort={$sort}&orderby={$orderby}&grid={$grid}&amp;");
+    $pagingbar = new paging_bar($totalcount, $page, $perpage, "admin.php?a=admin&id={$id}&act={$act}&sort={$sort}&orderby={$orderby}&gid={$gid}&amp;");
     echo $OUTPUT->render($pagingbar);
 
-    if ($table) {
+    if (isset($table) && count($table->data)) {
         echo html_writer::table($table);
     }
 
-    $pagingbar = new paging_bar($totalcount, $page, $perpage, "admin.php?a=admin&id={$id}&act={$act}&sort={$sort}&orderby={$orderby}&grid={$grid}&amp;");
+    $pagingbar = new paging_bar($totalcount, $page, $perpage, "admin.php?a=admin&id={$id}&act={$act}&sort={$sort}&orderby={$orderby}&gid={$gid}&amp;");
     echo $OUTPUT->render($pagingbar);
 
     if (has_capability('mod/reader:deletequizzes', $contextmodule)) {
-      echo '<form action="?a=admin&id='.$id.'&act='.$act.'&sort='.$sort.'&orderby='.$orderby.'&grid='.$grid.'" method="post"><div> ';
+      echo '<form action="?a=admin&id='.$id.'&act='.$act.'&sort='.$sort.'&orderby='.$orderby.'&gid='.$gid.'" method="post"><div> ';
       echo ' <div style="margin:20px 0;font-size:16px;">'.get_string('restoredeletedattempt', 'reader').'</div>';
       echo '<div style="float:left;width:200px;">'.get_string('studentuserid', 'reader').'</div>';
       echo '<div style="float:left;width:200px;"><input type="text" name="studentuserid" value="" style="width:120px;" /></div><div style="clear:both;"></div>';
@@ -2296,21 +2308,21 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
 
     $table = new html_table();
 
-    $titlesarray = Array ('Image'=>'', 'Username'=>'username', 'Fullname<br />Click to view screen'=>'fullname', 'Start level'=>'startlevel', 'Current level'=>'currentlevel', 'NoPromote'=>'nopromote', 'Stop Promo At'=>'promotionstops', 'Goal'=>'goal');
+    $titlesarray = array('Image'=>'', 'Username'=>'username', 'Fullname<br />Click to view screen'=>'fullname', 'Start level'=>'startlevel', 'Current level'=>'currentlevel', 'NoPromote'=>'nopromote', 'Stop Promo At'=>'promotionstops', 'Goal'=>'goal');
 
     if ($reader->individualstrictip == 1) {
         $titlesarray['Restrict IP'] = '';
     }
 
-    $table->head = reader_make_table_headers($titlesarray, $orderby, $sort, '?a=admin&id='.$id.'&act='.$act.'&page='.$page.'&grid='.$grid.'&searchtext='.$searchtext);
+    $table->head = reader_make_table_headers($titlesarray, $orderby, $sort, '?a=admin&id='.$id.'&act='.$act.'&page='.$page.'&gid='.$gid.'&searchtext='.$searchtext);
     $table->align = array('center', 'left', 'left', 'center', 'center', 'center', 'center', 'center', 'center');
     $table->width = '100%';
 
-    if (! $grid) {
-        $grid = NULL;
+    if (! $gid) {
+        $gid = NULL;
     }
 
-    $coursestudents = get_enrolled_users($context, NULL, $grid);
+    $coursestudents = get_enrolled_users($context, NULL, $gid);
 
     foreach ($coursestudents as $coursestudent) {
       if (reader_check_search_text($searchtext, $coursestudent)) {
@@ -2332,26 +2344,27 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
         }
 
         if ($studentlevel->startlevel >= 0) {
-            $startlevelt = reader_selectlevel_form ($coursestudent->id, $studentlevel, 'startlevel');
+            $startlevelt = reader_selectlevel_form($coursestudent->id, $studentlevel, 'startlevel');
         } else {
             $startlevelt = $studentlevel->startlevel;
         }
 
         if ($studentlevel->currentlevel >= 0) {
-            $currentlevelt = reader_selectlevel_form ($coursestudent->id, $studentlevel, 'currentlevel');
+            $currentlevelt = reader_selectlevel_form($coursestudent->id, $studentlevel, 'currentlevel');
         } else {
             $currentlevelt = $studentlevel->currentlevel;
         }
 
-        $nopromote     = reader_yes_no_box ($coursestudent->id, $studentlevel, 'nopromote', 1);
-        $promotionstop = reader_promotion_stop_box ($coursestudent->id, $studentlevel, 'promotionstop', 2);
-        $goalbox       = reader_goal_box ($coursestudent->id, $studentlevel, 'goal', 3, $reader);
+        $nopromote     = reader_yes_no_box($coursestudent->id, $studentlevel, 'nopromote', 1);
+        $promotionstop = reader_promotion_stop_box($coursestudent->id, $studentlevel, 'promotionstop', 2);
+        $goalbox       = reader_goal_box($coursestudent->id, $studentlevel, 'goal', 3, $reader);
 
-        list($linkusername, $username) = reader_user_link_t($coursestudent);
-        list($linkfullname, $username) = reader_fullname_link_t($coursestudent);
+        $linkusername = reader_username_link($coursestudent, $course->id, $excel);
 
         if (has_capability('mod/reader:viewstudentreaderscreens', $contextmodule)) {
-            $linkfullname = reader_fullname_link_viewasstudent($coursestudent, "grid={$grid}&searchtext={$searchtext}&page={$page}&sort={$sort}&orderby={$orderby}");
+            $linkfullname = reader_fullname_link_viewasstudent($coursestudent, $id, $excel);
+        } else {
+            $linkfullname = reader_fullname_link($coursestudent, $course->id, $excel);
         }
 
         if ($reader->individualstrictip == 1) {
@@ -2364,7 +2377,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
                 array($nopromote, $studentlevel->nopromote),
                 array($promotionstop, $studentlevel->promotionstop),
                 array($goalbox, $studentlevel->goal),
-                reader_selectip_form ($coursestudent->id, $reader)));
+                reader_selectip_form($coursestudent->id, $reader)));
         } else {
             $table->data[] = new html_table_row(array(
                 $picture,
@@ -2381,9 +2394,9 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
 
     reader_sort_table($table, $titlesarray, $orderby, $sort);
 
-    if ($grid) {
+    if ($gid) {
         $levels = array(0,1,2,3,4,5,6,7,8,9,10);
-        echo '<form action="?a=admin&id='.$id.'&act='.$act.'&sort='.$sort.'&orderby='.$orderby.'&grid='.$grid.'" method="post"><div> ';
+        echo '<form action="?a=admin&id='.$id.'&act='.$act.'&sort='.$sort.'&orderby='.$orderby.'&gid='.$gid.'" method="post"><div> ';
         print_string('changestartlevel', 'reader');
         echo ' <select name="changeallstartlevel">';
         foreach ($levels as $value) {
@@ -2395,7 +2408,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
         echo '</div></form>';
 
         $levels = array(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14);
-        echo '<form action="?a=admin&id='.$id.'&act='.$act.'&sort='.$sort.'&orderby='.$orderby.'&grid='.$grid.'" method="post"><div> ';
+        echo '<form action="?a=admin&id='.$id.'&act='.$act.'&sort='.$sort.'&orderby='.$orderby.'&gid='.$gid.'" method="post"><div> ';
         print_string('changecurrentlevel', 'reader');
         echo ' <select name="changeallcurrentlevel">';
         foreach ($levels as $value) {
@@ -2408,7 +2421,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
 
         //Points goal for all students
         $levels = array(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15);
-        echo '<form action="?a=admin&id='.$id.'&act='.$act.'&sort='.$sort.'&orderby='.$orderby.'&grid='.$grid.'" method="post"><div> ';
+        echo '<form action="?a=admin&id='.$id.'&act='.$act.'&sort='.$sort.'&orderby='.$orderby.'&gid='.$gid.'" method="post"><div> ';
         print_string('setuniformgoalinpoints', 'reader');
         echo ' <select name="changeallcurrentgoal">';
         foreach ($levels as $value) {
@@ -2432,7 +2445,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
             }
             $levels = $levels2;
         }
-        echo '<form action="?a=admin&id='.$id.'&act='.$act.'&sort='.$sort.'&orderby='.$orderby.'&grid='.$grid.'" method="post"><div> ';
+        echo '<form action="?a=admin&id='.$id.'&act='.$act.'&sort='.$sort.'&orderby='.$orderby.'&gid='.$gid.'" method="post"><div> ';
         print_string('setuniformgoalinwords', 'reader');
         echo ' <select name="changeallcurrentgoal">';
         foreach ($levels as $value) {
@@ -2445,7 +2458,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
 
         //"NoPromo"/"Promo" for all students
         $levels = array('Promo', 'NoPromo');
-        echo '<form action="?a=admin&id='.$id.'&act='.$act.'&sort='.$sort.'&orderby='.$orderby.'&grid='.$grid.'" method="post"><div> ';
+        echo '<form action="?a=admin&id='.$id.'&act='.$act.'&sort='.$sort.'&orderby='.$orderby.'&gid='.$gid.'" method="post"><div> ';
         print_string('changeallto', 'reader');
         echo ' <select name="changeallpromo">';
         foreach ($levels as $value) {
@@ -2458,7 +2471,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
 
         //Stop Promo for all students
         $levels = array(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15);
-        echo '<form action="?a=admin&id='.$id.'&act='.$act.'&sort='.$sort.'&orderby='.$orderby.'&grid='.$grid.'" method="post"><div> ';
+        echo '<form action="?a=admin&id='.$id.'&act='.$act.'&sort='.$sort.'&orderby='.$orderby.'&gid='.$gid.'" method="post"><div> ';
         print_string('changeallstoppromoto', 'reader');
         echo ' <select name="changeallstoppromo">';
         foreach ($levels as $value) {
@@ -2470,24 +2483,24 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
         echo '</div></form>';
     }
 
-    reader_print_search_form ($id, $act);
+    reader_print_search_form();
 
-    $groups = groups_get_all_groups ($course->id);
+    $groups = groups_get_all_groups($course->id);
 
     if ($groups) {
         reader_print_group_select_box($course->id, 'admin.php?a=admin&id='.$id.'&act='.$act.'&sort='.$sort.'&orderby='.$orderby);
     }
 
-    reader_select_perpage($id, $act, $sort, $orderby, $grid);
+    reader_select_perpage($id, $act, $sort, $orderby, $gid);
     list($totalcount, $table->data, $startrec, $finishrec, $options['page']) = reader_get_pages($table->data, $page, $perpage);
-    $pagingbar = new paging_bar($totalcount, $page, $perpage, "admin.php?a=admin&id={$id}&act={$act}&sort={$sort}&orderby={$orderby}&grid={$grid}&amp;");
+    $pagingbar = new paging_bar($totalcount, $page, $perpage, "admin.php?a=admin&id={$id}&act={$act}&sort={$sort}&orderby={$orderby}&gid={$gid}&amp;");
     echo $OUTPUT->render($pagingbar);
 
-    if ($table) {
+    if (isset($table) && count($table->data)) {
         echo html_writer::table($table);
     }
 
-    $pagingbar = new paging_bar($totalcount, $page, $perpage, "admin.php?a=admin&id={$id}&act={$act}&sort={$sort}&orderby={$orderby}&grid={$grid}&amp;");
+    $pagingbar = new paging_bar($totalcount, $page, $perpage, "admin.php?a=admin&id={$id}&act={$act}&sort={$sort}&orderby={$orderby}&gid={$gid}&amp;");
     echo $OUTPUT->render($pagingbar);
 
 } else if ($act == 'changereaderlevel' && has_capability('mod/reader:changereadinglevelorlengthfactor', $contextmodule)) {
@@ -2495,12 +2508,12 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
     $table = new html_table();
 
     if ($reader->bookinstances == 1) {
-      $titlesarray = Array ('Title'=>'title', 'Publisher'=>'publisher', 'Level'=>'level', 'Reading Level'=>'readinglevel', 'Length'=>'length');
+      $titlesarray = array('Title'=>'title', 'Publisher'=>'publisher', 'Level'=>'level', 'Reading Level'=>'readinglevel', 'Length'=>'length');
     } else {
-      $titlesarray = Array ('Title'=>'title', 'Publisher'=>'publisher', 'Level'=>'level', 'Words'=>'words', 'Reading Level'=>'readinglevel', 'Length'=>'length');
+      $titlesarray = array('Title'=>'title', 'Publisher'=>'publisher', 'Level'=>'level', 'Words'=>'words', 'Reading Level'=>'readinglevel', 'Length'=>'length');
     }
 
-    $table->head = reader_make_table_headers($titlesarray, $orderby, $sort, '?a=admin&id='.$id.'&act='.$act.'&grid='.$grid.'&publisher='.$publisher.'&page='.$page.'&searchtext='.$searchtext);
+    $table->head = reader_make_table_headers($titlesarray, $orderby, $sort, '?a=admin&id='.$id.'&act='.$act.'&gid='.$gid.'&publisher='.$publisher.'&page='.$page.'&searchtext='.$searchtext);
     if ($reader->bookinstances == 1) {
       $table->align = array('left', 'left', 'left', 'center', 'center');
     } else {
@@ -2531,8 +2544,8 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
             $leveltitle     = reader_ajax_textbox_title($has_capability, $book, 'level', $id, $act);
             $publishertitle = reader_ajax_textbox_title($has_capability, $book, 'publisher', $id, $act);
 
-            $difficultyform = trim(reader_select_difficulty_form (reader_get_reader_difficulty($reader, $book->id), $book->id, $reader));
-            $lengthform = trim(reader_select_length_form (reader_get_reader_difficulty($reader, $book->id), $book->id, $reader));
+            $difficultyform = trim(reader_select_difficulty_form(reader_get_reader_difficulty($reader, $book->id), $book->id, $reader));
+            $lengthform = trim(reader_select_length_form(reader_get_reader_difficulty($reader, $book->id), $book->id, $reader));
 
             if ($reader->bookinstances == 1) {
                 $table->data[] = new html_table_row(array($book->name, $publishertitle, $leveltitle, $difficultyform, $lengthform));
@@ -2566,7 +2579,9 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
     echo '<select id="publisher_select" name="publisher" onchange="self.location=document.getElementById(\'publisherselect\').publisher.options[document.getElementById(\'publisherselect\').publisher.selectedIndex].value;">';
     foreach ($publisherform as $key => $value) {
         echo '<option value="'.$key.'" ';
-        if ($publisher == $value) { echo ' selected="selected" '; }
+        if ($publisher == $value) {
+            echo ' selected="selected" ';
+        }
         echo '>'.$value.'</option>';
     }
     echo '</select>';
@@ -2586,7 +2601,9 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
         echo '<select id="level_select" name="level" onchange="self.location=document.getElementById(\'publisherselect\').level.options[document.getElementById(\'publisherselect\').level.selectedIndex].value;">';
         foreach ($levelform as $key => $value) {
             echo '<option value="'.$key.'" ';
-            if ($level == $value) { echo ' selected="selected" '; }
+            if ($level == $value) {
+                echo ' selected="selected" ';
+            }
             echo '>'.$value.'</option>';
         }
         echo '</select>';
@@ -2612,7 +2629,9 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
           if (! in_array($value->publisher, $pubto)) {
             $pubto[] = $value->publisher;
             echo '<option value="'.$value->publisher.'" ';
-            if ($publisher == $value->publisher) { echo ' selected="selected" '; }
+            if ($publisher == $value->publisher) {
+                echo ' selected="selected" ';
+            }
             echo '>'.$value->publisher.'</option>';
           }
         }
@@ -2628,7 +2647,9 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
         echo ' <select name="level">';
         foreach ($level_ as $key => $value) {
             echo '<option value="'.$key.'" ';
-            if ($level == $key) { echo ' selected="selected" '; }
+            if ($level == $key) {
+                echo ' selected="selected" ';
+            }
             echo '>'.$key.'</option>';
         }
         echo '</select> ';
@@ -2647,7 +2668,9 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
         reset($length_);
         foreach ($length_ as $key => $value) {
             echo '<option value="'.$key.'" ';
-            if ($length == $key) { echo ' selected="selected" '; }
+            if ($length == $key) {
+                echo ' selected="selected" ';
+            }
             echo '>'.$key.'</option>';
         }
         echo '</select> ';
@@ -2669,7 +2692,9 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
         reset($difficulty_);
         foreach ($difficulty_ as $key => $value) {
             echo '<option value="'.$key.'" ';
-            if ($difficulty == $key) { echo ' selected="selected" '; }
+            if ($difficulty == $key) {
+                echo ' selected="selected" ';
+            }
             echo '>'.$key.'</option>';
         }
         echo '</select> ';
@@ -2686,13 +2711,13 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
     }
 
     list($totalcount, $table->data, $startrec, $finishrec, $options['page']) = reader_get_pages($table->data, $page, $perpage);
-    $pagingbar = new paging_bar($totalcount, $page, $perpage, "admin.php?a=admin&id={$id}&act={$act}&sort={$sort}&orderby={$orderby}&grid={$grid}&publisher={$publisher}&amp;");
+    $pagingbar = new paging_bar($totalcount, $page, $perpage, "admin.php?a=admin&id={$id}&act={$act}&sort={$sort}&orderby={$orderby}&gid={$gid}&publisher={$publisher}&amp;");
     echo $OUTPUT->render($pagingbar);
-    if ($table) {
+    if (isset($table) && count($table->data)) {
         echo html_writer::table($table);
     }
 
-    $pagingbar = new paging_bar($totalcount, $page, $perpage, "admin.php?a=admin&id={$id}&act={$act}&sort={$sort}&orderby={$orderby}&grid={$grid}&publisher={$publisher}&amp;");
+    $pagingbar = new paging_bar($totalcount, $page, $perpage, "admin.php?a=admin&id={$id}&act={$act}&sort={$sort}&orderby={$orderby}&gid={$gid}&publisher={$publisher}&amp;");
     echo $OUTPUT->render($pagingbar);
 
 } else if ($act == 'sendmessage' && has_capability('mod/reader:sendmessage', $contextmodule)) {
@@ -2721,7 +2746,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
 
             $mform    = &$this->_form;
 
-            $groups = groups_get_all_groups ($course->id);
+            $groups = groups_get_all_groups($course->id);
             $grouparray = array('0' => 'All Course students');
 
             foreach ($groups as $group) {
@@ -2752,7 +2777,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
     foreach ($textmessages as $textmessage) {
         $before = $textmessage->timebefore - time();
 
-        $forgroupsarray = explode (',', $textmessage->users);
+        $forgroupsarray = explode(',', $textmessage->users);
 
         $forgroup = "";
         $bgcolor  = '';
@@ -2860,7 +2885,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
 } else if ($act == 'awardextrapoints' && has_capability('mod/reader:awardextrapoints', $contextmodule)) {
     $table = new html_table();
 
-    $groups = groups_get_all_groups ($course->id);
+    $groups = groups_get_all_groups($course->id);
 
     $_SESSION['SESSION']->reader_perpage = 1000;
 
@@ -2868,31 +2893,31 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
         reader_print_group_select_box($course->id, 'admin.php?a=admin&id='.$id.'&act=awardextrapoints&sort='.$sort.'&orderby='.$orderby);
     }
 
-    if ($grid) {
+    if ($gid) {
       if ($award && $student) {
         echo "<center><h2><font color=\"red\">Done</font></h2></center>";
       } else {
         echo '<form action="" method="post"><table width="100%"><tr><td align="right"><input type="button" value="Select all" onclick="checkall();" /> <input type="button" value="Deselect all" onclick="uncheckall();" /></td></tr></table>';
-        $titlesarray = Array ('Image'=>'', 'Username'=>'username', 'Fullname'=>'fullname', 'Select Students'=>'');
+        $titlesarray = array('Image'=>'', 'Username'=>'username', 'Fullname'=>'fullname', 'Select Students'=>'');
 
-        $table->head = reader_make_table_headers($titlesarray, $orderby, $sort, '?a=admin&id='.$id.'&act=awardextrapoints&grid='.$grid);
+        $table->head = reader_make_table_headers($titlesarray, $orderby, $sort, '?a=admin&id='.$id.'&act=awardextrapoints&gid='.$gid);
         $table->align = array('center', 'left', 'left', 'center');
         $table->width = '100%';
 
-        $coursestudents = get_enrolled_users($context, NULL, $grid);
+        $coursestudents = get_enrolled_users($context, NULL, $gid);
 
         foreach ($coursestudents as $coursestudent) {
             $picture = $OUTPUT->user_picture($coursestudent,array($course->id, true, 0, true));
             $table->data[] = new html_table_row(array(
                 $picture,
-                reader_user_link_t($coursestudent),
-                reader_fullname_link_t($coursestudent),
+                reader_username_link($coursestudent, $course->id, $excel),
+                reader_fullname_link($coursestudent, $course->id, $excel),
                 '<input type="checkbox" name="student[]" value="'.$coursestudent->id.'" />'));
         }
 
         reader_sort_table($table, $titlesarray, $orderby, $sort);
 
-        if ($table) {
+        if (isset($table) && count($table->data)) {
             echo html_writer::table($table);
         }
 //fixed by Tom 4 July 2010
@@ -2974,7 +2999,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
             }
         }
 
-        //print_r ($allips);
+        //print_r($allips);
 
         foreach ($allips as $quize => $val) {
             $checkerarray = $val;
@@ -2993,7 +3018,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
                         $comparearr[$quize][$rid]      = $resultip;
                     }
                 }
-                reset ($checkerarray);
+                reset($checkerarray);
             }
         }
 
@@ -3023,7 +3048,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
           }
         }
 
-        $titlesarray = Array ('Book'=>'book', 'Username 1'=>'username1', 'Username 2'=>'username2', 'IP 1'=>'', 'IP 2'=>'', 'Time 1'=>'', 'Time 2'=>'', 'Time period'=>'', 'Log text'=>'');
+        $titlesarray = array('Book'=>'book', 'Username 1'=>'username1', 'Username 2'=>'username2', 'IP 1'=>'', 'IP 2'=>'', 'Time 1'=>'', 'Time 2'=>'', 'Time period'=>'', 'Log text'=>'');
 
         $table->head  = reader_make_table_headers($titlesarray, $orderby, $sort, '?a=admin&id='.$id.'&act='.$act);
         $table->align = array("left", "left", "left", "center", "center", "center", "center", "center", "left");
@@ -3144,22 +3169,22 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
 
         reader_sort_table($table, $titlesarray, $orderby, $sort);
 
-        if ($table) {
+        if (isset($table) && count($table->data)) {
             echo html_writer::table($table);
         }
 
         //echo $totalcount;
-        //print_r ($quizzes);
+        //print_r($quizzes);
     }
 
 } else if ($act == 'reportbyclass' && has_capability('mod/reader:readerviewreports', $contextmodule)) {
-    $groups = groups_get_all_groups ($course->id);
+    $groups = groups_get_all_groups($course->id);
 
     $table = new html_table();
 
-    $titlesarray = Array ('Group name'=>'groupname', 'Students with<br /> no quizzes'=>'noquizzes', 'Students with<br /> quizzes'=>'quizzes', 'Percent with<br /> quizzes'=>'quizzes', 'Average Taken<br /> Quizzes'=>'takenquizzes', 'Average Passed<br /> Quizzes'=>'passedquizzes', 'Average Failed<br /> Quizzes'=>'failedquizzes', 'Average total<br /> points'=>'totalpoints', 'Average words<br /> this term'=>'averagewordsthisterm', 'Average words<br /> all terms'=>'averagewordsallterms');
+    $titlesarray = array('Group name'=>'groupname', 'Students with<br /> no quizzes'=>'noquizzes', 'Students with<br /> quizzes'=>'quizzes', 'Percent with<br /> quizzes'=>'quizzes', 'Average Taken<br /> Quizzes'=>'takenquizzes', 'Average Passed<br /> Quizzes'=>'passedquizzes', 'Average Failed<br /> Quizzes'=>'failedquizzes', 'Average total<br /> points'=>'totalpoints', 'Average words<br /> this term'=>'averagewordsthisterm', 'Average words<br /> all terms'=>'averagewordsallterms');
 
-    $table->head = reader_make_table_headers($titlesarray, $orderby, $sort, '?a=admin&id='.$id.'&act='.$act.'&grid='.$grid.'&searchtext='.$searchtext.'&page='.$page.'&fromtime='.$fromtime);
+    $table->head = reader_make_table_headers($titlesarray, $orderby, $sort, '?a=admin&id='.$id.'&act='.$act.'&gid='.$gid.'&searchtext='.$searchtext.'&page='.$page.'&fromtime='.$fromtime);
     $table->align = array("left", "center", "center", "center", "center", "center", "center", "center", "center");
     $table->width = "100%";
 
@@ -3270,27 +3295,27 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
     echo '</td></tr></table>';
 
     echo '<table style="width:100%"><tr><td align="right">';
-    echo '<form action="#" id="getfromdate" class="popupform"><select name="fromtime" onchange="self.location=document.getElementById(\'getfromdate\').fromtime.options[document.getElementById(\'getfromdate\').fromtime.selectedIndex].value;"><option value="admin.php?a=admin&id='.$id.'&act='.$act.'&sort='.$sort.'&orderby='.$orderby.'&grid='.$grid.'&perpage='.$page.'&fromtime=0"';
+    echo '<form action="#" id="getfromdate" class="popupform"><select name="fromtime" onchange="self.location=document.getElementById(\'getfromdate\').fromtime.options[document.getElementById(\'getfromdate\').fromtime.selectedIndex].value;"><option value="admin.php?a=admin&id='.$id.'&act='.$act.'&sort='.$sort.'&orderby='.$orderby.'&gid='.$gid.'&perpage='.$page.'&fromtime=0"';
     if ($fromtime == 86400 || !$fromtime) {
         echo ' selected="selected" ';
     }
-    echo '>All time</option><option value="admin.php?a=admin&id='.$id.'&act='.$act.'&sort='.$sort.'&orderby='.$orderby.'&grid='.$grid.'&perpage='.$page.'&fromtime='.$reader->ignoredate.'"';
+    echo '>All time</option><option value="admin.php?a=admin&id='.$id.'&act='.$act.'&sort='.$sort.'&orderby='.$orderby.'&gid='.$gid.'&perpage='.$page.'&fromtime='.$reader->ignoredate.'"';
     if ($fromtime > 86400) {
         echo ' selected="selected" ';
     }
     echo '>Current Term</option></select></form>';
     echo '</td></tr></table>';
 
-    reader_select_perpage($id, $act, $sort, $orderby, $grid);
+    reader_select_perpage($id, $act, $sort, $orderby, $gid);
     list($totalcount, $table->data, $startrec, $finishrec, $options['page']) = reader_get_pages($table->data, $page, $perpage);
-    $pagingbar = new paging_bar($totalcount, $page, $perpage, "admin.php?a=admin&id={$id}&act={$act}&sort={$sort}&orderby={$orderby}&grid={$grid}&fromtime={$fromtime}&amp;");
+    $pagingbar = new paging_bar($totalcount, $page, $perpage, "admin.php?a=admin&id={$id}&act={$act}&sort={$sort}&orderby={$orderby}&gid={$gid}&fromtime={$fromtime}&amp;");
     echo $OUTPUT->render($pagingbar);
 
-    if ($table) {
+    if (isset($table) && count($table->data)) {
         echo html_writer::table($table);
     }
 
-    $pagingbar = new paging_bar($totalcount, $page, $perpage, "admin.php?a=admin&id={$id}&act={$act}&sort={$sort}&orderby={$orderby}&grid={$grid}&fromtime={$fromtime}&amp;");
+    $pagingbar = new paging_bar($totalcount, $page, $perpage, "admin.php?a=admin&id={$id}&act={$act}&sort={$sort}&orderby={$orderby}&gid={$gid}&fromtime={$fromtime}&amp;");
     echo $OUTPUT->render($pagingbar);
 
 } else if ($act == 'setgoal' && has_capability('mod/reader:setgoal', $contextmodule)) {
@@ -3508,7 +3533,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
         }
         $data = reader_order_object($data, "ratingaverage");
 
-        $titlesarray = Array ('Book Title'=>'booktitle', 'Publisher'=>'publisher', 'R. Level'=>'level', 'Avg Rating'=>'avrating', 'No. of Ratings'=>'nrating');
+        $titlesarray = array('Book Title'=>'booktitle', 'Publisher'=>'publisher', 'R. Level'=>'level', 'Avg Rating'=>'avrating', 'No. of Ratings'=>'nrating');
 
         $table->head = reader_make_table_headers($titlesarray, $orderby, $sort, '?a=admin&id='.$id.'&act='.$act.'&booksratingbest='.$booksratingbest.'&booksratinglevel='.$booksratinglevel.'&booksratingterm='.$booksratingterm.'&booksratingwithratings='.$booksratingwithratings."&booksratingshow=Go");
         $table->align = array("left", "left", "center", "center", "center");
@@ -3548,7 +3573,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
         }
         reader_sort_table($table, $titlesarray, $orderby, $sort);
 
-        if ($table) {
+        if (isset($table) && count($table->data)) {
             echo html_writer::table($table);
         }
     }
@@ -3560,9 +3585,9 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
 } else if ($act == 'viewlogsuspiciousactivity' && has_capability('mod/reader:readerviewreports', $contextmodule)) {
     $table = new html_table();
 
-    $titlesarray = Array ('Image'=>'', 'By Username'=>'byusername', 'Student 1'=>'student1', 'Student 2'=>'student2', 'Quiz'=>'quiz', 'Status'=>'status', 'Date'=>'date');
+    $titlesarray = array('Image'=>'', 'By Username'=>'byusername', 'Student 1'=>'student1', 'Student 2'=>'student2', 'Quiz'=>'quiz', 'Status'=>'status', 'Date'=>'date');
 
-    $table->head = reader_make_table_headers($titlesarray, $orderby, $sort, '?a=admin&id='.$id.'&act='.$act.'&grid='.$grid.'&page='.$page);
+    $table->head = reader_make_table_headers($titlesarray, $orderby, $sort, '?a=admin&id='.$id.'&act='.$act.'&gid='.$gid.'&page='.$page);
     $table->align = array("center", "left", "left", "left", "left", "center", "center");
     $table->width = "100%";
 
@@ -3581,8 +3606,8 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
         $myxls->write_string(2, 5, 'Date',$formatbc);
     }
 
-    if (! $grid) {
-        $grid = NULL;
+    if (! $gid) {
+        $gid = NULL;
     }
 
     $cheatedlogs = $DB->get_records('reader_cheated_log', array('readerid' => $reader->id));
@@ -3590,7 +3615,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
     foreach ($cheatedlogs as $cheatedlog) {
         $cheatedstring = '';
         if ($cheatedlog->status == "cheated") {
-            $cheatedstring = ' <a href="admin.php?a='.$a.'&id='.$id.'&act='.$act.'&grid='.$grid.'&page='.$page.'&sort='.$sort.'&orderby='.$orderby.'&uncheated='.$cheatedlog->attempt1.'_'.$cheatedlog->attempt2.'" onclick="if(confirm(\'Set passed ?\')) return true; else return false;">Set passed</a>';
+            $cheatedstring = ' <a href="admin.php?a='.$a.'&id='.$id.'&act='.$act.'&gid='.$gid.'&page='.$page.'&sort='.$sort.'&orderby='.$orderby.'&uncheated='.$cheatedlog->attempt1.'_'.$cheatedlog->attempt2.'" onclick="if(confirm(\'Set passed ?\')) return true; else return false;">Set passed</a>';
         }
 
         $byuser  = $DB->get_record('user', array('id' => $cheatedlog->byuserid));
@@ -3601,9 +3626,9 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
         $picture = $OUTPUT->user_picture($byuser,array($course->id, true, 0, true));
         $table->data[] = new html_table_row(array(
             $picture,
-            reader_fullname_link_t($byuser),
-            reader_fullname_link_t($user1),
-            reader_fullname_link_t($user2),
+            reader_fullname_link($byuser, $course->id, $excel),
+            reader_fullname_link($user1, $course->id, $excel),
+            reader_fullname_link($user2, $course->id, $excel),
             $quiz->name,
             $cheatedlog->status.$cheatedstring,
             date("d M Y", $cheatedlog->date)
@@ -3633,16 +3658,16 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
     echo $OUTPUT->single_button(new moodle_url('admin.php',$options), get_string('downloadexcel', 'reader'), 'post', $options);
     echo '</td></tr></table>';
 
-    reader_select_perpage($id, $act, $sort, $orderby, $grid);
+    reader_select_perpage($id, $act, $sort, $orderby, $gid);
     list($totalcount, $table->data, $startrec, $finishrec, $options['page']) = reader_get_pages($table->data, $page, $perpage);
-    $pagingbar = new paging_bar($totalcount, $page, $perpage, "admin.php?a=admin&id={$id}&act={$act}&sort={$sort}&orderby={$orderby}&grid={$grid}&amp;");
+    $pagingbar = new paging_bar($totalcount, $page, $perpage, "admin.php?a=admin&id={$id}&act={$act}&sort={$sort}&orderby={$orderby}&gid={$gid}&amp;");
     echo $OUTPUT->render($pagingbar);
 
-    if ($table) {
+    if (isset($table) && count($table->data)) {
         echo html_writer::table($table);
     }
 
-    $pagingbar = new paging_bar($totalcount, $page, $perpage, "admin.php?a=admin&id={$id}&act={$act}&sort={$sort}&orderby={$orderby}&grid={$grid}&amp;");
+    $pagingbar = new paging_bar($totalcount, $page, $perpage, "admin.php?a=admin&id={$id}&act={$act}&sort={$sort}&orderby={$orderby}&gid={$gid}&amp;");
     echo $OUTPUT->render($pagingbar);
 
 } else if ($act == 'exportstudentrecords' && has_capability('mod/reader:userdbmanagement', $contextmodule)) {
@@ -3751,7 +3776,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
                 } else {
                     echo " &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Can't add attempt <br />\n";
                     echo "<pre>";
-                    print_r ($newdata);
+                    print_r($newdata);
                     echo "</pre>";
                 }
             }
@@ -3810,17 +3835,17 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
 } else if ($act == 'assignpointsbookshavenoquizzes' && has_capability('mod/reader:changestudentslevelsandpromote', $contextmodule)) {
     $table = new html_table();
 
-    $titlesarray = Array ('<input type="button" value="Select all" onclick="checkall();" />'=>'', 'Image'=>'', 'Username'=>'username', 'Fullname<br />Click to view screen'=>'fullname', 'Current level'=>'currentlevel', 'Total words<br /> this term'=>'totalwordsthisterm', 'Total words<br /> all terms'=>'totalwordsallterms');
+    $titlesarray = array('<input type="button" value="Select all" onclick="checkall();" />'=>'', 'Image'=>'', 'Username'=>'username', 'Fullname<br />Click to view screen'=>'fullname', 'Current level'=>'currentlevel', 'Total words<br /> this term'=>'totalwordsthisterm', 'Total words<br /> all terms'=>'totalwordsallterms');
 
-    $table->head = reader_make_table_headers($titlesarray, $orderby, $sort, '?a=admin&id='.$id.'&act='.$act.'&book='.$book.'&grid='.$grid.'&searchtext='.$searchtext.'&page='.$page);
+    $table->head = reader_make_table_headers($titlesarray, $orderby, $sort, '?a=admin&id='.$id.'&act='.$act.'&book='.$book.'&gid='.$gid.'&searchtext='.$searchtext.'&page='.$page);
     $table->align = array("center", "center", "left", "left", "center", "center", "center");
     $table->width = "100%";
 
-    if (! $grid) {
-        $grid = NULL;
+    if (! $gid) {
+        $gid = NULL;
     }
 
-    $coursestudents = get_enrolled_users($context, NULL, $grid);
+    $coursestudents = get_enrolled_users($context, NULL, $gid);
 
     foreach ($coursestudents as $coursestudent) {
       if (reader_check_search_text($searchtext, $coursestudent)) {
@@ -3863,15 +3888,15 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
 
         if ($attemptdata = reader_get_student_attempts($coursestudent->id, $reader)) {
             if (has_capability('mod/reader:viewstudentreaderscreens', $contextmodule)) {
-                $link = reader_fullname_link_viewasstudent($coursestudent, "grid={$grid}&book={$book}&searchtext={$searchtext}&page={$page}&sort={$sort}&orderby={$orderby}");
+                $link = reader_fullname_link_viewasstudent($coursestudent, $id, $excel);
             } else {
-                $link = reader_fullname_link_t($coursestudent);
+                $link = reader_fullname_link($coursestudent, $course->id, $excel);
             }
 
             $table->data[] = new html_table_row(array(
                 '<input type="checkbox" name="noquizuserid[]" value="'.$coursestudent->id.'" />',
                 $picture,
-                reader_user_link_t($coursestudent),
+                reader_username_link($coursestudent, $course->id, $excel),
                 $link,
                 $attemptdata[1]['currentlevel'],
                 $data['totalwordsthisterm'],
@@ -3879,15 +3904,15 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
             ));
         } else {
             if (has_capability('mod/reader:viewstudentreaderscreens', $contextmodule)) {
-                $link = reader_fullname_link_viewasstudent($coursestudent);
+                $link = reader_fullname_link_viewasstudent($coursestudent, $id, $excel);
             } else {
-                $link = reader_fullname_link_t($coursestudent);
+                $link = reader_fullname_link($coursestudent, $course->id, $excel);
             }
 
             $table->data[] = new html_table_row(array(
                 '<input type="checkbox" name="noquizuserid[]" value="'.$coursestudent->id.'" />',
                 $picture,
-                reader_user_link_t($coursestudent),
+                reader_username_link($coursestudent, $course->id, $excel),
                 $link,
                 $attemptdata[1]['currentlevel'],
                 0,0));
@@ -3897,9 +3922,9 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
 
     reader_sort_table($table, $titlesarray, $orderby, $sort);
 
-    reader_print_search_form ($id, $act);
+    reader_print_search_form();
 
-    $groups = groups_get_all_groups ($course->id);
+    $groups = groups_get_all_groups($course->id);
 
     if ($groups) {
         reader_print_group_select_box($course->id, 'admin.php?a=admin&id='.$id.'&act='.$act.'&book='.$book.'&sort='.$sort.'&orderby='.$orderby);
@@ -3939,7 +3964,9 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
     echo '<select name="publisher" id="id_publisher" onchange="request(\'view_get_bookslist_noquiz.php?ajax=true&\' + this.options[this.selectedIndex].value,\'selectthebook\'); return false;">';
     foreach ($publisherform as $publisherformkey => $publisherformvalue) {
         echo '<option value="'.$publisherformkey.'" ';
-        if ($publisherformvalue == $publisher) { echo 'selected="selected"'; }
+        if ($publisherformvalue == $publisher) {
+            echo 'selected="selected"';
+        }
         echo ' >'.$publisherformvalue.'</option>';
     }
     echo '</select>';
@@ -3955,18 +3982,18 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
     echo '</center>';
     //echo '</form></center>';
 
-    reader_select_perpage($id, $act, $sort, $orderby, $grid);
+    reader_select_perpage($id, $act, $sort, $orderby, $gid);
     list($totalcount, $table->data, $startrec, $finishrec, $options['page']) = reader_get_pages($table->data, $page, $perpage);
-    $pagingbar = new paging_bar($totalcount, $page, $perpage, "admin.php?a=admin&id={$id}&act={$act}&book={$book}&sort={$sort}&orderby={$orderby}&grid={$grid}&amp;");
+    $pagingbar = new paging_bar($totalcount, $page, $perpage, "admin.php?a=admin&id={$id}&act={$act}&book={$book}&sort={$sort}&orderby={$orderby}&gid={$gid}&amp;");
     echo $OUTPUT->render($pagingbar);
 
-    if ($table) {
+    if (isset($table) && count($table->data)) {
         echo html_writer::table($table);
     }
 
     echo '</form>';
 
-    $pagingbar = new paging_bar($totalcount, $page, $perpage, "admin.php?a=admin&id={$id}&act={$act}&book={$book}&sort={$sort}&orderby={$orderby}&grid={$grid}&amp;");
+    $pagingbar = new paging_bar($totalcount, $page, $perpage, "admin.php?a=admin&id={$id}&act={$act}&book={$book}&sort={$sort}&orderby={$orderby}&gid={$gid}&amp;");
     echo $OUTPUT->render($pagingbar);
 
 } else if ($act == 'adjustscores' && has_capability('mod/reader:manage', $contextmodule)) {
@@ -3975,7 +4002,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
     if ($sort == 'username') {
         $sort = 'title';
     }
-    $titlesarray = Array (''=>'', 'Full Name'=>'username', 'Title'=>'title', 'Publisher'=>'publisher', 'Level'=>'level', 'Reading Level'=>'rlevel', 'Reading level'=>'rlevel', 'Score'=>'score', 'P/F/C'=>'', 'Finishtime'=>'finishtime', 'Option'=>'');
+    $titlesarray = array(''=>'', 'Full Name'=>'username', 'Title'=>'title', 'Publisher'=>'publisher', 'Level'=>'level', 'Reading Level'=>'rlevel', 'Reading level'=>'rlevel', 'Score'=>'score', 'P/F/C'=>'', 'Finishtime'=>'finishtime', 'Option'=>'');
 
     $table->head = reader_make_table_headers($titlesarray, $orderby, $sort, '?a=admin&id='.$id.'&act='.$act.'&searchtext='.$searchtext);
     $table->align = array("left", "left", "left", "left", "center", "center", "center", "center", "center", "center", "center");
@@ -3984,26 +4011,26 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
     if ($book >= 1) {
         $bookdata = $DB->get_record('reader_books', array('id' => $book));
     }
-    $attemptsofbook = $DB->get_records_sql('SELECT * FROM {reader_attempts} WHERE quizid= ?  and reader= ? ', array($book, $reader->id));
+    $readerattempts = $DB->get_records_sql('SELECT * FROM {reader_attempts} WHERE quizid= ?  and reader= ? ', array($book, $reader->id));
 
-    while(list($attemptsofbookkey, $attemptsofbook_) = each($attemptsofbook)) {
-        if (strtolower($attemptsofbook_->passed) == 'true') {
+    while(list($readerattemptskey, $readerattempt) = each($readerattempts)) {
+        if (strtolower($readerattempt->passed) == 'true') {
           $pfcmark = 'P';
-        } else if (strtolower($attemptsofbook_->passed) == 'false') {
+        } else if (strtolower($readerattempt->passed) == 'false') {
           $pfcmark = 'F';
         } else { $pfcmark = 'C'; }
-        $userdata = $DB->get_record('user', array('id' => $attemptsofbook_->userid));
+        $userdata = $DB->get_record('user', array('id' => $readerattempt->userid));
         $table->data[] = new html_table_row(array(
-            '<input type="checkbox" name="adjustscoresupbooks[]" value="'.$attemptsofbook_->id.'" />',
+            '<input type="checkbox" name="adjustscoresupbooks[]" value="'.$readerattempt->id.'" />',
             fullname($userdata),
             array('<a href="report.php?idh='.$id.'&q='.$bookdata->quizid.'&mode=analysis&b='.$bookdata->id.'">'.$bookdata->name.'</a>', $bookdata->name),
             $bookdata->publisher,
             $bookdata->level,
             reader_get_reader_difficulty($reader, $bookdata->id),
             $bookdata->difficulty,
-            round($attemptsofbook_->percentgrade)."%",
+            round($readerattempt->percentgrade)."%",
             $pfcmark,
-            date("d-M-Y", $attemptsofbook_->timemodified),
+            date("d-M-Y", $readerattempt->timemodified),
             'deleted'));
     }
 
@@ -4014,12 +4041,12 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
     }
 
     echo '<table style="width:100%"><tr><td align="right">';
-    $publisherform = Array("id=".$id.'&publisher=Select Publisher' => get_string('selectpublisher', 'reader'));
-    $publisherform2 = Array("id=".$id.'&publisher=Select Publisher' => get_string('selectpublisher', 'reader'));
-    $seriesform    = Array(get_string('selectseries', 'reader'));
-    $levelsform    = Array(get_string('selectlevel', 'reader'));
-    $booksform     = Array();
-    $publishers = $DB->get_records('reader_books', NULL, NULL, "id,publisher");
+    $publisherform  = array("id=".$id.'&publisher=Select Publisher' => get_string('selectpublisher', 'reader'));
+    $publisherform2 = array("id=".$id.'&publisher=Select Publisher' => get_string('selectpublisher', 'reader'));
+    $seriesform     = array(get_string('selectseries', 'reader'));
+    $levelsform     = array(get_string('selectlevel', 'reader'));
+    $booksform      = array();
+    $publishers = $DB->get_records('reader_books', NULL, NULL, 'id,publisher');
     foreach ($publishers as $publisher_) {
         $publisherform["id=".$id."&publisher=".$publisher_->publisher] = $publisher_->publisher;
     }
@@ -4051,7 +4078,9 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
     echo '<select name="publisher" id="id_publisher" onchange="'."request('view_get_bookslist.php?onlypub=1&ajax=true&' + this.options[this.selectedIndex].value,'selectthebook'); return false;".'">';
     foreach ($publisherform as $publisherformkey => $publisherformvalue) {
         echo '<option value="'.$publisherformkey.'" ';
-        if ($publisherformvalue == $publisher) { echo 'selected="selected"'; }
+        if ($publisherformvalue == $publisher) {
+            echo 'selected="selected"';
+        }
         echo ' >'.$publisherformvalue.'</option>';
     }
     echo '</select>';
@@ -4084,7 +4113,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
 
     echo '</div>';
 
-    if ($table) {
+    if (isset($table) && count($table->data)) {
         echo html_writer::table($table);
     }
 

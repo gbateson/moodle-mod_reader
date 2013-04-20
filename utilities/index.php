@@ -51,15 +51,20 @@ $dirpath = $CFG->dirroot.'/'.$dirname;
 
 echo html_writer::start_tag('ul')."\n";
 
+$files = array();
 $items = new DirectoryIterator($dirpath);
 foreach ($items as $item) {
     if ($item->isDot() || substr($item, 0, 1)=='.' || $item=='index.php') {
         continue;
     }
     if ($item->isFile()) {
-        $href = $CFG->wwwroot.'/'.$dirname.'/'.$item;
-        echo html_writer::tag('li', html_writer::tag('a', $item, array('href' => $href)))."\n";
+        $files[] = "$item"; // convert $item to string
     }
+}
+sort($files);
+foreach ($files as $file) {
+    $href = $CFG->wwwroot.'/'.$dirname.'/'.$file;
+    echo html_writer::tag('li', html_writer::tag('a', $file, array('href' => $href)))."\n";
 }
 
 echo html_writer::end_tag('ul')."\n";
