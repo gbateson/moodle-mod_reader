@@ -422,16 +422,16 @@ function reader_get_stlevel_data($reader, $userid=0) {
 
 
 
-    $leveldata['studentlevel'] = $studentlevel->currentlevel;
-    $leveldata['onthislevel'] = $reader->nextlevel - $counter['countlevel'];
+    $readerlevel['studentlevel'] = $studentlevel->currentlevel;
+    $readerlevel['onthislevel'] = $reader->nextlevel - $counter['countlevel'];
     if ($counter['prevlevel'] != -1) {
-        $leveldata['onprevlevel'] = $reader->quizpreviouslevel - $counter['prevlevel'];
+        $readerlevel['onprevlevel'] = $reader->quizpreviouslevel - $counter['prevlevel'];
     } else {
-        $leveldata['onprevlevel'] = -1;
+        $readerlevel['onprevlevel'] = -1;
     }
-    $leveldata['onnextlevel'] = $reader->quiznextlevel - $counter['nextlevel'];
+    $readerlevel['onnextlevel'] = $reader->quiznextlevel - $counter['nextlevel'];
 
-    return $leveldata;
+    return $readerlevel;
 }
 
 /**
@@ -1014,34 +1014,38 @@ function reader_scale_used($readerid,$scaleid) {
  * @return xxx
  * @todo Finish documenting this function
  */
-function reader_make_table_headers($titlesarray, $orderby, $sort, $link) {
-
-global $USER, $CFG;
+function reader_make_table_headers(&$table, $headers, $orderby, $sort, $params) {
+    global $CFG;
 
     if ($orderby == 'ASC') {
-        $columndir    = 'DESC';
-        $columndirimg = 'down';
+        $direction = 'DESC';
+        $directionimg = 'down';
     } else {
-        $columndir    = 'ASC';
-        $columndirimg = 'up';
+        $direction = 'ASC';
+        $directionimg = 'up';
     }
 
-    foreach ($titlesarray as $titlesarraykey => $titlesarrayvalue) {
-        if ($sort != $titlesarrayvalue) {
-            $columnicon = '';
-        } else {
-            $url = new moodle_url('/theme/image.php', array('theme' => $CFG->theme, 'image' => "t/$columndirimg", 'rev' =>$CFG->themerev));
-            $columnicon = ' <img src="'.$url.'" alt="" />';
+    $table->head = array();
+    foreach ($headers as $text => $columnname) {
+        $header = $text;
+
+        if ($columnname) {
+
+            // append sort icon
+            if ($sort == $columnname) {
+                $imgparams = array('theme' => $CFG->theme, 'image' => "t/$directionimg", 'rev' => $CFG->themerev);
+                $header .= ' '.html_writer::empty_tag('img', array('src' => new moodle_url('/theme/image.php', $imgparams), 'alt' => ''));
+            }
+
+            // convert $header to link
+            $params['sort'] = $columnname;
+            $params['orderby'] = $direction;
+            $header = html_writer::tag('a', $header, array('href' => new moodle_url('/mod/reader/admin.php', $params)));
         }
-        if (! empty($titlesarrayvalue)) {
-            $table->head[] = "<a href=\"".$link."&sort=$titlesarrayvalue&orderby=$columndir\">$titlesarraykey</a>$columnicon";
-        } else {
-            $table->head[] = $titlesarraykey;
-        }
+
+        // add header to table
+        $table->head[] = $header;
     }
-
-    return $table->head;
-
 }
 
 /**
@@ -1059,7 +1063,7 @@ function reader_sort_table(&$table, $columns, $sortdirection, $sortcolumn) {
     $sortindex = 0; // default is first column
     if ($sortcolumn) {
         $i = 0;
-        foreach ($columns as $column) {
+        foreach ($columns as $text => $column) {
             if ($column == $sortcolumn) {
                 $sortindex = $i;
             }
@@ -1069,7 +1073,7 @@ function reader_sort_table(&$table, $columns, $sortdirection, $sortcolumn) {
 
     $values = array();
     foreach ($table->data as $r => $row) {
-        $values[$r] = $row->cells[$sortindex]->text;
+        $values[$r] = strip_tags($row->cells[$sortindex]->text);
     }
 
     if (empty($sortdirection) || $sortdirection=='ASC') {
@@ -1602,40 +1606,42 @@ function reader_check_search_text_quiz($searchtext, $book) {
  * @uses $page
  * @uses $sort
  * @param xxx $userid
- * @param xxx $leveldata
- * @param xxx $level
+ * @param xxx $readerlevel
+ * @param xxx $leveltype
  * @return xxx
  * @todo Finish documenting this function
  */
-function reader_selectlevel_form($userid, $leveldata, $level) {
-    global $CFG, $COURSE, $_SESSION, $id, $act, $gid, $sort, $orderby, $page;
+function reader_selectlevel_form($userid, $readerlevel, $leveltype) {
+    global $id, $act, $gid, $sort, $orderby, $page;
 
-    if (! isset($leveldata)) {
-        $leveldata = new stdClass();
+    if (empty($readerlevel)) {
+        $readerlevel = new stdClass();
     }
-    if (! isset($leveldata->$level)) {
-        $leveldata->$level = 0;
+    if (! isset($readerlevel->$leveltype)) {
+        $readerlevel->$leveltype = 0;
     }
 
-    $levels = array(0,1,2,3,4,5,6,7,8,9,10,12,13,14);
+    $patch = $userid.'-'.$leveltype;
 
-    $patch = $userid."_".$level;
+    $output = '';
+    $output .= html_writer::start_tag('div', array('id' => 'changelevels'.$patch));
+    $output .= '<select id="choose_levels'.$patch.'" name="levels'.$patch.'" onchange="request(\'admin.php?ajax=true&\' + this.options[this.selectedIndex].value,\'changelevels'.$patch.'\'); return false;">';
 
-    $string = '<div id="changelevels'.$patch.'">';
-
-    $string .= '<select id="choose_levels'.$patch.'" name="levels'.$patch.'" onchange="request(\'admin.php?ajax=true&\' + this.options[this.selectedIndex].value,\'changelevels'.$patch.'\'); return false;">';
-
-    foreach ($levels as $levels_) {
-        $string .= '<option value="admin.php?a=admin&id='.$id.'&act='.$act.'&changelevel='.$levels_.'&userid='.$userid.'&slevel='.$level.'" ';
-        if ($levels_ == $leveldata->$level) {
-            $string .= ' selected="selected" ';
+    $levels = range(0, 14);
+    foreach ($levels as $level) {
+        $params = array('a' => 'admin', 'id' => $id, 'act' => $act,
+                        'changelevel' => $level, 'userid' => $userid,
+                        'slevel' => $leveltype);
+        $params = array('value' => new moodle_url('/mod/reader/admin.php', $params));
+        if ($level == $readerlevel->$leveltype) {
+            $params['selected'] = 'selected';
         }
-        $string .= '>'.$levels_.'</option>';
+        $output .= html_writer::tag('option', $level, $params);
     }
+    $output .= html_writer::end_tag('select');
+    $output .= html_writer::end_tag('div');
 
-    $string .= '</select></div>';
-
-    return $string;
+    return $output;
 }
 
 /**

@@ -967,28 +967,31 @@ $navigation = build_navigation('', $cm);
 
 if ($excel) {
     $workbook = new MoodleExcelWorkbook('-');
-    $myxls = $workbook->add_worksheet('report');
+    $worksheet = $workbook->add_worksheet('report');
 
-    $format = $workbook->add_format();
-    $format->set_bold(0);
-    $formatbc = $workbook->add_format();
-    $formatbc->set_bold(1);
+    $formatbold = $workbook->add_format();
+    $formatbold->set_bold(1);
 
-    if (! empty($gid)) {
-        $grname = groups_get_group_name($gid);
-    } else {
+    $formatdate = $workbook->add_format();
+    $formatdate->set_num_format(get_string('log_excel_date_format'));
+
+    if (empty($gid)) {
         $grname = 'all';
+    } else {
+        $grname = groups_get_group_name($gid);
     }
 
     $exceldata['time'] = date('d.M.Y');
     $exceldata['course_shotname'] = str_replace(' ', '-', $course->shortname);
     $exceldata['groupname'] = str_replace(' ', '-', $grname);
 
-    if ($act != 'exportstudentrecords') {
-        $workbook->send('report_'.$exceldata['time'].'_'.$exceldata['course_shotname'].'_'.$exceldata['groupname'].'.xls');
+    if ($act == 'exportstudentrecords') {
+        $filename = $COURSE->shortname.'_attempts.txt';
+        header('Content-Type: text/plain; filename="'.$filename.'"');
+        $workbook->send($filename);
     } else {
-        header("Content-Type: text/plain; filename=\"{$COURSE->shortname}_attempts.txt\"");
-        $workbook->send($COURSE->shortname.'_attempts.txt');
+        $filename = 'report_'.$exceldata['time'].'_'.$exceldata['course_shotname'].'_'.$exceldata['groupname'].'.xls';
+        $workbook->send($filename);
     }
     add_to_log($course->id, 'reader', 'AA-excel', 'admin.php?id='.$id, $cm->instance);
 }
@@ -1235,7 +1238,8 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
 
     $titlesarray = array(''=>'', 'Title'=>'title', 'Publisher'=>'publisher', 'Level'=>'level', 'Reading Level'=>'rlevel', 'Length'=>'length', 'Times Quiz Taken'=>'qtaken', 'Average Points'=>'apoints', 'Options'=>'');
 
-    $table->head = reader_make_table_headers($titlesarray, $orderby, $sort, '?a=admin&id='.$id.'&act='.$act);
+    $params = array('a' => 'admin', 'id' => $id, 'act' => $act);
+    reader_make_table_headers($table, $titlesarray, $orderby, $sort, $params);
     $table->align = array('center', 'left', 'left', 'center', 'center', 'center', 'center', 'center', 'center');
     $table->width = '100%';
 
@@ -1350,28 +1354,31 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
 
     $titlesarray = array('Image'=>'', 'Username'=>'username', 'Fullname<br />Click to view screen'=>'fullname', 'Start level'=>'startlevel', 'Current level'=>'currentlevel', 'Taken Quizzes'=>'tquizzes', 'Passed<br /> Quizzes'=>'cquizzes', 'Failed<br /> Quizzes'=>'iquizzes', 'Total Points'=>'totalpoints', 'Total words<br /> this term'=>'totalwordsthisterm', 'Total words<br /> all terms'=>'totalwordsallterms');
 
-    $table->head = reader_make_table_headers($titlesarray, $orderby, $sort, '?a=admin&id='.$id.'&act=reports&gid='.$gid.'&searchtext='.$searchtext.'&page='.$page);
+    $params = array('a' => 'admin', 'id' => $id, 'act' => 'reports', 'gid' => $gid, 'searchtext' => $searchtext, 'page' => $page);
+    reader_make_table_headers($table, $titlesarray, $orderby, $sort, $params);
     $table->align = array('center', 'left', 'left', 'center', 'center', 'center', 'center', 'center', 'center', 'center', 'center');
     $table->width = '100%';
 
     if ($excel) {
-        $myxls->write_string(0, 0, 'Summary Report by Student',$formatbc);
-        $myxls->write_string(1, 0, 'Date: '.$exceldata['time'].'; Course name: '.$exceldata['course_shotname'].'; Group: '.$exceldata['groupname']);
-        $myxls->set_row(0, 30);
-        $myxls->set_column(0,1,20);
-        $myxls->set_column(2,10,15);
+        $worksheet->set_row(0, 24); // set row height
+        $worksheet->write_string(0, 0, 'Summary Report by Student', $formatbold);
 
-        $myxls->write_string(2, 0, 'Username',$formatbc);
-        $myxls->write_string(2, 1, 'Fullname',$formatbc);
-        $myxls->write_string(2, 2, 'Groups',$formatbc);
-        $myxls->write_string(2, 3, 'Start level',$formatbc);
-        $myxls->write_string(2, 4, 'Current level',$formatbc);
-        $myxls->write_string(2, 5, 'Taken Quizzes',$formatbc);
-        $myxls->write_string(2, 6, 'Passed Quizzes',$formatbc);
-        $myxls->write_string(2, 7, 'Failed Quizzes',$formatbc);
-        $myxls->write_string(2, 8, 'Total Points',$formatbc);
-        $myxls->write_string(2, 9, 'Total words this term',$formatbc);
-        $myxls->write_string(2, 10, 'Total words all terms',$formatbc);
+        $worksheet->set_row(1, 24); // set row height
+        $worksheet->write_string(1, 0, 'Date: '.$exceldata['time'].'; Course name: '.$exceldata['course_shotname'].'; Group: '.$exceldata['groupname']);
+
+        $c = 0;
+        $worksheet->set_row(2, 24); // set row height
+        $worksheet->write_string(2, $c++, 'Username', $formatbold);
+        $worksheet->write_string(2, $c++, 'Fullname', $formatbold);
+        $worksheet->write_string(2, $c++, 'Groups', $formatbold);
+        $worksheet->write_string(2, $c++, 'Start level', $formatbold);
+        $worksheet->write_string(2, $c++, 'Current level', $formatbold);
+        $worksheet->write_string(2, $c++, 'Taken Quizzes', $formatbold);
+        $worksheet->write_string(2, $c++, 'Passed Quizzes', $formatbold);
+        $worksheet->write_string(2, $c++, 'Failed Quizzes', $formatbold);
+        $worksheet->write_string(2, $c++, 'Total Points', $formatbold);
+        $worksheet->write_string(2, $c++, 'Total words this term', $formatbold);
+        $worksheet->write_string(2, $c++, 'Total words all terms', $formatbold);
     }
 
     if (! $gid) {
@@ -1379,16 +1386,17 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
     }
 
     $coursestudents = get_enrolled_users($context, NULL, $gid);
+    $groupnames = array();
 
     foreach ($coursestudents as $coursestudent) {
+        $groupnames[$coursestudent->username] = array();
         if (reader_check_search_text($searchtext, $coursestudent)) {
             $picture = $OUTPUT->user_picture($coursestudent,array($course->id, true, 0, true));
             if ($excel) {
                 if ($usergroups = groups_get_all_groups($course->id, $coursestudent->id)){
                     foreach ($usergroups as $group){
-                        $groupsdata[$coursestudent->username] .= $group->name.', ';
+                        $groupnames[$coursestudent->username][] = $group->name;
                     }
-                    $groupsdata[$coursestudent->username] = substr($groupsdata[$coursestudent->username], 0, -2);
                 }
             }
 
@@ -1411,31 +1419,32 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
                 }
             }
 
-            if ($attempts = $DB->get_records_sql('SELECT * FROM {reader_attempts} WHERE userid= ? ', array($coursestudent->id))) {
-                foreach ($attempts as $attempt) {
-                    if (strtolower($attempt->passed) == 'true') {
-                        if ($attempt->preview == 0) {
-                            $bookdata = $DB->get_record('reader_books', array('quizid' => $attempt->quizid));
+            if ($readerattempts = $DB->get_records('reader_attempts', array('userid' => $coursestudent->id))) {
+                foreach ($readerattempts as $readerattempt) {
+                    if (strtolower($readerattempt->passed) == 'true') {
+                        if ($readerattempt->preview == 0) {
+                            $bookwords = $DB->get_field('reader_books', 'words', array('quizid' => $readerattempt->quizid));
                         } else {
-                            $bookdata = $DB->get_record('reader_noquiz', array('quizid' => $attempt->quizid));
+                            $bookwords = $DB->get_field('reader_noquiz', 'words', array('quizid' => $readerattempt->quizid));
                         }
-                        if ($bookdata) {
+                        if ($bookwords) {
                             $data['totalwordsallterms'] += $bookdata->words;
                         }
                     }
                 }
             }
 
+            $usernamelink = reader_username_link($coursestudent, $course->id, $excel);
             if (has_capability('mod/reader:viewstudentreaderscreens', $contextmodule)) {
-                $link = reader_fullname_link_viewasstudent($coursestudent, $id, $excel);
+                $fullnamelink = reader_fullname_link_viewasstudent($coursestudent, $id, $excel);
             } else {
-                $link = reader_fullname_link($coursestudent, $course->id, $excel);
+                $fullnamelink = reader_fullname_link($coursestudent, $course->id, $excel);
             }
             if ($attemptdata = reader_get_student_attempts($coursestudent->id, $reader)) {
                 $table->data[] = new html_table_row(array(
                         $picture,
-                        reader_username_link($coursestudent, $course->id, $excel),
-                        $link,
+                        $usernamelink,
+                        $fullnamelink,
                         $attemptdata[1]['startlevel'],
                         $attemptdata[1]['currentlevel'],
                         $attemptdata[1]['countattempts'],
@@ -1446,7 +1455,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
                         $data['totalwordsallterms']
                 ));
             } else {
-                $table->data[] = new html_table_row(array($picture, reader_username_link($coursestudent, $course->id, $excel), $link, 0,0,0,0,0,0,0,0));
+                $table->data[] = new html_table_row(array($picture, $usernamelink, $fullnamelink, 0,0,0,0,0,0,0));
             }
         }
     }
@@ -1454,23 +1463,27 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
     reader_sort_table($table, $titlesarray, $orderby, $sort);
 
     if ($excel) {
-      foreach ($table->data as $tabledataarray) {
-        $myxls->write_string($row, 0, strip_tags($tabledataarray[1]));
-        $myxls->write_string($row, 1, strip_tags($tabledataarray[2]));
-        $myxls->write_string($row, 2, (string) $groupsdata[strip_tags($tabledataarray[1])]);
-        $myxls->write_number($row, 3, (int) $tabledataarray[3]);
-        $myxls->write_number($row, 4, (int) $tabledataarray[4]);
-        $myxls->write_number($row, 5, (int) $tabledataarray[5]);
-        $myxls->write_number($row, 6, (int) $tabledataarray[6]);
-        $myxls->write_number($row, 7, (int) $tabledataarray[7]);
-        $myxls->write_string($row, 8, $tabledataarray[8]);
-        $myxls->write_string($row, 9, (int) $tabledataarray[9]);
-        $myxls->write_string($row, 10, (int) $tabledataarray[10]);
-        $row++;
-      }
-    }
+        foreach ($table->data as $r => $row) {
+            $c = 0; // column number
 
-    if ($excel) {
+            $username = strip_tags($row->cells[1]->text);
+            $worksheet->write_string(2 + $r, $c++, $username);
+
+            $fullname = strip_tags($row->cells[2]->text);
+            $worksheet->write_string(2 + $r, $c++, $fullname);
+
+            $groupname = implode(',', $groupnames[$username]);
+            $worksheet->write_string(2 + $r, $c++, $groupname);
+
+            $worksheet->write_number(2 + $r, $c, $row->cells[$c++]->text);
+            $worksheet->write_number(2 + $r, $c, $row->cells[$c++]->text);
+            $worksheet->write_number(2 + $r, $c, $row->cells[$c++]->text);
+            $worksheet->write_number(2 + $r, $c, $row->cells[$c++]->text);
+            $worksheet->write_number(2 + $r, $c, $row->cells[$c++]->text);
+            $worksheet->write_string(2 + $r, $c, $row->cells[$c++]->text);
+            $worksheet->write_string(2 + $r, $c, $row->cells[$c++]->text);
+            $worksheet->write_string(2 + $r, $c, $row->cells[$c++]->text);
+        }
         $workbook->close();
         die;
     }
@@ -1503,81 +1516,84 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
 
 } else if ($act == 'fullreports' && has_capability('mod/reader:readerviewreports', $contextmodule)) {
     $table = new html_table();
-    if ($reader->wordsorpoints == 'words') {
-        if ($reader->checkbox == 1) {
-            $titlesarray = array('Image'=>'', 'Username'=>'username', 'Fullname<br />Click to view screen'=>'fullname', 'Check'=>'', 'Date'=>'date', 'S-Level'=>'slevel', 'B-Level'=>'blevel', 'Title'=>'title', 'Score'=>'', 'P/F/C'=>'', 'Words'=>'', 'Total Words'=>'');
-            $table->align = array('center', 'left', 'left', 'center', 'center', 'center', 'center', 'left', 'center', 'center', 'center', 'center');
-        } else {
-            $titlesarray = array('Image'=>'', 'Username'=>'username', 'Fullname<br />Click to view screen'=>'fullname', 'Date'=>'date', 'S-Level'=>'slevel', 'B-Level'=>'blevel', 'Title'=>'title', 'Score'=>'', 'P/F/C'=>'', 'Words'=>'', 'Total Words'=>'');
-            $table->align = array('center', 'left', 'left', 'center', 'center', 'center', 'left', 'center', 'center',  'center');
-        }
-    } else {
-        if ($reader->checkbox == 1) {
-            $titlesarray = array('Image'=>'', 'Username'=>'username', 'Fullname<br />Click to view screen'=>'fullname', 'Check'=>'', 'Date'=>'date', 'S-Level'=>'slevel', 'B-Level'=>'blevel', 'Title'=>'title', 'Score'=>'', 'P/F/C'=>'', 'Points'=>'', 'Length'=>'', 'Total Points'=>'');
-            $table->align = array('center', 'left', 'left', 'center', 'center', 'center', 'center', 'left', 'center', 'center', 'center', 'center', 'center');
-        } else {
-            $titlesarray = array('Image'=>'', 'Username'=>'username', 'Fullname<br />Click to view screen'=>'fullname', 'Date'=>'date', 'S-Level'=>'slevel', 'B-Level'=>'blevel', 'Title'=>'title', 'Score'=>'', 'P/F/C'=>'', 'Points'=>'', 'Length'=>'', 'Total Points'=>'');
-            $table->align = array('center', 'left', 'left', 'center', 'center', 'center', 'left', 'center', 'center', 'center', 'center', 'center');
-        }
+
+    $titlesarray = array();
+    $table->align = array();
+
+    $titlesarray['Image'] = '';
+    $titlesarray['Username'] = 'username';
+    $titlesarray['Fullname'] = 'fullname'; // <br />Click to view screen'
+    array_push($table->align, 'center', 'left', 'left');
+
+    if ($reader->checkbox == 1) {
+        $titlesarray['Check'] = '';
+        array_push($table->align, 'center');
     }
 
-    $table->head = reader_make_table_headers($titlesarray, $orderby, $sort, '?a=admin&id='.$id.'&act=fullreports&gid='.$gid.'&searchtext='.$searchtext.'&page='.$page.'&ct='.$ct);
+    $titlesarray['Date'] ='date';
+    $titlesarray['S-Level'] = 'slevel';
+    $titlesarray['B-Level'] = 'blevel';
+    $titlesarray['Title'] = 'title';
+    $titlesarray['Score'] = '';
+    $titlesarray['P/F/C'] = '';
+    array_push($table->align, 'center', 'center', 'center', 'left', 'center', 'center');
+
+    if ($reader->wordsorpoints == 'words') {
+        $titlesarray['Words'] = '';
+        $titlesarray['Total Words'] = '';
+        array_push($table->align, 'center', 'center');
+    } else {
+        $titlesarray['Points'] = '';
+        $titlesarray['Length'] = '';
+        $titlesarray['Total Points'] = '';
+        array_push($table->align, 'center', 'center', 'center');
+    }
+
+    // '?a=admin&id='.$id.'&act=fullreports&gid='.$gid.'&searchtext='.$searchtext.'&page='.$page.'&ct='.$ct
+    $params = array('a' => 'admin', 'id' => $id, 'act' => 'fullreports', 'gid' => $gid, 'searchtext' => $searchtext, 'page' => $page, 'ct' => $ct);
+    reader_make_table_headers($table, $titlesarray, $orderby, $sort, $params);
     $table->width = '100%';
 
     if ($excel) {
-        $myxls->write_string(0, 0, 'Full Report by Student',$formatbc);
-        $myxls->write_string(1, 0, 'Date: '.$exceldata['time'].'; Course name: '.$exceldata['course_shotname'].'; Group: '.$exceldata['groupname']);
-        $myxls->set_row(0, 30);
-        $myxls->set_column(0,1,20);
-        $myxls->set_column(2,10,15);
+        $worksheet->set_row(0, 24); // set row height
+        $worksheet->write_string(0, 0, 'Full Report by Student', $formatbold);
 
-        $myxls->write_string(2, 0, 'Username',$formatbc);
-        $myxls->write_string(2, 1, 'Fullname',$formatbc);
-        $myxls->write_string(2, 2, 'Groups',$formatbc);
+        $worksheet->set_row(1, 24); // set row height
+        $worksheet->write_string(1, 0, 'Date: '.$exceldata['time'].'; Course name: '.$exceldata['course_shotname'].'; Group: '.$exceldata['groupname']);
+
+        $c = 0; // column number
+        $worksheet->set_row(2, 24); // set row height
+
+        $worksheet->set_column($c, $c, 20); // set col width
+        $worksheet->write_string(2, $c++, 'Username', $formatbold);
+
+        $worksheet->set_column($c, $c, 20); // set col width
+        $worksheet->write_string(2, $c++, 'Fullname', $formatbold);
+
+        $worksheet->set_column($c, $c, 20); // set col width
+        $worksheet->write_string(2, $c++, 'Groups', $formatbold);
+
+        if ($reader->checkbox == 1) {
+            $worksheet->write_string(2, $c++, 'Check', $formatbold);
+        }
+
+        $worksheet->write_string(2, $c++, 'Date', $formatbold);
+        $worksheet->write_string(2, $c++, 'S-Level', $formatbold);
+        $worksheet->write_string(2, $c++, 'B-Level', $formatbold);
+
+        $worksheet->set_column($c, $c, 30); // set col width
+        $worksheet->write_string(2, $c++, 'Title', $formatbold);
+
+        $worksheet->write_string(2, $c++, 'Score', $formatbold);
+        $worksheet->write_string(2, $c++, 'P/F/C', $formatbold);
+
         if ($reader->wordsorpoints == 'words') {
-            if ($reader->checkbox == 1) {
-                $myxls->write_string(2, 3, 'Check',$formatbc);
-                $myxls->write_string(2, 4, 'Date',$formatbc);
-                $myxls->write_string(2, 5, 'S-Level',$formatbc);
-                $myxls->write_string(2, 6, 'B-Level',$formatbc);
-                $myxls->write_string(2, 7, 'Title',$formatbc);
-                $myxls->write_string(2, 8, 'Score',$formatbc);
-                $myxls->write_string(2, 9, 'P/F/C',$formatbc);
-                $myxls->write_string(2, 10, 'Words',$formatbc);
-                $myxls->write_string(2, 11, 'Total Words',$formatbc);
-            } else {
-                $myxls->write_string(2, 3, 'Date',$formatbc);
-                $myxls->write_string(2, 4, 'S-Level',$formatbc);
-                $myxls->write_string(2, 5, 'B-Level',$formatbc);
-                $myxls->write_string(2, 6, 'Title',$formatbc);
-                $myxls->write_string(2, 7, 'Score',$formatbc);
-                $myxls->write_string(2, 8, 'P/F/C',$formatbc);
-                $myxls->write_string(2, 9, 'Words',$formatbc);
-                $myxls->write_string(2, 10, 'Total Words',$formatbc);
-            }
+            $worksheet->write_string(2, $c++, 'Words', $formatbold);
+            $worksheet->write_string(2, $c++, 'Total Words', $formatbold);
         } else {
-            if ($reader->checkbox == 1) {
-                $myxls->write_string(2, 3, 'Check',$formatbc);
-                $myxls->write_string(2, 4, 'Date',$formatbc);
-                $myxls->write_string(2, 5, 'S-Level',$formatbc);
-                $myxls->write_string(2, 6, 'B-Level',$formatbc);
-                $myxls->write_string(2, 7, 'Title',$formatbc);
-                $myxls->write_string(2, 8, 'Score',$formatbc);
-                $myxls->write_string(2, 9, 'P/F/C',$formatbc);
-                $myxls->write_string(2, 10, 'Points',$formatbc);
-                $myxls->write_string(2, 11, 'Length',$formatbc);
-                $myxls->write_string(2, 12, 'Total Points',$formatbc);
-            } else {
-                $myxls->write_string(2, 3, 'Date',$formatbc);
-                $myxls->write_string(2, 4, 'S-Level',$formatbc);
-                $myxls->write_string(2, 5, 'B-Level',$formatbc);
-                $myxls->write_string(2, 6, 'Title',$formatbc);
-                $myxls->write_string(2, 7, 'Score',$formatbc);
-                $myxls->write_string(2, 8, 'P/F/C',$formatbc);
-                $myxls->write_string(2, 9, 'Points',$formatbc);
-                $myxls->write_string(2, 10, 'Length',$formatbc);
-                $myxls->write_string(2, 11, 'Total Points',$formatbc);
-            }
+            $worksheet->write_string(2, $c++, 'Points', $formatbold);
+            $worksheet->write_string(2, $c++, 'Length', $formatbold);
+            $worksheet->write_string(2, $c++, 'Total Points', $formatbold);
         }
     }
 
@@ -1585,262 +1601,175 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
         $gid = NULL;
     }
 
-    if ($sort != 'username' && $sort != 'firstname') {
+    if ($sort == 'username' || $sort == 'firstname') {
         $coursestudents = get_enrolled_users($context, NULL, $gid);
     } else {
         $coursestudents = get_enrolled_users($context, NULL, $gid);
     }
+    $groupnames = array();
 
     foreach ($coursestudents as $coursestudent) {
-        $picture = $OUTPUT->user_picture($coursestudent,array($course->id, true, 0, true));
+        $groupnames[$coursestudent->username] = array();
+
+        $picture = $OUTPUT->user_picture($coursestudent, array($course->id, true, 0, true));
         $totable['first'] = true;
 
         if ($excel) {
-
             if ($usergroups = groups_get_all_groups($course->id, $coursestudent->id)){
                 foreach ($usergroups as $group){
-                    $groupsdata[$coursestudent->username] .= $group->name.', ';
+                    $groupnames[$coursestudent->username][] = $group->name;
                 }
-                $groupsdata[$coursestudent->username] = substr($groupsdata[$coursestudent->username], 0, -2);
             }
-
         }
 
-        if (list($attemptdata, $summaryattemptdata) = reader_get_student_attempts($coursestudent->id, $reader)) {
-            unset($totalwords);
-            foreach ($attemptdata as $attemptdata_) {
+        list($readerattempts, $summaryattemptdata) = reader_get_student_attempts($coursestudent->id, $reader);
+        if (empty($readerattempts)) {
+            continue;
+        }
 
-              if (($attemptdata_['timefinish']>=$reader->ignoredate && $ct == 1) || empty($ct)) {
-                if ($reader->wordsorpoints == 'words') {
-                  $totalwords = "";
-                  if (reader_check_search_text($searchtext, $coursestudent, $attemptdata_)) {
-                    $showwords = "";
-                    switch (strtolower($attemptdata_['passed'])) {
-                     case 'true':
-                         $passedstatus = 'P';
-                         $totalwords +=  $attemptdata_['words'];
-                         $showwords   =  $attemptdata_['words'];
-                         break;
-                     case 'false':
-                         $passedstatus = 'F';
-                         break;
-                     case 'cheated':
-                         $passedstatus = 'C';
-                         break;
+        $totalwords = 0;
+        foreach ($readerattempts as $readerattempt) {
+            if (isset($ct) && $ct == 1 && $readerattempt['timefinish'] < $reader->ignoredate) {
+                continue;
+            }
+
+            $timefinish = date('Y/m/d', $readerattempt['timefinish']);
+
+            if ($totable['first'] || $sort == 'slevel' || $sort == 'blevel' || $sort == 'title' || $sort == 'date' || $excel) {
+                $showuser = true;
+            } else {
+                $showuser = false;
+            }
+
+            switch (strtolower($readerattempt['passed'])) {
+                case 'true': $passedstatus = 'P'; break;
+                case 'false': $passedstatus = 'F'; break;
+                case 'cheated': $passedstatus = 'C'; break;
+                default: $passedstatus = '';
+            }
+
+            if ($reader->wordsorpoints == 'words') {
+                if (reader_check_search_text($searchtext, $coursestudent, $readerattempt)) {
+
+                    if ($passedstatus=='P') { // passed
+                        $totalwords +=  $readerattempt['words'];
                     }
-                    //$totalwords +=  $attemptdata_['words'];
-                    if (! $excel && $sort == 'date') {
-                        $attemptbooktime = array(date('d-M-Y', $attemptdata_['timefinish']), $attemptdata_['timefinish']);
-                    } else if (! $excel) {
-                        $attemptbooktime = date('d-M-Y', $attemptdata_['timefinish']);
-                    } else {
-                        $attemptbooktime = date('Y/m/d', $attemptdata_['timefinish']);
-                    }
-                    if (($totable['first'] || $sort == 'slevel' || $sort == 'blevel' || $sort == 'title' || $sort == 'date') || $excel) {
+
+                    if ($showuser) {
                         $linkusername = reader_username_link($coursestudent, $course->id, $excel);
                         if (has_capability('mod/reader:viewstudentreaderscreens', $contextmodule)) {
                             $linkfullname = reader_fullname_link_viewasstudent($coursestudent, $id, $excel);
                         } else {
                             $linkfullname = reader_fullname_link($coursestudent, $course->id, $excel);
                         }
-
-                        if ($reader->checkbox == 1) {
-                            $table->data[] = new html_table_row(array(
-                                                $picture,
-                                                $linkusername,
-                                                $linkfullname,
-                                                reader_ra_checkbox($attemptdata_),
-                                                $attemptbooktime,
-                                                $attemptdata_['userlevel'],
-                                                $attemptdata_['bookdiff'],
-                                                $attemptdata_['booktitle'],
-                                                $attemptdata_['percentgrade'].'%',
-                                                $passedstatus,
-                                                $attemptdata_['words'],
-                                                $totalwords));
-
-                        } else {
-                            $table->data[] = new html_table_row(array(
-                                                $picture,
-                                                $linkusername,
-                                                $linkfullname,
-                                                $attemptbooktime,
-                                                $attemptdata_['userlevel'],
-                                                $attemptdata_['bookdiff'],
-                                                $attemptdata_['booktitle'],
-                                                $attemptdata_['percentgrade'].'%',
-                                                $passedstatus,
-                                                $attemptdata_['words'],
-                                                $totalwords));
-                        }
                         $totable['first'] = false;
                     } else {
-                        if ($reader->checkbox == 1) {
-                            $table->data[] = new html_table_row(array(
-                                               '', // picture
-                                               '', // username
-                                               '', // fullname
-                                               reader_ra_checkbox($attemptdata_),
-                                               $attemptbooktime,
-                                               $attemptdata_['userlevel'],
-                                               $attemptdata_['bookdiff'],
-                                               $attemptdata_['booktitle'],
-                                               $attemptdata_['percentgrade'].'%',
-                                               $passedstatus,
-                                               $attemptdata_['words'],
-                                               $totalwords));
-                        } else {
-                            $table->data[] = new html_table_row(array(
-                                               '', // picture
-                                               '', // username
-                                               '', // fullname
-                                               $attemptbooktime,
-                                               $attemptdata_['userlevel'],
-                                               $attemptdata_['bookdiff'],
-                                               $attemptdata_['booktitle'],
-                                               $attemptdata_['percentgrade'].'%',
-                                               $passedstatus,
-                                               //$attemptdata_['bookpoints'],
-                                               $attemptdata_['words'],
-                                               $totalwords));
-                        }
+                        $picture = '';
+                        $linkusername = '';
+                        $linkfullname = '';
                     }
-                  }
-                } else {
-                  if (reader_check_search_text($searchtext, $coursestudent, $attemptdata_)) {
-                    switch (strtolower($attemptdata_['passed'])) {
-                    case 'true':
-                        $passedstatus = 'P';
-                        break;
-                    case 'false':
-                        $passedstatus = 'F';
-                        break;
-                    case 'cheated':
-                        $passedstatus = 'C';
-                        break;
+                    // build $cells
+                    $cells = array();
+
+                    array_push($cells,
+                        $picture,
+                        $linkusername,
+                        $linkfullname
+                    );
+                    if ($reader->checkbox == 1) {
+                        array_push($cells, reader_ra_checkbox($readerattempt));
                     }
-                    if (! $excel && $sort == 'date') {
-                        $attemptbooktime = array(date('d-M-Y', $attemptdata_['timefinish']), $attemptdata_['timefinish']);
-                    } else if (! $excel) {
-                        $attemptbooktime = date('d-M-Y', $attemptdata_['timefinish']);
-                    } else {
-                        $attemptbooktime = date('Y/m/d', $attemptdata_['timefinish']);
-                    }
-                    if (($totable['first'] || $sort == 'slevel' || $sort == 'blevel' || $sort == 'title' || $sort == 'date') || $excel) {
+                    array_push($cells,
+                        $timefinish,
+                        $readerattempt['userlevel'],
+                        $readerattempt['bookdiff'],
+                        $readerattempt['booktitle'],
+                        $readerattempt['percentgrade'].'%',
+                        $passedstatus,
+                        number_format($readerattempt['words']),
+                        number_format($totalwords)
+                    );
+                    $table->data[] = new html_table_row($cells);
+                }
+            } else {
+                if (reader_check_search_text($searchtext, $coursestudent, $readerattempt)) {
+                    if ($showuser) {
                         $linkusername = reader_username_link($coursestudent, $course->id, $excel);
                         if (has_capability('mod/reader:viewstudentreaderscreens', $contextmodule)) {
                             $linkfullname = reader_fullname_link_viewasstudent($coursestudent, $id, $excel);
                         } else {
                             $linkfullname = reader_fullname_link($coursestudent, $course->id, $excel);
                         }
-                        if ($reader->checkbox == 1) {
-                            $table->data[] = new html_table_row(array(
-                                                $picture,
-                                                $linkusername,
-                                                $linkfullname,
-                                                reader_ra_checkbox($attemptdata_),
-                                                $attemptbooktime,
-                                                $attemptdata_['userlevel'],
-                                                $attemptdata_['bookdiff'],
-                                                $attemptdata_['booktitle'],
-                                                $attemptdata_['percentgrade'].'%',
-                                                $passedstatus,
-                                                $attemptdata_['bookpoints'],
-                                                $attemptdata_['booklength'],
-                                                $attemptdata_['totalpoints']));
-                        } else {
-                            $table->data[] = new html_table_row(array(
-                                                $picture,
-                                                $linkusername,
-                                                $linkfullname,
-                                                $attemptbooktime,
-                                                $attemptdata_['userlevel'],
-                                                $attemptdata_['bookdiff'],
-                                                $attemptdata_['booktitle'],
-                                                $attemptdata_['percentgrade'].'%',
-                                                $passedstatus,
-                                                $attemptdata_['bookpoints'],
-                                                $attemptdata_['booklength'],
-                                                $attemptdata_['totalpoints']));
-                        }
                         $totable['first'] = false;
                     } else {
-                        if ($reader->checkbox == 1) {
-                            $table->data[] = new html_table_row(array(
-                                               '', // picture
-                                               '', // username
-                                               '', // fullname
-                                               reader_ra_checkbox($attemptdata_),
-                                               $attemptbooktime,
-                                               $attemptdata_['userlevel'],
-                                               $attemptdata_['bookdiff'],
-                                               $attemptdata_['booktitle'],
-                                               $attemptdata_['percentgrade'].'%',
-                                               $passedstatus,
-                                               $attemptdata_['bookpoints'],
-                                               $attemptdata_['booklength'],
-                                               $attemptdata_['totalpoints']));
-                        } else {
-                            $table->data[] = new html_table_row(array(
-                                               '', // picture
-                                               '', // username
-                                               '', // fullname
-                                               $attemptbooktime,
-                                               $attemptdata_['userlevel'],
-                                               $attemptdata_['bookdiff'],
-                                               $attemptdata_['booktitle'],
-                                               $attemptdata_['percentgrade'].'%',
-                                               $passedstatus,
-                                               $attemptdata_['bookpoints'],
-                                               $attemptdata_['booklength'],
-                                               $attemptdata_['totalpoints']));
-                        }
+                        $picture = '';
+                        $linkusername = '';
+                        $linkfullname = '';
                     }
-                  }
+
+                    $cells = array();
+                    array_push($cells,
+                        $picture,
+                        $linkusername,
+                        $linkfullname
+                    );
+                    if ($reader->checkbox == 1) {
+                        array_push($cells, reader_ra_checkbox($readerattempt));
+                    }
+                    array_push($cells,
+                        $timefinish,
+                        $readerattempt['userlevel'],
+                        $readerattempt['bookdiff'],
+                        $readerattempt['booktitle'],
+                        $readerattempt['percentgrade'].'%',
+                        $passedstatus,
+                        $readerattempt['bookpoints'],
+                        $readerattempt['booklength'],
+                        $readerattempt['totalpoints']
+                    );
+                    $table->data[] = new html_table_row($cells);
                 }
-              }
             }
         }
-    }
+    } // end foreach $readerattempts
 
     if ($sort == 'slevel' || $sort == 'blevel' || $sort == 'title' || $sort == 'date') {
         reader_sort_table($table, $titlesarray, $orderby, $sort);
     }
 
     if ($excel) {
-      $formatDate = &$workbook->add_format();
-      $formatDate->set_num_format(get_string('log_excel_date_format'));
-      foreach ($table->data as $tabledataarray) {
-        $myxls->write_string($row, 0, $tabledataarray[1]);
-        $myxls->write_string($row, 1, strip_tags($tabledataarray[2]));
-        $myxls->write_string($row, 2, $groupsdata[$tabledataarray[1]]);
-        if ($reader->checkbox == 1) {
-            $myxls->write_string($row, 3, $tabledataarray[3]);
-            $myxls->write_string($row, 4, strip_tags($tabledataarray[4]), $formatDate);
-            $myxls->write_string($row, 5, $tabledataarray[5]);
-            $myxls->write_string($row, 6, $tabledataarray[6]);
-            $myxls->write_string($row, 7, $tabledataarray[7]);
-            $myxls->write_string($row, 8, $tabledataarray[8]);
-            $myxls->write_string($row, 9, $tabledataarray[9]);
-            $myxls->write_string($row, 10, $tabledataarray[10]);
-            $myxls->write_string($row, 11, $tabledataarray[11]);
-            $myxls->write_string($row, 12, $tabledataarray[12]);
-        } else {
-            $myxls->write_string($row, 3, strip_tags($tabledataarray[3]), $formatDate);
-            $myxls->write_string($row, 4, $tabledataarray[4]);
-            $myxls->write_string($row, 5, $tabledataarray[5]);
-            $myxls->write_string($row, 6, $tabledataarray[6]);
-            $myxls->write_string($row, 7, $tabledataarray[7]);
-            $myxls->write_string($row, 8, $tabledataarray[8]);
-            $myxls->write_string($row, 9, $tabledataarray[9]);
-            $myxls->write_string($row, 10, $tabledataarray[10]);
-            $myxls->write_string($row, 11, $tabledataarray[11]);
-        }
-        $row++;
-      }
-    }
+        foreach ($table->data as $r => $row) {
+            $c = 0; // column number
 
-    if ($excel) {
+            $username = strip_tags($row->cells[1]->text);
+            $worksheet->write_string(2 + $r, $c++, $username);
+
+            $fullname = strip_tags($row->cells[2]->text);
+            $worksheet->write_string(2 + $r, $c++, $fullname);
+
+            $groupname = implode(',', $groupnames[$username]);
+            $worksheet->write_string(2 + $r, $c++, $groupname);
+
+            if ($reader->checkbox == 1) {
+                $worksheet->write_string(2 + $r, $c, $row->cells[$c++]->text);
+            }
+
+            $worksheet->write_string(2 + $r, $c, $row->cells[$c++]->text, $formatdate);
+            $worksheet->write_string(2 + $r, $c, $row->cells[$c++]->text); // S-level
+            $worksheet->write_string(2 + $r, $c, $row->cells[$c++]->text); // B-level
+            $worksheet->write_string(2 + $r, $c, $row->cells[$c++]->text); // Title
+            $worksheet->write_string(2 + $r, $c, $row->cells[$c++]->text); // Score
+            $worksheet->write_string(2 + $r, $c, $row->cells[$c++]->text); // P/F/C
+
+            if ($reader->wordsorpoints == 'words') {
+                $worksheet->write_string(2 + $r, $c, $row->cells[$c++]->text); // Words
+                $worksheet->write_string(2 + $r, $c, $row->cells[$c++]->text); // Total Words
+            } else {
+                $worksheet->write_string(2 + $r, $c, $row->cells[$c++]->text); // Points
+                $worksheet->write_string(2 + $r, $c, $row->cells[$c++]->text); // Length
+                $worksheet->write_string(2 + $r, $c, $row->cells[$c++]->text); // Total Points
+            }
+        }
         $workbook->close();
         die;
     }
@@ -1887,27 +1816,30 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
     $table = new html_table();
     $titlesarray = array('Title'=>'title', 'Publisher'=>'publisher', 'Level'=>'level', 'Reading Level'=>'rlevel', 'Length'=>'length', 'Times Quiz Taken'=>'qtaken', 'Average Points'=>'apoints', 'Passed'=>'passed', 'Failed'=>'failed', 'Pass Rate'=>'prate');
 
-    $table->head = reader_make_table_headers($titlesarray, $orderby, $sort, '?a=admin&id='.$id.'&act=summarybookreports&gid='.$gid.'&searchtext='.$searchtext.'&page='.$page);
+    $params = array('a' => 'admin', 'id' => $id, 'act' => 'summarybookreports', 'gid' => $gid, 'searchtext' => $searchtext, 'page' => $page);
+    reader_make_table_headers($table, $titlesarray, $orderby, $sort, $params);
     $table->align = array('left', 'left', 'center', 'center', 'center', 'center', 'center', 'center', 'center', 'center');
     $table->width = '100%';
 
     if ($excel) {
-        $myxls->write_string(0, 0, 'Summary Report by Book Title',$formatbc);
-        $myxls->write_string(1, 0, 'Date: '.$exceldata['time'].'; Course name: '.$exceldata['course_shotname'].'; Group: '.$exceldata['groupname']);
-        $myxls->set_row(0, 30);
-        $myxls->set_column(0,1,20);
-        $myxls->set_column(2,10,15);
+        $worksheet->set_row(0, 24); // set row height
+        $worksheet->write_string(0, 0, 'Summary Report by Book Title', $formatbold);
 
-        $myxls->write_string(2, 0, 'Title',$formatbc);
-        $myxls->write_string(2, 1, 'Publisher',$formatbc);
-        $myxls->write_string(2, 2, 'Level',$formatbc);
-        $myxls->write_string(2, 3, 'Reading Level',$formatbc);
-        $myxls->write_string(2, 4, 'Length',$formatbc);
-        $myxls->write_string(2, 5, 'Times Quiz Taken',$formatbc);
-        $myxls->write_string(2, 6, 'Average Points',$formatbc);
-        $myxls->write_string(2, 7, 'Passed',$formatbc);
-        $myxls->write_string(2, 8, 'Failed',$formatbc);
-        $myxls->write_string(2, 8, 'Pass Rate',$formatbc);
+        $worksheet->set_row(1, 24); // set row height
+        $worksheet->write_string(1, 0, 'Date: '.$exceldata['time'].'; Course name: '.$exceldata['course_shotname'].'; Group: '.$exceldata['groupname']);
+
+        $c = 0;
+        $worksheet->set_row(2, 24); // set row height
+        $worksheet->write_string(2, $c++, 'Title', $formatbold);
+        $worksheet->write_string(2, $c++, 'Publisher', $formatbold);
+        $worksheet->write_string(2, $c++, 'Level', $formatbold);
+        $worksheet->write_string(2, $c++, 'Reading Level', $formatbold);
+        $worksheet->write_string(2, $c++, 'Length', $formatbold);
+        $worksheet->write_string(2, $c++, 'Times Quiz Taken', $formatbold);
+        $worksheet->write_string(2, $c++, 'Average Points', $formatbold);
+        $worksheet->write_string(2, $c++, 'Passed', $formatbold);
+        $worksheet->write_string(2, $c++, 'Failed', $formatbold);
+        $worksheet->write_string(2, $c++, 'Pass Rate', $formatbold);
     }
 
     $select = 'hidden = ? AND private IN (0, ?)';
@@ -1958,22 +1890,19 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
     reader_sort_table($table, $titlesarray, $orderby, $sort);
 
     if ($excel) {
-      foreach ($table->data as $tabledataarray) {
-        $myxls->write_string($row, 0, strip_tags($tabledataarray[0]));
-        $myxls->write_string($row, 1, $tabledataarray[1]);
-        $myxls->write_string($row, 2, $tabledataarray[2]);
-        $myxls->write_string($row, 3, $tabledataarray[3]);
-        $myxls->write_string($row, 4, $tabledataarray[4]);
-        $myxls->write_string($row, 5, $tabledataarray[5]);
-        $myxls->write_string($row, 6, $tabledataarray[6]);
-        $myxls->write_string($row, 7, $tabledataarray[7]);
-        $myxls->write_string($row, 8, $tabledataarray[8]);
-        $myxls->write_string($row, 9, $tabledataarray[9]);
-        $row++;
-      }
-    }
-
-    if ($excel) {
+        foreach ($table->data as $r => $row) {
+            $c = 0;
+            $worksheet->write_string(2 + $r, $c, strip_tags($row->cells[$c++]->text));
+            $worksheet->write_string(2 + $r, $c, $row->cells[$c++]->text);
+            $worksheet->write_string(2 + $r, $c, $row->cells[$c++]->text);
+            $worksheet->write_string(2 + $r, $c, $row->cells[$c++]->text);
+            $worksheet->write_string(2 + $r, $c, $row->cells[$c++]->text);
+            $worksheet->write_string(2 + $r, $c, $row->cells[$c++]->text);
+            $worksheet->write_string(2 + $r, $c, $row->cells[$c++]->text);
+            $worksheet->write_string(2 + $r, $c, $row->cells[$c++]->text);
+            $worksheet->write_string(2 + $r, $c, $row->cells[$c++]->text);
+            $worksheet->write_string(2 + $r, $c, $row->cells[$c++]->text);
+        }
         $workbook->close();
         die;
     }
@@ -2005,78 +1934,91 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
     $titlesarray = array('Title'=>'title', 'Publisher'=>'publisher', 'Level'=>'level', 'Reading Level'=>'rlevel', 'Student Name'=>'sname', 'Student ID'=>'studentid', 'Passed/Failed'=>'');
 
     if ($excel) {
-        $myxls->write_string(0, 0, 'Full Report by Book Title',$formatbc);
-        $myxls->write_string(1, 0, 'Date: '.$exceldata['time'].'; Course name: '.$exceldata['course_shotname'].'; Group: '.$exceldata['groupname']);
-        $myxls->set_row(0, 30);
-        $myxls->set_column(0,1,20);
-        $myxls->set_column(2,10,15);
+        $worksheet->set_row(0, 24); // set row height
+        $worksheet->write_string(0, 0, 'Full Report by Book Title', $formatbold);
 
-        $myxls->write_string(2, 0, 'Title',$formatbc);
-        $myxls->write_string(2, 1, 'Publisher',$formatbc);
-        $myxls->write_string(2, 2, 'Level',$formatbc);
-        $myxls->write_string(2, 3, 'Reading Level',$formatbc);
-        $myxls->write_string(2, 4, 'Student Name',$formatbc);
-        $myxls->write_string(2, 5, 'Student ID',$formatbc);
-        $myxls->write_string(2, 6, 'Passed/Failed',$formatbc);
+        $worksheet->set_row(1, 24); // set row height
+        $worksheet->write_string(1, 0, 'Date: '.$exceldata['time'].'; Course name: '.$exceldata['course_shotname'].'; Group: '.$exceldata['groupname']);
+
+        $c = 0;
+        $worksheet->set_row(2, 24); // set row height
+
+        $worksheet->set_column($c, $c, 30); // set col width
+        $worksheet->write_string(2, $c++, 'Title', $formatbold);
+
+        $worksheet->set_column($c, $c, 20); // set width
+        $worksheet->write_string(2, $c++, 'Publisher', $formatbold);
+
+        $worksheet->write_string(2, $c++, 'Level', $formatbold);
+        $worksheet->write_string(2, $c++, 'Reading Level', $formatbold);
+
+        $worksheet->set_column($c, $c, 20); // set width
+        $worksheet->write_string(2, $c++, 'Student Name', $formatbold);
+
+        $worksheet->write_string(2, $c++, 'Student ID', $formatbold);
+        $worksheet->write_string(2, $c++, 'Passed/Failed', $formatbold);
     }
 
-    $table->head = reader_make_table_headers($titlesarray, $orderby, $sort, '?a=admin&id='.$id.'&act=fullbookreports&gid='.$gid.'&searchtext='.$searchtext.'&page='.$page);
+    $params = array('a' => 'admin', 'id' => $id, 'act' => 'fullbookreports', 'gid' => $gid, 'searchtext' => $searchtext, 'page' => $page);
+    reader_make_table_headers($table, $titlesarray, $orderby, $sort, $params);
     $table->align = array('left', 'left', 'center', 'center', 'left', 'left', 'center');
     $table->width = '100%';
 
-    $books = $DB->get_records('reader_books');
-
-    $usegroupidsql = "";
-    if ($gid) {
-        $groupstudents = groups_get_members($gid);
-        foreach ($groupstudents as $groupstudents_) {
-            $allids .= $groupstudents_->id.",";
-        }
-        $allids = substr($allids, 0, -1);
-        $usegroupidsql = ' AND ra.userid IN ({$allids})';
+    if (! $books = $DB->get_records('reader_books')) {
+        $books = array();
     }
 
-    while(list($bookkey, $book) = each($books)) {
-    //foreach ($books as $book) {
-      if (reader_check_search_text($searchtext, '', $book)) {
-        $totalgrade = 0;
-
-        $select = 'ra.*, u.username, u.firstname, u.lastname';
-        $from   = '{reader_attempts} ra INNER JOIN {user} u ON u.id = ra.userid';
-        $where  = 'ra.quizid= ? AND ra.reader= ? '.$usegroupidsql;
-        $params = array($book->quizid, $reader->id);
-        $readerattempts = $DB->get_records_sql("SELECT $select FROM $from WHERE $where", $params);
-        while(list($readerattemptskey, $readerattempt) = each($readerattempts)) {
-        //foreach ($readerattempts as $readerattempt) {
-            $table->data[] = new html_table_row(array(
-                //array('<a href="report.php?idh='.$id.'&q='.$book->quizid.'&mode=analysis&b='.$book->id.'">'.$book->name.'</a>', $book->name),
-                html_writer::tag('a', $book->name, array('href' => new moodle_url('/mod/reader/report.php', array('idh' => $id, 'q' => $book->quizid, 'mode' => 'analysis', 'b' => $book->id)))),
-                $book->publisher,
-                $book->level,
-                reader_get_reader_difficulty($reader, $book->id),
-                reader_fullname_link($readerattempt, $course->id, $excel),
-                reader_username_link($readerattempt, $course->id, $excel),
-                $readerattempt->passed));
+    $groupuserfilter = '';
+    if ($gid) {
+        $groupuserids = array();
+        if ($groupusers = groups_get_members($gid)) {
+            foreach ($groupusers as $groupuser) {
+                $groupuserids[] = $groupuser->id;
+            }
         }
-      }
+        if ($groupuserids = implode(',', $groupuserids)) {
+            $groupuserfilter = ' AND ra.userid IN ('.$groupuserids.')';
+        }
+    }
+
+    foreach ($books as $book) {
+        if (reader_check_search_text($searchtext, '', $book)) {
+            $totalgrade = 0;
+
+            $select = 'ra.*, u.username, u.firstname, u.lastname';
+            $from   = '{reader_attempts} ra INNER JOIN {user} u ON u.id = ra.userid';
+            $where  = 'ra.quizid= ? AND ra.reader= ?'.$groupuserfilter;
+            $params = array($book->quizid, $reader->id);
+            if (! $readerattempts = $DB->get_records_sql("SELECT $select FROM $from WHERE $where ORDER BY ra.userid", $params)) {
+                $readerattempts = array();
+            }
+            foreach ($readerattempts as $readerattempt) {
+                $params = array('idh' => $id, 'q' => $book->quizid, 'mode' => 'analysis', 'b' => $book->id);
+                $table->data[] = new html_table_row(array(
+                    html_writer::tag('a', $book->name, array('href' => new moodle_url('/mod/reader/report.php', $params))),
+                    $book->publisher,
+                    $book->level,
+                    reader_get_reader_difficulty($reader, $book->id),
+                    reader_fullname_link($readerattempt, $course->id, $excel),
+                    reader_username_link($readerattempt, $course->id, $excel),
+                    $readerattempt->passed));
+            }
+        }
     }
 
     reader_sort_table($table, $titlesarray, $orderby, $sort);
 
     if ($excel) {
-      foreach ($table->data as $tabledataarray) {
-        $myxls->write_string($row, 0, strip_tags($tabledataarray[0]));
-        $myxls->write_string($row, 1, $tabledataarray[1]);
-        $myxls->write_string($row, 2, $tabledataarray[2]);
-        $myxls->write_string($row, 3, $tabledataarray[3]);
-        $myxls->write_string($row, 4, strip_tags($tabledataarray[4]));
-        $myxls->write_string($row, 5, strip_tags($tabledataarray[5]));
-        $myxls->write_string($row, 6, $tabledataarray[6]);
-        $row++;
-      }
-    }
-
-    if ($excel) {
+        foreach ($table->data as $r => $row) {
+            $c = 0;
+            $worksheet->write_string(2 + $r, $c, strip_tags($row->cells[$c++]->text));
+            $worksheet->write_string(2 + $r, $c, $row->cells[$c++]->text);
+            $worksheet->write_string(2 + $r, $c, $row->cells[$c++]->text);
+            $worksheet->write_string(2 + $r, $c, $row->cells[$c++]->text);
+            $worksheet->write_string(2 + $r, $c, strip_tags($row->cells[$c++]->text));
+            $worksheet->write_string(2 + $r, $c, strip_tags($row->cells[$c++]->text));
+            $worksheet->write_string(2 + $r, $c, $row->cells[$c++]->text);
+        }
         $workbook->close();
         die;
     }
@@ -2118,31 +2060,34 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
             $titlesarray = array('Username'=>'username', 'Fullname'=>'fullname', 'Book Name'=>'bname', 'AttemptID'=>'attemptid', 'Score'=>'score', 'P/F/C'=>'', 'Finishtime'=>'timefinish');
         }
 
-        $table->head = reader_make_table_headers($titlesarray, $orderby, $sort, '?a=admin&id='.$id.'&act=viewattempts&page='.$page.'&gid='.$gid.'&searchtext='.$searchtext);
+        $params = array('a' => 'admin', 'id' => $id, 'act' => 'viewattempts', 'gid' => $gid, 'searchtext' => $searchtext, 'page' => $page);
+        reader_make_table_headers($table, $titlesarray, $orderby, $sort, $params);
         $table->align = array('left', 'left', 'left', 'center', 'center', 'center', 'center', 'center');
         $table->width = '100%';
 
         if ($excel) {
-            $myxls->write_string(0, 0, 'View and Delete Attempts',$formatbc);
-            //$myxls->write_string(1, 0, 'Date: '.$exceldata['time'].'; Course name: '.$exceldata['course_shotname'].'; Group: '.$exceldata['groupname']);
-            $myxls->set_row(0, 30);
-            $myxls->set_column(0,1,20);
-            $myxls->set_column(2,10,15);
+            $worksheet->set_row(0, 24); // set row height
+            $worksheet->write_string(0, 0, 'View and Delete Attempts', $formatbold);
 
-            $myxls->write_string(2, 0, 'Username',$formatbc);
-            $myxls->write_string(2, 1, 'Fullname',$formatbc);
-            $myxls->write_string(2, 2, 'Book Name',$formatbc);
-            $myxls->write_string(2, 3, 'AttemptID',$formatbc);
-            $myxls->write_string(2, 4, 'Score',$formatbc);
-            $myxls->write_string(2, 5, 'Finishtime',$formatbc);
-            $myxls->write_string(2, 6, 'P/F/C',$formatbc);
+            //$worksheet->set_row(1, 24); // set row height
+            //$worksheet->write_string(1, 0, 'Date: '.$exceldata['time'].'; Course name: '.$exceldata['course_shotname'].'; Group: '.$exceldata['groupname']);
+
+            $c = 0;
+            $worksheet->set_row(2, 24); // set row height
+            $worksheet->write_string(2, $c++, 'Username', $formatbold);
+            $worksheet->write_string(2, $c++, 'Fullname', $formatbold);
+            $worksheet->write_string(2, $c++, 'Book Name', $formatbold);
+            $worksheet->write_string(2, $c++, 'AttemptID', $formatbold);
+            $worksheet->write_string(2, $c++, 'Score', $formatbold);
+            $worksheet->write_string(2, $c++, 'Finishtime', $formatbold);
+            $worksheet->write_string(2, $c++, 'P/F/C', $formatbold);
         }
 
         if (! $searchtext && $gid) {
-            $groupstudents = groups_get_members($gid);
+            $groupusers = groups_get_members($gid);
             $allids = "";
-            foreach ($groupstudents as $groupstudents_) {
-                $allids .= $groupstudents_->id.',';
+            foreach ($groupusers as $groupuser) {
+                $allids .= $groupuser->id.',';
             }
             $allids = substr($allids, 0, -1);
 
@@ -2246,19 +2191,16 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
         reader_sort_table($table, $titlesarray, $orderby, $sort);
 
         if ($excel) {
-          foreach ($table->data as $tabledataarray) {
-            $myxls->write_string($row, 0, strip_tags($tabledataarray[0]));
-            $myxls->write_string($row, 1, strip_tags($tabledataarray[1]));
-            $myxls->write_string($row, 2, $tabledataarray[2]);
-            $myxls->write_string($row, 3, $tabledataarray[3]);
-            $myxls->write_string($row, 4, $tabledataarray[4]);
-            $myxls->write_string($row, 5, $tabledataarray[5]);
-            $myxls->write_string($row, 6, $tabledataarray[6]);
-            $row++;
-          }
-        }
-
-        if ($excel) {
+            foreach ($table->data as $row) {
+                $c = 0;
+                $worksheet->write_string(2 + $r, $c, strip_tags($row->cells[$c++]->text));
+                $worksheet->write_string(2 + $r, $c, strip_tags($row->cells[$c++]->text));
+                $worksheet->write_string(2 + $r, $c, $row->cells[$c++]->text);
+                $worksheet->write_string(2 + $r, $c, $row->cells[$c++]->text);
+                $worksheet->write_string(2 + $r, $c, $row->cells[$c++]->text);
+                $worksheet->write_string(2 + $r, $c, $row->cells[$c++]->text);
+                $worksheet->write_string(2 + $r, $c, $row->cells[$c++]->text);
+            }
             $workbook->close();
             die;
         }
@@ -2314,7 +2256,8 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
         $titlesarray['Restrict IP'] = '';
     }
 
-    $table->head = reader_make_table_headers($titlesarray, $orderby, $sort, '?a=admin&id='.$id.'&act='.$act.'&page='.$page.'&gid='.$gid.'&searchtext='.$searchtext);
+    $params = array('a' => 'admin', 'id' => $id, 'act' => $act, 'gid' => $gid, 'searchtext' => $searchtext, 'page' => $page);
+    reader_make_table_headers($table, $titlesarray, $orderby, $sort, $params);
     $table->align = array('center', 'left', 'left', 'center', 'center', 'center', 'center', 'center', 'center');
     $table->width = '100%';
 
@@ -2325,71 +2268,45 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
     $coursestudents = get_enrolled_users($context, NULL, $gid);
 
     foreach ($coursestudents as $coursestudent) {
-      if (reader_check_search_text($searchtext, $coursestudent)) {
-        $studentlevel = $DB->get_record('reader_levels', array('userid' => $coursestudent->id,  'readerid' => $reader->id));
-        $picture = $OUTPUT->user_picture($coursestudent,array($course->id, true, 0, true));
+        if (reader_check_search_text($searchtext, $coursestudent)) {
+            $readerlevel = $DB->get_record('reader_levels', array('userid' => $coursestudent->id, 'readerid' => $reader->id));
+            $picture = $OUTPUT->user_picture($coursestudent,array($course->id, true, 0, true));
 
-        if (empty($studentlevel)) {
-            $studentlevel = (object)array(
-                'id'            => 0,
-                'userid'        => $coursestudent->id,
-                'readerid'      => $reader->id,
-                'startlevel'    => 0,
-                'currentlevel'  => 0,
-                'nopromote'     => 0,
-                'promotionstop' => 0,
-                'goal'          => null,
-                'time'          => time()
+            if (empty($readerlevel)) {
+                $readerlevel = (object)array(
+                    'id'            => 0,
+                    'userid'        => $coursestudent->id,
+                    'readerid'      => $reader->id,
+                    'startlevel'    => 0,
+                    'currentlevel'  => 0,
+                    'nopromote'     => 0,
+                    'promotionstop' => 0,
+                    'goal'          => null,
+                    'time'          => time()
+                );
+            }
+
+            if (has_capability('mod/reader:viewstudentreaderscreens', $contextmodule)) {
+                $linkfullname = reader_fullname_link_viewasstudent($coursestudent, $id, $excel);
+            } else {
+                $linkfullname = reader_fullname_link($coursestudent, $course->id, $excel);
+            }
+
+            $cells = array(
+                $picture,
+                reader_username_link($coursestudent, $course->id, $excel),
+                $linkfullname,
+                reader_selectlevel_form($coursestudent->id, $readerlevel, 'startlevel'),
+                reader_selectlevel_form($coursestudent->id, $readerlevel, 'currentlevel'),
+                reader_yes_no_box($coursestudent->id, $readerlevel, 'nopromote', 1),
+                reader_promotion_stop_box($coursestudent->id, $readerlevel, 'promotionstop', 2),
+                reader_goal_box($coursestudent->id, $readerlevel, 'goal', 3, $reader)
             );
+            if ($reader->individualstrictip == 1) {
+                $cells[] = reader_selectip_form($coursestudent->id, $reader);
+            }
+            $table->data[] = new html_table_row($cells);
         }
-
-        if ($studentlevel->startlevel >= 0) {
-            $startlevelt = reader_selectlevel_form($coursestudent->id, $studentlevel, 'startlevel');
-        } else {
-            $startlevelt = $studentlevel->startlevel;
-        }
-
-        if ($studentlevel->currentlevel >= 0) {
-            $currentlevelt = reader_selectlevel_form($coursestudent->id, $studentlevel, 'currentlevel');
-        } else {
-            $currentlevelt = $studentlevel->currentlevel;
-        }
-
-        $nopromote     = reader_yes_no_box($coursestudent->id, $studentlevel, 'nopromote', 1);
-        $promotionstop = reader_promotion_stop_box($coursestudent->id, $studentlevel, 'promotionstop', 2);
-        $goalbox       = reader_goal_box($coursestudent->id, $studentlevel, 'goal', 3, $reader);
-
-        $linkusername = reader_username_link($coursestudent, $course->id, $excel);
-
-        if (has_capability('mod/reader:viewstudentreaderscreens', $contextmodule)) {
-            $linkfullname = reader_fullname_link_viewasstudent($coursestudent, $id, $excel);
-        } else {
-            $linkfullname = reader_fullname_link($coursestudent, $course->id, $excel);
-        }
-
-        if ($reader->individualstrictip == 1) {
-            $table->data[] = new html_table_row(array(
-                $picture,
-                $linkusername,
-                $linkfullname,
-                array($startlevelt, $studentlevel->startlevel),
-                array($currentlevelt, $studentlevel->currentlevel),
-                array($nopromote, $studentlevel->nopromote),
-                array($promotionstop, $studentlevel->promotionstop),
-                array($goalbox, $studentlevel->goal),
-                reader_selectip_form($coursestudent->id, $reader)));
-        } else {
-            $table->data[] = new html_table_row(array(
-                $picture,
-                $linkusername,
-                $linkfullname,
-                array($startlevelt, $studentlevel->startlevel),
-                array($currentlevelt, $studentlevel->currentlevel),
-                array($nopromote, $studentlevel->nopromote),
-                array($promotionstop, $studentlevel->promotionstop),
-                array($goalbox, $studentlevel->goal)));
-        }
-      }
     }
 
     reader_sort_table($table, $titlesarray, $orderby, $sort);
@@ -2513,7 +2430,8 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
       $titlesarray = array('Title'=>'title', 'Publisher'=>'publisher', 'Level'=>'level', 'Words'=>'words', 'Reading Level'=>'readinglevel', 'Length'=>'length');
     }
 
-    $table->head = reader_make_table_headers($titlesarray, $orderby, $sort, '?a=admin&id='.$id.'&act='.$act.'&gid='.$gid.'&publisher='.$publisher.'&page='.$page.'&searchtext='.$searchtext);
+    $params = array('a' => 'admin', 'id' => $id, 'act' => $act, 'gid' => $gid, 'searchtext' => $searchtext, 'page' => $page, 'publisher' => $publisher);
+    reader_make_table_headers($table, $titlesarray, $orderby, $sort, $params);
     if ($reader->bookinstances == 1) {
       $table->align = array('left', 'left', 'left', 'center', 'center');
     } else {
@@ -2900,7 +2818,8 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
         echo '<form action="" method="post"><table width="100%"><tr><td align="right"><input type="button" value="Select all" onclick="checkall();" /> <input type="button" value="Deselect all" onclick="uncheckall();" /></td></tr></table>';
         $titlesarray = array('Image'=>'', 'Username'=>'username', 'Fullname'=>'fullname', 'Select Students'=>'');
 
-        $table->head = reader_make_table_headers($titlesarray, $orderby, $sort, '?a=admin&id='.$id.'&act=awardextrapoints&gid='.$gid);
+        $params = array('a' => 'admin', 'id' => $id, 'act' => 'awardextrapoints', 'gid' => $gid);
+        reader_make_table_headers($table, $titlesarray, $orderby, $sort, $params);
         $table->align = array('center', 'left', 'left', 'center');
         $table->width = '100%';
 
@@ -3050,7 +2969,8 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
 
         $titlesarray = array('Book'=>'book', 'Username 1'=>'username1', 'Username 2'=>'username2', 'IP 1'=>'', 'IP 2'=>'', 'Time 1'=>'', 'Time 2'=>'', 'Time period'=>'', 'Log text'=>'');
 
-        $table->head  = reader_make_table_headers($titlesarray, $orderby, $sort, '?a=admin&id='.$id.'&act='.$act);
+        $params = array('a' => 'admin', 'id' => $id, 'act' => $act);
+        $table->head  = reader_make_table_headers($table, $titlesarray, $orderby, $sort, $params);
         $table->align = array("left", "left", "left", "center", "center", "center", "center", "center", "left");
         $table->width = "100%";
 
@@ -3184,33 +3104,36 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
 
     $titlesarray = array('Group name'=>'groupname', 'Students with<br /> no quizzes'=>'noquizzes', 'Students with<br /> quizzes'=>'quizzes', 'Percent with<br /> quizzes'=>'quizzes', 'Average Taken<br /> Quizzes'=>'takenquizzes', 'Average Passed<br /> Quizzes'=>'passedquizzes', 'Average Failed<br /> Quizzes'=>'failedquizzes', 'Average total<br /> points'=>'totalpoints', 'Average words<br /> this term'=>'averagewordsthisterm', 'Average words<br /> all terms'=>'averagewordsallterms');
 
-    $table->head = reader_make_table_headers($titlesarray, $orderby, $sort, '?a=admin&id='.$id.'&act='.$act.'&gid='.$gid.'&searchtext='.$searchtext.'&page='.$page.'&fromtime='.$fromtime);
+    $params = array('a' => 'admin', 'id' => $id, 'act' => $act, 'gif' => $gid, 'searchtext' => $searchtext, 'page' => $page, 'fromtime' => $fromtime);
+    reader_make_table_headers($table, $titlesarray, $orderby, $sort, $params);
     $table->align = array("left", "center", "center", "center", "center", "center", "center", "center", "center");
     $table->width = "100%";
 
     if ($excel) {
-        $myxls->write_string(0, 0, 'Summary Report by Class Group',$formatbc);
-        $myxls->write_string(1, 0, 'Date: '.$exceldata['time'].'; Course name: '.$exceldata['course_shotname']);
-        $myxls->set_row(0, 30);
-        $myxls->set_column(0,1,20);
-        $myxls->set_column(2,10,15);
+        $worksheet->set_row(0, 24); // set row height
+        $worksheet->write_string(0, 0, 'Summary Report by Class Group', $formatbold);
 
-        $myxls->write_string(2, 0, 'Group name',$formatbc);
-        $myxls->write_string(2, 1, 'Students with no quizzes',$formatbc);
-        $myxls->write_string(2, 2, 'Students with quizzes',$formatbc);
-        $myxls->write_string(2, 3, 'Percent with Quizzes',$formatbc);
-        $myxls->write_string(2, 4, 'Average Taken Quizzes',$formatbc);
-        $myxls->write_string(2, 5, 'Average Passed Quizzes',$formatbc);
-        $myxls->write_string(2, 6, 'Average Failed Quizzes',$formatbc);
-        $myxls->write_string(2, 7, 'Average total points',$formatbc);
-        $myxls->write_string(2, 8, 'Average words this term',$formatbc);
-        $myxls->write_string(2, 9, 'Average words all terms',$formatbc);
+        $worksheet->set_row(1, 24); // set row height
+        $worksheet->write_string(1, 0, 'Date: '.$exceldata['time'].'; Course name: '.$exceldata['course_shotname']);
+
+        $c = 0;
+        $worksheet->set_row(2, 24); // set row height
+        $worksheet->write_string(2, $c++, 'Group name', $formatbold);
+        $worksheet->write_string(2, $c++, 'Students with no quizzes', $formatbold);
+        $worksheet->write_string(2, $c++, 'Students with quizzes', $formatbold);
+        $worksheet->write_string(2, $c++, 'Percent with Quizzes', $formatbold);
+        $worksheet->write_string(2, $c++, 'Average Taken Quizzes', $formatbold);
+        $worksheet->write_string(2, $c++, 'Average Passed Quizzes', $formatbold);
+        $worksheet->write_string(2, $c++, 'Average Failed Quizzes', $formatbold);
+        $worksheet->write_string(2, $c++, 'Average total points', $formatbold);
+        $worksheet->write_string(2, $c++, 'Average words this term', $formatbold);
+        $worksheet->write_string(2, $c++, 'Average words all terms', $formatbold);
     }
 
     foreach ($groups as $group) {
         unset($data);
         $data = array();
-        $data['percentgrade']              = 0;
+        $data['percentgrade']         = 0;
         $data['averagetaken']         = 0;
         $data['averagepassed']        = 0;
         $data['averagepoints']        = 0;
@@ -3222,12 +3145,14 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
 
         $coursestudents = get_enrolled_users($context, NULL, $group->id);
         foreach ($coursestudents as $coursestudent) {
-            if ($attempts = $DB->get_records_sql('SELECT * FROM {reader_attempts} WHERE userid= ?  and reader= ?  and timestart > ?', array($coursestudent->id, $reader->id, $reader->ignoredate))) {
-                $data['averagetaken'] += count($attempts);
-                foreach ($attempts as $attempt) {
-                    if (strtolower($attempt->passed) == 'true') {
+            $select = 'userid= ? AND reader= ? AND timestart > ?';
+            $params = array($coursestudent->id, $reader->id, $reader->ignoredate);
+            if ($readerattempts = $DB->get_records_select('reader_attempts', $select, $params)) {
+                $data['averagetaken'] += count($readerattempts);
+                foreach ($readerattempts as $readerattempt) {
+                    if (strtolower($readerattempt->passed) == 'true') {
                         $data['averagepassed']++;
-                        if ($bookdata = $DB->get_record('reader_books', array('quizid' => $attempt->quizid))) {
+                        if ($bookdata = $DB->get_record('reader_books', array('quizid' => $readerattempt->quizid))) {
                             $data['averagepoints'] += reader_get_reader_length($reader, $bookdata->id);
                             $data['averagewordsthisterm'] += $bookdata->words;
                         }
@@ -3240,10 +3165,10 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
                 $data['withoutquizzes'] ++;
             }
 
-            if ($attempts = $DB->get_records_sql('SELECT * FROM {reader_attempts} WHERE userid= ? ', array($coursestudent->id))) {
-                foreach ($attempts as $attempt) {
-                    if (strtolower($attempt->passed) == 'true') {
-                        if ($bookdata = $DB->get_record('reader_books', array('quizid' => $attempt->quizid))) {
+            if ($readerattempts = $DB->get_records('reader_attempts', array('userid' => $coursestudent->id))) {
+                foreach ($readerattempts as $readerattempt) {
+                    if (strtolower($readerattempt->passed) == 'true') {
+                        if ($bookdata = $DB->get_record('reader_books', array('quizid' => $readerattempt->quizid))) {
                             $data['averagewordsallterms'] += $bookdata->words;
                         }
                     }
@@ -3270,22 +3195,19 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
     reader_sort_table($table, $titlesarray, $orderby, $sort);
 
     if ($excel) {
-      foreach ($table->data as $tabledataarray) {
-        $myxls->write_string($row, 0, $tabledataarray[0]);
-        $myxls->write_number($row, 1, (int) $tabledataarray[1]);
-        $myxls->write_number($row, 2, (int) $tabledataarray[2]);
-        $myxls->write_number($row, 3, (int) $tabledataarray[3]);
-        $myxls->write_number($row, 4, (int) $tabledataarray[4]);
-        $myxls->write_number($row, 5, (int) $tabledataarray[5]);
-        $myxls->write_string($row, 6, (int) $tabledataarray[6]);
-        $myxls->write_string($row, 7, (int) $tabledataarray[7]);
-        $myxls->write_string($row, 8, (int) $tabledataarray[8]);
-        $myxls->write_string($row, 9, (int) $tabledataarray[9]);
-        $row++;
-      }
-    }
-
-    if ($excel) {
+        foreach ($table->data as $r => $row) {
+            $c = 0;
+            $worksheet->write_string(2 + $r, $c, $row->cells[$c++]->text);
+            $worksheet->write_number(2 + $r, $c, $row->cells[$c++]->text);
+            $worksheet->write_number(2 + $r, $c, $row->cells[$c++]->text);
+            $worksheet->write_number(2 + $r, $c, $row->cells[$c++]->text);
+            $worksheet->write_number(2 + $r, $c, $row->cells[$c++]->text);
+            $worksheet->write_number(2 + $r, $c, $row->cells[$c++]->text);
+            $worksheet->write_string(2 + $r, $c, $row->cells[$c++]->text);
+            $worksheet->write_string(2 + $r, $c, $row->cells[$c++]->text);
+            $worksheet->write_string(2 + $r, $c, $row->cells[$c++]->text);
+            $worksheet->write_string(2 + $r, $c, $row->cells[$c++]->text);
+        }
         $workbook->close();
         die;
     }
@@ -3535,7 +3457,12 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
 
         $titlesarray = array('Book Title'=>'booktitle', 'Publisher'=>'publisher', 'R. Level'=>'level', 'Avg Rating'=>'avrating', 'No. of Ratings'=>'nrating');
 
-        $table->head = reader_make_table_headers($titlesarray, $orderby, $sort, '?a=admin&id='.$id.'&act='.$act.'&booksratingbest='.$booksratingbest.'&booksratinglevel='.$booksratinglevel.'&booksratingterm='.$booksratingterm.'&booksratingwithratings='.$booksratingwithratings."&booksratingshow=Go");
+        $params = array('a' => 'admin', 'id' => $id, 'act' => 'booksratingbest',
+                        'booksratingshow'  => 'Go',
+                        'booksratingterm'  => $booksratingterm,
+                        'booksratinglevel' => $booksratinglevel,
+                        'booksratingwithratings' => $booksratingwithratings);
+        reader_make_table_headers($table, $titlesarray, $orderby, $sort, $params);
         $table->align = array("left", "left", "center", "center", "center");
         $table->width = "100%";
 
@@ -3587,23 +3514,26 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
 
     $titlesarray = array('Image'=>'', 'By Username'=>'byusername', 'Student 1'=>'student1', 'Student 2'=>'student2', 'Quiz'=>'quiz', 'Status'=>'status', 'Date'=>'date');
 
-    $table->head = reader_make_table_headers($titlesarray, $orderby, $sort, '?a=admin&id='.$id.'&act='.$act.'&gid='.$gid.'&page='.$page);
+    $params = array('a' => 'admin', 'id' => $id, 'act' => $act, 'gid' => $gid, 'page' => $page);
+    reader_make_table_headers($table, $titlesarray, $orderby, $sort, $params);
     $table->align = array("center", "left", "left", "left", "left", "center", "center");
     $table->width = "100%";
 
     if ($excel) {
-        $myxls->write_string(0, 0, 'View log of suspicious activity',$formatbc);
-        $myxls->write_string(1, 0, 'Date: '.$exceldata['time'].'; Course name: '.$exceldata['course_shotname'].'; ');
-        $myxls->set_row(0, 30);
-        $myxls->set_column(0,1,20);
-        $myxls->set_column(2,10,15);
+        $worksheet->set_row(0, 24); // set row height
+        $worksheet->write_string(0, 0, 'View log of suspicious activity', $formatbold);
 
-        $myxls->write_string(2, 0, 'By Username',$formatbc);
-        $myxls->write_string(2, 1, 'Student 1',$formatbc);
-        $myxls->write_string(2, 2, 'Student 2',$formatbc);
-        $myxls->write_string(2, 3, 'Quiz',$formatbc);
-        $myxls->write_string(2, 4, 'Status',$formatbc);
-        $myxls->write_string(2, 5, 'Date',$formatbc);
+        $worksheet->set_row(1, 24); // set row height
+        $worksheet->write_string(1, 0, 'Date: '.$exceldata['time'].'; Course name: '.$exceldata['course_shotname'].'; ');
+
+        $c = 0;
+        $worksheet->set_row(2, 24); // set row height
+        $worksheet->write_string(2, $c++, 'By Username', $formatbold);
+        $worksheet->write_string(2, $c++, 'Student 1', $formatbold);
+        $worksheet->write_string(2, $c++, 'Student 2', $formatbold);
+        $worksheet->write_string(2, $c++, 'Quiz', $formatbold);
+        $worksheet->write_string(2, $c++, 'Status', $formatbold);
+        $worksheet->write_string(2, $c++, 'Date', $formatbold);
     }
 
     if (! $gid) {
@@ -3638,15 +3568,15 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
     reader_sort_table($table, $titlesarray, $orderby, $sort);
 
     if ($excel) {
-      foreach ($table->data as $tabledataarray) {
-        $myxls->write_string($row, 0, (string) $tabledataarray[1]);
-        $myxls->write_string($row, 1, (string) $tabledataarray[2]);
-        $myxls->write_string($row, 2, (string) $tabledataarray[3]);
-        $myxls->write_number($row, 3, (string) $tabledataarray[4]);
-        $myxls->write_number($row, 4, (string) $tabledataarray[5]);
-        $myxls->write_number($row, 5, (string) $tabledataarray[6]);
-        $row++;
-      }
+        foreach ($table->data as $r => $row) {
+            $c = 0;
+            $worksheet->write_string(2 + $r, $c, (string) $row->cells[$c++]->text);
+            $worksheet->write_string(2 + $r, $c, (string) $row->cells[$c++]->text);
+            $worksheet->write_string(2 + $r, $c, (string) $row->cells[$c++]->text);
+            $worksheet->write_number(2 + $r, $c, (string) $row->cells[$c++]->text);
+            $worksheet->write_number(2 + $r, $c, (string) $row->cells[$c++]->text);
+            $worksheet->write_number(2 + $r, $c, (string) $row->cells[$c++]->text);
+        }
     }
 
     if ($excel) {
@@ -3837,7 +3767,8 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
 
     $titlesarray = array('<input type="button" value="Select all" onclick="checkall();" />'=>'', 'Image'=>'', 'Username'=>'username', 'Fullname<br />Click to view screen'=>'fullname', 'Current level'=>'currentlevel', 'Total words<br /> this term'=>'totalwordsthisterm', 'Total words<br /> all terms'=>'totalwordsallterms');
 
-    $table->head = reader_make_table_headers($titlesarray, $orderby, $sort, '?a=admin&id='.$id.'&act='.$act.'&book='.$book.'&gid='.$gid.'&searchtext='.$searchtext.'&page='.$page);
+    $params = array('a' => 'admin', 'id' => $id, 'act' => $act, 'gid' => $gid, 'book' => $book, 'searchtext' => $searchtext, 'page' => $page);
+    reader_make_table_headers($table, $titlesarray, $orderby, $sort, $params);
     $table->align = array("center", "center", "left", "left", "center", "center", "center");
     $table->width = "100%";
 
@@ -3846,20 +3777,19 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
     }
 
     $coursestudents = get_enrolled_users($context, NULL, $gid);
+    $groupnames = array();
 
     foreach ($coursestudents as $coursestudent) {
+      $groupnames[$username] = array();
       if (reader_check_search_text($searchtext, $coursestudent)) {
         $picture = $OUTPUT->user_picture($coursestudent,array($course->id, true, 0, true));
 
         if ($excel) {
-
             if ($usergroups = groups_get_all_groups($course->id, $coursestudent->id)){
                 foreach ($usergroups as $group){
-                    $groupsdata[$coursestudent->username] .= $group->name.', ';
+                    $groupnames[$coursestudent->username][] = $group->name;
                 }
-                $groupsdata[$coursestudent->username] = substr($groupsdata[$coursestudent->username], 0, -2);
             }
-
         }
 
         unset($data);
@@ -4004,7 +3934,8 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
     }
     $titlesarray = array(''=>'', 'Full Name'=>'username', 'Title'=>'title', 'Publisher'=>'publisher', 'Level'=>'level', 'Reading Level'=>'rlevel', 'Reading level'=>'rlevel', 'Score'=>'score', 'P/F/C'=>'', 'Finishtime'=>'finishtime', 'Option'=>'');
 
-    $table->head = reader_make_table_headers($titlesarray, $orderby, $sort, '?a=admin&id='.$id.'&act='.$act.'&searchtext='.$searchtext);
+    $params = array('a' => 'admin', 'id' => $id, 'act' => $act, 'searchtext' => $searchtext);
+    reader_make_table_headers($table, $titlesarray, $orderby, $sort, $params);
     $table->align = array("left", "left", "left", "left", "center", "center", "center", "center", "center", "center", "center");
     $table->width = "100%";
 
