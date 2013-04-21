@@ -28,8 +28,14 @@
 /** Include required files */
 require_once('../../config.php');
 
-$filepath = preg_replace('/^.*images.php/', '', $FULLME);
-$fullpath = $CFG->dataroot.$filepath;
+if ($CFG->slasharguments) {
+    $images_php = 'images.php';
+} else {
+    $images_php = 'images.php?file=';
+}
+
+$filepath = preg_replace('/^.*'.preg_quote($images_php).'/', '', $FULLME);
+$fullpath = clean_param(urldecode($CFG->dataroot.$filepath), PARAM_PATH);
 
 if (! file_exists($fullpath) || ! $fh = @fopen($fullpath, 'r')) {
     //header('HTTP/1.1 500 Internal Server Error');
