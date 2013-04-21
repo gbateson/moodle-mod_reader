@@ -1060,11 +1060,15 @@ function reader_make_table_headers(&$table, $headers, $orderby, $sort, $params) 
  */
 function reader_sort_table(&$table, $columns, $sortdirection, $sortcolumn) {
 
+    if (empty($table->data)) {
+        return; // nothing to do
+    }
+
     $sortindex = 0; // default is first column
     if ($sortcolumn) {
         $i = 0;
-        foreach ($columns as $text => $column) {
-            if ($column == $sortcolumn) {
+        foreach ($columns as $text => $columnname) {
+            if ($columnname == $sortcolumn) {
                 $sortindex = $i;
             }
             $i++;

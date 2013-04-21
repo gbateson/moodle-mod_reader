@@ -1428,7 +1428,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
                             $bookwords = $DB->get_field('reader_noquiz', 'words', array('quizid' => $readerattempt->quizid));
                         }
                         if ($bookwords) {
-                            $data['totalwordsallterms'] += $bookdata->words;
+                            $data['totalwordsallterms'] += $bookwords;
                         }
                     }
                 }
