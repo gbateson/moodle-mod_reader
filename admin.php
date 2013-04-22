@@ -238,6 +238,11 @@ if (empty($deletebook) || empty($deletequiz)) {
     $deletebook = $deletequiz = 0;
 }
 
+// we limit the number of students to 400,
+// otherwise the reports run out of memmory
+$coursestudents = get_enrolled_users($context, NULL, $gid);
+$coursestudents = array_slice($coursestudents, 0, 400, true);
+
 if (has_capability('mod/reader:manage', $contextmodule) && $quizesid) {
     if (empty($publisher) && ($publisherex == '0')) {
         error('Please choose publisher', 'admin.php?a=admin&id='.$id.'&act=addquiz');
@@ -322,9 +327,9 @@ if (has_capability('mod/reader:manage', $contextmodule) && $quizesid) {
 
 if (has_capability('mod/reader:deletereaderattempts', $contextmodule) && $act == 'viewattempts' && $attemptid) {
     //if (authenticate_user_login($USER->username, $upassword)) {
-        $attemptdata = $DB->get_record('reader_attempts', array('id' => $attemptid));
-        unset($attemptdata->id);
-        $DB->insert_record('reader_deleted_attempts', $attemptdata);
+        $readerattempt = $DB->get_record('reader_attempts', array('id' => $attemptid));
+        unset($readerattempt->id);
+        $DB->insert_record('reader_deleted_attempts', $readerattempt);
         $DB->delete_records('reader_attempts', array('id' => $attemptid));
         add_to_log($course->id, 'reader', 'AA-reader_deleted_attempts', 'admin.php?id='.$id, $cm->instance);
     //}
@@ -337,9 +342,9 @@ if (has_capability('mod/reader:deletereaderattempts', $contextmodule) && $act ==
     }
 
     if (! empty($studentuserid)) {
-        $attemptdata = $DB->get_record('reader_deleted_attempts', array('userid' => $studentuserid, 'quizid' => $bookquiznumber));
-        unset($attemptdata->id);
-        $DB->insert_record('reader_attempts', $attemptdata);
+        $readerattempt = $DB->get_record('reader_deleted_attempts', array('userid' => $studentuserid, 'quizid' => $bookquiznumber));
+        unset($readerattempt->id);
+        $DB->insert_record('reader_attempts', $readerattempt);
         $DB->delete_records('reader_deleted_attempts', array('userid' => $studentuserid, 'quizid' => $bookquiznumber));
         add_to_log($course->id, 'reader', 'AA-reader_restore_attempts', 'admin.php?id='.$id, $cm->instance);
     }
@@ -625,7 +630,6 @@ if (has_capability('mod/reader:manage', $contextmodule) && $setip) {
 
 
 if (has_capability('mod/reader:manage', $contextmodule) && $changeallstartlevel >= 0) {
-    $coursestudents = get_enrolled_users($context, NULL, $gid);
     foreach ($coursestudents as $coursestudent) {
         if ($DB->get_record('reader_levels', array('userid' => $coursestudent->id, 'readerid' => $reader->id))) {
             $DB->set_field('reader_levels',  'startlevel',  $changeallstartlevel, array('userid' => $coursestudent->id,  'readerid' => $reader->id));
@@ -644,7 +648,6 @@ if (has_capability('mod/reader:manage', $contextmodule) && $changeallstartlevel 
 }
 
 if (has_capability('mod/reader:manage', $contextmodule) &&  $changeallcurrentlevel >= 0) {
-    $coursestudents = get_enrolled_users($context, NULL, $gid);
     foreach ($coursestudents as $coursestudent) {
         if ($DB->get_record('reader_levels', array('userid' => $coursestudent->id, 'readerid' => $reader->id))) {
             $DB->set_field('reader_levels',  'currentlevel',  $changeallcurrentlevel, array('userid' => $coursestudent->id,  'readerid' => $reader->id));
@@ -665,7 +668,6 @@ if (has_capability('mod/reader:manage', $contextmodule) &&  $changeallcurrentlev
 
 
 if (has_capability('mod/reader:manage', $contextmodule) && $changeallpromo) {
-    $coursestudents = get_enrolled_users($context, NULL, $gid);
     foreach ($coursestudents as $coursestudent) {
         if ($DB->get_record('reader_levels', array('userid' => $coursestudent->id, 'readerid' => $reader->id))) {
             if (strtolower($changeallpromo) == 'promo') {$nopromote = 0;} else {$nopromote = 1;}
@@ -676,7 +678,6 @@ if (has_capability('mod/reader:manage', $contextmodule) && $changeallpromo) {
 }
 
 if (has_capability('mod/reader:manage', $contextmodule) && $changeallstoppromo >= 0 && $gid) {
-    $coursestudents = get_enrolled_users($context, NULL, $gid);
     foreach ($coursestudents as $coursestudent) {
         if ($DB->get_record('reader_levels', array('userid' => $coursestudent->id, 'readerid' => $reader->id))) {
             $DB->set_field('reader_levels',  'promotionstop',  $changeallstoppromo, array('userid' => $coursestudent->id,  'readerid' => $reader->id));
@@ -688,7 +689,6 @@ if (has_capability('mod/reader:manage', $contextmodule) && $changeallstoppromo >
 
 
 if (has_capability('mod/reader:manage', $contextmodule) && $changeallcurrentgoal) {
-    $coursestudents = get_enrolled_users($context, NULL, $gid);
     foreach ($coursestudents as $coursestudent) {
         if ($data = $DB->get_record('reader_levels', array('userid' => $coursestudent->id, 'readerid' => $reader->id))) {
             $DB->set_field('reader_levels',  'goal',  $changeallcurrentgoal, array('id' => $data->id));
@@ -1108,7 +1108,7 @@ $options['id']         = $id;
 $options['act']        = $act;
 $options['sort']       = $sort;
 $options['orderby']    = $orderby;
-$options['gid']       = $gid;
+$options['gid']        = $gid;
 $options['ct']         = $ct;
 $options['searchtext'] = $searchtext;
 $options['excel']      = 1;
@@ -1317,20 +1317,20 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
         $table->align = array('center', 'left', 'left', 'center', 'center');
         $table->width = '80%';
 
-        foreach ($needdeleteattemptsfirst as $attemptdata) {
-            if ($attemptdata->timefinish >= $reader->ignoredate) {
+        foreach ($needdeleteattemptsfirst as $readerattempt) {
+            if ($readerattempt->timefinish >= $reader->ignoredate) {
                 $status = 'active';
             } else {
                 $status = 'inactive';
             }
 
-            $userdata = $DB->get_record('user', array('id' => $attemptdata->userid));
+            $userdata = $DB->get_record('user', array('id' => $readerattempt->userid));
 
             $table->data[] = new html_table_row(array(
-                $attemptdata->id,
-                date('d M Y', $attemptdata->timefinish),
+                $readerattempt->id,
+                date('d M Y', $readerattempt->timefinish),
                 fullname($userdata),
-                round($attemptdata->sumgrades, 2),
+                round($readerattempt->sumgrades, 2),
                 $status
             ));
         }
@@ -1385,9 +1385,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
         $gid = NULL;
     }
 
-    $coursestudents = get_enrolled_users($context, NULL, $gid);
     $groupnames = array();
-
     foreach ($coursestudents as $coursestudent) {
         $groupnames[$coursestudent->username] = array();
         if (reader_check_search_text($searchtext, $coursestudent)) {
@@ -1440,17 +1438,17 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
             } else {
                 $fullnamelink = reader_fullname_link($coursestudent, $course->id, $excel);
             }
-            if ($attemptdata = reader_get_student_attempts($coursestudent->id, $reader)) {
+            if ($readerattempt = reader_get_student_attempts($coursestudent->id, $reader)) {
                 $table->data[] = new html_table_row(array(
                         $picture,
                         $usernamelink,
                         $fullnamelink,
-                        $attemptdata[1]['startlevel'],
-                        $attemptdata[1]['currentlevel'],
-                        $attemptdata[1]['countattempts'],
-                        $attemptdata[1]['correct'],
-                        $attemptdata[1]['incorrect'],
-                        $attemptdata[1]['totalpoints'],
+                        $readerattempt[1]['startlevel'],
+                        $readerattempt[1]['currentlevel'],
+                        $readerattempt[1]['countattempts'],
+                        $readerattempt[1]['correct'],
+                        $readerattempt[1]['incorrect'],
+                        $readerattempt[1]['totalpoints'],
                         $data['totalwordsthisterm'],
                         $data['totalwordsallterms']
                 ));
@@ -1601,13 +1599,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
         $gid = NULL;
     }
 
-    if ($sort == 'username' || $sort == 'firstname') {
-        $coursestudents = get_enrolled_users($context, NULL, $gid);
-    } else {
-        $coursestudents = get_enrolled_users($context, NULL, $gid);
-    }
     $groupnames = array();
-
     foreach ($coursestudents as $coursestudent) {
         $groupnames[$coursestudent->username] = array();
 
@@ -1686,8 +1678,8 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
                         $readerattempt['booktitle'],
                         $readerattempt['percentgrade'].'%',
                         $passedstatus,
-                        number_format($readerattempt['words']),
-                        number_format($totalwords)
+                        (is_numeric($readerattempt['words']) ? number_format($readerattempt['words']) : $readerattempt['words']),
+                        (is_numeric($totalwords) ? number_format($totalwords) : $totalwords)
                     );
                     $table->data[] = new html_table_row($cells);
                 }
@@ -2083,109 +2075,105 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
             $worksheet->write_string(2, $c++, 'P/F/C', $formatbold);
         }
 
-        if (! $searchtext && $gid) {
-            $groupusers = groups_get_members($gid);
-            $allids = "";
-            foreach ($groupusers as $groupuser) {
-                $allids .= $groupuser->id.',';
-            }
-            $allids = substr($allids, 0, -1);
+        $select = 'ra.id,ra.timefinish,ra.userid,ra.attempt,ra.percentgrade,ra.passed,'.
+                  'rb.name,rb.publisher,rb.level,'.
+                  'u.username,u.firstname,u.lastname';
+        $from   = '{reader_attempts} ra '.
+                  'LEFT JOIN {user} u ON ra.userid = u.id '.
+                  'LEFT JOIN {reader_books} rb ON ra.quizid = rb.quizid';
+        $where  = '';
+        $params = null;
 
-            if ($CFG->dbtype == 'mysql') {
-                $select = 'ra.timefinish,ra.userid,ra.attempt,ra.percentgrade,ra.id,ra.passed,'.
-                          'rb.name,rb.publisher,rb.level,'.
-                          'u.username,u.firstname,u.lastname';
-                $from   = '{reader_attempts} ra '.
-                          'LEFT JOIN ({reader_books} rb, {user} u) ON (rb.quizid = ra.quizid AND u.id = ra.userid)';
-                $where  = 'ra.userid IN ('.$allids.')';
-                $params = array();
-                $attemptsdata = $DB->get_records_sql("SELECT $select FROM $from WHERE $where", $params);
-            } else {
-                /*  VARIANT 2 */
-
-                $select = 'ra.timefinish,ra.userid,ra.attempt,ra.percentgrade,ra.id,ra.quizid,ra.sumgrades,ra.passed,rb.name,rb.publisher,rb.level,rb.length,rb.image,rb.difficulty,rb.words';
-                $from   = '{reader_attempts} ra LEFT JOIN {reader_books} rb ON rb.quizid = ra.quizid';
-                $where  = 'ra.userid IN ('.$allids.')';
-                $params = array();
-                $attemptsdata = $DB->get_records_sql("SELECT $select FROM $from WHERE $where ORDER BY ra.timefinish", $params);
-                 foreach ($attemptsdata as $key => $value) {
-                     $userdata = $DB->get_record('user', array('id' => $value->userid));
-                     $attemptsdata[$key]->username  = $userdata->username;
-                     $attemptsdata[$key]->firstname = $userdata->firstname;
-                     $attemptsdata[$key]->lastname  = $userdata->lastname;
-                 }
-             }
-        } else if ($searchtext) {
+        if ($searchtext) {
             if (strstr($searchtext, '"')) {
-                $searchtextforsql = str_replace('\"', '"', $searchtext);
-                $searchtextforsql = explode('"', $searchtextforsql);
+                $texts = explode('"', str_replace('\"', '"', $searchtext));
             } else {
-                $searchtextforsql = explode(' ', $searchtext);
+                $texts = explode(' ', $searchtext);
             }
-            if ($CFG->dbtype == 'mysql') {
-                foreach ($searchtextforsql as $searchtext_) {
-                  if ($searchtext_ && strlen($searchtext_) > 3) {
-                    $searchsql .= " u.username LIKE '%{$searchtext_}%' OR u.firstname LIKE '%{$searchtext_}%' OR u.lastname LIKE '%{$searchtext_}%' OR rp.name LIKE '%{$searchtext_}%' OR rp.level LIKE '%{$searchtext_}%' OR rp.publisher LIKE '%{$searchtext_}%' OR";
-                  }
+            $where  = array();
+            foreach ($texts as $text) {
+                if ($text && strlen($text) > 3) {
+                    $where[] = "u.username LIKE '%$text%'";
+                    $where[] = "u.firstname LIKE '%{$text}%'";
+                    $where[] = "u.lastname LIKE '%{$text}%'";
+                    $where[] = "rb.name LIKE '%{$text}%'";
+                    $where[] = "rb.level LIKE '%{$text}%'";
+                    $where[] = "rb.publisher LIKE '%{$text}%'";
                 }
-                $searchsql = substr($searchsql, 0, -2);
-                $attemptsdata = $DB->get_records_sql('SELECT ra.timefinish,ra.userid,ra.attempt,ra.percentgrade,ra.id,ra.passed,rp.name,rp.publisher,rp.level,u.username,u.firstname,u.lastname FROM {reader_attempts} ra LEFT JOIN ({reader_books} rp, {user} u) ON (rp.quizid = ra.quizid AND u.id = ra.userid) WHERE {$searchsql}');
-            } else {
-                $attemptsdata = $DB->get_records_sql('SELECT ra.timefinish,ra.userid,ra.attempt,ra.percentgrade,ra.id,ra.passed,rp.name,rp.publisher,rp.level FROM {reader_attempts} ra LEFT JOIN {reader_books} rp ON rp.quizid = ra.quizid');
-
-                foreach ($attemptsdata as $key => $value) {
-                    $userdata = $DB->get_record('user', array('id' => $value->userid));
-                    $needmark = false;
-                    foreach ($searchtextforsql as $searchtext_) {
-                        if (strstr(strtolower($userdata->username),strtolower($searchtext_)) || strstr(strtolower($userdata->firstname),strtolower($searchtext_)) || strstr(strtolower($userdata->lastname),strtolower($searchtext_))) {
-                          $needmark = true;
-                        }
-                    }
-                    if ($needmark) {
-                        $attemptsdata[$key]->username  = $userdata->username;
-                        $attemptsdata[$key]->firstname = $userdata->firstname;
-                        $attemptsdata[$key]->lastname  = $userdata->lastname;
-                    } else {
-                        unset($attemptsdata[$key]);
-                    }
-                }
+            }
+            $where = implode(' OR ', $where);
+        } else if ($gid) {
+            $groupuserids = array();
+            $groupusers = groups_get_members($gid);
+            foreach ($groupusers as $groupuser) {
+                $groupuserids[] = $groupuser->id;
+            }
+            if ($groupuserids = implode(',', $groupuserids)) {
+                $where = 'ra.userid IN ('.$groupuserids.')';
             }
         }
-
-        foreach ($attemptsdata as $attemptdata) {
-            if (! $excel) {
-                $attemptbooktime = array(date('d-M-Y', $attemptdata->timefinish), $attemptdata->timefinish);
+        if ($where) {
+            if ($orderby=='' || strtoupper($orderby)=='ASC') {
+                $ASC_DESC = ' ASC';
             } else {
-                $attemptbooktime = date('Y/m/d', $attemptdata->timefinish);
+                $ASC_DESC = ' DESC';
             }
+            switch ($sort) {
+                case 'username'   : $where .= " ORDER BY u.username $ASC_DESC"; break;
+                case 'fullname'   : $where .= " ORDER BY u.firstname $ASC_DESC, u.lastname $ASC_DESC"; break;
+                case 'bname'      : $where .= " ORDER BY rb.name $ASC_DESC"; break;
+                case 'attemptid'  : $where .= " ORDER BY ra.id $ASC_DESC"; break;
+                case 'score'      : $where .= " ORDER BY ra.percentgrade $ASC_DESC"; break;
+                case 'timefinish' : $where .= " ORDER BY ra.timefinish $ASC_DESC"; break;
+                default           : $where .= " ORDER BY u.username $ASC_DESC"; break;
+            }
+            $limitfrom = 0;
+            $limitnum = 1000;
+            $readerattempts = $DB->get_records_sql("SELECT $select FROM $from WHERE $where", $params, $limitfrom, $limitnum);
+        } else {
+            $readerattempts = false;
+        }
 
-            switch (strtolower($attemptdata->passed)) {
+        if (! $readerattempts) {
+            $readerattempts = array();
+        }
+
+        $can_deleteattempts = has_capability('mod/reader:deletereaderattempts', $contextmodule);
+
+        foreach ($readerattempts as $readerattempt) {
+            $attemptbooktime = date('Y/m/d', $readerattempt->timefinish);
+
+            switch (strtolower($readerattempt->passed)) {
                 case 'true':    $passedstatus = 'P'; break;
                 case 'false':   $passedstatus = 'F'; break;
                 case 'cheated': $passedstatus = 'C'; break;
             }
 
-            if (has_capability('mod/reader:deletereaderattempts', $contextmodule)) {
-                $deletelink = '<a href="admin.php?a=admin&id='.$id.'&act=viewattempts&page='.$page.'&sort='.$sort.'&orderby='.$orderby.'&attemptid='.$attemptdata->id.'" onclick="alert(\'`'.$attemptdata->name.'` quiz  for `'.$attemptdata->username.' ('.$attemptdata->firstname.' '.$attemptdata->lastname.')` has been deleted\');">Delete</a>';
-                $table->data[] = new html_table_row(array(
-                    reader_username_link($attemptdata, $course->id, $excel),
-                    reader_fullname_link($attemptdata, $course->id, $excel),
-                    $attemptdata->name,
-                    $attemptdata->attempt,
-                    $attemptdata->percentgrade.'%',
-                    $passedstatus,
-                    $attemptbooktime,
-                    $deletelink));
-            } else {
-                $table->data[] = new html_table_row(array(
-                    reader_username_link($attemptdata, $course->id, $excel),
-                    reader_fullname_link($attemptdata, $course->id, $excel),
-                    $attemptdata->name,
-                    $attemptdata->attempt,
-                    $attemptdata->percentgrade.'%',
-                    $passedstatus,
-                    $attemptbooktime));
+            $cells = array(
+                reader_username_link($readerattempt, $course->id, $excel),
+                reader_fullname_link($readerattempt, $course->id, $excel),
+                $readerattempt->name,
+                $readerattempt->attempt,
+                $readerattempt->percentgrade.'%',
+                $passedstatus,
+                $attemptbooktime
+            );
+            if ($can_deleteattempts) {
+                $params = array('a' => 'admin', 'id' => $id, 'act' => 'viewattempts',
+                                'page' => $page, 'sort' => $sort, 'orderby' => $orderby,
+                                'attemptid' => $readerattempt->id);
+                $alert = 'Quiz attempt';
+                if ($fullname = implode(' ', array($readerattempt->firstname, $readerattempt->lastname))) {
+                    $alert .= " by '$fullname'"; // user's full name
+                }
+                if ($readerattempt->name) {
+                    $alert .= " at '$readerattempt->name'"; // book name
+                }
+                $alert .= ' has been deleted';
+                $params = array('href' => new moodle_url('/mod/reader/admin.php', $params), 'onclick' => 'alert("'.$alert.'")');
+                array_push($cells, html_writer::tag('a', 'Delete', $params));
             }
+            $table->data[] = new html_table_row($cells);
         }
 
         reader_sort_table($table, $titlesarray, $orderby, $sort);
@@ -2264,8 +2252,6 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
     if (! $gid) {
         $gid = NULL;
     }
-
-    $coursestudents = get_enrolled_users($context, NULL, $gid);
 
     foreach ($coursestudents as $coursestudent) {
         if (reader_check_search_text($searchtext, $coursestudent)) {
@@ -2823,8 +2809,6 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
         $table->align = array('center', 'left', 'left', 'center');
         $table->width = '100%';
 
-        $coursestudents = get_enrolled_users($context, NULL, $gid);
-
         foreach ($coursestudents as $coursestudent) {
             $picture = $OUTPUT->user_picture($coursestudent,array($course->id, true, 0, true));
             $table->data[] = new html_table_row(array(
@@ -2839,7 +2823,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
         if (isset($table) && count($table->data)) {
             echo html_writer::table($table);
         }
-//fixed by Tom 4 July 2010
+        //fixed by Tom 4 July 2010
         $awardpoints = array('0.5 pt/500 Words' => '0.5 points', '1 pt/1000 Words' => 'One point', '2 pts/2000 Words' => 'Two points', '3 pts/4000 Words' => 'Three points', '4 Pts/8000 Words' => 'Four points', '5 Pts/16000 Words' => 'Five points');
         echo '<center><select id="Award_point" name="award">';
         foreach ($awardpoints as $key => $value) {
@@ -3143,7 +3127,6 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
         $data['averagewordsthisterm'] = 0;
         $data['averagewordsallterms'] = 0;
 
-        $coursestudents = get_enrolled_users($context, NULL, $group->id);
         foreach ($coursestudents as $coursestudent) {
             $select = 'userid= ? AND reader= ? AND timestart > ?';
             $params = array($coursestudent->id, $reader->id, $reader->ignoredate);
@@ -3776,9 +3759,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
         $gid = NULL;
     }
 
-    $coursestudents = get_enrolled_users($context, NULL, $gid);
     $groupnames = array();
-
     foreach ($coursestudents as $coursestudent) {
       $groupnames[$username] = array();
       if (reader_check_search_text($searchtext, $coursestudent)) {
@@ -3816,7 +3797,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
             }
         }
 
-        if ($attemptdata = reader_get_student_attempts($coursestudent->id, $reader)) {
+        if ($readerattempt = reader_get_student_attempts($coursestudent->id, $reader)) {
             if (has_capability('mod/reader:viewstudentreaderscreens', $contextmodule)) {
                 $link = reader_fullname_link_viewasstudent($coursestudent, $id, $excel);
             } else {
@@ -3828,7 +3809,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
                 $picture,
                 reader_username_link($coursestudent, $course->id, $excel),
                 $link,
-                $attemptdata[1]['currentlevel'],
+                $readerattempt[1]['currentlevel'],
                 $data['totalwordsthisterm'],
                 $data['totalwordsallterms']
             ));
@@ -3844,7 +3825,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
                 $picture,
                 reader_username_link($coursestudent, $course->id, $excel),
                 $link,
-                $attemptdata[1]['currentlevel'],
+                $readerattempt[1]['currentlevel'],
                 0,0));
         }
       }

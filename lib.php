@@ -1008,8 +1008,8 @@ function reader_scale_used($readerid,$scaleid) {
  * @uses $CFG
  * @uses $USER
  * @param xxx $titlesarray
- * @param xxx $orderby
- * @param xxx $sort
+ * @param xxx $orderby "ASC" or "DESC"
+ * @param xxx $sort name of a table column
  * @param xxx $link
  * @return xxx
  * @todo Finish documenting this function
