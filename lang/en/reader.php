@@ -246,3 +246,5 @@ $string['youmusttakequiz'] = ' You can take {$a} more quiz ';
 $string['youmusttakequizzes'] = ' You can take {$a} more quizzes ';
 $string['yourcurrentlevel'] = 'Your current level';
 $string['yourteacherhasstopped'] = ' Your teacher has stopped automatic promotion for you.';
+
+$string['quizzespassedtable'] = 'Quizzes passed at RL-{$a}';

@@ -25,5 +25,5 @@
  * @since      Moodle 2.0
  */
 
-$module->version  = 2013041703;    // The current module version (Date: YYYYMMDDXX)
+$module->version  = 2013042300;    // The current module version (Date: YYYYMMDDXX)
 $module->cron     = 3600;          // Period for cron to check this module (secs)

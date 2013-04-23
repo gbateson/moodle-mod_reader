@@ -318,7 +318,7 @@ if ($bookcoversinthisterm) {
     echo html_writer::tag('p', $bookcoversinthisterm);
 }
 
-echo '<br /><table width="100%"><tr><td><h2><span style="background-color:orange">'.get_string('readingreportfor', 'reader').": {$USER->firstname} {$USER->lastname} </span></h2>";
+echo '<table width="100%"><tr><td><h2><span style="background-color:orange">'.get_string('readingreportfor', 'reader').": {$USER->firstname} {$USER->lastname} </span></h2>";
 if (isset($_SESSION['SESSION']->reader_changetostudentview) && $_SESSION['SESSION']->reader_changetostudentview > 0) {
     $params = array('a' => 'admin', 'id' => $id, 'act' => 'reports');
     if (isset($_SESSION['SESSION']->reader_changetostudentviewlink)) {
@@ -333,6 +333,11 @@ if (isset($_SESSION['SESSION']->reader_changetostudentview) && $_SESSION['SESSIO
     echo '</span></small>';
 }
 echo "</td></tr></table>";
+
+if ($reader->levelcheck == 1) {
+    echo reader_level_blockgraph($reader, $leveldata);
+}
+
 if (! empty($table->data)) {
     echo '<center>'.html_writer::table($table).'</center>';
 } else {
@@ -501,8 +506,7 @@ $levelsform     = array(get_string('selectlevel', 'reader'));
 $booksform      = array();
 
 $alreadyansweredbooksid = array();
-$leveldata              = reader_get_stlevel_data($reader);
-$promoteinfo            = $DB->get_record('reader_levels', array('userid' => $USER->id, 'readerid' => $reader->id));
+$promoteinfo = $DB->get_record('reader_levels', array('userid' => $USER->id, 'readerid' => $reader->id));
 if ((isset($_SESSION['SESSION']->reader_teacherview) && $_SESSION['SESSION']->reader_teacherview == "teacherview") || $reader->levelcheck == 0) {
     $levels = range(0, 15);
 } else {
@@ -677,8 +681,68 @@ if (isset($_SESSION['SESSION']->reader_changetostudentview) && $_SESSION['SESSIO
     }
 }
 
+echo html_writer::tag('div', '', array('style'=>'clear:both;'));
+
 echo $OUTPUT->box_end();
-
 print ('<center><img src="img/credit.jpg" height="40px"></center>');
-
 echo $OUTPUT->footer();
+
+
+function reader_level_blockgraph($reader, $level) {
+
+    // levels
+    $lmax  = $reader->quizpreviouslevel;
+    $max   = $reader->nextlevel;
+    $hmax  = $reader->quiznextlevel;
+    $lqnow = $reader->quizpreviouslevel - $level['onprevlevel'];
+    $qnow  = $reader->nextlevel - $level['onthislevel'];
+    $hqnow = $reader->quiznextlevel - $level['onnextlevel'];
+
+    // images
+    $spacer = html_writer::empty_tag('img', array('src'=>new moodle_url('/mod/reader/pix/progress/spacer.jpg'), 'border'=>0, 'alt'=>'space', 'height'=>26, 'width'=>28, 'style'=>'margin:0 4px 0 0'));
+    $done   = html_writer::empty_tag('img', array('src'=>new moodle_url('/mod/reader/pix/progress/done.jpg'), 'border'=>0, 'alt'=>'done', 'height'=>26, 'width'=>28, 'style'=>'margin:0 4px 0 0'));
+    $yet    = html_writer::empty_tag('img', array('src'=>new moodle_url('/mod/reader/pix/progress/notyet.jpg'), 'border'=>0, 'alt'=>'notyet', 'height'=>26, 'width'=>28, 'style'=>'margin:0 4px 0 0'));
+    $lm1    = html_writer::empty_tag('img', array('src'=>new moodle_url('/mod/reader/pix/progress/lm1.jpg'), 'border'=>0, 'alt'=>'lm1', 'height'=>16, 'width'=>28, 'style'=>'margin:0 4px 0 0'));
+    $lnow   = html_writer::empty_tag('img', array('src'=>new moodle_url('/mod/reader/pix/progress/l.jpg'), 'border'=>0, 'alt'=>'l', 'height'=>16, 'width'=>28, 'style'=>'margin:0 4px 0 0'));
+    $lp1    = html_writer::empty_tag('img', array('src'=>new moodle_url('/mod/reader/pix/progress/lp1.jpg'), 'border'=>0, 'alt'=>'lp1', 'height'=>16, 'width'=>28, 'style'=>'margin:0 4px 0 0'));
+
+    // generate $output
+    $output  = '';
+    $output .= html_writer::start_tag('div', array('style'=>'float:right; margin-right: 50px;'));
+
+    $output .= html_writer::start_tag('div');
+    $output .= html_writer::tag('h3', get_string('quizzespassedtable', 'reader', $level['studentlevel']));
+    $output .= html_writer::end_tag('div');
+
+    for ($i = $max; $i > 0; $i--) {
+
+        if ($i > $lqnow && $i <= $lmax) {
+            $output .= $yet;
+        } else if ($i > $lqnow ) {
+            $output .= $spacer;
+        } else {
+            $output .= $done;
+        }
+
+        if ($i > $qnow && $i <= $max) {
+            $output .= $yet;
+        } else if ($i > $qnow ) {
+            $output .= $spacer;
+        } else {
+            $output .= $done;
+        }
+
+        if ($i > $hqnow && $i <= $hmax) {
+            $output .= $yet;
+        } else if ($i > $hqnow ) {
+            $output .= $spacer;
+        } else {
+            $output .= $done;
+        }
+
+        $output .= html_writer::empty_tag('br');
+    }
+    $output .= $lm1.$lnow.$lp1.html_writer::empty_tag('br');
+    $output .= html_writer::end_tag('div');
+    return $output;
+}

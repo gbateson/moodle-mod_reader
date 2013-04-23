@@ -114,47 +114,6 @@ function xmldb_reader_upgrade($oldversion) {
         upgrade_mod_savepoint(true, "$newversion", 'reader');
     }
 
-    $newversion = 2013033107;
-    if ($result && $oldversion < $newversion) {
-
-        if ($courseid = get_config('reader', 'reader_usecourse')) {
-            $rebuild_course_cache = false;
-
-            if ($sections = $DB->get_records_select('course_sections', "course = ? AND section > ?", array($courseid, 0))) {
-                foreach ($sections as $section) {
-
-                    $sectionname = '';
-                    if ($sectionname=='') {
-                        $sectionname = trim(strip_tags($section->name));
-                    }
-                    if ($sectionname=='') {
-                        $sectionname = trim(strip_tags($section->summary));
-                    }
-                    if ($section->sequence=='') {
-                        $sectionname = ''; // empty sections don't need a "name"
-                    }
-
-                    // update the section "name", if necessary
-                    if ($sectionname != $section->name) {
-                        $DB->set_field('course_sections', 'name', $sectionname, array('id' => $section->id));
-                        $rebuild_course_cache = true;
-                    }
-
-                    // if section "name" is set, we can remove the contents of the "summary" field
-                    if ($sectionname && $section->summary) {
-                        $DB->set_field('course_sections', 'summary', '', array('id' => $section->id));
-                        $rebuild_course_cache = true;
-                    }
-                }
-            }
-
-            if ($rebuild_course_cache) {
-                rebuild_course_cache($courseid);
-            }
-        }
-        upgrade_mod_savepoint(true, "$newversion", 'reader');
-    }
-
     $newversion = 2013033108;
     if ($result && $oldversion < $newversion) {
 
@@ -298,6 +257,61 @@ function xmldb_reader_upgrade($oldversion) {
                         }
                     }
                 }
+            }
+        }
+        upgrade_mod_savepoint(true, "$newversion", 'reader');
+    }
+
+    $newversion = 2013042300;
+    if ($result && $oldversion < $newversion) {
+
+        // tidy all courses used to store reader quizzes
+        $courseids = array();
+        if ($courseid = get_config('reader', 'reader_usecourse')) {
+            $courseids[] = $courseid;
+        }
+        $select = 'SELECT DISTINCT usecourse FROM {reader} WHERE usecourse IS NOT NULL AND usecourse > ?';
+        $select = "id IN ($select) AND visible = ?";
+        $params = array(0, 0);
+        if ($courses = $DB->get_records_select('course', $select, $params, 'id', 'id,visible')) {
+            $courseids = array_merge($courseids, array_keys($courses));
+            $courseids = array_unique($courseids);
+            sort($courseids);
+        }
+
+        foreach ($courseids as $courseid) {
+            $rebuild_course_cache = false;
+
+            // move section summary to section name, if necessary
+            if ($sections = $DB->get_records_select('course_sections', "course = ? AND section > ?", array($courseid, 0))) {
+                foreach ($sections as $section) {
+
+                    $sectionname = trim(strip_tags($section->name));
+                    $sectionsummary = trim(strip_tags($section->summary));
+
+                    if ($sectionname=='') {
+                        $sectionname = $sectionsummary;
+                    }
+                    if ($section->sequence=='') {
+                        $sectionname = ''; // empty sections don't need a "name"
+                    }
+
+                    // update the section "name", if necessary
+                    if ($sectionname != $section->name) {
+                        $DB->set_field('course_sections', 'name', $sectionname, array('id' => $section->id));
+                        $rebuild_course_cache = true;
+                    }
+
+                    // if section "name" is set, we can remove the contents of the "summary" field
+                    if ($sectionname && ($sectionname==$sectionsummary || ($sectionsummary=='' && $section->summary))) {
+                        $DB->set_field('course_sections', 'summary', '', array('id' => $section->id));
+                        $rebuild_course_cache = true;
+                    }
+                }
+            }
+
+            if ($rebuild_course_cache) {
+                rebuild_course_cache($courseid);
             }
         }
         upgrade_mod_savepoint(true, "$newversion", 'reader');
