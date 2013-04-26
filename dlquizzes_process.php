@@ -143,25 +143,21 @@ foreach ($quizitems as $sectionname => $items) {
         $itemid = $item['id'];
         $itemname = $item['title'];
 
-        // check to see if the $item is already a quiz in this section of the course
-        if ($cm = reader_download_instance_exists($targetcourseid, $sectionnum, 'quiz', $itemname)) {
-            if ($DB->record_exists('reader_books', array('quizid' => $cm->instance))) {
-                $a = (object)array('coursename'  => format_text($targetcourse->shortname, FORMAT_PLAIN),
-                                   'sectionnum'  => $sectionnum,
-                                   'sectionname' => $sectionname,
-                                   'quizname'    => $itemname);
-                echo html_writer::tag('p', get_string('skipquizdownload', 'reader', $a));
-                unset($quizitems[$sectionname][$i]);
-            } else {
-                // the quiz exists, but we don't have the book, so we continue
-                // but we set "quizexistsalready", so that questions are not duplicated
-                $quizids[$itemid] = $cm->instance;
-                $quizitems[$sectionname][$i]['quizexistsalready'] = true;
+        // if book already exists, hide the quiz
+        // the new quiz will replace it (allowing for updates)
+        if ($oldquizid = $DB->get_field('reader_books', 'quizid', array('publisher' => $item['publisher'], 'level' => $item['level'], 'name' => $item['title']))) {
+            if ($cmid = $DB->get_field('course_modules', 'id', array('module' => $quizmodule->id, 'instance' => $oldquizid))) {
+                set_coursemodule_visible($cmid, 0);
             }
-        } else {
-            // add a new quiz course module for this $item
-            $cm = reader_create_new_quiz($targetcourseid, $sectionnum, $quizmodule, $itemname);
-            $quizids[$itemid] = $cm->instance;
+        }
+
+        // add a new quiz course module for this $item
+        $cm = reader_create_new_quiz($targetcourseid, $sectionnum, $quizmodule, $itemname);
+        $quizids[$itemid] = $cm->instance;
+
+        // if necessary, replace the old quizid with the new quizid
+        if ($oldquizid) {
+            $DB->set_field('reader_books', 'quizid', $cm->instance, array('quizid' => $oldquizid));
         }
     }
 }
@@ -233,9 +229,7 @@ foreach ($quizitems as $sectionname => $items) {
         reader_remove_directory($tempdir);
 
         // add the questions for this quiz
-        if (empty($item['quizexistsalready'])) {
-            reader_restore_questions($restore, $xml, $quizid);
-        }
+        reader_restore_questions($restore, $xml, $quizid);
 
         // add the book cover for this item
         $imagepath = (empty($item['image']) ? '' : $item['image']);
@@ -522,16 +516,30 @@ function reader_download_sectionnum(&$targetcourse, $sectionname, $sectionchoosi
  */
 function reader_download_instance_exists($targetcourseid, $sectionnum, $modname, $instancename) {
     global $DB;
-    $select = 'cm.*, cs.section AS sectionnum, m.name AS modname, x.name';
+    $select = 'cm.*, cs.section AS sectionnum, cs.visible AS sectionvisible, m.name AS modname, x.name';
     $from   = '{course_modules} cm '.
               'LEFT JOIN {course_sections} cs ON cm.section = cs.id '.
               'LEFT JOIN {modules} m ON cm.module = m.id '.
               'LEFT JOIN {'.$modname.'} x ON cm.instance = x.id';
     $where  = 'cm.course = ? AND cs.section = ? AND m.name = ? AND x.name = ?';
     $params = array($targetcourseid, $sectionnum, $modname, $instancename);
-    if ($records = $DB->get_records_sql("SELECT $select FROM $from WHERE $where", $params)) {
-        return reset($records); // return first record - should only be one !!
+    if ($cms = $DB->get_records_sql("SELECT $select FROM $from WHERE $where", $params)) {
+        // return first visible $cm if possible
+        foreach ($cms as $cmid => $cm) {
+            if ($cm->sectionvisible) {
+                if ($cm->visible) {
+                    return $cm;
+                }
+            } else { // a hidden section
+                if ($cm->visibleold) {
+                    return $cm;
+                }
+            }
+        }
+        // no $cms are visible, so just return "true"
+        return true;
     } else {
+        // $cm does not exist
         return false;
     }
 }

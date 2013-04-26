@@ -1136,7 +1136,7 @@ function reader_get_student_attempts($userid, $reader, $allreaders = false, $boo
         $reader->ignoredate = 0;
     }
 
-    $select = 'ra.timefinish,ra.userid,ra.attempt,ra.percentgrade,ra.id,ra.quizid,ra.sumgrades,ra.passed,ra.checkbox,ra.preview,'.
+    $select = 'ra.id,ra.timefinish,ra.userid,ra.attempt,ra.percentgrade,ra.quizid,ra.sumgrades,ra.passed,ra.checkbox,ra.preview,'.
               'rp.name,rp.publisher,rp.level,rp.length,rp.image,rp.difficulty,rp.words,rp.sametitle,rp.id as rpid';
     $from   = '{reader_attempts} ra LEFT JOIN {reader_books} rp ON rp.quizid = ra.quizid';
     $where  = 'ra.preview != 1 AND ra.userid= :userid AND ra.timefinish > :readerignoredate';
@@ -1149,7 +1149,7 @@ function reader_get_student_attempts($userid, $reader, $allreaders = false, $boo
         $attempts_p = array();
     }
 
-    $select = 'ra.timefinish,ra.userid,ra.attempt,ra.percentgrade,ra.id,ra.quizid,ra.sumgrades,ra.passed,ra.checkbox,ra.preview,'.
+    $select = 'ra.id,ra.timefinish,ra.userid,ra.attempt,ra.percentgrade,ra.quizid,ra.sumgrades,ra.passed,ra.checkbox,ra.preview,'.
               'rp.name,rp.publisher,rp.level,rp.length,rp.image,rp.difficulty,rp.words,rp.sametitle,rp.id as rpid';
     $from   = '{reader_attempts} ra LEFT JOIN {reader_noquiz} rp ON rp.quizid = ra.quizid';
     $where  = 'ra.preview = 1 AND ra.userid= :userid AND ra.timefinish > :readerignoredate';

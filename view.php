@@ -716,6 +716,7 @@ function reader_level_blockgraph($reader, $level) {
 
     for ($i = $max; $i > 0; $i--) {
 
+        // previous level
         if ($i > $lqnow && $i <= $lmax) {
             $output .= $yet;
         } else if ($i > $lqnow ) {
@@ -724,6 +725,7 @@ function reader_level_blockgraph($reader, $level) {
             $output .= $done;
         }
 
+        // current level
         if ($i > $qnow && $i <= $max) {
             $output .= $yet;
         } else if ($i > $qnow ) {
@@ -732,6 +734,7 @@ function reader_level_blockgraph($reader, $level) {
             $output .= $done;
         }
 
+        // next level
         if ($i > $hqnow && $i <= $hmax) {
             $output .= $yet;
         } else if ($i > $hqnow ) {

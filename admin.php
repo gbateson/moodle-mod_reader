@@ -1324,7 +1324,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
                 $status = 'inactive';
             }
 
-            $userdata = $DB->get_record('user', array('id' => $readerattempt->userid));
+            $userdata = $DB->get_record('user', array('id' => $userid));
 
             $table->data[] = new html_table_row(array(
                 $readerattempt->id,
@@ -1400,23 +1400,25 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
 
             $data = array('totalwordsthisterm' => 0, 'totalwordsallterms' => 0);
 
+            // words this term
             $select = 'userid= ? AND reader= ? AND timefinish > ?';
             $params = array($coursestudent->id, $reader->id, $reader->ignoredate);
-            if ($attempts = $DB->get_records_select('reader_attempts', $select, $params)) {
-                foreach ($attempts as $attempt) {
-                    if (strtolower($attempt->passed) == 'true') {
-                        if ($attempt->preview == 0) {
-                            $bookdata = $DB->get_record('reader_books', array('quizid' => $attempt->quizid));
+            if ($readerattempts = $DB->get_records_select('reader_attempts', $select, $params)) {
+                foreach ($readerattempts as $readerattempt) {
+                    if (strtolower($readerattempt->passed) == 'true') {
+                        if ($readerattempt->preview == 0) {
+                            $bookwords = $DB->get_field('reader_books', 'words', array('quizid' => $readerattempt->quizid));
                         } else {
-                            $bookdata = $DB->get_record('reader_noquiz', array('quizid' => $attempt->quizid));
+                            $bookwords = $DB->get_field('reader_noquiz', 'words', array('quizid' => $readerattempt->quizid));
                         }
-                        if ($bookdata) {
-                            $data['totalwordsthisterm'] += $bookdata->words;
+                        if ($bookwords) {
+                            $data['totalwordsthisterm'] += $bookwords;
                         }
                     }
                 }
             }
 
+            // all words
             if ($readerattempts = $DB->get_records('reader_attempts', array('userid' => $coursestudent->id))) {
                 foreach ($readerattempts as $readerattempt) {
                     if (strtolower($readerattempt->passed) == 'true') {
@@ -3135,7 +3137,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
                 foreach ($readerattempts as $readerattempt) {
                     if (strtolower($readerattempt->passed) == 'true') {
                         $data['averagepassed']++;
-                        if ($bookdata = $DB->get_record('reader_books', array('quizid' => $readerattempt->quizid))) {
+                        if ($bookdata = $DB->get_record('reader_books', array('quizid' => $quizid))) {
                             $data['averagepoints'] += reader_get_reader_length($reader, $bookdata->id);
                             $data['averagewordsthisterm'] += $bookdata->words;
                         }
@@ -3151,7 +3153,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
             if ($readerattempts = $DB->get_records('reader_attempts', array('userid' => $coursestudent->id))) {
                 foreach ($readerattempts as $readerattempt) {
                     if (strtolower($readerattempt->passed) == 'true') {
-                        if ($bookdata = $DB->get_record('reader_books', array('quizid' => $readerattempt->quizid))) {
+                        if ($bookdata = $DB->get_record('reader_books', array('quizid' => $quizid))) {
                             $data['averagewordsallterms'] += $bookdata->words;
                         }
                     }
@@ -3584,32 +3586,75 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
     echo $OUTPUT->render($pagingbar);
 
 } else if ($act == 'exportstudentrecords' && has_capability('mod/reader:userdbmanagement', $contextmodule)) {
-    $data = $DB->get_records('reader_attempts', array('reader' => $reader->id));
 
-    foreach($data as $data_) {
-        if (empty($userdata)) {
-            $userdata = array();
+    $users = array();
+    $books = array();
+    $levels = array();
+
+    // get all attempts
+    $sortfields = 'userid,quizid,timefinish,uniqueid DESC';
+    $readerattempts = $DB->get_records('reader_attempts', array('reader' => $reader->id), $sortfields);
+
+    // prune the attempts
+    $userid = 0;
+    $quizid = 0;
+    $timefinish = 0;
+    foreach($readerattempts as $readerattempt) {
+        // remove lower uniqueids with same userid/quizid/timefinish
+        if ($readerattempt->userid==$userid && $readerattempt->quizid==$quizid && $readerattempt->timefinish==$timefinish) {
+            unset($readerattempts[$readerattempt->id]);
+        } else {
+            $userid = $readerattempt->userid;
+            $quizid = $readerattempt->quizid;
+            $timefinish = $readerattempt->timefinish;
         }
-        if (empty($userdata[$data_->userid])) {
-            $userdata[$data_->userid] = $DB->get_record('user', array('id' => $data_->userid));
+    }
+
+    foreach($readerattempts as $readerattempt) {
+        $userid = $readerattempt->userid;
+        $quizid = $readerattempt->quizid;
+
+        if (empty($users[$userid])) {
+            if ($user = $DB->get_record('user', array('id' => $userid))) {
+                $users[$userid] = $user;
+            } else {
+                $users[$userid] = (object)array('id' => 0, 'username' => '');
+            }
         }
-        if (empty($levelsdata)) {
-            $levelsdata = array();
+        if (empty($levels[$userid])) {
+            if ($records = $DB->get_records('reader_levels', array('userid' => $userid))) {
+                $levels[$userid] = reset($records);
+            } else {
+                $levels[$userid] = (object)array('currentlevel' => 0);
+            }
+
         }
-        if (empty($levelsdata[$data_->userid])) {
-            $levelsdata[$data_->userid] = $DB->get_record('reader_levels', array('userid' => $data_->userid));
+        if (empty($books[$quizid])) {
+            if ($records = $DB->get_records('reader_books', array('quizid' => $quizid))) {
+                $books[$quizid] = reset($records); // there may be several !!
+            } else {
+                $books[$quizid] = (object)array('image' => '');
+            }
         }
-        if (empty($bookdata)) {
-            $bookdata = array();
-        }
-        if (empty($bookdata[$data_->quizid])) {
-            $bookdata[$data_->quizid] = $DB->get_record('reader_books', array('quizid' => $data_->quizid));
-        }
+
         if (! headers_sent()) {
             $filename = $COURSE->shortname.'_attempts.txt';
             header('Content-Type: text/plain; filename="'.$filename.'"');
         }
-        echo "{$userdata[$data_->userid]->username},{$data_->uniqueid},{$data_->attempt},{$data_->sumgrades},{$data_->percentgrade},{$data_->bookrating},{$data_->ip},{$bookdata[$data_->quizid]->image},{$data_->timefinish},{$data_->passed},{$data_->percentgrade},{$levelsdata[$data_->userid]->currentlevel}\n";
+
+        echo $users[$userid]->username.','.
+             $readerattempt->uniqueid.','.
+             $readerattempt->attempt.','.
+             $readerattempt->sumgrades.','.
+             $readerattempt->percentgrade.','.
+             $readerattempt->bookrating.','.
+             $readerattempt->ip.','.
+             $books[$quizid]->image.','.
+             $readerattempt->timefinish.','.
+             $readerattempt->passed.','.
+             $readerattempt->percentgrade.','.
+             $levels[$userid]->currentlevel.
+             "\n";
     }
     die;
 
@@ -3637,72 +3682,171 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
         }
     }
     $mform = new mod_reader_importstudentrecord_form("admin.php?a=admin&id={$id}&act=importstudentrecord");
-    if ($contents = $mform->get_file_content('importstudentrecorddata')) {
+    if ($lines = $mform->get_file_content('importstudentrecorddata')) {
 
-        $contents = preg_replace('/\r\n|\r/', '\n', $contents);
+        $lines = preg_replace('/[\r\n]+/', '\n', $lines);
+        $lines = explode('\n', $lines);
 
-        $contents = explode('\n', $contents);
-
-        if ($contents) {
+        if ($lines) {
             echo "File was uploaded <br />\n";
         }
 
-        $lastattemptid = $DB->get_field_sql('SELECT uniqueid FROM {reader_attempts} ORDER BY uniqueid DESC');
+        if ($uniqueid = $DB->get_field_sql('SELECT MAX(uniqueid) FROM {reader_attempts}')) {
+            $uniqueid ++;
+        } else {
+            $uniqueid = 1;
+        }
 
-        foreach ($contents as $content_) {
-            $lastattemptid++;
-            list($data['username'],$data['uniqueid'],$data['attempt'],$data['sumgrades'],$data['percentgrade'],$data['bookrating'],$data['ip'],$data['image'],$data['timefinish'],$data['passed'],$data['percentgrade'],$data['currentlevel']) = explode(',', $content_);
-            if (! $userdata[$data['username']]) {
-                $userdata[$data['username']] = $DB->get_record('user', array('username' => $data['username']));
+        $userid = 0;
+        $bookid = 0;
+        foreach ($lines as $line) {
+
+
+            // skip empty lines
+            $line = trim($line);
+            if ($line=='') {
+                continue;
             }
-            if (! $bookdata[$data['image']]) {
-                $bookdata[$data['image']] = $DB->get_record('reader_books', array('image' => $data['image']));
+
+            // make sure we have exactly 11 commas (=12 columns)
+            if (substr_count($line, ',') <> 11) {
+                echo 'SKIP line: '.$line.html_writer::empty_tag('br');
+                continue; // unexpected format !!
             }
 
-            echo "User name: {$data['username']} (id:{$userdata[$data['username']]->id}) Book id: {$bookdata[$data['image']]->id} <br />\n";
+            $values = array();
+            list($values['username'],
+                 $values['uniqueid'],
+                 $values['attempt'],
+                 $values['sumgrades'],
+                 $values['percentgrade'],
+                 $values['bookrating'],
+                 $values['ip'],
+                 $values['image'],
+                 $values['timefinish'],
+                 $values['passed'],
+                 $values['percentgrade'],
+                 $values['currentlevel']) = explode(',', $line);
 
-            $newdata = new object;
-            $newdata->uniqueid       = $lastattemptid;
-            //$newdata->uniqueid       = 0;
-            $newdata->reader         = $reader->id;
-            $newdata->userid         = $userdata[$data['username']]->id;
-            $newdata->attempt        = $data['attempt'];
-            //$newdata->attempt        = 0;
-            $newdata->sumgrades      = $data['sumgrades'];
-            $newdata->percentgrade        = $data['percentgrade'];
-            $newdata->passed         = $data['passed'];
-            $newdata->checkbox       = 0;
-            $newdata->timestart      = $data['timefinish'];
-            $newdata->timefinish     = $data['timefinish'];
-            $newdata->timemodified   = $data['timefinish'];
-            //$newdata->layout         = $data['layout'];
-            $newdata->layout         = 0;
-            $newdata->preview        = 0;
-            $newdata->quizid         = $bookdata[$data['image']]->id;
-            $newdata->bookrating     = $data['bookrating'];
-            $newdata->ip             = $data['ip'];
+            if (! $username = $values['username']) {
+                continue; // empty username !!
+            }
+            if (! $image = $values['image']) {
+                continue; // empty image !!
+            }
 
-            if (! $DB->get_record('reader_attempts', array('userid' => $newdata->userid, 'quizid' => $newdata->quizid)) && !empty($newdata->userid) && !empty($newdata->quizid)) {
-
-                if ($idat = $DB->insert_record('reader_attempts', $newdata)) {
-                    echo " &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Attempt added ({$idat})<br />\n";
+            if (empty($userdata[$username])) {
+                if ($user = $DB->get_record('user', array('username' => $username))) {
+                    $users[$username] = $user;
                 } else {
-                    echo " &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Can't add attempt <br />\n";
-                    echo "<pre>";
-                    print_r($newdata);
-                    echo "</pre>";
+                    $users[$username] = (object)array('id' => 0); // no such user ?!
+                    echo "User name not found: $username".html_writer::empty_tag('br');
                 }
             }
-            else if (empty($newdata->userid)) {
-                echo " &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; User not found<br />\n";
+
+            if (empty($users[$username]->id)) {
+                continue;
             }
-            else if (empty($newdata->quizid)) {
-                echo " &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Book not found<br />\n";
+
+            if (empty($books[$image])) {
+                if ($book = $DB->get_record('reader_books', array('image' => $image))) {
+                    $books[$image] = $book;
+                } else {
+                    $books[$image] = (object)array('id' => 0, 'quizid' => 0); // no such book ?!
+                    echo "Book not found: $image".html_writer::empty_tag('br');
+                }
+            }
+
+            if (empty($books[$image]->id) || empty($books[$image]->quizid)) {
+                continue;
+            }
+
+            $sameuser = ($userid && $userid==$users[$username]->id);
+            $samebook = ($sameuser && $bookid && $bookid==$books[$image]->id);
+
+
+            if ($samebook==false) {
+
+                if ($bookid) {
+                    echo html_writer::end_tag('ul'); // end attempts
+                    echo html_writer::end_tag('li'); // end book
+                }
+
+                if ($sameuser==false) {
+                    if ($userid==0) {
+                        echo html_writer::start_tag('ul'); // start users
+                    } else {
+                        echo html_writer::end_tag('ul'); // end books
+                        echo html_writer::end_tag('li'); // end user
+                    }
+                    echo html_writer::start_tag('li'); // start user
+                    $fullname = fullname($users[$username]).' (username='.$username.', id='.$users[$username]->id.')';
+                    echo html_writer::tag('span', $fullname, array('class' => 'importusername'));
+                    $userid = $users[$username]->id;
+                    $bookid = 0; // force new book list
+                }
+
+                if ($bookid==0) {
+                    echo html_writer::start_tag('ul'); // start books
+                }
+
+                echo html_writer::start_tag('li'); // start book
+                echo html_writer::tag('span', $books[$image]->name, array('class' => 'importbookname'));
+                echo html_writer::start_tag('ul'); // start attempt list
+                $bookid = $books[$image]->id;
+            }
+
+            echo html_writer::start_tag('li'); // start attempt
+
+            switch ($values['passed']) {
+                case 'true': $status = 'Passed'; break;
+                case 'false': $status = 'Failed'; break;
+                default: $status = $values['passed'];
+            }
+            $timefinish = userdate($values['timefinish'])." ($status)";
+            echo html_writer::tag('span', $timefinish, array('class' => 'importattempttime')).' ';
+
+            $readerattempt = (object)array(
+                'uniqueid'      => $uniqueid++,
+                'reader'        => $reader->id,
+                'userid'        => $users[$username]->id,
+                'attempt'       => $values['attempt'],
+                'sumgrades'     => $values['sumgrades'],
+                'percentgrade'  => $values['percentgrade'],
+                'passed'        => $values['passed'],
+                'checkbox'      => 0,
+                'timestart'     => $values['timefinish'],
+                'timefinish'    => $values['timefinish'],
+                'timemodified'  => $values['timefinish'],
+                'layout'        => 0, // $values['layout']
+                'preview'       => 0,
+                'quizid'        => $books[$image]->quizid,
+                'bookrating'    => $values['bookrating'],
+                'ip'            => $values['ip'],
+            );
+
+            $params = array('userid' => $users[$username]->id, 'quizid' => $books[$image]->quizid, 'timefinish' => $values['timefinish']);
+            if ($DB->record_exists('reader_attempts', $params)) {
+                echo html_writer::tag('span', 'skipped', array('class' => 'importskipped'));
+            } else if ($DB->insert_record('reader_attempts', $readerattempt)) {
+                echo html_writer::tag('span', 'added', array('class' => 'importsuccess'));
             } else {
-                echo " &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Attempt already exist<br />\n";
+                echo html_writer::tag('span', 'failed', array('class' => 'importfailed'));
+                print_object($readerattempt);
             }
+            echo html_writer::end_tag('li'); // end attempt
         }
-        echo "Done";
+
+        if ($bookid) {
+            echo html_writer::end_tag('ul'); // end attempt
+            echo html_writer::end_tag('li'); // end book
+        }
+        if ($userid) {
+            echo html_writer::end_tag('ul'); // end books
+            echo html_writer::end_tag('li'); // end user
+            echo html_writer::end_tag('ul'); // end users
+        }
+        echo 'Done';
     } else {
         $mform->display();
     }
@@ -3931,7 +4075,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
         } else if (strtolower($readerattempt->passed) == 'false') {
           $pfcmark = 'F';
         } else { $pfcmark = 'C'; }
-        $userdata = $DB->get_record('user', array('id' => $readerattempt->userid));
+        $userdata = $DB->get_record('user', array('id' => $userid));
         $table->data[] = new html_table_row(array(
             '<input type="checkbox" name="adjustscoresupbooks[]" value="'.$readerattempt->id.'" />',
             fullname($userdata),
