@@ -2859,7 +2859,11 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
     //echo 'Other ip mask <input type="text" name="ipmaskother" value="" />';
     echo get_string('fromthistime', 'reader').' <select id="from_time" name="fromtime">';
 //change by Tom 28 June 2010
-    $fromtimeselect = array('86400' => 'Day', '604800' => 'Week', '2419200' => 'Month', '5270400' => '2 Months', '7862400' => '3 Months');
+    $fromtimeselect = array('86400' => '1 day',
+                            '604800' => '1 week',
+                            '2419200' => '1 month',
+                            '5270400' => '2 months',
+                            '7862400' => '3 months');
     foreach ($fromtimeselect as $key => $value) {
         echo '<option value="'.$key.'"';
         if ($key == $fromtime) {
@@ -2869,7 +2873,14 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
     }
     echo '</select><br />';
     echo get_string('maxtimebetweenquizzes', 'reader').' <select id="max_time" name="maxtime">';
-    $fromtimeselect = array('900' => '15 Minutes', '1800' => '30 Minutes', '2700' => '45 Minutes', '3600' => 'Hour', '10800' => '3 Hours', '21600' => '6 Hours', '43200' => '12 Hours', '86400' => 'Day');
+    $fromtimeselect = array('900' => '15 minutes',
+                            '1800' => '30 minutes',
+                            '2700' => '45 minutes',
+                            '3600' => '1 hour',
+                            '10800' => '3 hours',
+                            '21600' => '6 hours',
+                            '43200' => '12 hours',
+                            '86400' => '24 hours');
     foreach ($fromtimeselect as $key => $value) {
         echo '<option value="'.$key.'"';
         if ($key == $maxtime) {
@@ -2882,30 +2893,34 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
     echo '</form>';
 
     if ($findcheated) {
+        $allips = array();
+
         $order='l.time DESC';
 
         if ($useonlythiscourse) {
-            $usecoursesql = "course = '{$course->id}' and";
+            $usecoursesql = "course = '{$course->id}' AND";
         }
         if ($fromtime) {
-            $fromtimesql = "time > '".(time() - $fromtime)."' and";
+            $fromtimesql = "time > '".(time() - $fromtime)."' AND";
         }
 
         $select = " {$usecoursesql} {$fromtimesql} module = 'reader' and info LIKE 'readerID%; reader quiz%; %/%' ";
         $countsql = (strlen($select) > 0) ? ' WHERE '. $select : '';
-        $totalcount = $DB->count_records_sql('SELECT COUNT(*) FROM {log} l {$countsql}');
-        $logtext = $DB->get_records_sql('SELECT * FROM {log} l $countsql') ;
-        foreach ($logtext as $logtext_) {
-            if (preg_match("!reader quiz (.*?); !si",$logtext_->info,$quizid)) {
-                $quizid=$quizid[1];
-            }
-            if ($quizid) {
-                $allips[$quizid][$logtext_->id] = $logtext_->ip;
+        $totalcount = $DB->count_records_sql("SELECT COUNT(*) FROM {log} l $countsql");
+        if ($logtext = $DB->get_records_sql("SELECT * FROM {log} l $countsql")) {
+            foreach ($logtext as $logtext_) {
+                if (preg_match("!reader quiz (.*?); !si",$logtext_->info,$quizid)) {
+                    $quizid=$quizid[1];
+                }
+                if ($quizid) {
+                    $allips[$quizid][$logtext_->id] = $logtext_->ip;
+                }
             }
         }
 
         //print_r($allips);
 
+        $comparearr = array();
         foreach ($allips as $quize => $val) {
             $checkerarray = $val;
             foreach ($val as $resultid => $resultip) {
@@ -2933,6 +2948,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
             }
         }
 
+        $compare = array();
         foreach ($comparearr as $key => $value) {
           $f = 0;
           $countofarray = count($value);
