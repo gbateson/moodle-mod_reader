@@ -73,7 +73,7 @@
      */
     function backup_delete_old_data() {
 
-        global $CFG,$DB;
+        global $CFG, $DB;
 
         //Change this if you want !!
         $hours = 4;
@@ -262,7 +262,7 @@
      */
     function get_module_type($courseid,$moduleid) {
 
-        global $CFG,$DB;
+        global $CFG, $DB;
 
         $results = $DB->get_records_sql ("SELECT cm.id, m.name
                                     FROM {course_modules} cm,
@@ -342,7 +342,7 @@
      */
     function clean_temp_data($preferences) {
 
-        global $CFG,$DB;
+        global $CFG, $DB;
 
         $status = true;
 
@@ -585,7 +585,7 @@
      */
     function backup_putid($backup_unique_code, $table, $old_id, $new_id, $info="") {
 
-        global $CFG,$DB;
+        global $CFG, $DB;
 
         $max_db_storage = 128;  //Max bytes to save to db, else save to file
 
@@ -644,7 +644,7 @@
      */
     function backup_delid($backup_unique_code, $table, $old_id) {
 
-        global $CFG,$DB;
+        global $CFG, $DB;
 
         $status = true;
 
@@ -671,7 +671,7 @@
      */
     function backup_getid($backup_unique_code, $table, $old_id) {
 
-        global $CFG,$DB;
+        global $CFG, $DB;
 
         $status = true;
         $status2 = true;
@@ -832,8 +832,7 @@
      *   messages
      */
     function import_backup_file_silently($pathtofile,$destinationcourse,$emptyfirst=false,$userdata=false, $preferences=array()) {
-        global $CFG,$SESSION,$USER; // is there such a thing on cron? I guess so..
-        global $restore,$DB; // ick
+        global $CFG, $DB, $SESSION, $USER,  $restore;
         if (empty($USER)) {
             $USER = get_admin();
             $USER->admin = 1; // not sure why, but this doesn't get set
@@ -952,7 +951,7 @@
     * @param array $prefs see {@link backup_generate_preferences_artificially}
     */
     function backup_course_silently($courseid, $prefs, &$errorstring) {
-        global $CFG, $preferences,$DB; // global preferences here because something else wants it :(
+        global $CFG, $DB, $preferences; // global preferences here because something else wants it :(
         define('BACKUP_SILENTLY', 1);
         if (! $course = $DB->get_record('course', array('id'=> $courseid))) {
             debugging("Couldn't find course with id $courseid in backup_course_silently");
@@ -984,7 +983,7 @@
     */
 
     function backup_generate_preferences_artificially($course, $prefs) {
-        global $CFG,$DB;
+        global $CFG, $DB;
         $preferences = new StdClass;
         $preferences->backup_unique_code = time();
         $preferences->backup_name = backup_get_zipfile_name($course, $preferences->backup_unique_code);

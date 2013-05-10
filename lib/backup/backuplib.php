@@ -2735,7 +2735,7 @@
      */
     function backup_encode_absolute_links($content) {
 
-        global $CFG,$preferences;
+        global $CFG, $preferences;
 
     /// MDL-14072: Prevent NULLs, empties and numbers to be processed by the
     /// heavy interlinking. Just a few cpu cycles saved.
@@ -3116,7 +3116,7 @@
      * And check if there is data about it
      */
     function backup_fetch_prefs_from_request(&$preferences,&$count,$course) {
-        global $CFG,$SESSION;
+        global $CFG, $SESSION;
 
         // check to see if it's in the session already
         if (! empty($SESSION->backupprefs)  && array_key_exists($course->id,$SESSION->backupprefs) && !empty($SESSION->backupprefs[$course->id])) {

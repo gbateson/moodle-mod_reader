@@ -136,7 +136,7 @@ define('RESTORE_GROUPS_GROUPINGS', 3);
      * @todo Finish documenting this function
      */
     function restore_decode_content_links($restore) {
-        global $CFG,$DB;
+        global $CFG, $DB;
 
         $status = true;
 
@@ -886,7 +886,7 @@ define('RESTORE_GROUPS_GROUPINGS', 3);
      */
     function restore_create_new_course($restore,&$course_header) {
 
-        global $CFG,$DB;
+        global $CFG, $DB;
 
         $status = true;
 
@@ -1079,7 +1079,7 @@ define('RESTORE_GROUPS_GROUPINGS', 3);
      * @todo Finish documenting this function
      */
     function restore_create_blocks($restore, $backup_block_format, $blockinfo, $xml_file) {
-        global $CFG,$DB;
+        global $CFG, $DB;
         $status = true;
 
         delete_records('block_instance', 'pageid', $restore->course_id, 'pagetype', PAGE_COURSE_VIEW);
@@ -1311,7 +1311,7 @@ define('RESTORE_GROUPS_GROUPINGS', 3);
      */
     function restore_create_sections(&$restore, $xml_file) {
 
-        global $CFG,$db,$DB;
+        global $CFG, $DB, $db;
 
         $status = true;
         //Check it exists
@@ -1488,7 +1488,7 @@ define('RESTORE_GROUPS_GROUPINGS', 3);
      * @todo Finish documenting this function
      */
     function restore_set_format_data($restore,$xml_file) {
-        global $CFG,$db;
+        global $CFG, $db;
 
         $status = true;
         //Check it exists
@@ -1537,7 +1537,7 @@ define('RESTORE_GROUPS_GROUPINGS', 3);
      */
     function restore_create_metacourse($restore,$xml_file) {
 
-        global $CFG,$db,$DB;
+        global $CFG, $DB, $db;
 
         $status = true;
         //Check it exists
@@ -1817,7 +1817,7 @@ define('RESTORE_GROUPS_GROUPINGS', 3);
      * This function creates all the gradebook data from xml
      */
     function restore_create_gradebook($restore,$xml_file) {
-        global $CFG,$DB;
+        global $CFG, $DB;
 
         $status = true;
         //Check it exists
@@ -2700,7 +2700,7 @@ define('RESTORE_GROUPS_GROUPINGS', 3);
      */
     function restore_create_users($restore,$xml_file) {
 
-        global $CFG, $db,$DB;
+        global $CFG, $DB, $db;
         require_once ($CFG->dirroot.'/tag/lib.php');
 
         $status = true;
@@ -3094,7 +3094,7 @@ define('RESTORE_GROUPS_GROUPINGS', 3);
      */
     function restore_create_messages($restore,$xml_file) {
 
-        global $CFG,$DB;
+        global $CFG, $DB;
 
         $status = true;
         //Check it exists
@@ -3339,7 +3339,7 @@ define('RESTORE_GROUPS_GROUPINGS', 3);
      */
     function restore_create_blogs($restore,$xml_file) {
 
-        global $CFG,$DB;
+        global $CFG, $DB;
 
         $status = true;
         //Check it exists
@@ -3510,7 +3510,7 @@ define('RESTORE_GROUPS_GROUPINGS', 3);
      */
     function restore_create_scales($restore,$xml_file) {
 
-        global $CFG, $db,$DB;
+        global $CFG, $DB, $db;
 
         $status = true;
         //Check it exists
@@ -4096,7 +4096,7 @@ define('RESTORE_GROUPS_GROUPINGS', 3);
      */
     function restore_decode_absolute_links($content) {
 
-        global $CFG,$restore;
+        global $CFG, $restore;
         require_once($CFG->dirroot.'/lib/filelib.php');
 
     /// MDL-14072: Prevent NULLs, empties and numbers to be processed by the
@@ -4212,7 +4212,7 @@ define('RESTORE_GROUPS_GROUPINGS', 3);
      */
     function restore_group_files($restore) {
 
-        global $CFG,$DB;
+        global $CFG, $DB;
 
         $status = true;
 
@@ -4460,7 +4460,7 @@ define('RESTORE_GROUPS_GROUPINGS', 3);
      */
     function restore_create_logs($restore,$xml_file) {
 
-        global $CFG,$db,$DB;
+        global $CFG, $DB, $db;
 
         //Number of records to get in every chunk
         $recordset_size = 4;
@@ -4877,7 +4877,7 @@ define('RESTORE_GROUPS_GROUPINGS', 3);
      */
     function restore_check_instances($restore) {
 
-        global $CFG,$DB;
+        global $CFG, $DB;
 
         $status = true;
 
@@ -8273,7 +8273,7 @@ define('RESTORE_GROUPS_GROUPINGS', 3);
      * @todo Finish documenting this function
      */
     function restore_setup_for_check(&$restore,$backup_unique_code) {
-        global $SESSION,$DB;
+        global $DB, $SESSION;
         $restore->backup_unique_code=$backup_unique_code;
         $restore->users = 2; // yuk
         $restore->course_files = $SESSION->restore->restore_course_files;
@@ -8352,7 +8352,7 @@ define('RESTORE_GROUPS_GROUPINGS', 3);
      */
     function restore_execute(&$restore,$info,$course_header,&$errorstr) {
 
-        global $CFG, $USER,$DB;
+        global $CFG, $DB, $USER;
         $status = true;
 
         //Checks for the required files/functions to restore every module

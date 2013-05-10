@@ -112,7 +112,7 @@ $readercfg = reader_get_config_defaults();
  */
 function reader_add_instance($reader) {
 
-    global $CFG, $USER, $DB;
+    global $CFG, $DB, $USER;
     $reader->timemodified = time();
 
     $reader->id = $DB->insert_record('reader', $reader);
@@ -184,7 +184,7 @@ function reader_submit_instance($reader, $id) {
  * @todo Finish documenting this function
  */
 function reader_delete_instance($id) {
-    global $CFG,$DB;
+    global $CFG, $DB;
 
     if (! $reader = $DB->get_record('reader', array('id' => $id))) {
         return false;
@@ -254,7 +254,7 @@ function reader_print_recent_activity($course, $isteacher, $timestart) {
  * @todo Finish documenting this function
  */
 function reader_cron() {
-    global $CFG,$DB;
+    global $CFG, $DB;
 
     $textmessages = $DB->get_records('reader_messages');
 
@@ -353,7 +353,7 @@ function reader_get_user_attempt_unfinished($readerid, $userid) {
  * @todo Finish documenting this function
  */
 function reader_get_stlevel_data($reader, $userid=0) {
-    global $USER, $CFG, $DB;
+    global $CFG, $DB, $USER;
 
     $counter['countlevel'] = 0;
     $counter['prevlevel'] = 0;
@@ -488,7 +488,7 @@ function reader_get_user_attempts($readerid, $userid, $status = 'finished', $inc
  * @todo Finish documenting this function
  */
 function reader_create_attempt($reader, $attemptnumber, $bookid) {
-    global $USER, $CFG,$DB;
+    global $CFG, $DB, $USER;
 
     $book = $DB->get_record('reader_books', array('id' => $bookid));
 
@@ -616,7 +616,7 @@ function reader_delete_attempt($attempt, $reader) {
  * @todo Finish documenting this function
  */
 function reader_save_best_grade($reader, $userid = null) {
-    global $USER,$DB;
+    global $DB, $USER;
 
     if (empty($userid)) {
         $userid = $USER->id;
@@ -663,7 +663,7 @@ function reader_save_best_grade($reader, $userid = null) {
  * @todo Finish documenting this function
  */
 function reader_update_grades($reader=null, $userid=0, $nullifnone=true) {
-    global $CFG,$DB;
+    global $CFG, $DB;
     if (! function_exists('grade_update')) { //workaround for buggy PHP versions
         require_once($CFG->dirroot.'/lib/gradelib.php');
     }
@@ -767,7 +767,7 @@ function reader_rescale_grade($rawgrade, $reader) {
  * @todo Finish documenting this function
  */
 function reader_get_user_grades($reader, $userid=0) {
-    global $CFG,$DB;
+    global $CFG, $DB;
 
     $user = $userid ? "AND u.id = $userid" : "";
 
@@ -928,7 +928,7 @@ function reader_print_navigation_panel($page, $pages) {
 function reader_first_questionnumber($readerlayout, $pagelayout) {
     // this works by finding all the questions from the readerlayout that
     // come before the current page and then adding up their lengths.
-    global $CFG,$DB;
+    global $CFG, $DB;
     $start = strpos($readerlayout, ','.$pagelayout.',')-2;
     if ($start > 0) {
         $prevlist = substr($readerlayout, 0, $start);
@@ -1711,7 +1711,7 @@ function reader_promotion_stop_box($userid, $data, $field, $rand) {
  * @todo Finish documenting this function
  */
 function reader_goal_box($userid, $dataoflevel, $field, $rand, $reader) {
-    global $CFG, $COURSE, $_SESSION, $id, $act, $gid, $sort, $orderby, $page,$DB;
+    global $CFG, $COURSE, $DB, $_SESSION, $id, $act, $gid, $sort, $orderby, $page;
 
     $goal = 0;
 
@@ -1844,7 +1844,7 @@ function reader_yes_no_box($userid, $data, $field, $rand) {
  * @todo Finish documenting this function
  */
 function reader_selectip_form($userid, $reader) {
-    global $CFG, $COURSE, $_SESSION, $id, $act, $gid, $sort, $orderby, $page,$DB;
+    global $CFG, $COURSE, $DB, $_SESSION, $id, $act, $gid, $sort, $orderby, $page;
 
     $levels = array(0=>"No",1=>"Yes");
 
@@ -1888,7 +1888,7 @@ function reader_selectip_form($userid, $reader) {
  * @todo Finish documenting this function
  */
 function reader_select_difficulty_form($difficulty, $bookid, $reader) {
-    global $CFG, $COURSE, $_SESSION, $id, $act, $gid, $sort, $orderby, $page,$DB;
+    global $CFG, $COURSE, $DB, $_SESSION, $id, $act, $gid, $sort, $orderby, $page;
 
     $levels = array(0,1,2,3,4,5,6,7,8,9,10,12,13,14);
 
@@ -1966,7 +1966,7 @@ function reader_select_length_form($length, $bookid, $reader) {
  * @todo Finish documenting this function
  */
 function reader_set_attempt_result($attemptid, $reader) {
-    global $CFG, $COURSE, $USER,$DB;
+    global $CFG, $COURSE, $DB, $USER;
 
     $attemptdata = $DB->get_record('reader_attempts', array('id' => $attemptid));
 
@@ -2168,7 +2168,7 @@ function reader_order_object($array, $key) {
  * @todo Finish documenting this function
  */
 function reader_get_goal_progress($progress, $reader) {
-    global $CFG, $USER,$DB;
+    global $CFG, $DB, $USER;
 
     if (! $progress) {
         $progress = 0;
@@ -2371,7 +2371,7 @@ function reader_get_reader_length($reader, $bookid) {
  * @todo Finish documenting this function
  */
 function reader_ra_checkbox($data) {
-    global $act, $id, $CFG, $USER, $excel;
+    global $CFG, $USER, $act, $excel, $id;
     $checked = '';
 
     if ($excel) {
@@ -2399,7 +2399,7 @@ function reader_ra_checkbox($data) {
  * @todo Finish documenting this function
  */
 function reader_groups_get_user_groups($userid=0) {
-    global $CFG, $USER, $DB;
+    global $CFG, $DB, $USER;
 
     if (empty($userid)) {
         $userid = $USER->id;

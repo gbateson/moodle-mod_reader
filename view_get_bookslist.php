@@ -61,6 +61,7 @@ require_login($course->id);
 
 add_to_log($course->id, 'reader', 'Ajax get list of books', "view.php?id=$id", "$cm->instance");
 
+$booksform = array();
 if ($onlypub == 1) {
     $books = $DB->get_records_sql("SELECT * FROM {reader_books} WHERE publisher= ? and hidden='0' ORDER BY name", array($publisher));
     foreach ($books as $books_) {

@@ -280,7 +280,7 @@
      * @todo Finish documenting this function
      */
     function restore_recode_category_parents($restore){
-        global $CFG,$DB;
+        global $CFG, $DB;
         $status = true;
         //Now we have to recode the parent field of each restored category
         $categories = $DB->get_records_sql("SELECT old_id, new_id
@@ -359,7 +359,7 @@
      */
     function restore_questions($old_category_id, $best_question_cat, $info, $restore) {
 
-        global $CFG, $QTYPES,$DB;
+        global $CFG, $DB, $QTYPES;
 
         $status = true;
         $restored_questions = array();
@@ -573,7 +573,7 @@
      */
     function question_restore_answers($old_question_id,$new_question_id,$info,$restore) {
 
-        global $CFG,$DB;
+        global $CFG, $DB;
 
         $status = true;
         $qtype = backup_todb($info['#']['QTYPE']['0']['#']);

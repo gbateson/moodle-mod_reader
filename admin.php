@@ -1407,12 +1407,14 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
                 foreach ($readerattempts as $readerattempt) {
                     if (strtolower($readerattempt->passed) == 'true') {
                         if ($readerattempt->preview == 0) {
-                            $bookwords = $DB->get_field('reader_books', 'words', array('quizid' => $readerattempt->quizid));
+                            $table = 'reader_books';
                         } else {
-                            $bookwords = $DB->get_field('reader_noquiz', 'words', array('quizid' => $readerattempt->quizid));
+                            $table = 'reader_noquiz';
                         }
-                        if ($bookwords) {
-                            $data['totalwordsthisterm'] += $bookwords;
+                        if ($books = $DB->get_records($table, array('quizid' => $readerattempt->quizid))) {
+                            if ($book = array_shift($books)) {
+                                $data['totalwordsthisterm'] += $book->words;
+                            }
                         }
                     }
                 }
@@ -1423,12 +1425,14 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
                 foreach ($readerattempts as $readerattempt) {
                     if (strtolower($readerattempt->passed) == 'true') {
                         if ($readerattempt->preview == 0) {
-                            $bookwords = $DB->get_field('reader_books', 'words', array('quizid' => $readerattempt->quizid));
+                            $table = 'reader_books';
                         } else {
-                            $bookwords = $DB->get_field('reader_noquiz', 'words', array('quizid' => $readerattempt->quizid));
+                            $table = 'reader_noquiz';
                         }
-                        if ($bookwords) {
-                            $data['totalwordsallterms'] += $bookwords;
+                        if ($books = $DB->get_records($table, array('quizid' => $readerattempt->quizid))) {
+                            if ($book = array_shift($books)) {
+                                $data['totalwordsthisterm'] += $book->words;
+                            }
                         }
                     }
                 }
@@ -3265,7 +3269,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
          * @todo Finish documenting this function
          */
         function definition() {
-            global $COURSE, $CFG, $reader, $course, $DB;
+            global $COURSE, $CFG, $DB, $course, $reader;
 
             $mform    = &$this->_form;
             $mform->addElement('header', 'setgoal', get_string('setgoal', 'reader'));
@@ -3337,7 +3341,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
          * @todo Finish documenting this function
          */
         function definition() {
-            global $COURSE, $CFG, $reader, $course,$DB;
+            global $COURSE, $CFG, $DB, $course, $reader;
 
             if ($default = $DB->get_record('reader_forcedtimedelay', array('readerid' => $reader->id,  'level' => 99))) {
               if ($default->delay) {
@@ -3892,7 +3896,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
          * @todo Finish documenting this function
          */
         function definition() {
-            global $CFG, $course,$DB;
+            global $CFG, $DB, $course;
 
             $mform    = &$this->_form;
 
@@ -4164,7 +4168,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
     echo '<tr><td colspan="3" align="center">';
 
     echo '</td></tr>';
-    echo '<tr><td colspan="3" align="center"><input type="button" value="Select quiz" onclick="if (validateForm(this.form) && confirm(999)) {this.form.submit();}" /> </td></tr>';
+    echo '<tr><td colspan="3" align="center"><input type="button" value="Select quiz" onclick="if (validateForm(this.form)) {this.form.submit();}" /> </td></tr>';
     echo '</table>';
     echo '</form></center>';
 

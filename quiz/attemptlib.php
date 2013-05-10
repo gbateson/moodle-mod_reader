@@ -532,7 +532,7 @@ class reader_attempt {
      * @todo Finish documenting this function
      */
     public function set_rating($likebook) {
-        global $DB,$USER;
+        global $DB, $USER;
 
         if (isset($likebook)){
             $this->attempt->bookrating = $likebook;

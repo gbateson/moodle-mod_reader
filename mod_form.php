@@ -54,7 +54,7 @@ class mod_reader_mod_form extends moodleform_mod {
      */
     function definition() {
 
-        global $COURSE, $CFG, $form, $DB, $PAGE;
+        global $COURSE, $CFG, $DB, $PAGE, $form;
 
         $readercfg = get_config('reader');
 
