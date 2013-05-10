@@ -3149,6 +3149,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
         $data['averagewordsthisterm'] = 0;
         $data['averagewordsallterms'] = 0;
 
+        $coursestudents = get_enrolled_users($context, NULL, $group->id);
         foreach ($coursestudents as $coursestudent) {
             $select = 'userid= ? AND reader= ? AND timestart > ?';
             $params = array($coursestudent->id, $reader->id, $reader->ignoredate);
