@@ -3157,7 +3157,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
                 foreach ($readerattempts as $readerattempt) {
                     if (strtolower($readerattempt->passed) == 'true') {
                         $data['averagepassed']++;
-                        if ($bookdata = $DB->get_record('reader_books', array('quizid' => $quizid))) {
+                        if ($bookdata = $DB->get_record('reader_books', array('quizid' => $readerattempt->quizid))) {
                             $data['averagepoints'] += reader_get_reader_length($reader, $bookdata->id);
                             $data['averagewordsthisterm'] += $bookdata->words;
                         }
@@ -3173,7 +3173,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
             if ($readerattempts = $DB->get_records('reader_attempts', array('userid' => $coursestudent->id))) {
                 foreach ($readerattempts as $readerattempt) {
                     if (strtolower($readerattempt->passed) == 'true') {
-                        if ($bookdata = $DB->get_record('reader_books', array('quizid' => $quizid))) {
+                        if ($bookdata = $DB->get_record('reader_books', array('quizid' => $readerattempt->quizid))) {
                             $data['averagewordsallterms'] += $bookdata->words;
                         }
                     }
