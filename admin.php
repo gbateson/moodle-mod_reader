@@ -1407,11 +1407,11 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
                 foreach ($readerattempts as $readerattempt) {
                     if (strtolower($readerattempt->passed) == 'true') {
                         if ($readerattempt->preview == 0) {
-                            $table = 'reader_books';
+                            $tablename = 'reader_books';
                         } else {
-                            $table = 'reader_noquiz';
+                            $tablename = 'reader_noquiz';
                         }
-                        if ($books = $DB->get_records($table, array('quizid' => $readerattempt->quizid))) {
+                        if ($books = $DB->get_records($tablename, array('quizid' => $readerattempt->quizid))) {
                             if ($book = array_shift($books)) {
                                 $data['totalwordsthisterm'] += $book->words;
                             }
@@ -1425,11 +1425,11 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
                 foreach ($readerattempts as $readerattempt) {
                     if (strtolower($readerattempt->passed) == 'true') {
                         if ($readerattempt->preview == 0) {
-                            $table = 'reader_books';
+                            $tablename = 'reader_books';
                         } else {
-                            $table = 'reader_noquiz';
+                            $tablename = 'reader_noquiz';
                         }
-                        if ($books = $DB->get_records($table, array('quizid' => $readerattempt->quizid))) {
+                        if ($books = $DB->get_records($tablename, array('quizid' => $readerattempt->quizid))) {
                             if ($book = array_shift($books)) {
                                 $data['totalwordsthisterm'] += $book->words;
                             }
