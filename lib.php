@@ -1744,8 +1744,9 @@ function reader_goal_box($userid, $dataoflevel, $field, $rand, $reader) {
     if (empty($reader->wordsorpoints) || $reader->wordsorpoints == "words") {
         $levels = array(0,5000,6000,7000,8000,9000,10000,12500,15000,20000,25000,30000,35000,40000,45000,50000,60000,70000,80000,90000,100000,125000,150000,175000,200000,250000,300000,350000,400000,450000,500000);
         if (! in_array($goal, $levels) && !empty($goal)) {
-            for ($i=0; $i<count($levels); $i++) {
-                if ($goal < $levels[$i+1] && $goal > $levels[$i]) {
+            $i_max = count($levels) - 1;
+            for ($i=0; $i<=$i_max; $i++) {
+                if ($i < $i_max && $goal < $levels[$i+1] && $goal > $levels[$i]) {
                     $levels2[] = $goal;
                     $levels2[] = $levels[$i];
                 } else {
