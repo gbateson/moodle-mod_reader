@@ -317,6 +317,44 @@ function xmldb_reader_upgrade($oldversion) {
         upgrade_mod_savepoint(true, "$newversion", 'reader');
     }
 
+    $newversion = 2013051200;
+    if ($result && $oldversion < $newversion) {
+
+        // force all text fields to be long text - the default for Moodle 2.3+
+        $tables = array(
+            'reader' => array(
+                new xmldb_field('intro',   XMLDB_TYPE_TEXT, 'long', null, XMLDB_NOTNULL),
+                new xmldb_field('cheated', XMLDB_TYPE_TEXT, 'long', null, XMLDB_NOTNULL),
+                new xmldb_field('not',     XMLDB_TYPE_TEXT, 'long', null, XMLDB_NOTNULL),
+            ),
+            'reader_attempts' => array(
+                new xmldb_field('layout',  XMLDB_TYPE_TEXT, 'long', null, XMLDB_NOTNULL),
+            ),
+            'reader_backup_ids' => array(
+                new xmldb_field('info',    XMLDB_TYPE_TEXT, 'long', null, XMLDB_NOTNULL),
+            ),
+            'reader_deleted_attempts' => array(
+                new xmldb_field('layout',  XMLDB_TYPE_TEXT, 'long', null, XMLDB_NOTNULL),
+            ),
+            'reader_messages' => array(
+                new xmldb_field('text',    XMLDB_TYPE_TEXT, 'long', null, XMLDB_NOTNULL),
+            )
+        );
+
+        foreach ($tables as $tablename => $fields) {
+            $table = new xmldb_table($tablename);
+            foreach ($fields as $field) {
+                if ($dbman->table_exists($table) && $dbman->field_exists($table, $field)) {
+                    $fieldname = $field->getName();
+                    $DB->set_field_select($tablename, $fieldname, '', "$fieldname IS NULL");
+                    $dbman->change_field_type($table, $field);
+                }
+            }
+        }
+
+        upgrade_mod_savepoint(true, "$newversion", 'reader');
+    }
+
     return $result;
 }
 
