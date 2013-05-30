@@ -276,17 +276,17 @@ function reader_cron() {
             $quizdata = (object)array('questions' => '');
         }
         $questions = explode(',', $quizdata->questions);
-        $answersgrade = $DB->get_records('reader_question_instances', array('quiz' => $publishersquizze->id));
+        $answersgrade = $DB->get_records('reader_question_instances', array('quiz' => $publishersquizze->quizid));
         $doublecheck = array();
         foreach ($answersgrade as $answersgrade_) {
             if (! in_array($answersgrade_->question, $questions)) {
-                $DB->delete_records('reader_question_instances', array('quiz' => $publishersquizze->id, 'question' => $answersgrade_->question));
+                $DB->delete_records('reader_question_instances', array('quiz' => $publishersquizze->quizid, 'question' => $answersgrade_->question));
                 $editedquizzes[$publishersquizze->id] = $publishersquizze->quizid;
             }
             if (! in_array($answersgrade_->question, $doublecheck)) {
                 $doublecheck[] = $answersgrade_->question;
             } else {
-                add_to_log(1, 'reader', 'Cron', '', "Double entries found!! reader_question_instances; quiz: {$publishersquizze->id}; question: {$answersgrade_->question}");
+                add_to_log(1, 'reader', 'Cron', '', "Double entries found!! reader_question_instances; quiz: {$publishersquizze->quizid}; question: {$answersgrade_->question}");
             }
         }
     }

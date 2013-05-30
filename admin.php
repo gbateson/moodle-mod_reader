@@ -736,7 +736,7 @@ if (has_capability('mod/reader:manage', $contextmodule) && $act == 'awardextrapo
             }
 
             $totalgrade = 0;
-            $answersgrade = $DB->get_records('reader_question_instances', array('quiz' => $bookdata->id)); // Count Grades (TotalGrade)
+            $answersgrade = $DB->get_records('reader_question_instances', array('quiz' => $bookdata->quizid)); // Count Grades (TotalGrade)
             foreach ($answersgrade as $answersgrade_) {
                 $totalgrade += $answersgrade_->grade;
             }
@@ -1254,7 +1254,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
         $totalpointsaverage = 0;
         $correctpoints = 0;
 
-        $answersgrade = $DB->get_records('reader_question_instances', array('quiz' => $book->id));
+        $answersgrade = $DB->get_records('reader_question_instances', array('quiz' => $book->quizid));
         foreach ($answersgrade as $answersgrade_) {
             $totalgrade += $answersgrade_->grade;
         }

@@ -96,6 +96,7 @@ $contextmodule = reader_get_context(CONTEXT_MODULE, $cm->id);
 require_capability('mod/reader:manage', $contextmodule);
 
 $readercfg = get_config('reader');
+$keepoldquizzes = get_config('reader', 'keepoldquizzes');
 
 add_to_log($course->id, 'reader', 'Download Quizzes Process', "dlquizzes.php?id=$id", "$cm->instance");
 
@@ -157,11 +158,19 @@ foreach ($quizitems as $sectionname => $items) {
         $cm = reader_create_new_quiz($targetcourseid, $sectionnum, $quizmodule, $itemname);
         $quizids[$itemid] = $cm->instance;
 
-        // if necessary, replace the old quizid with the new quizid
+        // tidy up references to the old quizzes
         foreach ($oldquizids as $oldquizid) {
-            $DB->set_field('reader_books', 'quizid', $cm->instance, array('quizid' => $oldquizid));
+
+            // adjust references to the old quiz
+            reader_fix_quiz_ids($cm->instance, $oldquizid)
+
+            // hide or remove the old quiz activity
             if ($cmid = $DB->get_field('course_modules', 'id', array('module' => $quizmodule->id, 'instance' => $book->quizid))) {
-                set_coursemodule_visible($cmid, 0);
+                if ($keepoldquizzes) {
+                    set_coursemodule_visible($cmid, 0);
+                } else {
+                    reader_remove_coursemodule($cmid);
+                }
             }
         }
     }
@@ -1007,4 +1016,71 @@ function reader_add_book($item, $quizid) {
     } else {
         return false;
     }
+}
+
+/**
+ * reader_remove_coursemodule
+ *
+ * @param integer $cmid
+ * @return xxx
+ * @todo Finish documenting this function
+ */
+function reader_remove_coursemodule($cmid) {
+    global $CFG, $DB;
+    require_once($CFG->dirroot.'/course/lib.php');
+
+    // get course module - with sectionnum :-)
+    if (! $cm = get_coursemodule_from_id('', $cmid, 0, true)) {
+        print_error('invalidcoursemodule');
+    }
+
+    $libfile = $CFG->dirroot.'/mod/'.$cm->modname.'/lib.php';
+    if (! file_exists($libfile)) {
+        notify("$cm->modname lib.php not accessible ($libfile)");
+    }
+    require_once($libfile);
+
+    $deleteinstancefunction = $cm->modname.'_delete_instance';
+    if (! function_exists($deleteinstancefunction)) {
+        notify("$cm->modname delete function not found ($deleteinstancefunction)");
+    }
+
+    // copied from 'course/mod.php'
+    if (! $deleteinstancefunction($cm->instance)) {
+        notify("Could not delete the $cm->modname (instance id=$cm->instance)");
+    }
+    if (! delete_course_module($cm->id)) {
+        notify("Could not delete the $cm->modname (coursemodule, id=$cm->id)");
+    }
+    if (! $sectionid = $DB->get_field('course_sections', 'id', array('course' => $cm->course, 'section' => $cm->sectionnum))) {
+        notify("Could not get section id (course id=$cm->course, section num=$cm->sectionnum)");
+    }
+    if (! delete_mod_from_section($cm->id, $sectionid)) {
+        notify("Could not delete the $cm->modname (id=$cm->id) from that section (id=$sectionid)");
+    }
+
+    add_to_log($cm->course, 'course', 'delete mod', "view.php?id=$cm->course", "$cm->modname $cm->instance", $cm->id);
+
+    $rebuild_course_cache = true;
+    return $rebuild_course_cache;
+}
+
+/**
+ * reader_fix_quiz_ids
+ *
+ * @uses $DB
+ * @param xxx $newid
+ * @param xxx $oldid
+ * @todo Finish documenting this function
+ */
+function reader_fix_quiz_ids($newid, $oldid) {
+    global $DB;
+    // adjust all references to the old quiz
+    $DB->set_field('reader_books',              'quizid', $newid, array('quizid' => $oldid));
+    $DB->set_field('reader_attempts',           'quizid', $newid, array('quizid' => $oldid));
+    $DB->set_field('reader_cheated_log',        'quizid', $newid, array('quizid' => $oldid));
+    $DB->set_field('reader_conflicts',          'quizid', $newid, array('quizid' => $oldid));
+    $DB->set_field('reader_deleted_attempts',   'quizid', $newid, array('quizid' => $oldid));
+    $DB->set_field('reader_noquiz',             'quizid', $newid, array('quizid' => $oldid));
+    //$DB->set_field('reader_question_instances', 'quiz',   $newid, array('quiz'   => $oldid));
 }
