@@ -249,7 +249,7 @@ $readersettings->add(new admin_setting_configtext_with_advanced($name, $text, $h
 $name = 'reader/reader_keepoldquizzes';
 $text = get_string('keepoldquizzes', 'reader');
 $help = get_string('configkeepoldquizzes', 'reader');
-$default = array('value' => $readercfg->reader_keepoldquizzes, 'fix' => false);
+$default = array('value' => 0, 'fix' => false);
 $options = array(
     0 => get_string('no'),
     1 => get_string('yes')
