@@ -1045,7 +1045,7 @@ if (! $excel) {
             // new reader_menu_item($displaystring, $capability, $scriptname, $scriptparams)
             new reader_menu_item('addquiztoreader', 'addcoursequizzestoreaderquizzes', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'addquiz')),
             new reader_menu_item('uploadquiztoreader', 'downloadquizzesfromthereaderquizdatabase', 'dlquizzes.php', array('id'=>$id)),
-            //new reader_menu_item('uploaddatanoquizzes', 'downloadquizzesfromthereaderquizdatabase', 'dlquizzesnoq.php', array('id'=>$id)),
+            new reader_menu_item('uploaddatanoquizzes', 'downloadquizzesfromthereaderquizdatabase', 'dlquizzesnoq.php', array('id'=>$id)),
             new reader_menu_item('updatequizzes', 'manage', 'updatecheck.php', array('id'=>$id, 'checker'=>1)),
             new reader_menu_item('editquiztoreader', 'deletequizzes', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'editquiz')),
             new reader_menu_item('setbookinstances', 'selectquizzestomakeavailabletostudents', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'setbookinstances')),
