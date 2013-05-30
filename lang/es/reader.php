@@ -306,5 +306,5 @@ $string['wordscount'] = 'Word count';
 $string['wordsorpoints'] = 'Display to students';
 $string['wordsprogressbar'] = 'Word Count Progress Bar';
 $string['youcantake'] = ' You can take ';
-$string['youcantakeaquizafter'] = ' You can takea quiz after ';
+$string['youcantakeaquizafter'] = ' You can take a quiz after ';
 ** ================================================== */

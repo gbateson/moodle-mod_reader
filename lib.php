@@ -2507,64 +2507,30 @@ function reader_nicetime($unix_date) {
 /**
  * reader_nicetime2
  *
- * @param xxx $session_time
+ * @param xxx $seconds
  * @return xxx
  * @todo Finish documenting this function
  */
-function reader_nicetime2($session_time) {
-    $time_difference = $session_time ;
+function reader_nicetime2($seconds) {
 
-    //echo $time_difference."!!";
+    $minutes = round($seconds / 60);
+    $hours   = round($seconds / 3600);
+    $days    = round($seconds / 86400);
+    $weeks   = round($seconds / 604800);
+    $months  = round($seconds / 2419200);
+    $years   = round($seconds / 29030400);
 
-    $seconds = $time_difference ;
-    $minutes = round($time_difference / 60);
-    $hours   = round($time_difference / 3600);
-    $days    = round($time_difference / 86400);
-    $weeks   = round($time_difference / 604800);
-    $months  = round($time_difference / 2419200);
-    $years   = round($time_difference / 29030400);
-
-    if ($seconds <= 60) { // Seconds
-        $text .= "$seconds seconds ";
-    } else if ($minutes <= 60) { //Minutes
-        if ($minutes==1) {
-            $text .= "one minute ";
-        } else {
-            $text .= "$minutes minutes ";
-        }
-    } else if($hours <=24) {//Hours
-        if($hours==1) {
-            $text .= "one hour ";
-        } else {
-            $text .= "$hours hours ";
-        }
-    } else if($days <= 7) { //Days
-        if($days==1) {
-            $text .= "one day ";
-        } else {
-            $text .= "$days days ";
-        }
-    } else if($weeks <= 4) { //Weeks
-        if($weeks==1) {
-            $text .= "one week ";
-        } else {
-            $text .= "$weeks weeks ";
-        }
-    } else if($months <=12) { //Months
-        if($months==1) {
-            $text .= "one month ";
-        } else {
-            $text .= "$months months ";
-        }
-    } else { //Years
-        if($years==1) {
-            $text .= "one year ago";
-        } else {
-            $text .= "$years years ";
-        }
+    switch (true) {
+        case ($seconds <= 60): $text = ($seconds==1 ? 'one second' : "$seconds seconds"); break;
+        case ($minutes <= 60): $text = ($minutes==1 ? 'one minute' : "$minutes minutes"); break;
+        case ($hours   <= 24): $text = ($hours==1   ? 'one hour'   : "$hours hours"    ); break;
+        case ($days    <= 7) : $text = ($days==1    ? 'one day'    : "$days days"      ); break;
+        case ($weeks   <= 4) : $text = ($weeks==1   ? 'one week'   : "$weeks weeks"    ); break;
+        case ($months  <=12) : $text = ($months==1  ? 'one month'  : "$months months"  ); break;
+        default:               $text = ($years==1   ? 'one year'   : "$years years "   );
     }
 
-    return $text;
+    return "$text ";
 }
 
 /**
