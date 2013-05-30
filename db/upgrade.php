@@ -266,18 +266,7 @@ function xmldb_reader_upgrade($oldversion) {
     if ($result && $oldversion < $newversion) {
 
         // tidy all courses used to store reader quizzes
-        $courseids = array();
-        if ($courseid = get_config('reader', 'reader_usecourse')) {
-            $courseids[] = $courseid;
-        }
-        $select = 'SELECT DISTINCT usecourse FROM {reader} WHERE usecourse IS NOT NULL AND usecourse > ?';
-        $select = "id IN ($select) AND visible = ?";
-        $params = array(0, 0);
-        if ($courses = $DB->get_records_select('course', $select, $params, 'id', 'id,visible')) {
-            $courseids = array_merge($courseids, array_keys($courses));
-            $courseids = array_unique($courseids);
-            sort($courseids);
-        }
+        $courseids = xmldb_reader_quiz_courseids();
 
         foreach ($courseids as $courseid) {
             $rebuild_course_cache = false;
@@ -450,13 +439,17 @@ function xmldb_reader_upgrade($oldversion) {
         // save this value of the 'keepoldquizzes' config setting
         set_config('reader_keepoldquizzes', $keepoldquizzes, 'reader');
 
-        if ($reader_usecourse = get_config('reader', 'reader_usecourse')) {
-            if ($course = $DB->get_record('course', array('id' => $reader_usecourse))) {
+        $src = $OUTPUT->pix_url('t/switch_minus');
+        $img = html_writer::empty_tag('img', array('src' => $src, 'onclick' => 'showhide_list(this)', 'alt' => 'switch_minus'));
+
+        $courseids = xmldb_reader_quiz_courseids();
+        foreach ($courseids as $courseid) {
+            if ($course = $DB->get_record('course', array('id' => $courseid))) {
                 $rebuild_course_cache = false;
-                if (xmldb_reader_fix_duplicate_books($course, $keepoldquizzes)) {
+                if (xmldb_reader_fix_duplicate_books($course, $keepoldquizzes, $img)) {
                     $rebuild_course_cache = true;
                 }
-                if (xmldb_reader_fix_duplicate_quizzes($course, $keepoldquizzes)) {
+                if (xmldb_reader_fix_duplicate_quizzes($course, $keepoldquizzes, $img)) {
                     $rebuild_course_cache = true;
                 }
                 if ($rebuild_course_cache) {
@@ -552,14 +545,13 @@ function xmldb_reader_fix_previous_field($dbman, $table, &$field) {
  *
  * @param xxx $course record
  * @param boolean $keepoldquizzes
+ * @param xxx $img
  * @return boolean $rebuild_course_cache
+ * @todo Finish documenting this function
  */
-function xmldb_reader_fix_duplicate_books($course, $keepoldquizzes) {
+function xmldb_reader_fix_duplicate_books($course, $keepoldquizzes, $img) {
     global $DB, $OUTPUT;
     $rebuild_course_cache = false;
-
-    $src = $OUTPUT->pix_url('t/switch_minus');
-    $img = html_writer::empty_tag('img', array('src' => $src, 'onclick' => 'showhide_list(this)', 'alt' => 'switch_minus'));
 
     // extract all duplicate (i.e. same publisher and name) books
     $publisher_level_name = $DB->sql_concat('publisher', "'_'", 'level', "'_'", 'name');
@@ -611,6 +603,7 @@ function xmldb_reader_fix_duplicate_books($course, $keepoldquizzes) {
 
                     if ($publisher != $book->publisher) {
                         if ($publisher=='') {
+                            echo xmldb_reader_showhide_lists_js();
                             echo "<div><b>The following duplicate books were fixed:</b> $img";
                             echo '<ul>'; // start publisher list
                         } else {
@@ -634,7 +627,7 @@ function xmldb_reader_fix_duplicate_books($course, $keepoldquizzes) {
                                     $rebuild_course_cache = true;
                                 }
                             } else {
-                                echo '<li><span style="color: red;">DELETED</span> '."Duplicate quiz (course module id=$cmid, quiz id=$book->quizid)".'</li>';
+                                echo '<li><span style="color: red;">DELETED</span> '."Duplicate quiz (course module id=$cm->id, quiz id=$book->quizid)".'</li>';
                                 xmldb_reader_remove_coursemodule($cm->id);
                                 $rebuild_course_cache = true;
                             }
@@ -645,7 +638,7 @@ function xmldb_reader_fix_duplicate_books($course, $keepoldquizzes) {
                     if ($mainbookid && $mainbookid != $book->id) {
                         // adjust all references to the duplicate book
                         echo "<li>remove references to duplicate book</li>";
-                        $DB->set_field('reader_book_instances', 'bookid', $mainbookid, array('bookid' => $book->quizid));
+                        $DB->set_field('reader_book_instances', 'bookid', $mainbookid, array('bookid' => $book->id));
 
                         // now we can delete this book (because it is a duplicate)
                         echo "<li>remove duplicate book</li>";
@@ -669,8 +662,10 @@ function xmldb_reader_fix_duplicate_books($course, $keepoldquizzes) {
  *
  * @param object $course record
  * @param boolean $keepoldquizzes
+ * @param xxx $img
+ * @todo Finish documenting this function
  */
-function xmldb_reader_fix_duplicate_quizzes($course, $keepoldquizzes) {
+function xmldb_reader_fix_duplicate_quizzes($course, $keepoldquizzes, $img) {
     global $CFG, $DB;
     require_once($CFG->dirroot.'/course/lib.php');
 
@@ -689,10 +684,12 @@ function xmldb_reader_fix_duplicate_quizzes($course, $keepoldquizzes) {
 
     // extract all duplicate (i.e. same section and name) quizzes in main reader course
     if ($duplicates = $DB->get_records_sql("SELECT $select FROM $from WHERE $where GROUP BY $groupby", $params)) {
+        echo xmldb_reader_showhide_lists_js();
+        echo "<div><b>The following duplicate quizzes were fixed:</b> $img";
         echo '<ul>';
 
         foreach ($duplicates as $duplicate) {
-            echo '<li>Merging duplicates for quiz: '.$duplicate->quizname.'<ul>';
+            echo '<li>Merging duplicate quizzes: '.$duplicate->quizname.'<ul>';
 
             $maincm = null;
 
@@ -734,6 +731,7 @@ function xmldb_reader_fix_duplicate_quizzes($course, $keepoldquizzes) {
             echo '</ul></li>';
         }
         echo '</ul>';
+        echo '</div>';
     }
 
     return $rebuild_course_cache;
@@ -804,4 +802,78 @@ function xmldb_reader_remove_coursemodule($cmid) {
 
     $rebuild_course_cache = true;
     return $rebuild_course_cache;
+}
+
+/**
+ * xmldb_reader_quiz_courseids
+ *
+ * @return array $courseids containing Reader module quizzes
+ * @todo Finish documenting this function
+ */
+function xmldb_reader_quiz_courseids() {
+    global $DB;
+
+    $courseids = array();
+    if ($courseid = get_config('reader', 'reader_usecourse')) {
+        $courseids[] = $courseid;
+    }
+    $select = 'SELECT DISTINCT usecourse FROM {reader} WHERE usecourse IS NOT NULL AND usecourse > ?';
+    $select = "id IN ($select) AND visible = ?";
+    $params = array(0, 0);
+    if ($courses = $DB->get_records_select('course', $select, $params, 'id', 'id,visible')) {
+        $courseids = array_merge($courseids, array_keys($courses));
+        $courseids = array_unique($courseids);
+        sort($courseids);
+    }
+    return $courseids;
+}
+
+/**
+ *
+ */
+function xmldb_reader_showhide_lists_js() {
+    static $done = false;
+
+    $js = '';
+    if ($done==false) {
+        $done = true;
+        $js .= '<script type="text/javascript">'."\n";
+        $js .= "//<![CDATA[\n";
+        $js .= "function showhide_list(img) {\n";
+        $js .= "    var obj = img.nextSibling;\n";
+        $js .= "    if (obj) {\n";
+        $js .= "        if (obj.style.display=='none') {\n";
+        $js .= "            obj.style.display = '';\n";
+        $js .= "            var pix = 'minus';\n";
+        $js .= "        } else {\n";
+        $js .= "            obj.style.display = 'none';\n";
+        $js .= "            var pix = 'plus';\n";
+        $js .= "        }\n";
+        $js .= "        img.alt = 'switch_' + pix;\n";
+        $js .= "        img.src = img.src.replace(new RegExp('switch_[a-z]+'), 'switch_' + pix);\n";
+        $js .= "    }\n";
+        $js .= "}\n";
+        $js .= "function showhide_lists() {\n";
+        $js .= "    var img = document.getElementsByTagName('img');\n";
+        $js .= "    if (img) {\n";
+        $js .= "        var targetsrc = new RegExp('switch_(minus|plus)');\n";
+        $js .= "        var i_max = img.length;\n";
+        $js .= "        for (var i=0; i<=i_max; i++) {\n";
+        $js .= "            if (img[i].src.match(targetsrc)) {\n";
+        $js .= "                showhide_list(img[i]);\n";
+        $js .= "            }\n";
+        $js .= "        }\n";
+        $js .= "    }\n";
+        $js .= "}\n";
+        $js .= "if (window.addEventListener) {\n";
+        $js .= "    window.addEventListener('load', showhide_lists, false);\n";
+        $js .= "} else if (window.attachEvent) {\n";
+        $js .= "    window.attachEvent('onload', showhide_lists);\n";
+        $js .= "} else {\n";
+        $js .= "    // window['onload'] = showhide_lists;\n";
+        $js .= "}\n";
+        $js .= "//]]>\n";
+        $js .= '</script>'."\n";
+    }
+    return $js;
 }
