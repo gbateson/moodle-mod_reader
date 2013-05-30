@@ -143,12 +143,14 @@ foreach ($quizitems as $sectionname => $items) {
         $itemid = $item['id'];
         $itemname = $item['title'];
 
-        // if book already exists, hide the quiz
+        // if book(s) already exists, get the old quiz ids
         // the new quiz will replace it (allowing for updates)
-        if ($oldquizid = $DB->get_field('reader_books', 'quizid', array('publisher' => $item['publisher'], 'level' => $item['level'], 'name' => $item['title']))) {
-            if ($cmid = $DB->get_field('course_modules', 'id', array('module' => $quizmodule->id, 'instance' => $oldquizid))) {
-                set_coursemodule_visible($cmid, 0);
+        $oldquizids = array();
+        if ($books = $DB->get_records('reader_books', array('publisher' => $item['publisher'], 'level' => $item['level'], 'name' => $item['title']))) {
+            foreach ($books as $book) {
+                $oldquizids[] = $book->quizid;
             }
+            $oldquizids = array_unique($oldquizids);
         }
 
         // add a new quiz course module for this $item
@@ -156,8 +158,11 @@ foreach ($quizitems as $sectionname => $items) {
         $quizids[$itemid] = $cm->instance;
 
         // if necessary, replace the old quizid with the new quizid
-        if ($oldquizid) {
+        foreach ($oldquizids as $oldquizid) {
             $DB->set_field('reader_books', 'quizid', $cm->instance, array('quizid' => $oldquizid));
+            if ($cmid = $DB->get_field('course_modules', 'id', array('module' => $quizmodule->id, 'instance' => $book->quizid))) {
+                set_coursemodule_visible($cmid, 0);
+            }
         }
     }
 }
@@ -236,7 +241,7 @@ foreach ($quizitems as $sectionname => $items) {
         reader_download_bookcover($readercfg, $imagepath, $itemid, $targetcourseid);
 
         // and finally we can add the book
-        reader_add_book($item, $quizid);
+        $book = reader_add_book($item, $quizid);
     }
 }
 
@@ -964,26 +969,35 @@ function reader_download_bookcover($readercfg, $imagepath, $itemid, $targetcours
 function reader_add_book($item, $quizid) {
     global $DB;
 
-    // required fields
+    if ($books = $DB->get_records('reader_books', array('quizid' => $quizid), 'hidden ASC, time DESC', '*', 0, 1)) {
+        return reset($books); // most recent visible book
+    }
+
+    // create a new $book
     $book = (object)array(
-        'publisher'  => $item['publisher'],
-        'level'      => $item['level'],
-        'difficulty' => $item['difficulty'],
-        'name'       => $item['title'],
-        'words'      => $item['words'],
-        'sametitle'  => $item['sametitle'],
+        'publisher'  => '',
+        'series'     => '',
+        'level'      => '',
+        'difficulty' => 0,
+        'name'       => '',
+        'words'      => '',
+        'genre'      => '',
+        'fiction'    => '',
         'quizid'     => $quizid,
-        'image'      => $item['image'],
-        'length'     => $item['length'],
+        'image'      => '',
+        'length'     => '',
+        'private'    => 0,
+        'sametitle'  => '',
         'hidden'     => 0,
+        'maxtime'    => 0,
         'time'       => time(),
     );
 
-    // optional fields
-    $fields = array('genre', 'fiction', 'maxtime');
-    foreach ($fields as $field) {
-        if (! empty($item[$field])) {
-            $book->$field = $item[$field];
+    foreach ($item as $field => $value) {
+        if ($field=='quizid' || $field=='time') {
+            // do nothing
+        } else if (isset($book->$field)) {
+            $book->$field = $value;
         }
     }
 

@@ -126,7 +126,8 @@ $string['youmusttakequiz'] = ' Usted puede tomar $a más exámen ';
 $string['youmusttakequizzes'] = ' Usted puede tomar $a más exámenes ';
 $string['yourcurrentlevel'] = 'Su nivel actual';
 $string['yourteacherhasstopped'] = ' Su profesor le ha suspendido la promoción automática.';
-\n/* ==================================================
+
+/* ==================================================
 ** these strings are also used by the Reader module
 ** ==================================================
 $string['all'] = 'All';
@@ -135,18 +136,52 @@ $string['alldone'] = 'All done';
 $string['allparticipants'] = 'All participants';
 $string['alreadyclosed'] = 'Sorry, this activity is no longer available. It closed {$a}.';
 $string['attemptscoremanagement'] = 'Attempt and score management';
+$string['attemptsofday'] = 'Quiz for days';
 $string['best'] = 'Best';
+$string['bookcovers'] = 'Show book covers';
 $string['bookquiznumber'] = 'Book quiz number';
 $string['changeallstoppromoto'] = 'Change all Stop Promo to ';
 $string['changeallto'] = 'Change all to ';
 $string['changepublisherfrom'] = 'Change publisher name from';
+$string['cheated_message'] = 'Cheated notice';
+$string['checkbox'] = 'Use checkboxes in student report';
 $string['clicktocontinue'] = 'Click here to continue';
+$string['configattemptsofday'] = '';
+$string['configbookcovers'] = '';
+$string['configcheated_message'] = '';
+$string['configcheckbox'] = '';
+$string['configeditingteacherrole'] = '';
+$string['configintro'] = 'The values you set here define the default values that are used in the settings form when you create a new Reader activity.
+
+You can also configure which reader settings are considered advanced.';
+$string['configkeepoldquizzes'] = '';
+$string['configlevelcheck'] = '';
+$string['confignot_cheated_message'] = '';
+$string['configpercentforreading'] = '';
+$string['configpointreport'] = '';
+$string['configquestionmark'] = '';
+$string['configquiznextlevel'] = '';
+$string['configquizonnextlevel'] = '';
+$string['configquizpreviouslevel'] = '';
+$string['configquiztimeout'] = '';
+$string['configreportwordspoints'] = '';
+$string['configsendmessagesaboutcheating'] = '';
+$string['configserverlink'] = '';
+$string['configserverlogin'] = '';
+$string['configserverpassword'] = '';
+$string['configupdate'] = '';
+$string['configusecourse'] = '';
+$string['configwordsprogressbar'] = '';
 $string['coursespecificquizselection'] = 'Course-specific quiz selection" to "Yes" in the module set-up screen.';
 $string['downloadexcel'] = 'Download Excel';
+$string['editingteacherrole'] = 'Use Editing Teacher role';
+$string['error'] = 'Error: {$a}';
 $string['fix_bookcovers'] = 'Detect and fix missing book covers';
 $string['fixslashesinnames'] = 'Remove slashes in book titles';
 $string['in1000sofwords'] = 'In 1000s of words';
+$string['keepoldquizzes'] = 'Keep old quizzes';
 $string['lastupdatedtime'] = 'The quizzes on this site were last updated on {$a}.  Do you want to update the site now?';
+$string['levelcheck'] = 'Use the quiz taking level restriction feature';
 $string['makenewquizzesavailable'] = 'Make new quizzes available in this course only';
 $string['makenewquizzesavailable2'] = 'Make new quizzes available in all courses on this site [default]';
 $string['modulename_help'] = 'The Reader module allows teachers to set reading goals for students, and allows students to demonstrate they have achieved the specified reading goals.';
@@ -155,15 +190,24 @@ $string['mybooks'] = 'Only books already installed on this site';
 $string['needtocheckupdates'] = 'This site has not checked for quiz updates in ({$a} days). Check now?';
 $string['noquizzesfound'] = 'No quizzes found';
 $string['noreaders'] = 'No Reader activities found in this course';
+$string['not_cheated_message'] = 'Points restored notice';
 $string['nothavepermissioncreateinstance'] = 'Sorry you do not have permission to do this.';
 $string['notopenyet'] = 'Sorry, this activity is not available yet. It will open {$a}.';
 $string['onlybookswithmorethan'] = 'Only books with more than';
+$string['percentforreading'] = 'Percent correct for making the book as read. (%)';
 $string['pluginadministration'] = 'Reader Administration';
 $string['pluginname'] = 'Reader';
+$string['pointreport'] = 'Full point report';
 $string['points'] = 'Points';
 $string['private'] = 'Private';
+$string['questionmark'] = 'Show question mark';
+$string['quiznextlevel'] = 'Give next level, when student answered more than correct quizzes';
+$string['quizonnextlevel'] = 'Allow to select quizzes of next level';
+$string['quizpreviouslevel'] = 'Allow to select quizzes of previous level';
+$string['quiztimeout'] = 'Quiz time out';
 $string['quizupdateswillbeapplied'] = 'Quiz updates will be applied to all courses currently using the quiz.';
 $string['quizzesmustbeinstalled'] = 'Quizzes must be installed in a course that is separate from the course that the students will log into when they take quizzes. This course is hidden from the students and is only used as a storage area for the quizzes, and is normally called "All Quizzes." The course that you have established for this purpose should be shown below.  If you haven\'t yet established a course, please click on "Create new course."';
+$string['quizzespassedtable'] = 'Quizzes passed at RL-{$a}';
 $string['ratings'] = 'ratings';
 $string['reader:addcoursequizzestoreaderquizzes'] = 'Add course quizzes to reader quizzes';
 $string['reader:addinstance'] = 'Add a new Reader activity';
@@ -195,6 +239,7 @@ $string['reader:viewreaderinformation'] = 'View reader information';
 $string['reader:viewreaderreports'] = 'View reader reports';
 $string['reader:viewstudentreaderscreens'] = 'View student reader screens';
 $string['readerreports'] = 'Reader module reports';
+$string['reportwordspoints'] = 'Report';
 $string['restoredeletedattempt'] = 'Restore deleted attempt';
 $string['returntostudentlist'] = 'Return to Student List';
 $string['s_bookinstances'] = 'Course-specific quiz selection';
@@ -207,7 +252,11 @@ $string['s_sectiontothebottom'] = 'add all quizzes to the bottom of the hidden c
 $string['s_sectiontothissection'] = 'add selected quizzes to this section';
 $string['s_sendmessagesaboutcheating'] = 'Send messages about cheating?';
 $string['s_wordsprogressbar'] = 'Word Count Progress Bar';
+$string['sendmessagesaboutcheating'] = 'Send messages about cheating?';
 $string['separategroups'] = 'Separate groups';
+$string['serverlink'] = 'Link to Reader server (with quizzes)';
+$string['serverlogin'] = 'Reader server login';
+$string['serverpassword'] = 'Reader server password';
 $string['setuniformgoalinpoints'] = 'Set uniform goal in points';
 $string['setuniformgoalinwords'] = 'Set uniform goal in words';
 $string['showlevel'] = 'Show Level';
@@ -219,7 +268,17 @@ $string['therehavebeennonewquizzesorupdates'] = 'There have been no new quizzes 
 $string['thisblockunavailable'] = 'This block is currently unavailable to this student';
 $string['totalwords'] = 'Total Words Read this Term';
 $string['totalwordsall'] = 'Total Words Read All Terms';
+$string['update'] = 'Check server for quiz updates?';
 $string['updatequizzes'] = 'Update quizzes';
+$string['upgradeoldquizzesinfo'] = 'The upgrade has been paused, so that you can decide whether or not you wish to keep old versions of the Reader module quizzes on this Moodle site.
+
+If you select "Yes", no quizzes will be deleted. Choose this option if you wish to keep all statistics about answers to individual questions on old quizzes.
+
+If you select "No", any old version of Reader module quizzes will be deleted leaving only the most recent visible version of each quiz. Choose this option if you are not concerned about statistics regarding answers to individual questions on old Reader quizzes and you wish to tidy up the Reader quizzes course page.
+
+Note that even if you choose "No", the word counts in Reader activities will not be affected by this operation.
+
+Do you wish to keep old versions of Reader module quizzes?';
 $string['upgradestalefiles'] = 'Mixed Reader module versions detected, upgrade cannot continue';
 $string['upgradestalefilesinfo'] = 'The Moodle update process has been paused because files from previous versions of the Reader module have been detected in the "mod/reader" directory.
 
@@ -240,10 +299,12 @@ The "mod/reader" files that are currently blocking the upgrade are as follows:
 If you prefer, you can also delete the above file(s) yourself.
 
 Click the button below to resume the Moodle update process.';
+$string['usecourse'] = 'Quiz location';
 $string['whichbooks'] = 'Choose the books and click "Go"';
 $string['withoutdayfilter'] = 'Without day filter';
 $string['wordscount'] = 'Word count';
 $string['wordsorpoints'] = 'Display to students';
+$string['wordsprogressbar'] = 'Word Count Progress Bar';
 $string['youcantake'] = ' You can take ';
 $string['youcantakeaquizafter'] = ' You can takea quiz after ';
 ** ================================================== */

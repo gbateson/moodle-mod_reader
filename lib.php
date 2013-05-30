@@ -528,17 +528,19 @@ function reader_create_attempt($reader, $attemptnumber, $bookid) {
     $questionids = explode (',', $attempt->layout);
     $questionids = array_filter($questionids); // remove blanks
 
-    // get ids of question instances already exist
-    list($select, $params) = $DB->get_in_or_equal($questionids);
+    if (count($questionids)) {
+        // get ids of question instances that already exist
+        list($select, $params) = $DB->get_in_or_equal($questionids);
 
-    $select = "question $select AND quiz = ?";
-    array_push($params, $book->quizid);
+        $select = "question $select AND quiz = ?";
+        array_push($params, $book->quizid);
 
-    if ($instances = $DB->get_records_select('reader_question_instances', $select, $params)) {
-        foreach ($instances as $instance) {
-            $i = array_search($instance->question, $questionids);
-            if (is_numeric($i)) {
-                unset($questionids[$i]);
+        if ($instances = $DB->get_records_select('reader_question_instances', $select, $params)) {
+            foreach ($instances as $instance) {
+                $i = array_search($instance->question, $questionids);
+                if (is_numeric($i)) {
+                    unset($questionids[$i]);
+                }
             }
         }
     }
@@ -1533,7 +1535,7 @@ function reader_check_search_text($searchtext, $coursestudent, $book=false) {
                 $publisher = strtolower($book['publisher']);
             } else {
                 $booktitle = strtolower($book->name);
-                $level     = strtolower($book->level);
+                $booklevel = strtolower($book->level);
                 $publisher = strtolower($book->publisher);
             }
 

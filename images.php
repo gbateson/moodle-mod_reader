@@ -35,9 +35,14 @@ if ($CFG->slasharguments) {
 }
 
 $filepath = preg_replace('/^.*'.preg_quote($images_php).'/', '', $FULLME);
-$fullpath = clean_param(urldecode($CFG->dataroot.$filepath), PARAM_PATH);
+if ($filepath = urldecode($filepath)) {
+    if ($filepath = clean_param($filepath, PARAM_PATH)) {
+        $filepath = '/'.ltrim($filepath, '/'); // force leading slash
+    }
+}
+$fullpath = $CFG->dataroot.$filepath;
 
-if (! file_exists($fullpath) || ! $fh = @fopen($fullpath, 'r')) {
+if (empty($filepath) || ! file_exists($fullpath) || ! $fh = @fopen($fullpath, 'r')) {
     //header('HTTP/1.1 500 Internal Server Error');
     echo 'File not found: '.$filepath;
     die;

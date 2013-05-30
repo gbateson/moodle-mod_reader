@@ -30,7 +30,7 @@ class back_ordering_qtype  {
      *
      * This is used in question/restorelib.php
      */
-    function restore($old_question_id,$new_question_id,$info,$restore) {
+    function restore($old_question_id, $new_question_id, $info, $restore) {
         global $DB;
         $status = true;
 
@@ -38,61 +38,58 @@ class back_ordering_qtype  {
         $orderings = $info['#']['ORDERING'];
 
         //Iterate over orderings
-        for($i = 0; $i < sizeof($orderings); $i++) {
-            $mul_info = $orderings[$i];
+        foreach ($orderings as $i => $ordering) {
 
-            //Now, build the question_ordering record structure
-            $ordering = new stdClass;
-            $ordering->question = $new_question_id;
-            $ordering->logical = backup_todb($mul_info['#']['LOGICAL']['0']['#']);
-            $ordering->studentsee = backup_todb($mul_info['#']['STUDENTSEE']['0']['#']);
-            if (array_key_exists("CORRECTFEEDBACK", $mul_info['#'])) {
-                $ordering->correctfeedback = backup_todb($mul_info['#']['CORRECTFEEDBACK']['0']['#']);
-            } else {
-                $ordering->correctfeedback = '';
-            }
-            if (array_key_exists("PARTIALLYCORRECTFEEDBACK", $mul_info['#'])) {
-                $ordering->partiallycorrectfeedback = backup_todb($mul_info['#']['PARTIALLYCORRECTFEEDBACK']['0']['#']);
-            } else {
-                $ordering->partiallycorrectfeedback = '';
-            }
-            if (array_key_exists("INCORRECTFEEDBACK", $mul_info['#'])) {
-                $ordering->incorrectfeedback = backup_todb($mul_info['#']['INCORRECTFEEDBACK']['0']['#']);
-            } else {
-                $ordering->incorrectfeedback = '';
-            }
+            // build the question_ordering record structure
+            $question_ordering = new stdClass;
 
-            //We have to recode the answers field (a list of answers id)
-            //Extracts answer id from sequence
-            $answers_field = "";
-            $in_first = true;
-            $tok = @strtok($ordering->answers,",");
-            while ($tok) {
-                //Get the answer from reader_backup_ids
-                $answer = backup_getid($restore->backup_unique_code,"question_answers",$tok);
-                if ($answer) {
-                    if ($in_first) {
-                        $answers_field .= $answer->new_id;
-                        $in_first = false;
-                    } else {
-                        $answers_field .= ",".$answer->new_id;
-                    }
+            $fields = array(
+                'question'   => 0, // the question id
+                'logical'    => 0, // 0=all, 1=random subset, 2=contiguous subset
+                'studentsee' => 0, // how many items will be shown to the students
+                'correctfeedback' => '',
+                'incorrectfeedback' => '',
+                'partiallycorrectfeedback' => '',
+            );
+
+            foreach ($fields as $fieldname => $default) {
+                $FIELDNAME = strtoupper($fieldname);
+                if (array_key_exists($FIELDNAME, $ordering['#'])) {
+                    $question_ordering->$fieldname = backup_todb($ordering['#'][$FIELDNAME]['0']['#']);
+                } else {
+                    $question_ordering->$fieldname = $default;
                 }
-                //check for next
-                $tok = strtok(",");
             }
-            //We have the answers field recoded to its new ids
-            $ordering->answers = $answers_field;
 
-            //The structure is equal to the db, so insert the question_shortanswer
-            $newid = $DB->insert_record ("question_ordering",$ordering);
+            // recode the answers field (a list of answers id)
+            // this is not necessary for ordering quetsions
+            //$answerids = array();
+            //if (isset($question_ordering->answers)) {
+
+            //    $answerids = explode(',', $question_ordering->answers);
+            //    array_map('trim', $answerids);
+            //    array_filter($answerids); // remove blanks
+
+            //    foreach ($answerids as $a => $answerid) {
+            //        if ($answer = backup_getid($restore->backup_unique_code, 'question_answers', $answerid)) {
+            //            $answerids[$a] = $answer->new_id;
+            //        } else {
+            //            $answerids[$a] = 0; // shouldn't happen !!
+            //        }
+            //    }
+            //    array_filter($answerids); // remove blanks
+            //}
+            //$question_ordering->answers = implode(',', $answerids);
+
+            //The structure is equal to the db, so insert the question_ordering
+            $newid = $DB->insert_record ('question_ordering', $question_ordering);
 
             //Do some output
             if (($i+1) % 50 == 0) {
                 if (! defined('RESTORE_SILENTLY')) {
-                    echo ".";
+                    echo '.';
                     if (($i+1) % 1000 == 0) {
-                        echo "<br />";
+                        echo '<br />';
                     }
                 }
                 backup_flush(300);

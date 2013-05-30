@@ -328,6 +328,9 @@ if (has_capability('mod/reader:manage', $contextmodule) && $quizesid) {
 if (has_capability('mod/reader:deletereaderattempts', $contextmodule) && $act == 'viewattempts' && $attemptid) {
     //if (authenticate_user_login($USER->username, $upassword)) {
         $readerattempt = $DB->get_record('reader_attempts', array('id' => $attemptid));
+        // make sure "uniqueid" is in fact unique
+        $DB->delete_records('reader_deleted_attempts', array('uniqueid' => $readerattempt->uniqueid));
+        // transfer attempt to "deleted_attempts" table
         unset($readerattempt->id);
         $DB->insert_record('reader_deleted_attempts', $readerattempt);
         $DB->delete_records('reader_attempts', array('id' => $attemptid));

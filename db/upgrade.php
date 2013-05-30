@@ -38,7 +38,7 @@ defined('MOODLE_INTERNAL') || die;
  * @todo Finish documenting this function
  */
 function xmldb_reader_upgrade($oldversion) {
-    global $CFG, $DB;
+    global $CFG, $DB, $OUTPUT;
     $result = true;
 
     $dbman = $DB->get_manager();
@@ -311,7 +311,7 @@ function xmldb_reader_upgrade($oldversion) {
             }
 
             if ($rebuild_course_cache) {
-                rebuild_course_cache($courseid);
+                rebuild_course_cache($courseid, true); // $clearonly must be set to true
             }
         }
         upgrade_mod_savepoint(true, "$newversion", 'reader');
@@ -348,6 +348,120 @@ function xmldb_reader_upgrade($oldversion) {
                     $fieldname = $field->getName();
                     $DB->set_field_select($tablename, $fieldname, '', "$fieldname IS NULL");
                     $dbman->change_field_type($table, $field);
+                }
+            }
+        }
+
+        upgrade_mod_savepoint(true, "$newversion", 'reader');
+    }
+
+    $newversion = 2013052100;
+    if ($result && $oldversion < $newversion) {
+
+        $strupdating = 'Updating ordering questions for Reader module'; // get_string('fixordering', 'reader');
+
+        $select = 'qa.question AS questionid, COUNT(*) AS countanswers, SUM(qa.fraction) AS sumanswers';
+        $from   = '{question_answers} qa LEFT JOIN {question} q ON qa.question = q.id';
+        $where  = 'q.qtype = ?';
+        $params = array('ordering');
+
+        // we expect the "fraction" field of the answers to contain each answer's order number (1, 2, 3, ...)
+        // therefore if we total the fractions, we should get the Fibonacci sum for the number of answers
+        // e.g. 2 answers -> 3, 3 answers -> 6, 4 answers -> 10, 5 answers -> 15
+        // if "x" is the number of answers, then the Fibonacci sum can be calculated as (((x + 1) / 2) * x)
+        $groupby = "qa.question HAVING (((COUNT(*) + 1) / 2) * COUNT(*)) <> SUM(qa.fraction)";
+
+         // this might be faster, but doesn't catch all the wrongly ordered answers
+        // $groupby = "qa.question HAVING COUNT(*) >= SUM(qa.fraction)";
+
+        $sql = "SELECT $select FROM $from WHERE $where GROUP BY $groupby";
+        if ($i_max = $DB->count_records_sql("SELECT COUNT(*) FROM ($sql) unorderedquestions", $params)) {
+            $rs = $DB->get_recordset_sql($sql, $params);
+        } else {
+            $rs = false;
+        }
+
+        if ($rs) {
+            $i = 0; // record counter
+            $bar = new progress_bar('readerfixordering', 500, true);
+
+            // loop through answer records
+            foreach ($rs as $question) {
+                $i++; // increment record count
+
+                // apply for more script execution time (3 mins)
+                upgrade_set_timeout();
+
+                if ($answers = $DB->get_records('question_answers', array('question' => $question->questionid), 'id', 'id,fraction')) {
+
+                    $fraction = 0;
+                    foreach ($answers as $answer) {
+                        $fraction++;
+                        if ($fraction != $answer->fraction) {
+                            $DB->set_field('question_answers', 'fraction', floatval($fraction), array('id' => $answer->id));
+                        }
+                    }
+                }
+
+                // update progress bar
+                $bar->update($i, $i_max, $strupdating.": ($i/$i_max)");
+            }
+            $rs->close();
+        }
+
+        upgrade_mod_savepoint(true, "$newversion", 'reader');
+    }
+
+
+    $newversion = 2013052900;
+    if ($result && $oldversion < $newversion) {
+
+        $keepoldquizzes = optional_param('keepoldquizzes', null, PARAM_INT);
+        if ($keepoldquizzes===null || $keepoldquizzes===false || $keepoldquizzes==='') {
+
+            $message = get_string('upgradeoldquizzesinfo', 'reader');
+            $message = format_text($message, FORMAT_MARKDOWN);
+
+            $params = array(
+                'confirmupgrade' => optional_param('confirmupgrade', 0, PARAM_INT),
+                'confirmrelease' => optional_param('confirmrelease', 0, PARAM_INT),
+                'confirmplugincheck' => optional_param('confirmplugincheck', 0, PARAM_INT),
+            );
+
+            $params['keepoldquizzes'] = 0;
+            $no = new moodle_url('/admin/index.php', $params);
+
+            $params['keepoldquizzes'] = 1;
+            $yes = new moodle_url('/admin/index.php', $params);
+
+            $buttons = $OUTPUT->single_button($no, get_string('no'), 'get').
+                       $OUTPUT->single_button($yes, get_string('yes'), 'get');
+            $buttons = html_writer::tag('div', $buttons, array('class' => 'buttons'));
+
+            $output = '';
+            $output .= $OUTPUT->heading(get_string('keepoldquizzes', 'reader'));
+            $output .= $OUTPUT->box($message.$buttons, 'generalbox', 'notice');
+            $output .= $OUTPUT->footer();
+
+            echo $output;
+            die;
+        }
+
+        // save this value of the 'keepoldquizzes' config setting
+        set_config('reader_keepoldquizzes', $keepoldquizzes, 'reader');
+
+        if ($reader_usecourse = get_config('reader', 'reader_usecourse')) {
+            if ($course = $DB->get_record('course', array('id' => $reader_usecourse))) {
+                $rebuild_course_cache = false;
+                if (xmldb_reader_fix_duplicate_books($course, $keepoldquizzes)) {
+                    $rebuild_course_cache = true;
+                }
+                if (xmldb_reader_fix_duplicate_quizzes($course, $keepoldquizzes)) {
+                    $rebuild_course_cache = true;
+                }
+                if ($rebuild_course_cache) {
+                    echo 'Re-building course cache ... ';
+                    rebuild_course_cache($course->id, true); // $clearonly must be set to true
                 }
             }
         }
@@ -431,4 +545,263 @@ function xmldb_reader_fix_previous_field($dbman, $table, &$field) {
         // $previous field does not exist, so remove it
         $field->setPrevious(null);
     }
+}
+
+/**
+ * xmldb_reader_fix_duplicate_books
+ *
+ * @param xxx $course record
+ * @param boolean $keepoldquizzes
+ * @return boolean $rebuild_course_cache
+ */
+function xmldb_reader_fix_duplicate_books($course, $keepoldquizzes) {
+    global $DB, $OUTPUT;
+    $rebuild_course_cache = false;
+
+    $src = $OUTPUT->pix_url('t/switch_minus');
+    $img = html_writer::empty_tag('img', array('src' => $src, 'onclick' => 'showhide_list(this)', 'alt' => 'switch_minus'));
+
+    // extract all duplicate (i.e. same publisher and name) books
+    $publisher_level_name = $DB->sql_concat('publisher', "'_'", 'level', "'_'", 'name');
+    $select = "$publisher_level_name AS publisher_level_name, publisher, level, name, COUNT(*) AS countbooks";
+    $from   = '{reader_books}';
+    $groupby = 'publisher, level, name HAVING COUNT(*) > 1';
+    $params = array();
+    if ($duplicates = $DB->get_records_sql("SELECT $select FROM $from GROUP BY $groupby", $params)) {
+
+        // cache quiz module id
+        $quizmoduleid = $DB->get_field('modules', 'id', array('name' => 'quiz'));
+
+        // reduce duplicate books to a single book
+        $publisher = '';
+        foreach ($duplicates as $duplicate) {
+
+            $select = 'rb.id, rb.publisher, rb.level, rb.name, rb.quizid, q.id AS associated_quizid';
+            $from   = '{reader_books} rb LEFT JOIN {quiz} q ON rb.quizid = q.id';
+            $where  = 'rb.publisher = :publisher AND rb.level = :level AND rb.name = :bookname';
+            $params = array('publisher' => $duplicate->publisher, 'level' => $duplicate->level, 'bookname' => $duplicate->name);
+            if ($books = $DB->get_records_sql("SELECT $select FROM $from WHERE $where", $params)) {
+
+                $mainbookid = 0;
+                $mainquizid = 0;
+                foreach ($books as $book) {
+                    if ($mainbookid==0 && $book->associated_quizid) {
+                        if ($book->id) {
+                            $mainbookid = $book->id;
+                        }
+                    }
+                    if ($mainquizid==0 || $DB->get_field('course_modules', 'visible', array('module' => $quizmoduleid, 'instance' => $book->quizid))) {
+                        if ($book->quizid) {
+                            $mainquizid = $book->quizid;
+                        }
+                    }
+                }
+                if ($mainbookid==0) {
+                    continue; // try next duplicate
+                    // one day we could be ambitious and download the missing quiz ...
+                    $book = reset($books);
+                    $mainbookid = $book->id;
+                    $mainquizid = $book->quizid;
+                    // fetch quiz for this book ?
+                }
+                foreach ($books as $book) {
+                    if ($book->id==$mainbookid && $book->quizid==$mainquizid) {
+                        continue;
+                    }
+
+                    if ($publisher != $book->publisher) {
+                        if ($publisher=='') {
+                            echo "<div><b>The following duplicate books were fixed:</b> $img";
+                            echo '<ul>'; // start publisher list
+                        } else {
+                            echo '</ul></li>'; // finish book list
+                        }
+                        // start book list for this publisher
+                        echo "<li><b>$book->publisher</b> $img";
+                        echo '<ul>';
+                        $publisher = $book->publisher;
+                    }
+                    echo "<li><b>$book->name</b> (bookid=$book->id) $img<ul>";
+
+                    if ($mainquizid && $mainquizid != $book->quizid) {
+                        echo "<li>fix references to duplicate quiz (quizid $book->quizid =&gt; $mainquizid)</li>";
+                        xmldb_reader_fix_quiz_ids($mainquizid, $book->quizid);
+                        if ($cm = $DB->get_record('course_modules', array('module' => $quizmoduleid, 'instance' => $book->quizid))) {
+                            if ($keepoldquizzes) {
+                                if ($cm->visible==1) {
+                                    echo '<li>Hide duplicate quiz '."(course module id=$cm->id, quiz id=$cm->instance)".'</li>';
+                                    set_coursemodule_visible($cm->id, 0);
+                                    $rebuild_course_cache = true;
+                                }
+                            } else {
+                                echo '<li><span style="color: red;">DELETED</span> '."Duplicate quiz (course module id=$cmid, quiz id=$book->quizid)".'</li>';
+                                xmldb_reader_remove_coursemodule($cm->id);
+                                $rebuild_course_cache = true;
+                            }
+                        }
+                        $book->quizid = $mainquizid;
+                    }
+
+                    if ($mainbookid && $mainbookid != $book->id) {
+                        // adjust all references to the duplicate book
+                        echo "<li>remove references to duplicate book</li>";
+                        $DB->set_field('reader_book_instances', 'bookid', $mainbookid, array('bookid' => $book->quizid));
+
+                        // now we can delete this book (because it is a duplicate)
+                        echo "<li>remove duplicate book</li>";
+                        $DB->delete_records('reader_books', array('id' => $book->id));
+                    }
+
+                    echo '</ul></li>';
+                }
+            }
+        }
+        if ($publisher) {
+            echo '</ul></li></ul></div>';
+        }
+    }
+
+    return $rebuild_course_cache;
+}
+
+/**
+ * xmldb_reader_fix_duplicate_quizzes
+ *
+ * @param object $course record
+ * @param boolean $keepoldquizzes
+ */
+function xmldb_reader_fix_duplicate_quizzes($course, $keepoldquizzes) {
+    global $CFG, $DB;
+    require_once($CFG->dirroot.'/course/lib.php');
+
+    $rebuild_course_cache = false;
+
+    $section_quizname = $DB->sql_concat('cm.section', "'_'", 'q.name');
+    $select = "$section_quizname AS section_quizname, ".
+              'cm.section AS sectionid, cm.module AS moduleid, '.
+              'q.name AS quizname, COUNT(*) AS countquizzes';
+    $from   = '{course_modules} cm '.
+              'LEFT JOIN {modules} m ON cm.module = m.id '.
+              'LEFT JOIN {quiz} q ON cm.instance = q.id ';
+    $where  = 'cm.course = ?';
+    $groupby = 'cm.section, q.name HAVING COUNT(*) > 1';
+    $params = array($course->id); // course id
+
+    // extract all duplicate (i.e. same section and name) quizzes in main reader course
+    if ($duplicates = $DB->get_records_sql("SELECT $select FROM $from WHERE $where GROUP BY $groupby", $params)) {
+        echo '<ul>';
+
+        foreach ($duplicates as $duplicate) {
+            echo '<li>Merging duplicates for quiz: '.$duplicate->quizname.'<ul>';
+
+            $maincm = null;
+
+            $select = 'cm.*';
+            $from   = '{course_modules} cm '.
+                      'LEFT JOIN {quiz} q ON cm.instance = q.id ';
+            $where  = 'cm.course = ? AND cm.section = ? AND cm.module = ? AND q.name = ?';
+            $params = array($course->id, $duplicate->sectionid, $duplicate->moduleid, $duplicate->quizname);
+            $orderby = 'cm.visible DESC, cm.added DESC'; // most recent visible activity will be first
+
+            if ($cms = $DB->get_records_sql("SELECT $select FROM $from WHERE $where ORDER BY $orderby", $params)) {
+                foreach ($cms as $cm) {
+                    if (is_null($maincm)) {
+                        $maincm = $cm; // the main quiz activity
+                    } else {
+                        // transfer all quiz data to mainquizid
+                        echo "<li>transferring quiz data (quiz id $cm->instance =&gt; $maincm->instance)</li>";
+                        xmldb_reader_fix_quiz_ids($maincm->instance, $cm->instance);
+                        // hide or delete the duplicate quiz
+                        if ($keepoldquizzes) {
+                            if ($cm->visible==1) {
+                                echo '<li>Hide duplicate quiz '."(course module id=$cm->id, quiz id=$cm->instance)".'</li>';
+                                set_coursemodule_visible($cm->id, 0);
+                                $rebuild_course_cache = true;
+                            }
+                        } else {
+                            echo '<li><span style="color: red;">DELETED</span> '."Duplicate quiz (course module id=$cm->id, quiz id=$cm->instance)".'</li>';
+                            xmldb_reader_remove_coursemodule($cm->id);
+                            $rebuild_course_cache = true;
+                        }
+                    }
+                }
+            }
+            if ($maincm && $maincm->visible==0) {
+                echo '<li>Make quiz visible '."(course module id=$maincm->id, quiz id=$maincm->instance)".'</li>';
+                set_coursemodule_visible($maincm->id, 1);
+                $rebuild_course_cache = true;
+            }
+            echo '</ul></li>';
+        }
+        echo '</ul>';
+    }
+
+    return $rebuild_course_cache;
+}
+
+/**
+ * xmldb_reader_fix_quiz_ids
+ *
+ * @uses $DB
+ * @param xxx $newid
+ * @param xxx $oldid
+ * @todo Finish documenting this function
+ */
+function xmldb_reader_fix_quiz_ids($newid, $oldid) {
+    global $DB;
+    // adjust all references to the non-existant/duplicate quiz
+    $DB->set_field('reader_books',              'quizid', $newid, array('quizid' => $oldid));
+    $DB->set_field('reader_attempts',           'quizid', $newid, array('quizid' => $oldid));
+    $DB->set_field('reader_cheated_log',        'quizid', $newid, array('quizid' => $oldid));
+    $DB->set_field('reader_conflicts',          'quizid', $newid, array('quizid' => $oldid));
+    $DB->set_field('reader_deleted_attempts',   'quizid', $newid, array('quizid' => $oldid));
+    $DB->set_field('reader_noquiz',             'quizid', $newid, array('quizid' => $oldid));
+    $DB->set_field('reader_question_instances', 'quiz',   $newid, array('quiz'   => $oldid));
+}
+
+/**
+ * xmldb_reader_remove_coursemodule
+ *
+ * @param integer $cmid
+ * @return xxx
+ * @todo Finish documenting this function
+ */
+function xmldb_reader_remove_coursemodule($cmid) {
+    global $CFG, $DB;
+    require_once($CFG->dirroot.'/course/lib.php');
+
+    // get course module - with sectionnum :-)
+    if (! $cm = get_coursemodule_from_id('', $cmid, 0, true)) {
+        print_error('invalidcoursemodule');
+    }
+
+    $libfile = $CFG->dirroot.'/mod/'.$cm->modname.'/lib.php';
+    if (! file_exists($libfile)) {
+        notify("$cm->modname lib.php not accessible ($libfile)");
+    }
+    require_once($libfile);
+
+    $deleteinstancefunction = $cm->modname.'_delete_instance';
+    if (! function_exists($deleteinstancefunction)) {
+        notify("$cm->modname delete function not found ($deleteinstancefunction)");
+    }
+
+    // copied from 'course/mod.php'
+    if (! $deleteinstancefunction($cm->instance)) {
+        notify("Could not delete the $cm->modname (instance id=$cm->instance)");
+    }
+    if (! delete_course_module($cm->id)) {
+        notify("Could not delete the $cm->modname (coursemodule, id=$cm->id)");
+    }
+    if (! $sectionid = $DB->get_field('course_sections', 'id', array('course' => $cm->course, 'section' => $cm->sectionnum))) {
+        notify("Could not get section id (course id=$cm->course, section num=$cm->sectionnum)");
+    }
+    if (! delete_mod_from_section($cm->id, $sectionid)) {
+        notify("Could not delete the $cm->modname (id=$cm->id) from that section (id=$sectionid)");
+    }
+
+    add_to_log($cm->course, 'course', 'delete mod', "view.php?id=$cm->course", "$cm->modname $cm->instance", $cm->id);
+
+    $rebuild_course_cache = true;
+    return $rebuild_course_cache;
 }

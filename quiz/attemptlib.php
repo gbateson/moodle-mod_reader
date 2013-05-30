@@ -168,10 +168,10 @@ class reader {
         if (empty($this->questionids)) {
             throw new moodle_reader_exception($this, 'noquestions', $this->edit_url());
         }
-        $this->questions = question_preload_questions($this->questionids,
-                'qqi.grade AS maxmark, qqi.id AS instance',
-                '{reader_question_instances} qqi ON qqi.quiz = :quizid AND q.id = qqi.question',
-                array('quizid' => $this->book->quizid));
+        $select = 'qqi.grade AS maxmark, qqi.id AS instance';
+        $from   = '{reader_question_instances} qqi ON qqi.quiz = :quizid AND q.id = qqi.question';
+        $params = array('quizid' => $this->quiz->id);
+        $this->questions = question_preload_questions($this->questionids, $select, $from, $params);
     }
 
     /**
@@ -431,6 +431,7 @@ class reader_attempt {
 
         $this->readerobj = reader::create($reader->id, $attempt->userid, $book->id);
         $this->quba = question_engine::load_questions_usage_by_activity($this->attempt->uniqueid);
+
         $this->determine_layout();
         $this->number_questions();
     }

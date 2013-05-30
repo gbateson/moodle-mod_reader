@@ -81,7 +81,30 @@ $quba->set_preferred_behaviour('deferredfeedback');
 // Create the new attempt and initialize the question sessions
 $attempt = reader_create_attempt($reader, $attemptnumber, $book);
 
-if (! ($reader->attemptonlast && $lastattempt)) {
+if ($reader->attemptonlast && $lastattempt) {
+    // Starting a subsequent attempt in each attempt builds on last mode.
+    // looks like this should never happen
+
+    $oldquba = question_engine::load_questions_usage_by_activity($lastattempt->uniqueid);
+
+    $slots = array();
+    foreach ($oldquba->get_attempt_iterator() as $oldslot => $oldqa) {
+        $newslot = $quba->add_question($oldqa->get_question(), $oldqa->get_max_mark());
+        $quba->start_question_based_on($newslot, $oldqa);
+        $slots[$oldslot] = $newslot;
+    }
+
+    // Update attempt layout.
+    $layout = array();
+    foreach (explode(',', $lastattempt->layout) as $oldslot) {
+        if ($oldslot == 0) {
+            $layout[] = 0;
+        } else {
+            $layout[] = $slots[$oldslot];
+        }
+    }
+    $attempt->layout = implode(',', $layout);
+} else {
     // Starting a normal, new, reader attempt.
 
     // Fully load all the questions in this reader.
@@ -89,70 +112,39 @@ if (! ($reader->attemptonlast && $lastattempt)) {
     $readerobj->load_questions();
 
     // Add them all to the $quba.
-    $idstoslots = array();
+    $slots = array();
     $questionsinuse = array_keys($readerobj->get_questions());
 
-    foreach ($readerobj->get_questions() as $i => $questiondata) {
-        if ($questiondata->qtype != 'random') {
+    foreach ($readerobj->get_questions() as $qid => $questiondata) {
+        if ($questiondata->qtype == 'random') {
+            $question = question_bank::get_qtype('random')->choose_other_question($questiondata, $questionsinuse, $reader->shuffleanswers);
+            if (is_null($question)) {
+                throw new moodle_exception('notenoughrandomquestions', 'reader', $readerobj->view_url(), $questiondata);
+            }
+        } else {
             if (! $reader->shuffleanswers) {
                 $questiondata->options->shuffleanswers = false;
             }
             $question = question_bank::make_question($questiondata);
-
-        } else {
-            $question = question_bank::get_qtype('random')->choose_other_question(
-                    $questiondata, $questionsinuse, $reader->shuffleanswers);
-            if (is_null($question)) {
-                throw new moodle_exception('notenoughrandomquestions', 'reader',
-                        $readerobj->view_url(), $questiondata);
-            }
         }
 
-        $idstoslots[$i] = $quba->add_question($question, $questiondata->maxmark);
+        $slots[$qid] = $quba->add_question($question, $questiondata->maxmark);
         $questionsinuse[] = $question->id;
     }
 
     // Start all the questions.
-    $variantoffset = $attemptnumber;
+    $quba->start_all_questions(new question_variant_pseudorandom_no_repeats_strategy($attemptnumber), time());
 
-    $quba->start_all_questions(
-            new question_variant_pseudorandom_no_repeats_strategy($variantoffset),
-            time());
-
-    // Update attempt layout.
-    $newlayout = array();
+    // convert question ids to slot numbers in attempt layout
+    $layout = array();
     foreach (explode(',', $attempt->layout) as $qid) {
-        if ($qid != 0) {
-            $newlayout[] = $idstoslots[$qid];
+        if ($qid == 0) {
+            $layout[] = 0;
         } else {
-            $newlayout[] = 0;
+            $layout[] = $slots[$qid];
         }
     }
-    $attempt->layout = implode(',', $newlayout);
-} else {
-    // Starting a subsequent attempt in each attempt builds on last mode.
-
-    $oldquba = question_engine::load_questions_usage_by_activity($lastattempt->uniqueid);
-
-    $oldnumberstonew = array();
-    foreach ($oldquba->get_attempt_iterator() as $oldslot => $oldqa) {
-        $newslot = $quba->add_question($oldqa->get_question(), $oldqa->get_max_mark());
-
-        $quba->start_question_based_on($newslot, $oldqa);
-
-        $oldnumberstonew[$oldslot] = $newslot;
-    }
-
-    // Update attempt layout.
-    $newlayout = array();
-    foreach (explode(',', $lastattempt->layout) as $oldslot) {
-        if ($oldslot != 0) {
-            $newlayout[] = $oldnumberstonew[$oldslot];
-        } else {
-            $newlayout[] = 0;
-        }
-    }
-    $attempt->layout = implode(',', $newlayout);
+    $attempt->layout = implode(',', $layout);
 }
 
 // Save the attempt in the database.
@@ -162,8 +154,7 @@ $attempt->uniqueid = $quba->get_id();
 $attempt->id = $DB->insert_record('reader_attempts', $attempt);
 
 // Log the new attempt.
-    add_to_log($course->id, 'reader', 'attempt', 'review.php?attempt=' . $attempt->id,
-            $id, $book);
+add_to_log($course->id, 'reader', 'attempt', 'review.php?attempt=' . $attempt->id, $id, $book);
 
 // Trigger event
 $eventdata = new stdClass();
