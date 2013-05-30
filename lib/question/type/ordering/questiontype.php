@@ -61,27 +61,7 @@ class back_ordering_qtype  {
                 }
             }
 
-            // recode the answers field (a list of answers id)
-            // this is not necessary for ordering quetsions
-            //$answerids = array();
-            //if (isset($question_ordering->answers)) {
-
-            //    $answerids = explode(',', $question_ordering->answers);
-            //    array_map('trim', $answerids);
-            //    array_filter($answerids); // remove blanks
-
-            //    foreach ($answerids as $a => $answerid) {
-            //        if ($answer = backup_getid($restore->backup_unique_code, 'question_answers', $answerid)) {
-            //            $answerids[$a] = $answer->new_id;
-            //        } else {
-            //            $answerids[$a] = 0; // shouldn't happen !!
-            //        }
-            //    }
-            //    array_filter($answerids); // remove blanks
-            //}
-            //$question_ordering->answers = implode(',', $answerids);
-
-            //The structure is equal to the db, so insert the question_ordering
+            $question_ordering->question = $new_question_id;
             $newid = $DB->insert_record ('question_ordering', $question_ordering);
 
             //Do some output

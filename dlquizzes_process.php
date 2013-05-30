@@ -162,7 +162,7 @@ foreach ($quizitems as $sectionname => $items) {
         foreach ($oldquizids as $oldquizid) {
 
             // adjust references to the old quiz
-            reader_fix_quiz_ids($cm->instance, $oldquizid)
+            reader_fix_quiz_ids($cm->instance, $oldquizid);
 
             // hide or remove the old quiz activity
             if ($cmid = $DB->get_field('course_modules', 'id', array('module' => $quizmodule->id, 'instance' => $book->quizid))) {
@@ -262,8 +262,10 @@ if ($readercfg->reader_last_update == 1) {
 
 if (! empty($end)) {
     echo '<center>';
-    echo $OUTPUT->single_button(new moodle_url('/mod/reader/dlquizzes.php', array('id' => $id)), 'Return to Quiz Selection Screen', 'get');
-    echo $OUTPUT->continue_button(new moodle_url('/course/view.php', array('id' => $targetcourseid)));
+    $url = new moodle_url('/mod/reader/dlquizzes.php', array('id' => $id));
+    echo $OUTPUT->single_button($url, 'Return to Quiz Selection Screen', 'get');
+    $url = new moodle_url('/course/view.php', array('id' => $targetcourseid));
+    echo $OUTPUT->continue_button($url);
     echo '</center>';
 }
 

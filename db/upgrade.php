@@ -754,7 +754,7 @@ function xmldb_reader_fix_quiz_ids($newid, $oldid) {
     $DB->set_field('reader_conflicts',          'quizid', $newid, array('quizid' => $oldid));
     $DB->set_field('reader_deleted_attempts',   'quizid', $newid, array('quizid' => $oldid));
     $DB->set_field('reader_noquiz',             'quizid', $newid, array('quizid' => $oldid));
-    $DB->set_field('reader_question_instances', 'quiz',   $newid, array('quiz'   => $oldid));
+    //$DB->set_field('reader_question_instances', 'quiz',   $newid, array('quiz'   => $oldid));
 }
 
 /**
