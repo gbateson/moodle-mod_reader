@@ -572,7 +572,6 @@
      * @todo Finish documenting this function
      */
     function question_restore_answers($old_question_id,$new_question_id,$info,$restore) {
-
         global $CFG, $DB;
 
         $status = true;
@@ -580,58 +579,52 @@
 
         //Get the answers array
         if (isset($info['#']['ANSWERS']['0']['#']['ANSWER'])) {
-            $answers = $info['#']['ANSWERS']['0']['#']['ANSWER'];
 
-            //Iterate over answers
-            for($i = 0; $i < sizeof($answers); $i++) {
-                $ans_info = $answers[$i];
-                //traverse_xmlize($ans_info);                                                                 //Debug
-                //print_object ($GLOBALS['traverse_array']);                                                  //Debug
-                //$GLOBALS['traverse_array']="";                                                              //Debug
+            // Iterate over answers
+            $answers = $info['#']['ANSWERS']['0']['#']['ANSWER'];
+            foreach ($answers as $i => $answer) {
 
                 //We'll need this later!!
-                $oldid = backup_todb($ans_info['#']['ID']['0']['#']);
+                $oldid = backup_todb($answer['#']['ID']['0']['#']);
 
-                //Now, build the question_answers record structure
-                $answer = new stdClass;
-                $answer->question = $new_question_id;
-                $answer->answer = stripslashes(backup_todb($ans_info['#']['ANSWER_TEXT']['0']['#']));
-                $answer->fraction = backup_todb($ans_info['#']['FRACTION']['0']['#']);
-                $answer->feedback = backup_todb($ans_info['#']['FEEDBACK']['0']['#']);
+                //create a new question_answers record
+                $question_answer = (object)array(
+                    'question' => $new_question_id,
+                    'answer'   => stripslashes(backup_todb($answer['#']['ANSWER_TEXT']['0']['#'])),
+                    'fraction' => backup_todb($answer['#']['FRACTION']['0']['#']),
+                    'feedback' => backup_todb($answer['#']['FEEDBACK']['0']['#'])
+                );
+
+                // for ordering questions, the "fraction" field is used to show the order
+                // except that sometimes it isn't, so we force it to be the expected value
+                if ($qtype == 'ordering') {
+                    $question_answer->fraction = ($i+1);
+                }
 
                 // Update 'match everything' answers for numerical questions coming from old backup files.
-                if ($qtype == 'numerical' && $answer->answer == '') {
-                    $answer->answer = '*';
+                if ($qtype == 'numerical' && $question_answer->answer == '') {
+                    $question_answer->answer = '*';
                 }
 
-                $noneed = 0;
-
-                if ($qtype == 'multichoice' && empty($answer->answer)) {
-                    $noneed = 1;
+                if ($qtype == 'multichoice' && empty($question_answer->answer)) {
+                    // do nothing
+                } else {
+                    if ($newid = $DB->insert_record ('question_answers', $question_answer)) {
+                        backup_putid($restore->backup_unique_code, 'question_answers', $oldid, $newid);
+                    } else {
+                        $status = false; // oops - could not add question_answers record !
+                    }
                 }
 
-                if ($noneed == 0) {
-                  //The structure is equal to the db, so insert the question_answers
-                  $newid = $DB->insert_record ("question_answers",$answer);
-
-                  //Do some output
-                  if (($i+1) % 50 == 0) {
-                      if (! defined('RESTORE_SILENTLY')) {
-                          echo ".";
-                          if (($i+1) % 1000 == 0) {
-                              echo "<br />";
-                          }
-                      }
-                      backup_flush(300);
-                  }
-
-                  if ($newid) {
-                      //We have the newid, update reader_backup_ids
-                      backup_putid($restore->backup_unique_code,"question_answers",$oldid,
-                                   $newid);
-                  } else {
-                      $status = false;
-                  }
+                //Do some output
+                if (($i+1) % 50 == 0) {
+                    if (! defined('RESTORE_SILENTLY')) {
+                        echo '.';
+                        if (($i+1) % 1000 == 0) {
+                            echo '<br />';
+                        }
+                    }
+                    backup_flush(300);
                 }
             }
         }
@@ -661,32 +654,34 @@
             return $status;
         }
 
-        //Get the answers array
-        $answers = $info['#']['ANSWERS']['0']['#']['ANSWER'];
-
         //Iterate over answers
-        for($i = 0; $i < sizeof($answers); $i++) {
-            $ans_info = $answers[$i];
-            //traverse_xmlize($ans_info);                                                                 //Debug
-            //print_object ($GLOBALS['traverse_array']);                                                  //Debug
-            //$GLOBALS['traverse_array']="";                                                              //Debug
+        $answers = $info['#']['ANSWERS']['0']['#']['ANSWER'];
+        foreach ($answers as $i => $answer) {
 
-            //We'll need this later!!
-            $oldid = backup_todb($ans_info['#']['ID']['0']['#']);
+            // cache old id
+            $oldid = backup_todb($answer['#']['ID']['0']['#']);
 
-            //Now, build the question_answers record structure
-            $answer->question = $new_question_id;
-            $answer->answer = backup_todb($ans_info['#']['ANSWER_TEXT']['0']['#']);
-            $answer->fraction = backup_todb($ans_info['#']['FRACTION']['0']['#']);
-            $answer->feedback = backup_todb($ans_info['#']['FEEDBACK']['0']['#']);
+            // build the question_answers record
+            $question_answer = (object)array(
+                'question' => $new_question_id,
+                'answer'   => backup_todb($answer['#']['ANSWER_TEXT']['0']['#']),
+                'fraction' => backup_todb($answer['#']['FRACTION']['0']['#']),
+                'feedback' => backup_todb($answer['#']['FEEDBACK']['0']['#']),
+            );
 
-            //If we are in this method is because the question exists in DB, so its
-            //answers must exist too.
-            //Now, we are going to look for that answer in DB and to create the
-            //mappings in reader_backup_ids to use them later where restoring states (user level).
+            // If we are in this method is because the question exists in DB,
+            // so its answers must exist too.
+            // Now, we are going to look for that answer in DB and to create the
+            // mappings in reader_backup_ids to use them later where restoring states (user level).
 
-            //Get the answer from DB (by question and answer)
-            $db_answer = $DB->get_record_sql('SELECT * FROM {question_answers} WHERE `question` = ? AND `answer` = ?', array($new_question_id, $answer->answer));
+            // Get the answer from DB (by question and answer)
+            $select = 'question = ? AND answer = ?';
+            $params = array($new_question_id, $question_answer->answer);
+            if ($db_answer = $DB->get_record_select('question_answers', $select, $params)) {
+                backup_putid($restore->backup_unique_code, 'question_answers', $oldid, $db_answer->id);
+            } else {
+                $status = false; // shouldn't happen !!
+            }
 
             //Do some output
             if (($i+1) % 50 == 0) {
@@ -697,14 +692,6 @@
                     }
                 }
                 backup_flush(300);
-            }
-
-            if ($db_answer) {
-                //We have the database answer, update reader_backup_ids
-                backup_putid($restore->backup_unique_code,"question_answers",$oldid,
-                             $db_answer->id);
-            } else {
-                $status = false;
             }
         }
 
