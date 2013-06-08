@@ -462,6 +462,13 @@ function xmldb_reader_upgrade($oldversion) {
         upgrade_mod_savepoint(true, "$newversion", 'reader');
     }
 
+    $newversion = 2013060800;
+    if ($result && $oldversion < $newversion) {
+        xmldb_reader_fix_nameless_books();
+        xmldb_reader_fix_question_instances();
+        upgrade_mod_savepoint(true, "$newversion", 'reader');
+    }
+
     return $result;
 }
 
@@ -747,14 +754,25 @@ function xmldb_reader_fix_duplicate_quizzes($course, $keepoldquizzes, $img) {
  */
 function xmldb_reader_fix_quiz_ids($newid, $oldid) {
     global $DB;
-    // adjust all references to the non-existant/duplicate quiz
-    $DB->set_field('reader_books',              'quizid', $newid, array('quizid' => $oldid));
-    $DB->set_field('reader_attempts',           'quizid', $newid, array('quizid' => $oldid));
-    $DB->set_field('reader_cheated_log',        'quizid', $newid, array('quizid' => $oldid));
-    $DB->set_field('reader_conflicts',          'quizid', $newid, array('quizid' => $oldid));
-    $DB->set_field('reader_deleted_attempts',   'quizid', $newid, array('quizid' => $oldid));
-    $DB->set_field('reader_noquiz',             'quizid', $newid, array('quizid' => $oldid));
-    //$DB->set_field('reader_question_instances', 'quiz',   $newid, array('quiz'   => $oldid));
+
+    $fields = array(
+        // $tablename => $fieldname
+        'reader_books'              => 'quizid',
+        'reader_attempts'           => 'quizid',
+        'reader_cheated_log'        => 'quizid',
+        'reader_conflicts'          => 'quizid',
+        'reader_deleted_attempts'   => 'quizid',
+        'reader_noquiz'             => 'quizid',
+        'reader_question_instances' => 'quiz'
+    );
+
+    foreach ($fields as $tablename => $fieldname) {
+        if ($newid==0) {
+            $DB->delete_records($tablename, array($fieldname => $oldid));
+        } else {
+            $DB->set_field($tablename, $fieldname, $newid, array($fieldname => $oldid));
+        }
+    }
 }
 
 /**
@@ -876,4 +894,92 @@ function xmldb_reader_showhide_lists_js() {
         $js .= '</script>'."\n";
     }
     return $js;
+}
+
+/**
+ * xmldb_reader_fix_question_instances
+ *
+ * @return array $courseids containing Reader module quizzes
+ * @todo Finish documenting this function
+ */
+function xmldb_reader_fix_question_instances() {
+    global $DB;
+
+    $courseid = get_config('reader', 'reader_usecourse');
+
+    $select = 'rqi.*, qz.id AS quizid, qn.id AS questionid, rb.id AS bookid';
+    $from   = '{reader_question_instances} rqi '.
+              'LEFT JOIN {quiz} qz ON rqi.quiz = qz.id '.
+              'LEFT JOIN {question} qn ON rqi.question = qn.id '.
+              'LEFT JOIN {reader_books} rb ON rqi.quiz = rb.quizid';
+    $where  = 'qz.id IS NULL OR qn.id IS NULL OR rb.id IS NULL';
+
+    if ($instances = $DB->get_records_sql("SELECT $select FROM $from WHERE $where")) {
+        foreach ($instances as $instance) {
+            if (empty($instance->quizid)) {
+                // no such quiz, so remove all references to this quiz
+                xmldb_reader_fix_quiz_ids(0, $instance->quiz);
+            }
+            $DB->delete_records('reader_question_instances', array('id' => $instance->id));
+        }
+    }
+
+    $i_max = 0;
+    $rs = false;
+
+    if ($courseid) {
+        if ($i_max = $DB->count_records_sql('SELECT COUNT(*) FROM {reader_question_instances}')) {
+            $rs = $DB->get_recordset_sql('SELECT * FROM {reader_question_instances}');
+        }
+    }
+
+    if ($rs) {
+        $i = 0; // record counter
+        $bar = new progress_bar('readerfixinstances', 500, true);
+        $strupdating = 'Checking Reader question instances'; // get_string('fixinstances', 'reader');
+
+        // loop through answer records
+        foreach ($rs as $instance) {
+            $i++; // increment record count
+
+            // apply for more script execution time (3 mins)
+            upgrade_set_timeout();
+
+            // TODO: check $instance->quiz and $instance->question is a valid combination
+            if ($DB->record_exists('quiz_question_instances', array('quiz' => $instance->quiz, 'question' => $instance->question))) {
+                if ($quiz_question_instances = $DB->get_records('quiz_question_instances', array('question' => $instance->question))) {
+                    foreach ($quiz_question_instances as $quiz_question_instance) {
+                        if ($DB->record_exists('quiz', array('id' => $quiz_question_instance->quiz, 'course' => $courseid))) {
+                            $DB->set_field('reader_question_instances', 'quiz', $quiz_question_instance->quiz, array('id' => $instance->id));
+                        }
+                    }
+                }
+            }
+
+            // update progress bar
+            $bar->update($i, $i_max, $strupdating.": ($i/$i_max)");
+        }
+        $rs->close();
+    }
+
+    // get all distinct quizids from books
+    // foreach (quiz) check every question has an entry in the instances table
+}
+
+/**
+ * xmldb_reader_fix_nameless_books
+ *
+ * @todo Finish documenting this function
+ */
+function xmldb_reader_fix_nameless_books() {
+    global $DB;
+    $select = 'rb.id, rb.quizid, rb.name AS bookname, q.name AS quizname';
+    $from   = '{reader_books} rb LEFT JOIN {quiz} q ON rb.quizid = q.id';
+    $where  = 'rb.name = ? AND rb.quizid <> ? AND q.id IS NOT NULL';
+    $params = array('', 0);
+    if ($books = $DB->get_records_sql("SELECT $select FROM $from WHERE $where", $params)) {
+        foreach ($books as $book) {
+            $DB->set_field('reader_books', 'name', $book->quizname, array('id' => $book->id));
+        }
+    }
 }

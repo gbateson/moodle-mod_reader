@@ -70,21 +70,21 @@ function reader_get_config_defaults() {
         'update'             => '1',
         'last_update'        => '1',
         'update_interval'    => '604800',
-        'cheated_message'    => "We are sorry to say that the MoodleReader program has discovered ".
-                                "that you have probably cheated when you took the above quiz.  ".
+        'cheated_message'    => 'We are sorry to say that the MoodleReader program has discovered '.
+                                'that you have probably cheated when you took the above quiz. '.
                                 "'Cheating' means that you either helped another person to take the quiz ".
-                                "or that you received help from someone else to take the quiz.  ".
+                                'or that you received help from someone else to take the quiz. '.
                                 "Both people have been marked 'cheated'\n\n".
-                                "Sometimes the computer makes mistakes.  ".
-                                "If you honestly did not receive help and did not help someone else, ".
-                                "then please inform your teacher and your points will be restored.\n\n".
-                                "--The MoodleReader Module Manager",
-        'not_cheated_message' => "We are happy to inform you that your points for the above quiz have been restored.  ".
-                                 "We apologize for the mistake!\n\n".
-                                 "--The MoodleReader Module Manager",
-        'serverlink'         => 'http://moodlereader.net/quizbank',
-        'serverlogin'        => '',
-        'serverpassword'     => ''
+                                'Sometimes the computer makes mistakes. '.
+                                'If you honestly did not receive help and did not help someone else, '.
+                                'then please inform your teacher and your points will be restored.'."\n\n".
+                                '--The MoodleReader Module Manager',
+        'not_cheated_message' => 'We are happy to inform you that your points for the above quiz have been restored. '.
+                                 'We apologize for the mistake!'."\n\n".
+                                 '--The MoodleReader Module Manager',
+        'serverlink'          => 'http://moodlereader.net/quizbank',
+        'serverlogin'         => '',
+        'serverpassword'      => ''
     );
 
     $readercfg = get_config('reader');
@@ -398,7 +398,7 @@ function reader_get_stlevel_data($reader, $userid=0) {
     }
 
     if ($studentlevel->promotionstop > 0 && $studentlevel->promotionstop == $studentlevel->currentlevel) {
-        $DB->set_field('reader_levels',  "nopromote",  1, array('readerid' => $reader->id,  'userid' => $USER->id));
+        $DB->set_field('reader_levels',  'nopromote',  1, array('readerid' => $reader->id,  'userid' => $USER->id));
         $studentlevel->nopromote = 1;
     }
 
@@ -680,11 +680,11 @@ function reader_update_grades($reader=null, $userid=0, $nullifnone=true) {
         }
 
     } else {
-        $sql = "SELECT a.*, cm.idnumber as cmidnumber, a.course as courseid
-                  FROM {reader} a, {course_modules} cm, {modules} m
-                 WHERE m.name='reader' AND m.id=cm.module AND cm.instance=a.id";
-
-        if ($rs = $DB->get_recordset_sql($sql)) {
+        $select = 'a.*, cm.idnumber as cmidnumber, a.course as courseid';
+        $from   = '{reader} a, {course_modules} cm, {modules} m';
+        $where  = 'm.name = ? AND m.id = cm.module AND cm.instance = a.id';
+        $params = array('reader');
+        if ($rs = $DB->get_recordset_sql("SELECT $select FROM $from WHERE $where", $params)) {
           foreach ($rs as $reader) {
               if ($reader->grade != 0) {
                   reader_update_grades($reader, 0, false);
@@ -769,17 +769,19 @@ function reader_rescale_grade($rawgrade, $reader) {
  * @todo Finish documenting this function
  */
 function reader_get_user_grades($reader, $userid=0) {
-    global $CFG, $DB;
-
-    $user = $userid ? "AND u.id = $userid" : "";
-
-    $sql = "SELECT u.id, u.id AS userid, g.grade AS rawgrade, g.timemodified AS dategraded, MAX(a.timefinish) AS datesubmitted
-            FROM {$CFG->prefix}user u, {$CFG->prefix}reader_grades g, {$CFG->prefix}reader_attempts a
-            WHERE u.id = g.userid AND g.reader = {$reader->id} AND a.reader = g.reader AND u.id = a.userid
-                  $user
-            GROUP BY u.id, g.grade, g.timemodified";
-
-    return $DB->get_records_sql($sql);
+    global $DB;
+    $select = 'u.id, u.id AS userid, '.
+              'rg.grade AS rawgrade, rg.timemodified AS dategraded, '.
+              'MAX(ra.timefinish) AS datesubmitted';
+    $from   = '{user} u, {reader_grades} rg, {reader_attempts} ra';
+    $where  = 'u.id = rg.userid AND rg.reader = ? AND ra.reader = rg.reader AND u.id = ra.userid';
+    $groupby = 'u.id, rg.grade, rg.timemodified';
+    $params = array($reader->id);
+    if ($userid) {
+        $select .= ' AND u.id = ?';
+        $params[] = $userid;
+    }
+    return $DB->get_records_sql("SELECT $select FROM $from WHERE $where GROUP BY $groupby", $params);
 }
 
 /**
@@ -905,16 +907,9 @@ function reader_number_of_pages($layout) {
  * @todo Finish documenting this function
  */
 function reader_print_navigation_panel($page, $pages) {
-    echo '<div class="pagingbar">';
-    echo '<span class="title">' . get_string('page') . ':</span>';
-
-    echo ($page + 1) . '('.$pages.')';
-
-    if ($page < $pages - 1) {
-        // Print next link
-        $strnext = get_string('next');
-    }
-    echo '</div>';
+    $text = html_writer::tag('span', get_string('page').':', array('class' => 'title'));
+    $text .= ($page + 1).' ('.$pages.')';
+    return html_writer::tag('div', $text, array('class' => 'pagingbar'));
 }
 
 /**
@@ -1110,11 +1105,22 @@ function reader_question_preview_button($quiz, $question) {
     if (! question_has_capability_on($question, 'use', $question->category)){
         return '';
     }
+
+    $params = array('id' => $question->id);
+    if (isset($quiz->id) && $quiz->id) {
+        $params['quizid'] = $quiz->id;
+    } else {
+        $params['courseid'] = $COURSE->id;
+    }
+    $link = new moodle_url('/question/preview.php', $params);
+
+    $params = array('theme' => $CFG->theme, 'image' => 'preview', 'rev' => $CFG->themerev);
+    $src = new moodle_url('/theme/image.php', $params);
+
     $strpreview = get_string('previewquestion', 'quiz');
-    $quizorcourseid = $quiz->id?('&amp;quizid=' . $quiz->id):('&amp;courseid=' .$COURSE->id);
-    return link_to_popup_window('/question/preview.php?id=' . $question->id . $quizorcourseid, 'questionpreview',
-            "<img src=\"{$CFG->wwwroot}/theme/image.php?theme={$CFG->theme}&image=preview&rev={$CFG->themerev}\" class=\"iconsmall\" alt=\"$strpreview\" />",
-            0, 0, $strpreview, QUESTION_PREVIEW_POPUP_OPTIONS, true);
+    $img = html_writer::empty_tag('img', array('src' => $src, 'class' => 'iconsmall', 'alt' => $strpreview));
+
+    return link_to_popup_window($link, 'questionpreview', $img, 0, 0, $strpreview, QUESTION_PREVIEW_POPUP_OPTIONS, true);
 }
 
 /**
@@ -1193,7 +1199,7 @@ function reader_get_student_attempts($userid, $reader, $allreaders = false, $boo
             $totals['correct']++;
         } else {
             if($attempt->passed=='cheated') {
-                $statustext = '<span style="color:red">Cheated</span>';
+                $statustext = html_writer::tag('span', 'Cheated', array('style' => 'color:red'));
             } else {
                 $statustext = 'Not Passed';
             }
@@ -1285,15 +1291,36 @@ function reader_print_group_select_box($courseid, $link) {
 
     if ($groups) {
         echo '<table style="width:100%"><tr><td align="right">';
-        echo '<form action="" method="post" id="mform_gr"><select onchange="document.getElementById(\'mform_gr\').action = document.getElementById(\'mform_gr\').level.options[document.getElementById(\'mform_gr\').level.selectedIndex].value;document.getElementById(\'mform_gr\').submit(); return true;" name="level" id="id_level">';
-        echo '<option value="'.$link.'&gid=0">'.get_string('allgroups', 'reader').'</option>';
-        foreach ($groups as $groupkey => $groupvalue) {
-            echo '<option value="'.$link.'&gid='.$groupkey.'" ';
-            if ($groupkey == $gid) { echo 'selected="selected"'; }
-                echo ' >'.$groupvalue->name.'</option>';
+        echo '<form action="" method="post" id="mform_gr">';
+        echo '<select name="gid" id="id_gid">';
+        echo '<option value="0">'.get_string('allgroups', 'reader').'</option>';
+        foreach ($groups as $groupid => $group) {
+            if ($groupid == $gid) {
+                $selected = ' selected="selected"';
+            } else {
+                $selected = '';
+            }
+            echo '<option value="'.$groupid.'"'.$selected.'>'.$group->name.'</option>';
         }
-        echo '</select></form>';
-        echo '</td></tr></table>';
+        echo '</select>';
+        echo '<input type="submit" id="form_gr_submit" value="'.get_string('go').'" />';
+        echo '</form>';
+        echo '</td></tr></table>'."\n";
+
+        // javascript to submit group form automatically and hide "Go" button
+        echo '<script type="text/javascript">'."\n";
+        echo "//<![CDATA[\n";
+        echo "var obj = document.getElementById('id_gid');\n";
+        echo "if (obj) {\n";
+        echo "    obj.onchange = new Function('this.form.submit(); return true;');\n";
+        echo "}\n";
+        echo "var obj = document.getElementById('form_gr_submit');\n";
+        echo "if (obj) {\n";
+        echo "    obj.style.display = 'none';\n";
+        echo "}\n";
+        echo "obj = null;\n";
+        echo "//]]>\n";
+        echo "</script>\n";
     }
 }
 
@@ -1421,29 +1448,55 @@ function reader_fullname_link($userdata, $courseid, $nolink=false) {
 function reader_select_perpage($id, $act, $sort, $orderby, $gid) {
     global $CFG, $COURSE, $_SESSION;
 
-    $perpages = array(30,60,100,200,500);
-
-    $book = optional_param('book', NULL, PARAM_CLEAN);
-
     echo '<table style="width:100%"><tr><td align="right">';
-    echo '<form action="admin.php?a=admin&id='.$id.'" method="get"  id="chooseperpage" class="popupform">';
-    echo 'Perpage ';
-    echo '<select id="choose_perpage" name="perpage" onchange="self.location=document.getElementById(\'chooseperpage\').perpage.options[document.getElementById(\'chooseperpage\').perpage.selectedIndex].value;">';
 
+    $params = array('action' => new moodle_url('/mod/reader/admin.php'), 'method' => 'get', 'class' => 'popupform');
+    echo html_writer::start_tag('form', $params);
+
+    $params = array('a' => 'admin',  'id'  => $id,
+                    'act'  => $act,  'gid' => $gid,
+                    'sort' => $sort, 'orderby' => $orderby,
+                    'book' => optional_param('book', '', PARAM_CLEAN));
+    foreach ($params as $name => $value) {
+        echo html_writer::empty_tag('input', array('type' => 'hidden', 'name' => $name, 'value' => $value));
+    }
+
+    echo 'Perpage ';
+
+    echo html_writer::start_tag('select', array('id' => 'id_perpage', 'name' => 'perpage'));
+
+    $perpages = array(30, 60, 100, 200, 500);
     foreach ($perpages as $perpage) {
-        $params = array('a' => 'admin', 'id' => $id, 'act' => $act,
-                        'sort' => $sort, 'orderby' => $orderby,
-                        'book' => $book, 'gid' => $gid, 'perpage' => $perpage);
-        $params = array('value' => new moodle_url('/mod/reader/admin.php', $params));
-        if ($_SESSION['SESSION']->reader_perpage == $page) {
+
+        $params = array('value' => $perpage);
+        if ($_SESSION['SESSION']->reader_perpage == $perpage) {
             $params['selected'] = 'selected';
         }
         echo html_writer::tag('option', $perpage, $params);
     }
 
-    echo '</select>';
-    echo '</form>';
+    echo html_writer::end_tag('select');
+
+    $params = array('type' => 'submit', 'id' => 'id_perpage_submit', 'name' => 'perpage_submit', 'value' => get_string('go'));
+    echo html_writer::empty_tag('input', $params);
+
+    echo html_writer::end_tag('form');
     echo '</td></tr></table>';
+
+    // javascript to submit perpage form automatically and hide "Go" button
+    echo '<script type="text/javascript">'."\n";
+    echo "//<![CDATA[\n";
+    echo "var obj = document.getElementById('id_perpage');\n";
+    echo "if (obj) {\n";
+    echo "    obj.onchange = new Function('this.form.submit(); return true;');\n";
+    echo "}\n";
+    echo "var obj = document.getElementById('id_perpage_submit');\n";
+    echo "if (obj) {\n";
+    echo "    obj.style.display = 'none';\n";
+    echo "}\n";
+    echo "obj = null;\n";
+    echo "//]]>\n";
+    echo "</script>\n";
 }
 
 /**

@@ -49,7 +49,7 @@ $topublisher            = optional_param('topublisher', NULL, PARAM_CLEAN);
 $levelex                = optional_param('levelex', NULL, PARAM_CLEAN);
 $length                 = optional_param('length', NULL, PARAM_CLEAN);
 $tolength               = optional_param('tolength', NULL, PARAM_CLEAN);
-$gid                   = optional_param('gid', NULL, PARAM_CLEAN);
+$gid                    = optional_param('gid', NULL, PARAM_CLEAN);
 $excel                  = optional_param('excel', NULL, PARAM_CLEAN);
 $del                    = optional_param('del', NULL, PARAM_CLEAN);
 $attemptid              = optional_param('attemptid', NULL, PARAM_CLEAN);
@@ -1105,16 +1105,17 @@ if (! $excel) {
 
 }
 
-$options               = array();
-$options['a']          = $a;
-$options['id']         = $id;
-$options['act']        = $act;
-$options['sort']       = $sort;
-$options['orderby']    = $orderby;
-$options['gid']        = $gid;
-$options['ct']         = $ct;
-$options['searchtext'] = $searchtext;
-$options['excel']      = 1;
+$options = array(
+    'a' => $a,
+    'id' => $id,
+    'act' => $act,
+    'sort' => $sort,
+    'orderby' => $orderby,
+    'gid' => $gid,
+    'ct' => $ct,
+    'searchtext' => $searchtext,
+    'excel' => 1,
+);
 
 if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquizzes', $contextmodule)) {
     if (! $quizesid) {
@@ -1355,7 +1356,19 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
 } else if ($act == 'reports' && has_capability('mod/reader:readerviewreports', $contextmodule)) {
     $table = new html_table();
 
-    $titlesarray = array('Image'=>'', 'Username'=>'username', 'Fullname<br />Click to view screen'=>'fullname', 'Start level'=>'startlevel', 'Current level'=>'currentlevel', 'Taken Quizzes'=>'tquizzes', 'Passed<br /> Quizzes'=>'cquizzes', 'Failed<br /> Quizzes'=>'iquizzes', 'Total Points'=>'totalpoints', 'Total words<br /> this term'=>'totalwordsthisterm', 'Total words<br /> all terms'=>'totalwordsallterms');
+    $titlesarray = array(
+        'Image'                => '',
+        'Username'             => 'username',
+        'Fullname<br />Click to view screen' => 'fullname',
+        'Start level'          => 'startlevel',
+        'Current level'        => 'currentlevel',
+        'Taken Quizzes'        => 'tquizzes',
+        'Passed<br />Quizzes'  => 'cquizzes',
+        'Failed<br />Quizzes'  => 'iquizzes',
+        'Total Points'         => 'totalpoints',
+        'Total words<br />this term' => 'totalwordsthisterm',
+        'Total words<br />all terms' => 'totalwordsallterms'
+    );
 
     $params = array('a' => 'admin', 'id' => $id, 'act' => 'reports', 'gid' => $gid, 'searchtext' => $searchtext, 'page' => $page);
     reader_make_table_headers($table, $titlesarray, $orderby, $sort, $params);
@@ -1392,6 +1405,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
     foreach ($coursestudents as $coursestudent) {
         $groupnames[$coursestudent->username] = array();
         if (reader_check_search_text($searchtext, $coursestudent)) {
+
             $picture = $OUTPUT->user_picture($coursestudent,array($course->id, true, 0, true));
             if ($excel) {
                 if ($usergroups = groups_get_all_groups($course->id, $coursestudent->id)){
@@ -1401,29 +1415,9 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
                 }
             }
 
-            $data = array('totalwordsthisterm' => 0, 'totalwordsallterms' => 0);
-
-            // words this term
-            $select = 'userid= ? AND reader= ? AND timefinish > ?';
-            $params = array($coursestudent->id, $reader->id, $reader->ignoredate);
-            if ($readerattempts = $DB->get_records_select('reader_attempts', $select, $params)) {
-                foreach ($readerattempts as $readerattempt) {
-                    if (strtolower($readerattempt->passed) == 'true') {
-                        if ($readerattempt->preview == 0) {
-                            $tablename = 'reader_books';
-                        } else {
-                            $tablename = 'reader_noquiz';
-                        }
-                        if ($books = $DB->get_records($tablename, array('quizid' => $readerattempt->quizid))) {
-                            if ($book = array_shift($books)) {
-                                $data['totalwordsthisterm'] += $book->words;
-                            }
-                        }
-                    }
-                }
-            }
-
-            // all words
+            // count words in attempts
+            $totalwords = array('thisterm' => 0,
+                                'allterms' => 0);
             if ($readerattempts = $DB->get_records('reader_attempts', array('userid' => $coursestudent->id))) {
                 foreach ($readerattempts as $readerattempt) {
                     if (strtolower($readerattempt->passed) == 'true') {
@@ -1434,7 +1428,10 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
                         }
                         if ($books = $DB->get_records($tablename, array('quizid' => $readerattempt->quizid))) {
                             if ($book = array_shift($books)) {
-                                $data['totalwordsthisterm'] += $book->words;
+                                $totalwords['allterms'] += $book->words;
+                                if ($readerattempt->reader==$reader->id && $reader->ignoredate < $readerattempt->timefinish) {
+                                    $totalwords['thisterm'] += $book->words;
+                                }
                             }
                         }
                     }
@@ -1449,17 +1446,17 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
             }
             if ($readerattempt = reader_get_student_attempts($coursestudent->id, $reader)) {
                 $table->data[] = new html_table_row(array(
-                        $picture,
-                        $usernamelink,
-                        $fullnamelink,
-                        $readerattempt[1]['startlevel'],
-                        $readerattempt[1]['currentlevel'],
-                        $readerattempt[1]['countattempts'],
-                        $readerattempt[1]['correct'],
-                        $readerattempt[1]['incorrect'],
-                        $readerattempt[1]['totalpoints'],
-                        $data['totalwordsthisterm'],
-                        $data['totalwordsallterms']
+                    $picture,
+                    $usernamelink,
+                    $fullnamelink,
+                    $readerattempt[1]['startlevel'],
+                    $readerattempt[1]['currentlevel'],
+                    $readerattempt[1]['countattempts'],
+                    $readerattempt[1]['correct'],
+                    $readerattempt[1]['incorrect'],
+                    $readerattempt[1]['totalpoints'],
+                    $totalwords['thisterm'],
+                    $totalwords['allterms']
                 ));
             } else {
                 $table->data[] = new html_table_row(array($picture, $usernamelink, $fullnamelink, 0,0,0,0,0,0,0));
@@ -3111,7 +3108,18 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
 
     $table = new html_table();
 
-    $titlesarray = array('Group name'=>'groupname', 'Students with<br /> no quizzes'=>'noquizzes', 'Students with<br /> quizzes'=>'quizzes', 'Percent with<br /> quizzes'=>'quizzes', 'Average Taken<br /> Quizzes'=>'takenquizzes', 'Average Passed<br /> Quizzes'=>'passedquizzes', 'Average Failed<br /> Quizzes'=>'failedquizzes', 'Average total<br /> points'=>'totalpoints', 'Average words<br /> this term'=>'averagewordsthisterm', 'Average words<br /> all terms'=>'averagewordsallterms');
+    $titlesarray = array(
+        'Group name'=>'groupname',
+        'Students with<br /> no quizzes'=>'noquizzes',
+        'Students with<br /> quizzes'=>'quizzes',
+        'Percent with<br /> quizzes'=>'quizzes',
+        'Average Taken<br /> Quizzes'=>'takenquizzes',
+        'Average Passed<br /> Quizzes'=>'passedquizzes',
+        'Average Failed<br /> Quizzes'=>'failedquizzes',
+        'Average total<br /> points'=>'totalpoints',
+        'Average words<br /> this term'=>'averagewordsthisterm',
+        'Average words<br /> all terms'=>'averagewordsallterms'
+    );
 
     $params = array('a' => 'admin', 'id' => $id, 'act' => $act, 'gif' => $gid, 'searchtext' => $searchtext, 'page' => $page, 'fromtime' => $fromtime);
     reader_make_table_headers($table, $titlesarray, $orderby, $sort, $params);
@@ -3154,11 +3162,14 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
 
         $coursestudents = get_enrolled_users($context, NULL, $group->id);
         foreach ($coursestudents as $coursestudent) {
+
             $select = 'userid= ? AND reader= ? AND timestart > ?';
             $params = array($coursestudent->id, $reader->id, $reader->ignoredate);
             if ($readerattempts = $DB->get_records_select('reader_attempts', $select, $params)) {
+
                 $data['averagetaken'] += count($readerattempts);
                 foreach ($readerattempts as $readerattempt) {
+
                     if (strtolower($readerattempt->passed) == 'true') {
                         $data['averagepassed']++;
                         if ($bookdata = $DB->get_record('reader_books', array('quizid' => $readerattempt->quizid))) {
@@ -3177,8 +3188,10 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
             if ($readerattempts = $DB->get_records('reader_attempts', array('userid' => $coursestudent->id))) {
                 foreach ($readerattempts as $readerattempt) {
                     if (strtolower($readerattempt->passed) == 'true') {
-                        if ($bookdata = $DB->get_record('reader_books', array('quizid' => $readerattempt->quizid))) {
-                            $data['averagewordsallterms'] += $bookdata->words;
+                        if ($books = $DB->get_records('reader_books', array('quizid' => $readerattempt->quizid))) {
+                            if ($book = array_shift($books)) {
+                                $data['averagewordsallterms'] += $book->words;
+                            }
                         }
                     }
                 }

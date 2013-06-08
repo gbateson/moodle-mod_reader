@@ -1007,6 +1007,8 @@ function reader_add_book($item, $quizid) {
     foreach ($item as $field => $value) {
         if ($field=='quizid' || $field=='time') {
             // do nothing
+        } else if ($field=='title') {
+            $book->name = $value;
         } else if (isset($book->$field)) {
             $book->$field = $value;
         }
