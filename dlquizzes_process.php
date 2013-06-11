@@ -401,6 +401,7 @@ function reader_download_quizitems($quizids, $password) {
  * @todo Finish documenting this function
  */
 function reader_create_targetcourse($numsections=1) {
+
     // get the first valid $category_id
     $category_list = array();
     $category_parents = array();
@@ -802,15 +803,16 @@ function reader_download_quiz_images($readercfg, $xml, $targetcourseid) {
         $dirname = trim($dirname, '/');
         $dirname = ltrim($dirname, './');
         if ($dirname) {
-            $dirname = '/'.$dirname;
-            make_upload_directory($targetcourseid.$dirname);
+            $dirname = 'reader/images/'.$dirname;
+            make_upload_directory($dirname);
+            $dirname .= '/';
         }
 
         $params = array('imagelink' => urlencode($image));
         $image_file_url = new moodle_url($readercfg->reader_serverlink.'/getfile_quiz_image.php', $params);
         $image_contents = file_get_contents($image_file_url);
 
-        if ($fp = @fopen($CFG->dataroot.'/'.$targetcourseid.$dirname.'/'.$basename, 'w+')) {
+        if ($fp = @fopen($CFG->dataroot.'/'.$dirname.$basename, 'w+')) {
             @fwrite($fp, $image_contents);
             @fclose($fp);
         }

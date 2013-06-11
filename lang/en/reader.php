@@ -305,3 +305,14 @@ $string['youmusttakequiz'] = ' You can take {$a} more quiz ';
 $string['youmusttakequizzes'] = ' You can take {$a} more quizzes ';
 $string['yourcurrentlevel'] = 'Your current level';
 $string['yourteacherhasstopped'] = ' Your teacher has stopped automatic promotion for you.';
+
+$string['fixmissingquizzes'] = 'fixmissingquizzes';
+$string['fixmissingquizzesinfo'] = 'The upgrade has been paused, so that you can decide whether or not you wish to download and install Reader module quizzes that are missing on this Moodle site.
+
+If you select "Yes", the missing quizzes will be downloaded and installed.
+
+If you select "No", any Reader books whose quiz are missing will be marked as having no quiz data.
+
+Note that even if you choose "No", the word counts for each student in Reader activities will not be affected by this operation.
+
+Do you wish to download and install missing Reader module quizzes for books on this Moodle site?';

@@ -3483,7 +3483,10 @@ define('RESTORE_GROUPS_GROUPINGS', 3);
             //info will contain the old_id of every category
             //in reader_backup_ids->info will be the real info (serialized)
             $info = restore_read_xml_questions($restore,$xml_file);
+        } else {
+            $info = false;
         }
+
         //Now, if we have anything in info, we have to restore that
         //categories/questions
         if ($info) {

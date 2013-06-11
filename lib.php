@@ -2075,12 +2075,8 @@ function reader_set_attempt_result($attemptid, $reader) {
  * @return xxx
  * @todo Finish documenting this function
  */
-function reader_makexml($xmlarray) {
-    $xml = "";
-    foreach ($xmlarray as $xmlarray_) {
-        $xml .= $xmlarray_;
-    }
-    return $xml;
+function reader_makexml($xml) {
+    return implode('', $xml);
 }
 
 /**
@@ -2092,31 +2088,34 @@ function reader_makexml($xmlarray) {
  * @todo Finish documenting this function
  */
 function reader_file($url, $post = false) {
-    $postdata = "";
+
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-    if ($post) {
-        curl_setopt($ch, CURLOPT_POST, 1);
 
-        foreach ($post as $key => $value) {
-          if (! is_array($value)) {
-              $postdata .= $key.'='.$value.'&';
-          } else {
-            foreach ($value as $key2 => $value2) {
-                if (! is_array($value2)) {
-                    $postdata .= $key.'['.$key2.']='.$value2.'&';
-                } else {
-                    foreach ($value2 as $key3 => $value3) {
-                        $postdata .= $key.'['.$key2.']['.$key3.']='.$value3.'&';
+    if ($post) {
+        $postfields = array();
+        foreach ($post as $key1 => $value1) {
+            if (is_array($value1)) {
+                foreach ($value1 as $key2 => $value2) {
+                    if (is_array($value2)) {
+                        foreach ($value2 as $key3 => $value3) {
+                            $postfields[] = $key1.'['.$key2.']['.$key3.']='.$value3;
+                        }
+                    } else {
+                        $postfields[] = $key1.'['.$key2.']='.$value2;
                     }
                 }
+            } else {
+                $postfields[] = $key1.'='.$value1;
             }
-          }
         }
-        //echo $postdata;
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $postdata);
+        if ($postfields = implode('&', $postfields)) {
+            curl_setopt($ch, CURLOPT_POST, 1);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $postfields);
+        }
     }
+
     $result = curl_exec($ch);
     curl_close($ch);
 
@@ -2146,10 +2145,13 @@ function reader_remove_directory($dir) {
  * @todo Finish documenting this function
  */
 function reader_curlfile($url) {
+
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+
     //curl_setopt($ch, CURLOPT_REFERER, trackback_url(false));
+
     $result = curl_exec($ch);
     curl_close($ch);
 
