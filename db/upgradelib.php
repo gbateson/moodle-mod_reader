@@ -599,8 +599,13 @@ function xmldb_reader_fix_wrong_quizids() {
               'LEFT JOIN {quiz} q ON rb.quizid = q.id '.
               'LEFT JOIN {course_modules} cm ON q.id = cm.instance '.
               'LEFT JOIN {course_sections} cs ON cs.course = cm.course AND cs.id = cm.section '.
-              'LEFT JOIN {modules} m ON m.id = cm.module AND m.name = ?';
-    $where  = 'rb.name <> q.name OR '.$DB->sql_concat('rb.publisher', "' - '", 'rb.level').' <> cs.name';
+              'LEFT JOIN {modules} m ON m.id = cm.module';
+    $where  = 'm.name = ? '.
+              'AND q.id IS NOT NULL '.
+              'AND cm.id IS NOT NULL '.
+              'AND m.id IS NOT NULL '.
+              'AND cs.id IS NOT NULL '.
+              'AND (rb.name <> q.name OR '.$DB->sql_concat('rb.publisher', "' - '", 'rb.level').' <> cs.name)';
     $params = array('quiz');
     $orderby = 'rb.publisher,rb.level,rb.name';
 
