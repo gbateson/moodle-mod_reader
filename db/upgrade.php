@@ -417,22 +417,8 @@ function xmldb_reader_upgrade($oldversion) {
         // save this value of the 'keepoldquizzes' config setting
         set_config('reader_keepoldquizzes', $keepoldquizzes, 'reader');
 
-        $courseids = xmldb_reader_quiz_courseids();
-        foreach ($courseids as $courseid) {
-            if ($course = $DB->get_record('course', array('id' => $courseid))) {
-                $rebuild_course_cache = false;
-                if (xmldb_reader_fix_duplicate_books($course, $keepoldquizzes)) {
-                    $rebuild_course_cache = true;
-                }
-                if (xmldb_reader_fix_duplicate_quizzes($course, $keepoldquizzes)) {
-                    $rebuild_course_cache = true;
-                }
-                if ($rebuild_course_cache) {
-                    echo 'Re-building course cache ... ';
-                    rebuild_course_cache($course->id, true); // $clearonly must be set to true
-                }
-            }
-        }
+        // fix duplicate books and quizzes
+        xmldb_reader_fix_duplicates();
 
         upgrade_mod_savepoint(true, "$newversion", 'reader');
     }
@@ -444,10 +430,12 @@ function xmldb_reader_upgrade($oldversion) {
         upgrade_mod_savepoint(true, "$newversion", 'reader');
     }
 
-    $newversion = 2013061000;
+    $newversion = 2013061200;
     if ($result && $oldversion < $newversion) {
         xmldb_reader_fix_slashes();
+        xmldb_reader_fix_wrong_sectionnames();
         xmldb_reader_fix_wrong_quizids();
+        xmldb_reader_fix_duplicates();
         //xmldb_reader_fix_nonunique_quizids();
         upgrade_mod_savepoint(true, "$newversion", 'reader');
     }

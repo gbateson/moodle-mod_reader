@@ -96,7 +96,7 @@ $contextmodule = reader_get_context(CONTEXT_MODULE, $cm->id);
 require_capability('mod/reader:manage', $contextmodule);
 
 $readercfg = get_config('reader');
-$keepoldquizzes = get_config('reader', 'keepoldquizzes');
+$keepoldquizzes = get_config('reader', 'reader_keepoldquizzes');
 
 add_to_log($course->id, 'reader', 'Download Quizzes Process', "dlquizzes.php?id=$id", "$cm->instance");
 
@@ -371,10 +371,11 @@ function reader_download_quizitems($quizids, $password) {
 
         // set section name
         $publisher = $item['@']['publisher'];
-        if ($level = $item['@']['level']) {
-            $name = $publisher.' - '.$level;
-        } else {
+        $level = $item['@']['level'];
+        if ($level=='' || $level=='--') {
             $name = $publisher; // no level
+        } else {
+            $name = $publisher.' - '.$level;
         }
 
         // initialize items in this section

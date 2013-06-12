@@ -172,7 +172,7 @@ function xmldb_reader_fix_duplicate_books($course, $keepoldquizzes) {
                             echo '</ul></li>'; // finish book list
                         }
                         // start book list for this publisher
-                        echo '<li><b>$book->publisher</b> '.xmldb_reader_showhide_img();
+                        echo "<li><b>$book->publisher</b> ".xmldb_reader_showhide_img();
                         echo '<ul>';
                         $publisher = $book->publisher;
                     }
@@ -386,17 +386,22 @@ function xmldb_reader_quiz_courseids() {
     global $DB;
 
     $courseids = array();
+
     if ($courseid = get_config('reader', 'reader_usecourse')) {
         $courseids[] = $courseid;
     }
-    $select = 'SELECT DISTINCT usecourse FROM {reader} WHERE usecourse IS NOT NULL AND usecourse > ?';
+
+    // $select = 'SELECT DISTINCT usecourse FROM {reader} WHERE usecourse IS NOT NULL AND usecourse > ?';
+    $select = 'SELECT DISTINCT q.course FROM {reader_books} rb LEFT JOIN {quiz} q ON rb.quizid = q.id WHERE q.id IS NOT NULL';
     $select = "id IN ($select) AND visible = ?";
-    $params = array(0, 0);
+    $params = array($courseid, 0);
     if ($courses = $DB->get_records_select('course', $select, $params, 'id', 'id,visible')) {
         $courseids = array_merge($courseids, array_keys($courses));
         $courseids = array_unique($courseids);
         sort($courseids);
     }
+
+
     return $courseids;
 }
 
@@ -586,6 +591,99 @@ function xmldb_reader_fix_slashes() {
 }
 
 /**
+ * xmldb_reader_fix_wrong_sectionnames
+ *
+ * @todo Finish documenting this function
+ */
+function xmldb_reader_fix_wrong_sectionnames() {
+    global $DB, $OUTPUT;
+
+    $courseids = xmldb_reader_quiz_courseids();
+    foreach ($courseids as $courseid) {
+
+        if (! $course = $DB->get_record('course', array('id' => $courseid))) {
+            continue;
+        }
+        if (! $sections = $DB->get_records('course_sections', array('course' => $courseid))) {
+            continue;
+        }
+
+        $started_box = false;
+        $rebuild_course_cache = false;
+        foreach ($sections as $sectionid => $section) {
+
+            if ($section->section==0) {
+                continue; // ignore intro section
+            }
+
+            $cmids = explode(',', $section->sequence);
+            $cmids = array_filter($cmids); // remove blanks
+
+            $quizids = array();
+            foreach ($cmids as $cmid) {
+
+                $cm = get_coursemodule_from_id('', $cmid);
+                if ($cm->modname=='label') {
+                    continue; // ignore labels
+                }
+                if ($cm->modname=='quiz') {
+                    $quizids[] = $cm->instance;
+                }
+            }
+
+            $sectionname = '';
+            $sectionnames = array();
+            if (count($quizids)) {
+                list($select, $params) = $DB->get_in_or_equal($quizids);
+                if ($books = $DB->get_records_select('reader_books', "quizid $select", $params)) {
+                    foreach ($books as $book) {
+                        $sectionname = $book->publisher;
+                        if ($book->level=='' || $book->level=='--') {
+                            // do nothing
+                        } else {
+                            $sectionname .= ' - '.$book->level;
+                        }
+                        if (empty($sectionnames[$sectionname])) {
+                            $sectionnames[$sectionname] = 1;
+                        } else {
+                            $sectionnames[$sectionname]++;
+                        }
+                    }
+                }
+            }
+
+            if (count($sectionnames)==1) {
+                if ($section->name==$sectionname) {
+                    // do nothing
+                } else {
+                    if ($started_box==false) {
+                        $started_box = true;
+                        echo xmldb_reader_showhide_js();
+                        echo $OUTPUT->box_start('generalbox', 'notice');
+                        echo '<div><b>The following course sections were adjusted:</b> '.xmldb_reader_showhide_img();
+                        echo '<ul>';
+                    }
+                    echo html_writer::tag('li', "Reset section name: $section->name => $sectionname");
+                    $DB->set_field('course_sections', 'name', $sectionname, array('id' => $sectionid));
+                    $rebuild_course_cache = true;
+                }
+            }
+        }
+
+        if ($started_box==true) {
+            echo '</ul>';
+            echo '</div>';
+            echo $OUTPUT->box_end();
+        }
+
+        if ($rebuild_course_cache) {
+            echo "Re-building course cache: $course->shortname ... ";
+            rebuild_course_cache($courseid, true); // $clearonly must be set to true
+        }
+    }
+}
+
+/**
  * xmldb_reader_fix_wrong_quizids
  *
  * @todo Finish documenting this function
@@ -593,27 +691,43 @@ function xmldb_reader_fix_slashes() {
 function xmldb_reader_fix_wrong_quizids() {
     global $DB, $OUTPUT;
 
+    $sectionname = $DB->sql_concat('rb.publisher', "' - '", 'rb.level');
+    $sectionname = "(CASE WHEN (rb.level IS NULL OR rb.level = ? OR rb.level = ?) THEN rb.publisher ELSE $sectionname END)";
+
+    // q.name NOT LIKE CONCAT('%', rb.name, '%')
+    $quizname = $DB->sql_concat("'%'", 'rb.name', "'%'");
+    $quizname = str_replace('???', $quizname, $DB->sql_like('q.name', '???', false, false, true)); // NOT LIKE
+
     // extract books with wrong quizid
-    $select = 'rb.id, rb.publisher, rb.level, rb.name, rb.quizid, q.name AS quizname, cs.name AS sectionname, q.course AS courseid';
+    $select = 'rb.id, rb.publisher, rb.level, rb.name, rb.quizid, '.
+              'q.name AS quizname, q.course AS courseid, '.
+              'cs.name AS sectionname';
     $from   = '{reader_books} rb '.
               'LEFT JOIN {quiz} q ON rb.quizid = q.id '.
-              'LEFT JOIN {course_modules} cm ON q.id = cm.instance '.
-              'LEFT JOIN {course_sections} cs ON cs.course = cm.course AND cs.id = cm.section '.
+              'LEFT JOIN {course_modules} cm ON cm.instance = q.id '.
+              'LEFT JOIN {course_sections} cs ON cs.id = cm.section '.
               'LEFT JOIN {modules} m ON m.id = cm.module';
     $where  = 'm.name = ? '.
-              'AND q.id IS NOT NULL '.
+              'AND q.id  IS NOT NULL '.
               'AND cm.id IS NOT NULL '.
-              'AND m.id IS NOT NULL '.
+              'AND m.id  IS NOT NULL '.
               'AND cs.id IS NOT NULL '.
-              'AND (rb.name <> q.name OR '.$DB->sql_concat('rb.publisher', "' - '", 'rb.level').' <> cs.name)';
-    $params = array('quiz');
+              'AND ('.$quizname.' OR cs.name <> '.$sectionname.')';
+    $params = array('quiz', '', '--');
     $orderby = 'rb.publisher,rb.level,rb.name';
 
     if ($books = $DB->get_records_sql("SELECT $select FROM $from WHERE $where ORDER BY $orderby", $params)) {
 
+        echo xmldb_reader_showhide_js();
+        echo $OUTPUT->box_start('generalbox', 'notice');
+        echo '<div><b>The quiz id for the following books was fixed:</b> '.xmldb_reader_showhide_img();
+        echo '<ul>';
+
         foreach ($books as $book) {
             $sectionname = $book->publisher;
-            if ($book->level) {
+            if ($book->level=='' || $book->level=='--') {
+                // do nothing
+            } else {
                 $sectionname .= ' - '.$book->level;
             }
             $select = 'q.id, q.name, cs.name AS sectionname';
@@ -628,11 +742,17 @@ function xmldb_reader_fix_wrong_quizids() {
             if ($quiz = $DB->get_records_sql("SELECT $select FROM $from WHERE $where ORDER BY $orderby", $params, 0, 1)) {
                 $quiz = reset($quiz);
                 if ($book->quizid != $quiz->id) {
-                    echo html_writer::tag('li', "Reset quiz id for $sectionname: $book->name ($book->quizid => $quiz->id)");
+                    echo html_writer::tag('li', "Reset quiz for $sectionname: $book->name (quiz id $book->quizid => $quiz->id)");
                     $DB->set_field('reader_books', 'quizid', $quiz->id, array('id' => $book->id));
                 }
+            } else {
+                echo html_writer::tag('li', "OOPS, could not locate quiz for $sectionname: $book->name (quiz id = $book->quizid)");
             }
         }
+
+        echo '</ul>';
+        echo '</div>';
+        echo $OUTPUT->box_end();
     }
 }
 
@@ -663,7 +783,9 @@ function xmldb_reader_fix_nonunique_quizids() {
 
             // generate expected section name
             $sectionname = $book->publisher;
-            if ($book->level) {
+            if ($book->level=='' || $book->level=='--') {
+                // do nothing
+            } else {
                 $sectionname .= ' - '.$book->level;
             }
 
@@ -885,7 +1007,9 @@ function reader_install_missingquizzes($books) {
 
         // create section if necessary
         $sectionname = $publisher;
-        if ($level) {
+        if ($level=='' || $level=='--') {
+            // do nothing
+        } else {
             $sectionname .= ' - '.$level;
         }
         $sectionnum = reader_xmldb_get_sectionnum($targetcourse, $sectionname);
@@ -1399,5 +1523,33 @@ function reader_xmldb_init_qtypes() {
 
         $QTYPE_MANUAL = implode(',', $QTYPE_MANUAL);
         $QTYPE_EXCLUDE_FROM_RANDOM = implode(',', $QTYPE_EXCLUDE_FROM_RANDOM);
+    }
+}
+
+/**
+ * xmldb_reader_fix_duplicates
+ *
+ * @todo Finish documenting this function
+ */
+function xmldb_reader_fix_duplicates() {
+    global $DB;
+
+    $keepoldquizzes = get_config('reader', 'reader_keepoldquizzes');
+    $courseids = xmldb_reader_quiz_courseids();
+
+    foreach ($courseids as $courseid) {
+        if ($course = $DB->get_record('course', array('id' => $courseid))) {
+            $rebuild_course_cache = false;
+            if (xmldb_reader_fix_duplicate_books($course, $keepoldquizzes)) {
+                $rebuild_course_cache = true;
+            }
+            if (xmldb_reader_fix_duplicate_quizzes($course, $keepoldquizzes)) {
+                $rebuild_course_cache = true;
+            }
+            if ($rebuild_course_cache) {
+                echo "Re-building course cache $course->shortname ... ";
+                rebuild_course_cache($course->id, true); // $clearonly must be set to true
+            }
+        }
     }
 }
