@@ -227,7 +227,7 @@ function xmldb_reader_fix_duplicate_books($course, $keepoldquizzes) {
  * @todo Finish documenting this function
  */
 function xmldb_reader_fix_duplicate_quizzes($course, $keepoldquizzes) {
-    global $CFG, $DB;
+    global $CFG, $DB, $OUTPUT;
     require_once($CFG->dirroot.'/course/lib.php');
 
     $rebuild_course_cache = false;
@@ -246,6 +246,7 @@ function xmldb_reader_fix_duplicate_quizzes($course, $keepoldquizzes) {
     // extract all duplicate (i.e. same section and name) quizzes in main reader course
     if ($duplicates = $DB->get_records_sql("SELECT $select FROM $from WHERE $where GROUP BY $groupby", $params)) {
         echo xmldb_reader_showhide_js();
+        echo $OUTPUT->box_start('generalbox', 'notice');
         echo '<div><b>The following duplicate quizzes were fixed:</b> '.xmldb_reader_showhide_img();
         echo '<ul>';
 
@@ -293,6 +294,7 @@ function xmldb_reader_fix_duplicate_quizzes($course, $keepoldquizzes) {
         }
         echo '</ul>';
         echo '</div>';
+        echo $OUTPUT->box_end('generalbox', 'notice');
     }
 
     return $rebuild_course_cache;
@@ -677,7 +679,7 @@ function xmldb_reader_fix_wrong_sectionnames() {
         }
 
         if ($rebuild_course_cache) {
-            echo "Re-building course cache: $course->shortname ... ";
+            echo html_writer::tag('div', "Re-building course cache: $course->shortname ... ", array('class' => 'notifysuccess'));
             rebuild_course_cache($courseid, true); // $clearonly must be set to true
         }
     }
@@ -1547,9 +1549,236 @@ function xmldb_reader_fix_duplicates() {
                 $rebuild_course_cache = true;
             }
             if ($rebuild_course_cache) {
-                echo "Re-building course cache $course->shortname ... ";
+                echo html_writer::tag('div', "Re-building course cache: $course->shortname ... ", array('class' => 'notifysuccess'));
                 rebuild_course_cache($course->id, true); // $clearonly must be set to true
             }
         }
+    }
+}
+
+/**
+ * xmldb_reader_fix_question_categories
+ *
+ * @todo Finish documenting thi function
+ */
+function xmldb_reader_fix_question_categories() {
+    global $CFG, $DB, $OUTPUT;
+    require_once($CFG->dirroot.'/mod/reader/lib.php');
+
+    // get contexts for quizzes in of courses where Reader quizzes are stored
+    $courseids = xmldb_reader_quiz_courseids();
+    $select = array();
+    $params = array();
+    foreach ($courseids as $courseid) {
+        if ($coursecontext  = reader_get_context(CONTEXT_COURSE, $courseid)) {
+            array_push($select, '((contextlevel = ? AND path = ?) OR (contextlevel = ? AND '.$DB->sql_like('path', '?').'))');
+            array_push($params, CONTEXT_COURSE, $coursecontext->path, CONTEXT_MODULE, $coursecontext->path.'/%');
+        }
+    }
+
+    // check we found some quizzes
+    if (! $select = implode(' OR ', $select)) {
+        return true; // no Reader quizzes - unusual ?!
+    }
+
+    // get reader course activity contexts
+    if (! $modulecontexts = $DB->get_records_select('context', $select, $params)) {
+        return false; // shouldn't happen !!
+    }
+
+    // first we tidy up the reader_question_instances table
+    $select  = 'question, COUNT(*)';
+    $from    = '{reader_question_instances}';
+    $groupby = 'question HAVING COUNT(*) > 1';
+    $params  = array();
+    if ($duplicates = $DB->get_records_sql("SELECT $select FROM $from GROUP BY $groupby", $params)) {
+        $started_box = false;
+        foreach ($duplicates as $duplicate) {
+            if ($instances = $DB->get_records('reader_question_instances', array('question' => $duplicate->question), 'id')) {
+                $instanceids = array_keys($instances);
+                $instanceid = array_shift($instanceids); // keep this one :-)
+                list($select, $params) = $DB->get_in_or_equal($instanceids);
+                $DB->delete_records_select('reader_question_instances', 'id '.$select, $params);
+                if ($started_box==false) {
+                    $started_box = true;
+                    echo xmldb_reader_showhide_js();
+                    echo $OUTPUT->box_start('generalbox', 'notice');
+                    echo '<div><b>The following reader question instances were fixed:</b> '.xmldb_reader_showhide_img();
+                    echo '<ul>';
+                }
+                echo '<li><span style="color: red;">DELETE</span> '.count($instanceids).' duplicate question instance(s) (id IN '.implode(', ', $instanceids).')</li>';
+            }
+        }
+        if ($started_box==true) {
+            echo '</ul>';
+            echo '</div>';
+            echo $OUTPUT->box_end();
+        }
+    }
+
+    // unset all missing parent question ids
+    // (the "parent" question is the old version of a question that was edited)
+
+    $select = 'q1.id, q1.parent';
+    $from   = '{question} q1 LEFT JOIN {question} q2 ON q1.parent = q2.id';
+    $where  = 'q1.parent > 0 AND q2.id IS NULL';
+    if ($questions = $DB->get_records_sql("SELECT $select FROM $from WHERE $where")) {
+
+        echo xmldb_reader_showhide_js();
+        echo $OUTPUT->box_start('generalbox', 'notice');
+        echo '<div><b>The following reader questions were fixed:</b> '.xmldb_reader_showhide_img();
+        echo '<ul>';
+
+        $msg = '<span style="color: brown;">RESET</span> parent ids on '.count($questions).' questions (id  IN '.implode(', ', array_keys($questions)).')';
+        echo html_writer::tag('li', $msg);
+
+        list($select, $params) = $DB->get_in_or_equal(array_keys($questions));
+        $DB->set_field_select('question', 'parent', 0, 'id '.$select, $params);
+
+        echo '</ul>';
+        echo '</div>';
+        echo $OUTPUT->box_end();
+    }
+
+    // get question categories for Reader course activities
+
+    $started_box = false;
+
+    list($select, $params) = $DB->get_in_or_equal(array_keys($modulecontexts));
+    if ($categories = $DB->get_records_select('question_categories', 'contextid '.$select, $params)) {
+
+        foreach ($categories as $category) {
+
+            $msg = '';
+
+            // searhc and replace strings to fix "ordering" instructions
+            $search = '/(?<=Put the following events )("[^"]*")\s*/';
+            $replace = 'from $1 ';
+
+            // count random and non-random questions
+            $random = 0;
+            $nonrandom = 0;
+            if ($questions = $DB->get_records('question', array('category' => $category->id))) {
+                foreach ($questions as $question) {
+                    if ($question->qtype=='random') {
+                        $random++;
+                    } else {
+                        $nonrandom++;
+                        if ($question->qtype=='ordering') {
+                            $update = 0;
+                            $question->questiontext = preg_replace($search, $replace, $question->questiontext, -1, $update);
+                            if ($update) {
+                                $DB->set_field('question', 'questiontext', $question->questiontext, array('id' => $question->id));
+                            }
+                        }
+                    }
+                }
+            }
+
+            if ($nonrandom) {
+                // category contains at least one non-random quiz
+            } else if ($random) {
+                // category contains only "random" questions, check if they are used or not
+                list($select, $params) = $DB->get_in_or_equal(array_keys($questions));
+                if ($DB->count_records_select('reader_question_instances', 'question '.$select, $params)) {
+                    // at least one questions is used in at least one reader quiz
+                } else if ($DB->count_records_select('quiz_question_instances', 'question '.$select, $params)) {
+                    // at least one questions is used in at least one non-reader quiz
+                } else {
+                    // questions are NOT used in any quizzes
+                    $DB->delete_records_select('question', 'id '.$select, $params);
+                    $msg .= '<li><span style="color: red;">DELETE</span> '.$random.' unused random questions ('.implode(', ', array_keys($questions)).') from category '.$category->name.' (id='.$category->id.')</li>';
+                }
+            }
+
+            if ($DB->record_exists('question_categories', array('parent' => $category->id))) {
+                $keep = true;  // a parent category
+            } else if (substr($category->name, 0, 11)=='Default for') {
+                $keep = true;  // an empty parent category
+            } else if ($DB->get_records('question', array('category' => $category->id))) {
+                $keep = true;  // category contains questions
+            } else {
+                $keep = false; // empty category
+            }
+
+            if ($keep && $category->contextid==$coursecontext->id) {
+                // this category is in a course context, but it should NOT be
+                // let's see if we can move the questions to a quiz context
+                if ($questions = $DB->get_records('question', array('category' => $category->id))) {
+                    list($select, $params) = $DB->get_in_or_equal(array_keys($questions));
+                    if ($instances = $DB->get_records_select('reader_question_instances', 'question '.$select, $params)) {
+                        // these questions are used in Reader quizzes
+                    } else if ($instances = $DB->get_records_select('quiz_question_instances', 'question '.$select, $params)) {
+                        // these questions are used in Moodle quizzes
+                        $quizids = array();
+                        foreach ($instances as $instance) {
+                            $quizids[$instance->quiz] = true;
+                        }
+                        $quizids = array_keys($quizids);
+                        if (count($quizids)==1) {
+                            // move questions to this quiz's context
+                            $quizid = reset($quizids);
+                            if (! $cm = get_coursemodule_from_instance('quiz', $quizid)) {
+                                $msg .= '<li><span style="color: red;">OOPS</span> course module record not found for quizid='.$quizid.'</li>';
+                            } else if (! $quizcontext = reader_get_context(CONTEXT_MODULE, $cm->id)) {
+                                $msg .= '<li><span style="color: red;">OOPS</span> context record not found for cm id='.$cm->id.'</li>';
+                            } else {
+                                $DB->set_field('question_categories', 'parent', 0, array('id' => $category->id));
+                                $DB->set_field('question_categories', 'contextid', $quizcontext->id, array('id' => $category->id));
+                                $msg .= '<li><span style="color: green;">MOVED</span> '.count($questions).' active questions ('.implode(', ', array_keys($questions)).') to new context (id='.$quizcontext->id.', quiz name='.$cm->name.')</li>';
+                            }
+                        } else {
+                            // questions are used by several quizzes
+                            $msg .= '<li><span style="color: red;">COULD NOT MOVE</span> '.count($questions).' active questions ('.implode(', ', array_keys($questions)).') because they are used in more than one quiz</li>';
+                        }
+                    } else {
+                        // these questions are not used in any quizzes so we can delete them
+                        list($select, $params) = $DB->get_in_or_equal(array_keys($questions));
+                        $DB->delete_records_select('question', 'id '.$select, $params);
+                        $msg .= '<li><span style="color: red;">DELETE</span> '.count($questions).' unused non-random questions ('.implode(', ', array_keys($questions)).') from category '.$category->name.' (id='.$category->id.')</li>';
+                        $keep = false;
+                    }
+                }
+            }
+
+            if ($keep) {
+                // remove slashes from category name
+                if (strpos($category->name, '\\') !== false) {
+                    $msg .= '<li><span style="color: brown;">FIX</span> slashes in category name: '.$category->name.' (id='.$category->id.')</li>';
+                    $DB->set_field('question_categories', 'name', stripslashes($category->name), array('id' => $category->id));
+                }
+                // fix case of category name
+                if ($category->name=='ordering' || $category->name=='ORDERING') {
+                    $msg .= '<li><span style="color: brown;">FIX</span> category name: '.$category->name.' =&gt; Ordering (id='.$category->id.')</li>';
+                    $DB->set_field('question_categories', 'name', 'Ordering', array('id' => $category->id));
+                }
+                // remove slashes from category info
+                if (strpos($category->info, '\\') !== false) {
+                    $msg .= '<li><span style="color: brown;">FIX</span> slashes in category info: '.$category->info.' (id='.$category->id.')</li>';
+                    $DB->set_field('question_categories', 'info', stripslashes($category->info), array('id' => $category->id));
+                }
+            } else {
+                // delete this category
+                $msg .= '<li><span style="color: red;">DELETE</span> empty category: '.$category->name.' (id='.$category->id.')</li>';
+                $DB->delete_records('question_categories', array('id' => $category->id));
+            }
+
+            if ($msg) {
+                if ($started_box==false) {
+                    $started_box = true;
+                    echo xmldb_reader_showhide_js();
+                    echo $OUTPUT->box_start('generalbox', 'notice');
+                    echo '<div><b>The following reader question categories were fixed:</b> '.xmldb_reader_showhide_img();
+                    echo '<ul>';
+                }
+                echo $msg;
+            }
+        }
+    }
+
+    if ($started_box) {
+        echo '</div>';
+        echo '</ul>';
+        echo $OUTPUT->box_end();
     }
 }

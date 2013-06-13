@@ -430,13 +430,14 @@ function xmldb_reader_upgrade($oldversion) {
         upgrade_mod_savepoint(true, "$newversion", 'reader');
     }
 
-    $newversion = 2013061200;
+    $newversion = 2013061400;
     if ($result && $oldversion < $newversion) {
         xmldb_reader_fix_slashes();
         xmldb_reader_fix_wrong_sectionnames();
         xmldb_reader_fix_wrong_quizids();
         xmldb_reader_fix_duplicates();
         //xmldb_reader_fix_nonunique_quizids();
+        xmldb_reader_fix_question_categories();
         upgrade_mod_savepoint(true, "$newversion", 'reader');
     }
 
