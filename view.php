@@ -341,7 +341,7 @@ if ($reader->levelcheck == 1) {
 if (! empty($table->data)) {
     echo '<center>'.html_writer::table($table).'</center>';
 } else {
-    print_string('nodata', 'reader');
+    //echo '<center>'.get_string('nodata', 'reader').'</center>';
 }
 
 if ($reader->wordsprogressbar) {
@@ -454,13 +454,8 @@ if ($reader->attemptsofday > 0) { // && $_SESSION['SESSION']->reader_teacherview
     $showform = true;
 }
 
-echo '<h3>'.get_string('messagefromyourteacher', 'reader').'</h3>';
+if ($messages = $DB->get_records_sql('SELECT * FROM {reader_messages} WHERE instance = ?', array($cm->instance))) {
 
-//print_simple_box_start('center', '700px', '#ffffff', 10);
-
-$messages = $DB->get_records_sql('SELECT * FROM {reader_messages} WHERE instance = ?', array($cm->instance));
-
-if (count($messages) > 0 && !empty($messages)) {
     $usergroupsarray = array(0);
     $studentgroups = groups_get_user_groups($course->id, $USER->id);
     foreach ($studentgroups as $studentgroup) {
@@ -468,7 +463,8 @@ if (count($messages) > 0 && !empty($messages)) {
             $usergroupsarray[] = $studentgroup_;
         }
     }
-    //$messages = $DB->get_records_sql('SELECT * FROM {reader_messages} WHERE instance = ?', array($cm->instance));
+
+    $started_list = false;
     foreach ($messages as $message) {
         $forgroupsarray = explode (',', $message->users);
         $showmessage = false;
@@ -485,6 +481,10 @@ if (count($messages) > 0 && !empty($messages)) {
         }
 
         if ($showmessage) {
+            if ($started_list==false) {
+                $started_list = true; // only do this once
+                echo '<h3>'.get_string('messagefromyourteacher', 'reader').'</h3>';
+            }
             echo '<table width="100%"><tr><td align="right"><table cellspacing="0" cellpadding="0" class="forumpost blogpost blog" '.$bgcolor.' width="90%">';
             echo '<tr><td align="left"><div style="margin-left: 10px;margin-right: 10px;">'."\n";
             echo format_text($message->text);
