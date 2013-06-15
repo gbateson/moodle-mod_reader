@@ -447,5 +447,24 @@ function xmldb_reader_upgrade($oldversion) {
         upgrade_mod_savepoint(true, "$newversion", 'reader');
     }
 
+
+    $newversion = 2013061600;
+    if ($result && $oldversion < $newversion) {
+
+        // Define index "sametitle_key" (not unique) to be added to "reader_books" table
+        $table = new xmldb_table('reader_books');
+        $index = new xmldb_index('sametitle_key', XMLDB_INDEX_NOTUNIQUE, array('sametitle'));
+        if (! $dbman->index_exists($table, $index)) {
+            $dbman->add_index($table, $index);
+        }
+
+        // Change precision of field "percentgrade" on table "reader_attempts" to (6, 2)
+        $table = new xmldb_table('reader_attempts');
+        $field = new xmldb_field('percentgrade', XMLDB_TYPE_NUMBER, '6, 2', null, null, null, null, 'sumgrades');
+        xmldb_reader_fix_previous_field($dbman, $table, $field);
+        $dbman->change_field_precision($table, $field);
+
+        upgrade_mod_savepoint(true, "$newversion", 'reader');
+    }
     return $result;
 }
