@@ -36,19 +36,27 @@ $id   = required_param('id', PARAM_INT); // "course_modules" id
 $book = required_param('book', PARAM_INT); // "reader_books" id
 $page = optional_param('page', 0, PARAM_INT); // Page to jump to in the attempt.
 
-if (! $cm = get_coursemodule_from_id('reader', $id)) {
-    print_error('invalidcoursemodule');
-}
-if (! $course = $DB->get_record('course', array('id' => $cm->course))) {
-    print_error('coursemisconf');
-}
-if (! $reader = $DB->get_record('reader', array('id' => $cm->instance))) {
-    print_error('invalidcoursemodule');
-}
+$cm = get_coursemodule_from_id('reader', $id, 0, false, MUST_EXIST);
+$course = $DB->get_record('course', array('id'=>$cm->course), '*', MUST_EXIST);
+$reader = $DB->get_record('reader', array('id'=>$cm->instance), '*', MUST_EXIST);
 
-require_login($course, true, $cm);
+require_course_login($course, true, $cm);
+
+// get SQL to verify user can access this book
+list($from, $where, $sqlparams) = reader_available_sql($reader, $USER->id);
+
+// add book id to SQL search conditions
+$where = "id = ? AND $where";
+array_unshift($sqlparams, $book);
+
+// check the user can access the requested book
+if (! $DB->record_exists_sql("SELECT * FROM $from WHERE $where", $sqlparams)) {
+    echo get_string('quiznotavailable', 'reader');
+    die;
+}
 
 $readerobj = reader::create($reader->id, $USER->id, $book);
+
 // This script should only ever be posted to, so set page URL to the view page.
 $PAGE->set_url($readerobj->view_url());
 

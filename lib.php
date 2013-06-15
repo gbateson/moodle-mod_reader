@@ -123,7 +123,7 @@ function reader_add_instance($reader) {
     if (isset($reader->promotionstop)) {
         $allstudents = $DB->get_records('reader_levels', array('readerid' => $reader->id));
         foreach ($allstudents as $allstudents_) {
-            $DB->set_field('reader_levels',  'promotionstop',  $reader->promotionstop, array('id' => $allstudents_->id));
+            $DB->set_field('reader_levels', 'promotionstop', $reader->promotionstop, array('id' => $allstudents_->id));
         }
     }
 
@@ -152,7 +152,7 @@ function reader_update_instance($reader, $id) {
     if (isset($reader->promotionstop)) {
         $allstudents = $DB->get_records('reader_levels', array('readerid' => $reader->id));
         foreach ($allstudents as $allstudents_) {
-            $DB->set_field('reader_levels',  'promotionstop',  $reader->promotionstop, array('id' => $allstudents_->id));
+            $DB->set_field('reader_levels', 'promotionstop', $reader->promotionstop, array('id' => $allstudents_->id));
         }
     }
 
@@ -242,7 +242,7 @@ function reader_user_complete($course, $user, $mod, $reader) {
 function reader_print_recent_activity($course, $isteacher, $timestart) {
     global $CFG;
 
-    return false;  //  True if anything was printed, otherwise false
+    return false; // True if anything was printed, otherwise false
 }
 
 /**
@@ -295,7 +295,7 @@ function reader_cron() {
 
     foreach ($publishersquizzes as $publishersquizze) {
         if (strstr($publishersquizze->name, "\'")) {
-            $DB->set_field('reader_books',  'name', stripslashes($publishersquizze->name), array('id' => $publishersquizze->id));
+            $DB->set_field('reader_books', 'name', stripslashes($publishersquizze->name), array('id' => $publishersquizze->id));
             echo '..reader title updating: '.$publishersquizze->name."\n";
         }
     }
@@ -343,7 +343,7 @@ function reader_get_user_attempt_unfinished($readerid, $userid) {
 }
 
 /**
- * reader_get_stlevel_data
+ * reader_get_level_data
  *
  * @uses $CFG
  * @uses $DB
@@ -352,86 +352,107 @@ function reader_get_user_attempt_unfinished($readerid, $userid) {
  * @return xxx
  * @todo Finish documenting this function
  */
-function reader_get_stlevel_data($reader, $userid=0) {
+function reader_get_level_data($reader, $userid=0) {
     global $CFG, $DB, $USER;
 
-    $counter['countlevel'] = 0;
-    $counter['prevlevel'] = 0;
-    $counter['nextlevel'] = 0;
+    // initialize count of quizzes taken at "prev", "this" and "next" levels
+    //     Note that for "prev" and "next" we count ANY attempt
+    //     but for "this" level, we only count PASSED attempts
+    $count = array('prev' => 0, 'this' => 0, 'next' => 0);
 
     if ($userid==0) {
         $userid = $USER->id;
     }
 
-    if (! $studentlevel = $DB->get_record('reader_levels', array('userid' => $userid, 'readerid' => $reader->id))) {
-        $createlevel = new object;
-        $createlevel->userid = $userid;
-        $createlevel->startlevel = 0;
-        $createlevel->currentlevel = 0;
-        $createlevel->readerid = $reader->id;
-        $createlevel->promotionstop = $reader->promotionstop;
-        $createlevel->time = time();
-        $DB->insert_record('reader_levels', $createlevel);
-        $studentlevel = $DB->get_record('reader_levels', array('userid' => $userid, 'readerid' => $reader->id));
+    if (! $level = $DB->get_record('reader_levels', array('userid' => $userid, 'readerid' => $reader->id))) {
+        $level = (object)array(
+            'userid'        => $userid,
+            'readerid'      => $reader->id,
+            'startlevel'    => 0,
+            'currentlevel'  => 0,
+            'nopromote'     => 0,
+            'promotionstop' => $reader->promotionstop,
+            'goal'          => 0,
+            'time'          => time(),
+        );
+        if (! $level->id = $DB->insert_record('reader_levels', $level)) {
+            // oops record could not be added - shouldn't happen !!
+        }
     }
 
-    $attemptsofbook = $DB->get_records_sql('SELECT ra.*,rp.difficulty,rp.id as rpid FROM {reader_attempts} ra INNER JOIN {reader_books} rp ON rp.quizid = ra.quizid WHERE ra.userid= ?  AND ra.reader= ?  AND ra.timefinish> ?  ORDER BY ra.timemodified', array($USER->id, $reader->id, $reader->ignoredate));
+    $select = 'ra.*, rb.difficulty, rb.id AS bookid';
+    $from   = '{reader_attempts} ra INNER JOIN {reader_books} rb ON rb.quizid = ra.quizid';
+    $where  = 'ra.userid= ? AND ra.reader= ? AND ra.timefinish > ?';
+    $params = array($USER->id, $reader->id, $reader->ignoredate);
 
-    foreach ($attemptsofbook as $attemptsofbook_) {
-        if (reader_get_reader_difficulty($reader, $attemptsofbook_->rpid) == $studentlevel->currentlevel) {
-            if (strtolower($attemptsofbook_->passed) == 'true') {
-                $counter['countlevel'] += 1;
+    if ($attempts = $DB->get_records_sql("SELECT $select FROM $from WHERE $where ORDER BY ra.timemodified", $params)) {
+        foreach ($attempts as $attempt) {
+
+            $difficulty = reader_get_reader_difficulty($reader, $attempt->bookid, $attempt->difficulty);
+            switch (true) {
+
+                case ($difficulty == ($level->currentlevel - 1)):
+                    if ($level->currentlevel < $level->startlevel) {
+                        $count['prev'] = -1;
+                    } else if ($level->time < $attempt->timefinish) {
+                        $count['prev'] += 1;
+                    }
+                    break;
+
+                case ($difficulty == $level->currentlevel):
+                    if (strtolower($attempt->passed)=='true') {
+                        $count['this'] += 1;
+                    }
+                    break;
+
+                case ($difficulty == ($level->currentlevel + 1)):
+                    if ($level->time < $attempt->timefinish) {
+                        $count['next'] += 1;
+                    }
+                    break;
             }
         }
-
-        if (($studentlevel->time < $attemptsofbook_->timefinish) && (reader_get_reader_difficulty($reader, $attemptsofbook_->rpid) == ($studentlevel->currentlevel + 1))) {
-            $counter['nextlevel'] += 1;
-        }
-
-        if ($studentlevel->currentlevel >= $studentlevel->startlevel) {
-            if (($studentlevel->time < $attemptsofbook_->timefinish) && (reader_get_reader_difficulty($reader, $attemptsofbook_->rpid) == ($studentlevel->currentlevel - 1))) {
-                $counter['prevlevel'] += 1;
-            }
-        } else {
-            $counter['prevlevel'] = -1;
-        }
     }
 
-    if ($studentlevel->promotionstop > 0 && $studentlevel->promotionstop == $studentlevel->currentlevel) {
-        $DB->set_field('reader_levels',  'nopromote',  1, array('readerid' => $reader->id,  'userid' => $USER->id));
-        $studentlevel->nopromote = 1;
+    // if this is the highest allowed level, then enable the "nopromote" switch
+    if ($level->promotionstop > 0 && $level->promotionstop <= $level->currentlevel) {
+        $DB->set_field('reader_levels', 'nopromote', 1, array('readerid' => $reader->id, 'userid' => $USER->id));
+        $level->nopromote = 1;
     }
 
-    if ($studentlevel->nopromote == 1) {
-        $counter['countlevel'] = 1;
+    if ($level->nopromote==1) {
+        $count['this'] = 1;
     }
 
-    if ($counter['countlevel'] >= $reader->nextlevel) {
-        $studentlevel->currentlevel += 1;
-        $DB->set_field('reader_levels',  'currentlevel',  $studentlevel->currentlevel, array('readerid' => $reader->id,  'userid' => $USER->id));
-        $DB->set_field('reader_levels', 'time', time(), array('readerid' => $reader->id, 'userid' => $USER->id));
-        $counter['countlevel'] = 0;
-        $counter['prevlevel'] = 0;
-        $counter['nextlevel'] = 0;
+    // promote this student, if they have done enough quizzes at this level
+    if ($count['this'] >= $reader->nextlevel) {
+        $level->currentlevel += 1;
+        $level->time = time();
+        $DB->update_record('reader_levels', $level);
+
+        $count['this'] = 0;
+        $count['prev'] = 0;
+        $count['next'] = 0;
+
         echo '<script type="text/javascript">'."\n";
         echo '//<![CDATA['."\n";
-        echo 'alert("Congratulations!!  You have been promoted to Level '.$studentlevel->currentlevel.'!");'."\n";
+        echo 'alert("Congratulations!! You have been promoted to Level '.$level->currentlevel.'!");'."\n";
         echo '//]]>'."\n";
         echo '</script>';
     }
 
-
-
-    $readerlevel['studentlevel'] = $studentlevel->currentlevel;
-    $readerlevel['onthislevel'] = $reader->nextlevel - $counter['countlevel'];
-    if ($counter['prevlevel'] != -1) {
-        $readerlevel['onprevlevel'] = $reader->quizpreviouslevel - $counter['prevlevel'];
-    } else {
-        $readerlevel['onprevlevel'] = -1;
+    // prepare level data
+    $leveldata = array(
+        'currentlevel' => $level->currentlevel,                        // current level of this user
+        'onprevlevel'  => $reader->quizpreviouslevel - $count['prev'], // number of quizzes allowed at previous level
+        'onthislevel'  => $reader->nextlevel         - $count['this'], // number of quizzes allowed at current level
+        'onnextlevel'  => $reader->quiznextlevel     - $count['next']  // number of quizzes allowed at next level
+    );
+    if ($count['prev'] == -1) {
+        $leveldata['onprevlevel'] = -1;
     }
-    $readerlevel['onnextlevel'] = $reader->quiznextlevel - $counter['nextlevel'];
 
-    return $readerlevel;
+    return $leveldata;
 }
 
 /**
@@ -497,7 +518,7 @@ function reader_create_attempt($reader, $attemptnumber, $bookid) {
         return false; // invalid $bookid or $book->quizid
     }
 
-    $params = array('reader' => $reader->id,  'userid' => $USER->id,  'attempt' => ($attemptnumber - 1));
+    $params = array('reader' => $reader->id, 'userid' => $USER->id, 'attempt' => ($attemptnumber - 1));
     if ($attemptnumber > 1 && $reader->attemptonlast && ($attempt = $DB->get_record('reader_attempts', $params))) {
         // do nothing - we will build on previous attempt
     } else {
@@ -513,7 +534,7 @@ function reader_create_attempt($reader, $attemptnumber, $bookid) {
             'userid'  => $USER->id,
             'quizid'  => $book->quizid,
             'preview' => 0,
-            'layout' => reader_repaginate($reader->questions, $reader->questionsperpage)
+            'layout'  => reader_repaginate($reader->questions, $reader->questionsperpage)
         );
     }
 
@@ -551,7 +572,7 @@ function reader_create_attempt($reader, $attemptnumber, $bookid) {
         if (empty($book->quizid)) {
             $grade = $DB->get_field('question', 'defaultgrade', array('id' => $questionid));
         } else {
-            $params = array('quiz' => $book->quizid,  'question' => $questionid);
+            $params = array('quiz' => $book->quizid, 'question' => $questionid);
             $grade = $DB->get_field('quiz_question_instances', 'grade', $params);
         }
         $instance = (object)array(
@@ -632,7 +653,7 @@ function reader_save_best_grade($reader, $userid = null) {
     $bestgrade = reader_calculate_best_grade($reader, $attempts);
     $bestgrade = reader_rescale_grade($bestgrade, $reader);
     // Save the best grade in the database
-    if ($grade = $DB->get_record('reader_grades', array('reader' => $reader->id,  'userid' => $userid))) {
+    if ($grade = $DB->get_record('reader_grades', array('reader' => $reader->id, 'userid' => $userid))) {
         $grade->grade = $bestgrade;
         $grade->timemodified = time();
         if (! $DB->update_record('reader_grades', $grade)) {
@@ -1173,7 +1194,7 @@ function reader_get_student_attempts($userid, $reader, $allreaders = false, $boo
     $attempts = array_merge($attempts_p, $attempts_n);
     $attempts = array_filter($attempts); // remove blanks
 
-    $level = $DB->get_record('reader_levels', array('userid' => $userid,  'readerid' => $reader->id));
+    $level = $DB->get_record('reader_levels', array('userid' => $userid, 'readerid' => $reader->id));
     if (empty($level)) {
         $level = (object)array('currentlevel' => 0, 'startlevel' => 0);
     }
@@ -1904,7 +1925,7 @@ function reader_selectip_form($userid, $reader) {
 
     $levels = array(0=>"No",1=>"Yes");
 
-    $data = $DB->get_record('reader_strict_users_list', array('readerid' => $reader->id,  'userid' => $userid));
+    $data = $DB->get_record('reader_strict_users_list', array('readerid' => $reader->id, 'userid' => $userid));
 
     $patch = $userid."_ip_".$reader->id;
 
@@ -2055,7 +2076,7 @@ function reader_set_attempt_result($attemptid, $reader) {
             $passedlog = "Failed";
         }
 
-        if (! $DB->get_record('log', array('userid' => $USER->id,  'course' => $COURSE->id,  'info' => "readerID {$reader->id}; reader quiz {$bookdata->id}; {$percentgrade}/{$passedlog}"))) {
+        if (! $DB->get_record('log', array('userid' => $USER->id, 'course' => $COURSE->id, 'info' => "readerID {$reader->id}; reader quiz {$bookdata->id}; {$percentgrade}/{$passedlog}"))) {
             $logaction = 'view attempt: '.substr($bookdata->name, 0, 26); // 40 char limit
             $loginfo   = "readerID {$reader->id}; ".
                          "reader quiz {$bookdata->id}; ".
@@ -2063,8 +2084,8 @@ function reader_set_attempt_result($attemptid, $reader) {
             add_to_log($COURSE->id, 'reader', $logaction, "view.php?id={$attemptid}", $loginfo);
         }
 
-        $DB->set_field('reader_attempts',  "percentgrade",  $percentgrade, array('id' => $attemptid));
-        $DB->set_field('reader_attempts',  "passed",  $passed, array('id' => $attemptid));
+        $DB->set_field('reader_attempts', "percentgrade", $percentgrade, array('id' => $attemptid));
+        $DB->set_field('reader_attempts', "passed", $passed, array('id' => $attemptid));
     }
 }
 
@@ -2232,7 +2253,7 @@ function reader_get_goal_progress($progress, $reader) {
         $progress = 0;
     }
 
-    if ($dataofuserlevels = $DB->get_record('reader_levels', array('userid' => $USER->id,  'readerid' => $reader->id))) {
+    if ($dataofuserlevels = $DB->get_record('reader_levels', array('userid' => $USER->id, 'readerid' => $reader->id))) {
         if (! empty($dataofuserlevels->goal)) {
             $goal = $dataofuserlevels->goal;
         }
@@ -2298,7 +2319,7 @@ function reader_get_goal_progress($progress, $reader) {
         }
         $currentpositionpix += 8;
 
-        $returntext = '<style  type="text/css" >
+        $returntext = '<style type="text/css" >
 <!--
 #ScoreBoxDiv
 {
@@ -2361,28 +2382,31 @@ z-index:40;
  * @uses $DB
  * @param xxx $reader
  * @param xxx $bookid
+ * @param xxx $difficulty (optional, default=0)
  * @return xxx
  * @todo Finish documenting this function
  */
-function reader_get_reader_difficulty($reader, $bookid) {
+function reader_get_reader_difficulty($reader, $bookid, $difficulty=0) {
     global $DB;
-    if ($reader->bookinstances == 1) {
-        if (! $data = $DB->get_record('reader_book_instances', array('readerid' => $reader->id,  'bookid' => $bookid))) {
-            if (empty($data)) {
-                return 0;
-            }
-            $data = $DB->get_record('reader_books', array('id' => $bookid));
-            return $data->difficulty;
-        } else {
-            return $data->difficulty;
+
+    // "Course-specific quiz selection" is enabled for this reader activity
+    if ($reader->bookinstances) {
+        if ($instance = $DB->get_record('reader_book_instances', array('readerid' => $reader->id, 'bookid' => $bookid))) {
+            return $instance->difficulty;
         }
-    } else {
-        $data = $DB->get_record('reader_books', array('id' => $bookid));
-        if (empty($data)) {
-            return 0;
-        }
-        return $data->difficulty;
     }
+
+    // if we already know the difficulty for this book, then use that
+    if ($difficulty) {
+        return $difficulty;
+    }
+
+    // get the book difficulty from the "reader_books" table
+    if ($book = $DB->get_record('reader_books', array('id' => $bookid))) {
+        return $book->difficulty;
+    }
+
+    return 0; // shouldn't happen !!
 }
 
 /**
@@ -2391,29 +2415,31 @@ function reader_get_reader_difficulty($reader, $bookid) {
  * @uses $DB
  * @param xxx $reader
  * @param xxx $bookid
+ * @param xxx $length (optional, default=0)
  * @return xxx
  * @todo Finish documenting this function
  */
-function reader_get_reader_length($reader, $bookid) {
+function reader_get_reader_length($reader, $bookid, $length=0) {
     global $DB;
-    if ($reader->bookinstances == 1) {
-        $data = $DB->get_record('reader_book_instances', array('readerid' => $reader->id,  'bookid' => $bookid));
-        if (! empty($data->length)) {
-            return $data->length;
-        } else {
-            $data = $DB->get_record('reader_books', array('id' => $bookid));
-            if (empty($data)) {
-                return 0;
-            }
-            return $data->length;
+
+    // "Course-specific quiz selection" is enabled for this reader activity
+    if ($reader->bookinstances) {
+        if ($instance = $DB->get_record('reader_book_instances', array('readerid' => $reader->id, 'bookid' => $bookid))) {
+            return $instance->length;
         }
-    } else {
-        $data = $DB->get_record('reader_books', array('id' => $bookid));
-        if (empty($data)) {
-            return 0;
-        }
-        return $data->length;
     }
+
+    // if we already know the length for this book, then use that
+    if ($length) {
+        return $length;
+    }
+
+    // get the book length from the "reader_books" table
+    if ($book = $DB->get_record('reader_books', array('id' => $bookid))) {
+        return $book->length;
+    }
+
+    return 0; // shouldn't happen !!
 }
 
 /**
@@ -2429,21 +2455,27 @@ function reader_get_reader_length($reader, $bookid) {
  * @todo Finish documenting this function
  */
 function reader_ra_checkbox($data) {
-    global $CFG, $USER, $act, $excel, $id;
-    $checked = '';
+    global $act, $excel, $id;
 
     if ($excel) {
-      if ($data['checkbox'] == 1) {
-        return 'yes';
-      } else {
-        return 'no';
-      }
+        return ($data['checkbox']==1 ? 'yes' : 'no');
     }
 
+    $target_id = 'atcheck_'.$data['id'];
+    $target_url = "'admin.php?'+'ajax=true&id=$id&act=$act&checkattempt=".$data['id']."&checkattemptvalue='+(this.checked ? 1 : 0)";
+
+    $params = array('type'    => 'checkbox',
+                    'name'    => 'checkattempt',
+                    'value'   => '1',
+                    'onclick' => "request($target_url,'$target_id')");
+
     if ($data['checkbox'] == 1) {
-        $checked = 'checked';
+        $params['checked'] = 'checked';
     }
-    return '<input type="checkbox" name="checkattempt" value="1" '.$checked.' onclick="if(this.checked) { request(\'admin.php?ajax=true&id='.$id.'&act='.$act.'&checkattempt='.$data['id'].'&checkattemptvalue=1\',\'atcheck_'.$data['id'].'\'); } else { request(\'admin.php?ajax=true&id='.$id.'&act='.$act.'&checkattempt='.$data['id'].'&checkattemptvalue=0\',\'atcheck_'.$data['id'].'\'); }" ><div id="atcheck_'.$data['id'].'"></div>';
+
+    // create checkbox INPUT element and target DIV
+    return html_writer::empty_tag('input', $params).
+           html_writer::tag('div', '', array('id' => $target_id));
 }
 
 /**
@@ -2506,18 +2538,18 @@ function reader_nicetime($unix_date) {
         return "No date provided";
     }
 
-    $periods         = array("second", "minute", "hour", "day", "week", "month", "year", "decade");
-    $lengths         = array("60","60","24","7","4.35","12","10");
+    $periods = array("second", "minute", "hour", "day", "week", "month", "year", "decade");
+    $lengths = array("60","60","24","7","4.35","12","10");
 
-    $now             = time();
+    $now = time();
 
     if($now > $unix_date) {
-        $difference     = $now - $unix_date;
-        $tense         = "";
+        $difference = $now - $unix_date;
+        $tense = "";
 
     } else {
-        $difference     = $unix_date - $now;
-        $tense         = "";
+        $difference = $unix_date - $now;
+        $tense = "";
     }
 
     for($j = 0; $difference >= $lengths[$j] && $j < count($lengths)-1; $j++) {
@@ -2535,12 +2567,12 @@ function reader_nicetime($unix_date) {
     if ($j == 3) {
         $unix_date = $unix_date - $difference * 24 * 60 * 60;
         if($now > $unix_date) {
-            $difference     = $now - $unix_date;
-            $tense         = "";
+            $difference = $now - $unix_date;
+            $tense = "";
 
         } else {
-            $difference     = $unix_date - $now;
-            $tense         = "";
+            $difference = $unix_date - $now;
+            $tense = "";
         }
 
         for($j = 0; $difference >= $lengths[$j] && $j < count($lengths)-1; $j++) {
@@ -2610,17 +2642,17 @@ function reader_forcedtimedelay_check($cleartime, $reader, $studentlevel, $lastt
         if ($usergroups = groups_get_all_groups($course->id, $USER->id)){
             foreach ($usergroups as $group) {
                 if (isset($group->id)) {
-                    $params = array('readerid' => $reader->id,  'level' => $studentlevel,  'groupid' => $group->id);
+                    $params = array('readerid' => $reader->id, 'level' => $studentlevel, 'groupid' => $group->id);
                     $data = $DB->get_record('reader_forcedtimedelay', $params);
                 }
             }
         }
         if (empty($data)) {
-            $params = array('readerid' => $reader->id,  'level' => $studentlevel,  'groupid' => 0);
+            $params = array('readerid' => $reader->id, 'level' => $studentlevel, 'groupid' => 0);
             $data = $DB->get_record('reader_forcedtimedelay', $params);
         }
         if (empty($data)) {
-            $params = array('readerid' => $reader->id,  'level' => 99,  'groupid' => 0);
+            $params = array('readerid' => $reader->id, 'level' => 99, 'groupid' => 0);
             $data = $DB->get_record('reader_forcedtimedelay', $params);
         }
     }
@@ -2776,7 +2808,7 @@ function reader_set_numsections($course, $numsections) {
  * @return either an array of form values or the $default value
  */
 function reader_optional_param_array($name, $default, $type) {
-    $optional_param_array   = 'optional_param';
+    $optional_param_array = 'optional_param';
     if (function_exists('optional_param_array')) {
         switch (true) {
             case (isset($_POST[$name]) && is_array($_POST[$name])): $optional_param_array = 'optional_param_array'; break;
@@ -2787,8 +2819,7 @@ function reader_optional_param_array($name, $default, $type) {
 }
 
 /**
- * Exception for reporting error in Reader module.
- *
+ * Exception for reporting error in Reader module
  */
 class reader_exception extends moodle_exception {
     /**
@@ -2798,4 +2829,544 @@ class reader_exception extends moodle_exception {
     function __construct($debuginfo=null) {
         parent::__construct('error', 'reader', '', null, $debuginfo);
     }
+}
+
+/**
+ * reader_available_sql
+ *
+ * @param xxx $reader
+ * @param xxx $userid
+ * @return xxx
+ * @todo Finish documenting this function
+ */
+function reader_available_sql($reader, $userid) {
+
+    // we want to get a list of all available books
+    // a book is available if it satisfies the following conditions:
+    // (1) the book is not hidden
+    // (2) the quiz for the book has NEVER been attempted before by this user
+    // (3) EITHER the book has an empty "sametitle" field
+    //     OR the "sametitle" field is different from that of any books whose quizzes this user has taken before
+    // (4) EITHER the reader activity's "levelcheck" field is empty
+    //     OR the level of the book is one of the levels this user is currently allowed to take in this reader
+
+    // "id" values of books whose quizzes this user has already attempted
+    $recordids    = 'SELECT rb.id '.
+                  'FROM {reader_attempts} ra LEFT JOIN {reader_books} rb ON ra.quizid = rb.quizid '.
+                  'WHERE ra.userid = ? AND rb.id IS NOT NULL';
+
+    // "sametitle" values for books whose quizzes this user has already attempted
+    $sametitles = 'SELECT DISTINCT rb.sametitle '.
+                  'FROM {reader_attempts} ra LEFT JOIN {reader_books} rb ON ra.quizid = rb.quizid '.
+                  'WHERE ra.userid = ? AND rb.id IS NOT NULL AND rb.sametitle <> ?';
+
+    $from   = '{reader_books}';
+    $where = "id NOT IN ($recordids) AND (sametitle = ? OR sametitle NOT IN ($sametitles)) AND hidden = ?";
+    $sqlparams = array($userid, '', $userid, '', 0);
+
+    $levels = array();
+    if (isset($_SESSION['SESSION']->reader_teacherview) && $_SESSION['SESSION']->reader_teacherview == 'teacherview') {
+        // do nothing - this is a teacher
+    } else if ($reader->levelcheck == 0) {
+        // do nothing - level checking is disabled
+    } else {
+        // a student with level-checking enabled
+        $leveldata = reader_get_level_data($reader, $userid);
+        if ($leveldata['onthislevel'] > 0 && $leveldata['currentlevel'] > 0) {
+            $levels[] = $leveldata['currentlevel'];
+        }
+        if ($leveldata['onprevlevel'] > 0 && $leveldata['currentlevel'] > 1) {
+            $levels[] = ($leveldata['currentlevel'] - 1);
+        }
+        if ($leveldata['onnextlevel'] > 0) {
+            $levels[] = ($leveldata['currentlevel'] + 1);
+        }
+        if (empty($levels)) {
+            $levels[] = 0; // user can't take any more quizzes - shouldn't happen !!
+        }
+    }
+
+    if ($levels = implode(',', $levels)) {
+        if ($reader->bookinstances) {
+            // we are maintaining a list of book difficulties for each course, so we must check "reader_books_instances"
+            $from  .= ' rb LEFT JOIN {reader_book_instances} rbi ON rbi.bookid = rb.id AND rbi.readerid = '.$reader->id;
+            $where .= " AND ((rbi.id IS NULL AND rb.difficulty IN ($levels)) OR (rbi.id IS NOT NULL AND rbi.difficulty IN ($levels)))";
+        } else {
+            $where .= " AND difficulty IN ($levels)";
+        }
+    }
+
+    return array($from, $where, $sqlparams);
+}
+
+/**
+ * reader_available_publishers
+ *
+ * @param xxx $cmid
+ * @param xxx $from
+ * @param xxx $where
+ * @param xxx $sqlparams
+ * @param xxx $count (passed by reference)
+ * @param xxx $record (passed by reference)
+ * @return xxx
+ * @todo Finish documenting this function
+ */
+function reader_available_publishers($cmid, $from, $where, $sqlparams, &$count, &$record) {
+    global $DB;
+    $output = '';
+
+    $select = 'publisher, COUNT(*) AS countbooks';
+    if ($records = $DB->get_records_sql("SELECT $select FROM $from WHERE $where GROUP BY publisher ORDER BY publisher", $sqlparams)) {
+        $count = count($records);
+    } else {
+        $count = 0;
+    }
+
+    if ($count==0) {
+        $output .= 'Sorry, there are currently no books for you';
+    } else if ($count==1) {
+        $record = reset($records);
+        $output .= html_writer::tag('p', 'Publisher: '.$record->publisher);
+    } else if ($count > 1) {
+        //$output .= html_writer::tag('p', 'Choose a publisher');
+
+        $target_div = 'bookleveldiv';
+        $target_url = "'view_get_bookslist.php?id=$cmid&publisher='+escape(this.options[this.selectedIndex].value)";
+
+        $params = array('id' => 'id_publisher',
+                        'name' => 'publisher',
+                        'size' => min(10, count($records)),
+                        'style' => 'width: 240px; float: left; margin: 0px 9px;',
+                        'onchange' => "request($target_url, '$target_div')");
+        $output .= html_writer::start_tag('select', $params);
+
+        foreach ($records as $record) {
+            $output .= html_writer::tag('option', "$record->publisher ($record->countbooks books)", array('value' => $record->publisher));
+        }
+        $record = null;
+
+        $output .= html_writer::end_tag('select');
+        $output .= html_writer::tag('div', '', array('id' => $target_div));
+    }
+
+    return $output;
+}
+
+/**
+ * reader_available_levels
+ *
+ * @param xxx $publisher
+ * @param xxx $cmid
+ * @param xxx $from
+ * @param xxx $where
+ * @param xxx $sqlparams
+ * @param xxx $count (passed by reference)
+ * @param xxx $record (passed by reference)
+ * @return xxx
+ * @todo Finish documenting this function
+ */
+function reader_available_levels($publisher, $cmid, $from, $where, $sqlparams, &$count, &$record) {
+    global $DB;
+    $output = '';
+
+    $where .= ' AND publisher = ?';
+    array_push($sqlparams, $publisher);
+
+    $select = "level, COUNT(*) AS countbooks, ROUND(SUM(difficulty) / COUNT(*)) AS average_difficulty";
+    if ($records = $DB->get_records_sql("SELECT $select FROM $from WHERE $where GROUP BY level ORDER BY average_difficulty", $sqlparams)) {
+        $count = count($records);
+    } else {
+        $count = 0;
+    }
+
+    if ($count==0) {
+        $output .= 'Sorry, there are currently no books for you by '.$publisher;
+    } else if ($count==1) {
+        $record = reset($records);
+        if ($record->level != '' && $record->level != '--') {
+            $output .= html_writer::tag('p', 'Level: '.$record->level, array('style' => 'float: left; margin: 0px 9px;'));
+        }
+    } else if ($count > 1) {
+        //$output .= html_writer::tag('p', 'Choose a level');
+
+        $target_div = 'bookiddiv';
+        $target_url = "'view_get_bookslist.php?id=$cmid&publisher=$publisher&level='+escape(this.options[this.selectedIndex].value)";
+
+        $params = array('id' => 'id_level',
+                        'name' => 'level',
+                        'size' => min(10, count($records)),
+                        'style' => 'width: 240px; float: left; margin: 0px 9px;',
+                        'onchange' => "request($target_url, '$target_div')");
+        $output .= html_writer::start_tag('select', $params);
+
+        foreach ($records as $record) {
+            if ($record->level=='' || $record->level=='--') {
+                $displaylevel = $publisher;
+            } else {
+                $displaylevel = $record->level;
+            }
+            $output .= html_writer::tag('option', "$displaylevel ($record->countbooks books)", array('value' => $record->level));
+        }
+        $record = null;
+
+        $output .= html_writer::end_tag('select');
+        $output .= html_writer::tag('div', '', array('id' => $target_div));
+    }
+
+    return $output;
+}
+
+/**
+ * reader_available_bookids
+ *
+ * @param xxx $publisher
+ * @param xxx $level
+ * @param xxx $cmid
+ * @param xxx $from
+ * @param xxx $where
+ * @param xxx $sqlparams
+ * @param xxx $count (passed by reference)
+ * @param xxx $record (passed by reference)
+ * @return xxx
+ * @todo Finish documenting this function
+ */
+function reader_available_bookids($publisher, $level, $cmid, $from, $where, $sqlparams, &$count, &$record) {
+    global $DB;
+    $output = '';
+
+    $where .= " AND publisher = ? AND level = ?";
+    array_push($sqlparams, $publisher, $level);
+
+    $select = '*';
+    if ($records = $DB->get_records_sql("SELECT $select FROM $from WHERE $where ORDER BY name", $sqlparams)) {
+        $count = count($records);
+    } else {
+        $count = 0;
+    }
+
+    if ($count==0) {
+        $output .= 'Sorry, there are currently no books for you by '.$publisher;
+        $output .= (($level=='' || $level=='--') ? '' : " ($level)");
+
+    } else if ($count==1) {
+        $record = reset($records); // just one book found
+
+    } else if ($count > 1) {
+        //$output .= html_writer::tag('p', 'Book:');
+
+        $target_div = 'booknamediv';
+        $target_url = "'view_get_bookslist.php?id=$cmid&publisher=$publisher&level=$level&bookid='+this.options[this.selectedIndex].value";
+
+        $params = array('id' => 'id_book',
+                        'name' => 'book',
+                        'size' => min(10, count($records)),
+                        'style' => 'width: 360px; float: left; margin: 0px 9px;',
+                        'onchange' => "request($target_url, '$target_div')");
+        $output .= html_writer::start_tag('select', $params);
+
+        foreach ($records as $record) {
+            $output .= html_writer::tag('option', "[RL: $record->difficulty] $record->name", array('value' => $record->id));
+        }
+
+        $output .= html_writer::end_tag('select');
+        $output .= html_writer::tag('div', '', array('id' => $target_div, 'style' => 'float: left; margin: 0px 9px;'));
+    }
+
+    return $output;
+}
+
+/**
+ * reader_available_books
+ *
+ * @param xxx $cmid
+ * @param xxx $reader
+ * @param xxx $userid
+ * @return xxx
+ * @todo Finish documenting this function
+ */
+function reader_available_books($cmid, $reader, $userid) {
+    global $DB, $OUTPUT;
+    $output = '';
+
+    // get SQL $from and $where statements to extract available books
+    list($from, $where, $sqlparams) = reader_available_sql($reader, $userid);
+
+    // get parameters passed from browser
+    $publisher = optional_param('publisher', null, PARAM_CLEAN); // book publisher
+    $level     = optional_param('level',     null, PARAM_CLEAN); // book level
+    $bookid    = optional_param('bookid',    null, PARAM_INT  ); // book id
+
+    if ($publisher===null) {
+
+        $count = 0;
+        $record = null;
+        $output .= reader_available_publishers($cmid, $from, $where, $sqlparams, $count, $record);
+
+        if ($count==0 || $count > 1) {
+            return $output;
+        }
+
+        // otherwise, there is just one publisher, so continue and show the levels
+        $level = $record->publisher;
+    }
+
+    if ($level===null) {
+
+        $count = 0;
+        $record = null;
+        $output .= reader_available_levels($publisher, $cmid, $from, $where, $sqlparams, $count, $record);
+
+        if ($count==0 || $count > 1) {
+            return $output;
+        }
+
+        // otherwise there is just one level, so continue and show the books
+        $level = $record->level;
+    }
+
+    $book = null;
+    if ($bookid===null || $bookid===0) {
+
+        $count = 0;
+        $record = null;
+        $output .= reader_available_bookids($publisher, $level, $cmid, $from, $where, $sqlparams, $count, $record);
+
+        if ($count==0 || $count > 1) {
+            return $output;
+        }
+
+        // otherwise there is just one book, so continue and show the book name
+        $bookid = $record->id;
+    }
+
+    if ($book===null) {
+        $book = $DB->get_record('reader_books', array('id' => $bookid));
+    }
+
+    $params = array('id' => $cmid, 'book' => $bookid);
+    $url = new moodle_url('/mod/reader/quiz/startattempt.php', $params);
+
+    $params = array('class' => 'singlebutton readerquizbutton');
+    $output .= $OUTPUT->single_button($url, get_string('takequizfor', 'reader', $book->name), 'get', $params);
+
+    return $output;
+}
+
+/**
+ * reader_search_books
+ *
+ * @param xxx $cmid
+ * @param xxx $reader
+ * @param xxx $userid
+ * @param xxx $search (optional, default=0)
+ * @return xxx
+ * @todo Finish documenting this function
+ */
+function reader_search_books($cmid, $reader, $userid, $search=0) {
+    global $CFG, $DB, $OUTPUT;
+    $output = '';
+
+    // get parameters passed from form
+    $searchpublisher  = optional_param('searchpublisher',  '', PARAM_CLEAN);
+    $searchlevel      = optional_param('searchlevel',      '', PARAM_CLEAN);
+    $searchname       = optional_param('searchname',       '', PARAM_CLEAN);
+    $searchdifficulty = optional_param('searchdifficulty', '', PARAM_INT);
+
+    if ($search==0) {
+        $target_div = 'searchresultsdiv';
+        $target_url = "'view_get_bookslist.php?id=$cmid'".
+                      "+'&search=1'".
+                      "+'&searchpublisher='+escape(this.searchpublisher.value)".
+                      "+'&searchlevel='+escape(this.searchlevel.value)".
+                      "+'&searchname='+escape(this.searchname.value)".
+                      "+'&searchdifficulty='+this.searchdifficulty.options[this.searchdifficulty.selectedIndex].value";
+
+        // create the search form
+        $params = array(
+            'id'     => 'id_readersearchform',
+            'class'  => 'readersearchform',
+            'method' => 'post',
+            'action' => new moodle_url('/mod/reader/view.php', array('id' => $cmid)),
+            'onsubmit' => "request($target_url, '$target_div'); return false;"
+        );
+        $output .= html_writer::start_tag('form', $params);
+
+        $table = new html_table();
+        $table->align = array('right', 'left');
+
+        $table->rowclasses[0] = 'advanced'; // publisher
+        $table->rowclasses[1] = 'advanced'; // level
+        $table->rowclasses[3] = 'advanced'; // difficulty
+
+        $table->data[] = new html_table_row(array(
+            html_writer::tag('b', get_string('publisher', 'reader').':'),
+            html_writer::empty_tag('input', array('type' => 'text', 'name' => 'searchpublisher', 'value' => $searchpublisher))
+        ));
+        $table->data[] = new html_table_row(array(
+            html_writer::tag('b', get_string('level', 'reader').':'),
+            html_writer::empty_tag('input', array('type' => 'text', 'name' => 'searchlevel', 'value' => $searchlevel))
+        ));
+        $table->data[] = new html_table_row(array(
+            html_writer::tag('b', get_string('booktitle', 'reader').':'),
+            html_writer::empty_tag('input', array('type' => 'text', 'name' => 'searchname', 'value' => $searchname))
+        ));
+
+        if (isset($_SESSION['SESSION']->reader_teacherview) && $_SESSION['SESSION']->reader_teacherview == 'teacherview') {
+            // this is a teacher
+            $alllevels = true;
+        } else if ($reader->levelcheck == 0) {
+            // no level checking
+            $alllevels = true;
+        } else {
+            $alllevels = false;
+        }
+
+        $levels = array();
+        if ($alllevels) {
+            if ($reader->bookinstances) {
+                $tablename = 'reader_book_instances';
+            } else {
+                $tablename = 'reader_books';
+            }
+            if ($records = $DB->get_records_select($tablename, 'difficulty < 99', null, 'difficulty', 'DISTINCT difficulty')) {
+                $levels['-1'] = get_string('none');
+                foreach ($records as $record) {
+                    $levels[$record->difficulty] = $record->difficulty;
+                }
+            }
+        } else {
+            $leveldata = reader_get_level_data($reader, $userid);
+            if ($leveldata['onthislevel'] > 0 && $leveldata['currentlevel'] > 0) {
+                $levels[] = $leveldata['currentlevel'];
+            }
+            if ($leveldata['onprevlevel'] > 0 && $leveldata['currentlevel'] > 1) {
+                $levels[] = ($leveldata['currentlevel'] - 1);
+            }
+            if ($leveldata['onnextlevel'] > 0) {
+                $levels[] = ($leveldata['currentlevel'] + 1);
+            }
+        }
+
+        $table->data[] = new html_table_row(array(
+            html_writer::tag('b', get_string('difficulty', 'reader').':'),
+            html_writer::select($levels, 'searchdifficulty', $searchdifficulty, '')
+        ));
+
+        $onclick = '';
+        $onclick .= "var obj = document.getElementById('id_readersearchform');";
+        $onclick .= "if (obj) {";
+        $onclick .=     "obj = obj.getElementsByTagName('tr');";
+        $onclick .= "}";
+        $onclick .= "var styledisplay = '';";
+        $onclick .= "if (obj) {";
+        $onclick .=     "for (var i=0; i<obj.length; i++) {";
+        $onclick .=         "if (obj[i].className.indexOf('advanced')>=0) {";
+        $onclick .=             "styledisplay = obj[i].style.display;";
+        $onclick .=             "obj[i].style.display = (styledisplay ? '' : 'table-row');";
+        $onclick .=         "}";
+        $onclick .=     "}";
+        $onclick .= "}";
+        $onclick .= "this.innerHTML = (styledisplay ? '".get_string('showadvanced', 'form')."' : '".get_string('hideadvanced', 'form')."');";
+
+        $table->data[] = new html_table_row(array(
+            '&nbsp;',
+            html_writer::empty_tag('input', array('type' => 'submit', 'name' => 'submit', 'value' => get_string('search'))).
+            ' '.html_writer::tag('small', html_writer::tag('a', get_string('showadvanced', 'form').' ...', array('onclick' => $onclick)))
+        ));
+        $output .= html_writer::table($table);
+
+        $output .= html_writer::end_tag('form');
+    }
+
+    $searchresults = '';
+    if ($search) {
+        // get SQL $from and $where statements to extract available books
+        list($from, $where, $sqlparams) = reader_available_sql($reader, $userid);
+
+        // restrict search, if necessary
+        $search = array();
+        if (is_numeric($searchdifficulty) && $searchdifficulty >= 0) {
+            array_unshift($search, 'difficulty = ?');
+            array_unshift($sqlparams, $searchdifficulty);
+        }
+        if ($searchpublisher) {
+            array_unshift($search, $DB->sql_like('publisher', '?', false, false));
+            array_unshift($sqlparams, "%$searchpublisher%");
+        }
+        if ($searchlevel) {
+            array_unshift($search, $DB->sql_like('level', '?', false, false));
+            array_unshift($sqlparams, "%$searchlevel%");
+        }
+        if ($searchname) {
+            array_unshift($search, $DB->sql_like('name', '?', false, false));
+            array_unshift($sqlparams, "%$searchname%");
+        }
+        if (count($search)) {
+            $where = implode(' AND ', $search)." AND $where";
+            $search = 1;
+        }
+    }
+
+    if ($search) {
+
+        $cheatsheet = '';
+        $strcheatsheet = '';
+
+        // if there is a "cheatsheet" script, make it available (for site admins only)
+        if (has_capability('moodle/site:config', get_context_instance(CONTEXT_SYSTEM))) {
+            if (file_exists($CFG->dirroot.'/mod/reader/utilities/print_cheatsheet.php')) {
+                $cheatsheet = $CFG->wwwroot.'/mod/reader/utilities/print_cheatsheet.php';
+                $strcheatsheet = get_string('cheatsheet', 'reader');
+            }
+        }
+
+        $select = 'id, publisher, level, name, difficulty';
+        if ($books = $DB->get_records_sql("SELECT $select FROM $from WHERE $where", $sqlparams)) {
+
+            $table = new html_table();
+
+            $table->head = array(
+                get_string('publisher', 'reader'),
+                get_string('level', 'reader'),
+                get_string('booktitle', 'reader')." (".count($books)." books)",
+                get_string('difficulty', 'reader'),
+                '&nbsp;'
+            );
+            if ($cheatsheet) {
+                $table->head[] = html_writer::tag('small', $strcheatsheet);
+            }
+
+            foreach ($books as $book) {
+                $publisher = $book->publisher.(($book->level=='' | $book->level=='--') ? '' : ' - '.$book->level);
+
+                $params = array('id' => $cmid, 'book' => $book->id);
+                $url = new moodle_url('/mod/reader/quiz/startattempt.php', $params);
+
+                $params = array('class' => 'singlebutton readerquizbutton');
+                $button = $OUTPUT->single_button($url, get_string('takethisquiz', 'reader'), 'get', $params);
+
+                $row = array(
+                    $book->publisher,
+                    (($book->level=='' || $book->level=='--') ? '' : $book->level),
+                    $book->name,
+                    $book->difficulty,
+                    $button
+                );
+                if ($cheatsheet) {
+                    $url = new moodle_url($cheatsheet, array('publishers' => $publisher, 'books' => $book->id));
+                    $params = array('href' => $url, 'onclick' => "this.target='_blank; return true;'");
+                    $row[] = html_writer::tag('small', html_writer::tag('a', $strcheatsheet, $params));
+                }
+                $table->data[] = new html_table_row($row);
+            }
+            if (count($table->data)) {
+                $searchresults .= html_writer::table($table);
+            }
+        } else {
+            $searchresults .= html_writer::tag('p', get_string('nosearchresults', 'reader'));
+        }
+    }
+    $output .= html_writer::tag('div', $searchresults, array('id' => 'searchresultsdiv'));
+
+    return $output;
 }

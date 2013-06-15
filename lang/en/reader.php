@@ -316,3 +316,13 @@ If you select "No", any Reader books whose quiz are missing will be marked as ha
 Note that even if you choose "No", the word counts for each student in Reader activities will not be affected by this operation.
 
 Do you wish to download and install missing Reader module quizzes for books on this Moodle site?';
+
+$string['takethisquiz'] = 'Take this quiz';
+$string['takequizfor'] = 'Take the quiz for "{$a}"';
+$string['searchforthebookthatyouwant'] = 'Search for the book that you want to take a quiz on';
+$string['booktitle'] = 'Book title';
+$string['difficulty'] = 'RL';
+$string['cheatsheet'] = 'Cheat sheet';
+$string['nosearchresults'] = 'No books matching your search are available';
+$string['includepublishers'] = 'Search publisher names too?';
+$string['quiznotavailable'] = 'Sorry, this quiz is not currently available to you';

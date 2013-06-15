@@ -125,7 +125,7 @@ if (has_capability('mod/reader:manage', $contextmodule)) {
     }
 }
 
-$leveldata = reader_get_stlevel_data($reader);
+$leveldata = reader_get_level_data($reader);
 
 echo $OUTPUT->box_start('generalbox');
 
@@ -364,17 +364,17 @@ if ($reader->wordsprogressbar) {
 //    $displaymore = " more ";
 //}
 
-echo "<h3>".get_string('yourcurrentlevel', 'reader').": {$leveldata['studentlevel']}</h3>";
+echo '<h3>'.get_string('yourcurrentlevel', 'reader').': '.$leveldata['currentlevel'].'</h3>';
 
 $promoteinfo = $DB->get_record('reader_levels', array('userid' => $USER->id, 'readerid' => $reader->id));
 if ($promoteinfo->nopromote == 1) {
-    if ($promoteinfo->promotionstop == $leveldata['studentlevel']) {
+    if ($promoteinfo->promotionstop == $leveldata['currentlevel']) {
         print_string('pleaseaskyourinstructor', 'reader');
     } else {
         print_string('yourteacherhasstopped', 'reader');
     }
 
-    print_string('youcantakeasmanyquizzesasyouwant', 'reader', $leveldata['studentlevel']);
+    print_string('youcantakeasmanyquizzesasyouwant', 'reader', $leveldata['currentlevel']);
 
     if ($leveldata['onprevlevel'] <= 0) {
         $quizcount = 'no';
@@ -383,7 +383,7 @@ if ($promoteinfo->nopromote == 1) {
     }
     if ($leveldata['onprevlevel'] == 1) { $quiztext = 'quiz'; } else { $quiztext = 'quizzes'; }
     print_string('youmayalsotake', 'reader', $quizcount);
-    echo '{$quiztext} '.get_string('atlevel', 'reader').' '.($leveldata['studentlevel'] - 1).' ';
+    echo '{$quiztext} '.get_string('atlevel', 'reader').' '.($leveldata['currentlevel'] - 1).' ';
 
 } else if ($reader->levelcheck == 1) {
 
@@ -392,7 +392,7 @@ if ($promoteinfo->nopromote == 1) {
     } else {
         print_string('youmusttakequizzes', 'reader', $leveldata['onthislevel']);
     }
-    print_string('atlevelbeforebeingpromoted', 'reader', $leveldata['studentlevel']);
+    print_string('atlevelbeforebeingpromoted', 'reader', $leveldata['currentlevel']);
 
     if ($leveldata['onprevlevel'] <= 0) {
         $quizcount = 'no';
@@ -401,7 +401,7 @@ if ($promoteinfo->nopromote == 1) {
     }
     if ($leveldata['onprevlevel'] == 1) { $quiztext = "quiz"; } else { $quiztext = "quizzes"; }
 
-    if (($leveldata['studentlevel'] - 1) >= 0) {
+    if (($leveldata['currentlevel'] - 1) >= 0) {
 
         if ($leveldata['onprevlevel'] > 0 && $leveldata['onnextlevel'] <= 0) {
             $quiznextlevelso = 'but';
@@ -409,7 +409,7 @@ if ($promoteinfo->nopromote == 1) {
             $quiznextlevelso = 'and';
         }
         print_string('youmayalsotake', 'reader', $quizcount);
-        echo "{$quiztext} ".get_string('atlevel', 'reader')." ".($leveldata['studentlevel'] - 1)." ";
+        echo "{$quiztext} ".get_string('atlevel', 'reader')." ".($leveldata['currentlevel'] - 1)." ";
     } else {
         print_string('youcantake', 'reader');
     }
@@ -427,7 +427,7 @@ if ($promoteinfo->nopromote == 1) {
     if ($leveldata['onnextlevel'] == 1) {
         $quiztext = ' quiz '; } else { $quiztext = ' quizzes ';
     }
-    echo $quiznextlevelso.get_string('andnextmore', 'reader', $quizcount).$quiztext.get_string('atlevel', 'reader'). ' ' . ($leveldata['studentlevel'] + 1 .'.');
+    echo $quiznextlevelso.get_string('andnextmore', 'reader', $quizcount).$quiztext.get_string('atlevel', 'reader'). ' ' . ($leveldata['currentlevel'] + 1 .'.');
 } else if ($reader->levelcheck == 0) {
     print_string('butyoumaytakequizzes', 'reader');
 }
@@ -439,7 +439,7 @@ if ($reader->attemptsofday > 0) { // && $_SESSION['SESSION']->reader_teacherview
     //$lastttempt = $DB->get_record_sql('SELECT * FROM {reader_attempts} WHERE reader= ? and userid= ?  ORDER by timefinish DESC',array($reader->id, $USER->id));
     //$lastttempt = $DB->get_record_sql('SELECT * FROM {reader_attempts} ra, {reader} r WHERE ra.userid= ?  and r.id=ra.reader and r.course= ?  ORDER by ra.timefinish DESC', array($USER->id, $course->id));
     $cleartime = $lastattemptdate + ($reader->attemptsofday * 24 * 60 * 60);
-    $cleartime = reader_forcedtimedelay_check ($cleartime, $reader, $leveldata['studentlevel'], $lastattemptdate);
+    $cleartime = reader_forcedtimedelay_check ($cleartime, $reader, $leveldata['currentlevel'], $lastattemptdate);
     $time = time();
     if ($time > $cleartime) {
         $showform = true;
@@ -497,99 +497,6 @@ if (count($messages) > 0 && !empty($messages)) {
     }
 }
 
-echo '<h3>'.get_string('selectthebookthatyouwant', 'reader').':</h3>';
-
-$publisherform  = array('id='.$id.'&publisher=Select Publisher' => get_string('selectpublisher', 'reader'));
-$publisherform2 = array('id='.$id.'&publisher=Select Publisher' => get_string('selectpublisher', 'reader'));
-$seriesform     = array(get_string('selectseries', 'reader'));
-$levelsform     = array(get_string('selectlevel', 'reader'));
-$booksform      = array();
-
-$alreadyansweredbooksid = array();
-$promoteinfo = $DB->get_record('reader_levels', array('userid' => $USER->id, 'readerid' => $reader->id));
-if ((isset($_SESSION['SESSION']->reader_teacherview) && $_SESSION['SESSION']->reader_teacherview == "teacherview") || $reader->levelcheck == 0) {
-    $levels = range(0, 15);
-} else {
-    $levels = array();
-    if ($leveldata['onthislevel'] > 0) {
-        $levels[] = $leveldata['studentlevel'];
-    }
-    if ($leveldata['onprevlevel'] > 0 && ($leveldata['studentlevel'] - 1) >= 0) {
-        $levels[] = ($leveldata['studentlevel'] - 1);
-    }
-    if ($leveldata['onnextlevel'] > 0) {
-        $levels[] = ($leveldata['studentlevel'] + 1);
-    }
-}
-$allowdifficultysql = implode(',', $levels);
-
-$alreadyansweredbookssametitle = array();
-if (list($attemptdata, $summaryattemptdata) = reader_get_student_attempts($USER->id, $reader, true, true)) {
-    foreach ($attemptdata as $attemptdata_) {
-        reader_set_attempt_result ($attemptdata_['id'], $reader);  //insert result
-        $alreadyansweredbooksid[] = $attemptdata_['quizid'];
-        if (! empty($attemptdata_['sametitle'])) {
-            $alreadyansweredbookssametitle[] = $attemptdata_['sametitle'];
-        }
-    }
-}
-
-$publishers = $DB->get_records ('reader_books', NULL, 'publisher');
-foreach ($publishers as $publisher_) {
-    $publisherform['id='.$id.'&publisher='.$publisher_->publisher] = $publisher_->publisher;
-}
-
-foreach ($publisherform as $key => $value) {
-    $needtousepublisher = false;
-    if ($allowdifficultysql) {
-        if ($reader->bookinstances == 1) {
-            $books = $DB->get_records_sql("SELECT * FROM {reader_books} rb INNER JOIN {reader_book_instances} ib ON ib.bookid = rb.id WHERE ib.readerid = ? and rb.publisher= ? and rb.hidden='0' and rb.private IN(0, ? ) and ib.difficulty IN( ".$allowdifficultysql." ) ORDER BY rb.name", array($reader->id, $value, $reader->id));
-        } else {
-            $books = $DB->get_records_sql("SELECT * FROM {reader_books} WHERE publisher= ? and hidden='0' and private IN(0, ? ) and difficulty IN( ".$allowdifficultysql." ) ORDER BY name", array($value, $reader->id));
-        }
-        foreach ($books as $books_) {
-            if (! empty($books_->quizid)) {
-                if ($reader->bookinstances == 1) {
-                    if (! in_array($books_->bookid, $alreadyansweredbooksid)) {
-                        $needtousepublisher = true;
-                    }
-                } else {
-                    if (! in_array($books_->id, $alreadyansweredbooksid)) {
-                        $needtousepublisher = true;
-                    }
-                }
-
-                if ($showform) {
-                    if (! empty($books_->sametitle) && is_array($alreadyansweredbookssametitle)) {
-                        if ($reader->bookinstances == 1) {
-                            if (! in_array($books_->sametitle, $alreadyansweredbookssametitle)) {
-                                $needtousepublisher = true; break;
-                            }
-                        } else {
-                            if (! in_array($books_->sametitle, $alreadyansweredbookssametitle)) {
-                                $needtousepublisher = true; break;
-                            }
-                        }
-                    } else {
-                        if ($reader->bookinstances == 1) {
-                            $needtousepublisher = true;
-                            break;
-                        } else {
-                            $needtousepublisher = true;
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-    }
-    if ($needtousepublisher) {
-        $publisherform2['id='.$id.'&publisher='.$value] = $value;
-    }
-}
-unset($publisherform);
-$publisherform = $publisherform2;
-
 if ($attempt = $DB->get_record('reader_attempts', array('reader' => $cm->instance, 'userid' => $USER->id, 'timefinish' => 0))) {
     $showform = false;
 
@@ -624,46 +531,19 @@ if (isset($_SESSION['SESSION']->reader_changetostudentview)) {
     }
 }
 
+
+
 if ($showform && has_capability('mod/reader:attemptreaders', $contextmodule)) {
 
-    echo '<script type="text/javascript">'."\n";
-    echo '//<![CDATA['."\n";
-    echo 'function validateForm(form) {'."\n";
-    echo '    return (form && form.book && isChosen(form.book));'."\n";
-    echo '}'."\n";
-    echo 'function isChosen(select) {'."\n";
-    echo '    if (select.selectedIndex == -1) {'."\n";
-    echo '        alert("Please choose book!");'."\n";
-    echo '        return false;'."\n";
-    echo '    } else {'."\n";
-    echo '        return true;'."\n";
-    echo '    }'."\n";
-    echo '}'."\n";
-    echo '//]]>'."\n";
-    echo '</script>'."\n";
+    echo '<h3>'.get_string('searchforthebookthatyouwant', 'reader').':</h3>';
+    echo reader_search_books($id, $reader, $USER->id, '');
 
-    echo '<form action="quiz/startattempt.php?id='.$id.'" method="post" id="mform1">';
-    echo '<center><table width="600px">';
-    echo '<tr><td width="200px">'.get_string('publisherseries', 'reader').'</td><td width="10px"></td><td width="200px"></td></tr>';
-    echo '<tr><td valign="top">';
-    echo '<select name="publisher" id="id_publisher" onchange="request(\'view_get_bookslist.php?ajax=true&\' + this.options[this.selectedIndex].value,\'selectthebook\'); return false;">';
-    foreach ($publisherform as $publisherformkey => $publisherformvalue) {
-        echo '<option value="'.$publisherformkey.'" ';
-        if ($publisherformvalue == $publisher) { echo 'selected="selected"'; }
-        echo ' >'.$publisherformvalue.'</option>';
-    }
-    echo '</select>';
-    echo '</td><td valign="top">';
+    echo '<h3>'.get_string('selectthebookthatyouwant', 'reader').':</h3>';
+    echo reader_available_books($id, $reader, $USER->id);
 
-    echo '</td><td valign="top"><div id="selectthebook">';
-
-    echo '</div></td></tr>';
-    echo '<tr><td colspan="3" align="center">';
-
-    echo '</td></tr>';
-    echo '<tr><td colspan="3" align="center"><input type="button" value="Take quiz" onclick="if (validateForm(this.form)) {this.form.submit() };" /> <input value="'.get_string('returntocoursepage', 'reader').'" onclick="location.href=\''.$CFG->wwwroot.'/course/view.php?id='.$course->id.'\'" type="button" /></td></tr>';
-    echo '</table>';
-    echo '</form></center>';
+    $url = new moodle_url('/course/view.php', array('id' => $course->id));
+    $btn = $OUTPUT->single_button($url, get_string('returntocoursepage', 'reader'), 'get');
+    echo html_writer::tag('div', $btn, array('style' => 'clear: both; padding: 12px;'));
 
 } else if (! $DB->get_record('reader_attempts', array('reader' => $cm->instance, 'userid' => $USER->id, 'timefinish' => 0))) {
     print_string('pleasewait', 'reader');
@@ -711,7 +591,7 @@ function reader_level_blockgraph($reader, $level) {
     $output .= html_writer::start_tag('div', array('style'=>'float:right; margin-right: 50px;'));
 
     $output .= html_writer::start_tag('div');
-    $output .= html_writer::tag('h3', get_string('quizzespassedtable', 'reader', $level['studentlevel']));
+    $output .= html_writer::tag('h3', get_string('quizzespassedtable', 'reader', $level['currentlevel']));
     $output .= html_writer::end_tag('div');
 
     for ($i = $max; $i > 0; $i--) {
