@@ -57,7 +57,7 @@ if (isset($_SESSION['SESSION']->reader_lastuser) && $_SESSION['SESSION']->reader
 }
 
 if ($search) {
-    echo reader_search_books($id, $reader, $USER->id, $search);
+    echo reader_search_books($id, $reader, $USER->id);
 } else {
     echo reader_available_books($id, $reader, $USER->id);
 }

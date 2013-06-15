@@ -536,7 +536,7 @@ if (isset($_SESSION['SESSION']->reader_changetostudentview)) {
 if ($showform && has_capability('mod/reader:attemptreaders', $contextmodule)) {
 
     echo '<h3>'.get_string('searchforthebookthatyouwant', 'reader').':</h3>';
-    echo reader_search_books($id, $reader, $USER->id, '');
+    echo reader_search_books($id, $reader, $USER->id, true);
 
     echo '<h3>'.get_string('selectthebookthatyouwant', 'reader').':</h3>';
     echo reader_available_books($id, $reader, $USER->id);

@@ -2851,7 +2851,7 @@ function reader_available_sql($reader, $userid) {
     //     OR the level of the book is one of the levels this user is currently allowed to take in this reader
 
     // "id" values of books whose quizzes this user has already attempted
-    $recordids    = 'SELECT rb.id '.
+    $recordids  = 'SELECT rb.id '.
                   'FROM {reader_attempts} ra LEFT JOIN {reader_books} rb ON ra.quizid = rb.quizid '.
                   'WHERE ra.userid = ? AND rb.id IS NOT NULL';
 
@@ -3158,11 +3158,11 @@ function reader_available_books($cmid, $reader, $userid) {
  * @param xxx $cmid
  * @param xxx $reader
  * @param xxx $userid
- * @param xxx $search (optional, default=0)
+ * @param xxx $showform (optional, default=false)
  * @return xxx
  * @todo Finish documenting this function
  */
-function reader_search_books($cmid, $reader, $userid, $search=0) {
+function reader_search_books($cmid, $reader, $userid, $showform=false) {
     global $CFG, $DB, $OUTPUT;
     $output = '';
 
@@ -3170,9 +3170,10 @@ function reader_search_books($cmid, $reader, $userid, $search=0) {
     $searchpublisher  = optional_param('searchpublisher',  '', PARAM_CLEAN);
     $searchlevel      = optional_param('searchlevel',      '', PARAM_CLEAN);
     $searchname       = optional_param('searchname',       '', PARAM_CLEAN);
-    $searchdifficulty = optional_param('searchdifficulty', '', PARAM_INT);
+    $searchdifficulty = optional_param('searchdifficulty', -1, PARAM_INT);
+    $search           = optional_param('search',            0, PARAM_INT);
 
-    if ($search==0) {
+    if ($showform) {
         $target_div = 'searchresultsdiv';
         $target_url = "'view_get_bookslist.php?id=$cmid'".
                       "+'&search=1'".
@@ -3229,9 +3230,8 @@ function reader_search_books($cmid, $reader, $userid, $search=0) {
                 $tablename = 'reader_books';
             }
             if ($records = $DB->get_records_select($tablename, 'difficulty < 99', null, 'difficulty', 'DISTINCT difficulty')) {
-                $levels['-1'] = get_string('none');
                 foreach ($records as $record) {
-                    $levels[$record->difficulty] = $record->difficulty;
+                    $levels[] = $record->difficulty;
                 }
             }
         } else {
@@ -3246,6 +3246,11 @@ function reader_search_books($cmid, $reader, $userid, $search=0) {
                 $levels[] = ($leveldata['currentlevel'] + 1);
             }
         }
+
+        // make each $levels key the same as the value
+        // and then prepend the "none" value (-1)
+        $levels = array_combine($levels, $levels);
+        $levels = array(-1 => get_string('none')) + $levels;
 
         $table->data[] = new html_table_row(array(
             html_writer::tag('b', get_string('difficulty', 'reader').':'),
@@ -3278,7 +3283,7 @@ function reader_search_books($cmid, $reader, $userid, $search=0) {
         $output .= html_writer::end_tag('form');
     }
 
-    $searchresults = '';
+    // disable $search if there are no search parameters
     if ($search) {
         // get SQL $from and $where statements to extract available books
         list($from, $where, $sqlparams) = reader_available_sql($reader, $userid);
@@ -3304,9 +3309,12 @@ function reader_search_books($cmid, $reader, $userid, $search=0) {
         if (count($search)) {
             $where = implode(' AND ', $search)." AND $where";
             $search = 1;
+        } else {
+            $search = 0;
         }
     }
 
+    $searchresults = '';
     if ($search) {
 
         $cheatsheet = '';
