@@ -2957,6 +2957,11 @@ function reader_available_genres($from, $where, $sqlparams) {
 
     // a list of valid genres ($code => $text)
     $genres = array();
+
+    // skip NULL and empty genre fields
+    $where = "genre IS NOT NULL AND genre <> ? AND $where";
+    array_unshift($sqlparams, '');
+
     if ($records = $DB->get_records_sql("SELECT DISTINCT genre FROM $from WHERE $where", $sqlparams)) {
 
         $genres = array_keys($records);

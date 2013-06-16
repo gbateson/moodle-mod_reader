@@ -90,11 +90,11 @@
         <KEY NAME="mdl_readatte_uni_uix" TYPE="unique" FIELDS="uniqueid" PREVIOUS="primary"/>
       </KEYS>
       <INDEXES>
-        <INDEX NAME="userid_key" UNIQUE="false" FIELDS="userid" NEXT="reader_key"/>
-        <INDEX NAME="reader_key" UNIQUE="false" FIELDS="reader" PREVIOUS="userid_key" NEXT="attempt_key"/>
-        <INDEX NAME="attempt_key" UNIQUE="false" FIELDS="attempt" PREVIOUS="reader_key" NEXT="timefinish_key"/>
-        <INDEX NAME="timefinish_key" UNIQUE="false" FIELDS="timefinish" PREVIOUS="attempt_key" NEXT="quizid_key"/>
-        <INDEX NAME="quizid_key" UNIQUE="false" FIELDS="quizid" PREVIOUS="timefinish_key"/>
+        <INDEX NAME="attempt_key" UNIQUE="false" FIELDS="attempt" NEXT="quizid_key"/>
+        <INDEX NAME="quizid_key" UNIQUE="false" FIELDS="quizid" PREVIOUS="attempt_key" NEXT="reader_key"/>
+        <INDEX NAME="reader_key" UNIQUE="false" FIELDS="reader" PREVIOUS="quizid_key" NEXT="timefinish_key"/>
+        <INDEX NAME="timefinish_key" UNIQUE="false" FIELDS="timefinish" PREVIOUS="reader_key" NEXT="userid_key"/>
+        <INDEX NAME="userid_key" UNIQUE="false" FIELDS="userid" PREVIOUS="timefinish_key"/>
       </INDEXES>
     </TABLE>
     <TABLE NAME="reader_backup_ids" COMMENT="To store and convert ids in backup/restore" PREVIOUS="reader_attempts" NEXT="reader_books">
@@ -135,14 +135,15 @@
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
       </KEYS>
       <INDEXES>
-        <INDEX NAME="publisher_key" UNIQUE="false" FIELDS="publisher" NEXT="level_key"/>
-        <INDEX NAME="level_key" UNIQUE="false" FIELDS="level" PREVIOUS="publisher_key" NEXT="difficulty_key"/>
-        <INDEX NAME="difficulty_key" UNIQUE="false" FIELDS="difficulty" PREVIOUS="level_key" NEXT="name_key"/>
-        <INDEX NAME="name_key" UNIQUE="false" FIELDS="name" PREVIOUS="difficulty_key" NEXT="quizid_key"/>
-        <INDEX NAME="quizid_key" UNIQUE="false" FIELDS="quizid" PREVIOUS="name_key" NEXT="length_key"/>
-        <INDEX NAME="length_key" UNIQUE="false" FIELDS="length" PREVIOUS="quizid_key" NEXT="hidden_key"/>
-        <INDEX NAME="hidden_key" UNIQUE="false" FIELDS="hidden" PREVIOUS="length_key" NEXT="sametitle_key"/>
-        <INDEX NAME="sametitle_key" UNIQUE="false" FIELDS="sametitle" PREVIOUS="hidden_key"/>
+        <INDEX NAME="difficulty_key" UNIQUE="false" FIELDS="difficulty" NEXT="genre_key"/>
+        <INDEX NAME="genre_key" UNIQUE="false" FIELDS="genre" PREVIOUS="difficulty_key" NEXT="hidden_key"/>
+        <INDEX NAME="hidden_key" UNIQUE="false" FIELDS="hidden" PREVIOUS="genre_key" NEXT="length_key"/>
+        <INDEX NAME="length_key" UNIQUE="false" FIELDS="length" PREVIOUS="hidden_key" NEXT="level_key"/>
+        <INDEX NAME="level_key" UNIQUE="false" FIELDS="level" PREVIOUS="length_key" NEXT="name_key"/>
+        <INDEX NAME="name_key" UNIQUE="false" FIELDS="name" PREVIOUS="level_key" NEXT="publisher_key"/>
+        <INDEX NAME="publisher_key" UNIQUE="false" FIELDS="publisher" PREVIOUS="name_key" NEXT="quizid_key"/>
+        <INDEX NAME="quizid_key" UNIQUE="false" FIELDS="quizid" PREVIOUS="publisher_key" NEXT="sametitle_key"/>
+        <INDEX NAME="sametitle_key" UNIQUE="false" FIELDS="sametitle" PREVIOUS="quizid_key"/>
       </INDEXES>
     </TABLE>
     <TABLE NAME="reader_noquiz" COMMENT="reader_books table retrofitted from MySQL" PREVIOUS="reader_books" NEXT="reader_grades">

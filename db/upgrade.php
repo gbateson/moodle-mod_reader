@@ -448,12 +448,19 @@ function xmldb_reader_upgrade($oldversion) {
     }
 
 
-    $newversion = 2013061600;
+    $newversion = 2013061601;
     if ($result && $oldversion < $newversion) {
 
         // Define index "sametitle_key" (not unique) to be added to "reader_books" table
         $table = new xmldb_table('reader_books');
         $index = new xmldb_index('sametitle_key', XMLDB_INDEX_NOTUNIQUE, array('sametitle'));
+        if (! $dbman->index_exists($table, $index)) {
+            $dbman->add_index($table, $index);
+        }
+
+        // Define index "genre_key" (not unique) to be added to "reader_books" table
+        $table = new xmldb_table('reader_books');
+        $index = new xmldb_index('genre_key', XMLDB_INDEX_NOTUNIQUE, array('genre'));
         if (! $dbman->index_exists($table, $index)) {
             $dbman->add_index($table, $index);
         }
