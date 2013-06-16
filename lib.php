@@ -3400,8 +3400,17 @@ function reader_search_books($cmid, $reader, $userid, $showform=false) {
             array_unshift($sqlparams, $searchdifficulty);
         }
         if ($searchgenre) {
-            array_unshift($search, $DB->sql_like('genre', '?', false, false));
-            array_unshift($sqlparams, "%$searchgenre%");
+            if ($DB->sql_regex_supported()) {
+                array_unshift($search, 'genre '.$DB->sql_regex().' ?');
+                array_unshift($sqlparams, '(^|,)'.$searchgenre.'(,|$)');
+            } else {
+                $filter = array('genre = ?',
+                                $DB->sql_like('genre', '?', false, false),  // start
+                                $DB->sql_like('genre', '?', false, false),  // middle
+                                $DB->sql_like('genre', '?', false, false)); // end
+                array_unshift($search, '('.implode(' OR ', $filter).')');
+                array_unshift($sqlparams, "$searchgenre", "$searchgenre,%", "%,$searchgenre,%", "%,$searchgenre");
+            }
         }
         if ($searchpublisher) {
             array_unshift($search, $DB->sql_like('publisher', '?', false, false));
