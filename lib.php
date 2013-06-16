@@ -2900,6 +2900,84 @@ function reader_available_sql($reader, $userid) {
 }
 
 /**
+ * reader_valid_genres
+ *
+ * @param string $genre (optional, default='') a comma-separated list of genre codes
+ * @return xxx
+ * @todo Finish documenting this function
+ */
+function reader_valid_genres($genre='') {
+
+    $validgenres = array(
+        'all' => "All Genres",
+        'ad' => "Adventure",
+        'bi' => "Biography",
+        'cl' => "Classics",
+        'ch' => "Children's literature",
+        'co' => "Comedy",
+        'cu' => "Culture",
+        'ge' => "Geography/Environment",
+        'ho' => "Horror",
+        'hi' => "Historical",
+        'hu' => "Human interest",
+        'li' => "Literature in Translation",
+        'mo' => "Movies",
+        'mu' => "Murder Mystery",
+        'ro' => "Romance",
+        'sc' => "Science fiction",
+        'sh' => "Short stories",
+        'te' => "Technology & Science",
+        'th' => "Thriller",
+        'ch' => "Children's literature",
+        'yo' => "Young life, adventure"
+    );
+
+    if ($genre=='') {
+        return $validgenres;
+    }
+
+    $genre = explode(',', $genre);
+    $genre = array_flip($genre);
+    $genre = array_intersect_key($validgenres, $genre);
+    $genre = implode(', ', $genre);
+    return $genre;
+}
+
+/**
+ * reader_available_genres
+ *
+ * @param xxx $from
+ * @param xxx $where
+ * @param xxx $sqlparams
+ * @return xxx
+ * @todo Finish documenting this function
+ */
+function reader_available_genres($from, $where, $sqlparams) {
+    global $DB;
+
+    // a list of valid genres ($code => $text)
+    $genres = array();
+    if ($records = $DB->get_records_sql("SELECT DISTINCT genre FROM $from WHERE $where", $sqlparams)) {
+
+        $genres = array_keys($records);
+        $genres = array_filter($genres); // remove blanks
+        $genres = implode(',', $genres); // some books have a comma-separated list of genres
+        $genres = explode(',', $genres); // so we need to implode and then explode the list
+        $genres = array_unique($genres); // remove duplicates
+        sort($genres);
+
+        // extract only the required valid genres
+        $genres = array_flip($genres);
+        $genres = array_intersect_key(reader_valid_genres(), $genres);
+
+        // sort the values (but maintain keys)
+        asort($genres);
+    }
+
+    return $genres;
+}
+
+/**
  * reader_available_publishers
  *
  * @param xxx $cmid
@@ -3170,16 +3248,21 @@ function reader_search_books($cmid, $reader, $userid, $showform=false) {
     $searchpublisher  = optional_param('searchpublisher',  '', PARAM_CLEAN);
     $searchlevel      = optional_param('searchlevel',      '', PARAM_CLEAN);
     $searchname       = optional_param('searchname',       '', PARAM_CLEAN);
+    $searchgenre      = optional_param('searchgenre',      '', PARAM_CLEAN);
     $searchdifficulty = optional_param('searchdifficulty', -1, PARAM_INT);
     $search           = optional_param('search',            0, PARAM_INT);
+
+    // get SQL $from and $where statements to extract available books
+    list($from, $where, $sqlparams) = reader_available_sql($reader, $userid);
 
     if ($showform) {
         $target_div = 'searchresultsdiv';
         $target_url = "'view_get_bookslist.php?id=$cmid'".
-                      "+'&search=1'".
+                      "+'&search=1'". // so we can detect incoming search results
                       "+'&searchpublisher='+escape(this.searchpublisher.value)".
                       "+'&searchlevel='+escape(this.searchlevel.value)".
                       "+'&searchname='+escape(this.searchname.value)".
+                      "+'&searchgenre='+escape(this.searchgenre.options[this.searchgenre.selectedIndex].value)".
                       "+'&searchdifficulty='+this.searchdifficulty.options[this.searchdifficulty.selectedIndex].value";
 
         // create the search form
@@ -3197,7 +3280,8 @@ function reader_search_books($cmid, $reader, $userid, $showform=false) {
 
         $table->rowclasses[0] = 'advanced'; // publisher
         $table->rowclasses[1] = 'advanced'; // level
-        $table->rowclasses[3] = 'advanced'; // difficulty
+        $table->rowclasses[3] = 'advanced'; // genre
+        $table->rowclasses[4] = 'advanced'; // difficulty
 
         $table->data[] = new html_table_row(array(
             html_writer::tag('b', get_string('publisher', 'reader').':'),
@@ -3212,6 +3296,17 @@ function reader_search_books($cmid, $reader, $userid, $showform=false) {
             html_writer::empty_tag('input', array('type' => 'text', 'name' => 'searchname', 'value' => $searchname))
         ));
 
+        // get list of valid and available genres ($code => $text)
+        $genres = reader_available_genres($from, $where, $sqlparams);
+        $genres = array('' => get_string('none')) + $genres;
+
+        // add the "genre" drop-down list
+        $table->data[] = new html_table_row(array(
+            html_writer::tag('b', get_string('genre', 'block_readerview').':'),
+            html_writer::select($genres, 'searchgenre', $searchgenre, '')
+        ));
+
+        // can this user view all levels of books in this reader activity?
         if (isset($_SESSION['SESSION']->reader_teacherview) && $_SESSION['SESSION']->reader_teacherview == 'teacherview') {
             // this is a teacher
             $alllevels = true;
@@ -3222,6 +3317,7 @@ function reader_search_books($cmid, $reader, $userid, $showform=false) {
             $alllevels = false;
         }
 
+        // create list of RL's (reading levels) this user can attempt
         $levels = array();
         if ($alllevels) {
             if ($reader->bookinstances) {
@@ -3248,15 +3344,17 @@ function reader_search_books($cmid, $reader, $userid, $showform=false) {
         }
 
         // make each $levels key the same as the value
-        // and then prepend the "none" value (-1)
+        // and then prepend the (-1 => "none") key & value
         $levels = array_combine($levels, $levels);
         $levels = array(-1 => get_string('none')) + $levels;
 
+        // add the "RL" (reading level) drop-down list
         $table->data[] = new html_table_row(array(
             html_writer::tag('b', get_string('difficulty', 'reader').':'),
             html_writer::select($levels, 'searchdifficulty', $searchdifficulty, '')
         ));
 
+        // javascript to show/hide the "advanced" search fields
         $onclick = '';
         $onclick .= "var obj = document.getElementById('id_readersearchform');";
         $onclick .= "if (obj) {";
@@ -3273,26 +3371,32 @@ function reader_search_books($cmid, $reader, $userid, $showform=false) {
         $onclick .= "}";
         $onclick .= "this.innerHTML = (styledisplay ? '".get_string('showadvanced', 'form')."' : '".get_string('hideadvanced', 'form')."');";
 
+        // add the "search" button
         $table->data[] = new html_table_row(array(
             '&nbsp;',
             html_writer::empty_tag('input', array('type' => 'submit', 'name' => 'submit', 'value' => get_string('search'))).
             ' '.html_writer::tag('small', html_writer::tag('a', get_string('showadvanced', 'form').' ...', array('onclick' => $onclick)))
         ));
+
+        // create search results table
         $output .= html_writer::table($table);
 
+        // finish search form
         $output .= html_writer::end_tag('form');
     }
 
     // disable $search if there are no search parameters
     if ($search) {
-        // get SQL $from and $where statements to extract available books
-        list($from, $where, $sqlparams) = reader_available_sql($reader, $userid);
 
         // restrict search, if necessary
         $search = array();
         if (is_numeric($searchdifficulty) && $searchdifficulty >= 0) {
             array_unshift($search, 'difficulty = ?');
             array_unshift($sqlparams, $searchdifficulty);
+        }
+        if ($searchgenre) {
+            array_unshift($search, $DB->sql_like('genre', '?', false, false));
+            array_unshift($sqlparams, "%$searchgenre%");
         }
         if ($searchpublisher) {
             array_unshift($search, $DB->sql_like('publisher', '?', false, false));
@@ -3320,7 +3424,7 @@ function reader_search_books($cmid, $reader, $userid, $showform=false) {
         $cheatsheet = '';
         $strcheatsheet = '';
 
-        // if there is a "cheatsheet" script, make it available (for site admins only)
+        // if there is a "cheatsheet" script, make it available (for developer site admins only)
         if (has_capability('moodle/site:config', get_context_instance(CONTEXT_SYSTEM))) {
             if (file_exists($CFG->dirroot.'/mod/reader/utilities/print_cheatsheet.php')) {
                 $cheatsheet = $CFG->wwwroot.'/mod/reader/utilities/print_cheatsheet.php';
@@ -3328,7 +3432,7 @@ function reader_search_books($cmid, $reader, $userid, $showform=false) {
             }
         }
 
-        $select = 'id, publisher, level, name, difficulty';
+        $select = 'id, publisher, level, name, genre, difficulty';
         if ($books = $DB->get_records_sql("SELECT $select FROM $from WHERE $where", $sqlparams)) {
 
             $table = new html_table();
@@ -3337,6 +3441,7 @@ function reader_search_books($cmid, $reader, $userid, $showform=false) {
                 get_string('publisher', 'reader'),
                 get_string('level', 'reader'),
                 get_string('booktitle', 'reader')." (".count($books)." books)",
+                get_string('genre', 'block_readerview'),
                 get_string('difficulty', 'reader'),
                 '&nbsp;'
             );
@@ -3357,6 +3462,7 @@ function reader_search_books($cmid, $reader, $userid, $showform=false) {
                     $book->publisher,
                     (($book->level=='' || $book->level=='--') ? '' : $book->level),
                     $book->name,
+                    reader_valid_genres($book->genre),
                     $book->difficulty,
                     $button
                 );
