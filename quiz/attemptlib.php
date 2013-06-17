@@ -1214,6 +1214,7 @@ class reader_attempt {
      */
     public function finish_attempt($timestamp) {
         global $DB, $USER;
+
         $this->quba->process_all_actions($timestamp);
         $this->quba->finish_all_questions($timestamp);
 
@@ -1222,13 +1223,14 @@ class reader_attempt {
         $this->attempt->timemodified = $timestamp;
         $this->attempt->timefinish   = $timestamp;
         $this->attempt->sumgrades    = $this->quba->get_total_mark();
-        $this->attempt->percentgrade      = round(((float)$this->quba->get_total_mark() / (float)$this->readerobj->quiz->sumgrades) * 100);
-        if ((int)$this->readerobj->reader->percentforreading <= (int)$this->attempt->percentgrade) {
-          $this->attempt->passed     = 'true';
-          $passedlog = "Passed";
+        $this->attempt->percentgrade = round($this->quba->get_total_mark() / $this->readerobj->quiz->sumgrades * 100);
+
+        if ($this->readerobj->reader->percentforreading <= $this->attempt->percentgrade) {
+            $this->attempt->passed = 'true';
+            $passedlog = "Passed";
         } else {
-          $this->attempt->passed     = 'false';
-          $passedlog = "Failed";
+            $this->attempt->passed = 'false';
+            $passedlog = "Failed";
         }
 
         //add_to_log($this->readerobj->course->id, 'reader', 'finish attempt: '.$this->readerobj->book->name, "view.php?id={$this->readerobj->reader->id}", $this->attempt->percentgrade."%/".$this->attempt->passed);

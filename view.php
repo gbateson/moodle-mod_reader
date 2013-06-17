@@ -568,56 +568,65 @@ print ('<center><img src="img/credit.jpg" height="40px"></center>');
 echo $OUTPUT->footer();
 
 
-function reader_level_blockgraph($reader, $level) {
+function reader_level_blockgraph($reader, $leveldata) {
 
-    // levels
-    $lmax  = $reader->quizpreviouslevel;
-    $max   = $reader->nextlevel;
-    $hmax  = $reader->quiznextlevel;
-    $lqnow = $reader->quizpreviouslevel - $level['onprevlevel'];
-    $qnow  = $reader->nextlevel - $level['onthislevel'];
-    $hqnow = $reader->quiznextlevel - $level['onnextlevel'];
+    // max attempts allowed at each difficulty level
+    $prevmax = $reader->quizpreviouslevel;
+    $thismax = $reader->nextlevel;
+    $nextmax = $reader->quiznextlevel;
+
+    // num of attempts allowed at each difficulty level
+    $prevallow = $leveldata['onprevlevel'];
+    $thisallow = $leveldata['onthislevel'];
+    $nextallow = $leveldata['onnextlevel'];
+
+    // num of attempts completed at each difficulty level
+    $prevdone = $prevmax - $prevallow;
+    $thisdone = $thismax - $thisallow;
+    $nextdone = $nextmax - $nextallow;
 
     // images
-    $spacer = html_writer::empty_tag('img', array('src'=>new moodle_url('/mod/reader/pix/progress/spacer.jpg'), 'border'=>0, 'alt'=>'space', 'height'=>26, 'width'=>28, 'style'=>'margin:0 4px 0 0'));
-    $done   = html_writer::empty_tag('img', array('src'=>new moodle_url('/mod/reader/pix/progress/done.jpg'), 'border'=>0, 'alt'=>'done', 'height'=>26, 'width'=>28, 'style'=>'margin:0 4px 0 0'));
-    $yet    = html_writer::empty_tag('img', array('src'=>new moodle_url('/mod/reader/pix/progress/notyet.jpg'), 'border'=>0, 'alt'=>'notyet', 'height'=>26, 'width'=>28, 'style'=>'margin:0 4px 0 0'));
-    $lm1    = html_writer::empty_tag('img', array('src'=>new moodle_url('/mod/reader/pix/progress/lm1.jpg'), 'border'=>0, 'alt'=>'lm1', 'height'=>16, 'width'=>28, 'style'=>'margin:0 4px 0 0'));
-    $lnow   = html_writer::empty_tag('img', array('src'=>new moodle_url('/mod/reader/pix/progress/l.jpg'), 'border'=>0, 'alt'=>'l', 'height'=>16, 'width'=>28, 'style'=>'margin:0 4px 0 0'));
-    $lp1    = html_writer::empty_tag('img', array('src'=>new moodle_url('/mod/reader/pix/progress/lp1.jpg'), 'border'=>0, 'alt'=>'lp1', 'height'=>16, 'width'=>28, 'style'=>'margin:0 4px 0 0'));
+    $previmg = html_writer::empty_tag('img', array('src'=>new moodle_url('/mod/reader/pix/progress/lm1.jpg'), 'border'=>0, 'alt'=>'lm1', 'height'=>16, 'width'=>28, 'style'=>'margin:0 4px 0 0'));
+    $thisimg = html_writer::empty_tag('img', array('src'=>new moodle_url('/mod/reader/pix/progress/l.jpg'), 'border'=>0, 'alt'=>'l', 'height'=>16, 'width'=>28, 'style'=>'margin:0 4px 0 0'));
+    $nextimg = html_writer::empty_tag('img', array('src'=>new moodle_url('/mod/reader/pix/progress/lp1.jpg'), 'border'=>0, 'alt'=>'lp1', 'height'=>16, 'width'=>28, 'style'=>'margin:0 4px 0 0'));
+    $spacer  = html_writer::empty_tag('img', array('src'=>new moodle_url('/mod/reader/pix/progress/spacer.jpg'), 'border'=>0, 'alt'=>'space', 'height'=>26, 'width'=>28, 'style'=>'margin:0 4px 0 0'));
+    $done    = html_writer::empty_tag('img', array('src'=>new moodle_url('/mod/reader/pix/progress/done.jpg'), 'border'=>0, 'alt'=>'done', 'height'=>26, 'width'=>28, 'style'=>'margin:0 4px 0 0'));
+    $notyet  = html_writer::empty_tag('img', array('src'=>new moodle_url('/mod/reader/pix/progress/notyet.jpg'), 'border'=>0, 'alt'=>'notyet', 'height'=>26, 'width'=>28, 'style'=>'margin:0 4px 0 0'));
 
     // generate $output
     $output  = '';
-    $output .= html_writer::start_tag('div', array('style'=>'float:right; margin-right: 50px;'));
 
-    $output .= html_writer::start_tag('div');
-    $output .= html_writer::tag('h3', get_string('quizzespassedtable', 'reader', $level['currentlevel']));
-    $output .= html_writer::end_tag('div');
-
-    for ($i = $max; $i > 0; $i--) {
+    $i_max = max($prevmax, $thismax, $nextmax);
+    for ($i = $i_max; $i > 0; $i--) {
 
         // previous level
-        if ($i > $lqnow && $i <= $lmax) {
-            $output .= $yet;
-        } else if ($i > $lqnow ) {
+        if ($prevallow < 0) {
+            // this level is disabled - do nothing
+        } else if ($i > $prevdone && $i <= $prevmax) {
+            $output .= $notyet;
+        } else if ($i > $prevdone ) {
             $output .= $spacer;
         } else {
             $output .= $done;
         }
 
         // current level
-        if ($i > $qnow && $i <= $max) {
-            $output .= $yet;
-        } else if ($i > $qnow ) {
+        if ($thisallow < 0) {
+            // this level is disabled - do nothing
+        } else if ($i > $thisdone && $i <= $thismax) {
+            $output .= $notyet;
+        } else if ($i > $thisdone ) {
             $output .= $spacer;
         } else {
             $output .= $done;
         }
 
         // next level
-        if ($i > $hqnow && $i <= $hmax) {
-            $output .= $yet;
-        } else if ($i > $hqnow ) {
+        if ($nextallow < 0) {
+            // this level is disabled - do nothing
+        } else if ($i > $nextdone && $i <= $nextmax) {
+            $output .= $notyet;
+        } else if ($i > $nextdone ) {
             $output .= $spacer;
         } else {
             $output .= $done;
@@ -625,7 +634,19 @@ function reader_level_blockgraph($reader, $level) {
 
         $output .= html_writer::empty_tag('br');
     }
-    $output .= $lm1.$lnow.$lp1.html_writer::empty_tag('br');
-    $output .= html_writer::end_tag('div');
+
+    if ($output) {
+        // prepend heading
+        $output = html_writer::tag('h3', get_string('quizzespassedtable', 'reader', $leveldata['currentlevel'])).$output;
+
+        // append images as bar titles
+        $output .= ($prevallow < 0 ? '' : $previmg);
+        $output .= ($thisallow < 0 ? '' : $thisimg);
+        $output .= ($nextallow < 0 ? '' : $nextimg);
+
+        // put output in its own DIV
+        $output = html_writer::tag('div', $output, array('style'=>'float: right; margin-right: 50px; text-align: center;'));
+    }
+
     return $output;
 }

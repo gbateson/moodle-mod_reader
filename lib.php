@@ -448,7 +448,7 @@ function reader_get_level_data($reader, $userid=0) {
         'onthislevel'  => $reader->nextlevel         - $count['this'], // number of quizzes allowed at current level
         'onnextlevel'  => $reader->quiznextlevel     - $count['next']  // number of quizzes allowed at next level
     );
-    if ($count['prev'] == -1) {
+    if ($level->currentlevel==0 || $count['prev'] == -1) {
         $leveldata['onprevlevel'] = -1;
     }
 
@@ -1923,7 +1923,7 @@ function reader_yes_no_box($userid, $data, $field, $rand) {
 function reader_selectip_form($userid, $reader) {
     global $CFG, $COURSE, $DB, $_SESSION, $id, $act, $gid, $sort, $orderby, $page;
 
-    $levels = array(0=>"No",1=>"Yes");
+    $levels = array(0=>'No',1=>'Yes');
 
     $data = $DB->get_record('reader_strict_users_list', array('readerid' => $reader->id, 'userid' => $userid));
 
@@ -2029,64 +2029,6 @@ function reader_select_length_form($length, $bookid, $reader) {
     $string .= '</select></div>';
 
     return $string;
-}
-
-/**
- * reader_set_attempt_result
- *
- * @uses $CFG
- * @uses $COURSE
- * @uses $DB
- * @uses $USER
- * @param xxx $attemptid
- * @param xxx $reader
- * @todo Finish documenting this function
- */
-function reader_set_attempt_result($attemptid, $reader) {
-    global $CFG, $COURSE, $DB, $USER;
-
-    $attemptdata = $DB->get_record('reader_attempts', array('id' => $attemptid));
-
-    //if (! $attemptdata->percentgrade && $attemptdata->percentgrade != 0) {
-    if (! $attemptdata->percentgrade) {
-        $bookdata = $DB->get_record('reader_books', array('quizid' => $attemptdata->quizid));
-        if (empty($bookdata)) {
-            $bookdata = (object)array('id' => $attemptdata->quizid);
-        }
-        $totalgrade = 0;
-        $answersgrade = $DB->get_records('reader_question_instances', array('quiz' => $attemptdata->quizid)); // Count Grades (TotalGrade)
-        if (empty($answersgrade)) {
-            $answersgrade = array();
-        }
-        foreach ($answersgrade as $answersgrade_) {
-            $totalgrade += $answersgrade_->grade;
-        }
-
-        if (empty($attemptdata->sumgrades) || empty($totalgrade)) {
-            $percentgrade = 0;
-        } else {
-            $percentgrade = round(($attemptdata->sumgrades/$totalgrade) * 100, 0);
-        }
-
-        if ($percentgrade >= $reader->percentforreading) {
-            $passed = "true";
-            $passedlog = "Passed";
-        } else {
-            $passed = "false";
-            $passedlog = "Failed";
-        }
-
-        if (! $DB->get_record('log', array('userid' => $USER->id, 'course' => $COURSE->id, 'info' => "readerID {$reader->id}; reader quiz {$bookdata->id}; {$percentgrade}/{$passedlog}"))) {
-            $logaction = 'view attempt: '.substr($bookdata->name, 0, 26); // 40 char limit
-            $loginfo   = "readerID {$reader->id}; ".
-                         "reader quiz {$bookdata->id}; ".
-                         "{$percentgrade}/{$passedlog}";
-            add_to_log($COURSE->id, 'reader', $logaction, "view.php?id={$attemptid}", $loginfo);
-        }
-
-        $DB->set_field('reader_attempts', "percentgrade", $percentgrade, array('id' => $attemptid));
-        $DB->set_field('reader_attempts', "passed", $passed, array('id' => $attemptid));
-    }
 }
 
 /**
@@ -2253,11 +2195,8 @@ function reader_get_goal_progress($progress, $reader) {
         $progress = 0;
     }
 
-    if ($dataofuserlevels = $DB->get_record('reader_levels', array('userid' => $USER->id, 'readerid' => $reader->id))) {
-        if (! empty($dataofuserlevels->goal)) {
-            $goal = $dataofuserlevels->goal;
-        }
-    }
+    $goal = $DB->get_field('reader_levels', 'goal', array('userid' => $USER->id, 'readerid' => $reader->id));
+
     if (empty($goal)) {
         $data = $DB->get_records('reader_goal', array('readerid' => $reader->id));
         foreach ($data as $data_) {
@@ -2280,100 +2219,91 @@ function reader_get_goal_progress($progress, $reader) {
         $goal = $reader->goal;
     }
 
-        $goalchecker = $goal;
-        if ($progress > $goal) {
-            $goalchecker = $progress;
-        }
-        if ($goalchecker <= 50000) {
-            $img = 5;
-            $bgcolor = "#00FFFF";
-        }
-        else if ($goalchecker <= 100000) {
-            $img = 10;
-            $bgcolor = "#FF00FF";
-        }
-        else if ($goalchecker <= 500000) {
-            $img = 50;
-            $bgcolor = "#FFFF00";
-        }
-        else {
-            $img = 100;
-            $bgcolor = "#0000FF";
-        }
-        if ($goal > 1000000) {
-            $goal = 1000000;
-        }
-        if ($progress > 1000000) {
-            $progress = 1000000;
-        }
-        $currentpositiongoal = $goal / ($img * 10000);
-        $currentpositiongoalpix = round($currentpositiongoal * 800);
-        if ($currentpositiongoalpix > 800) {
-            $currentpositiongoalpix = 800;
-        }
+    $goalchecker = $goal;
+    if ($progress > $goal) {
+        $goalchecker = $progress;
+    }
+    if ($goalchecker <= 50000) {
+        $img = 5;
+        $bgcolor = "#00FFFF";
+    }
+    else if ($goalchecker <= 100000) {
+        $img = 10;
+        $bgcolor = "#FF00FF";
+    }
+    else if ($goalchecker <= 500000) {
+        $img = 50;
+        $bgcolor = "#FFFF00";
+    }
+    else {
+        $img = 100;
+        $bgcolor = "#0000FF";
+    }
+    if ($goal > 1000000) {
+        $goal = 1000000;
+    }
+    if ($progress > 1000000) {
+        $progress = 1000000;
+    }
+    $currentpositiongoal = $goal / ($img * 10000);
+    $currentpositiongoalpix = round($currentpositiongoal * 800);
+    if ($currentpositiongoalpix > 800) {
+        $currentpositiongoalpix = 800;
+    }
 
-        $currentposition = $progress / ($img * 10000);
-        $currentpositionpix = round($currentposition * 800);
-        if ($currentpositionpix > 800) {
-            $currentpositionpix = 800;
-        }
-        $currentpositionpix += 8;
+    $currentposition = $progress / ($img * 10000);
+    $currentpositionpix = round($currentposition * 800);
+    if ($currentpositionpix > 800) {
+        $currentpositionpix = 800;
+    }
+    $currentpositionpix += 8;
 
-        $returntext = '<style type="text/css" >
-<!--
-#ScoreBoxDiv
-{
-position:absolute;
-left:5px; top:34px;
-width:824px;
-height:63px;
-background-color: '.$bgcolor.' ;
-z-index:5;
-}
-img.color
-{
-position:absolute;
-top:40px;
-left:10px;
-z-index:20;
-clip: rect(0px '.$currentpositionpix.'px 100px 0px);
-}
-img.mark
-{
-position:absolute;
-top:47px;
-left:'.($currentpositionpix+10).'px;
-z-index:20;
-}
-img.grey
-{
-position:absolute;
-top:40px;
-left:10px;
-z-index:15;
-}
-img.goal
-{
-position:absolute;
-top:26px;
-left:'.$currentpositiongoalpix.'px;
-z-index:40;
-}
--->
+    $html = '';
+    $html .= '<style type="text/css" >'."\n";
+    $html .= '#ScoreBoxDiv {'."\n";
+    $html .= '    position:absolute;'."\n";
+    $html .= '    left:5px; top:34px;'."\n";
+    $html .= '    width:824px;'."\n";
+    $html .= '    height:63px;'."\n";
+    $html .= '    background-color: '.$bgcolor.' ;'."\n";
+    $html .= '    z-index:5;'."\n";
+    $html .= '}'."\n";
+    $html .= 'img.color {'."\n";
+    $html .= '    position:absolute;'."\n";
+    $html .= '    top:40px;'."\n";
+    $html .= '    left:10px;'."\n";
+    $html .= '    z-index:20;'."\n";
+    $html .= '    clip: rect(0px '.$currentpositionpix.'px 100px 0px);'."\n";
+    $html .= '}'."\n";
+    $html .= 'img.mark {'."\n";
+    $html .= '    position:absolute;'."\n";
+    $html .= '    top:47px;'."\n";
+    $html .= '    left:'.($currentpositionpix+10).'px;'."\n";
+    $html .= '    z-index:20;'."\n";
+    $html .= '}'."\n";
+    $html .= 'img.grey {'."\n";
+    $html .= '    position:absolute;'."\n";
+    $html .= '    top:40px;'."\n";
+    $html .= '    left:10px;'."\n";
+    $html .= '    z-index:15;'."\n";
+    $html .= '}'."\n";
+    $html .= 'img.goal {'."\n";
+    $html .= '    position:absolute;'."\n";
+    $html .= '    top:26px;'."\n";
+    $html .= '    left:'.$currentpositiongoalpix.'px;'."\n";
+    $html .= '    z-index:40;'."\n";
+    $html .= '}'."\n";
+    $html .= '</style>'."\n";
+    $html .= '<div id="ScoreBoxDiv" class="ScoreBoxDiv"> &nbsp;&nbsp;&nbsp;&nbsp;</div>'."\n";
+    $html .= '<img class="color" src="'.$CFG->wwwroot.'/mod/reader/img/colorscale800px'.$img.'.png">'."\n";
+    $html .= '<img class="grey" src="'.$CFG->wwwroot.'/mod/reader/img/colorscale800px'.$img.'gs.png">'."\n";
+    $html .= '<img class="mark" src="'.$CFG->wwwroot.'/mod/reader/img/now.png">'."\n";
 
-</style>
-<div id="ScoreBoxDiv" class="ScoreBoxDiv"> &nbsp;&nbsp;&nbsp;&nbsp;</div>
-<img class="color" src="'.$CFG->wwwroot.'/mod/reader/img/colorscale800px'.$img.'.png">
-<img class="grey" src="'.$CFG->wwwroot.'/mod/reader/img/colorscale800px'.$img.'gs.png">
-<img class="mark" src="'.$CFG->wwwroot.'/mod/reader/img/now.png">
-';
+    if (! empty($goal)) {
+        $html .= '<img class="goal" src="'.$CFG->wwwroot.'/mod/reader/img/goal.png">';
+    }
 
-        if (! empty($goal)) {
-            $returntext .= '<img class="goal" src="'.$CFG->wwwroot.'/mod/reader/img/goal.png">';
-        }
-
-        return $returntext;
-    //}
+    return $html;
 }
 
 /**
@@ -2872,10 +2802,10 @@ function reader_available_sql($reader, $userid) {
     } else {
         // a student with level-checking enabled
         $leveldata = reader_get_level_data($reader, $userid);
-        if ($leveldata['onthislevel'] > 0 && $leveldata['currentlevel'] > 0) {
+        if ($leveldata['onthislevel'] > 0 && $leveldata['currentlevel'] >= 0) {
             $levels[] = $leveldata['currentlevel'];
         }
-        if ($leveldata['onprevlevel'] > 0 && $leveldata['currentlevel'] > 1) {
+        if ($leveldata['onprevlevel'] > 0 && $leveldata['currentlevel'] >= 1) {
             $levels[] = ($leveldata['currentlevel'] - 1);
         }
         if ($leveldata['onnextlevel'] > 0) {
@@ -3337,11 +3267,11 @@ function reader_search_books($cmid, $reader, $userid, $showform=false) {
             }
         } else {
             $leveldata = reader_get_level_data($reader, $userid);
-            if ($leveldata['onthislevel'] > 0 && $leveldata['currentlevel'] > 0) {
-                $levels[] = $leveldata['currentlevel'];
-            }
-            if ($leveldata['onprevlevel'] > 0 && $leveldata['currentlevel'] > 1) {
+            if ($leveldata['onprevlevel'] > 0 && $leveldata['currentlevel'] >= 1) {
                 $levels[] = ($leveldata['currentlevel'] - 1);
+            }
+            if ($leveldata['onthislevel'] > 0 && $leveldata['currentlevel'] >= 0) {
+                $levels[] = $leveldata['currentlevel'];
             }
             if ($leveldata['onnextlevel'] > 0) {
                 $levels[] = ($leveldata['currentlevel'] + 1);
@@ -3446,11 +3376,13 @@ function reader_search_books($cmid, $reader, $userid, $showform=false) {
             }
         }
 
+        // search for available books that match  the search criteria
         $select = 'id, publisher, level, name, genre, difficulty';
         if ($books = $DB->get_records_sql("SELECT $select FROM $from WHERE $where", $sqlparams)) {
 
             $table = new html_table();
 
+            // add table headers - one per column
             $table->head = array(
                 get_string('publisher', 'reader'),
                 get_string('level', 'reader'),
@@ -3459,19 +3391,27 @@ function reader_search_books($cmid, $reader, $userid, $showform=false) {
                 get_string('difficulty', 'reader'),
                 '&nbsp;'
             );
+
+            // add extra column for "cheatsheet" links, if required
             if ($cheatsheet) {
                 $table->head[] = html_writer::tag('small', $strcheatsheet);
             }
 
+            // add one row for each book in the search results
             foreach ($books as $book) {
+
+                // format publisher- level
                 $publisher = $book->publisher.(($book->level=='' | $book->level=='--') ? '' : ' - '.$book->level);
 
+                // construct url to start attempt at quiz
                 $params = array('id' => $cmid, 'book' => $book->id);
                 $url = new moodle_url('/mod/reader/quiz/startattempt.php', $params);
 
+                // construct button to start attempt at quiz
                 $params = array('class' => 'singlebutton readerquizbutton');
                 $button = $OUTPUT->single_button($url, get_string('takethisquiz', 'reader'), 'get', $params);
 
+                // add cells to this row of the table
                 $row = array(
                     $book->publisher,
                     (($book->level=='' || $book->level=='--') ? '' : $book->level),
@@ -3480,13 +3420,19 @@ function reader_search_books($cmid, $reader, $userid, $showform=false) {
                     $book->difficulty,
                     $button
                 );
+
+                // add cheat sheet link, if required
                 if ($cheatsheet) {
                     $url = new moodle_url($cheatsheet, array('publishers' => $publisher, 'books' => $book->id));
-                    $params = array('href' => $url, 'onclick' => "this.target='_blank; return true;'");
+                    $params = array('href' => $url, 'onclick' => "this.target='cheatsheet'; return true;");
                     $row[] = html_writer::tag('small', html_writer::tag('a', $strcheatsheet, $params));
                 }
+
+                // add this row to the table
                 $table->data[] = new html_table_row($row);
             }
+
+            // create the HTML for the table of search results
             if (count($table->data)) {
                 $searchresults .= html_writer::table($table);
             }
