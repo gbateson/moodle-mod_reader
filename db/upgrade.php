@@ -434,8 +434,8 @@ function xmldb_reader_upgrade($oldversion) {
     if ($result && $oldversion < $newversion) {
         xmldb_reader_fix_slashes();
         xmldb_reader_fix_wrong_sectionnames();
-        xmldb_reader_fix_wrong_quizids();
         xmldb_reader_fix_duplicates();
+        xmldb_reader_fix_wrong_quizids();
         //xmldb_reader_fix_nonunique_quizids();
         xmldb_reader_fix_question_categories();
         upgrade_mod_savepoint(true, "$newversion", 'reader');
@@ -473,5 +473,13 @@ function xmldb_reader_upgrade($oldversion) {
 
         upgrade_mod_savepoint(true, "$newversion", 'reader');
     }
+
+    $newversion = 2013061800;
+    if ($result && $oldversion < $newversion) {
+        xmldb_reader_fix_multichoice_questions();
+        xmldb_reader_fix_duplicate_questions();
+        upgrade_mod_savepoint(true, "$newversion", 'reader');
+    }
+
     return $result;
 }

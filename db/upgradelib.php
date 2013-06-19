@@ -112,7 +112,9 @@ function xmldb_reader_fix_previous_field($dbman, $table, &$field) {
  * @todo Finish documenting this function
  */
 function xmldb_reader_fix_duplicate_books($course, $keepoldquizzes) {
-    global $DB, $OUTPUT;
+    global $CFG, $DB, $OUTPUT;
+    require_once($CFG->dirroot.'/course/lib.php');
+
     $rebuild_course_cache = false;
 
     // extract all duplicate (i.e. same publisher and name) books
@@ -130,26 +132,34 @@ function xmldb_reader_fix_duplicate_books($course, $keepoldquizzes) {
         $publisher = '';
         foreach ($duplicates as $duplicate) {
 
-            $select = 'rb.id, rb.publisher, rb.level, rb.name, rb.quizid, q.id AS associated_quizid';
-            $from   = '{reader_books} rb LEFT JOIN {quiz} q ON rb.quizid = q.id';
+            $select = 'rb.id, rb.publisher, rb.level, rb.name, rb.quizid, '.
+                      'q.id AS associated_quizid, q.name AS associated_quizname';
+            $from   = '{reader_books} rb LEFT JOIN {quiz} q ON rb.quizid = q.id ';
             $where  = 'rb.publisher = :publisher AND rb.level = :level AND rb.name = :bookname';
             $params = array('publisher' => $duplicate->publisher, 'level' => $duplicate->level, 'bookname' => $duplicate->name);
-            if ($books = $DB->get_records_sql("SELECT $select FROM $from WHERE $where", $params)) {
+            $orderby = 'rb.publisher, rb.level, rb.name, rb.time';
+
+            // get the duplicate books (and associated quizzes)
+            if ($books = $DB->get_records_sql("SELECT $select FROM $from WHERE $where ORDER BY $orderby", $params)) {
 
                 $mainbookid = 0;
                 $mainquizid = 0;
+                $mainquizadded = 0;
+                $mainquizvisible = 0;
+
                 foreach ($books as $book) {
-                    if ($mainbookid==0 && $book->associated_quizid) {
-                        if ($book->id) {
-                            $mainbookid = $book->id;
-                        }
-                    }
-                    if ($mainquizid==0 || $DB->get_field('course_modules', 'visible', array('module' => $quizmoduleid, 'instance' => $book->quizid))) {
-                        if ($book->quizid) {
-                            $mainquizid = $book->quizid;
+                    if ($book->associated_quizid && $book->name==$book->associated_quizname) {
+                        $mainbookid = $book->id;
+                        if ($cm = $DB->get_record('course_modules', array('module' => $quizmoduleid, 'instance' => $book->quizid))) {
+                            if ($mainquizid==0 || $mainquizvisible < $cm->visible || $mainquizadded < $cm->added) {
+                                $mainquizid = $cm->instance;
+                                $mainquizadded = $cm->added;
+                                $mainquizvisible = $cm->visible;
+                            }
                         }
                     }
                 }
+
                 if ($mainbookid==0) {
                     continue; // try next duplicate
                     // one day we could be ambitious and download the missing quiz ...
@@ -177,7 +187,7 @@ function xmldb_reader_fix_duplicate_books($course, $keepoldquizzes) {
                     }
                     echo "<li><b>$book->name</b> (bookid=$book->id) ".xmldb_reader_showhide_img()."<ul>";
 
-                    if ($mainquizid && $mainquizid != $book->quizid) {
+                    if ($mainquizid && $book->quizid && $mainquizid != $book->quizid) {
                         echo "<li>fix references to duplicate quiz (quizid $book->quizid =&gt; $mainquizid)</li>";
                         xmldb_reader_fix_quiz_ids($mainquizid, $book->quizid);
                         if ($cm = $DB->get_record('course_modules', array('module' => $quizmoduleid, 'instance' => $book->quizid))) {
@@ -188,6 +198,9 @@ function xmldb_reader_fix_duplicate_books($course, $keepoldquizzes) {
                                     $rebuild_course_cache = true;
                                 }
                             } else {
+                                if ($book->quizid==1 || $book->quizid==22 || $book->quizid==1464) {
+                                    die('Oops we are trying to delete one of the Cinderella quizzes'. " (quiz id = $book->quizid)");
+                                }
                                 echo '<li><span style="color: red;">DELETED</span> '."Duplicate quiz (course module id=$cm->id, quiz id=$book->quizid)".'</li>';
                                 xmldb_reader_remove_coursemodule($cm->id);
                                 $rebuild_course_cache = true;
@@ -304,6 +317,11 @@ function xmldb_reader_fix_duplicate_quizzes($course, $keepoldquizzes) {
  */
 function xmldb_reader_fix_quiz_ids($newid, $oldid) {
     global $DB;
+
+    // sanity check on $oldid
+    if ($oldid===null || $oldid===false || $oldid===0 || $oldid==='' || $oldid==='0') {
+        return false;
+    }
 
     $fields = array(
         // $tablename => $fieldname
@@ -471,7 +489,6 @@ function xmldb_reader_showhide_img() {
 /**
  * xmldb_reader_fix_question_instances
  *
- * @return array $courseids containing Reader module quizzes
  * @todo Finish documenting this function
  */
 function xmldb_reader_fix_question_instances() {
@@ -499,7 +516,10 @@ function xmldb_reader_fix_question_instances() {
     $i_max = 0;
     $rs = false;
 
-    if ($courseid) {
+    $courseids = xmldb_reader_quiz_courseids();
+    list($courseselect, $courseparams) = $DB->get_in_or_equal($courseids);
+
+    if (count($courseids)) {
         if ($i_max = $DB->count_records_sql('SELECT COUNT(*) FROM {reader_question_instances}')) {
             $rs = $DB->get_recordset_sql('SELECT * FROM {reader_question_instances}');
         }
@@ -521,7 +541,12 @@ function xmldb_reader_fix_question_instances() {
             if ($DB->record_exists('quiz_question_instances', array('quiz' => $instance->quiz, 'question' => $instance->question))) {
                 if ($quiz_question_instances = $DB->get_records('quiz_question_instances', array('question' => $instance->question))) {
                     foreach ($quiz_question_instances as $quiz_question_instance) {
-                        if ($DB->record_exists('quiz', array('id' => $quiz_question_instance->quiz, 'course' => $courseid))) {
+
+                        $select = "id = ? AND course $courseselect";
+                        $params = array($quiz_question_instance->quiz);
+                        $params = array_merge($params, $courseparams);
+
+                        if ($DB->record_exists_select('quiz', $select, $params)) {
                             $DB->set_field('reader_question_instances', 'quiz', $quiz_question_instance->quiz, array('id' => $instance->id));
                         }
                     }
@@ -533,9 +558,6 @@ function xmldb_reader_fix_question_instances() {
         }
         $rs->close();
     }
-
-    // get all distinct quizids from books
-    // foreach (quiz) check every question has an entry in the instances table
 }
 
 /**
@@ -682,14 +704,17 @@ function xmldb_reader_fix_wrong_sectionnames() {
 function xmldb_reader_fix_wrong_quizids() {
     global $DB, $OUTPUT;
 
+    // SQL to detect unexpected section name for a book
     $sectionname = $DB->sql_concat('rb.publisher', "' - '", 'rb.level');
     $sectionname = "(CASE WHEN (rb.level IS NULL OR rb.level = ? OR rb.level = ?) THEN rb.publisher ELSE $sectionname END)";
+    $wrongsectionname = "cs.name <> $sectionname";
 
-    // q.name NOT LIKE CONCAT('%', rb.name, '%')
+    // SQL to detect unexpected quiz name for a book
     $quizname = $DB->sql_concat("'%'", 'rb.name', "'%'");
-    $quizname = str_replace('???', $quizname, $DB->sql_like('q.name', '???', false, false, true)); // NOT LIKE
+    $wrongquizname = str_replace('???', $quizname, $DB->sql_like('q.name', '???', false, false, true));
+    // $wrongquizname = "q.name NOT LIKE CONCAT('%', rb.name, '%')"
 
-    // extract books with wrong quizid
+    // extract books with wrong (but valid) quizid
     $select = 'rb.id, rb.publisher, rb.level, rb.name, rb.quizid, '.
               'q.name AS quizname, q.course AS courseid, '.
               'cs.name AS sectionname';
@@ -703,7 +728,7 @@ function xmldb_reader_fix_wrong_quizids() {
               'AND cm.id IS NOT NULL '.
               'AND m.id  IS NOT NULL '.
               'AND cs.id IS NOT NULL '.
-              'AND ('.$quizname.' OR cs.name <> '.$sectionname.')';
+              'AND ('.$wrongquizname.' OR '.$wrongsectionname.')';
     $params = array('quiz', '', '--');
     $orderby = 'rb.publisher,rb.level,rb.name';
 
@@ -727,13 +752,39 @@ function xmldb_reader_fix_wrong_quizids() {
             $orderby = 'cm.visible DESC, cm.added DESC';
 
             if ($quiz = $DB->get_records_sql("SELECT $select FROM $from WHERE $where ORDER BY $orderby", $params, 0, 1)) {
-                $quiz = reset($quiz);
+                $quiz = reset($quiz); // most recent, visible quiz in expected section
+            }
+
+            if (empty($quiz)) {
+                // try and get quizid from submitted form data
+                if ($quizid = optional_param('quizidforbookid'.$book->id, 0, PARAM_INT)) {
+                    $quiz = $DB->get_record('quiz', array('id' => $quizid), 'id,name');
+                }
+            }
+
+            if (empty($quiz)) {
+                // offer form to select quizid
+                $where = $DB->sql_like('q.name', '?');
+                $params = array('quiz', $book->name);
+                if ($quizzes = $DB->get_records_sql("SELECT $select FROM $from WHERE $where ORDER BY $orderby", $params)) {
+                    // build select list (sectionname -> quiznames)
+echo 'Please select a quiz for book '.$book->name." ($sectionname)";
+print_object($quizzes);
+die;
+                    foreach ($quizzes as $quiz) {
+                    }
+                    die;
+                }
+            }
+
+            if ($quiz) {
                 if ($book->quizid != $quiz->id) {
                     echo html_writer::tag('li', "Reset quiz for $sectionname: $book->name (quiz id $book->quizid => $quiz->id)");
                     $DB->set_field('reader_books', 'quizid', $quiz->id, array('id' => $book->id));
                 }
             } else {
                 echo html_writer::tag('li', "OOPS, could not locate quiz for $sectionname: $book->name (quiz id = $book->quizid)");
+die;
             }
         }
         xmldb_reader_box_end();
@@ -1823,6 +1874,283 @@ function xmldb_reader_fix_duplicate_attempts() {
             xmldb_reader_box_end();
         }
     }
+}
+
+/**
+ * xmldb_reader_fix_duplicate_questions
+ *
+ * @todo Finish documenting this function
+ */
+function xmldb_reader_fix_duplicate_questions() {
+    global $CFG, $DB, $OUTPUT;
+
+    $table = '';
+    $started_box = false;
+
+    $questiontables = array('match', 'multianswer', 'multichoice', 'ordering', 'multianswer', 'shortanswer', 'truefalse');
+    foreach ($questiontables as $questiontable) {
+
+        $questiontable = 'question_'.$questiontable;
+
+        $select  = 'question AS questionid, COUNT(*) AS countrecords';
+        $from    = '{'.$questiontable.'}';
+        $groupby = 'question HAVING COUNT(*) > 1';
+
+        if ($duplicates = $DB->get_records_sql("SELECT $select FROM $from GROUP BY $groupby ")) {
+            foreach ($duplicates as $duplicate) {
+
+                // get duplicate records
+                if ($records = $DB->get_records($questiontable, array('question' => $duplicate->questionid), 'id,question')) {
+
+                    if ($started_box==false) {
+                        $started_box = true;
+                        xmldb_reader_box_start('The following duplicate question options were deleted');
+                    }
+
+                    if ($table=='' || $table != $questiontable) {
+                        if ($table) {
+                            echo html_writer::end_tag('ul');
+                            echo html_writer::end_tag('li');
+                        }
+                        echo html_writer::start_tag('li')."TABLE: $questiontable";
+                        echo html_writer::start_tag('ul');
+                        $table = $questiontable;
+                    }
+
+                    $ids = array_keys($records);
+                    $id = array_shift($ids); // keep the first one
+
+                    $DB->delete_records_list($questiontable, 'id', $ids);
+                    echo html_writer::tag('li', "question id=$id: ".count($ids)." duplicate(s) removed");
+                }
+
+                // remove duplicate answers from "question_answer" table
+                $select  = $DB->sql_concat('question', "'_'", 'answer').' AS question_answer, COUNT(*) AS countrecords';
+                $from    = '{question_answers}';
+                $where   = 'question = ?';
+                $params  = array($duplicate->questionid);
+                $groupby = 'question, answer HAVING COUNT(*) > 1';
+
+                if ($records = $DB->get_records_sql("SELECT $select FROM $from WHERE $where GROUP BY $groupby", $params)) {
+
+                    $qtype = $DB->get_field('question', 'qtype', array('id' => $duplicate->questionid));
+                    foreach ($records as $record) {
+
+                        $strpos = strpos($record->question_answer, '_');
+                        $questionid = substr($record->question_answer, 0, $strpos);
+                        $answertext = substr($record->question_answer, $strpos + 1);
+                        if ($answers = $DB->get_records_select('question_answers', 'question = ? AND answer = ?', array($questionid, $answertext))) {
+
+                            $answerids = array_keys($answers);
+                            $answerid = array_shift($answerids); // usually, we want to keep the first duplicate answer
+
+                            switch ($qtype) {
+                                case 'multichoice':
+                                    if ($record = $DB->get_record('question_multichoice', array('question' => $questionid))) {
+                                        $answers = explode(',', $record->answers);
+                                        $answers = array_diff($answers, $answerids);
+                                        $answers = implode(',', $answers);
+                                        if ($answers != $record->answers) {
+                                            $DB->set_field('question_multichoice', 'answers', $answers);
+                                        }
+                                    }
+                                    break;
+
+                                case 'ordering':
+                                    // do nothing
+                                    break;
+
+                                case 'truefalse':
+                                    if ($record = $DB->get_record('question_truefalse', array('question' => $questionid))) {
+                                        $answerids = array_keys($answers);
+                                        $answerids = array_diff($answerids, array($record->trueanswer, $record->falseanswer));
+                                    }
+                                    break;
+
+                                case '': // shouldn't happen !!
+                                    break;
+
+                                default:
+                                    echo "Oops - when removing duplicate question answers, we got an unrecognized question type: $qtype";
+                                    die;
+                            }
+
+                            // delete the (remaining) duplicate answers
+                            if (count($answerids)) {
+                                $DB->delete_records_list('question_answers', 'id', $answerids);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    if ($started_box==true) {
+        echo html_writer::end_tag('ul');
+        echo html_writer::end_tag('li');
+        xmldb_reader_box_end();
+    }
+}
+
+/**
+ * xmldb_reader_fix_multichoice_questions
+ *
+ * @todo Finish documenting this function
+ */
+function xmldb_reader_fix_multichoice_questions() {
+    global $DB;
+
+    // locate parents for orphan ":MULTICHOICE:" questions
+    $select = 'qtype = ? AND parent = ? AND '.$DB->sql_like('questiontext', '?');
+    $params = array('multichoice', 0, '%:MULTICHOICE:%');
+
+    $count = 0;
+    $rs = false;
+
+    if ($i_max = $DB->count_records_select('question', $select, $params)) {
+        $rs = $DB->get_recordset_select('question', $select, $params, 'id', 'id, category, qtype, name, questiontext, timecreated');
+    } else {
+        $rs = false;
+    }
+
+    if ($rs) {
+
+        $i = 0; // record counter
+        $bar = new progress_bar('readerfixmultichoice', 500, true);
+        $strupdating = 'Fixing Reader multichoice questions'; // get_string('fixmultichoice', 'reader');
+
+        $started_box = false;
+
+        // loop through questions
+        foreach ($rs as $question) {
+            $i++; // increment record count
+
+            // apply for more script execution time (3 mins)
+            upgrade_set_timeout();
+
+            if ($DB->sql_regex_supported()) {
+                $select = 'sequence '.$DB->sql_regex().' ?';
+                $params = array('(^|,)'.$question->id.'(,|$)');
+            } else {
+                $select = array('sequence = ?',
+                                $DB->sql_like('sequence', '?', false, false),  // start
+                                $DB->sql_like('sequence', '?', false, false),  // middle
+                                $DB->sql_like('sequence', '?', false, false)); // end
+                $select = '('.implode(' OR ', $select).')';
+                $params = array("$question->id", "$question->id,%", "%,$question->id,%", "%,$question->id");
+            }
+
+            if ($started_box==false) {
+                $started_box = true;
+                xmldb_reader_box_start('The following multichoice questions were fixed');
+            }
+
+            if ($multianswer_options = $DB->get_records_select('question_multianswer', $select, $params, 'question', 'id,question')) {
+                $multianswer_option = reset($multianswer_options);
+                $parentquestionid = $multianswer_option->question;
+            } else {
+                // get potential parent records
+                $select = 'parent = ? AND qtype = ? AND name = ? AND timecreated = ?';
+                $params = array(0, 'multianswer', $question->name, $question->timecreated);
+                if ($parentquestions = $DB->get_records_select('question', $select, $params, 'timecreated, id')) {
+                    $parentquestionid = 0;
+                    foreach ($parentquestions as $parentquestion) {
+                        switch (true) {
+                            case ($parentquestionid==0):
+                                // FIRST record (our #3 choice)
+
+                            case ($parentquestion->id > $question->id && $parentquestion->id < $parentquestionid):
+                                // LOWEST id ABOVE question id (our #2 choice)
+
+                            case ($parentquestion->id < $question->id && ($parentquestion->id > $parentquestionid || $parentquestionid > $question->id)):
+                                // HIGHEST id BELOW question id (our #1 choice)
+
+                                $parentquestionid = $parentquestion->id;
+                                break;
+                        }
+                    }
+
+                    // move preferred parent to start of $parentquestions array
+                    $parentquestion = $parentquestions[$parentquestionid];
+                    unset($parentquestions[$parentquestionid]);
+                    $parentquestions = array($parentquestionid => $parentquestion) + $parentquestions;
+
+                    $parentquestionid = 0;
+                    foreach ($parentquestions as $parentquestion) {
+
+                        $count_answers = 0; // the number of answers required by this parent question
+                        if (! preg_match('/\{\#[0-9]+\}/', $parentquestion->questiontext, $matches)) {
+                            continue; // shouldn't happen !!
+                        }
+                        $count_answers = count($matches);
+
+                        // get/create the multichoice options record for this parent question
+                        //     there should only be one such record,
+                        //     by just in case, we allow for duplicates
+                        if ($multianswer_options = $DB->get_records('question_multianswer', array('question' => $parentquestion->id))) {
+                            // do nothing
+                        } else {
+                            // add new question_multianswer record
+                            $multianswer_option = (object)array(
+                                'question' => $parentquestion->id,
+                                'sequence'  => '',
+                            );
+                            if (! $multianswer_option->id = $DB->insert_record('question_multianswer', $multianswer_option)) {
+                                // could not add record - this shouldn't happen !!
+                            }
+                            $multianswer_options = array($multianswer_option->id => $multianswer_option);
+                        }
+
+                        foreach ($multianswer_options as $multianswer_option) {
+
+                            $answerquestionids = explode(',', $multianswer_option->sequence);
+                            $answerquestionids = array_filter($answerquestionids); // remove blanks
+
+                            // remove ids of questions that don't exist
+                            foreach ($answerquestionids as $a => $answerquestionid) {
+                                if (! $DB->record_exists('question', array('id' => $answerquestionid))) {
+                                    $answerquestionids[$a] = false; // invalid answer id
+                                }
+                            }
+                            $answerquestionids = array_filter($answerquestionids); // remove blanks
+
+                            // add this question as a valid answer for the parent question
+                            if (count($answerquestionids) < $count_answers) {
+                                // add this question to $multianswer_option->sequence
+                                $answerquestionids[] = $question->id;
+                                $multianswer_option->sequence = implode(',', $answerquestionids);
+                                $DB->update_record('question_multianswer', $multianswer_option);
+                                $parentquestionid = $parentquestion->id;
+                                echo "<li>Add question (id = $question->id) as answer for multianswer parent question (id = $parentquestion->id)</li>";
+
+                                // todo: make sure answers for this question are present
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            if ($parentquestionid) {
+                $parentquestion = $DB->get_record('question', array('id' => $parentquestionid));
+                $DB->set_field('question', 'parent', $parentquestionid, array('id' => $question->id));
+                echo "<li>Set parent for question (id=$question->id): 0 =&gt; $parentquestionid $parentquestion->name</li>";
+            } else {
+                echo '<li><span style="color: red">OOPS</span> Could not locate parent for question: '.$question->id.'</li>';
+            }
+
+            // update progress bar
+            $bar->update($i, $i_max, $strupdating.": ($i/$i_max)");
+        }
+
+        if ($started_box==true) {
+            echo html_writer::end_tag('ul');
+            echo html_writer::end_tag('li');
+            xmldb_reader_box_end();
+        }
+    }
+
+    // get all distinct quizids from books
+    // foreach (quiz) check every question has an entry in the instances table
 }
 
 /**
