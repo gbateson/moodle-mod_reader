@@ -95,6 +95,9 @@ $PAGE->set_heading($course->fullname);
 
 echo $OUTPUT->header();
 
+// our date format for this page
+$dateformat = 'd M Y'; // e.g. 13 Jun 2013
+
 //Check time [open/close]
 $timenow = time();
 if (! empty($reader->timeopen) && $reader->timeopen > $timenow) {
@@ -126,6 +129,11 @@ if (has_capability('mod/reader:manage', $contextmodule)) {
 }
 
 $leveldata = reader_get_level_data($reader);
+if ($reader->levelcheck == 1) {
+    $promotiondate = $leveldata['promotiondate'];
+} else {
+    $promotiondate = $leveldata['promotiondate'];
+}
 
 echo $OUTPUT->box_start('generalbox');
 
@@ -191,71 +199,77 @@ if ($reader->bookcovers == 1) {
 $bookcoversinthisterm = '';
 $lastattemptdate = 0;
 
-if (list($attemptdata, $summaryattemptdata) = reader_get_student_attempts($USER->id, $reader)) {
-    foreach ($attemptdata as $attemptdata_) {
+if (list($attempts, $summaryattempts) = reader_get_student_attempts($USER->id, $reader)) {
+    foreach ($attempts as $attempt) {
 
-        $lastattemptdate = $attemptdata_['timefinish']; // fixing postgress problem
+        if ($promotiondate && $lastattemptdate) {
+            if ($lastattemptdate < $promotiondate && $attempt['timefinish'] > $promotiondate) {
+                $table->data[] = 'hr'; // separator shows promotion date
+                // maybe do this with a message in a html_table_cell with rowspan = count($table->head)
+            }
+        }
+        $lastattemptdate = $attempt['timefinish']; // fixing postgress problem
 
-        $alreadyansweredbooksid[] = $attemptdata_['quizid'];
+        $alreadyansweredbooksid[] = $attempt['quizid'];
 
-        if ($reader->bookcovers == 1 && $attemptdata_['status'] == 'correct') {
+        if ($reader->bookcovers == 1 && $attempt['status'] == 'correct') {
             if ($CFG->slasharguments) {
-                $src = new moodle_url('/mod/reader/images.php/reader/images/'.$attemptdata_['image']);
+                $src = new moodle_url('/mod/reader/images.php/reader/images/'.$attempt['image']);
             } else {
-                $params = array('file' => '/reader/images/'.$attemptdata_['image']);
+                $params = array('file' => '/reader/images/'.$attempt['image']);
                 $src = new moodle_url('/mod/reader/images.php', $params);
             }
-            $params = array('src' => $src, 'border' => 0, 'alt' => $attemptdata_['booktitle'], 'height' => 150, 'width' => 100);
+            $params = array('src' => $src, 'border' => 0, 'alt' => $attempt['booktitle'], 'height' => 150, 'width' => 100);
             $bookcoversinthisterm .= html_writer::empty_tag('img', $params).' ';
         }
 
-        if ($attemptdata_['statustext'] == 'Passed' || $attemptdata_['statustext'] == 'Credit'){
-            $totalwords += $attemptdata_['words'];
+        if ($attempt['statustext'] == 'Passed' || $attempt['statustext'] == 'Credit'){
+            $totalwords += $attempt['words'];
             $totalwordscount++;
-            $showwords = $attemptdata_['words'];
+            $showwords = $attempt['words'];
         } else {
             $showwords = '';
         }
 
         if ($reader->pointreport == 1) {
             if ($reader->reportwordspoints != 1) {
-                $table->data[] = array(date('d M Y', $attemptdata_['timefinish']),
-                                            $attemptdata_['booktitle'],
-                                            $attemptdata_['booklevel'].'[RL' .$attemptdata_['bookdiff'].']',
-                                            //$attemptdata_['words'],
+                $table->data[] = array(date($dateformat, $attempt['timefinish']),
+                                            $attempt['booktitle'],
+                                            $attempt['booklevel'].'[RL' .$attempt['bookdiff'].']',
+                                            //$attempt['words'],
                                             $showwords,
-                                            $attemptdata_['bookpercent'],
-                                            $attemptdata_['totalpoints']);
+                                            $attempt['bookpercent'],
+                                            $attempt['totalpoints']);
             } else {  //without words
-                $table->data[] = array(date('d M Y', $attemptdata_['timefinish']),
-                                            $attemptdata_['booktitle'],
-                                            $attemptdata_['booklevel'].'[RL'.$attemptdata_['bookdiff'].']',
-                                            $attemptdata_['bookpercent'],
-                                            $attemptdata_['totalpoints']);
+                $table->data[] = array(date($dateformat, $attempt['timefinish']),
+                                            $attempt['booktitle'],
+                                            $attempt['booklevel'].'[RL'.$attempt['bookdiff'].']',
+                                            $attempt['bookpercent'],
+                                            $attempt['totalpoints']);
             }
         } else {
             if ($reader->reportwordspoints == 2) {  //points and words
-                $table->data[] = array(date('d M Y', $attemptdata_['timefinish']),
-                                            $attemptdata_['booktitle'],
-                                            $attemptdata_['booklevel'].'[RL'.$attemptdata_['bookdiff'].']',
-                                            $attemptdata_['statustext'],
-                                            //$attemptdata_['words'],
+                $table->data[] = array(date($dateformat, $attempt['timefinish']),
+                                            $attempt['booktitle'],
+                                            $attempt['booklevel'].'[RL'.$attempt['bookdiff'].']',
+                                            $attempt['statustext'],
+                                            //$attempt['words'],
                                             $showwords,
-                                            $attemptdata_['bookpoints'],
-                                            $attemptdata_['totalpoints']);
+                                            $attempt['bookpoints'],
+                                            $attempt['totalpoints']);
             } else if ($reader->reportwordspoints == 1) {  //points only
-                $table->data[] = array(date('d M Y', $attemptdata_['timefinish']),
-                                            $attemptdata_['booktitle'],
-                                            $attemptdata_['booklevel'].'[RL'.$attemptdata_['bookdiff'].']',
-                                            $attemptdata_['statustext'],
-                                            $attemptdata_['bookpoints'],
-                                            $attemptdata_['totalpoints']);
+                $table->data[] = array(date($dateformat, $attempt['timefinish']),
+                                            $attempt['booktitle'],
+                                            $attempt['booklevel'].'[RL'.$attempt['bookdiff'].']',
+                                            $attempt['statustext'],
+                                            $attempt['bookpoints'],
+                                            $attempt['totalpoints']);
             } else if ($reader->reportwordspoints == 0) {  //words only
-                $table->data[] = array(date('d M Y', $attemptdata_['timefinish']),
-                                            $attemptdata_['booktitle'],
-                                            $attemptdata_['booklevel'].'[RL'.$attemptdata_['bookdiff'].']',
-                                            $attemptdata_['statustext'],
-                                            //$attemptdata_['words'],
+                $table->data[] = array(date($dateformat, $attempt['timefinish']),
+                                            $attempt['booktitle'],
+                                            $attempt['booklevel'].'[RL'.$attempt['bookdiff'].']',
+                                            $attempt['statustext'],
+                                            //$attempt['words'],
                                             $showwords,
                                             $totalwords);
             }
@@ -335,7 +349,7 @@ if (isset($_SESSION['SESSION']->reader_changetostudentview) && $_SESSION['SESSIO
 echo "</td></tr></table>";
 
 if ($reader->levelcheck == 1) {
-    echo reader_level_blockgraph($reader, $leveldata);
+    echo reader_level_blockgraph($reader, $leveldata, $dateformat);
 }
 
 if (! empty($table->data)) {
@@ -439,7 +453,7 @@ if ($reader->attemptsofday > 0) { // && $_SESSION['SESSION']->reader_teacherview
     //$lastttempt = $DB->get_record_sql('SELECT * FROM {reader_attempts} WHERE reader= ? and userid= ?  ORDER by timefinish DESC',array($reader->id, $USER->id));
     //$lastttempt = $DB->get_record_sql('SELECT * FROM {reader_attempts} ra, {reader} r WHERE ra.userid= ?  and r.id=ra.reader and r.course= ?  ORDER by ra.timefinish DESC', array($USER->id, $course->id));
     $cleartime = $lastattemptdate + ($reader->attemptsofday * 24 * 60 * 60);
-    $cleartime = reader_forcedtimedelay_check ($cleartime, $reader, $leveldata['currentlevel'], $lastattemptdate);
+    $cleartime = reader_forcedtimedelay_check($cleartime, $reader, $leveldata['currentlevel'], $lastattemptdate);
     $time = time();
     if ($time > $cleartime) {
         $showform = true;
@@ -568,7 +582,7 @@ print ('<center><img src="img/credit.jpg" height="40px"></center>');
 echo $OUTPUT->footer();
 
 
-function reader_level_blockgraph($reader, $leveldata) {
+function reader_level_blockgraph($reader, $leveldata, $dateformat) {
 
     // max attempts allowed at each difficulty level
     $prevmax = $reader->quizpreviouslevel;
@@ -637,7 +651,11 @@ function reader_level_blockgraph($reader, $leveldata) {
 
     if ($output) {
         // prepend heading
-        $output = html_writer::tag('h3', get_string('quizzespassedtable', 'reader', $leveldata['currentlevel'])).$output;
+        $params = array('style' => 'margin: 6px auto; padding: 6px auto;');
+        $promotiondate = date($dateformat, $leveldata['promotiondate']);
+        $output = html_writer::tag('h3', get_string('quizzespassedtable', 'reader', $leveldata['currentlevel']), $params).
+                  html_writer::tag('p', get_string('sincepromotionon', 'reader', $promotiondate), $params).
+                  $output;
 
         // append images as bar titles
         $output .= ($prevallow < 0 ? '' : $previmg);

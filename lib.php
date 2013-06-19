@@ -443,10 +443,11 @@ function reader_get_level_data($reader, $userid=0) {
 
     // prepare level data
     $leveldata = array(
-        'currentlevel' => $level->currentlevel,                        // current level of this user
-        'onprevlevel'  => $reader->quizpreviouslevel - $count['prev'], // number of quizzes allowed at previous level
-        'onthislevel'  => $reader->nextlevel         - $count['this'], // number of quizzes allowed at current level
-        'onnextlevel'  => $reader->quiznextlevel     - $count['next']  // number of quizzes allowed at next level
+        'promotiondate' => $level->time,
+        'currentlevel'  => $level->currentlevel,                        // current level of this user
+        'onprevlevel'   => $reader->quizpreviouslevel - $count['prev'], // number of quizzes allowed at previous level
+        'onthislevel'   => $reader->nextlevel         - $count['this'], // number of quizzes allowed at current level
+        'onnextlevel'   => $reader->quiznextlevel     - $count['next']  // number of quizzes allowed at next level
     );
     if ($level->currentlevel==0 || $count['prev'] == -1) {
         $leveldata['onprevlevel'] = -1;
