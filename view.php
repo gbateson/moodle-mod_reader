@@ -40,25 +40,15 @@ $series    = optional_param('series', NULL, PARAM_CLEAN);
 $likebook  = optional_param('likebook', NULL, PARAM_CLEAN);
 
 if ($id) {
-    if (! $cm = get_coursemodule_from_id('reader', $id)) {
-        throw new reader_exception('Course Module ID was incorrect');
-    }
-    if (! $course = $DB->get_record('course', array('id' => $cm->course))) {
-        throw new reader_exception('Course is misconfigured');
-    }
-    if (! $reader = $DB->get_record('reader', array('id' => $cm->instance))) {
-        throw new reader_exception('Course module is incorrect');
-    }
+    $cm = get_coursemodule_from_id('reader', $id, 0, false, MUST_EXIST);
+    $course = $DB->get_record('course', array('id'=>$cm->course), '*', MUST_EXIST);
+    $reader = $DB->get_record('reader', array('id'=>$cm->instance), '*', MUST_EXIST);
+    $a = $reader->id;
 } else {
-    if (! $reader = $DB->get_record('reader', array('id' => $a))) {
-        throw new reader_exception('Course module is incorrect');
-    }
-    if (! $course = $DB->get_record('course', array('id' => $reader->course))) {
-        throw new reader_exception('Course is misconfigured');
-    }
-    if (! $cm = get_coursemodule_from_instance('reader', $reader->id, $course->id)) {
-        throw new reader_exception('Course Module ID was incorrect');
-    }
+    $reader = $DB->get_record('reader', array('id'=>$a), '*', MUST_EXIST);
+    $cm = get_coursemodule_from_instance('reader', $reader->id, 0, false, MUST_EXIST);
+    $course = $DB->get_record('course', array('id'=>$cm->course), '*', MUST_EXIST);
+    $id = $cm->id;
 }
 
 require_login($course->id);
@@ -96,7 +86,7 @@ $PAGE->set_heading($course->fullname);
 echo $OUTPUT->header();
 
 // preferred time and date format for this page
-$timeformat = 'h:i A'; // 1:45 PM
+$timeformat = 'h:i A';  // 1:45 PM
 $dateformat = 'jS M Y'; // 2nd Jun 2013
 
 //Check time [open/close]
@@ -130,10 +120,10 @@ if (has_capability('mod/reader:manage', $contextmodule)) {
 }
 
 $leveldata = reader_get_level_data($reader);
-if ($reader->levelcheck == 1) {
-    $promotiondate = $leveldata['promotiondate'];
-} else {
+if ($reader->levelcheck==0) {
     $promotiondate = 0;
+} else {
+    $promotiondate = $leveldata['promotiondate'];
 }
 
 echo $OUTPUT->box_start('generalbox');
@@ -205,14 +195,20 @@ if (list($attempts, $summaryattempts) = reader_get_student_attempts($USER->id, $
 
         if ($promotiondate && $lastattemptdate) {
             if ($lastattemptdate < $promotiondate && $attempt['timefinish'] > $promotiondate) {
+
+                // format the "You were promoted ..." message
                 $params = (object)array(
                     'level' => $leveldata['currentlevel'],
                     'time'  => date($timeformat, $promotiondate),
                     'date'  => date($dateformat, $promotiondate)
                 );
                 $cell = new html_table_cell(get_string('youwerepromoted', 'reader', $params));
-                $cell->colspan = count($table->head);
+
+                // convert cell to single header header cell spanning all columns
                 $cell->header = true;
+                $cell->colspan = count($table->head);
+
+                // add table row containing this single cell
                 $table->data[] = new html_table_row(array($cell));
             }
         }
@@ -529,7 +525,7 @@ if ($attempt = $DB->get_record('reader_attempts', array('reader' => $cm->instanc
         $attempt->timemodified = time();
         $attempt->timefinish   = time();
         $attempt->passed       = 'false';
-        $attempt->percentgrade      = 0;
+        $attempt->percentgrade = 0;
         $attempt->sumgrades    = '0';
         $attempt->bookrating   = 0;
         $DB->update_record('reader_attempts', $attempt);
@@ -553,8 +549,6 @@ if (isset($_SESSION['SESSION']->reader_changetostudentview)) {
     }
 }
 
-
-
 if ($showform && has_capability('mod/reader:attemptreaders', $contextmodule)) {
 
     echo '<h3>'.get_string('searchforthebookthatyouwant', 'reader').':</h3>';
@@ -572,9 +566,9 @@ if ($showform && has_capability('mod/reader:attemptreaders', $contextmodule)) {
 }
 
 if (isset($_SESSION['SESSION']->reader_changetostudentview) && $_SESSION['SESSION']->reader_changetostudentview > 0) {
-    $_SESSION['SESSION']->reader_lastuser    = $USER->id;
-    $_SESSION['SESSION']->reader_page        = 'view';
-    $_SESSION['SESSION']->reader_lasttime    = time();
+    $_SESSION['SESSION']->reader_lastuser = $USER->id;
+    $_SESSION['SESSION']->reader_page     = 'view';
+    $_SESSION['SESSION']->reader_lasttime = time();
     $_SESSION['SESSION']->reader_lastuserfrom = $_SESSION['SESSION']->reader_changetostudentview;
 
     if ($USER = $DB->get_record('user', array('id' => $_SESSION['SESSION']->reader_changetostudentview))) {

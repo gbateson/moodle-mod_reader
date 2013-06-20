@@ -1471,22 +1471,22 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
             $c = 0; // column number
 
             $username = strip_tags($row->cells[1]->text);
-            $worksheet->write_string(2 + $r, $c++, $username);
+            $worksheet->write_string(3 + $r, $c++, $username);
 
             $fullname = strip_tags($row->cells[2]->text);
-            $worksheet->write_string(2 + $r, $c++, $fullname);
+            $worksheet->write_string(3 + $r, $c++, $fullname);
 
             $groupname = implode(',', $groupnames[$username]);
-            $worksheet->write_string(2 + $r, $c++, $groupname);
+            $worksheet->write_string(3 + $r, $c++, $groupname);
 
-            $worksheet->write_number(2 + $r, $c, $row->cells[$c++]->text);
-            $worksheet->write_number(2 + $r, $c, $row->cells[$c++]->text);
-            $worksheet->write_number(2 + $r, $c, $row->cells[$c++]->text);
-            $worksheet->write_number(2 + $r, $c, $row->cells[$c++]->text);
-            $worksheet->write_number(2 + $r, $c, $row->cells[$c++]->text);
-            $worksheet->write_string(2 + $r, $c, $row->cells[$c++]->text);
-            $worksheet->write_string(2 + $r, $c, $row->cells[$c++]->text);
-            $worksheet->write_string(2 + $r, $c, $row->cells[$c++]->text);
+            $worksheet->write_number(3 + $r, $c, $row->cells[$c++]->text);
+            $worksheet->write_number(3 + $r, $c, $row->cells[$c++]->text);
+            $worksheet->write_number(3 + $r, $c, $row->cells[$c++]->text);
+            $worksheet->write_number(3 + $r, $c, $row->cells[$c++]->text);
+            $worksheet->write_number(3 + $r, $c, $row->cells[$c++]->text);
+            $worksheet->write_string(3 + $r, $c, $row->cells[$c++]->text);
+            $worksheet->write_string(3 + $r, $c, $row->cells[$c++]->text);
+            $worksheet->write_string(3 + $r, $c, $row->cells[$c++]->text);
         }
         $workbook->close();
         die;
@@ -1740,32 +1740,32 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
             $c = 0; // column number
 
             $username = strip_tags($row->cells[1]->text);
-            $worksheet->write_string(2 + $r, $c++, $username);
+            $worksheet->write_string(3 + $r, $c++, $username);
 
             $fullname = strip_tags($row->cells[2]->text);
-            $worksheet->write_string(2 + $r, $c++, $fullname);
+            $worksheet->write_string(3 + $r, $c++, $fullname);
 
             $groupname = implode(',', $groupnames[$username]);
-            $worksheet->write_string(2 + $r, $c++, $groupname);
+            $worksheet->write_string(3 + $r, $c++, $groupname);
 
             if ($reader->checkbox == 1) {
-                $worksheet->write_string(2 + $r, $c, $row->cells[$c++]->text);
+                $worksheet->write_string(3 + $r, $c, $row->cells[$c++]->text);
             }
 
-            $worksheet->write_string(2 + $r, $c, $row->cells[$c++]->text, $formatdate);
-            $worksheet->write_string(2 + $r, $c, $row->cells[$c++]->text); // S-level
-            $worksheet->write_string(2 + $r, $c, $row->cells[$c++]->text); // B-level
-            $worksheet->write_string(2 + $r, $c, $row->cells[$c++]->text); // Title
-            $worksheet->write_string(2 + $r, $c, $row->cells[$c++]->text); // Score
-            $worksheet->write_string(2 + $r, $c, $row->cells[$c++]->text); // P/F/C
+            $worksheet->write_string(3 + $r, $c, $row->cells[$c++]->text, $formatdate);
+            $worksheet->write_string(3 + $r, $c, $row->cells[$c++]->text); // S-level
+            $worksheet->write_string(3 + $r, $c, $row->cells[$c++]->text); // B-level
+            $worksheet->write_string(3 + $r, $c, $row->cells[$c++]->text); // Title
+            $worksheet->write_string(3 + $r, $c, $row->cells[$c++]->text); // Score
+            $worksheet->write_string(3 + $r, $c, $row->cells[$c++]->text); // P/F/C
 
             if ($reader->wordsorpoints == 'words') {
-                $worksheet->write_string(2 + $r, $c, $row->cells[$c++]->text); // Words
-                $worksheet->write_string(2 + $r, $c, $row->cells[$c++]->text); // Total Words
+                $worksheet->write_string(3 + $r, $c, $row->cells[$c++]->text); // Words
+                $worksheet->write_string(3 + $r, $c, $row->cells[$c++]->text); // Total Words
             } else {
-                $worksheet->write_string(2 + $r, $c, $row->cells[$c++]->text); // Points
-                $worksheet->write_string(2 + $r, $c, $row->cells[$c++]->text); // Length
-                $worksheet->write_string(2 + $r, $c, $row->cells[$c++]->text); // Total Points
+                $worksheet->write_string(3 + $r, $c, $row->cells[$c++]->text); // Points
+                $worksheet->write_string(3 + $r, $c, $row->cells[$c++]->text); // Length
+                $worksheet->write_string(3 + $r, $c, $row->cells[$c++]->text); // Total Points
             }
         }
         $workbook->close();
@@ -1890,16 +1890,16 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
     if ($excel) {
         foreach ($table->data as $r => $row) {
             $c = 0;
-            $worksheet->write_string(2 + $r, $c, strip_tags($row->cells[$c++]->text));
-            $worksheet->write_string(2 + $r, $c, $row->cells[$c++]->text);
-            $worksheet->write_string(2 + $r, $c, $row->cells[$c++]->text);
-            $worksheet->write_string(2 + $r, $c, $row->cells[$c++]->text);
-            $worksheet->write_string(2 + $r, $c, $row->cells[$c++]->text);
-            $worksheet->write_string(2 + $r, $c, $row->cells[$c++]->text);
-            $worksheet->write_string(2 + $r, $c, $row->cells[$c++]->text);
-            $worksheet->write_string(2 + $r, $c, $row->cells[$c++]->text);
-            $worksheet->write_string(2 + $r, $c, $row->cells[$c++]->text);
-            $worksheet->write_string(2 + $r, $c, $row->cells[$c++]->text);
+            $worksheet->write_string(3 + $r, $c, strip_tags($row->cells[$c++]->text));
+            $worksheet->write_string(3 + $r, $c, $row->cells[$c++]->text);
+            $worksheet->write_string(3 + $r, $c, $row->cells[$c++]->text);
+            $worksheet->write_string(3 + $r, $c, $row->cells[$c++]->text);
+            $worksheet->write_string(3 + $r, $c, $row->cells[$c++]->text);
+            $worksheet->write_string(3 + $r, $c, $row->cells[$c++]->text);
+            $worksheet->write_string(3 + $r, $c, $row->cells[$c++]->text);
+            $worksheet->write_string(3 + $r, $c, $row->cells[$c++]->text);
+            $worksheet->write_string(3 + $r, $c, $row->cells[$c++]->text);
+            $worksheet->write_string(3 + $r, $c, $row->cells[$c++]->text);
         }
         $workbook->close();
         die;
@@ -2009,13 +2009,13 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
     if ($excel) {
         foreach ($table->data as $r => $row) {
             $c = 0;
-            $worksheet->write_string(2 + $r, $c, strip_tags($row->cells[$c++]->text));
-            $worksheet->write_string(2 + $r, $c, $row->cells[$c++]->text);
-            $worksheet->write_string(2 + $r, $c, $row->cells[$c++]->text);
-            $worksheet->write_string(2 + $r, $c, $row->cells[$c++]->text);
-            $worksheet->write_string(2 + $r, $c, strip_tags($row->cells[$c++]->text));
-            $worksheet->write_string(2 + $r, $c, strip_tags($row->cells[$c++]->text));
-            $worksheet->write_string(2 + $r, $c, $row->cells[$c++]->text);
+            $worksheet->write_string(3 + $r, $c, strip_tags($row->cells[$c++]->text));
+            $worksheet->write_string(3 + $r, $c, $row->cells[$c++]->text);
+            $worksheet->write_string(3 + $r, $c, $row->cells[$c++]->text);
+            $worksheet->write_string(3 + $r, $c, $row->cells[$c++]->text);
+            $worksheet->write_string(3 + $r, $c, strip_tags($row->cells[$c++]->text));
+            $worksheet->write_string(3 + $r, $c, strip_tags($row->cells[$c++]->text));
+            $worksheet->write_string(3 + $r, $c, $row->cells[$c++]->text);
         }
         $workbook->close();
         die;
@@ -2187,13 +2187,13 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
         if ($excel) {
             foreach ($table->data as $row) {
                 $c = 0;
-                $worksheet->write_string(2 + $r, $c, strip_tags($row->cells[$c++]->text));
-                $worksheet->write_string(2 + $r, $c, strip_tags($row->cells[$c++]->text));
-                $worksheet->write_string(2 + $r, $c, $row->cells[$c++]->text);
-                $worksheet->write_string(2 + $r, $c, $row->cells[$c++]->text);
-                $worksheet->write_string(2 + $r, $c, $row->cells[$c++]->text);
-                $worksheet->write_string(2 + $r, $c, $row->cells[$c++]->text);
-                $worksheet->write_string(2 + $r, $c, $row->cells[$c++]->text);
+                $worksheet->write_string(3 + $r, $c, strip_tags($row->cells[$c++]->text));
+                $worksheet->write_string(3 + $r, $c, strip_tags($row->cells[$c++]->text));
+                $worksheet->write_string(3 + $r, $c, $row->cells[$c++]->text);
+                $worksheet->write_string(3 + $r, $c, $row->cells[$c++]->text);
+                $worksheet->write_string(3 + $r, $c, $row->cells[$c++]->text);
+                $worksheet->write_string(3 + $r, $c, $row->cells[$c++]->text);
+                $worksheet->write_string(3 + $r, $c, $row->cells[$c++]->text);
             }
             $workbook->close();
             die;
@@ -3219,23 +3219,23 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
     if ($excel) {
         foreach ($table->data as $r => $row) {
             $c = 0;
-            $worksheet->write_string(2 + $r, $c, $row->cells[$c++]->text);
-            $worksheet->write_number(2 + $r, $c, $row->cells[$c++]->text);
-            $worksheet->write_number(2 + $r, $c, $row->cells[$c++]->text);
-            $worksheet->write_number(2 + $r, $c, $row->cells[$c++]->text);
-            $worksheet->write_number(2 + $r, $c, $row->cells[$c++]->text);
-            $worksheet->write_number(2 + $r, $c, $row->cells[$c++]->text);
-            $worksheet->write_string(2 + $r, $c, $row->cells[$c++]->text);
-            $worksheet->write_string(2 + $r, $c, $row->cells[$c++]->text);
-            $worksheet->write_string(2 + $r, $c, $row->cells[$c++]->text);
-            $worksheet->write_string(2 + $r, $c, $row->cells[$c++]->text);
+            $worksheet->write_string(3 + $r, $c, $row->cells[$c++]->text);
+            $worksheet->write_number(3 + $r, $c, $row->cells[$c++]->text);
+            $worksheet->write_number(3 + $r, $c, $row->cells[$c++]->text);
+            $worksheet->write_number(3 + $r, $c, $row->cells[$c++]->text);
+            $worksheet->write_number(3 + $r, $c, $row->cells[$c++]->text);
+            $worksheet->write_number(3 + $r, $c, $row->cells[$c++]->text);
+            $worksheet->write_string(3 + $r, $c, $row->cells[$c++]->text);
+            $worksheet->write_string(3 + $r, $c, $row->cells[$c++]->text);
+            $worksheet->write_string(3 + $r, $c, $row->cells[$c++]->text);
+            $worksheet->write_string(3 + $r, $c, $row->cells[$c++]->text);
         }
         $workbook->close();
         die;
     }
 
     echo '<table style="width:100%"><tr><td align="right">';
-    echo $OUTPUT->single_button(new moodle_url('admin.php',$options), get_string('downloadexcel', 'reader'), 'post', $options);
+    echo $OUTPUT->single_button(new moodle_url('admin.php', $options), get_string('downloadexcel', 'reader'), 'post', $options);
     echo '</td></tr></table>';
 
     echo '<table style="width:100%"><tr><td align="right">';
@@ -3592,12 +3592,12 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
     if ($excel) {
         foreach ($table->data as $r => $row) {
             $c = 0;
-            $worksheet->write_string(2 + $r, $c, (string) $row->cells[$c++]->text);
-            $worksheet->write_string(2 + $r, $c, (string) $row->cells[$c++]->text);
-            $worksheet->write_string(2 + $r, $c, (string) $row->cells[$c++]->text);
-            $worksheet->write_number(2 + $r, $c, (string) $row->cells[$c++]->text);
-            $worksheet->write_number(2 + $r, $c, (string) $row->cells[$c++]->text);
-            $worksheet->write_number(2 + $r, $c, (string) $row->cells[$c++]->text);
+            $worksheet->write_string(3 + $r, $c, (string) $row->cells[$c++]->text);
+            $worksheet->write_string(3 + $r, $c, (string) $row->cells[$c++]->text);
+            $worksheet->write_string(3 + $r, $c, (string) $row->cells[$c++]->text);
+            $worksheet->write_number(3 + $r, $c, (string) $row->cells[$c++]->text);
+            $worksheet->write_number(3 + $r, $c, (string) $row->cells[$c++]->text);
+            $worksheet->write_number(3 + $r, $c, (string) $row->cells[$c++]->text);
         }
     }
 
