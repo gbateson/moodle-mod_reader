@@ -327,5 +327,6 @@ $string['nosearchresults'] = 'No books matching your search are available';
 $string['includepublishers'] = 'Search publisher names too?';
 $string['quiznotavailable'] = 'Sorry, this quiz is not currently available to you';
 
-$string['sincepromotionon'] = '(since promotion on {$a})';
+$string['sincedate'] = '(since {$a})';
+$string['sincepromotion'] = '(since promotion on {$a})';
 $string['youwerepromoted'] = 'You were promoted to RL-{$a->level} on {$a->date} at {$a->time}';

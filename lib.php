@@ -3079,7 +3079,7 @@ function reader_available_bookids($publisher, $level, $cmid, $from, $where, $sql
         $output .= html_writer::start_tag('select', $params);
 
         foreach ($records as $record) {
-            $output .= html_writer::tag('option', "[RL: $record->difficulty] $record->name", array('value' => $record->id));
+            $output .= html_writer::tag('option', "[RL-$record->difficulty] $record->name", array('value' => $record->id));
         }
 
         $output .= html_writer::end_tag('select');

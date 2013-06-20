@@ -659,10 +659,11 @@ function reader_level_blockgraph($reader, $leveldata, $dateformat) {
 
     if ($output) {
         // prepend heading
-        $params = array('style' => 'margin: 6px auto; padding: 6px auto;');
-        $promotiondate = date($dateformat, $leveldata['promotiondate']);
+        $date   = date($dateformat, $leveldata['promotiondate']);
+        $since  = ($leveldata['currentlevel']==0 ? 'sincedate' : 'sincepromotion');
+        $params = array('class' => 'noverticalpadding', 'style' => 'margin: 6px auto; padding: 6px auto;');
         $output = html_writer::tag('h3', get_string('quizzespassedtable', 'reader', $leveldata['currentlevel']), $params).
-                  html_writer::tag('p', get_string('sincepromotionon', 'reader', $promotiondate), $params).
+                  html_writer::tag('p', get_string($since, 'reader', $date), $params).
                   $output;
 
         // append images as bar titles
@@ -670,7 +671,7 @@ function reader_level_blockgraph($reader, $leveldata, $dateformat) {
         $output .= ($thisallow < 0 ? '' : $thisimg);
         $output .= ($nextallow < 0 ? '' : $nextimg);
 
-        // put output in its own DIV
+        // put output in its own DIV floated to the right of the page
         $output = html_writer::tag('div', $output, array('style'=>'float: right; margin-right: 50px; text-align: center;'));
     }
 
