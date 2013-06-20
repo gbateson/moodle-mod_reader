@@ -95,8 +95,9 @@ $PAGE->set_heading($course->fullname);
 
 echo $OUTPUT->header();
 
-// our date format for this page
-$dateformat = 'd M Y'; // e.g. 13 Jun 2013
+// preferred time and date format for this page
+$timeformat = 'h:i A'; // 1:45 PM
+$dateformat = 'jS M Y'; // 2nd Jun 2013
 
 //Check time [open/close]
 $timenow = time();
@@ -132,7 +133,7 @@ $leveldata = reader_get_level_data($reader);
 if ($reader->levelcheck == 1) {
     $promotiondate = $leveldata['promotiondate'];
 } else {
-    $promotiondate = $leveldata['promotiondate'];
+    $promotiondate = 0;
 }
 
 echo $OUTPUT->box_start('generalbox');
@@ -204,8 +205,15 @@ if (list($attempts, $summaryattempts) = reader_get_student_attempts($USER->id, $
 
         if ($promotiondate && $lastattemptdate) {
             if ($lastattemptdate < $promotiondate && $attempt['timefinish'] > $promotiondate) {
-                $table->data[] = 'hr'; // separator shows promotion date
-                // maybe do this with a message in a html_table_cell with rowspan = count($table->head)
+                $params = (object)array(
+                    'level' => $leveldata['currentlevel'],
+                    'time'  => date($timeformat, $promotiondate),
+                    'date'  => date($dateformat, $promotiondate)
+                );
+                $cell = new html_table_cell(get_string('youwerepromoted', 'reader', $params));
+                $cell->colspan = count($table->head);
+                $cell->header = true;
+                $table->data[] = new html_table_row(array($cell));
             }
         }
         $lastattemptdate = $attempt['timefinish']; // fixing postgress problem
