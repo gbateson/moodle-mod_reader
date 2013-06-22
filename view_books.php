@@ -16,7 +16,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * mod/reader/view_get_bookslist.php
+ * mod/reader/view_books.php
  *
  * @package    mod
  * @subpackage reader
@@ -62,7 +62,7 @@ if ($search) {
     echo reader_available_books($id, $reader, $USER->id);
 }
 
-// this is probably not necessary ...
+// not sure what this does ... maybe switches the student mode back to teacher mode ?
 if (isset($_SESSION['SESSION']->reader_lastuser) && $_SESSION['SESSION']->reader_lastuser > 0) {
     $USER = $DB->get_record('user', array('id' => $_SESSION['SESSION']->reader_lastuserfrom));
 }

@@ -1102,7 +1102,7 @@ function quiz_reset_userdata($data) {
                             FROM {$CFG->prefix}quiz_attempts a, {$CFG->prefix}quiz q
                            WHERE q.course={$data->courseid} AND a.quiz=q.id";
 
-        $quizessql     = "SELECT q.id
+        $quizzessql     = "SELECT q.id
                             FROM {$CFG->prefix}quiz q
                            WHERE q.course={$data->courseid}";
 
@@ -1123,10 +1123,10 @@ function quiz_reset_userdata($data) {
             quiz_reset_gradebook($data->courseid);
         }
 
-        delete_records_select('quiz_grades', "quiz IN ($quizessql)");
+        delete_records_select('quiz_grades', "quiz IN ($quizzessql)");
         $status[] = array('component'=>$componentstr, 'item'=>get_string('gradesdeleted','quiz'), 'error'=>false);
 
-        delete_records_select('quiz_attempts', "quiz IN ($quizessql)");
+        delete_records_select('quiz_attempts', "quiz IN ($quizzessql)");
         $status[] = array('component'=>$componentstr, 'item'=>get_string('attemptsdeleted','quiz'), 'error'=>false);
     }
 

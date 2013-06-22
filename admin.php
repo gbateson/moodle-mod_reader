@@ -37,7 +37,7 @@ require_once($CFG->dirroot.'/question/editlib.php');
 $id                     = optional_param('id', 0, PARAM_INT);
 $a                      = optional_param('a', NULL, PARAM_CLEAN);
 $act                    = optional_param('act', NULL, PARAM_CLEAN);
-$quizesid               = optional_param('quizesid', NULL, PARAM_CLEAN);
+$quizzesid               = optional_param('quizzesid', NULL, PARAM_CLEAN);
 $publisher              = optional_param('publisher', NULL, PARAM_CLEAN);
 $publisherex            = optional_param('publisherex', NULL, PARAM_CLEAN);
 $difficulty             = optional_param('difficulty', NULL, PARAM_CLEAN);
@@ -230,6 +230,10 @@ if ($act == 'fullreports' && $ct == 0) {
 $context = reader_get_context(CONTEXT_COURSE, $course->id);
 $contextmodule = reader_get_context(CONTEXT_MODULE, $cm->id);
 
+// preferred time and date format for this page
+$timeformat = 'H:i';   // 13:45
+$dateformat = 'd M Y'; // 02 Jun 2013
+
 // check $deletebook is valid
 if ($deletebook) {
     $deletequiz = $DB->get_field('reader_books', 'quizid', array('id' => $deletebook));
@@ -243,7 +247,7 @@ if (empty($deletebook) || empty($deletequiz)) {
 $coursestudents = get_enrolled_users($context, NULL, $gid);
 $coursestudents = array_slice($coursestudents, 0, 400, true);
 
-if (has_capability('mod/reader:manage', $contextmodule) && $quizesid) {
+if (has_capability('mod/reader:manage', $contextmodule) && $quizzesid) {
     if (empty($publisher) && ($publisherex == '0')) {
         error('Please choose publisher', 'admin.php?a=admin&id='.$id.'&act=addquiz');
     }
@@ -278,7 +282,7 @@ if (has_capability('mod/reader:manage', $contextmodule) && $quizesid) {
         $newimagename = $userimagename;
     }
 
-    foreach ($quizesid as $quizesid_) {
+    foreach ($quizzesid as $quizzesid_) {
         $newquiz = new object;
         if (! $publisher) {
             $newquiz->publisher = $publisherex;
@@ -310,11 +314,11 @@ if (has_capability('mod/reader:manage', $contextmodule) && $quizesid) {
             $newquiz->words = $wordscount;
         }
 
-        $quizdata = $DB->get_record('quiz', array('id' => $quizesid_));
+        $quizdata = $DB->get_record('quiz', array('id' => $quizzesid_));
 
         $newquiz->name = $quizdata->name;
 
-        $newquiz->quizid = $quizesid_;
+        $newquiz->quizid = $quizzesid_;
         $newquiz->private = $private;
 
         $DB->insert_record('reader_books', $newquiz);
@@ -554,7 +558,7 @@ if (has_capability('mod/reader:viewstudentreaderscreens', $contextmodule) && $vi
     $_SESSION['SESSION']->reader_changetostudentviewlink = "gid={$gid}&searchtext={$searchtext}&page={$page}&sort={$sort}&orderby={$orderby}";
     $USER = $DB->get_record('user', array('id' => $viewasstudent));
     unset($_SESSION['SESSION']->reader_teacherview);
-    header("Location: view.php?a=quizes&id=".$id);
+    header("Location: view.php?a=quizzes&id=".$id);
 }
 
 
@@ -984,7 +988,7 @@ if ($excel) {
         $grname = groups_get_group_name($gid);
     }
 
-    $exceldata['time'] = date('d.M.Y');
+    $exceldata['time'] = date($dateformat); // was 'd.M.Y'
     $exceldata['course_shotname'] = str_replace(' ', '-', $course->shortname);
     $exceldata['groupname'] = str_replace(' ', '-', $grname);
 
@@ -1101,24 +1105,22 @@ if (! $excel) {
           echo $OUTPUT->box_end();
         }
     }
-    /*****************/
-
 }
 
 $options = array(
-    'a' => $a,
-    'id' => $id,
-    'act' => $act,
-    'sort' => $sort,
+    'a'       => $a,
+    'id'      => $id,
+    'act'     => $act,
+    'sort'    => $sort,
     'orderby' => $orderby,
-    'gid' => $gid,
-    'ct' => $ct,
+    'gid'     => $gid,
+    'ct'      => $ct,
+    'excel'   => 1,
     'searchtext' => $searchtext,
-    'excel' => 1,
 );
 
 if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquizzes', $contextmodule)) {
-    if (! $quizesid) {
+    if (! $quizzesid) {
         if ($quizdata  = get_all_instances_in_course('quiz', $DB->get_record('course', array('id' => $reader->usecourse)), NULL, true)) {
         //if ($quizdata  = get_records('quiz')) {
             $existdata['publisher'][0]  = get_string('selectalreadyexist', 'reader');
@@ -1133,14 +1135,14 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
                     $existdata['quizid'][$publishers_->quizid] = $publishers_->quizid;
                 }
             }
-            $quizesarray = array();
+            $quizzesarray = array();
             foreach ($quizdata as $quizdata_) {
                 if (! in_array($quizdata_->id, $existdata['quizid'])) {
-                    $quizesarray[$quizdata_->id] = $quizdata_->name;
+                    $quizzesarray[$quizdata_->id] = $quizdata_->name;
                 }
             }
 
-            if ($quizesarray) {
+            if ($quizzesarray) {
 
                 echo $OUTPUT->box_start('generalbox');
 
@@ -1161,8 +1163,8 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
                     echo '</select>';
                 }
                 echo '</td><td rowspan="5">';
-                echo '<select size="10" multiple="multiple" name="quizesid[]">';
-                foreach ($quizesarray as $key => $value) {
+                echo '<select size="10" multiple="multiple" name="quizzesid[]">';
+                foreach ($quizzesarray as $key => $value) {
                     echo '<option value="'.$key.'">'.$value.'</option>';
                 }
                 echo '</select>';
@@ -1332,7 +1334,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
 
             $table->data[] = new html_table_row(array(
                 $readerattempt->id,
-                date('d M Y', $readerattempt->timefinish),
+                date($dateformat, $readerattempt->timefinish), // was 'd M Y'
                 fullname($userdata),
                 round($readerattempt->sumgrades, 2),
                 $status
@@ -1631,7 +1633,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
                 continue;
             }
 
-            $timefinish = date('Y/m/d', $readerattempt['timefinish']);
+            $timefinish = date($dateformat, $readerattempt['timefinish']); // was 'Y/m/d'
 
             if ($totable['first'] || $sort == 'slevel' || $sort == 'blevel' || $sort == 'title' || $sort == 'date' || $excel) {
                 $showuser = true;
@@ -1639,17 +1641,12 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
                 $showuser = false;
             }
 
-            switch (strtolower($readerattempt['passed'])) {
-                case 'true': $passedstatus = 'P'; break;
-                case 'false': $passedstatus = 'F'; break;
-                case 'cheated': $passedstatus = 'C'; break;
-                default: $passedstatus = '';
-            }
+            $strpassed = reader_format_passed($readerattempt['passed']);
 
             if ($reader->wordsorpoints == 'words') {
                 if (reader_check_search_text($searchtext, $coursestudent, $readerattempt)) {
 
-                    if ($passedstatus=='P') { // passed
+                    if ($strpassed=='P') { // passed
                         $totalwords +=  $readerattempt['words'];
                     }
 
@@ -1683,7 +1680,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
                         $readerattempt['bookdiff'],
                         $readerattempt['booktitle'],
                         $readerattempt['percentgrade'].'%',
-                        $passedstatus,
+                        $strpassed,
                         (is_numeric($readerattempt['words']) ? number_format($readerattempt['words']) : $readerattempt['words']),
                         (is_numeric($totalwords) ? number_format($totalwords) : $totalwords)
                     );
@@ -1720,7 +1717,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
                         $readerattempt['bookdiff'],
                         $readerattempt['booktitle'],
                         $readerattempt['percentgrade'].'%',
-                        $passedstatus,
+                        $strpassed,
                         $readerattempt['bookpoints'],
                         $readerattempt['booklength'],
                         $readerattempt['totalpoints']
@@ -2147,21 +2144,16 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
         $can_deleteattempts = has_capability('mod/reader:deletereaderattempts', $contextmodule);
 
         foreach ($readerattempts as $readerattempt) {
-            $attemptbooktime = date('Y/m/d', $readerattempt->timefinish);
+            $attemptbooktime = date($dateformat, $readerattempt->timefinish); // was 'Y/m/d'
 
-            switch (strtolower($readerattempt->passed)) {
-                case 'true':    $passedstatus = 'P'; break;
-                case 'false':   $passedstatus = 'F'; break;
-                case 'cheated': $passedstatus = 'C'; break;
-            }
-
+            $strpassed = reader_format_passed($readerattempt->passed);
             $cells = array(
                 reader_username_link($readerattempt, $course->id, $excel),
                 reader_fullname_link($readerattempt, $course->id, $excel),
                 $readerattempt->name,
                 $readerattempt->attempt,
                 $readerattempt->percentgrade.'%',
-                $passedstatus,
+                $strpassed,
                 $attemptbooktime
             );
             if ($can_deleteattempts) {
@@ -2711,7 +2703,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
         echo format_text($textmessage->text);
         echo '<div style="text-align:right"><small>';
         echo round($before/(60 * 60 * 24), 2).' Days; ';
-        echo 'Added: '.date('d M Y H:i', $textmessage->timemodified).'; ';
+        echo 'Added: '.date("$dateformat $timeformat", $textmessage->timemodified).'; '; // was 'd M Y H:i'
         echo 'Group: '. $forgroup.'; ';
         echo '<a href="admin.php?a=admin&id='.$id.'&act=sendmessage&editmessage='.$textmessage->id.'">Edit</a> / <a href="admin.php?a=admin&id='.$id.'&act=sendmessage&deletemessage='.$textmessage->id.'">Delete</a>';
         echo '</small></div>';
@@ -3083,8 +3075,8 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
                     "<a href=\"{$CFG->wwwroot}/user/view.php?id={$logtext[$data['id2']]->userid}&course={$course->id}\">{$user2data->username} ({$user2data->firstname} {$user2data->lastname}; group: {$groupsuser2})</a><br />".$logstatus[2],
                     link_to_popup_window("{$CFG->wwwroot}/iplookup/index.php?ip={$data['ip']}&amp;user={$logtext[$key]->userid}", $data['ip'], 440, 700, null, null, true),
                     link_to_popup_window("{$CFG->wwwroot}/iplookup/index.php?ip={$data['ip2']}&amp;user={$logtext[$data['id2']]->userid}", $data['ip2'], 440, 700, null, null, true),
-                    date("D d F H:i", $logtext[$key]->time),
-                    date("D d F H:i", $logtext[$data['id2']]->time),
+                    date("D d F $timeformat", $logtext[$key]->time),
+                    date("D d F $timeformat", $logtext[$data['id2']]->time),
                     $diffstring,
                     $logtext[$key]->info."<br />".$logtext[$data['id2']]->info));
                 }
@@ -3583,7 +3575,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
             reader_fullname_link($user2, $course->id, $excel),
             $quiz->name,
             $cheatedlog->status.$cheatedstring,
-            date("d M Y", $cheatedlog->date)
+            date($dateformat, $cheatedlog->date) // was 'd M Y'
             ));
     }
 
@@ -3835,12 +3827,8 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
 
             echo html_writer::start_tag('li'); // start attempt
 
-            switch ($values['passed']) {
-                case 'true': $status = 'Passed'; break;
-                case 'false': $status = 'Failed'; break;
-                default: $status = $values['passed'];
-            }
-            $timefinish = userdate($values['timefinish'])." ($status)";
+            $strpassed = reader_format_passed($values['passed'], true);
+            $timefinish = userdate($values['timefinish'])." ($strpassed)";
             echo html_writer::tag('span', $timefinish, array('class' => 'importattempttime')).' ';
 
             $readerattempt = (object)array(
@@ -4053,7 +4041,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
     echo '<center><table width="600px">';
     echo '<tr><td width="200px">'.get_string('publisherseries', 'reader').'</td><td width="10px"></td><td width="200px"></td></tr>';
     echo '<tr><td valign="top">';
-    echo '<select name="publisher" id="id_publisher" onchange="request(\'view_get_bookslist_noquiz.php?ajax=true&\' + this.options[this.selectedIndex].value,\'selectthebook\'); return false;">';
+    echo '<select name="publisher" id="id_publisher" onchange="request(\'view_books_noquiz.php?ajax=true&\' + this.options[this.selectedIndex].value,\'selectthebook\'); return false;">';
     foreach ($publisherform as $publisherformkey => $publisherformvalue) {
         echo '<option value="'.$publisherformkey.'" ';
         if ($publisherformvalue == $publisher) {
@@ -4094,24 +4082,21 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
     if ($sort == 'username') {
         $sort = 'title';
     }
-    $titlesarray = array(''=>'', 'Full Name'=>'username', 'Title'=>'title', 'Publisher'=>'publisher', 'Level'=>'level', 'Reading Level'=>'rlevel', 'Reading level'=>'rlevel', 'Score'=>'score', 'P/F/C'=>'', 'Finishtime'=>'finishtime', 'Option'=>'');
+
+    $titlesarray = array('' => '', 'Full Name' => 'username', 'Title' => 'title', 'Publisher' => 'publisher', 'Level' => 'level', 'Reading Level' => 'rlevel', 'Reading level' => 'rlevel', 'Score' => 'score', 'P/F/C' => '', 'Finishtime' => 'finishtime', 'Option' => '');
 
     $params = array('a' => 'admin', 'id' => $id, 'act' => $act, 'searchtext' => $searchtext);
     reader_make_table_headers($table, $titlesarray, $orderby, $sort, $params);
-    $table->align = array("left", "left", "left", "left", "center", "center", "center", "center", "center", "center", "center");
-    $table->width = "100%";
+
+    $table->align = array('left', 'left', 'left', 'left', 'center', 'center', 'center', 'center', 'center', 'center', 'center');
+    $table->width = '100%';
 
     if ($book >= 1) {
         $bookdata = $DB->get_record('reader_books', array('id' => $book));
     }
     $readerattempts = $DB->get_records_sql('SELECT * FROM {reader_attempts} WHERE quizid= ?  and reader= ? ', array($book, $reader->id));
 
-    while(list($readerattemptskey, $readerattempt) = each($readerattempts)) {
-        if (strtolower($readerattempt->passed) == 'true') {
-          $pfcmark = 'P';
-        } else if (strtolower($readerattempt->passed) == 'false') {
-          $pfcmark = 'F';
-        } else { $pfcmark = 'C'; }
+    while(list($readerattempts, $readerattempt) = each($readerattempts)) {
         $userdata = $DB->get_record('user', array('id' => $userid));
         $table->data[] = new html_table_row(array(
             '<input type="checkbox" name="adjustscoresupbooks[]" value="'.$readerattempt->id.'" />',
@@ -4122,8 +4107,8 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
             reader_get_reader_difficulty($reader, $bookdata->id),
             $bookdata->difficulty,
             round($readerattempt->percentgrade)."%",
-            $pfcmark,
-            date("d-M-Y", $readerattempt->timemodified),
+            reader_format_passed($readerattempt->passed),
+            date($dateformat, $readerattempt->timemodified), // was 'd-M-Y'
             'deleted'));
     }
 
@@ -4133,84 +4118,63 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
         echo '<div style="padding:20px 0;">'.$adjustscorestext.'</div>';
     }
 
-    echo '<table style="width:100%"><tr><td align="right">';
-    $publisherform  = array("id=".$id.'&publisher=Select Publisher' => get_string('selectpublisher', 'reader'));
-    $publisherform2 = array("id=".$id.'&publisher=Select Publisher' => get_string('selectpublisher', 'reader'));
-    $seriesform     = array(get_string('selectseries', 'reader'));
-    $levelsform     = array(get_string('selectlevel', 'reader'));
-    $booksform      = array();
-    $publishers = $DB->get_records('reader_books', NULL, NULL, 'id,publisher');
-    foreach ($publishers as $publisher_) {
-        $publisherform["id=".$id."&publisher=".$publisher_->publisher] = $publisher_->publisher;
-    }
-    echo '<script type="text/javascript">'."\n";
-    echo '//<![CDATA['."\n";
-    echo 'function validateForm(form) {'."\n";
-    echo '    if (form==null || form.book==null) {'."\n";
-    echo '        alert("Please choose a publisher");'."\n";
-    echo '        return false;'."\n";
-    echo '    } else {'."\n";
-    echo '        return isChosen(form.book);'."\n";
-    echo '    }'."\n";
-    echo '}'."\n";
-    echo 'function isChosen(select) {'."\n";
-    echo '    if (select.selectedIndex == -1) {'."\n";
-    echo '        alert("Please choose a book");'."\n";
-    echo '        return false;'."\n";
-    echo '    } else {'."\n";
-    echo '        return true;'."\n";
-    echo '    }'."\n";
-    echo '}'."\n";
-    echo '//]]>'."\n";
-    echo '</script>'."\n";
+    echo html_writer::tag('h3', get_string('selectsomebooks', 'reader'));
+    echo reader_available_books($id, $reader, $USER->id, $act);
+    echo html_writer::tag('div', '', array('style' => 'clear: both; height: 6px;'));
 
-    echo '<form action="admin.php?a=admin&id='.$id.'&act='.$act.'" method="post" id="mform1">';
-    echo '<center><table width="600px">';
-    echo '<tr><td width="200px">'.get_string('publisherseries', 'reader').'</td><td width="10px"></td><td width="200px"></td></tr>';
-    echo '<tr><td valign="top">';
-    echo '<select name="publisher" id="id_publisher" onchange="'."request('view_get_bookslist.php?onlypub=1&ajax=true&' + this.options[this.selectedIndex].value,'selectthebook'); return false;".'">';
-    foreach ($publisherform as $publisherformkey => $publisherformvalue) {
-        echo '<option value="'.$publisherformkey.'" ';
-        if ($publisherformvalue == $publisher) {
-            echo 'selected="selected"';
-        }
-        echo ' >'.$publisherformvalue.'</option>';
-    }
-    echo '</select>';
-    echo '</td><td valign="top">';
+    echo html_writer::tag('h3', get_string('selectsomeusers', 'reader'));
+    echo reader_available_users($id, $reader, $USER->id, $act);
+    echo html_writer::tag('div', '', array('style' => 'clear: both; height: 6px;'));
 
-    echo '</td><td valign="top"><div id="selectthebook">';
+    echo html_writer::tag('h3', get_string('selectsomeattempts', 'reader'));
 
-    echo '</div></td></tr>';
-    echo '<tr><td colspan="3" align="center">';
+    $table = new html_table();
+    $table->align = array('right');
 
-    echo '</td></tr>';
-    echo '<tr><td colspan="3" align="center"><input type="button" value="Select quiz" onclick="if (validateForm(this.form)) {this.form.submit();}" /> </td></tr>';
-    echo '</table>';
-    echo '</form></center>';
+    $table->data[] = new html_table_row(array(
+        html_writer::tag('b', get_string('grade')),
+        get_string('min', 'reader'),
+        reader_grade_selector('min_points')
+    ));
+    $table->data[] = new html_table_row(array(
+        '',
+        get_string('max', 'reader'),
+        reader_grade_selector('max_points')
+    ));
 
-    echo '</td></tr></table>';
+    $table->data[] = new html_table_row(array(
+        html_writer::tag('b', get_string('date')),
+        get_string('min', 'reader'),
+        reader_datetime_selector('min_time')
+    ));
+    $table->data[] = new html_table_row(array(
+        '',
+        get_string('max', 'reader'),
+        reader_datetime_selector('max_time')
+    ));
 
-    echo '<form action="admin.php?a=admin&id='.$id.'&act='.$act.'&book='.$book.'" method="post"><div style="20px 0;">';
-    echo '<table><tr><td width="180px;">Update selected adding</td><td width="60px;"><input type="text" name="adjustscoresaddpoints" value="" style="width:60px;" /></td><td width="70px;">points</td><td><input type="submit" name="submit" value="Add" /></td></tr></table>';
+    $table->data[] = new html_table_row(array(
+        html_writer::tag('b', get_string('duration', 'reader')),
+        get_string('min', 'reader'),
+        reader_duration_selector('min_duration')
+    ));
+    $table->data[] = new html_table_row(array(
+        '',
+        get_string('max', 'reader'),
+        reader_duration_selector('max_duration')
+    ));
 
-    echo '<table><tr><td width="100px;">Update all > </td>
+    // create table cell holding submit button
+    $params = array('type' => 'submit', 'value' => get_string('showattempts', 'reader'));
+    $cell = new html_table_cell(html_writer::empty_tag('input', $params));
+    $cell->style = 'text-align: center;';
+    $cell->colspan = 3;
 
-    <td width="60px;"><input type="text" name="adjustscoresupall" value="" style="width:50px;" /></td>
-    <td width="90px;">points and < </td>
-    <td width="60px;"><input type="text" name="adjustscorespand" value="" style="width:50px;" /></td>
-    <td width="90px;">points by </td>
-    <td width="60px;"><input type="text" name="adjustscorespby" value="" style="width:50px;" /></td>
+    // add table cell containing the submit button
+    $table->data[] = new html_table_row(array($cell));
 
-    <td width="70px;">points</td><td><input type="submit" name="submit" value="Add" /></td></tr></table>';
-
-    echo '</div>';
-
-    if (isset($table) && count($table->data)) {
-        echo html_writer::table($table);
-    }
-
-    echo '</form>';
+    // send table to browser
+    echo html_writer::table($table);
 }
 
 echo $OUTPUT->box_end();
@@ -4526,4 +4490,135 @@ function reader_setbookinstances($cmid, $reader) {
     echo '</script>'."\n";
 
     echo $OUTPUT->box_end();
+}
+
+/**
+ * reader_datetime_selector
+ *
+ * @param xxx $name
+ * @return xxx
+ * @todo Finish documenting this function
+ */
+function reader_datetime_selector($name) {
+    $output = '';
+
+    $year  = array_combine(range(1970, 2020), range(1970, 2020));
+    $month = array_combine(range(1, 12), range(1, 12));
+    $day   = array_combine(range(1, 31), range(1, 31));
+    $hour  = range(0, 23);
+    $min   = range(0, 59);
+
+    // convert months to month names
+    foreach ($month as $m) {
+        $month[$m] = userdate(gmmktime(12,0,0,$m,15,2000), "%B");
+    }
+
+    // convert hours to double-digits
+    foreach ($hour as $h) {
+        $hour[$h] = sprintf('%02d', $h);
+    }
+
+    // convert minutes to double-digits
+    foreach ($min as $m) {
+        $min[$m] = sprintf('%02d', $m);
+    }
+
+    $disabled = optional_param($name.'_disabled', 1, PARAM_INT);
+    $time = time();
+
+    $fields = array('year' => '%Y',  'month' => '%m', 'day' => '%d', 'hour' => '%H', 'min'  => '%M');
+    foreach ($fields as $field => $fmt) {
+
+        $default = intval(gmstrftime($fmt, $time));
+        $value   = optional_param($name.'_'.$field, $default, PARAM_INT);
+        $output .= html_writer::select($$field,  $name.'_'.$field,  $value, '', array('disabled' => $disabled));
+
+        // add separator, if necessary
+        switch ($field) {
+            case 'day': $output .= ' &nbsp; '; break;
+            case 'hour': $output .= ':'; break;
+        }
+    }
+
+    // javascript to toggle "disable" property of select elements
+    $onchange = 'var obj = document.getElementsByTagName("select");'.
+                'if (obj) {'.
+                    'var i_max = obj.length;'.
+                    'for (var i=0; i<i_max; i++) {'.
+                        'if (obj[i].id && obj[i].id.indexOf("menu'.$name.'_")==0) {'.
+                            'obj[i].disabled = this.checked;'.
+                        '}'.
+                    '}'.
+                '}';
+
+    // add "disabled" checkbox
+    $params = array('id'   => 'id_'.$name.'_disabled',
+                    'name' => $name.'_disabled',
+                    'type' => 'checkbox',
+                    'value' => 1,
+                    'onchange' => $onchange);
+    if ($disabled) {
+        $params['checked'] = 'checked';
+    }
+    $output .= html_writer::empty_tag('input', $params);
+    $output .= get_string('disable');
+
+    return $output;
+}
+
+/**
+ * reader_grade_selector
+ *
+ * @param xxx $name
+ * @return xxx
+ * @todo Finish documenting this function
+ */
+function reader_grade_selector($name) {
+    $grades = range(0, 100);
+    foreach ($grades as $g) {
+        $grades[$g] = "$g %";
+    }
+    $grades = array('' => '') + $grades;
+    $value = optional_param($name, '', PARAM_INT);
+    return html_writer::select($grades, $name, $value, '');
+}
+
+/**
+ * reader_duration_selector
+ *
+ * @param xxx $name
+ * @return xxx
+ * @todo Finish documenting this function
+ */
+function reader_duration_selector($name) {
+
+    $duration = array_combine(range(0, 50, 10), range(0, 50, 10)) +
+                array_combine(range(1*60, 5*60, 60), range(1, 5)) +
+                array_combine(range(10*60, 15*60, 300), range(10, 15, 5));
+
+    foreach ($duration as $num => $text) {
+        if ($num < 60) {
+            if ($text==1) {
+                $text .= ' second';
+            } else {
+                $text .= ' seconds';
+            }
+        } else if ($num <= 3600) {
+            if ($text==1) {
+                $text .= ' minute';
+            } else {
+                $text .= ' minutes';
+            }
+        } else {
+            if ($text==1) {
+                $text .= ' hour';
+            } else {
+                $text .= ' hours';
+            }
+        }
+        $duration[$num] = $text;
+    }
+    $duration = array('' => '') + $duration;
+    $value = optional_param($name, '', PARAM_INT);
+    return html_writer::select($duration, $name, $value, '');
 }

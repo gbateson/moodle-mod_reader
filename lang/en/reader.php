@@ -61,6 +61,7 @@ $string['bookquiznumber'] = 'Book quiz number';
 $string['bookratingslevel'] = 'Display student book ratings for each book level';
 $string['booksreadinpreviousterms'] = 'Books read in previous terms';
 $string['booksreadthisterm'] = 'Books read this term';
+$string['booktitle'] = 'Book title';
 $string['butyoumaytakequizzes'] = ' But you may take quizzes on books at any level.';
 $string['changeallstoppromoto'] = 'Change all Stop Promo to ';
 $string['changeallto'] = 'Change all to ';
@@ -73,6 +74,7 @@ $string['changepublisherfrom'] = 'Change publisher name from';
 $string['changereaderlevel'] = 'Change Reading Level, Length or Word Count';
 $string['changestartlevel'] = 'Change all start level to ';
 $string['cheated_message'] = 'Cheated notice';
+$string['cheatsheet'] = 'Cheat sheet';
 $string['checkbox'] = 'Use checkboxes in student report';
 $string['checkonlythiscourse'] = 'Check only this course';
 $string['checksuspiciousactivity'] = 'Check logs for suspicious activity';
@@ -107,13 +109,29 @@ $string['configwordsprogressbar'] = '';
 $string['coursespecificquizselection'] = 'Course-specific quiz selection" to "Yes" in the module set-up screen.';
 $string['createcoversets_l'] = 'Create Cover Sets by Level & Publisher';
 $string['createcoversets_t'] = 'Create Cover Sets by Publisher &amp; Level';
+$string['difficulty'] = 'RL';
 $string['downloadexcel'] = 'Download Excel';
+$string['duration'] = 'Duration';
 $string['editingteacherrole'] = 'Use Editing Teacher role';
 $string['editquiztoreader'] = 'Delete quizzes.';
 $string['error'] = 'Error: {$a}';
 $string['exportstudentrecords'] = 'Export student records';
 $string['fix_bookcovers'] = 'Detect and fix missing book covers';
+$string['fixmissingquizzes'] = 'Fix missing quizzes';
+$string['fixmissingquizzesinfo'] = 'The upgrade has been paused, so that you can decide whether or not you wish to download and install Reader module quizzes that are missing on this Moodle site.
+
+If you select "Yes", the missing quizzes will be downloaded and installed.
+
+If you select "No", any Reader books whose quiz are missing will be marked as having no quiz data.
+
+Note that even if you choose "No", the word counts for each student in Reader activities will not be affected by this operation.
+
+Do you wish to download and install missing Reader module quizzes for books on this Moodle site?';
 $string['fixslashesinnames'] = 'Remove slashes in book titles';
+$string['fixwrongquizid'] = '"{$a->name}" (book id={$a->id}) has unexpected quiz id';
+$string['fixwrongquizidinfo'] = 'The upgrade has been paused, so that you can decide which quiz should be associated with this book.
+
+Please review the information below and select the quiz you wish to be associated with this book.';
 $string['forcedtimedelay'] = 'Set forced time delay';
 $string['fromthistime'] = 'From this time';
 $string['fullreportbybooktitle'] = 'Full Report by Book Title';
@@ -123,6 +141,7 @@ $string['ifimagealreadyexists'] = 'If image already exists in images folder (nam
 $string['image'] = 'Image';
 $string['importstudentrecord'] = 'Import student record';
 $string['in1000sofwords'] = 'In 1000s of words';
+$string['includepublishers'] = 'Search publisher names too?';
 $string['incorrect'] = ' - incorrect';
 $string['incorrect2'] = ' - Sorry, please obtain the correct password from the publisher(s). Click "Install Quizzes" to download your other selections.';
 $string['incorrectbooksreadinpreviousterms'] = 'View failed quizzes';
@@ -139,9 +158,11 @@ $string['likebook'] = 'How did you like this book?';
 $string['makenewquizzesavailable'] = 'Make new quizzes available in this course only';
 $string['makenewquizzesavailable2'] = 'Make new quizzes available in all courses on this site [default]';
 $string['massrename'] = 'Mass changes';
+$string['max'] = 'max';
 $string['maxtimebetweenquizzes'] = 'Max time between quizzes';
 $string['menu'] = 'Menu';
 $string['messagefromyourteacher'] = 'Message from your teacher';
+$string['min'] = 'min';
 $string['mybooks'] = 'Only books already installed on this site';
 $string['needdeletethisattemptstoo'] = 'Need delete this Attempts too';
 $string['needtocheckupdates'] = 'This site has not checked for quiz updates in ({$a} days). Check now?';
@@ -151,6 +172,7 @@ $string['nodata'] = 'no data';
 $string['noincorrectquizzes'] = 'You have not failed any quizzes';
 $string['noquizzesfound'] = 'No quizzes found';
 $string['noreaders'] = 'No Reader activities found in this course';
+$string['nosearchresults'] = 'No books matching your search are available';
 $string['not_cheated_message'] = 'Points restored notice';
 $string['nothavepermissioncreateinstance'] = 'Sorry you do not have permission to do this.';
 $string['notopenyet'] = 'Sorry, this activity is not available yet. It will open {$a}.';
@@ -171,7 +193,9 @@ $string['publisher'] = 'Publisher';
 $string['publisherseries'] = 'Publisher / Series';
 $string['questionmark'] = 'Show question mark';
 $string['quizmanagement'] = 'Quiz management';
+$string['quizname'] = 'Quiz name';
 $string['quiznextlevel'] = 'Give next level, when student answered more than correct quizzes';
+$string['quiznotavailable'] = 'Sorry, this quiz is not currently available to you';
 $string['quizonnextlevel'] = 'Allow to select quizzes of next level';
 $string['quizpreviouslevel'] = 'Allow to select quizzes of previous level';
 $string['quiztimeout'] = 'Quiz time out';
@@ -213,11 +237,13 @@ $string['s_sectiontothebottom'] = 'add all quizzes to the bottom of the hidden c
 $string['s_sectiontothissection'] = 'add selected quizzes to this section';
 $string['s_securitymeasures'] = 'Security measures';
 $string['s_selectcourse'] = 'Teacher-made quizzes for this module can be found in this course, which is not open for students access.';
-$string['s_selectquizes'] = 'Allow to select quizzes of previous level';
+$string['s_selectquizzes'] = 'Allow to select quizzes of previous level';
 $string['s_sendmessagesaboutcheating'] = 'Send messages about cheating?';
 $string['s_totalpointsgoal'] = 'Total point goal for the entire term';
 $string['s_wordsprogressbar'] = 'Word Count Progress Bar';
 $string['search'] = 'Search';
+$string['searchforthebookthatyouwant'] = 'Search for the book that you want to take a quiz on';
+$string['sectionname'] = 'Section name';
 $string['select_course'] = 'Select Course';
 $string['selectalreadyexist'] = 'Select already exist';
 $string['selectipmask'] = 'Select ip mask';
@@ -225,7 +251,11 @@ $string['selectlevel'] = 'Select Level';
 $string['selectpublisher'] = 'Select Publisher';
 $string['selectquizzes'] = 'Select Quizzes';
 $string['selectseries'] = 'Select Series';
+$string['selectsomeattempts'] = 'Select one or more attempts';
+$string['selectsomebooks'] = 'Select one or more books';
+$string['selectsomeusers'] = 'Select one or more users';
 $string['selectthebookthatyouwant'] = 'Select the book that you want to take a quiz on';
+$string['selectthisquiz'] = 'Select this quiz';
 $string['sendmessage'] = 'Send Message';
 $string['sendmessagesaboutcheating'] = 'Send messages about cheating?';
 $string['separategroups'] = 'Separate groups';
@@ -238,7 +268,10 @@ $string['setings'] = 'Settings';
 $string['setuniformgoalinpoints'] = 'Set uniform goal in points';
 $string['setuniformgoalinwords'] = 'Set uniform goal in words';
 $string['showall'] = 'Show All';
+$string['showattempts'] = 'Show attempts matching these conditions';
 $string['showlevel'] = 'Show Level';
+$string['sincedate'] = '(since {$a})';
+$string['sincepromotion'] = '(since promotion on {$a})';
 $string['skipquizdownload'] = 'Quiz "{$a->quizname}" already exists in section {$a->sectionnum}, "{$a->sectionname}", of "{$a->coursename}", and has been skipped';
 $string['studentmanagement'] = 'Student Management';
 $string['studentslevels'] = 'Change Students Levels, Promotion Policy and Goals';
@@ -246,6 +279,8 @@ $string['studentuserid'] = 'Student user ID';
 $string['studentusername'] = 'Student username';
 $string['summaryreportbybooktitle'] = 'Summary Report by Book Title';
 $string['summaryreportbyclassgroup'] = 'Summary Report by Class Group';
+$string['takequizfor'] = 'Take the quiz for "{$a}"';
+$string['takethisquiz'] = 'Take this quiz';
 $string['term'] = 'Term';
 $string['therehavebeennonewquizzesorupdates'] = 'There have been no new quizzes or updates added to the MoodleReader quiz bank since the last time you checked.';
 $string['thisblockunavailable'] = 'This block is currently unavailable to this student';
@@ -305,28 +340,4 @@ $string['youmusttakequiz'] = ' You can take {$a} more quiz ';
 $string['youmusttakequizzes'] = ' You can take {$a} more quizzes ';
 $string['yourcurrentlevel'] = 'Your current level';
 $string['yourteacherhasstopped'] = ' Your teacher has stopped automatic promotion for you.';
-
-$string['fixmissingquizzes'] = 'fixmissingquizzes';
-$string['fixmissingquizzesinfo'] = 'The upgrade has been paused, so that you can decide whether or not you wish to download and install Reader module quizzes that are missing on this Moodle site.
-
-If you select "Yes", the missing quizzes will be downloaded and installed.
-
-If you select "No", any Reader books whose quiz are missing will be marked as having no quiz data.
-
-Note that even if you choose "No", the word counts for each student in Reader activities will not be affected by this operation.
-
-Do you wish to download and install missing Reader module quizzes for books on this Moodle site?';
-
-$string['takethisquiz'] = 'Take this quiz';
-$string['takequizfor'] = 'Take the quiz for "{$a}"';
-$string['searchforthebookthatyouwant'] = 'Search for the book that you want to take a quiz on';
-$string['booktitle'] = 'Book title';
-$string['difficulty'] = 'RL';
-$string['cheatsheet'] = 'Cheat sheet';
-$string['nosearchresults'] = 'No books matching your search are available';
-$string['includepublishers'] = 'Search publisher names too?';
-$string['quiznotavailable'] = 'Sorry, this quiz is not currently available to you';
-
-$string['sincedate'] = '(since {$a})';
-$string['sincepromotion'] = '(since promotion on {$a})';
 $string['youwerepromoted'] = 'You were promoted to RL-{$a->level} on {$a->date} at {$a->time}';

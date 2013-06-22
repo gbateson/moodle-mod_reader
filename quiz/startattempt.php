@@ -43,7 +43,7 @@ $reader = $DB->get_record('reader', array('id'=>$cm->instance), '*', MUST_EXIST)
 require_course_login($course, true, $cm);
 
 // get SQL to verify user can access this book
-list($from, $where, $sqlparams) = reader_available_sql($reader, $USER->id);
+list($from, $where, $sqlparams) = reader_available_sql($cm->id, $reader, $USER->id);
 
 // add book id to SQL search conditions
 $where = "id = ? AND $where";

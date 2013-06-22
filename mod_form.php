@@ -122,7 +122,7 @@ class mod_reader_mod_form extends moodleform_mod {
         $mform->addElement('select', 'attemptsofday', get_string('s_quizfordays', 'reader'), array('0'=>'Off', '1'=>'1', '2'=>'2', '3'=>'3'));
         $mform->addElement('text', 'goal', get_string('s_totalpointsgoal', 'reader'), array('size'=>'10'));
         $mform->addElement('text', 'nextlevel', get_string('s_nextlevel', 'reader'), array('size'=>'10'));
-        $mform->addElement('text', 'quizpreviouslevel', get_string('s_selectquizes', 'reader'), array('size'=>'10'));
+        $mform->addElement('text', 'quizpreviouslevel', get_string('s_selectquizzes', 'reader'), array('size'=>'10'));
         $mform->addElement('text', 'quiznextlevel', get_string('s_quiznextlevel', 'reader'), array('size'=>'10'));
         $mform->addElement('text', 'promotionstop', get_string('s_nopromotion', 'reader'), array('size'=>'10'));
         //$mform->setHelpButton('promotionstop', array('promotionstop', get_string('s_nopromotion', 'reader'), 'reader'));

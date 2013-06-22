@@ -420,11 +420,11 @@ function xmldb_reader_quiz_courseids() {
 }
 
 /**
- * xmldb_reader_showhide_js
+ * xmldb_reader_showhide_start_js
  *
  * @todo Finish documenting this function
  */
-function xmldb_reader_showhide_js() {
+function xmldb_reader_showhide_start_js() {
     static $done = false;
 
     $js = '';
@@ -446,10 +446,10 @@ function xmldb_reader_showhide_js() {
         $js .= "        img.src = img.src.replace(new RegExp('switch_[a-z]+'), 'switch_' + pix);\n";
         $js .= "    }\n";
         $js .= "}\n";
-        $js .= "function showhide_lists() {\n";
+        $js .= "function showhide_lists(forcehide) {\n";
         $js .= "    var img = document.getElementsByTagName('img');\n";
         $js .= "    if (img) {\n";
-        $js .= "        var targetsrc = new RegExp('switch_(minus|plus)');\n";
+        $js .= "        var targetsrc = new RegExp('switch_(minus'+(forcehide ? '' : '|plus')+')');\n";
         $js .= "        var i_max = img.length;\n";
         $js .= "        for (var i=0; i<=i_max; i++) {\n";
         $js .= "            if (img[i].src.match(targetsrc)) {\n";
@@ -458,16 +458,24 @@ function xmldb_reader_showhide_js() {
         $js .= "        }\n";
         $js .= "    }\n";
         $js .= "}\n";
-        $js .= "if (window.addEventListener) {\n";
-        $js .= "    window.addEventListener('load', showhide_lists, false);\n";
-        $js .= "} else if (window.attachEvent) {\n";
-        $js .= "    window.attachEvent('onload', showhide_lists);\n";
-        $js .= "} else {\n";
-        $js .= "    // window['onload'] = showhide_lists;\n";
-        $js .= "}\n";
         $js .= "//]]>\n";
         $js .= '</script>'."\n";
     }
+    return $js;
+}
+
+/**
+ * xmldb_reader_showhide_end_js
+ *
+ * @todo Finish documenting this function
+ */
+function xmldb_reader_showhide_end_js() {
+    $js = '';
+    $js .= '<script type="text/javascript">'."\n";
+    $js .= "//<![CDATA[\n";
+    $js .= "showhide_lists(true);\n"; // force hide
+    $js .= "//]]>\n";
+    $js .= '</script>'."\n";
     return $js;
 }
 
@@ -699,6 +707,10 @@ function xmldb_reader_fix_wrong_sectionnames() {
 /**
  * xmldb_reader_fix_wrong_quizids
  *
+ * @uses $CFG
+ * @uses $DB
+ * @uses $SESSION
+ *
  * @todo Finish documenting this function
  */
 function xmldb_reader_fix_wrong_quizids() {
@@ -712,6 +724,8 @@ function xmldb_reader_fix_wrong_quizids() {
     // SQL to detect unexpected quiz name for a book
     $quizname = $DB->sql_concat("'%'", 'rb.name', "'%'");
     $wrongquizname = str_replace('???', $quizname, $DB->sql_like('q.name', '???', false, false, true));
+
+    // this should leave $wrongquizname looking something like this ...
     // $wrongquizname = "q.name NOT LIKE CONCAT('%', rb.name, '%')"
 
     // extract books with wrong (but valid) quizid
@@ -732,9 +746,24 @@ function xmldb_reader_fix_wrong_quizids() {
     $params = array('quiz', '', '--');
     $orderby = 'rb.publisher,rb.level,rb.name';
 
+    // get list of books with manually fixed quiz ids
+    if ($bookquizids = get_config('reader', 'bookquizids')) {
+        $bookquizids = unserialize($bookquizids);
+    } else {
+        $bookquizids = array();
+    }
+
+    // exclude any book ids that have already been fixed manually
+    if (count($bookquizids)) {
+        $bookids = array_keys($bookquizids);
+        list($filter, $bookids) = $DB->get_in_or_equal($bookids, SQL_PARAMS_QM, 'param', false); // NOT IN (...)
+        $where = "$where AND rb.id $filter";
+        $params = array_merge($params, $bookids);
+    }
+
+    $started_box = false;
     if ($books = $DB->get_records_sql("SELECT $select FROM $from WHERE $where ORDER BY $orderby", $params)) {
 
-        xmldb_reader_box_start('The quiz id for the following books was fixed');
         foreach ($books as $book) {
             $sectionname = $book->publisher;
             if ($book->level=='' || $book->level=='--') {
@@ -755,40 +784,107 @@ function xmldb_reader_fix_wrong_quizids() {
                 $quiz = reset($quiz); // most recent, visible quiz in expected section
             }
 
-            if (empty($quiz)) {
-                // try and get quizid from submitted form data
-                if ($quizid = optional_param('quizidforbookid'.$book->id, 0, PARAM_INT)) {
-                    $quiz = $DB->get_record('quiz', array('id' => $quizid), 'id,name');
-                }
-            }
+            // check if the user has told us which quiz to use for this book
+            $quizidparamname = 'bookquizid'.$book->id;
+            $quizid = optional_param($quizidparamname, null, PARAM_INT);
 
-            if (empty($quiz)) {
+            if (empty($quiz) && $quizid===null) {
                 // offer form to select quizid
                 $where = $DB->sql_like('q.name', '?');
                 $params = array('quiz', $book->name);
                 if ($quizzes = $DB->get_records_sql("SELECT $select FROM $from WHERE $where ORDER BY $orderby", $params)) {
                     // build select list (sectionname -> quiznames)
-echo 'Please select a quiz for book '.$book->name." ($sectionname)";
-print_object($quizzes);
-die;
+
+                    // params for "select" button urls
+                    $params = array(
+                        'confirmupgrade' => optional_param('confirmupgrade', 0, PARAM_INT),
+                        'confirmrelease' => optional_param('confirmrelease', 0, PARAM_INT),
+                        'confirmplugincheck' => optional_param('confirmplugincheck', 0, PARAM_INT),
+                    );
+
+                    $table = new html_table();
+                    $table->head = array(get_string('sectionname', 'reader'),
+                                         get_string('quizname', 'reader'),
+                                         get_string('select'));
+                    $table->align = array('left', 'left', 'center');
+
+                    // add candidate quizzes to the table
                     foreach ($quizzes as $quiz) {
+
+                        // create button url with this quiz id
+                        $params[$quizidparamname] = $quiz->id;
+                        $url = new moodle_url('/admin/index.php', $params);
+
+                        $table->data[] = new html_table_row(array(
+                            $quiz->sectionname,
+                            $quiz->name,
+                            $OUTPUT->single_button($url, get_string('selectthisquiz', 'reader'), 'get')
+                        ));
                     }
+
+                    $message = get_string('fixwrongquizidinfo', 'reader');
+                    $message = format_text($message, FORMAT_MARKDOWN);
+                    $message .= html_writer::table($table);
+
+                    // close the HTML box, if necessary
+                    if ($started_box==true) {
+                        $started_box==false;
+                        xmldb_reader_box_end();
+                    }
+
+                    // params for "fixwrongquizid" message (book name and id)
+                    $params = (object)array('name' => "$sectionname: $book->name", 'id' => $book->id);
+
+                    $output = '';
+                    $output .= $OUTPUT->heading(get_string('fixwrongquizid', 'reader', $params));
+                    $output .= $OUTPUT->box($message, 'generalbox', 'notice');
+                    $output .= $OUTPUT->footer();
+
+                    echo $output;
                     die;
+                }
+            }
+
+            $msg = array();
+            if (empty($quiz)) {
+
+                // update the cached array mapping $book->id => $quizid mapping
+                $bookquizids[$book->id] = $quizid;
+                set_config('bookquizids', serialize($bookquizids), 'reader');
+
+                if ($quizid) {
+                    if ($quiz = $DB->get_record('quiz', array('id' => $quizid), 'id,name')) {
+                        $msg[] = "Found quiz for $sectionname: $book->name (quiz id = $book->quizid)";
+                    } else {
+                        $msg[] = "OOPS, could not locate quiz for $sectionname: $book->name (quiz id = $book->quizid)";
+                    }
+                } else { // $quizid==0 so user wants to skip this book
+                    $msg[] = "Restting of quiz for $sectionname: $book->name (book id=$book->id) was skipped";
                 }
             }
 
             if ($quiz) {
                 if ($book->quizid != $quiz->id) {
-                    echo html_writer::tag('li', "Reset quiz for $sectionname: $book->name (quiz id $book->quizid => $quiz->id)");
+                    $msg[] = "Reset quiz for $sectionname: $book->name (quiz id $book->quizid => $quiz->id)";
                     $DB->set_field('reader_books', 'quizid', $quiz->id, array('id' => $book->id));
                 }
-            } else {
-                echo html_writer::tag('li', "OOPS, could not locate quiz for $sectionname: $book->name (quiz id = $book->quizid)");
-die;
+            }
+
+            if (count($msg)) {
+                if ($started_box==false) {
+                    $started_box = true;
+                    xmldb_reader_box_start('The quiz id for the following books was fixed');
+                }
+                echo html_writer::tag('li', implode('</li><li>', $msg));
             }
         }
-        xmldb_reader_box_end();
+        if ($started_box==true) {
+            xmldb_reader_box_end();
+        }
     }
+
+    // remove the list of manually fixed quizids
+    unset_config('bookquizids', 'reader');
 }
 
 /**
@@ -2161,7 +2257,7 @@ function xmldb_reader_fix_multichoice_questions() {
  */
 function xmldb_reader_box_start($msg) {
     global $OUTPUT;
-    echo xmldb_reader_showhide_js();
+    echo xmldb_reader_showhide_start_js();
     echo $OUTPUT->box_start('generalbox', 'notice');
     echo html_writer::start_tag('div');
     echo html_writer::tag('b', $msg).': '.xmldb_reader_showhide_img();
@@ -2178,4 +2274,5 @@ function xmldb_reader_box_end() {
     echo html_writer::end_tag('ul');
     echo html_writer::end_tag('div');
     echo $OUTPUT->box_end();
+    echo xmldb_reader_showhide_end_js();
 }

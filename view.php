@@ -43,7 +43,7 @@ if ($id) {
     $cm = get_coursemodule_from_id('reader', $id, 0, false, MUST_EXIST);
     $course = $DB->get_record('course', array('id'=>$cm->course), '*', MUST_EXIST);
     $reader = $DB->get_record('reader', array('id'=>$cm->instance), '*', MUST_EXIST);
-    $a = $reader->id;
+    //$a = $reader->id;
 } else {
     $reader = $DB->get_record('reader', array('id'=>$a), '*', MUST_EXIST);
     $cm = get_coursemodule_from_instance('reader', $reader->id, 0, false, MUST_EXIST);
@@ -190,26 +190,20 @@ if ($reader->bookcovers == 1) {
 $bookcoversinthisterm = '';
 $lastattemptdate = 0;
 
-if (list($attempts, $summaryattempts) = reader_get_student_attempts($USER->id, $reader)) {
+list($attempts, $summaryattempts) = reader_get_student_attempts($USER->id, $reader);
+if (count($attempts)) {
+
     foreach ($attempts as $attempt) {
 
-        if ($promotiondate && $lastattemptdate) {
-            if ($lastattemptdate < $promotiondate && $attempt['timefinish'] > $promotiondate) {
-
-                // format the "You were promoted ..." message
-                $params = (object)array(
-                    'level' => $leveldata['currentlevel'],
-                    'time'  => date($timeformat, $promotiondate),
-                    'date'  => date($dateformat, $promotiondate)
-                );
-                $cell = new html_table_cell(get_string('youwerepromoted', 'reader', $params));
-
-                // convert cell to single header header cell spanning all columns
-                $cell->header = true;
-                $cell->colspan = count($table->head);
-
-                // add table row containing this single cell
-                $table->data[] = new html_table_row(array($cell));
+        if ($promotiondate) {
+            if ($lastattemptdate==0) { // first attempt
+                if ($attempt['timefinish'] > $promotiondate) {
+                    reader_add_table_promotiondate($table, $leveldata, $promotiondate, $timeformat, $dateformat);
+                }
+            } else { // not the first attempt
+                if ($lastattemptdate < $promotiondate && $attempt['timefinish'] > $promotiondate) {
+                    reader_add_table_promotiondate($table, $leveldata, $promotiondate);
+                }
             }
         }
         $lastattemptdate = $attempt['timefinish']; // fixing postgress problem
@@ -278,6 +272,9 @@ if (list($attempts, $summaryattempts) = reader_get_student_attempts($USER->id, $
                                             $totalwords);
             }
         }
+    }
+    if ($promotiondate && $attempt['timefinish'] < $promotiondate) {
+        reader_add_table_promotiondate($table, $leveldata, $promotiondate, $timeformat, $dateformat);
     }
 }
 
@@ -552,10 +549,10 @@ if (isset($_SESSION['SESSION']->reader_changetostudentview)) {
 if ($showform && has_capability('mod/reader:attemptreaders', $contextmodule)) {
 
     echo '<h3>'.get_string('searchforthebookthatyouwant', 'reader').':</h3>';
-    echo reader_search_books($id, $reader, $USER->id, true);
+    echo reader_search_books($id, $reader, $USER->id, true, 'takequiz');
 
     echo '<h3>'.get_string('selectthebookthatyouwant', 'reader').':</h3>';
-    echo reader_available_books($id, $reader, $USER->id);
+    echo reader_available_books($id, $reader, $USER->id, 'takequiz');
 
     $url = new moodle_url('/course/view.php', array('id' => $course->id));
     $btn = $OUTPUT->single_button($url, get_string('returntocoursepage', 'reader'), 'get');
@@ -670,4 +667,21 @@ function reader_level_blockgraph($reader, $leveldata, $dateformat) {
     }
 
     return $output;
+}
+
+function reader_add_table_promotiondate(&$table, $leveldata, $promotiondate, $timeformat, $dateformat) {
+    // format the "You were promoted ..." message
+    $params = (object)array(
+        'level' => $leveldata['currentlevel'],
+        'time'  => date($timeformat, $promotiondate),
+        'date'  => date($dateformat, $promotiondate)
+    );
+    $cell = new html_table_cell(get_string('youwerepromoted', 'reader', $params));
+
+    // convert cell to single header header cell spanning all columns
+    $cell->header = true;
+    $cell->colspan = count($table->head);
+
+    // add table row containing this single cell
+    $table->data[] = new html_table_row(array($cell));
 }

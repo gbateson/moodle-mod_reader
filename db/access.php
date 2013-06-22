@@ -26,6 +26,7 @@
  */
 
 $capabilities = array(
+
     // Ability to add a new reader to the course.
     'mod/reader:addinstance' => array(
         'riskbitmask'  => RISK_XSS,
@@ -37,6 +38,7 @@ $capabilities = array(
         ),
         'clonepermissionsfrom' => 'moodle/course:manageactivities'
     ),
+
     'mod/reader:attemptreaders' => array(
         'riskbitmask' => RISK_PERSONAL,
         'captype' => 'write',
@@ -48,6 +50,7 @@ $capabilities = array(
             'manager' => CAP_ALLOW
         )
     ),
+
     'mod/reader:deletereaderattempts' => array(
         'riskbitmask' => RISK_PERSONAL,
         'captype' => 'write',
@@ -56,6 +59,7 @@ $capabilities = array(
             'manager' => CAP_ALLOW
         )
     ),
+
     'mod/reader:ignorestimelimitonreaders' => array(
         'riskbitmask' => RISK_PERSONAL,
         'captype' => 'write',
@@ -66,6 +70,7 @@ $capabilities = array(
             'manager' => CAP_ALLOW
         )
     ),
+
     'mod/reader:managereaders' => array(
         'riskbitmask' => RISK_PERSONAL,
         'captype' => 'write',
@@ -75,6 +80,7 @@ $capabilities = array(
             'manager' => CAP_ALLOW
         )
     ),
+
     'mod/reader:previewreaders' => array(
         'riskbitmask' => RISK_PERSONAL,
         'captype' => 'write',
@@ -85,6 +91,7 @@ $capabilities = array(
             'manager' => CAP_ALLOW
         )
     ),
+
     'mod/reader:viewstudentreaderscreens' => array(
         'riskbitmask' => RISK_PERSONAL,
         'captype' => 'write',
@@ -94,7 +101,7 @@ $capabilities = array(
             'manager' => CAP_ALLOW
         )
     ),
-    /*  MENU LIST  */
+
     'mod/reader:readerviewreports' => array(
         'riskbitmask' => RISK_PERSONAL,
         'captype' => 'write',
@@ -105,6 +112,7 @@ $capabilities = array(
             'manager' => CAP_ALLOW
         )
     ),
+
     'mod/reader:viewanddeleteattempts' => array(
         'riskbitmask' => RISK_PERSONAL,
         'captype' => 'write',
@@ -114,6 +122,7 @@ $capabilities = array(
             'manager' => CAP_ALLOW
         )
     ),
+
     'mod/reader:changestudentslevelsandpromote' => array(
         'riskbitmask' => RISK_PERSONAL,
         'captype' => 'write',
@@ -124,6 +133,7 @@ $capabilities = array(
             'manager' => CAP_ALLOW
         )
     ),
+
     'mod/reader:sendmessage' => array(
         'riskbitmask' => RISK_PERSONAL,
         'captype' => 'write',
@@ -133,6 +143,7 @@ $capabilities = array(
             'manager' => CAP_ALLOW
         )
     ),
+
     'mod/reader:awardextrapoints' => array(
         'riskbitmask' => RISK_PERSONAL,
         'captype' => 'write',
@@ -143,6 +154,7 @@ $capabilities = array(
             'manager' => CAP_ALLOW
         )
     ),
+
     'mod/reader:addcoursequizzestoreaderquizzes' => array(
         'riskbitmask' => RISK_PERSONAL,
         'captype' => 'write',
@@ -152,6 +164,7 @@ $capabilities = array(
             'manager' => CAP_ALLOW
         )
     ),
+
     'mod/reader:downloadquizzesfromthereaderquizdatabase' => array(
         'riskbitmask' => RISK_PERSONAL,
         'captype' => 'write',
@@ -161,6 +174,7 @@ $capabilities = array(
             'manager' => CAP_ALLOW
         )
     ),
+
     'mod/reader:setgoal' => array(
         'riskbitmask' => RISK_PERSONAL,
         'captype' => 'write',
@@ -170,6 +184,7 @@ $capabilities = array(
             'manager' => CAP_ALLOW
         )
     ),
+
     'mod/reader:forcedtimedelay' => array(
         'riskbitmask' => RISK_PERSONAL,
         'captype' => 'write',
@@ -179,6 +194,7 @@ $capabilities = array(
             'manager' => CAP_ALLOW
         )
     ),
+
     'mod/reader:deletequizzes' => array(
         'riskbitmask' => RISK_PERSONAL,
         'captype' => 'write',
@@ -188,6 +204,7 @@ $capabilities = array(
             'manager' => CAP_ALLOW
         )
     ),
+
     'mod/reader:checklogsforsuspiciousactivity' => array(
         'riskbitmask' => RISK_PERSONAL,
         'captype' => 'write',
@@ -197,6 +214,7 @@ $capabilities = array(
             'manager' => CAP_ALLOW
         )
     ),
+
     'mod/reader:selectquizzestomakeavailabletostudents' => array(
         'riskbitmask' => RISK_PERSONAL,
         'captype' => 'write',
@@ -206,6 +224,7 @@ $capabilities = array(
             'manager' => CAP_ALLOW
         )
     ),
+
     'mod/reader:changereadinglevelorlengthfactor' => array(
         'riskbitmask' => RISK_PERSONAL,
         'captype' => 'write',
@@ -215,6 +234,7 @@ $capabilities = array(
             'manager' => CAP_ALLOW
         )
     ),
+
     'mod/reader:createcoversetsbypublisherlevel' => array(
         'riskbitmask' => RISK_PERSONAL,
         'captype' => 'write',
@@ -224,6 +244,7 @@ $capabilities = array(
             'manager' => CAP_ALLOW
         )
     ),
+
     'mod/reader:createcoversetsbylevelpublisher' => array(
         'riskbitmask' => RISK_PERSONAL,
         'captype' => 'write',
@@ -233,6 +254,7 @@ $capabilities = array(
             'manager' => CAP_ALLOW
         )
     ),
+
     'mod/reader:userdbmanagement' => array(//New by Tom 4 Jan 2011
         'riskbitmask' => RISK_PERSONAL,
         'captype' => 'write',
@@ -241,6 +263,7 @@ $capabilities = array(
             'manager' => CAP_ALLOW
         )
     ),
+
     'mod/reader:cancreateinstance' => array(
         'riskbitmask' => RISK_PERSONAL,
         'captype' => 'write',
@@ -250,6 +273,7 @@ $capabilities = array(
             'manager' => CAP_ALLOW
         )
     ),
+
     'mod/reader:manage' => array(
         'riskbitmask' => RISK_PERSONAL,
         'captype' => 'write',

@@ -30,10 +30,8 @@ $currenttab = $a;
 /** Prevent direct access to this script */
 defined('MOODLE_INTERNAL') || die;
 
-
-
 if (! isset($currenttab)) {
-    $currenttab = 'quizes';
+    $currenttab = 'quizzes';
 }
 
 if (! isset($idh)) {
@@ -51,12 +49,13 @@ $context = reader_get_context(CONTEXT_MODULE, $cm->id);
 if (! isset($contexts)){
     $contexts = new question_edit_contexts($context);
 }
+
 $tabs = array();
 $row  = array();
 $inactive = array();
 $activated = array();
 
-$row[] = new tabobject('quizes', "view.php?a=quizes&id=".$idh, "Quizzes");
+$row[] = new tabobject('quizzes', "view.php?a=quizzes&id=".$idh, "Quizzes");
 $row[] = new tabobject('admin', "admin.php?a=admin&id=".$idh, "Admin Area");
 
 $tabs[] = $row;

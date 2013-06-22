@@ -2605,7 +2605,14 @@ function reader_forcedtimedelay_check($cleartime, $reader, $studentlevel, $lastt
  */
 function reader_copy_to_quizattempt($readerattempt) {
     global $DB;
+
+    // clear out any attempts which may block the creation of the new quiz_attempt record
+    $DB->delete_records('quiz_attempts', array('quiz' => $readerattempt->quizid,
+                                               'userid' => $readerattempt->userid,
+                                               'attempt' => $readerattempt->attempt));
     $DB->delete_records('quiz_attempts', array('uniqueid' => $readerattempt->uniqueid));
+
+    // set up new "quiz_attempt" record
     $quizattempt = (object)array(
         'uniqueid'             => $readerattempt->uniqueid,
         'quiz'                 => $readerattempt->quizid,
@@ -2619,6 +2626,8 @@ function reader_copy_to_quizattempt($readerattempt) {
         'preview'              => 0,
         'needsupgradetonewqe'  => 0
     );
+
+    // add the new "quiz_attempt" record
     if ($quizattempt->id = $DB->insert_record('quiz_attempts', $quizattempt)) {
         return true;
     } else {
@@ -2763,16 +2772,73 @@ class reader_exception extends moodle_exception {
 }
 
 /**
+ * reader_can_accessallgroups
+ *
+ * @param xxx $cmid
+ * @param xxx $userid
+ * @return xxx
+ * @todo Finish documenting this function
+ */
+function reader_can_accessallgroups($userid) {
+    static $can_accessallgroups = null;
+    if ($can_accessallgroups===null) {
+        $context = reader_get_context(CONTEXT_SYSTEM);
+        $can_accessallgroups = has_capability('moodle/site:accessallgroups', $context, $userid);
+    }
+    return $can_accessallgroups;
+}
+
+/**
+ * reader_can_manage
+ *
+ * @param xxx $cmid
+ * @param xxx $userid
+ * @return xxx
+ * @todo Finish documenting this function
+ */
+function reader_can_manage($cmid, $userid) {
+    static $can_manage = null;
+    if ($can_manage===null) {
+        $context = reader_get_context(CONTEXT_MODULE, $cmid);
+        $can_manage = has_capability('mod/reader:manage', $context, $userid);
+    }
+    return $can_manage;
+}
+
+/**
+ * reader_can_attemptreader
+ *
+ * @param xxx $cmid
+ * @param xxx $userid
+ * @return xxx
+ * @todo Finish documenting this function
+ */
+function reader_can_attemptreader($cmid, $userid) {
+    static $can_attemptreader = null;
+    if ($can_attemptreader===null) {
+        $context = reader_get_context(CONTEXT_MODULE, $cmid);
+        $can_attemptreader = has_capability('mod/reader:attemptreaders', $context, $userid);
+    }
+    return $can_attemptreader;
+}
+
+/**
  * reader_available_sql
  *
+ * @param xxx $cmid
  * @param xxx $reader
  * @param xxx $userid
  * @return xxx
  * @todo Finish documenting this function
  */
-function reader_available_sql($reader, $userid) {
+function reader_available_sql($cmid, $reader, $userid) {
 
-    // we want to get a list of all available books
+    // a teacher / admin can always access all the books
+    if (reader_can_manage($cmid, $userid)) {
+        return array('{reader_books}', 'hidden = ?', array(0)); // $from, $where, $params
+    }
+
+    // we want to get a list of all books available to this user
     // a book is available if it satisfies the following conditions:
     // (1) the book is not hidden
     // (2) the quiz for the book has NEVER been attempted before by this user
@@ -2791,8 +2857,8 @@ function reader_available_sql($reader, $userid) {
                   'FROM {reader_attempts} ra LEFT JOIN {reader_books} rb ON ra.quizid = rb.quizid '.
                   'WHERE ra.userid = ? AND rb.id IS NOT NULL AND rb.sametitle <> ?';
 
-    $from   = '{reader_books}';
-    $where = "id NOT IN ($recordids) AND (sametitle = ? OR sametitle NOT IN ($sametitles)) AND hidden = ?";
+    $from       = '{reader_books}';
+    $where      = "id NOT IN ($recordids) AND (sametitle = ? OR sametitle NOT IN ($sametitles)) AND hidden = ?";
     $sqlparams = array($userid, '', $userid, '', 0);
 
     $levels = array();
@@ -2833,7 +2899,7 @@ function reader_available_sql($reader, $userid) {
 /**
  * reader_valid_genres
  *
- * @param string $genre (optional, default='') a comma-separated list of genre codes
+ * @param string $genre (optional, default='') a comma-separated list of genre codes to be expanded
  * @return xxx
  * @todo Finish documenting this function
  */
@@ -2863,10 +2929,12 @@ function reader_valid_genres($genre='') {
         'yo' => "Young life, adventure"
     );
 
+    // if no genre is requested, return whole list of valid genre codes
     if ($genre=='') {
         return $validgenres;
     }
 
+    // a genre code (list) has been given, so expand the codes to full descriptions
     $genre = explode(',', $genre);
     $genre = array_flip($genre);
     $genre = array_intersect_key($validgenres, $genre);
@@ -2917,6 +2985,7 @@ function reader_available_genres($from, $where, $sqlparams) {
  * reader_available_publishers
  *
  * @param xxx $cmid
+ * @param xxx $action
  * @param xxx $from
  * @param xxx $where
  * @param xxx $sqlparams
@@ -2925,7 +2994,7 @@ function reader_available_genres($from, $where, $sqlparams) {
  * @return xxx
  * @todo Finish documenting this function
  */
-function reader_available_publishers($cmid, $from, $where, $sqlparams, &$count, &$record) {
+function reader_available_publishers($cmid, $action, $from, $where, $sqlparams, &$count, &$record) {
     global $DB;
     $output = '';
 
@@ -2938,14 +3007,14 @@ function reader_available_publishers($cmid, $from, $where, $sqlparams, &$count, 
 
     if ($count==0) {
         $output .= 'Sorry, there are currently no books for you';
+
     } else if ($count==1) {
         $record = reset($records);
         $output .= html_writer::tag('p', 'Publisher: '.$record->publisher);
-    } else if ($count > 1) {
-        //$output .= html_writer::tag('p', 'Choose a publisher');
 
+    } else if ($count > 1) {
         $target_div = 'bookleveldiv';
-        $target_url = "'view_get_bookslist.php?id=$cmid&publisher='+escape(this.options[this.selectedIndex].value)";
+        $target_url = "'view_books.php?id=$cmid&action=$action&publisher='+escape(this.options[this.selectedIndex].value)";
 
         $params = array('id' => 'id_publisher',
                         'name' => 'publisher',
@@ -2971,6 +3040,7 @@ function reader_available_publishers($cmid, $from, $where, $sqlparams, &$count, 
  *
  * @param xxx $publisher
  * @param xxx $cmid
+ * @param xxx $action
  * @param xxx $from
  * @param xxx $where
  * @param xxx $sqlparams
@@ -2979,7 +3049,7 @@ function reader_available_publishers($cmid, $from, $where, $sqlparams, &$count, 
  * @return xxx
  * @todo Finish documenting this function
  */
-function reader_available_levels($publisher, $cmid, $from, $where, $sqlparams, &$count, &$record) {
+function reader_available_levels($publisher, $cmid, $action, $from, $where, $sqlparams, &$count, &$record) {
     global $DB;
     $output = '';
 
@@ -3004,7 +3074,7 @@ function reader_available_levels($publisher, $cmid, $from, $where, $sqlparams, &
         //$output .= html_writer::tag('p', 'Choose a level');
 
         $target_div = 'bookiddiv';
-        $target_url = "'view_get_bookslist.php?id=$cmid&publisher=$publisher&level='+escape(this.options[this.selectedIndex].value)";
+        $target_url = "'view_books.php?id=$cmid&action=$action&publisher=$publisher&level='+escape(this.options[this.selectedIndex].value)";
 
         $params = array('id' => 'id_level',
                         'name' => 'level',
@@ -3036,6 +3106,7 @@ function reader_available_levels($publisher, $cmid, $from, $where, $sqlparams, &
  * @param xxx $publisher
  * @param xxx $level
  * @param xxx $cmid
+ * @param xxx $action
  * @param xxx $from
  * @param xxx $where
  * @param xxx $sqlparams
@@ -3044,7 +3115,7 @@ function reader_available_levels($publisher, $cmid, $from, $where, $sqlparams, &
  * @return xxx
  * @todo Finish documenting this function
  */
-function reader_available_bookids($publisher, $level, $cmid, $from, $where, $sqlparams, &$count, &$record) {
+function reader_available_bookids($publisher, $level, $cmid, $action, $from, $where, $sqlparams, &$count, &$record) {
     global $DB;
     $output = '';
 
@@ -3069,7 +3140,7 @@ function reader_available_bookids($publisher, $level, $cmid, $from, $where, $sql
         //$output .= html_writer::tag('p', 'Book:');
 
         $target_div = 'booknamediv';
-        $target_url = "'view_get_bookslist.php?id=$cmid&publisher=$publisher&level=$level&bookid='+this.options[this.selectedIndex].value";
+        $target_url = "'view_books.php?id=$cmid&action=$action&publisher=$publisher&level=$level&bookid='+this.options[this.selectedIndex].value";
 
         $params = array('id' => 'id_book',
                         'name' => 'book',
@@ -3095,26 +3166,28 @@ function reader_available_bookids($publisher, $level, $cmid, $from, $where, $sql
  * @param xxx $cmid
  * @param xxx $reader
  * @param xxx $userid
+ * @param xxx $action
  * @return xxx
  * @todo Finish documenting this function
  */
-function reader_available_books($cmid, $reader, $userid) {
+function reader_available_books($cmid, $reader, $userid, $action='') {
     global $DB, $OUTPUT;
     $output = '';
 
     // get SQL $from and $where statements to extract available books
-    list($from, $where, $sqlparams) = reader_available_sql($reader, $userid);
+    list($from, $where, $sqlparams) = reader_available_sql($cmid, $reader, $userid);
 
     // get parameters passed from browser
     $publisher = optional_param('publisher', null, PARAM_CLEAN); // book publisher
     $level     = optional_param('level',     null, PARAM_CLEAN); // book level
     $bookid    = optional_param('bookid',    null, PARAM_INT  ); // book id
+    $action    = optional_param('action', $action, PARAM_CLEAN);
 
     if ($publisher===null) {
 
         $count = 0;
         $record = null;
-        $output .= reader_available_publishers($cmid, $from, $where, $sqlparams, $count, $record);
+        $output .= reader_available_publishers($cmid, $action, $from, $where, $sqlparams, $count, $record);
 
         if ($count==0 || $count > 1) {
             return $output;
@@ -3128,7 +3201,7 @@ function reader_available_books($cmid, $reader, $userid) {
 
         $count = 0;
         $record = null;
-        $output .= reader_available_levels($publisher, $cmid, $from, $where, $sqlparams, $count, $record);
+        $output .= reader_available_levels($publisher, $cmid, $action, $from, $where, $sqlparams, $count, $record);
 
         if ($count==0 || $count > 1) {
             return $output;
@@ -3143,7 +3216,7 @@ function reader_available_books($cmid, $reader, $userid) {
 
         $count = 0;
         $record = null;
-        $output .= reader_available_bookids($publisher, $level, $cmid, $from, $where, $sqlparams, $count, $record);
+        $output .= reader_available_bookids($publisher, $level, $cmid, $action, $from, $where, $sqlparams, $count, $record);
 
         if ($count==0 || $count > 1) {
             return $output;
@@ -3157,11 +3230,23 @@ function reader_available_books($cmid, $reader, $userid) {
         $book = $DB->get_record('reader_books', array('id' => $bookid));
     }
 
-    $params = array('id' => $cmid, 'book' => $bookid);
-    $url = new moodle_url('/mod/reader/quiz/startattempt.php', $params);
+    if ($action=='takequiz' && reader_can_attemptreader($cmid, $userid)) {
+        $params = array('id' => $cmid, 'book' => $bookid);
+        $url = new moodle_url('/mod/reader/quiz/startattempt.php', $params);
 
-    $params = array('class' => 'singlebutton readerquizbutton');
-    $output .= $OUTPUT->single_button($url, get_string('takequizfor', 'reader', $book->name), 'get', $params);
+        $params = array('class' => 'singlebutton readerquizbutton');
+        $output .= $OUTPUT->single_button($url, get_string('takequizfor', 'reader', $book->name), 'get', $params);
+
+        list($cheatsheeturl, $strcheatsheet) = reader_cheatsheet_init($action);
+        if ($cheatsheeturl) {
+            if ($level && $level != '--') {
+                $publisher .= ' - '.$level;
+            }
+            $output .= reader_cheatsheet_link($cheatsheeturl, $strcheatsheet, $publisher, $book);
+        }
+    } else if ($action=='adjustscores') {
+        $output .= $book->name;
+    }
 
     return $output;
 }
@@ -3173,28 +3258,31 @@ function reader_available_books($cmid, $reader, $userid) {
  * @param xxx $reader
  * @param xxx $userid
  * @param xxx $showform (optional, default=false)
+ * @param xxx $action (optional, default='')
  * @return xxx
  * @todo Finish documenting this function
  */
-function reader_search_books($cmid, $reader, $userid, $showform=false) {
+function reader_search_books($cmid, $reader, $userid, $showform=false, $action='') {
     global $CFG, $DB, $OUTPUT;
     $output = '';
 
     // get parameters passed from form
-    $searchpublisher  = optional_param('searchpublisher',  '', PARAM_CLEAN);
-    $searchlevel      = optional_param('searchlevel',      '', PARAM_CLEAN);
-    $searchname       = optional_param('searchname',       '', PARAM_CLEAN);
-    $searchgenre      = optional_param('searchgenre',      '', PARAM_CLEAN);
-    $searchdifficulty = optional_param('searchdifficulty', -1, PARAM_INT);
-    $search           = optional_param('search',            0, PARAM_INT);
+    $searchpublisher  = optional_param('searchpublisher',    '', PARAM_CLEAN);
+    $searchlevel      = optional_param('searchlevel',        '', PARAM_CLEAN);
+    $searchname       = optional_param('searchname',         '', PARAM_CLEAN);
+    $searchgenre      = optional_param('searchgenre',        '', PARAM_CLEAN);
+    $searchdifficulty = optional_param('searchdifficulty',   -1, PARAM_INT);
+    $search           = optional_param('search',              0, PARAM_INT);
+    $action           = optional_param('action',        $action, PARAM_CLEAN);
 
     // get SQL $from and $where statements to extract available books
-    list($from, $where, $sqlparams) = reader_available_sql($reader, $userid);
+    list($from, $where, $sqlparams) = reader_available_sql($cmid, $reader, $userid);
 
     if ($showform) {
         $target_div = 'searchresultsdiv';
-        $target_url = "'view_get_bookslist.php?id=$cmid'".
+        $target_url = "'view_books.php?id=$cmid'".
                       "+'&search=1'". // so we can detect incoming search results
+                      "+'&action=$action'". // "adjustscores" or "takequiz"
                       "+'&searchpublisher='+escape(this.searchpublisher.value)".
                       "+'&searchlevel='+escape(this.searchlevel.value)".
                       "+'&searchname='+escape(this.searchname.value)".
@@ -3365,17 +3453,7 @@ function reader_search_books($cmid, $reader, $userid, $showform=false) {
 
     $searchresults = '';
     if ($search) {
-
-        $cheatsheet = '';
-        $strcheatsheet = '';
-
-        // if there is a "cheatsheet" script, make it available (for developer site admins only)
-        if (has_capability('moodle/site:config', get_context_instance(CONTEXT_SYSTEM))) {
-            if (file_exists($CFG->dirroot.'/mod/reader/utilities/print_cheatsheet.php')) {
-                $cheatsheet = $CFG->wwwroot.'/mod/reader/utilities/print_cheatsheet.php';
-                $strcheatsheet = get_string('cheatsheet', 'reader');
-            }
-        }
+        list($cheatsheeturl, $strcheatsheet) = reader_cheatsheet_init($action);
 
         // search for available books that match  the search criteria
         $select = 'id, publisher, level, name, genre, difficulty';
@@ -3389,12 +3467,16 @@ function reader_search_books($cmid, $reader, $userid, $showform=false) {
                 get_string('level', 'reader'),
                 get_string('booktitle', 'reader')." (".count($books)." books)",
                 get_string('genre', 'block_readerview'),
-                get_string('difficulty', 'reader'),
-                '&nbsp;'
+                get_string('difficulty', 'reader')
             );
 
+            // add column for "takequiz" button, if required
+            if ($action=='takequiz') {
+                $table->head[] = '&nbsp;';
+            }
+
             // add extra column for "cheatsheet" links, if required
-            if ($cheatsheet) {
+            if ($cheatsheeturl) {
                 $table->head[] = html_writer::tag('small', $strcheatsheet);
             }
 
@@ -3404,29 +3486,30 @@ function reader_search_books($cmid, $reader, $userid, $showform=false) {
                 // format publisher- level
                 $publisher = $book->publisher.(($book->level=='' | $book->level=='--') ? '' : ' - '.$book->level);
 
-                // construct url to start attempt at quiz
-                $params = array('id' => $cmid, 'book' => $book->id);
-                $url = new moodle_url('/mod/reader/quiz/startattempt.php', $params);
-
-                // construct button to start attempt at quiz
-                $params = array('class' => 'singlebutton readerquizbutton');
-                $button = $OUTPUT->single_button($url, get_string('takethisquiz', 'reader'), 'get', $params);
-
                 // add cells to this row of the table
                 $row = array(
                     $book->publisher,
                     (($book->level=='' || $book->level=='--') ? '' : $book->level),
                     $book->name,
                     reader_valid_genres($book->genre),
-                    $book->difficulty,
-                    $button
+                    $book->difficulty
                 );
 
+                if ($action=='takequiz') {
+                    // construct url to start attempt at quiz
+                    $params = array('id' => $cmid, 'book' => $book->id);
+                    $url = new moodle_url('/mod/reader/quiz/startattempt.php', $params);
+
+                    // construct button to start attempt at quiz
+                    $params = array('class' => 'singlebutton readerquizbutton');
+                    $button = $OUTPUT->single_button($url, get_string('takethisquiz', 'reader'), 'get', $params);
+
+                    $row[] = $button;
+                }
+
                 // add cheat sheet link, if required
-                if ($cheatsheet) {
-                    $url = new moodle_url($cheatsheet, array('publishers' => $publisher, 'books' => $book->id));
-                    $params = array('href' => $url, 'onclick' => "this.target='cheatsheet'; return true;");
-                    $row[] = html_writer::tag('small', html_writer::tag('a', $strcheatsheet, $params));
+                if ($cheatsheeturl) {
+                    $row[] = reader_cheatsheet_link($cheatsheeturl, $strcheatsheet, $publisher, $book);
                 }
 
                 // add this row to the table
@@ -3445,3 +3528,277 @@ function reader_search_books($cmid, $reader, $userid, $showform=false) {
 
     return $output;
 }
+
+/**
+ * reader_available_users
+ *
+ * @param xxx $cmid
+ * @param xxx $reader
+ * @param xxx $userid
+ * @param xxx $action
+ * @return xxx
+ * @todo Finish documenting this function
+ */
+function reader_available_users($cmid, $reader, $userid, $action='') {
+    global $DB, $OUTPUT;
+    $output = '';
+
+    // get values from form
+    $gid = optional_param('gid', null, PARAM_ALPHANUM);
+    $userid = optional_param('userid', null, PARAM_SEQUENCE);
+    $attemptid = optional_param('attemptid', null, PARAM_SEQUENCE);
+
+    if ($gid===null) {
+
+        $label = '';
+        $options = array();
+
+        $strgroup = get_string('group', 'group');
+        $strgrouping = get_string('grouping', 'group');
+
+        if ($groupings = groups_get_all_groupings($reader->course)) {
+            $label = $strgrouping;
+            $has_groupings = true;
+        } else {
+            $has_groupings = false;
+            $groupings = array();
+        }
+
+        if ($groups = groups_get_all_groups($reader->course)) {
+            if ($label) {
+                $label .= ' / ';
+            }
+            $label .= $strgroup;
+            $has_groups = true;
+        } else {
+            $has_groups = false;
+            $groups = array();
+        }
+
+        foreach ($groupings as $gid => $grouping) {
+            if ($has_groups) {
+                $prefix = $strgrouping.': ';
+            } else {
+                $prefix = '';
+            }
+            if ($members = groups_get_grouping_members($gid)) {
+                $options["grouping$gid"] = $prefix.format_string($grouping->name).' ('.count($members).' users)';
+            }
+        }
+
+        foreach ($groups as $gid => $group) {
+            if ($members = groups_get_members($gid)) {
+                if ($has_groupings) {
+                    $prefix = $strgroup.': ';
+                } else {
+                    $prefix = '';
+                }
+                $options["group$gid"] = $prefix.format_string($group->name).' ('.count($members).' users)';
+            }
+        }
+
+        $count = count($options);
+
+        if ($count==1) {
+            $gid = 0;
+        } else if ($count==1) {
+            list($gid, $option) = each($options);
+            $output .= html_writer::tag('p', $label.': '.$option);
+
+        } else if ($count > 1) {
+            $target_div = 'useriddiv';
+            $target_url = "'view_users.php?id=$cmid&action=$action&gid='+escape(this.options[this.selectedIndex].value)";
+
+            $params = array('id' => 'id_publisher',
+                            'name' => 'publisher',
+                            'size' => min(10, $count),
+                            'style' => 'width: 240px; float: left; margin: 0px 9px;',
+                            'onchange' => "request($target_url, '$target_div')");
+            $output .= html_writer::start_tag('select', $params);
+
+            $options = array('' => get_string('allgroups')) + $options;
+            foreach ($options as $id => $option) {
+                $output .= html_writer::tag('option', $option, array('value' => $id));
+            }
+            $option = null;
+
+            $output .= html_writer::end_tag('select');
+            $output .= html_writer::tag('div', '', array('id' => $target_div));
+        }
+
+        if ($gid===null) {
+            return $output;
+        }
+    }
+
+    if ($userid===null) {
+        $userids = array();
+        if (substr($gid, 0, 5)=='group') {
+            if (substr($gid, 5, 3)=='ing') {
+                $gids = groups_get_all_groupings($reader->course);
+                $gid = intval(substr($gid, 8));
+                if ($gids && array_key_exists($gid, $gids) && ($members = groups_get_grouping_members($gid))) {
+                    $userids = array_keys($members);
+                }
+            } else {
+                $gids = groups_get_all_groups($reader->course);
+                $gid = intval(substr($gid, 5));
+                if ($gids && array_key_exists($gid, $gids) && ($members = groups_get_members($gid))) {
+                    $userids = array_keys($members);
+                }
+            }
+        } else if ($gid=='' || $gid=='all') {
+            if ($userids = $DB->get_records('reader_attempts', array('reader' => $reader->id), 'userid', 'DISTINCT userid')) {
+                $userids = array_keys($userids);
+            } else {
+                $userids = array();
+            }
+        }
+
+        $count = count($userids);
+        if ($count==0) {
+            $userid = '';
+
+        } else if ($count==1) {
+            $userid = reset($userids);
+
+        } else {
+            list($select, $params) = $DB->get_in_or_equal($userids); // , SQL_PARAMS_NAMED, '', true
+            $select = "deleted = ? AND id $select";
+            array_unshift($params, 0);
+            if ($users = $DB->get_records_select('user', $select, $params, 'lastname,firstname', 'id, firstname, lastname')) {
+
+                $target_div = 'attemptiddiv';
+                $target_url = "'view_users.php?id=$cmid&action=$action&gid=$gid&userid='+escape(this.values)";
+
+                $params = array('id' => 'id_userid',
+                                'name' => 'userid',
+                                'size' => min(10, $count),
+                                'multiple' => 'multiple',
+                                'style' => 'width: 240px; float: left; margin: 0px 9px;',
+                                'onchange' => "this.values = new Array();".
+                                              "for (var i=0; i<this.options.length; i++) {".
+                                                  "if (this.options[i].selected) {".
+                                                      "this.values.push(this.options[i].value);".
+                                                  "}".
+                                              "}".
+                                              "this.values = this.values.join(',');".
+                                              "request($target_url, '$target_div')");
+                $output .= html_writer::start_tag('select', $params);
+
+                reader_format_users_fullname($users);
+                foreach ($users as $user) {
+                    $output .= html_writer::tag('option', fullname($user), array('value' => $user->id));
+                }
+
+                $output .= html_writer::end_tag('select');
+                $output .= html_writer::tag('div', '', array('id' => $target_div));
+            }
+
+            return $output;
+        }
+    }
+
+    if ($userids = explode(',', $userid)) {
+        $count = count($userids);
+        if ($count <= 10) {
+            list($select, $params) = $DB->get_in_or_equal($userids); // , SQL_PARAMS_NAMED, '', true
+            $select = "deleted = ? AND id $select";
+            array_unshift($params, 0);
+            if ($users = $DB->get_records_select('user', $select, $params, 'lastname,firstname', 'id, firstname, lastname')) {
+                reader_format_users_fullname($users);
+                foreach ($users as $user) {
+                    $users[$user->id] = fullname($user);
+                }
+                $params = array('style' => 'list-style-type: none;');
+                $output .= html_writer::alist($users, $params);
+            }
+        } else {
+            $output .= html_writer::tag('p', "$count users selected");
+        }
+    }
+
+    return $output;
+}
+
+
+/**
+ * reader_cheatsheet_init
+ *
+ * @param xxx $action
+ * @return xxx
+ * @todo Finish documenting this function
+ */
+function reader_cheatsheet_init($action) {
+    global $CFG;
+
+    $cheatsheeturl = '';
+    $strcheatsheet = '';
+
+    // if there is a "cheatsheet" script, make it available (for developer site admins only)
+    if ($action=='takequiz' && has_capability('moodle/site:config', get_context_instance(CONTEXT_SYSTEM))) {
+        if (file_exists($CFG->dirroot.'/mod/reader/utilities/print_cheatsheet.php')) {
+            $cheatsheeturl = $CFG->wwwroot.'/mod/reader/utilities/print_cheatsheet.php';
+            $strcheatsheet = get_string('cheatsheet', 'reader');
+        }
+    }
+
+    return array($cheatsheeturl, $strcheatsheet);
+}
+
+/**
+ * reader_cheatsheet_link
+ *
+ * @param xxx $cheatsheeturl
+ * @param xxx $strcheatsheet
+ * @param xxx $publisher
+ * @param xxx $book
+ * @return xxx
+ * @todo Finish documenting this function
+ */
+function reader_cheatsheet_link($cheatsheeturl, $strcheatsheet, $publisher, $book) {
+    $url = new moodle_url($cheatsheeturl, array('publishers' => $publisher, 'books' => $book->id));
+    $params = array('href' => $url, 'onclick' => "this.target='cheatsheet'; return true;");
+    return html_writer::tag('small', html_writer::tag('a', $strcheatsheet, $params));
+}
+
+/**
+ * reader_format_passed
+ *
+ * @param string $passed
+ * @param boolean $fulltext (optional, default=false)
+ * @return string
+ * @todo Finish documenting this function
+ */
+function reader_format_passed($passed, $fulltext=false) {
+    $passed = strtolower($passed);
+    if ($fulltext) {
+        switch ($passed) {
+            case 'true': return 'Passed'; break;
+            case 'false': return 'Failed'; break;
+            case 'cheated': return 'Cheated'; break;
+        }
+    } else {
+        switch ($passed) {
+            case 'true': return 'P'; break;
+            case 'false': return 'F'; break;
+            case 'cheated': return 'C'; break;
+        }
+    }
+    return $passed; // shouldn't happen !!
+}
+
+/**
+ * reader_format_users_fullname
+ *
+ * @param string $users (passed by reference)
+ * @return void but may update firstname and lastname values in $users array
+ * @todo Finish documenting this function
+ */
+function reader_format_users_fullname(&$users) {
+    foreach ($users as $user) {
+        $user->firstname = preg_replace('/\b[a-z]/e', 'strtoupper("$0")', strtolower($user->firstname));
+        $user->lastname = strtoupper($user->lastname);
+    }
+}
+
