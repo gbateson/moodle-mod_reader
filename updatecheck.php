@@ -39,7 +39,7 @@ $newquizzesto      = optional_param('newquizzesto', NULL, PARAM_CLEAN);
 $json              = optional_param('json', NULL, PARAM_CLEAN);
 $checker           = optional_param('checker', 0, PARAM_INT);
 
-//$readercfg->reader_last_update = $readercfg->reader_last_update - 31 * 24 * 3600;       //Убрать потом
+//$readercfg->last_update = $readercfg->last_update - 31 * 24 * 3600;       //Убрать потом
 
 if ($id) {
     if (! $cm = get_coursemodule_from_id('reader', $id)) {
@@ -66,7 +66,7 @@ if ($id) {
 require_login($course->id);
 
 $readercfg = get_config('reader');
-$readercfg->reader_last_update -= (31 * 24 * 3600);
+$readercfg->last_update -= (31 * 24 * 3600);
 
 $context = reader_get_context(CONTEXT_COURSE, $course->id);
 $contextmodule = reader_get_context(CONTEXT_MODULE, $cm->id);
@@ -90,7 +90,7 @@ require_once ('tabs_dl.php');
 echo $OUTPUT->box_start('generalbox');
 
 if ($checker == 1) {
-    echo "<center>"; print_string('lastupdatedtime', 'reader', date("d M Y", $readercfg->reader_last_update));
+    echo "<center>"; print_string('lastupdatedtime', 'reader', date("d M Y", $readercfg->last_update));
     echo ' <br /> <a href="updatecheck.php?id='.$id.'">YES</a> / <a href="admin.php?a=admin&id='.$id.'">NO</a></center> ';
 
     echo $OUTPUT->box_end();
@@ -140,7 +140,7 @@ if (empty($data)) {
 while (list($key,$book) = each($publishers)) {
     //echo "SELECT passed,bookrating FROM {$CFG->prefix}reader_attempts WHERE quizid = {$book->id}"."<br />";
     if ($book->time < 10) {
-        $book->time = $readercfg->reader_last_update;
+        $book->time = $readercfg->last_update;
     }
 
     $attempts = $DB->get_records_sql('SELECT id,passed,bookrating,reader FROM {reader_attempts} WHERE quizid = ?', array($book->id));
@@ -211,8 +211,8 @@ while (list($key,$book) = each($publishers)) {
     }
 }
 
-$jdata['userlogin']  = $readercfg->reader_serverlogin;
-$jdata['lastupdate'] = $readercfg->reader_last_update;
+$jdata['userlogin']  = $readercfg->serverlogin;
+$jdata['lastupdate'] = $readercfg->last_update;
 $jdata['books']      = $data;
 $jdata['readers']    = $datareaders;
 
@@ -234,7 +234,7 @@ $opts = array('http' =>
 
 $context  = stream_context_create($opts);
 
-$url = new moodle_url($readercfg->reader_serverlink.'/update_quizzes.php');
+$url = new moodle_url($readercfg->serverlink.'/update_quizzes.php');
 $result = file_get_contents($url, false, $context);
 
 //echo stripslashes($result);
@@ -449,4 +449,4 @@ echo '</script>'."\n";
 
 echo $OUTPUT->footer();
 
-$DB->set_field('config_plugins', 'value', time(), array('name' => 'reader_last_update'));
+$DB->set_field('config_plugins', 'value', time(), array('name' => 'last_update'));

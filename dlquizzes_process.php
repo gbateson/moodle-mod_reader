@@ -96,7 +96,7 @@ $contextmodule = reader_get_context(CONTEXT_MODULE, $cm->id);
 require_capability('mod/reader:manage', $contextmodule);
 
 $readercfg = get_config('reader');
-$keepoldquizzes = get_config('reader', 'reader_keepoldquizzes');
+$keepoldquizzes = get_config('reader', 'keepoldquizzes');
 
 add_to_log($course->id, 'reader', 'Download Quizzes Process', "dlquizzes.php?id=$id", "$cm->instance");
 
@@ -256,8 +256,8 @@ foreach ($quizitems as $sectionname => $items) {
 
 $DB->set_field('reader', 'usecourse', $targetcourseid, array('id' => $reader->id));
 
-if ($readercfg->reader_last_update == 1) {
-    $DB->set_field('config_plugins', 'value', time(), array('name' => 'reader_last_update'));
+if ($readercfg->last_update == 1) {
+    $DB->set_field('config_plugins', 'value', time(), array('name' => 'last_update'));
 }
 
 if (! empty($end)) {
@@ -347,9 +347,9 @@ function reader_download_quizitems($quizids, $password) {
 
     // set download url
     $params = array('a'        => 'quizzes',
-                    'login'    => $readercfg->reader_serverlogin,
-                    'password' => $readercfg->reader_serverpassword);
-    $url = new moodle_url($readercfg->reader_serverlink.'/', $params);
+                    'login'    => $readercfg->serverlogin,
+                    'password' => $readercfg->serverpassword);
+    $url = new moodle_url($readercfg->serverlink.'/', $params);
 
     // download quiz data and convert to array
     $params = array('password' => $password,
@@ -736,7 +736,7 @@ function reader_download_tempdir($restore) {
 function reader_download_getfile($readercfg, $itemid, $pass) {
 
     $params     = array('getid' => $itemid, 'pass' => $pass);
-    $getfileurl = new moodle_url($readercfg->reader_serverlink.'/getfile.php', $params);
+    $getfileurl = new moodle_url($readercfg->serverlink.'/getfile.php', $params);
 
     if ($xmlcontent = reader_curlfile($getfileurl)) {
         $xmlcontent = implode('', $xmlcontent);
@@ -810,7 +810,7 @@ function reader_download_quiz_images($readercfg, $xml, $targetcourseid) {
         }
 
         $params = array('imagelink' => urlencode($image));
-        $image_file_url = new moodle_url($readercfg->reader_serverlink.'/getfile_quiz_image.php', $params);
+        $image_file_url = new moodle_url($readercfg->serverlink.'/getfile_quiz_image.php', $params);
         $image_contents = file_get_contents($image_file_url);
 
         if ($fp = @fopen($CFG->dataroot.'/'.$dirname.$basename, 'w+')) {
@@ -963,7 +963,7 @@ function reader_download_bookcover($readercfg, $imagepath, $itemid, $targetcours
         return; // nothing to do
     }
     make_upload_directory('reader/images');
-    $imageurl = new moodle_url($readercfg->reader_serverlink.'/getfile.php', array('imageid' => $itemid));
+    $imageurl = new moodle_url($readercfg->serverlink.'/getfile.php', array('imageid' => $itemid));
     $image = file_get_contents($imageurl);
     if ($fp = @fopen($CFG->dataroot.'/reader/images/'.$imagepath, 'w+')) {
         @fwrite($fp, $image);

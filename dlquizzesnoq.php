@@ -57,7 +57,7 @@ $reader_images = array(
     'zoomloader' => new moodle_url('/mod/reader/pix/zoomloader.gif')
 );
 
-$listofpublishers = reader_curlfile("{$readercfg->reader_serverlink}/index-noq.php?a=publishers&login={$readercfg->reader_serverlogin}&password={$readercfg->reader_serverpassword}");
+$listofpublishers = reader_curlfile("{$readercfg->serverlink}/index-noq.php?a=publishers&login={$readercfg->serverlogin}&password={$readercfg->serverpassword}");
 $listofpublishers = xmlize(reader_makexml($listofpublishers));
 
 $quizzes = array();
@@ -159,9 +159,9 @@ if ($installall) {
 if ($printerrormessage) {
     echo $OUTPUT->box_start('generalbox');
     $params = array('a'        => 'publishers',
-                    'login'    => $readercfg->reader_serverlogin,
-                    'password' => $readercfg->reader_serverpassword);
-    $url = new moodle_url($readercfg->reader_serverlink.'/index-noq.php', $params);
+                    'login'    => $readercfg->serverlogin,
+                    'password' => $readercfg->serverpassword);
+    $url = new moodle_url($readercfg->serverlink.'/index-noq.php', $params);
     echo $url;
     error('In order to download quizzes, you need to be registered on the  "Moodle Reader Users" course on MoodleReader.org ( <a href=\"http://moodlereader.org/moodle/course/view.php?id=15\">http://moodlereader.org/moodle/course/view.php?id=15</a> ),  Please contact the system administrator ( admin@moodlereader.org ) to register yourself, providing information on your school, your position, the grade level of your students and the approximate number of students who will be using the system.');
     echo $OUTPUT->box_end();

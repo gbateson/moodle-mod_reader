@@ -123,7 +123,11 @@ function xmldb_reader_upgrade($oldversion) {
         make_upload_directory('reader');
 
         // set new/old location for Reader "images" folder
-        $courseid = get_config('reader', 'reader_usecourse');
+        if (! $courseid = get_config('reader', 'reader_usecourse')) {
+            if (! $courseid = get_config('reader', 'usecourse')) {
+                $courseid = 0; // shouldn't happen
+            }
+        }
         $oldname = $CFG->dataroot."/$courseid/images";
         $newname = $CFG->dataroot.'/reader/images';
 
@@ -415,7 +419,7 @@ function xmldb_reader_upgrade($oldversion) {
         }
 
         // save this value of the 'keepoldquizzes' config setting
-        set_config('reader_keepoldquizzes', $keepoldquizzes, 'reader');
+        set_config('keepoldquizzes', $keepoldquizzes, 'reader');
 
         // fix duplicate books and quizzes
         xmldb_reader_fix_duplicates();
@@ -487,6 +491,20 @@ function xmldb_reader_upgrade($oldversion) {
         upgrade_mod_savepoint(true, "$newversion", 'reader');
     }
 
+    $newversion = 2013062200;
+    if ($result && $oldversion < $newversion) {
+        $readercfg = get_config('reader');
+        $vars = get_object_vars($readercfg);
+        foreach ($vars as $oldname => $value) {
+            if (substr($oldname, 0, 7)=='reader_') {
+                unset_config($oldname, 'reader');
+                $newname = substr($oldname, 7);
+                set_config($newname, $value, 'reader');
+                echo "Rename Reader config setting: $oldname &gt; $newname<br />";
+            }
+        }
+        upgrade_mod_savepoint(true, "$newversion", 'reader');
+    }
 
     return $result;
 }

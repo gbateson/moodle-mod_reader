@@ -76,8 +76,8 @@ class reader_uploadbooks_form extends moodleform {
 
         $mform->addElement('header','general', get_string('select_course', 'reader'));
 
-        if ($readercfg->reader_usecourse) {
-            $puttocourse = $readercfg->reader_usecourse;
+        if ($readercfg->usecourse) {
+            $puttocourse = $readercfg->usecourse;
         }
         if ($reader->usecourse) {
             $puttocourse = $reader->usecourse;

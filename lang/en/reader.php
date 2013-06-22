@@ -2,7 +2,7 @@
 // essential strings
 $string['modulename'] = 'Reader';
 $string['modulename_help'] = 'The Reader module allows teachers to set reading goals for students, and allows students to demonstrate they have achieved the specified reading goals.';
-$string['modulename_link'] = '"mod/reader"/view';
+$string['modulename_link'] = 'mod/reader/view';
 $string['modulenameplural'] = 'Reader';
 $string['pluginadministration'] = 'Reader Administration';
 $string['pluginname'] = 'Reader';

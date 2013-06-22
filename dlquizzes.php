@@ -89,9 +89,9 @@ if (! function_exists('file')) {
 }
 
 $params = array('a'        => 'publishers',
-                'login'    => $readercfg->reader_serverlogin,
-                'password' => $readercfg->reader_serverpassword);
-$publishersurl = new moodle_url($readercfg->reader_serverlink.'/', $params);
+                'login'    => $readercfg->serverlogin,
+                'password' => $readercfg->serverpassword);
+$publishersurl = new moodle_url($readercfg->serverlink.'/', $params);
 
 $publishersxml = reader_curlfile($publishersurl);
 $publishersxml = xmlize(reader_makexml($publishersxml));
@@ -263,9 +263,9 @@ if (! $quiz) {
     // $quizzes has already been set up
 
     $params = array('a'        => 'quizzes',
-                    'login'    => $readercfg->reader_serverlogin,
-                    'password' => $readercfg->reader_serverpassword);
-    $quizzessurl = new moodle_url($readercfg->reader_serverlink.'/', $params);
+                    'login'    => $readercfg->serverlogin,
+                    'password' => $readercfg->serverpassword);
+    $quizzessurl = new moodle_url($readercfg->serverlink.'/', $params);
 
     if ($step == 1) {
         $postparams = array('quiz'=>$quiz);

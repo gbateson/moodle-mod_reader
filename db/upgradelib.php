@@ -401,7 +401,9 @@ function xmldb_reader_quiz_courseids() {
 
     $courseids = array();
 
-    if ($courseid = get_config('reader', 'reader_usecourse')) {
+    if ($courseid = get_config('reader', 'reader_usecourse')) { // old config name
+        $courseids[] = $courseid;
+    } else if ($courseid = get_config('reader', 'usecourse')) { // new config name
         $courseids[] = $courseid;
     }
 
@@ -501,8 +503,6 @@ function xmldb_reader_showhide_img() {
  */
 function xmldb_reader_fix_question_instances() {
     global $DB;
-
-    $courseid = get_config('reader', 'reader_usecourse');
 
     $select = 'rqi.*, qz.id AS quizid, qn.id AS questionid, rb.id AS bookid';
     $from   = '{reader_question_instances} rqi '.
@@ -1009,10 +1009,20 @@ function reader_install_missingquizzes($books) {
     // get reader config data
     $readercfg = get_config('reader');
 
+    // remove the "reader_" prefix from the config settings, if necessary
+    $vars = get_object_vars($readercfg);
+    foreach ($vars as $oldname => $value) {
+        if (substr($oldname, 0, 7)=='reader_') {
+            unset($readercfg->$oldname);
+            $newname = substr($oldname, 7);
+            $readercfg->$newname = $value;
+        }
+    }
+
     $params = array('a' => 'publishers',
-                    'login' => $readercfg->reader_serverlogin,
-                    'password' => $readercfg->reader_serverpassword);
-    $url = new moodle_url($readercfg->reader_serverlink.'/', $params);
+                    'login' => $readercfg->serverlogin,
+                    'password' => $readercfg->serverpassword);
+    $url = new moodle_url($readercfg->serverlink.'/', $params);
 
     if(! $xml = reader_file($url)) {
         return false; // shouldn't happen
@@ -1058,9 +1068,9 @@ function reader_install_missingquizzes($books) {
 
     // set download url
     $params = array('a' => 'quizzes',
-                    'login' => $readercfg->reader_serverlogin,
-                    'password' => $readercfg->reader_serverpassword);
-    $url = new moodle_url($readercfg->reader_serverlink.'/', $params);
+                    'login' => $readercfg->serverlogin,
+                    'password' => $readercfg->serverpassword);
+    $url = new moodle_url($readercfg->serverlink.'/', $params);
     // http://moodlereader.net/quizbank
 
     // download quiz data and convert to array
@@ -1077,7 +1087,7 @@ function reader_install_missingquizzes($books) {
     $test101 = '/<QUESTION_CATEGORY>(.*?)<NAME>Default for Test101<\/NAME>(.*?)<\/QUESTION_CATEGORY>\s*/s';
 
     // course where the new quizzes will be put
-    if ($targetcourseid = $readercfg->reader_usecourse) {
+    if ($targetcourseid = $readercfg->usecourse) {
         $targetcourse = $DB->get_record('course', array('id' => $targetcourseid));
     } else {
         $targetcourse = null; // will be created later, if necessary
@@ -1146,7 +1156,7 @@ function reader_install_missingquizzes($books) {
 
         // download questions for this quiz
         $params = array('getid' => $itemid, 'pass' => ''); // $pass
-        $url = new moodle_url($readercfg->reader_serverlink.'/getfile.php', $params);
+        $url = new moodle_url($readercfg->serverlink.'/getfile.php', $params);
         $xml = reader_file($url);
         $xml = preg_replace($test101, '', $xml); // remove "Test101" question category (if any)
 
@@ -1338,7 +1348,7 @@ function reader_xmldb_get_quiz_images($readercfg, $xml, $targetcourseid) {
         }
 
         $params = array('imagelink' => urlencode($image));
-        $image_file_url = new moodle_url($readercfg->reader_serverlink.'/getfile_quiz_image.php', $params);
+        $image_file_url = new moodle_url($readercfg->serverlink.'/getfile_quiz_image.php', $params);
         $image_contents = file_get_contents($image_file_url);
 
         if ($fp = @fopen($CFG->dataroot.'/'.$dirname.$basename, 'w+')) {
@@ -1660,7 +1670,7 @@ function reader_xmldb_init_qtypes() {
 function xmldb_reader_fix_duplicates() {
     global $DB;
 
-    $keepoldquizzes = get_config('reader', 'reader_keepoldquizzes');
+    $keepoldquizzes = get_config('reader', 'keepoldquizzes');
     $courseids = xmldb_reader_quiz_courseids();
 
     foreach ($courseids as $courseid) {

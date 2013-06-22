@@ -61,7 +61,7 @@ class mod_reader_mod_form extends moodleform_mod {
         $mform    = &$this->_form;
 
         $context = reader_get_context(CONTEXT_COURSE, $COURSE->id);
-        if (has_capability('mod/reader:cancreateinstance', $context) || $readercfg->reader_editingteacherrole == 0) {
+        if (has_capability('mod/reader:cancreateinstance', $context) || $readercfg->editingteacherrole == 0) {
 
         } else {
             notify(get_string('nothavepermissioncreateinstance', 'reader'));
@@ -192,37 +192,37 @@ class mod_reader_mod_form extends moodleform_mod {
         //$mform->setHelpButton('subnet', array("requiresubnet", get_string('requiresubnet', 'quiz'), "quiz"));
 
         //-----
-        $mform->setDefault('timelimit', $readercfg->reader_quiztimeout);
-        $mform->setDefault('percentforreading', $readercfg->reader_percentforreading);
-        $mform->setDefault('nextlevel', $readercfg->reader_quiznextlevel);
+        $mform->setDefault('timelimit', $readercfg->quiztimeout);
+        $mform->setDefault('percentforreading', $readercfg->percentforreading);
+        $mform->setDefault('nextlevel', $readercfg->quiznextlevel);
         $mform->addRule('nextlevel', null, 'required', null, 'client');
-        $mform->setDefault('quizpreviouslevel', $readercfg->reader_quizpreviouslevel);
+        $mform->setDefault('quizpreviouslevel', $readercfg->quizpreviouslevel);
         $mform->addRule('quizpreviouslevel', null, 'required', null, 'client');
-        $mform->setDefault('quiznextlevel', $readercfg->reader_quizonnextlevel);
+        $mform->setDefault('quiznextlevel', $readercfg->quizonnextlevel);
         $mform->addRule('quiznextlevel', null, 'required', null, 'client');
 
-        $mform->setDefault('pointreport', $readercfg->reader_pointreport);
-        $mform->setDefault('questionmark', $readercfg->reader_questionmark);
-        $mform->setDefault('bookcovers', $readercfg->reader_bookcovers);
-        $mform->setDefault('attemptsofday', $readercfg->reader_attemptsofday);
+        $mform->setDefault('pointreport', $readercfg->pointreport);
+        $mform->setDefault('questionmark', $readercfg->questionmark);
+        $mform->setDefault('bookcovers', $readercfg->bookcovers);
+        $mform->setDefault('attemptsofday', $readercfg->attemptsofday);
         if (isset($readercfg->reader_goal)) {
             $mform->setDefault('goal', $readercfg->reader_goal);
         }
         if (isset($readercfg->reader_secmeass)) {
             $mform->setDefault('secmeass', $readercfg->reader_secmeass);
         }
-        $mform->setDefault('levelcheck', $readercfg->reader_levelcheck);
+        $mform->setDefault('levelcheck', $readercfg->levelcheck);
 
-        $mform->setDefault('reportwordspoints', $readercfg->reader_reportwordspoints);
-        $mform->setDefault('wordsprogressbar', $readercfg->reader_wordsprogressbar);
-        $mform->setDefault('sendmessagesaboutcheating', $readercfg->reader_sendmessagesaboutcheating);
-        $mform->setDefault('cheated_message', $readercfg->reader_cheated_message);
-        $mform->setDefault('not_cheated_message', $readercfg->reader_not_cheated_message);
+        $mform->setDefault('reportwordspoints', $readercfg->reportwordspoints);
+        $mform->setDefault('wordsprogressbar', $readercfg->wordsprogressbar);
+        $mform->setDefault('sendmessagesaboutcheating', $readercfg->sendmessagesaboutcheating);
+        $mform->setDefault('cheated_message', $readercfg->cheated_message);
+        $mform->setDefault('not_cheated_message', $readercfg->not_cheated_message);
 
-        if ($readercfg->reader_usecourse == 0) {
+        if ($readercfg->usecourse == 0) {
             $mform->setDefault('usecourse', $COURSE->id);
         } else {
-            $mform->setDefault('usecourse', $readercfg->reader_usecourse);
+            $mform->setDefault('usecourse', $readercfg->usecourse);
         }
 
         //if ($mform->timelimit != 0 || !isset($mform->timelimit)) {

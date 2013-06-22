@@ -1096,10 +1096,10 @@ if (! $excel) {
     echo html_writer::end_tag('div');
     echo html_writer::end_tag('form');
 
-    if ($readercfg->reader_update == 1) {
-        if (time() - $readercfg->reader_last_update > $readercfg->reader_update_interval) {
+    if ($readercfg->update == 1) {
+        if (time() - $readercfg->last_update > $readercfg->update_interval) {
           echo $OUTPUT->box_start('generalbox');
-          $days = round((time() - $readercfg->reader_last_update) / (24 * 3600));
+          $days = round((time() - $readercfg->last_update) / (24 * 3600));
           print_string('needtocheckupdates', 'reader', $days);
           echo ' <a href="updatecheck.php?id='.$id.'">YES</a> / <a href="admin.php?a=admin&id='.$id.'">NO</a></center>';
           echo $OUTPUT->box_end();

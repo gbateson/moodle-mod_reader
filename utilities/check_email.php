@@ -45,7 +45,7 @@ echo $OUTPUT->header();
 echo $OUTPUT->box_start();
 
 $user1 = $DB->get_record('user', array('id' => 4));
-email_to_user($user1, get_admin(), 'Cheated notice', $readercfg->reader_cheated_message);
+email_to_user($user1, get_admin(), 'Cheated notice', $readercfg->cheated_message);
 echo '<p>'.get_string('passwordsenttext', 'moodle', $user1).'</p>';
 
 mail($user1->email, 'My Subject', "Line 1\nLine 2\nLine 3");
