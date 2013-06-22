@@ -500,7 +500,6 @@ function xmldb_reader_upgrade($oldversion) {
                 unset_config($oldname, 'reader');
                 $newname = substr($oldname, 7);
                 set_config($newname, $value, 'reader');
-                echo "Rename Reader config setting: $oldname &gt; $newname<br />";
             }
         }
         upgrade_mod_savepoint(true, "$newversion", 'reader');
