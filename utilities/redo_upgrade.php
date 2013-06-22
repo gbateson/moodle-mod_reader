@@ -41,12 +41,61 @@ $PAGE->set_title($title);
 $PAGE->set_heading($title);
 
 echo $OUTPUT->header();
-
-$DB->execute('UPDATE {modules} SET version=version-1 WHERE name='."'reader'");
-
 echo $OUTPUT->box_start();
-echo html_writer::tag('p', 'All done');
-echo html_writer::tag('p', html_writer::tag('a', 'Click here to continue', array('href' => $CFG->wwwroot.'/admin/index.php')));
-echo $OUTPUT->box_end();
 
+$dateformat = 'jS M Y'; // for date() function
+
+if ($version = optional_param('version', 0, PARAM_INT)) {
+
+    // format version
+    if (preg_match('/(\d{4})(\d{2})(\d{2})(\d{2})/', "$version", $match)) {
+        $yy = $match[1];
+        $mm = $match[2];
+        $dd = $match[3];
+        $vv = intval($match[4]);
+        $text = date($dateformat, mktime(0,0,0,$mm,$dd,$yy)).($vv==0 ? '' : " ($vv)");
+    } else {
+        $text = ''; // shouldn't happen !!
+    }
+
+    // reset the Reader module version
+    $DB->set_field('modules', 'version', $version - 1, array('name' => 'reader'));
+
+    // report
+    echo html_writer::tag('p', "Reader module version set to $version ($text)");
+
+    // link to upgrade page
+    $href = new moodle_url('/admin/index.php', array('confirmplugincheck' => 1));
+    echo html_writer::tag('p', html_writer::tag('a', 'Click here to continue', array('href' => $href)));
+
+} else { // no $version given so offer a form to select $version
+
+    // start form
+    echo html_writer::start_tag('form', array('action' => $FULLME, 'method' => 'post'));
+    echo html_writer::start_tag('div');
+
+    // extract and format versions
+    $contents = file_get_contents($CFG->dirroot.'/mod/reader/db/upgrade.php');
+    preg_match_all('/(?<=\$newversion = )(\d{4})(\d{2})(\d{2})(\d{2})(?=;)/', $contents, $matches);
+    $i_max = count($matches[0]);
+    for ($i=0; $i<$i_max; $i++) {
+        $version = $matches[0][$i];
+        $yy = $matches[1][$i];
+        $mm = $matches[2][$i];
+        $dd = $matches[3][$i];
+        $vv = intval($matches[4][$i]);
+        $versions[$version] = date($dateformat, mktime(0,0,0,$mm,$dd,$yy)).($vv==0 ? '' : " ($vv)");
+    }
+    krsort($versions);
+
+    // add form elements
+    echo get_string('version').' '.html_writer::select($versions, 'version').' ';
+    echo html_writer::empty_tag('input', array('type' => 'submit', 'value' => get_string('go')));
+
+    // finish form
+    echo html_writer::end_tag('div');
+    echo html_writer::end_tag('form');
+}
+
+echo $OUTPUT->box_end();
 echo $OUTPUT->footer();

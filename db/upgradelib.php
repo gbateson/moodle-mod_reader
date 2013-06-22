@@ -790,8 +790,8 @@ function xmldb_reader_fix_wrong_quizids() {
 
             if (empty($quiz) && $quizid===null) {
                 // offer form to select quizid
-                $where = $DB->sql_like('q.name', '?');
-                $params = array('quiz', $book->name);
+                $where = $DB->sql_like('q.name', '?').' AND cm.id IS NOT NULL AND cs.id IS NOT NULL AND m.id IS NOT NULL';
+                $params = array('quiz', "$book->name%");
                 if ($quizzes = $DB->get_records_sql("SELECT $select FROM $from WHERE $where ORDER BY $orderby", $params)) {
                     // build select list (sectionname -> quiznames)
 
