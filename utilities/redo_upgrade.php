@@ -62,19 +62,19 @@ if ($version = optional_param('version', 0, PARAM_INT)) {
     $DB->set_field('modules', 'version', $version - 1, array('name' => 'reader'));
 
     // report
-    echo html_writer::tag('p', "Reader module version set to $version ($text)");
+    echo html_writer::tag('p', "Reader module version set to $version - $text");
 
     // link to upgrade page
     $href = new moodle_url('/admin/index.php', array('confirmplugincheck' => 1));
     echo html_writer::tag('p', html_writer::tag('a', 'Click here to continue', array('href' => $href)));
 
-} else { // no $version given so offer a form to select $version
+} else { // no $version given, so offer a form to select $version
 
     // start form
     echo html_writer::start_tag('form', array('action' => $FULLME, 'method' => 'post'));
     echo html_writer::start_tag('div');
 
-    // extract and format versions
+    // extract and format versions from Reader upgrade script
     $contents = file_get_contents($CFG->dirroot.'/mod/reader/db/upgrade.php');
     preg_match_all('/(?<=\$newversion = )(\d{4})(\d{2})(\d{2})(\d{2})(?=;)/', $contents, $matches);
     $i_max = count($matches[0]);

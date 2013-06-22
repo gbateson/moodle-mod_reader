@@ -417,7 +417,6 @@ function xmldb_reader_quiz_courseids() {
         sort($courseids);
     }
 
-
     return $courseids;
 }
 
@@ -525,9 +524,9 @@ function xmldb_reader_fix_question_instances() {
     $rs = false;
 
     $courseids = xmldb_reader_quiz_courseids();
-    list($courseselect, $courseparams) = $DB->get_in_or_equal($courseids);
 
     if (count($courseids)) {
+        list($courseselect, $courseparams) = $DB->get_in_or_equal($courseids);
         if ($i_max = $DB->count_records_sql('SELECT COUNT(*) FROM {reader_question_instances}')) {
             $rs = $DB->get_recordset_sql('SELECT * FROM {reader_question_instances}');
         }
@@ -1613,7 +1612,6 @@ function reader_xmldb_get_questiongrades($xml) {
     }
     return $questiongrades;
 }
-
 
 /**
  * reader_xmldb_init_qtypes
