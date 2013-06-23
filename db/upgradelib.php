@@ -640,17 +640,16 @@ function xmldb_reader_fix_wrong_sectionnames() {
             if ($section->section==0) {
                 continue; // ignore intro section
             }
+            if ($section->sequence=='') {
+                continue; // ignore empty section
+            }
 
             $cmids = explode(',', $section->sequence);
             $cmids = array_filter($cmids); // remove blanks
 
             $quizids = array();
             foreach ($cmids as $cmid) {
-
                 $cm = get_coursemodule_from_id('', $cmid);
-                if ($cm->modname=='label') {
-                    continue; // ignore labels
-                }
                 if ($cm->modname=='quiz') {
                     $quizids[] = $cm->instance;
                 }
@@ -669,25 +668,39 @@ function xmldb_reader_fix_wrong_sectionnames() {
                             $sectionname .= ' - '.$book->level;
                         }
                         if (empty($sectionnames[$sectionname])) {
-                            $sectionnames[$sectionname] = 1;
-                        } else {
-                            $sectionnames[$sectionname]++;
+                            $sectionnames[$sectionname] = array();
                         }
+                        $sectionnames[$sectionname][] = $book->name;
                     }
                 }
             }
 
-            if (count($sectionnames)==1) {
-                if ($section->name==$sectionname) {
-                    // do nothing
+            if ($count = count($sectionnames)) {
+                if ($count==1 && $section->name==$sectionname) {
+                    // good - we only found the expected sectionname
                 } else {
+                    // oops - at least one unexpected quiz found
                     if ($started_box==false) {
                         $started_box = true;
                         xmldb_reader_box_start('The following course sections were adjusted');
                     }
-                    echo html_writer::tag('li', "Reset section name: $section->name => $sectionname");
-                    $DB->set_field('course_sections', 'name', $sectionname, array('id' => $sectionid));
-                    $rebuild_course_cache = true;
+                    if ($count==1) {
+                        echo html_writer::tag('li', "Reset section name: $section->name => $sectionname");
+                        $DB->set_field('course_sections', 'name', $sectionname, array('id' => $sectionid));
+                        $rebuild_course_cache = true;
+                    } else {
+                        foreach ($sectionnames as $sectionname => $books) {
+                            sort($books);
+                            $count = count($books);
+                            $sectionnames[$sectionname] = "$sectionname ($count books)";
+                            $sectionnames[$sectionname] .= html_writer::alist($books);
+                        }
+                        $sectionnames = array_values($sectionnames);
+                        echo html_writer::start_tag('li');
+                        echo 'Quizzes for books by multiple publishers / levels found in section: '.$section->name;
+                        echo html_writer::alist($sectionnames);
+                        echo html_writer::end_tag('li');
+                    }
                 }
             }
         }
@@ -713,7 +726,7 @@ function xmldb_reader_fix_wrong_sectionnames() {
  * @todo Finish documenting this function
  */
 function xmldb_reader_fix_wrong_quizids() {
-    global $DB, $OUTPUT;
+    global $DB, $OUTPUT, $SESSION;
 
     // SQL to detect unexpected section name for a book
     $sectionname = $DB->sql_concat('rb.publisher', "' - '", 'rb.level');
@@ -745,9 +758,15 @@ function xmldb_reader_fix_wrong_quizids() {
     $params = array('quiz', '', '--');
     $orderby = 'rb.publisher,rb.level,rb.name';
 
+    // Note - you could store bookquizids as a config setting:
+    // $bookquizids = get_config('reader', 'bookquizids');
+    // $bookquizids = unserialize($bookquizids);
+    // set_config('bookquizids', serialize($bookquizids), 'reader');
+    // unset_config('bookquizids', 'reader');
+
     // get list of books with manually fixed quiz ids
-    if ($bookquizids = get_config('reader', 'bookquizids')) {
-        $bookquizids = unserialize($bookquizids);
+    if (isset($SESSION->bookquizids)) {
+        $bookquizids = unserialize($SESSION->bookquizids);
     } else {
         $bookquizids = array();
     }
@@ -849,7 +868,7 @@ function xmldb_reader_fix_wrong_quizids() {
 
                 // update the cached array mapping $book->id => $quizid mapping
                 $bookquizids[$book->id] = $quizid;
-                set_config('bookquizids', serialize($bookquizids), 'reader');
+                $SESSION->bookquizids = serialize($bookquizids);
 
                 if ($quizid) {
                     if ($quiz = $DB->get_record('quiz', array('id' => $quizid), 'id,name')) {
@@ -881,13 +900,10 @@ function xmldb_reader_fix_wrong_quizids() {
             xmldb_reader_box_end();
         }
     }
-
-    // remove the list of manually fixed quizids
-    unset_config('bookquizids', 'reader');
 }
 
 /**
- * xmldb_reader_fix_slashes
+ * xmldb_reader_fix_nonunique_quizids
  *
  * @todo Finish documenting this function
  */
