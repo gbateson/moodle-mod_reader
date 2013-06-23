@@ -29,28 +29,43 @@
 require_once('../../config.php');
 require_once($CFG->dirroot.'/mod/reader/lib.php');
 
-$quizid = 0;
-if ($b = optional_param('b', 0, PARAM_INT)) {
+$id = optional_param('id', 0, PARAM_INT); // cm id
+$q  = optional_param('q',  0, PARAM_INT); // quiz id
+$b  = optional_param('b',  0, PARAM_INT); // reader_books id
+
+$cm = get_coursemodule_from_id('reader', $id, 0, false, MUST_EXIST);
+$course = $DB->get_record('course', array('id'=>$cm->course), '*', MUST_EXIST);
+$reader = $DB->get_record('reader', array('id'=>$cm->instance), '*', MUST_EXIST);
+require_course_login($course, true, $cm);
+
+$PAGE->set_url('/mod/reader/report.php', array('id' => $id, 'b' => $b, 'q' => $q));
+
+$title = get_string('report');
+$PAGE->set_title($title);
+$PAGE->set_heading($title);
+
+if ($q) {
+    $book = $DB->get_record('reader_books', array('quizid' => $q));
+} else if ($b) {
     $book = $DB->get_record('reader_books', array('id' => $b));
-    if ($readerattempts = $DB->get_records('reader_attempts', array('quizid' => $book->quizid))) {
-        foreach ($readerattempts as $readerattempt) {
-            reader_copy_to_quizattempt($readerattempt);
-        }
-    }
-    $quizid = $book->quizid;
+} else {
+    $book = false;
 }
 
-if ($quizid) {
-    if ($cm = get_coursemodule_from_instance('quiz', $quizid)) {
-        $quiz_report = new moodle_url('/mod/quiz/report.php', array('id' => $cm->id, 'mode' => 'responses'));
-        echo '<script type="text/javascript">',"\n";
-        echo '//<![CDATA['."\n";
-        echo 'top.location.href="'.$quiz_report.'";'."\n";
-        echo '//]]>'."\n";
-        echo '</script>';
+if ($book) {
+    if ($quizid = $book->quizid) {
+        if ($cm = get_coursemodule_from_instance('quiz', $quizid)) {
+            if ($attempts = $DB->get_records('reader_attempts', array('quizid' => $quizid))) {
+                foreach ($attempts as $attempt) {
+                    reader_copy_to_quizattempt($attempt);
+                }
+                $report = new moodle_url('/mod/quiz/report.php', array('id' => $cm->id, 'mode' => 'responses'));
+                redirect($report);
+            }
+        }
     }
-} else {
-    $OUTPUT->header;
-    echo '<h1>No attempts found</h1>';
-    $OUTPUT->footer;
 }
+
+echo $OUTPUT->header();
+echo '<h1>No attempts found</h1>';
+echo $OUTPUT->footer();

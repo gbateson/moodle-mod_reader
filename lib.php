@@ -3154,7 +3154,9 @@ function reader_available_bookids($publisher, $level, $cmid, $action, $from, $wh
         }
 
         $output .= html_writer::end_tag('select');
-        $output .= html_writer::tag('div', '', array('id' => $target_div, 'style' => 'float: left; margin: 0px 9px;'));
+        if ($action=='takequiz') {
+            $output .= html_writer::tag('div', '', array('id' => $target_div, 'style' => 'float: left; margin: 0px 9px;'));
+        }
     }
 
     return $output;
@@ -3244,8 +3246,9 @@ function reader_available_books($cmid, $reader, $userid, $action='') {
             }
             $output .= reader_cheatsheet_link($cheatsheeturl, $strcheatsheet, $publisher, $book);
         }
-    } else if ($action=='adjustscores') {
-        $output .= $book->name;
+    } else if ($action=='adjustscores' && reader_can_manage($cmid, $userid)) {
+        $output .= html_writer::tag('p', '1 book selected: '.$book->name);
+        $output .= html_writer::empty_tag('input', array('type' => 'hidden', 'name' => 'bookids', 'id' => 'id_bookids', 'value' => $book->id));
     }
 
     return $output;
@@ -3609,8 +3612,8 @@ function reader_available_users($cmid, $reader, $userid, $action='') {
             $target_div = 'useriddiv';
             $target_url = "'view_users.php?id=$cmid&action=$action&gid='+escape(this.options[this.selectedIndex].value)";
 
-            $params = array('id' => 'id_publisher',
-                            'name' => 'publisher',
+            $params = array('id' => 'id_users',
+                            'name' => 'users',
                             'size' => min(10, $count),
                             'style' => 'width: 240px; float: left; margin: 0px 9px;',
                             'onchange' => "request($target_url, '$target_div')");
@@ -3668,7 +3671,7 @@ function reader_available_users($cmid, $reader, $userid, $action='') {
             array_unshift($params, 0);
             if ($users = $DB->get_records_select('user', $select, $params, 'lastname,firstname', 'id, firstname, lastname')) {
 
-                $target_div = 'attemptiddiv';
+                $target_div = 'usernamediv';
                 $target_url = "'view_users.php?id=$cmid&action=$action&gid=$gid&userid='+escape(this.values)";
 
                 $params = array('id' => 'id_userid',
@@ -3692,30 +3695,20 @@ function reader_available_users($cmid, $reader, $userid, $action='') {
                 }
 
                 $output .= html_writer::end_tag('select');
-                $output .= html_writer::tag('div', '', array('id' => $target_div));
+                if ($action=='takequiz') {
+                    $output .= html_writer::tag('div', '', array('id' => $target_div));
+                }
             }
 
             return $output;
         }
     }
 
-    if ($userids = explode(',', $userid)) {
-        $count = count($userids);
-        if ($count <= 10) {
-            list($select, $params) = $DB->get_in_or_equal($userids); // , SQL_PARAMS_NAMED, '', true
-            $select = "deleted = ? AND id $select";
-            array_unshift($params, 0);
-            if ($users = $DB->get_records_select('user', $select, $params, 'lastname,firstname', 'id, firstname, lastname')) {
-                reader_format_users_fullname($users);
-                foreach ($users as $user) {
-                    $users[$user->id] = fullname($user);
-                }
-                $params = array('style' => 'list-style-type: none;');
-                $output .= html_writer::alist($users, $params);
-            }
-        } else {
-            $output .= html_writer::tag('p', "$count users selected");
-        }
+    $userids = explode(',', $userid);
+    $userids = array_filter($userids); // remove blanks
+    if ($count = count($userids)) {
+        $output .= html_writer::tag('p', count($userids)." users selected: $userid");
+        $output .= html_writer::empty_tag('input', array('type' => 'hidden', 'name' => 'userids', 'id' => 'id_userids', 'value' => $userid));
     }
 
     return $output;

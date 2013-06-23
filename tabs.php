@@ -34,12 +34,8 @@ if (! isset($currenttab)) {
     $currenttab = 'quizzes';
 }
 
-if (! isset($idh)) {
-    $idh = $id;
-}
-
 if (! isset($cm)) {
-    if (! $cm = $DB->get_record('course_modules', array('id' => $idh))) {
+    if (! $cm = $DB->get_record('course_modules', array('id' => $id))) {
         throw new reader_exception('Course Module ID was incorrect');
     }
 }
@@ -55,8 +51,8 @@ $row  = array();
 $inactive = array();
 $activated = array();
 
-$row[] = new tabobject('quizzes', "view.php?a=quizzes&id=".$idh, "Quizzes");
-$row[] = new tabobject('admin', "admin.php?a=admin&id=".$idh, "Admin Area");
+$row[] = new tabobject('quizzes', "view.php?a=quizzes&id=".$id, "Quizzes");
+$row[] = new tabobject('admin', "admin.php?a=admin&id=".$id, "Admin Area");
 
 $tabs[] = $row;
 
@@ -83,8 +79,8 @@ if ($currenttab == 'admin' and isset($mode)) {
     $currenttab = '';
     foreach ($reportlist as $report) {
         if (! isset($reportrestrictions[$report]) || has_capability($reportrestrictions[$report], $context)) {
-            $row[] = new tabobject($report, "$CFG->wwwroot/mod/reader/report.php?idh={$idh}&q={$q}&mode={$report}&b={$b}",
-                                    get_string($report, 'quiz_'.$report));
+            $url = "$CFG->wwwroot/mod/reader/report.php?id={$id}&q={$q}&mode={$report}&b={$b}";
+            $row[] = new tabobject($report, $url, $url, get_string($report, 'quiz_'.$report));
             if ($report == $mode) {
                 $currenttab = $report;
             }

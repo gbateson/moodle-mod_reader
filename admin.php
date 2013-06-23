@@ -1864,8 +1864,8 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
                 }
 
                 $timesoftaken = $i;
-                //$params = array('b' => $book->id, 'idh' => $id, 'q'=> $book->quizid, 'mode' => 'analysis', 'b' => $book->id);
-                $bookreportlink = html_writer::tag('a', $book->name, array('href' => new moodle_url('/mod/reader/report.php', array('b' => $book->id))));
+                $params = array('b' => $book->id, 'id' => $id, 'q'=> $book->quizid, 'b' => $book->id);
+                $bookreportlink = html_writer::tag('a', $book->name, array('href' => new moodle_url('/mod/reader/report.php', $params)));
                 $table->data[] = new html_table_row(array(
                     $bookreportlink,
                     $book->publisher,
@@ -1987,10 +1987,13 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
             if (! $readerattempts = $DB->get_records_sql("SELECT $select FROM $from WHERE $where ORDER BY ra.userid", $params)) {
                 $readerattempts = array();
             }
+
+            $params = array('id' => $id, 'q' => $book->quizid, 'b' => $book->id);
+            $report = new moodle_url('/mod/reader/report.php', $params);
+
             foreach ($readerattempts as $readerattempt) {
-                $params = array('idh' => $id, 'q' => $book->quizid, 'mode' => 'analysis', 'b' => $book->id);
                 $table->data[] = new html_table_row(array(
-                    html_writer::tag('a', $book->name, array('href' => new moodle_url('/mod/reader/report.php', $params))),
+                    html_writer::tag('a', $book->name, array('href' => $report)),
                     $book->publisher,
                     $book->level,
                     reader_get_reader_difficulty($reader, $book->id),
@@ -4096,21 +4099,21 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
     }
     $readerattempts = $DB->get_records_sql('SELECT * FROM {reader_attempts} WHERE quizid= ?  and reader= ? ', array($book, $reader->id));
 
-    while(list($readerattempts, $readerattempt) = each($readerattempts)) {
-        $userdata = $DB->get_record('user', array('id' => $userid));
-        $table->data[] = new html_table_row(array(
-            '<input type="checkbox" name="adjustscoresupbooks[]" value="'.$readerattempt->id.'" />',
-            fullname($userdata),
-            array('<a href="report.php?idh='.$id.'&q='.$bookdata->quizid.'&mode=analysis&b='.$bookdata->id.'">'.$bookdata->name.'</a>', $bookdata->name),
-            $bookdata->publisher,
-            $bookdata->level,
-            reader_get_reader_difficulty($reader, $bookdata->id),
-            $bookdata->difficulty,
-            round($readerattempt->percentgrade)."%",
-            reader_format_passed($readerattempt->passed),
-            date($dateformat, $readerattempt->timemodified), // was 'd-M-Y'
-            'deleted'));
-    }
+    //while(list($readerattempts, $readerattempt) = each($readerattempts)) {
+    //    $userdata = $DB->get_record('user', array('id' => $userid));
+    //    $table->data[] = new html_table_row(array(
+    //        '<input type="checkbox" name="adjustscoresupbooks[]" value="'.$readerattempt->id.'" />',
+    //        fullname($userdata),
+    //        array('<a href="report.php?id='.$id.'&q='.$bookdata->quizid.'&mode=analysis&b='.$bookdata->id.'">'.$bookdata->name.'</a>', $bookdata->name),
+    //        $bookdata->publisher,
+    //        $bookdata->level,
+    //        reader_get_reader_difficulty($reader, $bookdata->id),
+    //        $bookdata->difficulty,
+    //        round($readerattempt->percentgrade)."%",
+    //        reader_format_passed($readerattempt->passed),
+    //        date($dateformat, $readerattempt->timemodified), // was 'd-M-Y'
+    //        'deleted'));
+    //}
 
     reader_sort_table($table, $titlesarray, $orderby, $sort);
 
@@ -4118,63 +4121,243 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
         echo '<div style="padding:20px 0;">'.$adjustscorestext.'</div>';
     }
 
+    // get fields submitted from browser
+    $userids = optional_param('userids', '', PARAM_SEQUENCE);
+    $bookids = optional_param('bookids', '', PARAM_SEQUENCE);
+
+    // min/max grade
+    if ($min_grade = optional_param('min_grade', '', PARAM_ALPHANUM)) {
+        $min_grade - intval($min_grade);
+    }
+    if ($max_grade = optional_param('max_grade', '', PARAM_ALPHANUM)) {
+        $max_grade - intval($max_grade);
+    }
+
+    if (! optional_param('showattempts', '', PARAM_ALPHA)) {
+        $min_time_disabled = 1; // start with this element disabled
+        $max_time_disabled = 1; // start with this element disabled
+    } else {
+        $min_time_disabled = optional_param('min_time_disabled', 0, PARAM_INT);
+        $max_time_disabled = optional_param('max_time_disabled', 0, PARAM_INT);
+    }
+
+    // min time
+    if ($min_time_disabled) {
+        $min_time = '';
+    } else {
+        $min_time = mktime(optional_param('min_time_hour',   0, PARAM_INT),
+                           optional_param('min_time_minute', 0, PARAM_INT),
+                           optional_param('min_time_second', 0, PARAM_INT),
+                           optional_param('min_time_month',  0, PARAM_INT),
+                           optional_param('min_time_day',    0, PARAM_INT),
+                           optional_param('min_time_year',   0, PARAM_INT));
+    }
+
+    // max time
+    if ($max_time_disabled) {
+        $max_time = '';
+    } else {
+        $max_time = mktime(optional_param('max_time_hour',   0, PARAM_INT),
+                           optional_param('max_time_maxute', 0, PARAM_INT),
+                           optional_param('max_time_second', 0, PARAM_INT),
+                           optional_param('max_time_month',  0, PARAM_INT),
+                           optional_param('max_time_day',    0, PARAM_INT),
+                           optional_param('max_time_year',   0, PARAM_INT));
+    }
+
+    // min/max duration
+    if ($min_duration = optional_param('min_duration', '', PARAM_ALPHANUM)) {
+        $min_duration - intval($min_duration);
+    }
+    if ($max_duration = optional_param('max_duration', '', PARAM_ALPHANUM)) {
+        $max_duration - intval($max_duration);
+    }
+
+    // start the attempt selection form
+    $params = array(
+        'id'     => 'id_attemptsearchform',
+        'class'  => 'attemptsearchform',
+        'method' => 'post',
+        'action' => new moodle_url('/mod/reader/admin.php')
+    );
+    echo html_writer::start_tag('form', $params);
+    echo html_writer::start_tag('div');
+
+    // hidden fields
+    echo html_writer::empty_tag('input', array('type' => 'hidden', 'name' => 'a', 'value' => $a));
+    echo html_writer::empty_tag('input', array('type' => 'hidden', 'name' => 'id', 'value' => $id));
+    echo html_writer::empty_tag('input', array('type' => 'hidden', 'name' => 'act', 'value' => $act));
+
+    // select books
     echo html_writer::tag('h3', get_string('selectsomebooks', 'reader'));
     echo reader_available_books($id, $reader, $USER->id, $act);
     echo html_writer::tag('div', '', array('style' => 'clear: both; height: 6px;'));
 
+    // select users
     echo html_writer::tag('h3', get_string('selectsomeusers', 'reader'));
     echo reader_available_users($id, $reader, $USER->id, $act);
     echo html_writer::tag('div', '', array('style' => 'clear: both; height: 6px;'));
 
+    // DIV to store list of book ids
+    $params = array('type' => 'hidden', 'name' => 'bookids', 'id' => 'id_bookids', 'value' => $bookids);
+    echo html_writer::tag('div', html_writer::empty_tag('input', $params), array('id' => 'booknamediv'));
+
+    // DIV to store list of user ids
+    $params = array('type' => 'hidden', 'name' => 'userids', 'id' => 'id_userids', 'value' => $userids);
+    echo html_writer::tag('div', html_writer::empty_tag('input', $params), array('id' => 'usernamediv'));
+
+    // select attempts (table)
     echo html_writer::tag('h3', get_string('selectsomeattempts', 'reader'));
 
     $table = new html_table();
     $table->align = array('right');
 
+    $min = html_writer::tag('span', '&gt;=', array('title' => get_string('min', 'reader')));
+    $max = html_writer::tag('span', '&lt;=', array('title' => get_string('max', 'reader')));
+
+    // min/max grade
     $table->data[] = new html_table_row(array(
         html_writer::tag('b', get_string('grade')),
-        get_string('min', 'reader'),
-        reader_grade_selector('min_points')
+        $min,
+        reader_grade_selector('min_grade', $min_grade)
     ));
     $table->data[] = new html_table_row(array(
         '',
-        get_string('max', 'reader'),
-        reader_grade_selector('max_points')
+        $max,
+        reader_grade_selector('max_grade', $max_grade)
     ));
 
+    // min/max date
     $table->data[] = new html_table_row(array(
         html_writer::tag('b', get_string('date')),
-        get_string('min', 'reader'),
-        reader_datetime_selector('min_time')
+        $min,
+        reader_datetime_selector('min_time', $min_time, $min_time_disabled)
     ));
     $table->data[] = new html_table_row(array(
         '',
-        get_string('max', 'reader'),
-        reader_datetime_selector('max_time')
+        $max,
+        reader_datetime_selector('max_time', $max_time, $max_time_disabled)
     ));
 
+    // min/max duration
     $table->data[] = new html_table_row(array(
         html_writer::tag('b', get_string('duration', 'reader')),
-        get_string('min', 'reader'),
-        reader_duration_selector('min_duration')
+        $min,
+        reader_duration_selector('min_duration', $min_duration)
     ));
     $table->data[] = new html_table_row(array(
         '',
-        get_string('max', 'reader'),
-        reader_duration_selector('max_duration')
+        $max,
+        reader_duration_selector('max_duration', $max_duration)
     ));
 
-    // create table cell holding submit button
-    $params = array('type' => 'submit', 'value' => get_string('showattempts', 'reader'));
+    // cell holding submit button
+    $params = array('type' => 'submit', 'name' => 'showattempts', 'value' => get_string('showattempts', 'reader'));
     $cell = new html_table_cell(html_writer::empty_tag('input', $params));
     $cell->style = 'text-align: center;';
     $cell->colspan = 3;
 
-    // add table cell containing the submit button
+    // add the submit button cell
     $table->data[] = new html_table_row(array($cell));
 
     // send table to browser
     echo html_writer::table($table);
+
+    $select = 'ra.*, (ra.timemodified - ra.timestart) AS duration, '.
+              'rb.id AS bookid, rb.publisher, rb.level, rb.name AS bookname, rb.difficulty, '.
+              'u.firstname, u.lastname';
+    $from   = '{reader_attempts} ra '.
+              'INNER JOIN {user} u ON ra.userid = u.id '.
+              'INNER JOIN {reader_books} rb ON ra.quizid = rb.quizid';
+    $where  = 'ra.reader = ?';
+    $params = array($reader->id);
+
+    if ($userids) {
+        list($filter, $ids) = $DB->get_in_or_equal(explode(',', $userids));
+        $where .= " AND ra.userid $filter";
+        $params = array_merge($params, $ids);
+    }
+    if ($userids) {
+        list($filter, $ids) = $DB->get_in_or_equal(explode(',', $bookids));
+        $where .= " AND rb.id $filter";
+        $params = array_merge($params, $ids);
+    }
+    if (is_numeric($min_grade)) {
+        $where .= ' AND ra.percentgrade >= ?';
+        $params[] = $min_grade;
+    }
+    if (is_numeric($max_grade)) {
+        $where .= ' AND ra.percentgrade <= ?';
+        $params[] = $max_grade;
+    }
+    if (is_numeric($min_time) || is_numeric($max_time) || is_numeric($min_duration) || is_numeric($max_duration)) {
+        $where .= ' AND ra.timefinish > ?';
+        $params[] = 0;
+    }
+    if (is_numeric($min_time)) {
+        $where .= ' AND ra.timefinish >= ?';
+        $params[] = $min_time;
+    }
+    if (is_numeric($max_time)) {
+        $where .= ' AND ra.timefinish <= ?';
+        $params[] = $max_time;
+    }
+    if (is_numeric($min_duration)) {
+        $where .= ' AND (ra.timefinish - ra.timestart) >= ?';
+        $params[] = $min_duration;
+    }
+    if (is_numeric($max_duration)) {
+        $where .= ' AND (ra.timefinish - ra.timestart) <= ?';
+        $params[] = $max_duration;
+    }
+
+    if ($attempts = $DB->get_records_sql("SELECT $select FROM $from WHERE $where", $params)) {
+        echo count($attempts).' attempts found';
+
+        $table = new html_table();
+        $titles = array(''              => '',
+                        'Full Name'     => 'username',
+                        'Title'         => 'title',
+                        'Publisher'     => 'publisher',
+                        'Level'         => 'level',
+                        'Reading level' => 'rlevel',
+                        'Score'         => 'score',
+                        'P/F/C'         => '',
+                        'Finishtime'    => 'finishtime',
+                        'Option'        => '');
+
+        $params = array('a' => 'admin',
+                        'id' => $id,
+                        'act' => $act,
+                        'searchtext' => $searchtext);
+        reader_make_table_headers($table, $titles, $orderby, $sort, $params);
+        $table->align = array('left', 'left', 'left', 'left', 'center', 'center', 'center', 'center', 'center', 'center');
+
+        foreach ($attempts as $attempt) {
+            $params = array('id' => $id, 'q' => $attempt->quizid, 'b' => $attempt->bookid);
+            $report = new moodle_url('/mod/reader/report.php', $params);
+            $table->data[] = new html_table_row(array(
+                html_writer::empty_tag('input', array('type' => 'checkbox', 'name' => 'adjustscoresupbooks[]', 'value' => $attempt->id)),
+                fullname($attempt),
+                html_writer::tag('a', $attempt->bookname, array('href' => $report)),
+                $attempt->publisher,
+                $attempt->level,
+                //reader_get_reader_difficulty($reader, $attempt->id),
+                $attempt->difficulty,
+                round($attempt->percentgrade).'%',
+                reader_format_passed($attempt->passed),
+                date($dateformat, $attempt->timemodified), // was 'd-M-Y'
+                'deleted'
+            ));
+        }
+        echo html_writer::table($table);
+    } else {
+        echo 'no attempts found';
+    }
+
+    // finish form
+    echo html_writer::end_tag('div');
+    echo html_writer::end_tag('form');
 }
 
 echo $OUTPUT->box_end();
@@ -4499,7 +4682,7 @@ function reader_setbookinstances($cmid, $reader) {
  * @return xxx
  * @todo Finish documenting this function
  */
-function reader_datetime_selector($name) {
+function reader_datetime_selector($name, $value, $disabled) {
     $output = '';
 
     $year  = array_combine(range(1970, 2020), range(1970, 2020));
@@ -4523,15 +4706,12 @@ function reader_datetime_selector($name) {
         $min[$m] = sprintf('%02d', $m);
     }
 
-    $disabled = optional_param($name.'_disabled', 1, PARAM_INT);
-    $time = time();
-
+    $defaultvalue = ($value==0 ? time() : $value);
     $fields = array('year' => '%Y',  'month' => '%m', 'day' => '%d', 'hour' => '%H', 'min'  => '%M');
     foreach ($fields as $field => $fmt) {
 
-        $default = intval(gmstrftime($fmt, $time));
-        $value   = optional_param($name.'_'.$field, $default, PARAM_INT);
-        $output .= html_writer::select($$field,  $name.'_'.$field,  $value, '', array('disabled' => $disabled));
+        $selected = intval(gmstrftime($fmt, $defaultvalue));
+        $output .= html_writer::select($$field,  $name.'_'.$field,  $selected, '', array('disabled' => $disabled));
 
         // add separator, if necessary
         switch ($field) {
@@ -4573,13 +4753,12 @@ function reader_datetime_selector($name) {
  * @return xxx
  * @todo Finish documenting this function
  */
-function reader_grade_selector($name) {
+function reader_grade_selector($name, $value) {
     $grades = range(0, 100);
     foreach ($grades as $g) {
         $grades[$g] = "$g %";
     }
     $grades = array('' => '') + $grades;
-    $value = optional_param($name, '', PARAM_INT);
     return html_writer::select($grades, $name, $value, '');
 }
 
@@ -4590,7 +4769,7 @@ function reader_grade_selector($name) {
  * @return xxx
  * @todo Finish documenting this function
  */
-function reader_duration_selector($name) {
+function reader_duration_selector($name, $value) {
 
     $duration = array_combine(range(0, 50, 10), range(0, 50, 10)) +
                 array_combine(range(1*60, 5*60, 60), range(1, 5)) +
@@ -4619,6 +4798,5 @@ function reader_duration_selector($name) {
         $duration[$num] = $text;
     }
     $duration = array('' => '') + $duration;
-    $value = optional_param($name, '', PARAM_INT);
     return html_writer::select($duration, $name, $value, '');
 }
