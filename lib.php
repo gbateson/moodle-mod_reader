@@ -3028,8 +3028,10 @@ function reader_available_publishers($cmid, $action, $from, $where, $sqlparams, 
         }
         $record = null;
 
-        $output .= html_writer::end_tag('select');
-        $output .= html_writer::tag('div', '', array('id' => $target_div));
+        if ($action=='takequiz') {
+            $output .= html_writer::end_tag('select');
+            $output .= html_writer::tag('div', '', array('id' => $target_div));
+        }
     }
 
     return $output;
@@ -3093,8 +3095,10 @@ function reader_available_levels($publisher, $cmid, $action, $from, $where, $sql
         }
         $record = null;
 
-        $output .= html_writer::end_tag('select');
-        $output .= html_writer::tag('div', '', array('id' => $target_div));
+        if ($action=='takequiz') {
+            $output .= html_writer::end_tag('select');
+            $output .= html_writer::tag('div', '', array('id' => $target_div));
+        }
     }
 
     return $output;
@@ -3246,9 +3250,6 @@ function reader_available_books($cmid, $reader, $userid, $action='') {
             }
             $output .= reader_cheatsheet_link($cheatsheeturl, $strcheatsheet, $publisher, $book);
         }
-    } else if ($action=='adjustscores' && reader_can_manage($cmid, $userid)) {
-        $output .= html_writer::tag('p', '1 book selected: '.$book->name);
-        $output .= html_writer::empty_tag('input', array('type' => 'hidden', 'name' => 'bookids', 'id' => 'id_bookids', 'value' => $book->id));
     }
 
     return $output;

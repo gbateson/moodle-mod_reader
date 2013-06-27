@@ -487,7 +487,6 @@ function xmldb_reader_upgrade($oldversion) {
     $newversion = 2013062100;
     if ($result && $oldversion < $newversion) {
         xmldb_reader_fix_wrong_quizids();
-        //xmldb_reader_fix_nonunique_quizids();
         upgrade_mod_savepoint(true, "$newversion", 'reader');
     }
 
@@ -502,6 +501,13 @@ function xmldb_reader_upgrade($oldversion) {
                 set_config($newname, $value, 'reader');
             }
         }
+        upgrade_mod_savepoint(true, "$newversion", 'reader');
+    }
+
+    $newversion = 2013062600;
+    if ($result && $oldversion < $newversion) {
+        xmldb_reader_fix_uniqueids();
+        //xmldb_reader_fix_nonunique_quizids();
         upgrade_mod_savepoint(true, "$newversion", 'reader');
     }
 

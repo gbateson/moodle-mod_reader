@@ -903,6 +903,140 @@ function xmldb_reader_fix_wrong_quizids() {
 }
 
 /**
+ * xmldb_reader_fix_uniqueids
+ *
+ * @param xxx $course record
+ * @param boolean $keepoldquizzes
+ * @return boolean $rebuild_course_cache
+ * @todo Finish documenting this function
+ */
+function xmldb_reader_fix_uniqueids() {
+    global $CFG, $DB;
+    require_once($CFG->dirroot.'/mod/reader/lib.php');
+
+    $started_box = false;
+
+    $contexts = array();
+    $quizzes = array();
+
+    // extract all attempts with duplicate uniqueid - there should be none of these
+    if ($duplicates = $DB->get_records_sql("SELECT uniqueid FROM {reader_attempts} GROUP BY uniqueid HAVING COUNT(*) > 1")) {
+        foreach ($duplicates as $duplicate) {
+            if ($attempts = get_records('reader_attempts', array('uniqueid' => $duplicate->uniqueid), 'timestart')) {
+                array_shift($attempts); // remove earliest attempt
+                foreach ($attempts as $attempt) {
+                    xmldb_reader_fix_uniqueid($contexts, $quizzes, $attempt, $started_box);
+                }
+            }
+        }
+    }
+
+    // extract reader_attempts with invalid unqueid
+    // i.e. one that is not am id in the "question_usages" table
+    $select = 'ra.*, qu.id AS questionusageid';
+    $from   = '{reader_attempts} ra LEFT JOIN {question_usages} qu ON ra.uniqueid = qu.id';
+    $where  = 'ra.uniqueid < ? OR qu.id IS NULL';
+    $params = array(0);
+    if ($attempts = $DB->get_records_sql("SELECT $select FROM $from WHERE $where", $params)) {
+        foreach ($attempts as $attempt) {
+            xmldb_reader_fix_uniqueid($contexts, $quizzes, $attempt, $started_box);
+        }
+    }
+
+    if ($started_box==true) {
+        xmldb_reader_box_end();
+    }
+}
+
+/**
+ * xmldb_reader_fix_uniqueid
+ *
+ * @param array $course (passed by reference) $readerid => $context record from "contexts" table
+ * @param array $quizzes (passed by reference) $quizid => $quiz record from "quiz" table
+ * @param object $attempt (passed by reference) record from "reader_attempts" table
+ * @param boolean $started_box (passed by reference)
+ * @return void, but will modify $attempt->uniqueid
+ *               and update "reader_attempts" and "question_usages" tables in DB
+ * @todo Finish documenting this function
+ */
+function xmldb_reader_fix_uniqueid(&$contexts, &$quizzes, &$attempt, &$started_box) {
+    global $DB;
+
+    static $uniqueid = null;
+    static $readermoduleid = null;
+
+    // get next available (negative) temporary $uniqueid
+    if ($uniqueid===null) {
+        if ($uniqueid = $DB->get_field_sql('SELECT MIN(uniqueid) FROM {reader_attempts}')) {
+            $uniqueid = min(0, $uniqueid) - 1;
+        } else {
+            $uniqueid = -1;
+        }
+    }
+
+    // cache readermoduleid
+    if ($readermoduleid===null) {
+        $readermoduleid = $DB->get_field('modules', 'id', array('name' => 'reader'));
+    }
+
+    // fetch context and quiz records, if necessary
+    if (empty($contexts[$attempt->reader])) {
+        if ($cm = $DB->get_record('course_modules', array('module' => $readermoduleid, 'instance' => $attempt->reader))) {
+            $contexts[$attempt->reader] = reader_get_context(CONTEXT_MODULE, $cm->id);
+        } else {
+            // shouldn't happen - the reader has been deleted but the attempt remains ?
+            // let's see if any other attempts at this reader have a valid uniqueids
+            $select = 'ra.id, ra.uniqueid, qu.id AS questionusageid, qu.contextid, qu.preferredbehaviour';
+            $from   = '{reader_attempts} ra LEFT JOIN {question_usages} qu ON ra.uniqueid = qu.id';
+            $where  = 'ra.reader = ? AND qu.id IS NOT NULL';
+            $params = array($attempt->reader);
+            if ($records = $DB->get_records_sql("SELECT $select FROM $from WHERE $where", $params)) {
+                // we can get the contextid from the other "question_usage" records
+                $record = reset($records); // i.e. first record
+                $contexts[$attempt->reader] = (object)array('id' => $record->contextid);
+            } else {
+                // otherwise use the system context - should never happen !!
+                $contexts[$attempt->reader] = reader_get_context(CONTEXT_SYSTEM);
+            }
+        }
+    }
+    if (empty($quizzes[$attempt->quizid])) {
+        if (! $quizzes[$attempt->quizid] = $DB->get_record('quiz', array('id' => $attempt->quizid))) {
+            // shouldn't happen - but we can continue if we create a dummy quiz record ...
+            $quizzes[$attempt->quizid] = (object)array('id' => $attempt->quizid,
+                                                       'name' => "Invalid quizid = $attempt->quizid",
+                                                       'preferredbehaviour' => 'deferredfeedback');
+        }
+    }
+
+    // create question_usage record for this attempt
+    $question_usage = (object)array(
+        'contextid' => $contexts[$attempt->reader]->id,
+        'component' => 'mod_reader',
+        'preferredbehaviour' => $quizzes[$attempt->quizid]->preferredbehaviour
+    );
+
+    $olduniqueid = $attempt->uniqueid;
+    $newuniqueid = $DB->insert_record('question_usages', $question_usage);
+
+    // if any reader_attempt record is already using the $newuniqueid
+    // then give it a unique but temporary negative $uniqueid,
+    // so the uniqueness of the "uniqueid" field is preserved
+    $DB->set_field('reader_attempts', 'uniqueid', $uniqueid--, array('uniqueid' => $newuniqueid));
+
+    // update attempt record
+    $attempt->uniqueid = $newuniqueid;
+    $DB->set_field('reader_attempts', 'uniqueid', $attempt->uniqueid, array('id' => $attempt->id));
+
+    // tell the user what just happened
+    if ($started_box==false) {
+        $started_box = true;
+        echo xmldb_reader_box_start('The following reader attempts had their uniqueids fixed:');
+    }
+    echo html_writer::tag('li', $quizzes[$attempt->quizid]->name.": OLD: $olduniqueid => NEW: $newuniqueid");
+}
+
+/**
  * xmldb_reader_fix_nonunique_quizids
  *
  * @todo Finish documenting this function

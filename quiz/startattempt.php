@@ -158,22 +158,23 @@ if ($reader->attemptonlast && $lastattempt) {
 // Save the attempt in the database.
 //$transaction = $DB->start_delegated_transaction();
 question_engine::save_questions_usage_by_activity($quba);
-$attempt->uniqueid = $quba->get_id();
+$attempt->uniqueid = $quba->get_id(); // an new id in the "question_usages" table
 $attempt->id = $DB->insert_record('reader_attempts', $attempt);
 
 // Log the new attempt.
 add_to_log($course->id, 'reader', 'attempt', 'review.php?attempt=' . $attempt->id, $id, $book);
 
 // Trigger event
-$eventdata = new stdClass();
-$eventdata->component = 'mod_reader';
-$eventdata->attemptid = $attempt->id;
-$eventdata->timestart = $attempt->timestart;
-$eventdata->userid    = $attempt->userid;
-$eventdata->readerid  = $id;
-$eventdata->cmid      = $book;
-$eventdata->courseid  = $readerobj->get_courseid();
-events_trigger('reader_attempt_started', $eventdata);
+$event = (object)array(
+    'component' => 'mod_reader',
+    'attemptid' => $attempt->id,
+    'timestart' => $attempt->timestart,
+    'userid'    => $attempt->userid,
+    'readerid'  => $id,
+    'cmid'      => $book,
+    'courseid'  => $readerobj->get_courseid(),
+);
+events_trigger('reader_attempt_started', $event);
 
 //$transaction->allow_commit();
 
