@@ -3769,7 +3769,6 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
             if (! $username = $values['username']) {
                 continue; // empty username !!
             }
-            $username = 'admin';
             if (! $image = $values['image']) {
                 continue; // empty image !!
             }
