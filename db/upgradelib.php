@@ -905,12 +905,10 @@ function xmldb_reader_fix_wrong_quizids() {
 /**
  * xmldb_reader_fix_uniqueids
  *
- * @param xxx $course record
- * @param boolean $keepoldquizzes
- * @return boolean $rebuild_course_cache
+ * @param xxx $dbman (passed by reference)
  * @todo Finish documenting this function
  */
-function xmldb_reader_fix_uniqueids() {
+function xmldb_reader_fix_uniqueids(&$dbman) {
     global $CFG, $DB;
     require_once($CFG->dirroot.'/mod/reader/lib.php');
 
@@ -925,7 +923,7 @@ function xmldb_reader_fix_uniqueids() {
             if ($attempts = get_records('reader_attempts', array('uniqueid' => $duplicate->uniqueid), 'timestart')) {
                 array_shift($attempts); // remove earliest attempt
                 foreach ($attempts as $attempt) {
-                    xmldb_reader_fix_uniqueid($contexts, $quizzes, $attempt, $started_box);
+                    xmldb_reader_fix_uniqueid($dbman, $contexts, $quizzes, $attempt, $started_box);
                 }
             }
         }
@@ -933,13 +931,20 @@ function xmldb_reader_fix_uniqueids() {
 
     // extract reader_attempts with invalid unqueid
     // i.e. one that is not am id in the "question_usages" table
-    $select = 'ra.*, qu.id AS questionusageid';
-    $from   = '{reader_attempts} ra LEFT JOIN {question_usages} qu ON ra.uniqueid = qu.id';
-    $where  = 'ra.uniqueid < ? OR qu.id IS NULL';
-    $params = array(0);
+    if ($dbman->table_exists('question_usages')) { // Moodle >= 2.1
+        $select = 'ra.*, qu.id AS questionusageid';
+        $from   = '{reader_attempts} ra LEFT JOIN {question_usages} qu ON ra.uniqueid = qu.id';
+        $where  = 'ra.uniqueid < ? OR qu.id IS NULL';
+        $params = array(0);
+    } else if ($dbman->table_exists('question_attempts')) { // Moodle 2.0
+        $select = 'ra.*, qa.id AS questionusageid';
+        $from   = '{reader_attempts} ra LEFT JOIN {question_attempts} qa ON ra.uniqueid = qa.id';
+        $where  = 'ra.uniqueid < ? OR qa.id IS NULL';
+        $params = array(0);
+    }
     if ($attempts = $DB->get_records_sql("SELECT $select FROM $from WHERE $where", $params)) {
         foreach ($attempts as $attempt) {
-            xmldb_reader_fix_uniqueid($contexts, $quizzes, $attempt, $started_box);
+            xmldb_reader_fix_uniqueid($dbman, $contexts, $quizzes, $attempt, $started_box);
         }
     }
 
@@ -951,6 +956,7 @@ function xmldb_reader_fix_uniqueids() {
 /**
  * xmldb_reader_fix_uniqueid
  *
+ * @param xxx $dbman (passed by reference)
  * @param array $course (passed by reference) $readerid => $context record from "contexts" table
  * @param array $quizzes (passed by reference) $quizid => $quiz record from "quiz" table
  * @param object $attempt (passed by reference) record from "reader_attempts" table
@@ -959,7 +965,7 @@ function xmldb_reader_fix_uniqueids() {
  *               and update "reader_attempts" and "question_usages" tables in DB
  * @todo Finish documenting this function
  */
-function xmldb_reader_fix_uniqueid(&$contexts, &$quizzes, &$attempt, &$started_box) {
+function xmldb_reader_fix_uniqueid(&$dbman, &$contexts, &$quizzes, &$attempt, &$started_box) {
     global $DB;
 
     static $uniqueid = null;
@@ -974,50 +980,62 @@ function xmldb_reader_fix_uniqueid(&$contexts, &$quizzes, &$attempt, &$started_b
         }
     }
 
-    // cache readermoduleid
-    if ($readermoduleid===null) {
-        $readermoduleid = $DB->get_field('modules', 'id', array('name' => 'reader'));
-    }
+    $dbman = $DB->get_manager();
+    if ($dbman->table_exists('question_usages')) {
+        // Moodle >= 2.1
 
-    // fetch context and quiz records, if necessary
-    if (empty($contexts[$attempt->reader])) {
-        if ($cm = $DB->get_record('course_modules', array('module' => $readermoduleid, 'instance' => $attempt->reader))) {
-            $contexts[$attempt->reader] = reader_get_context(CONTEXT_MODULE, $cm->id);
-        } else {
-            // shouldn't happen - the reader has been deleted but the attempt remains ?
-            // let's see if any other attempts at this reader have a valid uniqueids
-            $select = 'ra.id, ra.uniqueid, qu.id AS questionusageid, qu.contextid, qu.preferredbehaviour';
-            $from   = '{reader_attempts} ra LEFT JOIN {question_usages} qu ON ra.uniqueid = qu.id';
-            $where  = 'ra.reader = ? AND qu.id IS NOT NULL';
-            $params = array($attempt->reader);
-            if ($records = $DB->get_records_sql("SELECT $select FROM $from WHERE $where", $params)) {
-                // we can get the contextid from the other "question_usage" records
-                $record = reset($records); // i.e. first record
-                $contexts[$attempt->reader] = (object)array('id' => $record->contextid);
+        // cache readermoduleid
+        if ($readermoduleid===null) {
+            $readermoduleid = $DB->get_field('modules', 'id', array('name' => 'reader'));
+        }
+
+        // fetch context, if necessary
+        if (empty($contexts[$attempt->reader])) {
+            if ($cm = $DB->get_record('course_modules', array('module' => $readermoduleid, 'instance' => $attempt->reader))) {
+                $contexts[$attempt->reader] = reader_get_context(CONTEXT_MODULE, $cm->id);
             } else {
-                // otherwise use the system context - should never happen !!
-                $contexts[$attempt->reader] = reader_get_context(CONTEXT_SYSTEM);
+                // shouldn't happen - the reader has been deleted but the attempt remains ?
+                // let's see if any other attempts at this reader have a valid uniqueids
+                $select = 'ra.id, ra.uniqueid, qu.id AS questionusageid, qu.contextid, qu.preferredbehaviour';
+                $from   = '{reader_attempts} ra LEFT JOIN {question_usages} qu ON ra.uniqueid = qu.id';
+                $where  = 'ra.reader = ? AND qu.id IS NOT NULL';
+                $params = array($attempt->reader);
+                if ($records = $DB->get_records_sql("SELECT $select FROM $from WHERE $where", $params)) {
+                    // we can get the contextid from the other "question_usage" records
+                    $record = reset($records); // i.e. first record
+                    $contexts[$attempt->reader] = (object)array('id' => $record->contextid);
+                } else {
+                    // otherwise use the system context - should never happen !!
+                    $contexts[$attempt->reader] = reader_get_context(CONTEXT_SYSTEM);
+                }
             }
         }
-    }
-    if (empty($quizzes[$attempt->quizid])) {
-        if (! $quizzes[$attempt->quizid] = $DB->get_record('quiz', array('id' => $attempt->quizid))) {
-            // shouldn't happen - but we can continue if we create a dummy quiz record ...
-            $quizzes[$attempt->quizid] = (object)array('id' => $attempt->quizid,
-                                                       'name' => "Invalid quizid = $attempt->quizid",
-                                                       'preferredbehaviour' => 'deferredfeedback');
+
+        // fetch quiz record, if necessary
+        if (empty($quizzes[$attempt->quizid])) {
+            if (! $quizzes[$attempt->quizid] = $DB->get_record('quiz', array('id' => $attempt->quizid))) {
+                // shouldn't happen - but we can continue if we create a dummy quiz record ...
+                $quizzes[$attempt->quizid] = (object)array('id' => $attempt->quizid,
+                                                           'name' => "Invalid quizid = $attempt->quizid",
+                                                           'preferredbehaviour' => 'deferredfeedback');
+            }
         }
+
+        // create question_usage record for this attempt
+        $question_usage = (object)array(
+            'contextid' => $contexts[$attempt->reader]->id,
+            'component' => 'mod_reader',
+            'preferredbehaviour' => $quizzes[$attempt->quizid]->preferredbehaviour
+        );
+        $newuniqueid = $DB->insert_record('question_usages', $question_usage);
+        $olduniqueid = $attempt->uniqueid;
+
+    } else if ($dbman->table_exists('question_attempts') && $dbman->field_exists('question_attempts', 'modulename')) {
+        // Moodle 2.0
+        $question_attempt = (object)array('modulename' => 'reader');
+        $newuniqueid = $DB->insert_record('question_attempts', $question_attempt);
+        $olduniqueid = $attempt->uniqueid;
     }
-
-    // create question_usage record for this attempt
-    $question_usage = (object)array(
-        'contextid' => $contexts[$attempt->reader]->id,
-        'component' => 'mod_reader',
-        'preferredbehaviour' => $quizzes[$attempt->quizid]->preferredbehaviour
-    );
-
-    $olduniqueid = $attempt->uniqueid;
-    $newuniqueid = $DB->insert_record('question_usages', $question_usage);
 
     // if any reader_attempt record is already using the $newuniqueid
     // then give it a unique but temporary negative $uniqueid,
@@ -1031,7 +1049,7 @@ function xmldb_reader_fix_uniqueid(&$contexts, &$quizzes, &$attempt, &$started_b
     // tell the user what just happened
     if ($started_box==false) {
         $started_box = true;
-        echo xmldb_reader_box_start('The following reader attempts had their uniqueids fixed:');
+        echo xmldb_reader_box_start('The following reader attempts had their uniqueids fixed');
     }
     echo html_writer::tag('li', $quizzes[$attempt->quizid]->name.": OLD: $olduniqueid => NEW: $newuniqueid");
 }
@@ -2039,7 +2057,7 @@ function xmldb_reader_fix_question_categories() {
             if ($msg) {
                 if ($started_box==false) {
                     $started_box = true;
-                    xmldb_reader_box_start('The following reader question categories were fixed:');
+                    xmldb_reader_box_start('The following reader question categories were fixed');
                 }
                 echo $msg;
             }
@@ -2198,12 +2216,12 @@ function xmldb_reader_fix_duplicate_questions(&$dbman) {
                 $select  = $DB->sql_concat('question', "'_'", 'answer').' AS question_answer, COUNT(*) AS countrecords';
                 $from    = '{question_answers}';
                 $where   = 'question = ?';
-                $params  = array($duplicate->questionid);
+                $params  = array($duplicate->$questionfield);
                 $groupby = 'question, answer HAVING COUNT(*) > 1';
 
                 if ($records = $DB->get_records_sql("SELECT $select FROM $from WHERE $where GROUP BY $groupby", $params)) {
 
-                    $qtype = $DB->get_field('question', 'qtype', array('id' => $duplicate->questionid));
+                    $qtype = $DB->get_field('question', 'qtype', array('id' => $duplicate->$questionfield));
                     foreach ($records as $record) {
 
                         $strpos = strpos($record->question_answer, '_');

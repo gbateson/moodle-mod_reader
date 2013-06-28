@@ -120,7 +120,7 @@ $publishertitleid       = optional_param('publishertitleid', NULL, PARAM_CLEAN);
 $checkattempt           = optional_param('checkattempt', NULL, PARAM_CLEAN);
 $checkattemptvalue      = optional_param('checkattemptvalue', 0, PARAM_INT);
 $book                   = optional_param('book', 0, PARAM_INT);
-$noquizuserid           = optional_param('noquizuserid', NULL, PARAM_CLEAN);
+$noquizuserid           = reader_optional_param_array('noquizuserid', NULL, PARAM_CLEAN);
 $withoutdayfilter       = optional_param('withoutdayfilter', NULL, PARAM_CLEAN);
 $numberofsections       = optional_param('numberofsections', NULL, PARAM_CLEAN);
 $ct                     = optional_param('ct', NULL, PARAM_CLEAN);
@@ -903,32 +903,32 @@ if (has_capability('mod/reader:manage', $contextmodule) && $act == 'forcedtimede
 }
 
 if (has_capability('mod/reader:manage', $contextmodule) && $book && is_array($noquizuserid)) {
-    foreach ($noquizuserid as $key => $value) {
-      if ($value != 0) {
-        $lastattemptid = $DB->get_field_sql('SELECT uniqueid FROM {reader_attempts} ORDER BY uniqueid DESC');
-        $data               = new object;
-        $data->uniqueid     = $lastattemptid + 1;
-        $data->reader       = $reader->id;
-        $data->userid       = $value;
-        $data->attempt      = 1;
-        $data->sumgrades    = 1;
-        $data->passed       = 'true';
-        $data->percentgrade      = 100;
-        $data->timestart    = time();
-        $data->timefinish   = time();
-        $data->timemodified = time();
-        $data->layout       = '0,';
-        $data->preview      = 1;
-        $data->quizid       = $book;
-        $data->bookrating   = 1;
-        $data->ip           = $_SERVER['REMOTE_ADDR'];
-
-        $DB->insert_record('reader_attempts', $data);
-      }
+    if (is_int($book) && $book > 0) {
+        $quizid = $DB->get_field('reader_books', 'quizid', array('id' => $book));
+        foreach ($noquizuserid as $key => $value) {
+            if ($value) {
+                $readerattempt = (object)array(
+                    'uniqueid'     => reader_get_new_uniqueid($contextmodule->id, $quizid),
+                    'reader'       => $reader->id,
+                    'userid'       => $value,
+                    'attempt'      => 1,
+                    'sumgrades'    => 1,
+                    'passed'       => 'true',
+                    'percentgrade' => 100,
+                    'timestart'    => time(),
+                    'timefinish'   => time(),
+                    'timemodified' => time(),
+                    'layout'       => '0,',
+                    'preview'      => 1,
+                    'quizid'       => $book->quizid,
+                    'bookrating'   => 1,
+                    'ip'           => $_SERVER['REMOTE_ADDR'],
+                );
+                $readerattempt->id = $DB->insert_record('reader_attempts', $readerattempt);
+            }
+        }
     }
-
     $noquizreport = 'Done';
-
     unset($book);
 }
 
@@ -3680,7 +3680,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
         }
 
         echo $users[$userid]->username.','.
-             $readerattempt->uniqueid.','.
+             $readerattempt->uniqueid.','. // this will have no meaning on the import site ?!
              $readerattempt->attempt.','.
              $readerattempt->sumgrades.','.
              $readerattempt->percentgrade.','.
@@ -3726,13 +3726,6 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
 
         if ($lines) {
             echo "File was uploaded <br />\n";
-        }
-
-        // get the next unique id
-        if ($uniqueid = $DB->get_field_sql('SELECT MAX(uniqueid) FROM {reader_attempts}')) {
-            $uniqueid ++;
-        } else {
-            $uniqueid = 1;
         }
 
         $userid = 0;
@@ -3787,14 +3780,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
             }
 
             if (empty($books[$image])) {
-                if ($book = $DB->get_record('reader_books', array('image' => $image))) {
-                    $book->quiz = $DB->get_record('quiz', array('id' => $book->quizid));
-                    if (empty($book->quiz)) {
-                        // shouldn't happen - but we can continue with a dummy quiz record ...
-                        $book->quiz = (object)array('preferredbehaviour' => 'deferredfeedback');
-                    }
-                    $books[$image] = $book;
-                }
+                $books[$image] = $DB->get_record('reader_books', array('image' => $image));
             }
             if (empty($books[$image])) {
                 $books[$image] = (object)array('id' => 0, 'quizid' => 0); // no such book ?!
@@ -3807,7 +3793,6 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
 
             $sameuser = ($userid && $userid==$users[$username]->id);
             $samebook = ($sameuser && $bookid && $bookid==$books[$image]->id);
-
 
             if ($samebook==false) {
 
@@ -3846,15 +3831,9 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
             $timefinish = userdate($values['timefinish'])." ($strpassed)";
             echo html_writer::tag('span', $timefinish, array('class' => 'importattempttime')).' ';
 
-            $question_usage = (object)array(
-                'contextid' => $contextmodule->id,
-                'component' => 'mod_reader',
-                'preferredbehaviour' => $books[$image]->quiz->preferredbehaviour
-            );
-
             $readerattempt = (object)array(
                 // the "uniqueid" field is in fact an "id" from the "question_usages" table
-                'uniqueid'      => $DB->insert_record('question_usages', $question_usage),
+                'uniqueid'      => reader_get_new_uniqueid($contextmodule->id, $books[$image]->quizid),
                 'reader'        => $reader->id,
                 'userid'        => $users[$username]->id,
                 'attempt'       => $values['attempt'],

@@ -3796,3 +3796,55 @@ function reader_format_users_fullname(&$users) {
     }
 }
 
+/**
+ * reader_get_new_uniqueid
+ *
+ * @param integer $contextid
+ * @param integer $quizid
+ * @param string $defaultbehavior (optional, default='deferredfeedback')
+ * @param string $modulename (optional, default='reader')
+ * @return integer (unique) id from "question_usages" or "question_attempts"
+ * @todo Finish documenting this function
+ */
+function reader_get_new_uniqueid($contextid, $quizid, $defaultbehavior='deferredfeedback', $modulename='reader') {
+    global $DB;
+    static $tablename = null;
+
+    if ($tablename===null) {
+        $dbman = $DB->get_manager();
+        switch (true) {
+
+            // Moodle >= 2.1
+            case $dbman->table_exists('question_usages'):
+                $tablename = 'question_usages';
+                break;
+
+            // Moodle == 2.0
+            case $dbman->table_exists('question_attempts') && $dbman->field_exists('question_attempts', 'modulename'):
+                $tablename = 'question_attempts';
+                break;
+
+            default: $tablename = ''; // shouldn't happen !!
+        }
+    }
+
+    // Moodle >= 2.1
+    if ($tablename=='question_usages') {
+        if (! $behaviour = $DB->get_field('quiz', 'preferredbehaviour', array('id' => $quizid))) {
+            $behaviour = $defaultbehavior;
+
+        }
+        $record = (object)array('contextid' => $contextid,
+                                'component' => 'mod_'.$modulename,
+                                'preferredbehaviour' => $behaviour);
+        return $DB->insert_record($tablename, $record);
+    }
+
+    // Moodle == 2.0
+    if ($record=='question_attempts') {
+        $question_attempt = (object)array('modulename' => $modulename);
+        return $DB->insert_record($tablename, $record);
+    }
+
+    return 0; // shoudn't happen !!
+}

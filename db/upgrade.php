@@ -506,7 +506,7 @@ function xmldb_reader_upgrade($oldversion) {
 
     $newversion = 2013062600;
     if ($result && $oldversion < $newversion) {
-        xmldb_reader_fix_uniqueids();
+        xmldb_reader_fix_uniqueids($dbman);
         //xmldb_reader_fix_nonunique_quizids();
         upgrade_mod_savepoint(true, "$newversion", 'reader');
     }
