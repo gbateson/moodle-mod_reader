@@ -2133,9 +2133,10 @@ function xmldb_reader_fix_duplicate_attempts() {
 /**
  * xmldb_reader_fix_duplicate_questions
  *
+ * @param xxx $dbman (passed by reference)
  * @todo Finish documenting this function
  */
-function xmldb_reader_fix_duplicate_questions() {
+function xmldb_reader_fix_duplicate_questions(&$dbman) {
     global $CFG, $DB, $OUTPUT;
 
     $table = '';
@@ -2144,17 +2145,32 @@ function xmldb_reader_fix_duplicate_questions() {
     $questiontables = array('match', 'multianswer', 'multichoice', 'ordering', 'multianswer', 'shortanswer', 'truefalse');
     foreach ($questiontables as $questiontable) {
 
-        $questiontable = 'question_'.$questiontable;
+        switch (true) {
+            // Moodle >= 2.5
+            case $dbman->table_exists('qtype_'.$questiontable.'_options'):
+                $questiontable = 'qtype_'.$questiontable.'_options';
+                $questionfield = 'questionid';
+                break;
 
-        $select  = 'question AS questionid, COUNT(*) AS countrecords';
+            // Moodle <= 2.4
+            case $dbman->table_exists('question_'.$questiontable):
+                $questiontable = 'question_'.$questiontable;
+                $questionfield = 'question';
+                break;
+
+            // table does not exist - shouldn't happen !!
+            default: continue;
+        }
+
+        $select  = $questionfield.', COUNT(*) AS countrecords';
         $from    = '{'.$questiontable.'}';
-        $groupby = 'question HAVING COUNT(*) > 1';
+        $groupby = $questionfield.' HAVING COUNT(*) > 1';
 
         if ($duplicates = $DB->get_records_sql("SELECT $select FROM $from GROUP BY $groupby ")) {
             foreach ($duplicates as $duplicate) {
 
                 // get duplicate records
-                if ($records = $DB->get_records($questiontable, array('question' => $duplicate->questionid), 'id,question')) {
+                if ($records = $DB->get_records($questiontable, array($questionfield => $duplicate->$questionfield), 'id,'.$questionfield)) {
 
                     if ($started_box==false) {
                         $started_box = true;
