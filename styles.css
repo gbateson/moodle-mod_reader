@@ -27,20 +27,21 @@
 
 #page-mod-reader-view .readersearchform tr.advanced { display: none; }
 
-#page-mod-reader-dlquizzesnoq ul.remotesites,
-#page-mod-reader-dlquizzesnoq ul.publishers,
-#page-mod-reader-dlquizzesnoq ul.levels,
-#page-mod-reader-dlquizzesnoq ul.items { list-style-type: none; margin: 6px 0px; padding: 6px; max-width: 600px; }
-#page-mod-reader-dlquizzesnoq ul.remotesites li,
-#page-mod-reader-dlquizzesnoq ul.publishers li,
-#page-mod-reader-dlquizzesnoq ul.levels li,
-#page-mod-reader-dlquizzesnoq ul.items li { margin-left: 6px; padding-left: 6px; }
-#page-mod-reader-dlquizzesnoq span.publisher { font-weight: bold; }
-#page-mod-reader-dlquizzesnoq span.itemcount { font-style: italic; font-size: 0.9em; }
+#page-mod-reader-admin-download ul.remotesites,
+#page-mod-reader-admin-download ul.publishers,
+#page-mod-reader-admin-download ul.levels,
+#page-mod-reader-admin-download ul.items { list-style-type: none; margin: 6px 0px; padding: 6px; max-width: 600px; }
+#page-mod-reader-admin-download ul.remotesites li,
+#page-mod-reader-admin-download ul.publishers li,
+#page-mod-reader-admin-download ul.levels li,
+#page-mod-reader-admin-download ul.items li { margin-left: 6px; padding-left: 6px; }
+#page-mod-reader-admin-download span.publishername { font-weight: bold; }
+#page-mod-reader-admin-download span.itemcount { font-style: italic; font-size: 0.9em; }
+#page-mod-reader-admin-download span.levelname { font-weight: bold; }
 
-#page-mod-reader-dlquizzesnoq ul.remotesites { background-color: #eeeeff; border: 2px solid #ccccff; }
-#page-mod-reader-dlquizzesnoq ul.publishers { background-color: #eeffee; border: 2px solid #ccffcc; }
-#page-mod-reader-dlquizzesnoq ul.levels { background-color: #ffeeee; border: 2px solid #ffcccc; }
-#page-mod-reader-dlquizzesnoq ul.items { background-color: #eeeeee; border: 2px solid #cccccc; }
+#page-mod-reader-admin-download ul.remotesites { background-color: #eeeeff; border: 2px solid #ddddff; }
+#page-mod-reader-admin-download ul.publishers { background-color: #eeffee; border: 2px solid #ddffdd; }
+#page-mod-reader-admin-download ul.levels { background-color: #ffeeee; border: 2px solid #ffdddd; }
+#page-mod-reader-admin-download ul.items { background-color: #eeeeee; border: 2px solid #dddddd; }
 
-#page-mod-reader-dlquizzesnoq span.itemname span.matchedtext { font-weight: bold; font-size: 1.2em; text-decoration: underline; background-color: #ffffcc; }
+#page-mod-reader-admin-download span.itemname span.matchedtext { font-weight: bold; font-size: 1.2em; text-decoration: underline; background-color: #ffffcc; }

@@ -183,6 +183,7 @@ if ($selecteditemids) {
             }
             $noquiz->$field = $value;
         }
+        $noquiz->quizid = 0; // quizid must be 0
 
         // initialize array to hold messages
         $msg = array();
@@ -240,8 +241,9 @@ if ($output) {
     $output = '';
 }
 
-// add form containing list of selectcable books
+// add form containing list of selectable books
 $output = '';
+$output .= reader_download_form_styles();
 $output .= reader_check_boxes_js();
 $output .= reader_showhide_start_js();
 $output .= $OUTPUT->box_start('generalbox', 'notice');
@@ -273,53 +275,90 @@ $onclick = 'clear_search_results(); showhide_lists(1, "publishers"); showhide_li
 $output .= html_writer::tag('a', get_string('levels', 'reader'), array('onclick' => $onclick));
 $output .= ' / ';
 
-// books
+// Books
 $onclick = 'clear_search_results(); showhide_lists(1, "publishers"); showhide_lists(1, "levels"); showhide_lists(1, "items"); return false;';
 $output .= html_writer::tag('a', get_string('books', 'reader'), array('onclick' => $onclick));
 $output .= ' / ';
 
-// downloadable
+// Downloadable
 $onclick = 'clear_search_results(); showhide_lists(1, "publishers", true); showhide_lists(1, "levels", true); showhide_lists(1, "items", true); return false;';
 $output .= html_writer::tag('a', get_string('downloadable', 'reader'), array('onclick' => $onclick));
 
 $output .= html_writer::end_tag('p');
 
-$output .= html_writer::start_tag('ul', array('class' => 'remotesites'));
-$output .= html_writer::start_tag('li', array('class' => 'remotesite'));
-$output .= reader_checkbox('remotesites[]', 0, $readercfg->serverlink, 'remotesites', $available->count, $available->newcount);
-$output .= html_writer::start_tag('ul', array('class' => 'publishers'));
+// one day, we might have multiple remote sites to download from
+// but for now there is just one, which we set up here ...
+$started_remotesites = false;
+$remotesitename = 'MoodleReader (.net) Quiz Bank'; // $readercfg->serverlink;
+if ($remotesitename=='') {
+    $displayremotesitename = false;
+} else {
+    $displayremotesitename = true;
+}
 
+// loop through available items to create selectable list
 $i = 0;
+$started_publishers = false;
 foreach ($available->items as $publishername => $levels) {
     $i++;
 
-    if ($publishername) {
-        $output .= html_writer::start_tag('li', array('class' => 'publisher'));
-        $output .= reader_checkbox('publishers[]', $i, $publishername, 'publisher', $levels->count, $levels->newcount);
-        $output .= html_writer::start_tag('ul', array('class' => 'levels'));
+    if ($publishername=='') {
+        $displaypublishername = false;
+    } else {
+        $displaypublishername = true;
     }
 
     $ii = 0;
+    $started_levels = false;
     foreach ($levels->items as $levelname => $items) {
         $ii++;
 
-        if ($levelname=='-' || $levelname=='--') {
-            $displaylevel = false;
+        if ($levelname=='' || $levelname=='-' || $levelname=='--') {
+            $displaylevelname = false;
         } else {
-            $displaylevel = true;
-        }
-
-        if ($displaylevel) {
-            $output .= html_writer::start_tag('li', array('class' => 'level'));
-            $output .= reader_checkbox('levels[]', $i.'_'.$ii, $levelname, 'publisher', $items->count, $items->newcount);
-            $output .= html_writer::start_tag('ul', array('class' => 'items'));
+            $displaylevelname = true;
         }
 
         $iii = 0;
+        $started_items = false;
         foreach ($items->items as $itemname => $itemid) {
             $iii++;
 
             if ($itemname) {
+                if ($started_remotesites==false) {
+                    $started_remotesites = true;
+                    if ($displayremotesitename) {
+                        $output .= html_writer::start_tag('ul', array('class' => 'remotesites'));
+                    }
+                }
+                if ($started_publishers==false) {
+                    $started_publishers = true;
+                    if ($displayremotesitename) {
+                        $output .= html_writer::start_tag('li', array('class' => 'remotesite'));
+                        $output .= reader_checkbox('remotesites[]', 0, $remotesitename, 'remotesites', $available->count, $available->newcount);
+                    }
+                    if ($displaypublishername) {
+                        $output .= html_writer::start_tag('ul', array('class' => 'publishers'));
+                    }
+                }
+                if ($started_levels==false) {
+                    $started_levels = true;
+                    if ($displaypublishername) {
+                        $output .= html_writer::start_tag('li', array('class' => 'publisher'));
+                        $output .= reader_checkbox('publishers[]', $i, $publishername, 'publishername', $levels->count, $levels->newcount);
+                    }
+                    if ($displaylevelname) {
+                        $output .= html_writer::start_tag('ul', array('class' => 'levels'));
+                    }
+                }
+                if ($started_items==false) {
+                    $started_items = true;
+                    if ($displaylevelname) {
+                        $output .= html_writer::start_tag('li', array('class' => 'level'));
+                        $output .= reader_checkbox('levels[]', $i.'_'.$ii, $levelname, 'levelname', $items->count, $items->newcount);
+                    }
+                    $output .= html_writer::start_tag('ul', array('class' => 'items'));
+                }
                 $output .= html_writer::start_tag('li', array('class' => 'item'));
                 if (empty($exist->items[$publishername]->items[$levelname]->items[$itemname])) {
                     $output .= reader_checkbox('itemids[]', $itemid, $itemname, 'itemname', 0, 1);
@@ -331,22 +370,23 @@ foreach ($available->items as $publishername => $levels) {
                 $output .= html_writer::end_tag('li'); // finish item
             }
         }
-
-        if ($displaylevel) {
+        if ($started_items) {
             $output .= html_writer::end_tag('ul'); // finish items
             $output .= html_writer::end_tag('li'); // finish level
         }
     }
-
-    if ($publishername) {
+    if ($started_levels) {
         $output .= html_writer::end_tag('ul'); // finish levels
         $output .= html_writer::end_tag('li'); // finish publisher
     }
 }
-$output .= html_writer::end_tag('ul'); // finish publishers
-
-$output .= html_writer::end_tag('li'); // finish remotesite
-$output .= html_writer::end_tag('ul'); // finish remotesites
+if ($started_publishers) {
+    $output .= html_writer::end_tag('ul'); // finish publishers
+    $output .= html_writer::end_tag('li'); // finish remotesite
+}
+if ($started_remotesites) {
+    $output .= html_writer::end_tag('ul'); // finish remotesites
+}
 
 $output .= html_writer::empty_tag('input', array('type' => 'submit', 'value' => get_string('download')));
 
@@ -358,6 +398,39 @@ $output .= reader_showhide_end_js(); // hide the lists
 echo $output;
 
 echo $OUTPUT->footer();
+
+
+function reader_download_form_styles() {
+    static $done = false;
+    $css = '';
+    if ($done==false) {
+        $done = true;
+        $css .= '<style type="text/css">'."\n";
+
+        $css .= "#page-mod-reader-dlquizzesnoq ul.remotesites,\n";
+        $css .= "#page-mod-reader-dlquizzesnoq ul.publishers,\n";
+        $css .= "#page-mod-reader-dlquizzesnoq ul.levels,\n";
+        $css .= "#page-mod-reader-dlquizzesnoq ul.items { list-style-type: none; margin: 6px 0px; padding: 6px; max-width: 600px; }\n";
+        $css .= "#page-mod-reader-dlquizzesnoq ul.remotesites li,\n";
+        $css .= "#page-mod-reader-dlquizzesnoq ul.publishers li,\n";
+        $css .= "#page-mod-reader-dlquizzesnoq ul.levels li,\n";
+        $css .= "#page-mod-reader-dlquizzesnoq ul.items li { margin-left: 6px; padding-left: 6px; }\n";
+
+        $css .= "#page-mod-reader-dlquizzesnoq span.publishername { font-weight: bold; }\n";
+        $css .= "#page-mod-reader-dlquizzesnoq span.itemcount { font-style: italic; font-size: 0.9em; }\n";
+        $css .= "#page-mod-reader-dlquizzesnoq span.levelname { font-weight: bold; }\n";
+
+        $css .= "#page-mod-reader-dlquizzesnoq ul.remotesites { background-color: #eeeeff; border: 2px solid #ccccff; }\n";
+        $css .= "#page-mod-reader-dlquizzesnoq ul.publishers { background-color: #eeffee; border: 2px solid #ccffcc; }\n";
+        $css .= "#page-mod-reader-dlquizzesnoq ul.levels { background-color: #ffeeee; border: 2px solid #ffcccc; }\n";
+        $css .= "#page-mod-reader-dlquizzesnoq ul.items { background-color: #eeeeee; border: 2px solid #cccccc; }\n";
+
+        $css .= "#page-mod-reader-dlquizzesnoq span.itemname span.matchedtext { font-weight: bold; font-size: 1.2em; text-decoration: underline; background-color: #ffffcc; }\n";
+
+        $css .= '</style>'."\n";
+    }
+    return $css;
+}
 
 /**
  * reader_check_boxes_js
@@ -405,13 +478,16 @@ function reader_showhide_start_js() {
         $js .= "//<![CDATA[\n";
 
         $js .= "function css_class_attribute() {\n";
-        $js .= "    var m = navigator.userAgent.match(new RegExp('MSIE (\\d+)'));\n";
-        $js .= "    if (m && m[1]<=7) {\n";
-        $js .= "        // IE7 and earlier\n";
-        $js .= "        return 'className';\n";
-        $js .= "    } else {\n";
-        $js .= "        return 'class';\n";
+        $js .= "    if (window.cssClassAttribute==null) {\n";
+        $js .= "        var m = navigator.userAgent.match(new RegExp('MSIE (\\d+)'));\n";
+        $js .= "        if (m && m[1]<=7) {\n";
+        $js .= "            // IE7 and earlier\n";
+        $js .= "            window.cssClassAttribute = 'className';\n";
+        $js .= "        } else {\n";
+        $js .= "            window.cssClassAttribute = 'class';\n";
+        $js .= "        }\n";
         $js .= "    }\n";
+        $js .= "    return window.cssClassAttribute;\n";
         $js .= "}\n";
 
         $js .= "function remove_child_nodes(obj) {\n";
@@ -430,18 +506,18 @@ function reader_showhide_start_js() {
         $js .= "    }\n";
         $js .= "}\n";
 
-        $js .= "function match_classname(obj, targetClassName) {\n";
+        $js .= "function match_classname(obj, targetClassNames) {\n";
         $js .= "    if (obj==null || obj.getAttribute==null) {\n";
         $js .= "        return false;\n";
         $js .= "    }\n";
         $js .= "    var myClassName = obj.getAttribute(css_class_attribute());\n";
         $js .= "    if (myClassName) {\n";
-        $js .= "        if (typeof(targetClassName)=='string') {\n";
-        $js .= "           targetClassName = new Array(targetClassName);\n";
+        $js .= "        if (typeof(targetClassNames)=='string') {\n";
+        $js .= "           targetClassNames = new Array(targetClassNames);\n";
         $js .= "        }\n";
-        $js .= "        var i_max = targetClassName.length;\n";
+        $js .= "        var i_max = targetClassNames.length;\n";
         $js .= "        for (var i=0; i<i_max; i++) {\n";
-        $js .= "            if (myClassName.indexOf(targetClassName[i]) >= 0) {\n";
+        $js .= "            if (myClassName.indexOf(targetClassNames[i]) >= 0) {\n";
         $js .= "                return true;\n";
         $js .= "            }\n";
         $js .= "        }\n";
@@ -449,16 +525,16 @@ function reader_showhide_start_js() {
         $js .= "    return false;\n";
         $js .= "}\n";
 
-        $js .= "function showhide_list(img, force, targetclass) {\n";
+        $js .= "function showhide_list(img, force, targetClassName) {\n";
         $js .= "    if (typeof(force)=='undefined') {\n";
         $js .= "       force = 0;\n"; // -1=hide, 0=toggle, 1=show
         $js .= "    }\n";
-        $js .= "    if (typeof(targetclass)=='undefined') {\n";
-        $js .= "       targetclass = '';\n";
+        $js .= "    if (typeof(targetClassName)=='undefined') {\n";
+        $js .= "       targetClassName = '';\n";
         $js .= "    }\n";
         $js .= "    var obj = img.nextSibling;\n";
-        $js .= "    var cssclass = obj.getAttribute(css_class_attribute());\n";
-        $js .= "    if (obj && (targetclass=='' || (cssclass && cssclass.match(new RegExp(targetclass))))) {\n";
+        $js .= "    var myClassName = obj.getAttribute(css_class_attribute());\n";
+        $js .= "    if (obj && (targetClassName=='' || (myClassName && myClassName.match(new RegExp(targetClassName))))) {\n";
         $js .= "        if (force==1 || (force==0 && obj.style.display=='none')) {\n";
         $js .= "            obj.style.display = '';\n";
         $js .= "            var pix = 'minus';\n";
@@ -471,37 +547,37 @@ function reader_showhide_start_js() {
         $js .= "    }\n";
         $js .= "}\n";
 
-        $js .= "function showhide_lists(force, targetclass, requirecheckbox) {\n";
+        $js .= "function showhide_lists(force, targetClassName, requireCheckbox) {\n";
 
         $js .= "    switch (force) {\n";
-        $js .= "        case -1: var targetsrc = 'minus';        break;\n"; // hide
-        $js .= "        case  0: var targetsrc = '(minus|plus)'; break;\n"; // toggle
-        $js .= "        case  1: var targetsrc = 'plus';         break;\n"; // show
+        $js .= "        case -1: var targetImgName = 'minus';        break;\n"; // hide
+        $js .= "        case  0: var targetImgName = '(minus|plus)'; break;\n"; // toggle
+        $js .= "        case  1: var targetImgName = 'plus';         break;\n"; // show
         $js .= "        default: return false;\n";
         $js .= "    }\n";
 
-        $js .= "    var targetsrc = new RegExp('switch_'+targetsrc);\n";
+        $js .= "    var targetImgName = new RegExp('switch_'+targetImgName);\n";
         $js .= "    var img = document.getElementsByTagName('img');\n";
         $js .= "    if (img) {\n";
 
         $js .= "        var i_max = img.length;\n";
         $js .= "        for (var i=0; i<i_max; i++) {\n";
 
-        $js .= "            if (typeof(requirecheckbox)=='undefined') {\n";
+        $js .= "            if (typeof(requireCheckbox)=='undefined') {\n";
         $js .= "                var ok = true;\n";
         $js .= "            } else {\n";
         $js .= "                var obj = img[i].parentNode.firstChild;\n";
         $js .= "                while (obj && obj.nodeType != 1) {\n";
         $js .= "                    obj = obj.nextSibling;\n";
         $js .= "                }\n";
-        $js .= "                requirecheckbox = (requirecheckbox ? true : false);\n"; // convert to boolean
+        $js .= "                requireCheckbox = (requireCheckbox ? true : false);\n"; // convert to boolean
         $js .= "                var hascheckbox = (obj && obj.nodeType==1 && obj.tagName.toUpperCase()=='INPUT');\n";
-        $js .= "                var ok = (requirecheckbox==hascheckbox);\n";
+        $js .= "                var ok = (requireCheckbox==hascheckbox);\n";
         $js .= "                obj = null;\n";
         $js .= "            }\n";
 
-        $js .= "            if (ok && img[i].src && img[i].src.match(targetsrc)) {\n";
-        $js .= "                showhide_list(img[i], force, targetclass);\n";
+        $js .= "            if (ok && img[i].src && img[i].src.match(targetImgName)) {\n";
+        $js .= "                showhide_list(img[i], force, targetClassName);\n";
         $js .= "            }\n";
         $js .= "        }\n";
         $js .= "    }\n";
@@ -510,15 +586,15 @@ function reader_showhide_start_js() {
         $js .= "function clear_search_results() {\n";
         $js .= "    showhide_lists(-1);\n";
 
-        $js .= "    var whitespace = new RegExp('  +', 'g');\n";
-        $js .= "    var htmltags = new RegExp('<[^>]*>', 'g');\n";
+        $js .= "    var whiteSpace = new RegExp('  +', 'g');\n";
+        $js .= "    var htmlTags = new RegExp('<[^>]*>', 'g');\n";
 
         $js .= "    var obj = document.getElementsByTagName('SPAN');\n";
         $js .= "    if (obj) {\n";
         $js .= "        var i_max = obj.length;\n";
         $js .= "        for (var i=0; i<i_max; i++) {\n";
         $js .= "            if (match_classname(obj[i], 'itemname')) {\n";
-        $js .= "                var txt = obj[i].innerHTML.replace(htmltags, '').replace(whitespace, ' ');\n";
+        $js .= "                var txt = obj[i].innerHTML.replace(htmlTags, '').replace(whiteSpace, ' ');\n";
         $js .= "                if (txt != obj[i].innerHTML) {\n";
         $js .= "                    remove_child_nodes(obj[i]);\n";
         $js .= "                    obj[i].appendChild(document.createTextNode(txt));\n";
