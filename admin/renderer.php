@@ -1,9 +1,53 @@
 <?php
 
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
+/**
+ * mod/reader/admin/renderer.php
+ *
+ * @package    mod
+ * @subpackage reader
+ * @copyright  2013 Gordon Bateson (gordon.bateson@gmail.com)
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @since      Moodle 2.0
+ */
+
+/** Prevent direct access to this script */
+defined('MOODLE_INTERNAL') || die;
+
+/** Include required files */
 require_once($CFG->dirroot.'/mod/reader/renderer.php');
 
+/**
+ * mod_reader_download_renderer
+ *
+ * @copyright  2013 Gordon Bateson (gordon.bateson@gmail.com)
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @since      Moodle 2.0
+ * @package    mod
+ * @subpackage reader
+ */
 class mod_reader_download_renderer extends mod_reader_renderer {
 
+    /**
+     * form_js_start
+     *
+     * @return xxx
+     * @todo Finish documenting this function
+     */
     public function form_js_start() {
         $output = '';
         $output .= $this->check_boxes_js();
@@ -11,6 +55,12 @@ class mod_reader_download_renderer extends mod_reader_renderer {
         return $output;
     }
 
+    /**
+     * check_boxes_js
+     *
+     * @return xxx
+     * @todo Finish documenting this function
+     */
     public function check_boxes_js() {
         $output = '';
 
@@ -38,6 +88,12 @@ class mod_reader_download_renderer extends mod_reader_renderer {
         return $output;
     }
 
+    /**
+     * showhide_js_start
+     *
+     * @return xxx
+     * @todo Finish documenting this function
+     */
     public function showhide_js_start() {
         $output = '';
 
@@ -239,12 +295,24 @@ class mod_reader_download_renderer extends mod_reader_renderer {
         return $output;
     }
 
+    /**
+     * form_js_end
+     *
+     * @return xxx
+     * @todo Finish documenting this function
+     */
     public function form_js_end() {
         $output = '';
         $output .= $this->showhide_js_end();
         return $output;
     }
 
+    /**
+     * showhide_js_end
+     *
+     * @return xxx
+     * @todo Finish documenting this function
+     */
     public function showhide_js_end() {
         $output = '';
         $output .= '<script type="text/javascript">'."\n";
@@ -255,6 +323,13 @@ class mod_reader_download_renderer extends mod_reader_renderer {
         return $output;
     }
 
+    /**
+     * form_start
+     *
+     * @param xxx $id
+     * @return xxx
+     * @todo Finish documenting this function
+     */
     public function form_start($id) {
         $output = '';
         $output .= $this->form_js_start();
@@ -265,6 +340,12 @@ class mod_reader_download_renderer extends mod_reader_renderer {
         return $output;
     }
 
+    /**
+     * search_box
+     *
+     * @return xxx
+     * @todo Finish documenting this function
+     */
     public function search_box() {
         $output = '';
         $output .= html_writer::start_tag('p');
@@ -275,6 +356,12 @@ class mod_reader_download_renderer extends mod_reader_renderer {
         return $output;
     }
 
+    /**
+     * showhide_menu
+     *
+     * @return xxx
+     * @todo Finish documenting this function
+     */
     public function showhide_menu() {
         $output = '';
         $output .= html_writer::start_tag('p');
@@ -303,6 +390,12 @@ class mod_reader_download_renderer extends mod_reader_renderer {
         return $output;
     }
 
+    /**
+     * form_end
+     *
+     * @return xxx
+     * @todo Finish documenting this function
+     */
     public function form_end() {
         $output = '';
         $output .= html_writer::empty_tag('input', array('type' => 'submit', 'value' => get_string('download')));
@@ -312,6 +405,13 @@ class mod_reader_download_renderer extends mod_reader_renderer {
         return $output;
     }
 
+    /**
+     * available_lists
+     *
+     * @param xxx $downloader
+     * @return xxx
+     * @todo Finish documenting this function
+     */
     public function available_lists($downloader) {
         $output = '';
         foreach ($downloader->remotesites as $r => $remotesite) {
@@ -320,6 +420,16 @@ class mod_reader_download_renderer extends mod_reader_renderer {
         return $output;
     }
 
+    /**
+     * available_list
+     *
+     * @uses $OUTPUT
+     * @param xxx $remotesite
+     * @param xxx $available
+     * @param xxx $downloaded
+     * @return xxx
+     * @todo Finish documenting this function
+     */
     public function available_list($remotesite, $available, $downloaded) {
         global $OUTPUT;
         $output = '';
@@ -327,9 +437,9 @@ class mod_reader_download_renderer extends mod_reader_renderer {
         $started_remotesites = false;
         $remotesitename = 'MoodleReader (.net) Quiz Bank'; // $readercfg->serverlink;
         if ($remotesitename=='') {
-            $displayremotesitename = false;
+            $showremotesitename = false;
         } else {
-            $displayremotesitename = true;
+            $showremotesitename = true;
         }
 
         // loop through available items to create selectable list
@@ -339,9 +449,9 @@ class mod_reader_download_renderer extends mod_reader_renderer {
             $i++;
 
             if (count($available->items)==1 && $publishername=='') {
-                $displaypublishername = false;
+                $showpublishername = false;
             } else {
-                $displaypublishername = true;
+                $showpublishername = true;
             }
 
             $ii = 0;
@@ -350,9 +460,9 @@ class mod_reader_download_renderer extends mod_reader_renderer {
                 $ii++;
 
                 if (count($levels->items)==1 && ($levelname=='' || $levelname=='-' || $levelname=='--' || $levelname=='No Level')) {
-                    $displaylevelname = false;
+                    $showlevelname = false;
                 } else {
-                    $displaylevelname = true;
+                    $showlevelname = true;
                 }
 
                 $iii = 0;
@@ -361,40 +471,45 @@ class mod_reader_download_renderer extends mod_reader_renderer {
                     $iii++;
 
                     if ($itemname) {
+
                         if ($started_remotesites==false) {
                             $started_remotesites = true;
-                            if ($displayremotesitename) {
+                            if ($showremotesitename) {
                                 $output .= html_writer::start_tag('ul', array('class' => 'remotesites'));
                             }
                         }
+
                         if ($started_publishers==false) {
                             $started_publishers = true;
-                            if ($displayremotesitename) {
+                            if ($showremotesitename) {
                                 $output .= html_writer::start_tag('li', array('class' => 'remotesite'));
                                 $output .= $this->available_list_name('remotesites[]', 0, $remotesitename, 'remotesites', $available->count, $available->newcount);
                             }
-                            if ($displaypublishername) {
+                            if ($showpublishername) {
                                 $output .= html_writer::start_tag('ul', array('class' => 'publishers'));
                             }
                         }
+
                         if ($started_levels==false) {
                             $started_levels = true;
-                            if ($displaypublishername) {
+                            if ($showpublishername) {
                                 $output .= html_writer::start_tag('li', array('class' => 'publisher'));
                                 $output .= $this->available_list_name('publishers[]', $i, $publishername, 'publishername', $levels->count, $levels->newcount);
                             }
-                            if ($displaylevelname) {
+                            if ($showlevelname) {
                                 $output .= html_writer::start_tag('ul', array('class' => 'levels'));
                             }
                         }
+
                         if ($started_items==false) {
                             $started_items = true;
-                            if ($displaylevelname) {
+                            if ($showlevelname) {
                                 $output .= html_writer::start_tag('li', array('class' => 'level'));
                                 $output .= $this->available_list_name('levels[]', $i.'_'.$ii, $levelname, 'levelname', $items->count, $items->newcount);
                             }
                             $output .= html_writer::start_tag('ul', array('class' => 'items'));
                         }
+
                         $output .= html_writer::start_tag('li', array('class' => 'item'));
                         if (empty($downloaded->items[$publishername]->items[$levelname]->items[$itemname])) {
                             $output .= $this->available_list_name('itemids[]', $itemid, $itemname, 'itemname', 0, 1);
@@ -408,30 +523,30 @@ class mod_reader_download_renderer extends mod_reader_renderer {
                 }
                 if ($started_items) {
                     $output .= html_writer::end_tag('ul'); // finish items
-                    if ($displaylevelname) {
+                    if ($showlevelname) {
                         $output .= html_writer::end_tag('li'); // finish level
                     }
                 }
             }
             if ($started_levels) {
-                if ($displaylevelname) {
+                if ($showlevelname) {
                     $output .= html_writer::end_tag('ul'); // finish levels
                 }
-                if ($displaypublishername) {
+                if ($showpublishername) {
                     $output .= html_writer::end_tag('li'); // finish publisher
                 }
             }
         }
         if ($started_publishers) {
-            if ($displaypublishername) {
+            if ($showpublishername) {
                 $output .= html_writer::end_tag('ul'); // finish publishers
             }
-            if ($displayremotesitename) {
+            if ($showremotesitename) {
                 $output .= html_writer::end_tag('li'); // finish remotesite
             }
         }
         if ($started_remotesites) {
-            if ($displayremotesitename) {
+            if ($showremotesitename) {
                 $output .= html_writer::end_tag('ul'); // finish remotesites
             }
         }
@@ -439,6 +554,18 @@ class mod_reader_download_renderer extends mod_reader_renderer {
         return $output;
     }
 
+    /**
+     * available_list_name
+     *
+     * @param xxx $name
+     * @param xxx $value
+     * @param xxx $text
+     * @param xxx $cssclass
+     * @param xxx $count (optional, default=0)
+     * @param xxx $newcount (optional, default=0)
+     * @return xxx
+     * @todo Finish documenting this function
+     */
     public function available_list_name($name, $value, $text, $cssclass, $count=0, $newcount=0) {
         $output = '';
         if ($newcount) {
@@ -469,6 +596,13 @@ class mod_reader_download_renderer extends mod_reader_renderer {
         return $output;
     }
 
+    /**
+     * available_list_img
+     *
+     * @uses $OUTPUT
+     * @return xxx
+     * @todo Finish documenting this function
+     */
     public function available_list_img() {
         global $OUTPUT;
         $src = $OUTPUT->pix_url('t/switch_minus');

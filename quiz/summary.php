@@ -17,15 +17,6 @@
 
 /**
  * mod/reader/quiz/summary.php
- *
- * @package    mod
- * @subpackage reader
- * @copyright  2013 Gordon Bateson (gordon.bateson@gmail.com)
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @since      Moodle 2.0
- */
-
-/**
  * This page prints a summary of a quiz attempt before it is submitted.
  *
  * @package    mod

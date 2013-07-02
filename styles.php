@@ -25,17 +25,17 @@
  * @since      Moodle 2.0
  */
 
+/** Prevent direct access to this script */
+defined('MOODLE_INTERNAL') || die;
  ?>
 
-/*** Modules: Reader
- ***/
+/*** Modules: Reader ***/
 
 #mod-reader-view .quizinfo {
   text-align: center;
 }
 #mod-reader-view #page .quizgradefeedback,
-#mod-reader-view #page .quizattempt
-{
+#mod-reader-view #page .quizattempt {
   text-align: center;
 }
 #mod-reader-view #page .quizattemptsummary td p {
@@ -50,11 +50,6 @@
 #mod-reader-view .generalbox#feedback h2 {
   margin: 0 0;
 }
-
-/** Prevent direct access to this script */
-defined('MOODLE_INTERNAL') || die;
-
-
 
 body#mod-reader-view .generalbox#feedback .overriddennotice {
   text-align: center;
@@ -93,8 +88,7 @@ body#mod-reader-view .generalbox#feedback .overriddennotice {
 }
 
 body#question-preview .quemodname,
-body#question-preview .controls
-{
+body#question-preview .controls {
   text-align: center;
 }
 body#question-preview .quemodname, body#question-preview .controls {
@@ -152,8 +146,7 @@ table.quizreviewsummary td.cell {
 }
 
 #mod-reader-edit #page .controls,
-#mod-reader-edit #page .quizattemptcounts
-{
+#mod-reader-edit #page .quizattemptcounts {
   text-align: center;
 }
 #mod-reader-edit .quizquestions h2 {
@@ -168,8 +161,7 @@ table.quizreviewsummary td.cell {
 
 #mod-reader-report table#attempts,
 #mod-reader-report table#commands,
-#mod-reader-report table#itemanalysis
-{
+#mod-reader-report table#itemanalysis {
   width: 80%;
   margin: auto;
 }
@@ -181,8 +173,7 @@ table.quizreviewsummary td.cell {
   margin: 20px auto;
 }
 #mod-reader-report table#attempts .header,
-#mod-reader-report table#attempts .cell
-{
+#mod-reader-report table#attempts .cell {
   padding: 4px;
 }
 #mod-reader-report table#attempts .header .commands {
@@ -212,8 +203,7 @@ table.quizreviewsummary td.cell {
   margin: 20px auto;
 }
 #mod-reader-report table#itemanalysis .header,
-#mod-reader-report table#itemanalysis .cell
-{
+#mod-reader-report table#itemanalysis .cell {
   padding: 4px;
 }
 #mod-reader-report table#itemanalysis .header .commands {
@@ -249,35 +239,29 @@ table.quizreviewsummary td.cell {
 }
 
 /* manual grading */
-#mod-reader-grading table#grading
-{
+#mod-reader-grading table#grading {
   width: 80%;
   margin: auto;
 }
 
-#mod-reader-grading table#grading
-{
+#mod-reader-grading table#grading {
   margin: 20px auto;
 }
 
 #mod-reader-grading table#grading .header,
-#mod-reader-grading table#grading .cell
-{
+#mod-reader-grading table#grading .cell {
   padding: 4px;
 }
 
-#mod-reader-grading table#grading .header .commands
-{
+#mod-reader-grading table#grading .header .commands {
   display: inline;
 }
 
-#mod-reader-grading table#grading .picture
-{
+#mod-reader-grading table#grading .picture {
   width: 40px;
 }
 
-#mod-reader-grading table#grading td
-{
+#mod-reader-grading table#grading td {
   border-left-width: 1px;
   border-right-width: 1px;
   border-left-style: solid;

@@ -1,7 +1,45 @@
 <?php
 
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
+/**
+ * mod/reader/admin/lib.php
+ *
+ * @package    mod
+ * @subpackage reader
+ * @copyright  2013 Gordon Bateson (gordon.bateson@gmail.com)
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @since      Moodle 2.0
+ */
+
+/** Prevent direct access to this script */
+defined('MOODLE_INTERNAL') || die;
+
+/** Include required files */
 require_once($CFG->dirroot.'/mod/reader/lib.php');
 
+/**
+ * reader_downloader
+ *
+ * @copyright  2013 Gordon Bateson (gordon.bateson@gmail.com)
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @since      Moodle 2.0
+ * @package    mod
+ * @subpackage reader
+ */
 class reader_downloader {
 
     /** values for download $type */
@@ -14,9 +52,21 @@ class reader_downloader {
 
     public $available = array();
 
+    /**
+     * __construct
+     *
+     * @todo Finish documenting this function
+     */
     public function __construct() {
     }
 
+    /**
+     * get_book_table
+     *
+     * @param xxx $type
+     * @return xxx
+     * @todo Finish documenting this function
+     */
     public function get_book_table($type) {
         switch ($type) {
             case self::BOOKS_WITH_QUIZZES: return 'reader_books';
@@ -25,6 +75,14 @@ class reader_downloader {
         return ''; // shouldn't happen !!
     }
 
+    /**
+     * get_downloaded_items
+     *
+     * @uses $DB
+     * @param xxx $type
+     * @param xxx $r (optional, default=0)
+     * @todo Finish documenting this function
+     */
     public function get_downloaded_items($type, $r=0) {
         global $DB;
 
@@ -49,16 +107,38 @@ class reader_downloader {
         }
     }
 
+    /**
+     * add_remotesite
+     *
+     * @param xxx $remotesite
+     * @todo Finish documenting this function
+     */
     public function add_remotesite($remotesite) {
         $this->remotesites[] = $remotesite;
     }
 
+    /**
+     * add_available_items
+     *
+     * @param xxx $type
+     * @param xxx $itemids
+     * @todo Finish documenting this function
+     */
     public function add_available_items($type, $itemids) {
         foreach ($this->remotesites as $r => $remotesite) {
             $this->available[$r] = $remotesite->get_available_items($type, $itemids, $this->downloaded[$r]);
         }
     }
 
+    /**
+     * check_selected_itemids
+     *
+     * @param xxx $publishers
+     * @param xxx $levels
+     * @param xxx $itemids (passed by reference)
+     * @return xxx
+     * @todo Finish documenting this function
+     */
     public function check_selected_itemids($publishers, $levels, &$itemids) {
         if (count($publishers)==0 && count($levels)==0) {
             return false; // nothing to do
@@ -84,6 +164,17 @@ class reader_downloader {
         }
     }
 
+    /**
+     * add_selected_itemids
+     *
+     * @uses $DB
+     * @uses $OUTPUT
+     * @param xxx $type
+     * @param xxx $itemids
+     * @param xxx $r (optional, default=0)
+     * @return xxx
+     * @todo Finish documenting this function
+     */
     public function add_selected_itemids($type, $itemids, $r=0) {
         global $DB, $OUTPUT;
 
@@ -185,6 +276,15 @@ class reader_downloader {
         }
     }
 
+    /**
+     * download_image
+     *
+     * @uses $CFG
+     * @param xxx $itemid
+     * @param xxx $filename
+     * @param xxx $r (optional, default=0)
+     * @todo Finish documenting this function
+     */
     public function download_image($itemid, $filename, $r=0) {
         global $CFG;
         make_upload_directory('reader/images');
@@ -201,6 +301,15 @@ class reader_downloader {
     }
 }
 
+/**
+ * reader_remotesite
+ *
+ * @copyright  2013 Gordon Bateson (gordon.bateson@gmail.com)
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @since      Moodle 2.0
+ * @package    mod
+ * @subpackage reader
+ */
 class reader_remotesite {
 
     /** the default download url for this remote site */
@@ -211,12 +320,29 @@ class reader_remotesite {
     public $username = '';
     public $password = '';
 
+    /**
+     * __construct
+     *
+     * @param xxx $baseurl (optional, default='')
+     * @param xxx $username (optional, default='')
+     * @param xxx $password (optional, default='')
+     * @todo Finish documenting this function
+     */
     public function __construct($baseurl='', $username='', $password='') {
         $this->baseurl = ($baseurl ? $baseurl : self::DEFAULT_URL);
         $this->username = $username;
         $this->password = $password;
     }
 
+    /**
+     * download_xml
+     *
+     * @uses $CFG
+     * @param xxx $url
+     * @param xxx $post (optional, default=false)
+     * @return xxx
+     * @todo Finish documenting this function
+     */
     public function download_xml($url, $post=false) {
         global $CFG;
         require_once($CFG->dirroot.'/lib/xmlize.php');
@@ -226,40 +352,111 @@ class reader_remotesite {
         return false; // shouldn't happen !!
     }
 
+    /**
+     * download_publishers
+     *
+     * @param xxx $type
+     * @param xxx $itemids
+     * @return xxx
+     * @todo Finish documenting this function
+     */
     public function download_publishers($type, $itemids) {
         $url = $this->get_publishers_url($type, $itemids);
         return $this->download_xml($url);
     }
 
+    /**
+     * get_publishers_url
+     *
+     * @param xxx $type
+     * @param xxx $itemids
+     * @return xxx
+     * @todo Finish documenting this function
+     */
     public function get_publishers_url($type, $itemids) {
         return $this->baseurl;
     }
 
+    /**
+     * get_publishers_params
+     *
+     * @param xxx $type
+     * @param xxx $itemids
+     * @return xxx
+     * @todo Finish documenting this function
+     */
     public function get_publishers_params($type, $itemids) {
         return null;
     }
 
+    /**
+     * download_quizzes
+     *
+     * @param xxx $type
+     * @param xxx $itemids
+     * @return xxx
+     * @todo Finish documenting this function
+     */
     public function download_quizzes($type, $itemids) {
         $url = $this->get_quizzes_url($type, $itemids);
         return $this->download_xml($url);
     }
 
+    /**
+     * get_quizzes_url
+     *
+     * @param xxx $type
+     * @param xxx $itemids
+     * @return xxx
+     * @todo Finish documenting this function
+     */
     public function get_quizzes_url($type, $itemids) {
         return $this->baseurl;
     }
 
+    /**
+     * get_quizzes_params
+     *
+     * @param xxx $type
+     * @param xxx $itemids
+     * @return xxx
+     * @todo Finish documenting this function
+     */
     public function get_quizzes_params($type, $itemids) {
         return null;
     }
 
+    /**
+     * get_image_url
+     *
+     * @param xxx $type
+     * @param xxx $itemid
+     * @return xxx
+     * @todo Finish documenting this function
+     */
     public function get_image_url($type, $itemid) {
         return $this->baseurl;
     }
 
+    /**
+     * get_image_params
+     *
+     * @param xxx $itemid
+     * @return xxx
+     * @todo Finish documenting this function
+     */
     public function get_image_params($itemid) {
         return null;
     }
 
+    /**
+     * get_curlfile
+     *
+     * @param xxx $url
+     * @param xxx $post (optional, default=false)
+     * @return xxx
+     * @todo Finish documenting this function
+     */
     public function get_curlfile($url, $post=false) {
         $ch = curl_init();
 
@@ -300,9 +497,26 @@ class reader_remotesite {
     }
 }
 
+/**
+ * reader_remotesite_moodlereadernet
+ *
+ * @copyright  2013 Gordon Bateson (gordon.bateson@gmail.com)
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @since      Moodle 2.0
+ * @package    mod
+ * @subpackage reader
+ */
 class reader_remotesite_moodlereadernet extends reader_remotesite {
     const DEFAULT_URL = 'http://moodlereader.net/quizbank';
 
+    /**
+     * get_publishers_url
+     *
+     * @param xxx $type
+     * @param xxx $itemids
+     * @return xxx
+     * @todo Finish documenting this function
+     */
     public function get_publishers_url($type, $itemids) {
         if ($type==reader_downloader::BOOKS_WITH_QUIZZES) {
             $params = $this->get_publishers_params($type, $itemids);
@@ -315,10 +529,26 @@ class reader_remotesite_moodlereadernet extends reader_remotesite {
         return parent::get_publishers_url($type, $itemids); // shouldn't happen !!
     }
 
+    /**
+     * get_publishers_params
+     *
+     * @param xxx $type
+     * @param xxx $itemids
+     * @return xxx
+     * @todo Finish documenting this function
+     */
     public function get_publishers_params($type, $itemids) {
         return array('a' => 'publishers', 'login' => $this->username, 'password' => $this->password);
     }
 
+    /**
+     * get_quizzes_url
+     *
+     * @param xxx $type
+     * @param xxx $itemids
+     * @return xxx
+     * @todo Finish documenting this function
+     */
     public function get_quizzes_url($type, $itemids) {
         if ($type==reader_downloader::BOOKS_WITH_QUIZZES) {
             $params = $this->get_quizzes_params($type, $itemids);
@@ -331,10 +561,26 @@ class reader_remotesite_moodlereadernet extends reader_remotesite {
         return parent::get_quizzes_url($type, $itemids); // shouldn't happen !!
     }
 
+    /**
+     * get_quizzes_params
+     *
+     * @param xxx $type
+     * @param xxx $itemids
+     * @return xxx
+     * @todo Finish documenting this function
+     */
     public function get_quizzes_params($type, $itemids) {
         return array('a' => 'quizzes', 'login' => $this->username, 'password' => $this->password);
     }
 
+    /**
+     * get_image_url
+     *
+     * @param xxx $type
+     * @param xxx $itemid
+     * @return xxx
+     * @todo Finish documenting this function
+     */
     public function get_image_url($type, $itemid) {
         if ($type==reader_downloader::BOOKS_WITH_QUIZZES) {
             $params = $this->get_quizzes_params($type, $itemid);
@@ -347,10 +593,26 @@ class reader_remotesite_moodlereadernet extends reader_remotesite {
         return parent::get_image_url($type, $itemid); // shouldn't happen !!
     }
 
+    /**
+     * get_image_params
+     *
+     * @param xxx $itemid
+     * @return xxx
+     * @todo Finish documenting this function
+     */
     public function get_image_params($itemid) {
         return array('imageid' => $itemid);
     }
 
+    /**
+     * get_available_items
+     *
+     * @param xxx $type
+     * @param xxx $itemids
+     * @param xxx $downloaded
+     * @return xxx
+     * @todo Finish documenting this function
+     */
     public function get_available_items($type, $itemids, $downloaded) {
         $items = $this->download_publishers($type, $itemids);
 
@@ -394,8 +656,9 @@ class reader_remotesite_moodlereadernet extends reader_remotesite {
         // sort items by name
         ksort($available->items);
         $publishers = array_keys($available->items);
+        $sort_by_name = array($this, 'sort_by_name');
         foreach ($publishers as $publisher) {
-            uksort($available->items[$publisher]->items, array($this, 'sort_by_name'));
+            uksort($available->items[$publisher]->items, $sort_by_name);
             $levels = array_keys($available->items[$publisher]->items);
             foreach ($levels as $level) {
                 ksort($available->items[$publisher]->items[$level]->items);
@@ -405,15 +668,27 @@ class reader_remotesite_moodlereadernet extends reader_remotesite {
         return $available;
     }
 
+    /**
+     * sort_by_name
+     *
+     * @param xxx $a
+     * @param xxx $b
+     * @return xxx
+     * @todo Finish documenting this function
+     */
     function sort_by_name($a, $b) {
 
         // search and replace strings
-        $search = array('/\b(-+|Level|Stage)/', '/\bEasyStart$/', '/\bStarter$/', '/\bBeginner$/', '/\bElementary$/', '/\bPre-Intermediate$/', '/\bUpper-Intermediate$/', '/Booksworms/');
-        $replace = array('', 0, 0, 1, 2, 3, 5, 'Bookworms');
+        $search1 = array('/^-+$/', '/\bLadder\s+([0-9]+)$/', '/\bLevel\s+([0-9]+)$/', '/\bStage\s+([0-9]+)$/', '/^Extra_Points|testing|_testing_only$/', '/Booksworms/');
+        $replace1 = array('', '100$1', '200$1', '300$1', 9999, 'Bookworms');
+
+        $search2 = '/\b(Pre|Low|Upper|High)?[ -]*(EasyStarts?|Quick Start|Starter|Beginner|Beginning|Elementary|Intermediate|Advanced)$/';
+        $replace2 = array($this, 'replace_name_with_number');
+
         $split = '/^(.*?)([0-9]+)$/';
 
         // get filtered name (a)
-        $aname = preg_replace($search, $replace, $a);
+        $aname = preg_replace_callback($search2, $replace2, preg_replace($search1, $replace1, $a));
         if (preg_match($split, $aname, $matches)) {
             $aname = trim($matches[1]);
             $anum  = intval($matches[2]);
@@ -422,7 +697,7 @@ class reader_remotesite_moodlereadernet extends reader_remotesite {
         }
 
         // get filtered name (b)
-        $bname = preg_replace($search, $replace, $b);
+        $bname = preg_replace_callback($search2, $replace2, preg_replace($search1, $replace1, $b));
         if (preg_match($split, $bname, $matches)) {
             $bname = trim($matches[1]);
             $bnum  = intval($matches[2]);
@@ -457,13 +732,60 @@ class reader_remotesite_moodlereadernet extends reader_remotesite {
         // same name && same level/stage/word number
         return 0;
     }
+
+    /**
+     * replace_name_with_number
+     *
+     * @param xxx $matches
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    function replace_name_with_number($matches) {
+        $num = 0;
+        switch ($matches[1]) {
+            case 'Pre':   $num += 10; break;
+            case 'Low':   $num += 20; break;
+            case 'Upper': $num += 30; break;
+            case 'High':  $num += 40; break;
+        }
+        switch ($matches[2]) {
+            case 'Quick Start':  break; // 0
+            case 'EasyStart':
+            case 'EasyStarts':
+            case 'Starter':      $num += 100; break;
+            case 'Beginner':
+            case 'Beginning':    $num += 200; break;
+            case 'Elementary':   $num += 300; break;
+            case 'Intermediate': $num += 400; break;
+            case 'Advanced':     $num += 500; break;
+        }
+        return $num;
+    }
 }
 
+/**
+ * reader_items
+ *
+ * @copyright  2013 Gordon Bateson (gordon.bateson@gmail.com)
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @since      Moodle 2.0
+ * @package    mod
+ * @subpackage reader
+ */
 class reader_items {
     public $count = 0;
     public $items = array();
 }
 
+/**
+ * reader_download_items
+ *
+ * @copyright  2013 Gordon Bateson (gordon.bateson@gmail.com)
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @since      Moodle 2.0
+ * @package    mod
+ * @subpackage reader
+ */
 class reader_download_items extends reader_items {
     public $newcount = 0;
     public $needpassword = false;

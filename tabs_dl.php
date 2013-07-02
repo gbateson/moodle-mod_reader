@@ -25,6 +25,9 @@
  * @since      Moodle 2.0
  */
 
+/** Prevent direct access to this script */
+defined('MOODLE_INTERNAL') || die;
+
 $tabs = array();
 $row  = array();
 $inactive = array();
@@ -35,10 +38,5 @@ $row[] = new tabobject('admin', "admin.php?a=admin&id=".$id, "Admin Area");
 $row[] = new tabobject('download', "", "Download Quizzes");
 
 $tabs[] = $row;
-
-/** Prevent direct access to this script */
-defined('MOODLE_INTERNAL') || die;
-
-
 
 print_tabs($tabs, 'download', $inactive, $activated);

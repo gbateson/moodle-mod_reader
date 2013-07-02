@@ -25,15 +25,23 @@
  * @since      Moodle 2.0
  */
 
-/** Prevent direct access to this script */
-defined('MOODLE_INTERNAL') || die;
-
 /**
  * xmldb_reader_check_files
  *
  * @uses $FULLME the full url, including query string, of this page
  * @uses $OUTPUT
  * @return void, but may pause the update if stale files are found
+ */
+
+/** Prevent direct access to this script */
+defined('MOODLE_INTERNAL') || die;
+
+/**
+ * xmldb_reader_check_stale_files
+ *
+ * @uses $FULLME
+ * @uses $OUTPUT
+ * @todo Finish documenting this function
  */
 function xmldb_reader_check_stale_files() {
     global $FULLME, $OUTPUT;

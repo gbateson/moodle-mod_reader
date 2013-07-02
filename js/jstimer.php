@@ -26,7 +26,7 @@ defined('MOODLE_INTERNAL') || die;
 
 <script type="text/javascript">
 //<![CDATA[
-var timesup = "<?php print_string('timesup',"reader");?>";
+var timesup = "<?php print_string('timesup', 'reader'); ?>";
 var quizclose = <?php echo ($reader->timeclose - time()) - $timerstartvalue; ?>; // in seconds
 var quizTimerValue = <?php echo $timerstartvalue; ?>; // in seconds
 parseInt(quizTimerValue);
@@ -45,7 +45,7 @@ var ec_quiz_finish = ec_page_start + <?php echo ($timerstartvalue * 1000); ?>;
     <td class="generalboxcontent" bgcolor="#ffffff" width="100%">
     <table class="generaltable" border="0" width="150" cellspacing="0" cellpadding="0">
     <tr>
-        <th class="generaltableheader" width="100%" scope="col"><?php print_string('timeleft',"reader");?></th>
+        <th class="generaltableheader" width="100%" scope="col"><?php print_string('timeleft', 'reader'); ?></th>
     </tr>
     <tr>
         <td id="QuizTimer" class="generaltablecell" align="center" width="100%">

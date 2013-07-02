@@ -17,15 +17,6 @@
 
 /**
  * mod/reader/quiz/attemptlib.php
- *
- * @package    mod
- * @subpackage reader
- * @copyright  2013 Gordon Bateson (gordon.bateson@gmail.com)
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @since      Moodle 2.0
- */
-
-/**
  * Back-end code for handling data about readerzes and the current user's attempt.
  *
  * There are classes for loading all the information about a reader and attempts,
@@ -37,22 +28,15 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-/**
- * Class for reader exceptions. Just saves a couple of arguments on the
- * constructor for a moodle_exception.
- *
- * @copyright  2008 Tim Hunt
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @since      Moodle 2.0
- */
-
 /** Prevent direct access to this script */
 defined('MOODLE_INTERNAL') || die;
 
 /**
  * moodle_reader_exception
+ * Class for reader exceptions. Just saves a couple of arguments on the
+ * constructor for a moodle_exception.
  *
- * @copyright  2013 Gordon Bateson (gordon.bateson@gmail.com)
+ * @copyright  2008 Tim Hunt
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @since      Moodle 2.0
  * @package    mod

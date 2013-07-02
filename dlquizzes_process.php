@@ -75,6 +75,7 @@ if ($id) {
 
 require_login($course->id);
 
+/** Include question types */
 require_once($CFG->dirroot.'/mod/reader/lib/question/type/multianswer/questiontype.php');
 require_once($CFG->dirroot.'/mod/reader/lib/question/type/multichoice/questiontype.php');
 require_once($CFG->dirroot.'/mod/reader/lib/question/type/ordering/questiontype.php');

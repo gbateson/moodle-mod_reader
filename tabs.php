@@ -25,10 +25,10 @@
  * @since      Moodle 2.0
  */
 
-$currenttab = $a;
-
 /** Prevent direct access to this script */
 defined('MOODLE_INTERNAL') || die;
+
+$currenttab = $a;
 
 if (! isset($currenttab)) {
     $currenttab = 'quizzes';

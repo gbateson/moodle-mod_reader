@@ -33,6 +33,7 @@ defined('MOODLE_INTERNAL') || die;
  *
  * @uses $CFG
  * @uses $DB
+ * @uses $OUTPUT
  * @param xxx $oldversion
  * @return xxx
  * @todo Finish documenting this function

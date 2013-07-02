@@ -580,7 +580,15 @@ echo $OUTPUT->box_end();
 print ('<center><img src="img/credit.jpg" height="40px"></center>');
 echo $OUTPUT->footer();
 
-
+/**
+ * reader_level_blockgraph
+ *
+ * @param xxx $reader
+ * @param xxx $leveldata
+ * @param xxx $dateformat
+ * @return xxx
+ * @todo Finish documenting this function
+ */
 function reader_level_blockgraph($reader, $leveldata, $dateformat) {
 
     // max attempts allowed at each difficulty level
@@ -669,6 +677,16 @@ function reader_level_blockgraph($reader, $leveldata, $dateformat) {
     return $output;
 }
 
+/**
+ * reader_add_table_promotiondate
+ *
+ * @param xxx $table (passed by reference)
+ * @param xxx $leveldata
+ * @param xxx $promotiondate
+ * @param xxx $timeformat
+ * @param xxx $dateformat
+ * @todo Finish documenting this function
+ */
 function reader_add_table_promotiondate(&$table, $leveldata, $promotiondate, $timeformat, $dateformat) {
     // format the "You were promoted ..." message
     $params = (object)array(

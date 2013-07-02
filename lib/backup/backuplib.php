@@ -16,8 +16,8 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 //This file contains all the function needed in the backup utility
-    //except the mod-related funtions that are into every backuplib.php inside
-    //every mod directory
+//except the mod-related funtions that are into every backuplib.php inside
+//every mod directory
 
     /**
      * This function calculates the users to be added to backup based in the

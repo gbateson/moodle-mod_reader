@@ -127,7 +127,6 @@ while (list($key,$reader) = each($readersarr)) {
     $r[$reader->id]['course'] = $reader->course;
     $r[$reader->id]['short_name'] = $course->shortname;
 }
-/**=============**/
 
 $publishers = $DB->get_records_sql('SELECT * FROM {reader_books} WHERE hidden != 1');
 if (empty($publishers)) {

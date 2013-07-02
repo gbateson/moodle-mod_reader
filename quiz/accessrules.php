@@ -17,27 +17,10 @@
 
 /**
  * mod/reader/quiz/accessrules.php
- *
- * @package    mod
- * @subpackage reader
- * @copyright  2013 Gordon Bateson (gordon.bateson@gmail.com)
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @since      Moodle 2.0
- */
-
-/**
  * Classes to enforce the various access rules that can apply to a quiz.
  *
  * @package    mod
  * @subpackage quiz
- * @copyright  2009 Tim Hunt
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
-
-/**
- * This class keeps track of the various access rules that apply to a particular
- * quiz, with convinient methods for seeing whether access is allowed.
- *
  * @copyright  2009 Tim Hunt
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -48,7 +31,7 @@ defined('MOODLE_INTERNAL') || die;
 /**
  * reader_access_manager
  *
- * @copyright  2013 Gordon Bateson (gordon.bateson@gmail.com)
+ * @copyright  2009 Tim Hunt
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @since      Moodle 2.0
  * @package    mod
