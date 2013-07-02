@@ -183,10 +183,13 @@ class reader_downloader {
         }
 
         $remotesite = $this->remotesites[$r];
-        if (! $xml = $remotesite->download_quizzes($type, $itemids)) {
+        $xml = $remotesite->download_quizzes($type, $itemids);
+        if (empty($xml) || empty($xml['myxml']) || empty($xml['myxml']['#'])) {
+die('Oops - no XML!');
             return false; // shouldn't happen !!
         }
-
+print_object($xml);
+die;
         $output = '';
         $started_list = false;
         foreach ($xml['myxml']['#']['item'] as $i => $item) {
@@ -362,7 +365,7 @@ class reader_remotesite {
      */
     public function download_publishers($type, $itemids) {
         $url = $this->get_publishers_url($type, $itemids);
-        return $this->download_xml($url);
+        return $this->download_xml($url, $itemids);
     }
 
     /**
@@ -399,7 +402,8 @@ class reader_remotesite {
      */
     public function download_quizzes($type, $itemids) {
         $url = $this->get_quizzes_url($type, $itemids);
-        return $this->download_xml($url);
+        $post = $this->get_quizzes_post($type, $itemids);
+        return $this->download_xml($url, $post);
     }
 
     /**
@@ -424,6 +428,18 @@ class reader_remotesite {
      */
     public function get_quizzes_params($type, $itemids) {
         return null;
+    }
+
+    /**
+     * get_quizzes_post
+     *
+     * @param xxx $type
+     * @param xxx $itemids
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function get_quizzes_post($type, $itemids) {
+        return $itemids;
     }
 
     /**
@@ -453,31 +469,31 @@ class reader_remotesite {
      * get_curlfile
      *
      * @param xxx $url
-     * @param xxx $post (optional, default=false)
+     * @param xxx $params (optional, default=false)
      * @return xxx
      * @todo Finish documenting this function
      */
-    public function get_curlfile($url, $post=false) {
+    public function get_curlfile($url, $params=false) {
         $ch = curl_init();
 
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
 
-        if ($post) {
+        if ($params) {
             $postfields = array();
-            foreach ($post as $key1 => $value1) {
+            foreach ($params as $name1 => $value1) {
                 if (is_array($value1)) {
-                    foreach ($value1 as $key2 => $value2) {
+                    foreach ($value1 as $name2 => $value2) {
                         if (is_array($value2)) {
-                            foreach ($value2 as $key3 => $value3) {
-                                $postfields[] = $key1.'['.$key2.']['.$key3.']='.$value3;
+                            foreach ($value2 as $name3 => $value3) {
+                                $postfields[] = $name1.'['.$name2.']['.$name3.']='.$value3;
                             }
                         } else {
-                            $postfields[] = $key1.'['.$key2.']='.$value2;
+                            $postfields[] = $name1.'['.$name2.']='.$value2;
                         }
                     }
                 } else {
-                    $postfields[] = $key1.'='.$value1;
+                    $postfields[] = $name1.'='.$value1;
                 }
             }
             if ($postfields = implode('&', $postfields)) {
@@ -571,6 +587,18 @@ class reader_remotesite_moodlereadernet extends reader_remotesite {
      */
     public function get_quizzes_params($type, $itemids) {
         return array('a' => 'quizzes', 'login' => $this->username, 'password' => $this->password);
+    }
+
+    /**
+     * get_quizzes_post
+     *
+     * @param xxx $type
+     * @param xxx $itemids
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function get_quizzes_post($type, $itemids) {
+        return array('quiz' => $itemids);
     }
 
     /**

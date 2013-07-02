@@ -198,7 +198,7 @@ class mod_reader_download_renderer extends mod_reader_renderer {
             $output .= "                    obj = obj.nextSibling;\n";
             $output .= "                }\n";
             $output .= "                requireCheckbox = (requireCheckbox ? true : false);\n"; // convert to boolean
-            $output .= "                var hascheckbox = (obj && obj.nodeType==1 && obj.tagName.toUpperCase()=='INPUT');\n";
+            $output .= "                var hascheckbox = (obj && obj.nodeType==1 && obj.nodeName.toUpperCase()=='INPUT');\n";
             $output .= "                var ok = (requireCheckbox==hascheckbox);\n";
             $output .= "                obj = null;\n";
             $output .= "            }\n";
@@ -276,8 +276,8 @@ class mod_reader_download_renderer extends mod_reader_renderer {
             $output .= "        var string3 = obj[i].innerHTML.substr(pos + searchtext.length);\n";
 
             $output .= "        var span = document.createElement('SPAN');\n";
-            $output .= "        span.setAttribute(css_class_attribute(), 'matchedtext');\n";
             $output .= "        span.appendChild(document.createTextNode(string2));\n";
+            $output .= "        span.setAttribute(css_class_attribute(), 'matchedtext');\n";
 
             $output .= "        remove_child_nodes(obj[i]);\n";
 
@@ -317,7 +317,8 @@ class mod_reader_download_renderer extends mod_reader_renderer {
         $output = '';
         $output .= '<script type="text/javascript">'."\n";
         $output .= "//<![CDATA[\n";
-        $output .= "showhide_lists(-1);\n"; // force hide
+        $output .= "showhide_lists(-1);\n"; // hide all
+        $output .= "showhide_lists(1, 'publishers');\n";
         $output .= "//]]>\n";
         $output .= '</script>'."\n";
         return $output;
@@ -330,13 +331,18 @@ class mod_reader_download_renderer extends mod_reader_renderer {
      * @return xxx
      * @todo Finish documenting this function
      */
-    public function form_start($id) {
+    public function form_start() {
+        // get page url and parameters
+        $action = $this->page->url->out_omit_querystring();
+        $params = $this->page->url->params();
+
         $output = '';
         $output .= $this->form_js_start();
-        $url = new moodle_url('/mod/reader/admin/download_bookdata.php');
-        $output .= html_writer::start_tag('form', array('action' => $url, 'method' => 'put'));
+        $output .= html_writer::start_tag('form', array('action' => $action, 'method' => 'put'));
         $output .= html_writer::start_tag('div');
-        $output .= html_writer::empty_tag('input', array('type' => 'hidden', 'name' => 'id', 'value' => $id));
+        foreach ($params as $name => $value) {
+            $output .= html_writer::empty_tag('input', array('type' => 'hidden', 'name' => $name, 'value' => $value));
+        }
         return $output;
     }
 
@@ -350,7 +356,7 @@ class mod_reader_download_renderer extends mod_reader_renderer {
         $output = '';
         $output .= html_writer::start_tag('p');
         $output .= html_writer::tag('span', get_string('search').': ');
-        $output .= html_writer::empty_tag('input', array('type' => 'text', 'name' => 'searchtext'));
+        $output .= html_writer::empty_tag('input', array('type' => 'text', 'name' => 'searchtext')).' ';
         $output .= html_writer::empty_tag('input', array('type' => 'submit', 'value' => get_string('go'), 'onclick' => 'search_itemnames(this); return false;'));
         $output .= html_writer::end_tag('p');
         return $output;

@@ -94,7 +94,7 @@ $downloader->check_selected_itemids($selectedpublishers,
 $downloader->add_selected_itemids($type, $selecteditemids);
 
 echo $output->box_start('generalbox', 'notice');
-echo $output->form_start($id);
+echo $output->form_start();
 
 echo $output->search_box();
 echo $output->showhide_menu();

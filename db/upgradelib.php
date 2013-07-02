@@ -2296,6 +2296,42 @@ function xmldb_reader_fix_duplicate_questions(&$dbman) {
 function xmldb_reader_fix_multichoice_questions() {
     global $DB;
 
+    // remove :MULTICHOICE: questions that have no correct answer
+    $select = 'q1.id, q1.questiontext, q1.qtype, MIN(q2.id) AS badid';
+    $from   = 'mdl_question q1 '.
+              'RIGHT JOIN mdl_question q2 ON q1.id = q2.parent';
+    $where  = 'q1.qtype = ? AND q2.qtype = ? '.
+              'AND '.$DB->sql_like('q2.questiontext', '?'). // LIKE
+              'AND '.$DB->sql_like('q2.questiontext', '?', false, false, true); // NOT LIKE
+    $params = array('multianswer', 'multichoice', '%:MULTICHOICE:%', '%=%');
+    $groupby = 'q2.parent';
+
+    $started_box = false;
+    if ($questions = $DB->get_records_sql("SELECT $select FROM $from WHERE $where GROUP BY $groupby", $params)) {
+        foreach ($questions as $question) {
+            $ids = array($question->id, $question->badid);
+            if ($multianswer = $DB->get_record('question_multianswer', array('question' => $question->id))) {
+                $DB->delete_records('question_multianswer', array('id' => $multianswer->id));
+                $ids = array_merge($ids, explode(',', $multianswer->sequence));
+                $ids = array_filter($ids); // remove blanks
+                $ids = array_unique($ids); // remove duplicates
+            }
+            $DB->delete_records_list('question', 'id', $ids);
+            $DB->delete_records_list('question', 'parent', $ids);
+            $DB->delete_records_list('quiz_question_instances', 'question', $ids);
+            $DB->delete_records_list('reader_question_instances', 'question', $ids);
+            if ($started_box==false) {
+                $started_box = true;
+                xmldb_reader_box_start('The following multichoice question gaps had no correct answer and were removed');
+            }
+            echo '<li><b>'.strip_tags($question->questiontext).'</b><ul>';
+            echo '<li>'.implode('</li><li>', $ids).'</li></ul></li>';
+        }
+    }
+    if ($started_box) {
+        xmldb_reader_box_end();
+    }
+
     // locate parents for orphan ":MULTICHOICE:" questions
     $select = 'qtype = ? AND parent = ? AND '.$DB->sql_like('questiontext', '?');
     $params = array('multichoice', 0, '%:MULTICHOICE:%');
