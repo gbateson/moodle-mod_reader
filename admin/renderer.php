@@ -332,17 +332,10 @@ class mod_reader_download_renderer extends mod_reader_renderer {
      * @todo Finish documenting this function
      */
     public function form_start() {
-        // get page url and parameters
-        $action = $this->page->url->out_omit_querystring();
-        $params = $this->page->url->params();
-
         $output = '';
         $output .= $this->form_js_start();
-        $output .= html_writer::start_tag('form', array('action' => $action, 'method' => 'put'));
+        $output .= html_writer::start_tag('form', array('action' => $this->page->url, 'method' => 'post'));
         $output .= html_writer::start_tag('div');
-        foreach ($params as $name => $value) {
-            $output .= html_writer::empty_tag('input', array('type' => 'hidden', 'name' => $name, 'value' => $value));
-        }
         return $output;
     }
 
@@ -441,11 +434,12 @@ class mod_reader_download_renderer extends mod_reader_renderer {
         $output = '';
 
         $started_remotesites = false;
-        $remotesitename = 'MoodleReader (.net) Quiz Bank'; // $readercfg->serverlink;
+
+        $remotesitename = $remotesite->sitename;
         if ($remotesitename=='') {
-            $showremotesitename = false;
+            $showremotesites = false;
         } else {
-            $showremotesitename = true;
+            $showremotesites = true;
         }
 
         // loop through available items to create selectable list
@@ -455,9 +449,9 @@ class mod_reader_download_renderer extends mod_reader_renderer {
             $i++;
 
             if (count($available->items)==1 && $publishername=='') {
-                $showpublishername = false;
+                $showpublishers = false;
             } else {
-                $showpublishername = true;
+                $showpublishers = true;
             }
 
             $ii = 0;
@@ -466,9 +460,9 @@ class mod_reader_download_renderer extends mod_reader_renderer {
                 $ii++;
 
                 if (count($levels->items)==1 && ($levelname=='' || $levelname=='-' || $levelname=='--' || $levelname=='No Level')) {
-                    $showlevelname = false;
+                    $showlevels = false;
                 } else {
-                    $showlevelname = true;
+                    $showlevels = true;
                 }
 
                 $iii = 0;
@@ -480,36 +474,36 @@ class mod_reader_download_renderer extends mod_reader_renderer {
 
                         if ($started_remotesites==false) {
                             $started_remotesites = true;
-                            if ($showremotesitename) {
+                            if ($showremotesites) {
                                 $output .= html_writer::start_tag('ul', array('class' => 'remotesites'));
                             }
                         }
 
                         if ($started_publishers==false) {
                             $started_publishers = true;
-                            if ($showremotesitename) {
+                            if ($showremotesites) {
                                 $output .= html_writer::start_tag('li', array('class' => 'remotesite'));
                                 $output .= $this->available_list_name('remotesites[]', 0, $remotesitename, 'remotesites', $available->count, $available->newcount);
                             }
-                            if ($showpublishername) {
+                            if ($showpublishers) {
                                 $output .= html_writer::start_tag('ul', array('class' => 'publishers'));
                             }
                         }
 
                         if ($started_levels==false) {
                             $started_levels = true;
-                            if ($showpublishername) {
+                            if ($showpublishers) {
                                 $output .= html_writer::start_tag('li', array('class' => 'publisher'));
                                 $output .= $this->available_list_name('publishers[]', $i, $publishername, 'publishername', $levels->count, $levels->newcount);
                             }
-                            if ($showlevelname) {
+                            if ($showlevels) {
                                 $output .= html_writer::start_tag('ul', array('class' => 'levels'));
                             }
                         }
 
                         if ($started_items==false) {
                             $started_items = true;
-                            if ($showlevelname) {
+                            if ($showlevels) {
                                 $output .= html_writer::start_tag('li', array('class' => 'level'));
                                 $output .= $this->available_list_name('levels[]', $i.'_'.$ii, $levelname, 'levelname', $items->count, $items->newcount);
                             }
@@ -529,30 +523,30 @@ class mod_reader_download_renderer extends mod_reader_renderer {
                 }
                 if ($started_items) {
                     $output .= html_writer::end_tag('ul'); // finish items
-                    if ($showlevelname) {
+                    if ($showlevels) {
                         $output .= html_writer::end_tag('li'); // finish level
                     }
                 }
             }
             if ($started_levels) {
-                if ($showlevelname) {
+                if ($showlevels) {
                     $output .= html_writer::end_tag('ul'); // finish levels
                 }
-                if ($showpublishername) {
+                if ($showpublishers) {
                     $output .= html_writer::end_tag('li'); // finish publisher
                 }
             }
         }
         if ($started_publishers) {
-            if ($showpublishername) {
+            if ($showpublishers) {
                 $output .= html_writer::end_tag('ul'); // finish publishers
             }
-            if ($showremotesitename) {
+            if ($showremotesites) {
                 $output .= html_writer::end_tag('li'); // finish remotesite
             }
         }
         if ($started_remotesites) {
-            if ($showremotesitename) {
+            if ($showremotesites) {
                 $output .= html_writer::end_tag('ul'); // finish remotesites
             }
         }

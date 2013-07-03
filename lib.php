@@ -1076,39 +1076,52 @@ function reader_make_table_headers(&$table, $headers, $orderby, $sort, $params) 
  * @param xxx $columns
  * @param xxx $sortdirection
  * @param xxx $sortcolumn
+ * @param array $dates (optional, default=null)
  * @return xxx
  * @todo Finish documenting this function
  */
-function reader_sort_table(&$table, $columns, $sortdirection, $sortcolumn) {
+function reader_sort_table(&$table, $columns, $sortdirection, $sortcolumn, $dates=null) {
 
     if (empty($table->data)) {
         return; // nothing to do
     }
 
-    $sortindex = 0; // default is first column
+    $columnnames = array_values($columns);
+    $columnnames = array_flip($columnnames);
+    // $columnnames maps column-name => column-number
+
     if ($sortcolumn) {
-        $i = 0;
-        foreach ($columns as $text => $columnname) {
-            if ($columnname == $sortcolumn) {
-                $sortindex = $i;
-            }
-            $i++;
+        if (array_key_exists($sortcolumn, $columnnames)) {
+            $sortindex = $columnnames[$sortcolumn];
+        } else {
+            $sortindex = 0; // default is first column
         }
-    }
 
-    $values = array();
-    foreach ($table->data as $r => $row) {
-        $values[$r] = strip_tags($row->cells[$sortindex]->text);
-    }
+        $values = array();
+        foreach ($table->data as $r => $row) {
+            $values[$r] = strip_tags($row->cells[$sortindex]->text);
+        }
 
-    if (empty($sortdirection) || $sortdirection=='ASC') {
-        asort($values);
+        if (empty($sortdirection) || $sortdirection=='ASC') {
+            asort($values);
+        } else {
+            arsort($values);
+        }
     } else {
-        arsort($values);
+        // sorting not required, but we still want to format dates
+        $values = range(0, count($table->data) - 1);
     }
 
     $data = array();
     foreach (array_keys($values) as $r) {
+        if ($dates) {
+            // format date columns - must be done after sorting
+            foreach ($dates as $columnname => $fmt) {
+                $c = $columnnames[$columnname];
+                $date = $table->data[$r]->cells[$c]->text;
+                $table->data[$r]->cells[$c]->text = date($fmt, $date);
+            }
+        }
         $data[] = $table->data[$r];
     }
     $table->data = $data;
@@ -2699,6 +2712,9 @@ function reader_textlib() {
  */
 function reader_get_numsections($course) {
     global $DB;
+    if (is_numeric($course)) {
+        $course = $DB->get_record('course', array('id' => $course));
+    }
     if ($course && isset($course->id)) {
         if (isset($course->numsections)) {
             return $course->numsections; // Moodle >= 2.3
@@ -2729,6 +2745,9 @@ function reader_get_numsections($course) {
  */
 function reader_set_numsections($course, $numsections) {
     global $DB;
+    if (is_numeric($course)) {
+        $course = $DB->get_record('course', array('id' => $course));
+    }
     if (empty($course) || empty($course->id)) {
         return false;
     }

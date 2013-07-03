@@ -55,7 +55,7 @@ require_login($course, true, $cm);
 add_to_log($course->id, 'reader', 'Download Quizzes', "admin/download.php?id=$id", "$cm->instance");
 
 // Initialize $PAGE, compute blocks
-$PAGE->set_url('/mod/reader/admin/download.php', array('id' => $cm->id));
+$PAGE->set_url('/mod/reader/admin/download.php', array('id' => $cm->id, 'type' => $type));
 
 $title = $course->shortname . ': ' . format_string($reader->name);
 $PAGE->set_title($title);
@@ -84,7 +84,7 @@ $readercfg = get_config('reader');
 $remotesite = new reader_remotesite_moodlereadernet($readercfg->serverlink,
                                                     $readercfg->serverlogin,
                                                     $readercfg->serverpassword);
-$downloader = new reader_downloader();
+$downloader = new reader_downloader($course, $cm, $reader);
 $downloader->add_remotesite($remotesite);
 $downloader->get_downloaded_items($type);
 $downloader->add_available_items($type, $selecteditemids);

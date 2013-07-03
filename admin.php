@@ -1634,8 +1634,6 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
                 continue;
             }
 
-            $timefinish = date($dateformat, $readerattempt['timefinish']); // was 'Y/m/d'
-
             if ($totable['first'] || $sort == 'slevel' || $sort == 'blevel' || $sort == 'title' || $sort == 'date' || $excel) {
                 $showuser = true;
             } else {
@@ -1676,7 +1674,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
                         array_push($cells, reader_ra_checkbox($readerattempt));
                     }
                     array_push($cells,
-                        $timefinish,
+                        $readerattempt['timefinish'],
                         $readerattempt['userlevel'],
                         $readerattempt['bookdiff'],
                         $readerattempt['booktitle'],
@@ -1713,7 +1711,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
                         array_push($cells, reader_ra_checkbox($readerattempt));
                     }
                     array_push($cells,
-                        $timefinish,
+                        $readerattempt['timefinish'],
                         $readerattempt['userlevel'],
                         $readerattempt['bookdiff'],
                         $readerattempt['booktitle'],
@@ -1730,8 +1728,11 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
     } // end foreach $readerattempts
 
     if ($sort == 'slevel' || $sort == 'blevel' || $sort == 'title' || $sort == 'date') {
-        reader_sort_table($table, $titles, $orderby, $sort);
+        // do nothing - these are valid sort fields
+    } else {
+        $sort = ''; // we particularly want to avoid sorting by "username"
     }
+    reader_sort_table($table, $titles, $orderby, $sort, array('date' => $dateformat));
 
     if ($excel) {
         foreach ($table->data as $r => $row) {
@@ -2148,8 +2149,6 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
         $can_deleteattempts = has_capability('mod/reader:deletereaderattempts', $contextmodule);
 
         foreach ($readerattempts as $readerattempt) {
-            $attemptbooktime = date($dateformat, $readerattempt->timefinish); // was 'Y/m/d'
-
             $strpassed = reader_format_passed($readerattempt->passed);
             $cells = array(
                 reader_username_link($readerattempt, $course->id, $excel),
@@ -2158,7 +2157,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
                 $readerattempt->attempt,
                 $readerattempt->percentgrade.'%',
                 $strpassed,
-                $attemptbooktime
+                $readerattempt->timefinish
             );
             if ($can_deleteattempts) {
                 $params = array('a' => 'admin', 'id' => $id, 'act' => 'viewattempts',
@@ -2178,7 +2177,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
             $table->data[] = new html_table_row($cells);
         }
 
-        reader_sort_table($table, $titles, $orderby, $sort);
+        reader_sort_table($table, $titles, $orderby, $sort, array('timefinish' => $dateformat));
 
         if ($excel) {
             foreach ($table->data as $row) {
@@ -2972,7 +2971,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
           }
         }
 
-        $titles = array('Book'=>'book', 'Username 1'=>'username1', 'Username 2'=>'username2', 'IP 1'=>'', 'IP 2'=>'', 'Time 1'=>'', 'Time 2'=>'', 'Time period'=>'', 'Log text'=>'');
+        $titles = array('Book'=>'book', 'Username 1'=>'username1', 'Username 2'=>'username2', 'IP 1'=>'', 'IP 2'=>'', 'Time 1'=>'time1', 'Time 2'=>'time2', 'Time period'=>'', 'Log text'=>'');
 
         $params = array('a' => 'admin', 'id' => $id, 'act' => $act);
         $table->head  = reader_make_table_headers($table, $titles, $orderby, $sort, $params);
@@ -3082,8 +3081,8 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
                     "<a href=\"{$CFG->wwwroot}/user/view.php?id={$logtext[$data['id2']]->userid}&course={$course->id}\">{$user2data->username} ({$user2data->firstname} {$user2data->lastname}; group: {$groupsuser2})</a><br />".$logstatus[2],
                     link_to_popup_window("{$CFG->wwwroot}/iplookup/index.php?ip={$data['ip']}&amp;user={$logtext[$key]->userid}", $data['ip'], 440, 700, null, null, true),
                     link_to_popup_window("{$CFG->wwwroot}/iplookup/index.php?ip={$data['ip2']}&amp;user={$logtext[$data['id2']]->userid}", $data['ip2'], 440, 700, null, null, true),
-                    date("D d F $timeformat", $logtext[$key]->time),
-                    date("D d F $timeformat", $logtext[$data['id2']]->time),
+                    $logtext[$key]->time,          // time1
+                    $logtext[$data['id2']]->time,  // time2
                     $diffstring,
                     $logtext[$key]->info."<br />".$logtext[$data['id2']]->info));
                 }
@@ -3092,7 +3091,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
           }
         }
 
-        reader_sort_table($table, $titles, $orderby, $sort);
+        reader_sort_table($table, $titles, $orderby, $sort, array('time1' => "D d F $timeformat", 'time2' => "D d F $timeformat", ));
 
         if (isset($table) && count($table->data)) {
             echo html_writer::table($table);
@@ -3583,11 +3582,11 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
             reader_fullname_link($user2, $course->id, $excel),
             $quiz->name,
             $cheatedlog->status.$cheatedstring,
-            date($dateformat, $cheatedlog->date) // was 'd M Y'
+            $cheatedlog->date
             ));
     }
 
-    reader_sort_table($table, $titles, $orderby, $sort);
+    reader_sort_table($table, $titles, $orderby, $sort, array('date' => $dateformat));
 
     if ($excel) {
         foreach ($table->data as $r => $row) {
@@ -4126,12 +4125,12 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
             $bookdata->difficulty,
             round($readerattempt->percentgrade).'%',
             reader_format_passed($readerattempt->passed),
-            date($dateformat, $readerattempt->timemodified), // was 'd-M-Y',
+            $readerattempt->timemodified,
             '' // deleted
         ));
     }
 
-    reader_sort_table($table, $titles, $orderby, $sort);
+    reader_sort_table($table, $titles, $orderby, $sort, array('finishtime' => $dateformat));
 
     $publisherform = array();
 
