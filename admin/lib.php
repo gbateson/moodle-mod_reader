@@ -737,6 +737,19 @@ class reader_downloader {
         $params = array('contextlevel' => CONTEXT_COURSE, 'instanceid' => $cm->course);
         $contextid = $DB->get_field('context', 'id', $params);
 
+        // pass params to restore engine via $_POST
+        $_POST['contextid'] = $contextid;
+        $_POST['filepath']  = $filepath; // actually this is the "folder" containing "moodle.xml"
+        $_POST['targetid']  = $cm->course;
+        $_POST['target']    = backup::TARGET_EXISTING_ADDING; // = 4
+        $_POST['sesskey']   = sesskey();
+        $_POST['setting_root_activities'] = 1;
+        $_POST['setting_course_overwrite_conf'] = 0;
+
+        // add target section and Quiz activity
+        $_POST['setting_section_section_31_included'] = 1;
+        $_POST['setting_activity_quiz_402_included']  = 1;
+
         $stages = array(restore_ui::STAGE_CONFIRM,      // 1
                         restore_ui::STAGE_DESTINATION,  // 2
                         restore_ui::STAGE_SETTINGS,     // 4
@@ -752,21 +765,11 @@ class reader_downloader {
                 continue;
             }
 
-            // pass params to restore engine via $_POST
-            $_POST['contextid'] = $contextid;
-            $_POST['filepath']  = $filepath; // actually this is the "folder" containing "moodle.xml"
-            $_POST['targetid']  = $cm->course;
-            $_POST['target']    = backup::TARGET_EXISTING_ADDING; // = 4
-            $_POST['sesskey']   = sesskey();
-            $_POST['stage']     = $stage;
-            if ($restoreid) {
-                $_POST['restore'] = $restoreid;
-            }
-            $_POST['setting_root_activities']       = 1;
-            $_POST['setting_course_overwrite_conf'] = 0;
+            // add params for this $stage
+            $_POST['stage'] = $stage;
+            $_POST['restore'] = $restoreid;
 
-            $_POST['setting_section_section_31_included'] = 1;
-            $_POST['setting_activity_quiz_402_included']  = 1;
+            // this code mimics "/backup/restore.php"
 
             if ($stage & restore_ui::STAGE_CONFIRM + restore_ui::STAGE_DESTINATION) {
                 $restore = restore_ui::engage_independent_stage($stage, $contextid);
@@ -789,6 +792,7 @@ class reader_downloader {
                     $restore = new restore_ui($rc, array('contextid'=>$contextid));
                 }
             }
+
             $outcome = $restore->process();
             if (! $restore->is_independent()) {
                 if ($restore->get_stage() == restore_ui::STAGE_PROCESS && ! $restore->requires_substage()) {
