@@ -460,7 +460,7 @@ function xmldb_reader_showhide_start_js() {
         $js .= "    if (img) {\n";
         $js .= "        var targetsrc = new RegExp('switch_(minus'+(forcehide ? '' : '|plus')+')');\n";
         $js .= "        var i_max = img.length;\n";
-        $js .= "        for (var i=0; i<=i_max; i++) {\n";
+        $js .= "        for (var i=0; i<i_max; i++) {\n";
         $js .= "            if (img[i].src.match(targetsrc)) {\n";
         $js .= "                showhide_list(img[i]);\n";
         $js .= "            }\n";
@@ -1869,11 +1869,11 @@ function xmldb_reader_fix_duplicates() {
  *
  * @todo Finish documenting thi function
  */
-function xmldb_reader_fix_question_categories() {
+function xmldb_reader_get_question_categories() {
     global $CFG, $DB, $OUTPUT;
     require_once($CFG->dirroot.'/mod/reader/lib.php');
 
-    // get contexts for quizzes in of courses where Reader quizzes are stored
+    // get contexts for quizzes in courses where Reader quizzes are stored
     $courseids = xmldb_reader_quiz_courseids();
     $select = array();
     $params = array();
@@ -1884,15 +1884,31 @@ function xmldb_reader_fix_question_categories() {
         }
     }
 
-    // check we found some quizzes
+    // check we found some contexts
     if (! $select = implode(' OR ', $select)) {
-        return true; // no Reader quizzes - unusual ?!
+        return false; // no Reader quizzes - unusual ?!
     }
 
     // get reader course activity contexts
     if (! $modulecontexts = $DB->get_records_select('context', $select, $params)) {
         return false; // shouldn't happen !!
     }
+
+    list($select, $params) = $DB->get_in_or_equal(array_keys($modulecontexts));
+    if (! $categories = $DB->get_records_select('question_categories', 'contextid '.$select, $params)) {
+        return false; // shouldn't happen !!
+    }
+
+    return $categories;
+}
+
+/**
+ * xmldb_reader_fix_question_categories
+ *
+ * @todo Finish documenting thi function
+ */
+function xmldb_reader_fix_question_categories() {
+    global $DB, $OUTPUT;
 
     // first we tidy up the reader_question_instances table
     $select  = 'question, COUNT(*)';
@@ -1942,10 +1958,7 @@ function xmldb_reader_fix_question_categories() {
     // get question categories for Reader course activities
 
     $started_box = false;
-
-    list($select, $params) = $DB->get_in_or_equal(array_keys($modulecontexts));
-    if ($categories = $DB->get_records_select('question_categories', 'contextid '.$select, $params)) {
-
+    if ($categories = xmldb_reader_get_question_categories()) {
         foreach ($categories as $category) {
 
             $msg = '';
@@ -2296,40 +2309,79 @@ function xmldb_reader_fix_duplicate_questions(&$dbman) {
 function xmldb_reader_fix_multichoice_questions() {
     global $DB;
 
-    // remove :MULTICHOICE: questions that have no correct answer
-    $select = 'q1.id, q1.questiontext, q1.qtype, MIN(q2.id) AS badid';
-    $from   = 'mdl_question q1 '.
-              'RIGHT JOIN mdl_question q2 ON q1.id = q2.parent';
-    $where  = 'q1.qtype = ? AND q2.qtype = ? '.
-              'AND '.$DB->sql_like('q2.questiontext', '?'). // LIKE
-              'AND '.$DB->sql_like('q2.questiontext', '?', false, false, true); // NOT LIKE
-    $params = array('multianswer', 'multichoice', '%:MULTICHOICE:%', '%=%');
-    $groupby = 'q2.parent';
+    // get categories for question used in Reader module quizzes
+    if ($categories = xmldb_reader_get_question_categories()) {
+        $started_box = false;
+        foreach ($categories as $category) {
 
-    $started_box = false;
-    if ($questions = $DB->get_records_sql("SELECT $select FROM $from WHERE $where GROUP BY $groupby", $params)) {
-        foreach ($questions as $question) {
-            $ids = array($question->id, $question->badid);
-            if ($multianswer = $DB->get_record('question_multianswer', array('question' => $question->id))) {
-                $DB->delete_records('question_multianswer', array('id' => $multianswer->id));
-                $ids = array_merge($ids, explode(',', $multianswer->sequence));
-                $ids = array_filter($ids); // remove blanks
-                $ids = array_unique($ids); // remove duplicates
+            // remove :MULTICHOICE: questions that have no correct answer
+            // q1 is parent, q2 is (bad) child with no "=" in questiontext
+            $select = 'q1.id, q1.questiontext, q1.qtype, MIN(q2.id) AS badid';
+            $from   = 'mdl_question q1 '.
+                      'RIGHT JOIN mdl_question q2 ON q1.id = q2.parent';
+            $where  = 'q1.category = ? '.
+                      'AND q1.qtype = ? AND q2.qtype = ? '.
+                      'AND '.$DB->sql_like('q2.questiontext', '?'). // LIKE
+                      'AND '.$DB->sql_like('q2.questiontext', '?', false, false, true); // NOT LIKE
+            $params = array($category->id, 'multianswer', 'multichoice', '%:MULTICHOICE:%', '%=%');
+            $groupby = 'q2.parent';
+
+            $started_category = false;
+            if ($questions = $DB->get_records_sql("SELECT $select FROM $from WHERE $where GROUP BY $groupby", $params)) {
+                $context = $DB->get_record('context',         array('id' => $category->contextid));
+                $cm      = $DB->get_record('course_modules',  array('id' => $context->instanceid));
+                $section = $DB->get_record('course_sections', array('id' => $cm->section));
+                $quiz    = $DB->get_record('quiz',            array('id' => $cm->instance));
+                foreach ($questions as $question) {
+
+                    if ($started_box==false) {
+                        $started_box = true;
+                        xmldb_reader_box_start('The following multichoice question gaps had no correct answer and were removed');
+                    }
+                    if ($started_category==false) {
+                        $started_category = true;
+                        echo '<li>';
+                        echo '<b>Section:</b> '.strip_tags($section->name).'<br />';
+                        echo '<b>Quiz:</b> '.strip_tags($quiz->name).'<br />';
+                        echo '<b>Category:</b> '.strip_tags($category->name);
+                        echo '<ul>';
+                    }
+
+                    $ids = array($question->id, $question->badid);
+                    if ($multianswer = $DB->get_record('question_multianswer', array('question' => $question->id))) {
+                        $sequence = explode(',', $multianswer->sequence);
+                        $sequence = array_filter($sequence); // remove blanks
+                        if (in_array($question->badid, $sequence)) {
+                            $ids = array_merge($ids, $sequence);
+                            $ids = array_unique($ids);
+                        } else {
+                            // $badid is not used in this multianswer, so we can delete the $badid only
+                            $ids = array($question->badid);
+                        }
+                    }
+                    $DB->delete_records_list('question', 'id', $ids);
+                    $DB->delete_records_list('question', 'parent', $ids);
+                    $DB->delete_records_list('question_multianswer', 'question', $ids);
+                    $DB->delete_records_list('quiz_question_instances', 'question', $ids);
+                    $DB->delete_records_list('reader_question_instances', 'question', $ids);
+
+                    // print these question ids
+                    if (count($ids) > 1) {
+                        echo '<li>Delete whole question</li>';
+                    }
+                    echo '<li><b>'.strip_tags($question->questiontext).'</b> ('.$question->id.')<ul>';
+                    echo '<li>'.implode('</li><li>', $ids).'</li></ul></li>';
+                }
+                unset($context, $cm, $section, $quiz, $ids, $sequence);
             }
-            $DB->delete_records_list('question', 'id', $ids);
-            $DB->delete_records_list('question', 'parent', $ids);
-            $DB->delete_records_list('quiz_question_instances', 'question', $ids);
-            $DB->delete_records_list('reader_question_instances', 'question', $ids);
-            if ($started_box==false) {
-                $started_box = true;
-                xmldb_reader_box_start('The following multichoice question gaps had no correct answer and were removed');
+            if ($started_category==true) {
+                echo '</ul></li>';
             }
-            echo '<li><b>'.strip_tags($question->questiontext).'</b><ul>';
-            echo '<li>'.implode('</li><li>', $ids).'</li></ul></li>';
         }
-    }
-    if ($started_box) {
-        xmldb_reader_box_end();
+        if ($started_box) {
+            xmldb_reader_box_end();
+        }
+        unset($categories[$category->id]);
     }
 
     // locate parents for orphan ":MULTICHOICE:" questions

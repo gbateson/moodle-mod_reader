@@ -707,7 +707,7 @@ class reader_downloader {
      * @todo Finish documenting this function
      */
     function add_questions($cm, $item, $r=0) {
-        global $DB, $USER;
+        global $CFG, $DB, $USER;
         require_once($CFG->dirroot . '/backup/util/includes/restore_includes.php');
 
         $remotesite = $this->remotesites[$r];
