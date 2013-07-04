@@ -274,6 +274,7 @@ class reader_downloader {
                     $error = 1;
                 }
             } else {
+                $book->quizid = 0;
                 if ($book->id = $DB->insert_record($booktable, $book)) {
                     $msg = "Book data added: $book->name";
                 } else {
@@ -373,6 +374,7 @@ class reader_downloader {
      * @todo Finish documenting this function
      */
     function add_quiz($item, $book, $r=0) {
+        global$DB;
 
         // get/create course to hold quiz
         $courseid = $this->get_quiz_courseid();
@@ -386,7 +388,7 @@ class reader_downloader {
         // add questions to quiz
         $this->add_questions($cm, $item, $r);
 
-        return $quiz;
+        return $DB->get_record('quiz', array('id' => $cm->instance));
     }
 
     /**
@@ -707,25 +709,108 @@ class reader_downloader {
      * @todo Finish documenting this function
      */
     function add_questions($cm, $item, $r=0) {
-        global $CFG, $DB, $USER;
+        global $CFG, $DB, $PAGE, $OUTPUT, $USER;
         require_once($CFG->dirroot . '/backup/util/includes/restore_includes.php');
 
+        // select $remotesite
         $remotesite = $this->remotesites[$r];
-        $xml = $remotesite->download_questions($item['@']['id']);
 
-echo 'STOP in add_questions (admin/lib.php, line 711)';
-die;
+        // get questions file content from $remotesite
+        // (actually it is an unzipped Moodle backup file)
+        $itemid = $item['@']['id'];
+        $url = $remotesite->get_questions_url($itemid);
+        $post = $remotesite->get_questions_post($itemid);
+        $content = download_file_content($url, null, $post);
 
-        // try and use Moodle API to parse this Moodle backup XML
-        // see /backup/restore.php
-        $restoreid = optional_param('restore', false, PARAM_ALPHANUM);
-        // $restoreid = 89416501dfcd6fce4e0ad9276b64c83f;
-        if ($rc = restore_ui::load_controller($restoreid)) {
-            if ($rc->get_status() == backup::STATUS_REQUIRE_CONV) {
-                $rc->convert();
-            }
-            $restore = new restore_ui($rc, array('contextid'=>$context->id));
+        // create unique filepath (e.g. "11de239ad6fe9195558fa9cfc54e0a28")
+        $filepath = restore_controller::get_tempdir_name($cm->course, $USER->id);
+
+        // create temporary directory and add "moodle.xml"
+        $tempdir = $CFG->tempdir.'/backup/'.$filepath;
+        if (! check_dir_exists($tempdir, true, true)) {
+            throw new restore_controller_exception('cannot_create_backup_temp_dir');
         }
+
+        // write moodle.xml to temp directory
+        file_put_contents($tempdir.'/moodle.xml', $content);
+
+        $params = array('contextlevel' => CONTEXT_COURSE, 'instanceid' => $cm->course);
+        $contextid = $DB->get_field('context', 'id', $params);
+
+        $stages = array(restore_ui::STAGE_CONFIRM,      // 1
+                        restore_ui::STAGE_DESTINATION,  // 2
+                        restore_ui::STAGE_SETTINGS,     // 4
+                        restore_ui::STAGE_SCHEMA,       // 8
+                        restore_ui::STAGE_REVIEW,       // 16
+                        restore_ui::STAGE_PROCESS,      // 32
+                        restore_ui::STAGE_COMPLETE);    // 64
+
+        $restoreid = 0;
+        foreach ($stages as $stage) {
+
+            if ($stage < restore_ui::STAGE_SETTINGS || $stage > restore_ui::STAGE_PROCESS) {
+                continue;
+            }
+
+            // pass params to restore engine via $_POST
+            $_POST['contextid'] = $contextid;
+            $_POST['filepath']  = $filepath; // actually this is the "folder" containing "moodle.xml"
+            $_POST['targetid']  = $cm->course;
+            $_POST['target']    = backup::TARGET_EXISTING_ADDING; // = 4
+            $_POST['sesskey']   = sesskey();
+            $_POST['stage']     = $stage;
+            if ($restoreid) {
+                $_POST['restore'] = $restoreid;
+            }
+            $_POST['setting_root_activities']       = 1;
+            $_POST['setting_course_overwrite_conf'] = 0;
+
+            $_POST['setting_section_section_31_included'] = 1;
+            $_POST['setting_activity_quiz_402_included']  = 1;
+
+            if ($stage & restore_ui::STAGE_CONFIRM + restore_ui::STAGE_DESTINATION) {
+                $restore = restore_ui::engage_independent_stage($stage, $contextid);
+            } else {
+                $restoreid = optional_param('restore', false, PARAM_ALPHANUM);
+                $rc = restore_ui::load_controller($restoreid);
+                if (! $rc) {
+                    $restore = restore_ui::engage_independent_stage($stage/2, $contextid);
+                    if ($restore->process()) {
+                        $rc = new restore_controller($restore->get_filepath(), $restore->get_course_id(), backup::INTERACTIVE_YES,
+                                            backup::MODE_GENERAL, $USER->id, $restore->get_target());
+                    }
+                }
+                if ($rc) {
+                    // check if the format conversion must happen first
+                    if ($rc->get_status() == backup::STATUS_REQUIRE_CONV) {
+                        $rc->convert();
+                    }
+
+                    $restore = new restore_ui($rc, array('contextid'=>$contextid));
+                }
+            }
+            $outcome = $restore->process();
+            if (! $restore->is_independent()) {
+                if ($restore->get_stage() == restore_ui::STAGE_PROCESS && ! $restore->requires_substage()) {
+                    try {
+                        $restore->execute();
+                    } catch(Exception $e) {
+                        $restore->cleanup();
+                        throw $e;
+                    }
+                } else {
+                    $restore->save_controller();
+                }
+            }
+
+            if ($restoreid==0) {
+                $restoreid = $restore->get_restoreid();
+            }
+
+            $restore->destroy();
+            unset($restore);
+        }
+
     }
 }
 
