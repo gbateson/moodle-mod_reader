@@ -385,10 +385,13 @@ class reader_downloader {
         // get/create "course_module" record for (new) quiz
         $cm = $this->get_quiz_coursemodule($courseid, $sectionnum, $book->name);
 
-        // add questions to quiz
-        $this->add_questions($cm, $item, $r);
+        // get newly created/updated quiz
+        $quiz = $DB->get_record('quiz', array('id' => $cm->instance));
 
-        return $DB->get_record('quiz', array('id' => $cm->instance));
+        // add questions to quiz
+        $this->add_question_categories($quiz, $cm, $item, $r);
+
+        return $quiz;
     }
 
     /**
@@ -698,123 +701,149 @@ class reader_downloader {
     }
 
     /**
-     * get_quiz_coursemodule
+     * add_question_categories
      *
      * @uses $DB
-     * @uses $USER
+     * @param xxx $quiz
      * @param xxx $cm
      * @param xxx $item
      * @param xxx $r (optional, default=0)
      * @return xxx
      * @todo Finish documenting this function
      */
-    function add_questions($cm, $item, $r=0) {
-        global $CFG, $DB, $PAGE, $OUTPUT, $USER;
-        require_once($CFG->dirroot . '/backup/util/includes/restore_includes.php');
+    function add_question_categories($quiz, $cm, $item, $r=0) {
+
+        // extract $itemid
+        $itemid = $item['@']['id'];
 
         // select $remotesite
         $remotesite = $this->remotesites[$r];
 
-        // get questions file content from $remotesite
-        // (actually it is an unzipped Moodle backup file)
-        $itemid = $item['@']['id'];
-        $url = $remotesite->get_questions_url($itemid);
-        $post = $remotesite->get_questions_post($itemid);
-        $content = download_file_content($url, null, $post);
+        // fetch question categories
+        list($mods, $sections, $categories) = $remotesite->get_questions($itemid);
 
-        // create unique filepath (e.g. "11de239ad6fe9195558fa9cfc54e0a28")
-        $filepath = restore_controller::get_tempdir_name($cm->course, $USER->id);
+        // check we got what we were expecting
+        foreach ($sections as $sectionnum => $section) {
+            foreach ($section->mods as $cmid => $mod) {
+                if ($mod->type=='quiz') {
+                    if ($quiz->name==$mods['quiz']->instances[$mod->instance]->name) {
+                        $quiz->old = new stdClass();
+                        $quiz->old->cmid = $cmid;
+                        $quiz->old->instance = $mod->instance;
+                        $quiz->old->sectionnum = $sectionnum;
+                    }
+                }
+            }
+        }
+        unset($sections, $mods);
 
-        // create temporary directory and add "moodle.xml"
-        $tempdir = $CFG->tempdir.'/backup/'.$filepath;
-        if (! check_dir_exists($tempdir, true, true)) {
-            throw new restore_controller_exception('cannot_create_backup_temp_dir');
+        if (empty($quiz->old)) {
+            return false; // should't happen !!
         }
 
-        // write moodle.xml to temp directory
-        file_put_contents($tempdir.'/moodle.xml', $content);
-
-        $params = array('contextlevel' => CONTEXT_COURSE, 'instanceid' => $cm->course);
-        $contextid = $DB->get_field('context', 'id', $params);
-
-        // pass params to restore engine via $_POST
-        $_POST['contextid'] = $contextid;
-        $_POST['filepath']  = $filepath; // actually this is the "folder" containing "moodle.xml"
-        $_POST['targetid']  = $cm->course;
-        $_POST['target']    = backup::TARGET_EXISTING_ADDING; // = 4
-        $_POST['sesskey']   = sesskey();
-        $_POST['setting_root_activities'] = 1;
-        $_POST['setting_course_overwrite_conf'] = 0;
-
-        // add target section and Quiz activity
-        $_POST['setting_section_section_31_included'] = 1;
-        $_POST['setting_activity_quiz_402_included']  = 1;
-
-        $stages = array(restore_ui::STAGE_CONFIRM,      // 1
-                        restore_ui::STAGE_DESTINATION,  // 2
-                        restore_ui::STAGE_SETTINGS,     // 4
-                        restore_ui::STAGE_SCHEMA,       // 8
-                        restore_ui::STAGE_REVIEW,       // 16
-                        restore_ui::STAGE_PROCESS,      // 32
-                        restore_ui::STAGE_COMPLETE);    // 64
-
-        $restoreid = 0;
-        foreach ($stages as $stage) {
-
-            if ($stage < restore_ui::STAGE_SETTINGS || $stage > restore_ui::STAGE_PROCESS) {
-                continue;
-            }
-
-            // add params for this $stage
-            $_POST['stage'] = $stage;
-            $_POST['restore'] = $restoreid;
-
-            // this code mimics "/backup/restore.php"
-
-            if ($stage & restore_ui::STAGE_CONFIRM + restore_ui::STAGE_DESTINATION) {
-                $restore = restore_ui::engage_independent_stage($stage, $contextid);
-            } else {
-                $restoreid = optional_param('restore', false, PARAM_ALPHANUM);
-                $rc = restore_ui::load_controller($restoreid);
-                if (! $rc) {
-                    $restore = restore_ui::engage_independent_stage($stage/2, $contextid);
-                    if ($restore->process()) {
-                        $rc = new restore_controller($restore->get_filepath(), $restore->get_course_id(), backup::INTERACTIVE_YES,
-                                            backup::MODE_GENERAL, $USER->id, $restore->get_target());
-                    }
+        foreach ($categories as $category) {
+            $add_question_category = false;
+            if (isset($category->context)) {
+                if ($category->context->level=='course') {
+                    $add_question_category = true;
                 }
-                if ($rc) {
-                    // check if the format conversion must happen first
-                    if ($rc->get_status() == backup::STATUS_REQUIRE_CONV) {
-                        $rc->convert();
-                    }
-
-                    $restore = new restore_ui($rc, array('contextid'=>$contextid));
+                if ($category->context->level=='module' && $category->context->instance==$quiz->old->cmid) {
+                    $add_question_category = true;
                 }
             }
-
-            $outcome = $restore->process();
-            if (! $restore->is_independent()) {
-                if ($restore->get_stage() == restore_ui::STAGE_PROCESS && ! $restore->requires_substage()) {
-                    try {
-                        $restore->execute();
-                    } catch(Exception $e) {
-                        $restore->cleanup();
-                        throw $e;
-                    }
-                } else {
-                    $restore->save_controller();
-                }
+            if ($add_question_category) {
+                $this->add_question_category($category, $quiz, $cm);
             }
+        }
+    }
 
-            if ($restoreid==0) {
-                $restoreid = $restore->get_restoreid();
-            }
+    /**
+     * add_question_category
+     *
+     * @uses $DB
+     * @param xxx $quiz
+     * @param xxx $cm
+     * @param xxx $item
+     * @param xxx $r (optional, default=0)
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    function add_question_category($category, $quiz, $cm) {
+        global $DB;
 
-            $restore->destroy();
-            unset($restore);
+        switch ($category->context->level) {
+            case 'course': $context = reader_get_context(CONTEXT_COURSE, $cm->course); break;
+            case 'module': $context = reader_get_context(CONTEXT_MODULE, $cm->id); break;
+            default: return false;
         }
 
+        $params = array('name' => $category->name, 'contextid' => $context->id);
+        $categoryid = $DB->get_field('question_categories', 'id', $params);
+
+        if (! $categoryid) {
+            $record = (object)array(
+                'name' => $category->name,
+                'info' => $category->info,
+                'stamp' => $category->stamp,
+                'parent' => $category->parent,
+                'sortorder' => $category->sortorder,
+                'contextid' => $context->id
+            );
+            $categoryid = $DB->insert_record('question_categories', $record);
+        }
+
+        if (! $categoryid) {
+            return false;
+        }
+
+        foreach ($category->questions as $question) {
+            $this->add_question($categoryid, $question);
+        }
+    }
+
+    /**
+     * add_question
+     *
+     * @uses $DB
+     * @param xxx $categoryid
+     * @param xxx $question
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    function add_question($categoryid, $question) {
+        global $DB;
+
+        switch ($question->qtype) {
+            case 'description':
+                echo 'Add DESCRIPTION question to category '.$categoryid.'<br />';
+                break;
+
+            case 'match':
+                echo 'Add MATCH question to category '.$categoryid.'<br />';
+                break;
+
+            case 'multianswer':
+                echo 'Add MULTIANSWER question to category '.$categoryid.'<br />';
+                break;
+
+            case 'multichoice':
+                echo 'Add MULTICHOICE question to category '.$categoryid.'<br />';
+                break;
+
+            case 'ordering':
+                echo 'Add ORDERING question to category '.$categoryid.'<br />';
+                break;
+
+            case 'truefalse':
+                echo 'Add TRuEFALSE question to category '.$categoryid.'<br />';
+                break;
+
+            case 'random':
+                echo 'Add RANDOM question to category '.$categoryid.'<br />';
+                break;
+
+            default: die('Unknown qtype: '.$question->qtype);
+        }
     }
 }
 
@@ -1058,6 +1087,355 @@ class reader_remotesite {
      */
     public function get_image_post($type, $itemid) {
         return null;
+    }
+
+    /**
+     * get_questions
+     *
+     * @param xxx $itemid
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function get_questions($itemid) {
+
+        $url = $this->get_questions_url($itemid);
+        $post = $this->get_questions_post($itemid);
+        $xml = $this->download_xml($url, $post);
+
+        if (empty($xml)) {
+            return false; // shouldn't happen !!
+        }
+        // INFO
+        // - MOODLE_VERSION, MOODLE_RELEASE, DATE, ORIGINAL_WWWROOT, ...
+        // ROLES
+        // COURSE
+        // - HEADER, BLOCKS, SECTIONS, QUESTION_CATEGORIES, GROUPS, GRADEBOOK, MODULES, FORMDATA
+
+        if (isset($xml['MOODLE_BACKUP']['#']['INFO']['0']['#']['DETAILS'])) {
+            $mods = $this->get_xml_values_mods($xml['MOODLE_BACKUP']['#']['INFO']['0']['#']['DETAILS']);
+        } else {
+            $mods = array(); // shouldn't happen !!
+        }
+
+        if (isset($xml['MOODLE_BACKUP']['#']['COURSE']['0']['#']['SECTIONS'])) {
+            $sections = $this->get_xml_values_sections($xml['MOODLE_BACKUP']['#']['COURSE']['0']['#']['SECTIONS'], $mods);
+        } else {
+            $sections = array(); // shouldn't happen !!
+        }
+
+        if (isset($xml['MOODLE_BACKUP']['#']['COURSE']['0']['#']['QUESTION_CATEGORIES'])) {
+            $categories = $this->get_xml_values_categories($xml['MOODLE_BACKUP']['#']['COURSE']['0']['#']['QUESTION_CATEGORIES']);
+        } else {
+            $categories = array(); // shouldn't happen !!
+        }
+
+        return array($mods, $sections, $categories);
+    }
+
+    /*
+     * get_xml_values_context
+     *
+     * @param xxx $xml (passed by reference)
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    function get_xml_values_context(&$xml) {
+        $defaults = array('level' => '', 'instance' => 0);
+        return $this->get_xml_values($xml['0']['#'], $defaults);
+    }
+
+    /*
+     * get_xml_values_categories
+     *
+     * @param xxx $xml (passed by reference)
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    function get_xml_values_categories(&$xml) {
+        $categories = array();
+
+        if (isset($xml['0']['#']['QUESTION_CATEGORY'])) {
+            $category = &$xml['0']['#']['QUESTION_CATEGORY'];
+
+            foreach (array_keys($category) as $c) {
+                $categories[$c] = $this->get_xml_values_category($category["$c"]['#']);
+            }
+            unset($category);
+        }
+
+        return $this->convert_to_assoc_array($categories, 'id');
+    }
+
+    /*
+     * get_xml_values_category
+     *
+     * @param xxx $xml (passed by reference)
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    function get_xml_values_category(&$xml) {
+        $defaults = array('id' => '', 'name' => '', 'info' => '', 'stamp' => '', 'parent' => 0, 'sortorder' => 0);
+        return $this->get_xml_values($xml, $defaults);
+    }
+
+    /*
+     * get_xml_values_questions
+     *
+     * @param xxx $xml (passed by reference)
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    function get_xml_values_questions(&$xml) {
+        $questions = array();
+        if (isset($xml['0']['#']['QUESTION'])) {
+
+            $question = $xml['0']['#']['QUESTION'];
+            foreach (array_keys($question) as $q) {
+
+                $defaults = array('id'              => '', 'parent'             => 0,  'name'      => '',
+                                  'questiontext'    => '', 'questiontextformat' => 0,  'image'     => '',
+                                  'generalfeedback' => 0,  'defaultgrade'       => 0,  'penalty'   => 0, 'qtype'      => '',
+                                  'length'          => '', 'stamp'              => '', 'version'   => 0, 'hidden'     => '',
+                                  'timecreated'     => 0,  'timemodified'       => 0,  'createdby' => 0, 'modifiedby' => 0);
+                $questions[$q] = $this->get_xml_values($question["$q"]['#'], $defaults);
+            }
+            unset($question);
+        }
+
+        return $this->convert_to_assoc_array($questions, 'id');
+    }
+
+    /*
+     * get_xml_values_ordering
+     *
+     * @param xxx $xml (passed by reference)
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    function get_xml_values_ordering(&$xml) {
+        $defaults = array('logical' => 1, 'studentsee' => 6, 'correctfeedback' => '', 'partiallycorrectfeedback' => '', 'incorrectfeedback' => '');
+        return $this->get_xml_values($xml['0']['#'], $defaults);
+    }
+
+    /*
+     * get_xml_values_multichoice
+     *
+     * @param xxx $xml (passed by reference)
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    function get_xml_values_multichoice(&$xml) {
+        $defaults = array('layout' => '0', 'answers' => array(), 'single' => 1, 'shuffleanswers' => 1, 'correctfeedback' => '', 'partiallycorrectfeedback' => '', 'incorrectfeedback' => '');
+        return $this->get_xml_values($xml['0']['#'], $defaults);
+    }
+
+    /*
+     * get_xml_values_truefalse
+     *
+     * @param xxx $xml (passed by reference)
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    function get_xml_values_truefalse(&$xml) {
+        $defaults = array('trueanswer' => 0, 'falseanswer' => 0);
+        return $this->get_xml_values($xml['0']['#'], $defaults);
+    }
+
+    /*
+     * get_xml_values_answers
+     *
+     * @param xxx $xml (passed by reference)
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    function get_xml_values_answers(&$xml) {
+        $answers = array();
+
+        if (isset($xml['0']['#']['ANSWER'])) {
+            $answer = &$xml['0']['#']['ANSWER'];
+
+            foreach (array_keys($answer) as $a) {
+                $defaults = array('id' => 0, 'answer_text' => '', 'fraction' => 0, 'feedback' => '');
+                $answers[$a] = $this->get_xml_values($answer["$a"]['#'], $defaults);
+            }
+            unset($answer);
+        }
+        return $answers;
+    }
+
+    /*
+     * get_xml_values_mods
+     *
+     * @param xxx $xml (passed by reference)
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    function get_xml_values_mods(&$xml) {
+        $mods = array();
+
+        if (isset($xml['0']['#']['MOD'])) {
+            $mod = &$xml['0']['#']['MOD'];
+
+            foreach (array_keys($mod) as $m) {
+                if (isset($mod["$m"]['#']['ID'])) {
+                    $defaults = array('id'      => 0,  'type'    => '', 'instance'  => 0, 'added'      => 0, 'score' => 0,
+                                     'indent'   => 0,  'visible' => 1,  'groupmode' => 0, 'groupingid' => 0, 'groupmembersonly' => 0,
+                                     'idnumber' => '', 'roles_overrides' => '', 'roles_assignments' => '');
+                    $index_field = 'id';
+                } else {
+                    $defaults = array('name' => '', 'included' => 0, 'userinfo' => 0);
+                    $index_field = 'name';
+                }
+                $mods[$m] = $this->get_xml_values($mod["$m"]['#'], $defaults);
+            }
+            unset($mod);
+        }
+        return $this->convert_to_assoc_array($mods, $index_field);
+    }
+
+    /*
+     * get_xml_values_sections
+     *
+     * @param xxx $xml (passed by reference)
+     * @param xxx $mods (passed by reference)
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    function get_xml_values_sections(&$xml, &$mods) {
+        $sections = array();
+        if ($xml['0']['#']['SECTION']) {
+            $section = $xml['0']['#']['SECTION'];
+            foreach (array_keys($section) as $s) {
+                if (isset($section["$s"]['#']['MODS']['0']['#']['MOD'])) {
+                    $defaults = array('id' => 0, 'number' => 0, 'summary' => '', 'visible' => 1);
+                    $sections[$s] = $this->get_xml_values($section["$s"]['#'], $defaults);
+                    $sections[$s]->summary = stripslashes(strip_tags($sections[$s]->summary));
+                }
+            }
+        }
+        return $this->convert_to_assoc_array($sections, 'number');
+    }
+
+    /*
+     * get_xml_values_section
+     *
+     * @param xxx $xml (passed by reference)
+     * @param xxx $mods (passed by reference)
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    function get_xml_values_section(&$xml, &$mods) {
+
+        foreach (array_keys($section) as $s) {
+            $sectionid = $section["$s"]['#']['ID']['0']['#'];
+            $sectionnum = $section["$s"]['#']['NUMBER']['0']['#'];
+            if (isset($section["$s"]['#']['NAME']['0']['#'])) {
+                $sectionname = strip_tags($section["$s"]['#']['NAME']['0']['#']);
+            } else {
+                $sectionname = strip_tags($section["$s"]['#']['SUMMARY']['0']['#']);
+            }
+            if (isset($section["$s"]['#']['MODS']['0']['#']['MOD'])) {
+                $sections[$sectionnum] = (object)array(
+                    'sectionid' => $sectionid,
+                    'sectionnum' => $sectionnum,
+                    'sectionname' => $sectionname,
+                    'mods' => array()
+                );
+                $mod = &$section["$s"]['#']['MODS']['0']['#']['MOD'];
+                foreach (array_keys($mod) as $m) {
+                    $cmid = $mod["$m"]['#']['ID']['0']['#'];
+                    $modname = $mod["$m"]['#']['TYPE']['0']['#'];
+                    $instanceid = $mod["$m"]['#']['INSTANCE']['0']['#'];
+                    $sections[$sectionnum]->mods[$cmid] = (object)array(
+                        'modname' => $modname,
+                        'instanceid' => $instanceid,
+                        'instancename' => $mods[$modname]->instances[$instanceid]
+                    );
+                }
+                unset($mod);
+            }
+        }
+    }
+
+    /*
+     * get_xml_values_instances
+     *
+     * @param xxx $xml (passed by reference)
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    function get_xml_values_instances(&$xml) {
+        $instances = array();
+
+        if (isset($xml['0']['#']['INSTANCE'])) {
+            $instance =&$xml['0']['#']['INSTANCE'];
+
+            foreach (array_keys($instance) as $i) {
+                $defaults = array('id' => 0, 'name' => '', 'included' => 0, 'userinfo' => 0);
+                $instances[$i] = $this->get_xml_values($instance["$i"]['#'], $defaults);
+            }
+            unset($instance);
+        }
+        return $this->convert_to_assoc_array($instances, 'id');
+    }
+
+    /*
+     * convert_to_assoc_array
+     *
+     * @param xxx $items
+     * @param xxx $field
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    function convert_to_assoc_array($items, $field) {
+        $return = array();
+        foreach ($items as $item) {
+            $return[$item->$field] = $item;
+        }
+        return $return;
+    }
+
+    /*
+     * get_xml_values
+     *
+     * @param xxx $xml (passed by reference)
+     * @param xxx $defaults
+     * @param xxx $stdclass (optional, default=null)
+     * @todo Finish documenting this function
+     */
+    function get_xml_values(&$xml, $defaults, $stdclass=null) {
+
+        if ($stdclass===null) {
+            $stdclass = new stdClass();
+        }
+
+        foreach ($defaults as $name => $value) {
+            $NAME = strtoupper($name);
+            if (isset($xml[$NAME]['0']['#'])) {
+                $stdclass->$name = $xml[$NAME]['0']['#'];
+            } else {
+                $stdclass->$name = $value;
+            }
+        }
+
+        // get the $names of fields from the $xml
+        // that were not transferred to the $stdclass
+        $names = array_keys($xml);
+        $names = array_map('strtolower', $names);
+        $names = array_diff($names, array_keys($defaults));
+
+        foreach ($names as $name) {
+            $method = 'get_xml_values_'.$name;
+            if (method_exists($this, $method)) {
+                $NAME = strtoupper($name);
+                $stdclass->$name = $this->$method($xml[$NAME]);
+            } else {
+                print_object($xml);
+                throw new moodle_exception('oops, method not found: '.$method);
+            }
+        }
+
+        return $stdclass;
     }
 }
 
