@@ -1955,6 +1955,9 @@ function xmldb_reader_fix_question_categories() {
         xmldb_reader_box_end();
     }
 
+    // cache contextlevel for each context used in these categories
+    $contextlevel = array();
+
     // get question categories for Reader course activities
 
     $started_box = false;
@@ -2013,7 +2016,17 @@ function xmldb_reader_fix_question_categories() {
                 $keep = false; // empty category
             }
 
-            if ($keep && $category->contextid==$coursecontext->id) {
+            $move_to_quiz_context = false;
+            if ($keep) {
+                if (empty($contextlevel[$category->contextid])) {
+                    $contextlevel[$category->contextid] = $DB->get_field('context', 'contextlevel', array('id' => $category->contextid));
+                }
+                if ($contextlevel[$category->contextid]==CONTEXT_COURSE) {
+                    $move_to_quiz_context = true;
+                }
+            }
+
+            if ($move_to_quiz_context) {
                 // this category is in a course context, but it should NOT be
                 // let's see if we can move the questions to a quiz context
                 if ($questions = $DB->get_records('question', array('category' => $category->id))) {
