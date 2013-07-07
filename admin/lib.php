@@ -614,36 +614,50 @@ class reader_downloader {
         $sumgrades = 0;
         $newquiz = (object)array(
             // standard Quiz fields
-            'name'          => $quizname,
-            'intro'         => ' ',
-            'visible'       => 1,
-            'introformat'   => FORMAT_HTML, // =1
-            'timeopen'      => 0,
-            'timeclose'     => 0,
+            'name'            => $quizname,
+            'intro'           => ' ',
+            'visible'         => 1,
+            'introformat'     => FORMAT_HTML, // =1
+            'timeopen'        => 0,
+            'timeclose'       => 0,
             'preferredbehaviour' => 'deferredfeedback',
-            'attempts'      => 0,
-            'attemptonlast' => 1,
-            'grademethod'   => 1,
-            'decimalpoints' => 2,
+            'attempts'        => 0,
+            'attemptonlast'   => 1,
+            'grademethod'     => 1,
+            'decimalpoints'   => 2,
+            'reviewattempt'   => 0,
+            'reviewcorrectness' => 0,
+            'reviewmarks'       => 0,
+            'reviewspecificfeedback' => 0,
+            'reviewgeneralfeedback'  => 0,
+            'reviewrightanswer'      => 0,
+            'reviewoverallfeedback'  => 0,
             'questionsperpage' => 0,
             'shufflequestions' => 0,
-            'shuffleanswers' => 1,
-            'timemodified'  => time(),
-            'timelimit'     => 0,
-            'subnet'        => '',
-            'quizpassword'  => '',
-            'delay1'        => 0,
-            'delay2'        => 0,
-            'questions'     => '0,',
+            'shuffleanswers'  => 1,
+            'questions'       => '0,',
+            'sumgrades'       => 0, // reset after adding questions
+            'grade'           => 100,
+            'timecreated'     => time(),
+            'timemodified'    => time(),
+            'timelimit'       => 0,
+            'overduehandling' => '',
+            'graceperiod'     => 0,
+            'quizpassword'    => '', // should be "password" ?
+            'subnet'          => '',
+            'browsersecurity' => '',
+            'delay1'          => 0,
+            'delay2'          => 0,
+            'showuserpicture' => 0,
+            'showblocks'      => 0,
+            'navmethod'       => '',
 
             // feedback fields (for "quiz_feedback" table)
-            'feedbacktext'          => array_fill(0, 5, array('text' => '', 'format' => 0)),
-            'feedbackboundaries'    => array(0 => 0, -1 => 11),
+            'feedbacktext'    => array_fill(0, 5, array('text' => '', 'format' => 0)),
+            'feedbackboundaries' => array(0 => 0, -1 => 11),
             'feedbackboundarycount' => 0,
 
             // these fields may not be necessary in Moodle 2.x
-            'sumgrades'     => 0, // reset after adding questions
-            'grade'         => 100,
             'adaptive'      => 1,
             'penaltyscheme' => 1,
             'popup'         => 0,
@@ -659,6 +673,7 @@ class reader_downloader {
             'cmidnumber'    => '',
             'groupmode'     => 0,
             'MAX_FILE_SIZE' => 10485760, // 10 GB
+
         );
 
         //$newquiz->instance = quiz_add_instance($newquiz);
@@ -712,7 +727,6 @@ class reader_downloader {
      * @todo Finish documenting this function
      */
     function add_question_categories($quiz, $cm, $item, $r=0) {
-
         // extract $itemid
         $itemid = $item['@']['id'];
 
@@ -720,64 +734,121 @@ class reader_downloader {
         $remotesite = $this->remotesites[$r];
 
         // fetch question categories
-        list($mods, $sections, $categories) = $remotesite->get_questions($itemid);
+        list($module, $categories) = $remotesite->get_questions($itemid);
 
-        // check we got what we were expecting
-        foreach ($sections as $sectionnum => $section) {
-            foreach ($section->mods as $cmid => $mod) {
-                if ($mod->type=='quiz') {
-                    if ($quiz->name==$mods['quiz']->instances[$mod->instance]->name) {
-                        $quiz->old = new stdClass();
-                        $quiz->old->cmid = $cmid;
-                        $quiz->old->instance = $mod->instance;
-                        $quiz->old->sectionnum = $sectionnum;
-                    }
-                }
-            }
-        }
-        unset($sections, $mods);
+        // prune questions to leave only main questions or sub questions
+        // e.g. questions used by random or multianswer questions
+        $this->prune_question_categories($module, $categories);
 
-        if (empty($quiz->old)) {
-            return false; // should't happen !!
-        }
+        // we need to track old and new question ids
+        $questionids = array();
 
         foreach ($categories as $category) {
-            $add_question_category = false;
-            if (isset($category->context)) {
-                if ($category->context->level=='course') {
-                    $add_question_category = true;
+            $this->add_question_category($questionids, $category, $quiz, $cm);
+        }
+
+        foreach ($module->question_instances as $instance) {
+            $this->add_question_instance($questionids, $instance, $quiz);
+        }
+    }
+
+    /**
+     * prune_question_categories
+     *
+     * @param xxx $module (passed by reference)
+     * @param xxx $categories (passed by reference)
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    function prune_question_categories(&$module, &$categories) {
+        // list of questions used in this $quiz
+        $ids = array();
+
+        // get main questions used in this quiz
+        foreach ($module->question_instances as $instance) {
+            $ids[$instance->question] = array($instance->question);
+        }
+
+        // get sub-questions used in this quiz
+        foreach ($categories as $categoryid => $category) {
+            foreach ($category->questions as $questionid => $question) {
+                if (isset($ids[$question->id]) && $question->qtype=='random') {
+                    $ids[$question->id] = array_keys($category->questions);
+                } else if (isset($ids[$question->parent])) {
+                    $ids[$question->parent][] = $questionid;
                 }
-                if ($category->context->level=='module' && $category->context->instance==$quiz->old->cmid) {
-                    $add_question_category = true;
-                }
-            }
-            if ($add_question_category) {
-                $this->add_question_category($category, $quiz, $cm);
             }
         }
+
+        // flatten array of required question ids
+        $questionids = array();
+        foreach (array_keys($ids) as $id) {
+            $questionids = array_merge($questionids, $ids[$id]);
+        }
+        $questionids = array_flip($questionids);
+
+        foreach ($categories as $categoryid => $category) {
+            // delete unneeded questions
+            foreach ($category->questions as $questionid => $question) {
+                if (array_key_exists($questionid, $questionids)) {
+                    continue; // keep this question
+                }
+                unset($categories[$categoryid]->questions[$questionid]);
+            }
+            // delete category if it now contains no questions
+            if (empty($categories[$categoryid]->questions)) {
+                unset($categories[$categoryid]);
+            }
+        }
+
+        return $categories;
     }
 
     /**
      * add_question_category
      *
      * @uses $DB
+     * @param xxx $questionids (passed by reference)
+     * @param xxx $category
      * @param xxx $quiz
      * @param xxx $cm
-     * @param xxx $item
-     * @param xxx $r (optional, default=0)
      * @return xxx
      * @todo Finish documenting this function
      */
-    function add_question_category($category, $quiz, $cm) {
+    function add_question_category(&$newquestionids, $category, $quiz, $cm) {
         global $DB;
 
-        switch ($category->context->level) {
-            case 'course': $context = reader_get_context(CONTEXT_COURSE, $cm->course); break;
-            case 'module': $context = reader_get_context(CONTEXT_MODULE, $cm->id); break;
-            default: return false;
+        if (empty($category->questions)) {
+            return false; // skip empty categories
         }
 
-        $params = array('name' => $category->name, 'contextid' => $context->id);
+        $systemcontext = reader_get_context(CONTEXT_SYSTEM);
+        $coursecontext = reader_get_context(CONTEXT_COURSE, $cm->course);
+        $modulecontext = reader_get_context(CONTEXT_MODULE, $cm->id);
+
+        switch ($category->context->level) {
+            case 'course':
+                if (strpos($category->info, 'default category')) {
+                    $coursename = $DB->get_field('course', 'shortname', array('id' => $cm->course));
+                    $category->name = get_string('defaultfor', 'question', $coursename);
+                    $category->info = get_string('defaultinfofor', 'question', $coursename);
+                }
+                $category->parent = $DB->get_field('question_categories', 'id', array('contextid' => $systemcontext->id));
+                $category->contextid = $coursecontext->id;
+                break;
+
+            case 'module':
+            default:
+                if (strpos($category->info, 'default category')) {
+                    $category->name = get_string('defaultfor', 'question', $quiz->name);
+                    $category->info = get_string('defaultinfofor', 'question', $quiz->name);
+                }
+                $category->parent = $DB->get_field('question_categories', 'id', array('contextid' => $coursecontext->id));
+                $category->contextid = $modulecontext->id;
+                break;
+        }
+
+        $params = array('name' => $category->name, 'contextid' => $category->contextid);
         $categoryid = $DB->get_field('question_categories', 'id', $params);
 
         if (! $categoryid) {
@@ -787,7 +858,7 @@ class reader_downloader {
                 'stamp' => $category->stamp,
                 'parent' => $category->parent,
                 'sortorder' => $category->sortorder,
-                'contextid' => $context->id
+                'contextid' => $category->contextid
             );
             $categoryid = $DB->insert_record('question_categories', $record);
         }
@@ -796,53 +867,249 @@ class reader_downloader {
             return false;
         }
 
+        // get the ids of the old (=existing) questions
+        // which most closely match the questions in this category
+        $oldquestionids = $this->get_old_questionids($categoryid, $category);
+
         foreach ($category->questions as $question) {
-            $this->add_question($categoryid, $question);
+            $this->add_question($oldquestionids, $newquestionids, $categoryid, $question);
         }
+    }
+
+    /**
+     * get_old_questionids
+     *
+     * @uses $DB
+     * @param xxx $category
+     * @param xxx $oldquestions
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    function get_old_questionids($categoryid, $category) {
+        global $DB;
+
+        $questionids = array();
+        if ($oldquestions = $DB->get_records('question', array('category' => $categoryid))) {
+            foreach ($category->questions as $questionid => $question) {
+                $questionids[$questionid] = array();
+
+                // set the $field will we use for comparison
+                if ($question->qtype=='random' || empty($question->questiontext)) {
+                    $field = 'name';
+                } else {
+                    $field = 'questiontext';
+                }
+
+                // set minimum required $levenshtein difference
+                // we will ignore any strings that differ
+                // by greater than $min_levenshtein
+                // we are aiming for the Fibonacci number
+                // $length => $min_levenshtein
+                //     3   =>   2
+                //     6   =>   3
+                //    10   =>   4
+                //    15   =>   5
+                //    21   =>   6
+                //    28   =>   7
+                $min_levenshtein = 2;
+                $length = strlen($question->$field);
+                while ((($min_levenshtein + 1) * $min_levenshtein / 2) < $length) {
+                    $min_levenshtein ++;
+                }
+
+                // compare this $question to all the old (=existing) questions
+                foreach ($oldquestions as $oldquestionid => $oldquestion) {
+
+                    $levenshtein = levenshtein($question->$field, $oldquestion->$field);
+                    if ($levenshtein <= $min_levenshtein) {
+                        $questionids[$questionid][$oldquestionid] = $levenshtein;
+                    }
+                }
+            }
+        }
+
+        // select best match not used by another question
+        $oldquestionids = array();
+        foreach ($questionids as $questionid => $ids) {
+
+            // sort old question ids by Levenshtein difference
+            // (lower difference is better match, 0 is a best)
+            asort($ids);
+
+            // remove ids that have already been used
+            $ids = array_keys($ids);
+            $ids = array_diff($ids, $oldquestionids);
+
+            // select the best remaining match
+            $oldquestionids[$questionid] = reset($ids);
+        }
+
+        return $oldquestionids;
     }
 
     /**
      * add_question
      *
      * @uses $DB
-     * @param xxx $categoryid
-     * @param xxx $question
+     * @param xxx $oldquestionids (passed by reference)
+     * @param xxx $newquestionids (passed by reference)
+     * @param xxx $categoryid of newly restored category
+     * @param xxx $question from backup data
      * @return xxx
      * @todo Finish documenting this function
      */
-    function add_question($categoryid, $question) {
-        global $DB;
+    function add_question(&$oldquestionids, &$newquestionids, $categoryid, $question) {
+        global $DB, $USER;
+
+        // store old question id (the one used in the backup file)
+        $oldid = $question->id;
+        unset($question->id);
+
+        // get defaults (from $DB if possible)
+        if (isset($oldquestionids[$oldid]) && $oldquestionids[$oldid]) {
+            $defaults = $DB->get_record('question', array('id' => $oldquestionids[$oldid]));
+            $defaults = get_object_vars($defaults);
+        } else {
+            $defaults = array(
+                'name'         => '',
+                'questiontext' => '',
+                'questiontextformat' => 0,
+                'generalfeedback' => '',
+                'generalfeedbackformat' => 0,
+                'defaultmark'  => 0,
+                'penalty'      => 0,
+                'qtype'        => '',
+                'length'       => 0,
+                'stamp'        => '',
+                'version'      => '',
+                'hidden'       => 0,
+                'timecreated'  => 0,
+                'timemodified' => 0,
+                'createdby'    => 0,
+                'modifiedby'   => 0
+            );
+        }
+
+        // transfer defaults to question
+        foreach ($defaults as $name => $value) {
+            if (isset($question->$name)) {
+                // do nothing
+            } else {
+                $question->$name = $value;
+            }
+        }
+
+        // ensure created/modified time and user are plausible
+        $time = time();
+        $fields = array('created', 'modified');
+        foreach ($fields as $field) {
+            $userfield = $field.'by';
+            $timefield = 'time'.$field;
+            if (! $question->$userfield = intval($question->$userfield)) {
+                $question->$userfield = $USER->id;
+            }
+            if (! $question->$timefield = intval($question->$timefield)) {
+                $question->$userfield = $time;
+            }
+        }
+
+        // set the question category
+        $question->category = $categoryid;
+
+        // add/update the question record
+        if (isset($question->id)) {
+            if (! $DB->update_record('question', $question)) {
+                return false; // shouldn't happen !!
+            }
+        } else {
+            if (! $question->id = $DB->insert_record('question', $question)) {
+                return false; // shouldn't happen !!
+            }
+        }
+
+        // map old (backup) question id to new $question->id in this Moodle $DB
+        $newquestionids[$oldid] = $question->id;
 
         switch ($question->qtype) {
             case 'description':
-                echo 'Add DESCRIPTION question to category '.$categoryid.'<br />';
+                echo 'Add DESCRIPTION question options to category '.$categoryid.'<br />';
+                die;
                 break;
 
             case 'match':
-                echo 'Add MATCH question to category '.$categoryid.'<br />';
+                echo 'Add MATCH question options to category '.$categoryid.'<br />';
                 break;
 
             case 'multianswer':
-                echo 'Add MULTIANSWER question to category '.$categoryid.'<br />';
+                echo 'Add MULTIANSWER question options to category '.$categoryid.'<br />';
                 break;
 
             case 'multichoice':
-                echo 'Add MULTICHOICE question to category '.$categoryid.'<br />';
+                echo 'Add MULTICHOICE question options to category '.$categoryid.'<br />';
                 break;
 
             case 'ordering':
-                echo 'Add ORDERING question to category '.$categoryid.'<br />';
+                if ($question->ordering->id = $DB->get_field('question_ordering', 'id', array('question' => $question->id))) {
+                    if (! $DB->update_record('question_ordering', $question->ordering)) {
+                        throw new moodle_exception(get_string('cannotupdaterecord', 'error', 'question_ordering (id='.$question->ordering->id.')'));
+                    }
+                } else {
+                    unset($question->ordering->id);
+                    if (! $DB->insert_record('question_ordering', $question->ordering)) {
+                        throw new moodle_exception(get_string('cannotinsertrecord', 'error', 'question_ordering'));
+                    }
+                }
                 break;
 
             case 'truefalse':
-                echo 'Add TRuEFALSE question to category '.$categoryid.'<br />';
+                echo 'Add TRUEFALSE question options to category '.$categoryid.'<br />';
                 break;
 
             case 'random':
-                echo 'Add RANDOM question to category '.$categoryid.'<br />';
+                // do nothing
+                // echo 'Add RANDOM question to category '.$categoryid.'<br />';
                 break;
 
             default: die('Unknown qtype: '.$question->qtype);
+        }
+    }
+
+    /**
+     * add_question_instance
+     *
+     * @uses $DB
+     * @param xxx $questionids (passed by reference)
+     * @param xxx $category
+     * @param xxx $quiz
+     * @param xxx $cm
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    function add_question_instance(&$questionids, $instance, $quiz) {
+        global $DB;
+
+        // set up quiz/reader instance record
+        $instance = (object)array(
+            'quiz'     => $quiz->id,
+            'question' => $questionids[$instance->question],
+            'grade'    => $instance->grade,
+        );
+
+        // define search $params for old (=existing) instance record
+        $params = array('quiz' => $instance->quiz, 'question' => $instance->question);
+
+        // add quiz question instance record, if necessary
+        if (! $DB->record_exists('quiz_question_instances', $params)) {
+            if (! $DB->insert_record('quiz_question_instances', $instance)) {
+                throw new moodle_exception(get_string('cannotinsertrecord', 'error', 'quiz_question_instances'));
+            }
+        }
+
+        // add reader question instance record, if necessary
+        if (! $DB->record_exists('reader_question_instances', $params)) {
+            if (! $id = $DB->insert_record('reader_question_instances', $instance)) {
+                throw new moodle_exception(get_string('cannotinsertrecord', 'error', 'reader_question_instances'));
+            }
         }
     }
 }
@@ -1102,34 +1369,31 @@ class reader_remotesite {
         $post = $this->get_questions_post($itemid);
         $xml = $this->download_xml($url, $post);
 
-        if (empty($xml)) {
-            return false; // shouldn't happen !!
-        }
-        // INFO
-        // - MOODLE_VERSION, MOODLE_RELEASE, DATE, ORIGINAL_WWWROOT, ...
-        // ROLES
-        // COURSE
+        // MOODLE_BACKUP -> INFO
+        // - MOODLE_VERSION, MOODLE_RELEASE, DATE, ORIGINAL_WWWROOT, ZIP_METHOD, DETAILS
+        // MOODLE_BACKUP -> ROLES
+        // - ROLE
+        // MOODLE_BACKUP -> COURSE
         // - HEADER, BLOCKS, SECTIONS, QUESTION_CATEGORIES, GROUPS, GRADEBOOK, MODULES, FORMDATA
 
-        if (isset($xml['MOODLE_BACKUP']['#']['INFO']['0']['#']['DETAILS'])) {
-            $mods = $this->get_xml_values_mods($xml['MOODLE_BACKUP']['#']['INFO']['0']['#']['DETAILS']);
-        } else {
-            $mods = array(); // shouldn't happen !!
+        $modules = array();
+        $categories = array();
+
+        if (is_array($xml)) {
+            if (isset($xml['MOODLE_BACKUP']['#']['COURSE'])) {
+                $course = &$xml['MOODLE_BACKUP']['#']['COURSE'];
+                if (isset($course['0']['#']['MODULES'])) {
+                    $modules = $this->get_xml_values_mods($course['0']['#']['MODULES']);
+                }
+                if (isset($course['0']['#']['QUESTION_CATEGORIES'])) {
+                    $categories = $this->get_xml_values_categories($course['0']['#']['QUESTION_CATEGORIES']);
+                }
+                unset($course);
+            }
         }
 
-        if (isset($xml['MOODLE_BACKUP']['#']['COURSE']['0']['#']['SECTIONS'])) {
-            $sections = $this->get_xml_values_sections($xml['MOODLE_BACKUP']['#']['COURSE']['0']['#']['SECTIONS'], $mods);
-        } else {
-            $sections = array(); // shouldn't happen !!
-        }
-
-        if (isset($xml['MOODLE_BACKUP']['#']['COURSE']['0']['#']['QUESTION_CATEGORIES'])) {
-            $categories = $this->get_xml_values_categories($xml['MOODLE_BACKUP']['#']['COURSE']['0']['#']['QUESTION_CATEGORIES']);
-        } else {
-            $categories = array(); // shouldn't happen !!
-        }
-
-        return array($mods, $sections, $categories);
+        $module = reset($modules);
+        return array($module, $categories);
     }
 
     /*
@@ -1191,8 +1455,7 @@ class reader_remotesite {
 
             $question = $xml['0']['#']['QUESTION'];
             foreach (array_keys($question) as $q) {
-
-                $defaults = array('id'              => '', 'parent'             => 0,  'name'      => '',
+                $defaults = array('id'              => 0,  'parent'             => 0,  'name'      => '',
                                   'questiontext'    => '', 'questiontextformat' => 0,  'image'     => '',
                                   'generalfeedback' => 0,  'defaultgrade'       => 0,  'penalty'   => 0, 'qtype'      => '',
                                   'length'          => '', 'stamp'              => '', 'version'   => 0, 'hidden'     => '',
@@ -1272,25 +1535,75 @@ class reader_remotesite {
      */
     function get_xml_values_mods(&$xml) {
         $mods = array();
-
         if (isset($xml['0']['#']['MOD'])) {
             $mod = &$xml['0']['#']['MOD'];
 
             foreach (array_keys($mod) as $m) {
-                if (isset($mod["$m"]['#']['ID'])) {
-                    $defaults = array('id'      => 0,  'type'    => '', 'instance'  => 0, 'added'      => 0, 'score' => 0,
-                                     'indent'   => 0,  'visible' => 1,  'groupmode' => 0, 'groupingid' => 0, 'groupmembersonly' => 0,
-                                     'idnumber' => '', 'roles_overrides' => '', 'roles_assignments' => '');
-                    $index_field = 'id';
-                } else {
-                    $defaults = array('name' => '', 'included' => 0, 'userinfo' => 0);
-                    $index_field = 'name';
-                }
+                $defaults = $this->get_xml_values_mod_defaults($mod["$m"]['#']);
                 $mods[$m] = $this->get_xml_values($mod["$m"]['#'], $defaults);
             }
             unset($mod);
         }
-        return $this->convert_to_assoc_array($mods, $index_field);
+        return $this->convert_to_assoc_array($mods, 'id');
+    }
+
+    function get_xml_values_mod_defaults(&$xml) {
+        $modtype = $xml['MODTYPE']['0']['#'];
+        if ($modtype=='quiz') {
+            return array('id'              => 0, 'modtype'       => '', 'name'             => '', 'intro'            => '',
+                         'timeopen'        => 0, 'timeclose'     => 0,  'optionflags'      => 0,  'penaltyscheme'    => 0,
+                         'attempts_number' => 0, 'attemptonlast' => 0,  'grademethod'      => 0,  'decimalpoints'    => 0,
+                         'review'          => 0, 'questions'     => '', 'questionsperpage' => 0,  'shufflequestions' => 0,
+                         'shuffleanswers'  => 0, 'sumgrades'     => 0,  'grade'            => 0,  'timecreated'      => 0,
+                         'timemodified'    => 0, 'timelimit'     => 0,  'password'         => '', 'subnet'           => '',
+                         'popup'           => 0, 'delay1'        => 0,  'delay2'           => 0);
+        }
+        // report unknown $modtype, and suggest $defaults
+        $keys = array_keys($xml);
+        $keys = array_map('strtolower', $keys);
+        echo '$defaults'." = array('".implode("' => '', '", $keys)."' => '');";
+        throw new moodle_exception('Unknown MODTYPE: '.$modtype);
+    }
+    /*
+     * get_xml_values_question_instances
+     *
+     * @param xxx $xml (passed by reference)
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    function get_xml_values_question_instances(&$xml) {
+        $instances = array();
+        if (isset($xml['0']['#']['QUESTION_INSTANCE'])) {
+
+            $instance = $xml['0']['#']['QUESTION_INSTANCE'];
+            foreach (array_keys($instance) as $i) {
+                $defaults = array('id' => 0, 'question' => 0, 'grade' => 0);
+                $instances[$i] = $this->get_xml_values($instance["$i"]['#'], $defaults);
+            }
+            unset($instance);
+        }
+        return $this->convert_to_assoc_array($instances, 'id');
+    }
+
+    /*
+     * get_xml_values_feedbacks
+     *
+     * @param xxx $xml (passed by reference)
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    function get_xml_values_feedbacks(&$xml) {
+        $feedbacks = array();
+        if (isset($xml['0']['#']['FEEDBACK'])) {
+
+            $feedback = $xml['0']['#']['FEEDBACK'];
+            foreach (array_keys($feedback) as $f) {
+                $defaults = array('id' => 0, 'quizid' => 0, 'feedbacktext' => '', 'mingrade' => 0, 'maxgrade' => 0);
+                $feedbacks[$f] = $this->get_xml_values($feedback["$f"]['#'], $defaults);
+            }
+            unset($feedback);
+        }
+        return $this->convert_to_assoc_array($feedbacks, 'id');
     }
 
     /*
@@ -1314,69 +1627,6 @@ class reader_remotesite {
             }
         }
         return $this->convert_to_assoc_array($sections, 'number');
-    }
-
-    /*
-     * get_xml_values_section
-     *
-     * @param xxx $xml (passed by reference)
-     * @param xxx $mods (passed by reference)
-     * @return xxx
-     * @todo Finish documenting this function
-     */
-    function get_xml_values_section(&$xml, &$mods) {
-
-        foreach (array_keys($section) as $s) {
-            $sectionid = $section["$s"]['#']['ID']['0']['#'];
-            $sectionnum = $section["$s"]['#']['NUMBER']['0']['#'];
-            if (isset($section["$s"]['#']['NAME']['0']['#'])) {
-                $sectionname = strip_tags($section["$s"]['#']['NAME']['0']['#']);
-            } else {
-                $sectionname = strip_tags($section["$s"]['#']['SUMMARY']['0']['#']);
-            }
-            if (isset($section["$s"]['#']['MODS']['0']['#']['MOD'])) {
-                $sections[$sectionnum] = (object)array(
-                    'sectionid' => $sectionid,
-                    'sectionnum' => $sectionnum,
-                    'sectionname' => $sectionname,
-                    'mods' => array()
-                );
-                $mod = &$section["$s"]['#']['MODS']['0']['#']['MOD'];
-                foreach (array_keys($mod) as $m) {
-                    $cmid = $mod["$m"]['#']['ID']['0']['#'];
-                    $modname = $mod["$m"]['#']['TYPE']['0']['#'];
-                    $instanceid = $mod["$m"]['#']['INSTANCE']['0']['#'];
-                    $sections[$sectionnum]->mods[$cmid] = (object)array(
-                        'modname' => $modname,
-                        'instanceid' => $instanceid,
-                        'instancename' => $mods[$modname]->instances[$instanceid]
-                    );
-                }
-                unset($mod);
-            }
-        }
-    }
-
-    /*
-     * get_xml_values_instances
-     *
-     * @param xxx $xml (passed by reference)
-     * @return xxx
-     * @todo Finish documenting this function
-     */
-    function get_xml_values_instances(&$xml) {
-        $instances = array();
-
-        if (isset($xml['0']['#']['INSTANCE'])) {
-            $instance =&$xml['0']['#']['INSTANCE'];
-
-            foreach (array_keys($instance) as $i) {
-                $defaults = array('id' => 0, 'name' => '', 'included' => 0, 'userinfo' => 0);
-                $instances[$i] = $this->get_xml_values($instance["$i"]['#'], $defaults);
-            }
-            unset($instance);
-        }
-        return $this->convert_to_assoc_array($instances, 'id');
     }
 
     /*
@@ -1405,6 +1655,10 @@ class reader_remotesite {
      */
     function get_xml_values(&$xml, $defaults, $stdclass=null) {
 
+        if ($xml===null) {
+            throw new moodle_exception('Oops $xml is NULL');
+        }
+
         if ($stdclass===null) {
             $stdclass = new stdClass();
         }
@@ -1419,7 +1673,7 @@ class reader_remotesite {
         }
 
         // get the $names of fields from the $xml
-        // that were not transferred to the $stdclass
+        // that were not transferred to $stdclass
         $names = array_keys($xml);
         $names = array_map('strtolower', $names);
         $names = array_diff($names, array_keys($defaults));
@@ -1430,8 +1684,10 @@ class reader_remotesite {
                 $NAME = strtoupper($name);
                 $stdclass->$name = $this->$method($xml[$NAME]);
             } else {
+                echo 'oops, method not found: '.$method;
+                print_object($stdclass);
                 print_object($xml);
-                throw new moodle_exception('oops, method not found: '.$method);
+                throw new moodle_exception('oops');
             }
         }
 
@@ -1628,12 +1884,14 @@ class reader_remotesite_moodlereadernet extends reader_remotesite {
             $available->items[$publisher]->items[$level]->items[$itemname] = $itemid;
         }
 
+        // define callback for sorting levels by name
+        $sort_level_by_name = array($this, 'sort_level_by_name');
+
         // sort items by name
         ksort($available->items);
         $publishers = array_keys($available->items);
-        $sort_by_name = array($this, 'sort_by_name');
         foreach ($publishers as $publisher) {
-            uksort($available->items[$publisher]->items, $sort_by_name);
+            uksort($available->items[$publisher]->items, $sort_level_by_name);
             $levels = array_keys($available->items[$publisher]->items);
             foreach ($levels as $level) {
                 ksort($available->items[$publisher]->items[$level]->items);
@@ -1644,21 +1902,21 @@ class reader_remotesite_moodlereadernet extends reader_remotesite {
     }
 
     /**
-     * sort_by_name
+     * sort_level_by_name
      *
      * @param xxx $a
      * @param xxx $b
      * @return xxx
      * @todo Finish documenting this function
      */
-    function sort_by_name($a, $b) {
+    function sort_level_by_name($a, $b) {
 
         // search and replace strings
         $search1 = array('/^-+$/', '/\bLadder\s+([0-9]+)$/', '/\bLevel\s+([0-9]+)$/', '/\bStage\s+([0-9]+)$/', '/^Extra_Points|testing|_testing_only$/', '/Booksworms/');
         $replace1 = array('', '100$1', '200$1', '300$1', 9999, 'Bookworms');
 
         $search2 = '/\b(Pre|Low|Upper|High)?[ -]*(EasyStarts?|Quick Start|Starter|Beginner|Beginning|Elementary|Intermediate|Advanced)$/';
-        $replace2 = array($this, 'replace_name_with_number');
+        $replace2 = array($this, 'convert_level_to_number');
 
         $split = '/^(.*?)([0-9]+)$/';
 
@@ -1680,7 +1938,7 @@ class reader_remotesite_moodlereadernet extends reader_remotesite {
             $bnum = 0;
         }
 
-        // deal with empty names always go last
+        // empty names always go last
         if ($aname || $bname) {
             if ($aname=='') {
                 return -1;
@@ -1709,16 +1967,16 @@ class reader_remotesite_moodlereadernet extends reader_remotesite {
     }
 
     /**
-     * replace_name_with_number
+     * convert_level_to_number
      *
-     * @param xxx $matches
+     * @param xxx $matches 1=Pre|Low|Upper|High, 2=Beginner|Elementary|Intermediate|Advanced ...
      * @return xxx
      * @todo Finish documenting this function
      */
-    function replace_name_with_number($matches) {
+    function convert_level_to_number($matches) {
         $num = 0;
         switch ($matches[1]) {
-            case 'Pre':   $num += 10; break;
+            case 'Pre':   $num -= 10; break;
             case 'Low':   $num += 20; break;
             case 'Upper': $num += 30; break;
             case 'High':  $num += 40; break;
