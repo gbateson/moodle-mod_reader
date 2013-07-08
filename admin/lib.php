@@ -1019,16 +1019,18 @@ class reader_downloader {
         // add/update the question record
         if (isset($question->id)) {
             if (! $DB->update_record('question', $question)) {
-                return false; // shouldn't happen !!
+                throw new moodle_exception(get_string('cannotupdaterecord', 'error', 'question (id='.$question->id.')'));
             }
         } else {
             if (! $question->id = $DB->insert_record('question', $question)) {
-                return false; // shouldn't happen !!
+                throw new moodle_exception(get_string('cannotinsertrecord', 'error', 'question'));
             }
         }
 
         // map old (backup) question id to new $question->id in this Moodle $DB
         $newquestionids[$oldid] = $question->id;
+
+        //question_bank::get_qtype($question->qtype)->save_question_options($question);
 
         switch ($question->qtype) {
             case 'description':

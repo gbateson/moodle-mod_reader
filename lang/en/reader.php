@@ -110,6 +110,10 @@ $string['configwordsprogressbar'] = '';
 $string['coursespecificquizselection'] = 'Course-specific quiz selection" to "Yes" in the module set-up screen.';
 $string['createcoversets_l'] = 'Create Cover Sets by Level & Publisher';
 $string['createcoversets_t'] = 'Create Cover Sets by Publisher &amp; Level';
+$string['dataallavailable'] = 'data for all {$a} book(s) is available';
+$string['dataalldownloaded'] = 'data for all {$a} book(s) has been downloaded';
+$string['datasomeavailable'] = 'data for {$a->new} out of {$a->all} book(s) is available';
+$string['defaultcoursename'] = 'Reader Quizzes';
 $string['difficulty'] = 'RL';
 $string['downloadable'] = 'Downloadable';
 $string['downloadexcel'] = 'Download Excel';
@@ -345,5 +349,3 @@ $string['youmusttakequizzes'] = ' You can take {$a} more quizzes ';
 $string['yourcurrentlevel'] = 'Your current level';
 $string['yourteacherhasstopped'] = ' Your teacher has stopped automatic promotion for you.';
 $string['youwerepromoted'] = 'You were promoted to RL-{$a->level} on {$a->date} at {$a->time}';
-
-$string['defaultcoursename'] = 'Reader Quizzes';

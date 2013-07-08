@@ -49,10 +49,10 @@ class mod_reader_download_renderer extends mod_reader_renderer {
      * @todo Finish documenting this function
      */
     public function form_js_start() {
-        $output = '';
-        $output .= $this->check_boxes_js();
-        $output .= $this->showhide_js_start();
-        return $output;
+        $js = '';
+        $js .= $this->check_boxes_js();
+        $js .= $this->showhide_js_start();
+        return $js;
     }
 
     /**
@@ -62,30 +62,30 @@ class mod_reader_download_renderer extends mod_reader_renderer {
      * @todo Finish documenting this function
      */
     public function check_boxes_js() {
-        $output = '';
+        $js = '';
 
         static $done = false;
         if ($done==false) {
             $done = true;
 
-            $output .= '<script type="text/javascript">'."\n";
-            $output .= "//<![CDATA[\n";
-            $output .= "function reader_check_boxes(checkbox) {\n";
-            $output .= "    var obj = checkbox.parentNode.getElementsByTagName('input');\n";
-            $output .= "    if (obj) {\n";
-            $output .= "        var i_max = obj.length;\n";
-            $output .= "        for (var i=0; i<i_max; i++) {\n";
-            $output .= "            if (obj[i].type=='checkbox') {\n";
-            $output .= "                obj[i].checked = checkbox.checked;\n";
-            $output .= "            }\n";
-            $output .= "        }\n";
-            $output .= "    }\n";
-            $output .= "    var obj = null;\n";
-            $output .= "}\n";
-            $output .= "//]]>\n";
-            $output .= '</script>'."\n";
+            $js .= '<script type="text/javascript">'."\n";
+            $js .= "//<![CDATA[\n";
+            $js .= "function reader_check_boxes(checkbox) {\n";
+            $js .= "    var obj = checkbox.parentNode.getElementsByTagName('input');\n";
+            $js .= "    if (obj) {\n";
+            $js .= "        var i_max = obj.length;\n";
+            $js .= "        for (var i=0; i<i_max; i++) {\n";
+            $js .= "            if (obj[i].type=='checkbox') {\n";
+            $js .= "                obj[i].checked = checkbox.checked;\n";
+            $js .= "            }\n";
+            $js .= "        }\n";
+            $js .= "    }\n";
+            $js .= "    var obj = null;\n";
+            $js .= "}\n";
+            $js .= "//]]>\n";
+            $js .= '</script>'."\n";
         }
-        return $output;
+        return $js;
     }
 
     /**
@@ -95,204 +95,204 @@ class mod_reader_download_renderer extends mod_reader_renderer {
      * @todo Finish documenting this function
      */
     public function showhide_js_start() {
-        $output = '';
+        $js = '';
 
         static $done = false;
         if ($done==false) {
             $done = true;
 
-            $output .= '<script type="text/javascript">'."\n";
-            $output .= "//<![CDATA[\n";
+            $js .= '<script type="text/javascript">'."\n";
+            $js .= "//<![CDATA[\n";
 
-            $output .= "function css_class_attribute() {\n";
-            $output .= "    if (window.cssClassAttribute==null) {\n";
-            $output .= "        var m = navigator.userAgent.match(new RegExp('MSIE (\\d+)'));\n";
-            $output .= "        if (m && m[1]<=7) {\n";
-            $output .= "            // IE7 and earlier\n";
-            $output .= "            window.cssClassAttribute = 'className';\n";
-            $output .= "        } else {\n";
-            $output .= "            window.cssClassAttribute = 'class';\n";
-            $output .= "        }\n";
-            $output .= "    }\n";
-            $output .= "    return window.cssClassAttribute;\n";
-            $output .= "}\n";
+            $js .= "function css_class_attribute() {\n";
+            $js .= "    if (window.cssClassAttribute==null) {\n";
+            $js .= "        var m = navigator.userAgent.match(new RegExp('MSIE (\\d+)'));\n";
+            $js .= "        if (m && m[1]<=7) {\n";
+            $js .= "            // IE7 and earlier\n";
+            $js .= "            window.cssClassAttribute = 'className';\n";
+            $js .= "        } else {\n";
+            $js .= "            window.cssClassAttribute = 'class';\n";
+            $js .= "        }\n";
+            $js .= "    }\n";
+            $js .= "    return window.cssClassAttribute;\n";
+            $js .= "}\n";
 
-            $output .= "function remove_child_nodes(obj) {\n";
-            $output .= "    while (obj.firstChild) {\n";
-            $output .= "        obj.removeChild(obj.firstChild);\n";
-            $output .= "    }\n";
-            $output .= "}\n";
+            $js .= "function remove_child_nodes(obj) {\n";
+            $js .= "    while (obj.firstChild) {\n";
+            $js .= "        obj.removeChild(obj.firstChild);\n";
+            $js .= "    }\n";
+            $js .= "}\n";
 
-            $output .= "function showhide_parent_lists(obj, display) {\n";
-            $output .= "    var p = obj.parentNode;\n";
-            $output .= "    while (p) {\n";
-            $output .= "        if (p.nodeType==1 && p.nodeName.toUpperCase()=='UL') {\n";
-            $output .= "            p.style.display = display;\n";
-            $output .= "        }\n";
-            $output .= "        p = p.parentNode;\n";
-            $output .= "    }\n";
-            $output .= "}\n";
+            $js .= "function showhide_parent_lists(obj, display) {\n";
+            $js .= "    var p = obj.parentNode;\n";
+            $js .= "    while (p) {\n";
+            $js .= "        if (p.nodeType==1 && p.nodeName.toUpperCase()=='UL') {\n";
+            $js .= "            p.style.display = display;\n";
+            $js .= "        }\n";
+            $js .= "        p = p.parentNode;\n";
+            $js .= "    }\n";
+            $js .= "}\n";
 
-            $output .= "function match_classname(obj, targetClassNames) {\n";
-            $output .= "    if (obj==null || obj.getAttribute==null) {\n";
-            $output .= "        return false;\n";
-            $output .= "    }\n";
-            $output .= "    var myClassName = obj.getAttribute(css_class_attribute());\n";
-            $output .= "    if (myClassName) {\n";
-            $output .= "        if (typeof(targetClassNames)=='string') {\n";
-            $output .= "           targetClassNames = new Array(targetClassNames);\n";
-            $output .= "        }\n";
-            $output .= "        var i_max = targetClassNames.length;\n";
-            $output .= "        for (var i=0; i<i_max; i++) {\n";
-            $output .= "            if (myClassName.indexOf(targetClassNames[i]) >= 0) {\n";
-            $output .= "                return true;\n";
-            $output .= "            }\n";
-            $output .= "        }\n";
-            $output .= "    }\n";
-            $output .= "    return false;\n";
-            $output .= "}\n";
+            $js .= "function match_classname(obj, targetClassNames) {\n";
+            $js .= "    if (obj==null || obj.getAttribute==null) {\n";
+            $js .= "        return false;\n";
+            $js .= "    }\n";
+            $js .= "    var myClassName = obj.getAttribute(css_class_attribute());\n";
+            $js .= "    if (myClassName) {\n";
+            $js .= "        if (typeof(targetClassNames)=='string') {\n";
+            $js .= "           targetClassNames = new Array(targetClassNames);\n";
+            $js .= "        }\n";
+            $js .= "        var i_max = targetClassNames.length;\n";
+            $js .= "        for (var i=0; i<i_max; i++) {\n";
+            $js .= "            if (myClassName.indexOf(targetClassNames[i]) >= 0) {\n";
+            $js .= "                return true;\n";
+            $js .= "            }\n";
+            $js .= "        }\n";
+            $js .= "    }\n";
+            $js .= "    return false;\n";
+            $js .= "}\n";
 
-            $output .= "function showhide_list(img, force, targetClassName) {\n";
-            $output .= "    if (typeof(force)=='undefined') {\n";
-            $output .= "       force = 0;\n"; // -1=hide, 0=toggle, 1=show
-            $output .= "    }\n";
-            $output .= "    if (typeof(targetClassName)=='undefined') {\n";
-            $output .= "       targetClassName = '';\n";
-            $output .= "    }\n";
-            $output .= "    var obj = img.nextSibling;\n";
-            $output .= "    var myClassName = obj.getAttribute(css_class_attribute());\n";
-            $output .= "    if (obj && (targetClassName=='' || (myClassName && myClassName.match(new RegExp(targetClassName))))) {\n";
-            $output .= "        if (force==1 || (force==0 && obj.style.display=='none')) {\n";
-            $output .= "            obj.style.display = '';\n";
-            $output .= "            var pix = 'minus';\n";
-            $output .= "        } else {\n";
-            $output .= "            obj.style.display = 'none';\n";
-            $output .= "            var pix = 'plus';\n";
-            $output .= "        }\n";
-            $output .= "        img.alt = 'switch_' + pix;\n";
-            $output .= "        img.src = img.src.replace(new RegExp('switch_[a-z]+'), 'switch_' + pix);\n";
-            $output .= "    }\n";
-            $output .= "}\n";
+            $js .= "function showhide_list(img, force, targetClassName) {\n";
+            $js .= "    if (typeof(force)=='undefined') {\n";
+            $js .= "       force = 0;\n"; // -1=hide, 0=toggle, 1=show
+            $js .= "    }\n";
+            $js .= "    if (typeof(targetClassName)=='undefined') {\n";
+            $js .= "       targetClassName = '';\n";
+            $js .= "    }\n";
+            $js .= "    var obj = img.nextSibling;\n";
+            $js .= "    var myClassName = obj.getAttribute(css_class_attribute());\n";
+            $js .= "    if (obj && (targetClassName=='' || (myClassName && myClassName.match(new RegExp(targetClassName))))) {\n";
+            $js .= "        if (force==1 || (force==0 && obj.style.display=='none')) {\n";
+            $js .= "            obj.style.display = '';\n";
+            $js .= "            var pix = 'minus';\n";
+            $js .= "        } else {\n";
+            $js .= "            obj.style.display = 'none';\n";
+            $js .= "            var pix = 'plus';\n";
+            $js .= "        }\n";
+            $js .= "        img.alt = 'switch_' + pix;\n";
+            $js .= "        img.src = img.src.replace(new RegExp('switch_[a-z]+'), 'switch_' + pix);\n";
+            $js .= "    }\n";
+            $js .= "}\n";
 
-            $output .= "function showhide_lists(force, targetClassName, requireCheckbox) {\n";
+            $js .= "function showhide_lists(force, targetClassName, requireCheckbox) {\n";
 
-            $output .= "    switch (force) {\n";
-            $output .= "        case -1: var targetImgName = 'minus';        break;\n"; // hide
-            $output .= "        case  0: var targetImgName = '(minus|plus)'; break;\n"; // toggle
-            $output .= "        case  1: var targetImgName = 'plus';         break;\n"; // show
-            $output .= "        default: return false;\n";
-            $output .= "    }\n";
+            $js .= "    switch (force) {\n";
+            $js .= "        case -1: var targetImgName = 'minus';        break;\n"; // hide
+            $js .= "        case  0: var targetImgName = '(minus|plus)'; break;\n"; // toggle
+            $js .= "        case  1: var targetImgName = 'plus';         break;\n"; // show
+            $js .= "        default: return false;\n";
+            $js .= "    }\n";
 
-            $output .= "    var targetImgName = new RegExp('switch_'+targetImgName);\n";
-            $output .= "    var img = document.getElementsByTagName('img');\n";
-            $output .= "    if (img) {\n";
+            $js .= "    var targetImgName = new RegExp('switch_'+targetImgName);\n";
+            $js .= "    var img = document.getElementsByTagName('img');\n";
+            $js .= "    if (img) {\n";
 
-            $output .= "        var i_max = img.length;\n";
-            $output .= "        for (var i=0; i<i_max; i++) {\n";
+            $js .= "        var i_max = img.length;\n";
+            $js .= "        for (var i=0; i<i_max; i++) {\n";
 
-            $output .= "            if (typeof(requireCheckbox)=='undefined') {\n";
-            $output .= "                var ok = true;\n";
-            $output .= "            } else {\n";
-            $output .= "                var obj = img[i].parentNode.firstChild;\n";
-            $output .= "                while (obj && obj.nodeType != 1) {\n";
-            $output .= "                    obj = obj.nextSibling;\n";
-            $output .= "                }\n";
-            $output .= "                requireCheckbox = (requireCheckbox ? true : false);\n"; // convert to boolean
-            $output .= "                var hascheckbox = (obj && obj.nodeType==1 && obj.nodeName.toUpperCase()=='INPUT');\n";
-            $output .= "                var ok = (requireCheckbox==hascheckbox);\n";
-            $output .= "                obj = null;\n";
-            $output .= "            }\n";
+            $js .= "            if (typeof(requireCheckbox)=='undefined') {\n";
+            $js .= "                var ok = true;\n";
+            $js .= "            } else {\n";
+            $js .= "                var obj = img[i].parentNode.firstChild;\n";
+            $js .= "                while (obj && obj.nodeType != 1) {\n";
+            $js .= "                    obj = obj.nextSibling;\n";
+            $js .= "                }\n";
+            $js .= "                requireCheckbox = (requireCheckbox ? true : false);\n"; // convert to boolean
+            $js .= "                var hascheckbox = (obj && obj.nodeType==1 && obj.nodeName.toUpperCase()=='INPUT');\n";
+            $js .= "                var ok = (requireCheckbox==hascheckbox);\n";
+            $js .= "                obj = null;\n";
+            $js .= "            }\n";
 
-            $output .= "            if (ok && img[i].src && img[i].src.match(targetImgName)) {\n";
-            $output .= "                showhide_list(img[i], force, targetClassName);\n";
-            $output .= "            }\n";
-            $output .= "        }\n";
-            $output .= "    }\n";
-            $output .= "}\n";
+            $js .= "            if (ok && img[i].src && img[i].src.match(targetImgName)) {\n";
+            $js .= "                showhide_list(img[i], force, targetClassName);\n";
+            $js .= "            }\n";
+            $js .= "        }\n";
+            $js .= "    }\n";
+            $js .= "}\n";
 
-            $output .= "function clear_search_results() {\n";
-            $output .= "    showhide_lists(-1);\n";
+            $js .= "function clear_search_results() {\n";
+            $js .= "    showhide_lists(-1);\n";
 
-            $output .= "    var whiteSpace = new RegExp('  +', 'g');\n";
-            $output .= "    var htmlTags = new RegExp('<[^>]*>', 'g');\n";
+            $js .= "    var whiteSpace = new RegExp('  +', 'g');\n";
+            $js .= "    var htmlTags = new RegExp('<[^>]*>', 'g');\n";
 
-            $output .= "    var obj = document.getElementsByTagName('SPAN');\n";
-            $output .= "    if (obj) {\n";
-            $output .= "        var i_max = obj.length;\n";
-            $output .= "        for (var i=0; i<i_max; i++) {\n";
-            $output .= "            if (match_classname(obj[i], 'itemname')) {\n";
-            $output .= "                var txt = obj[i].innerHTML.replace(htmlTags, '').replace(whiteSpace, ' ');\n";
-            $output .= "                if (txt != obj[i].innerHTML) {\n";
-            $output .= "                    remove_child_nodes(obj[i]);\n";
-            $output .= "                    obj[i].appendChild(document.createTextNode(txt));\n";
-            $output .= "                }\n";
-            $output .= "            }\n";
-            $output .= "        }\n";
-            $output .= "    }\n";
+            $js .= "    var obj = document.getElementsByTagName('SPAN');\n";
+            $js .= "    if (obj) {\n";
+            $js .= "        var i_max = obj.length;\n";
+            $js .= "        for (var i=0; i<i_max; i++) {\n";
+            $js .= "            if (match_classname(obj[i], 'itemname')) {\n";
+            $js .= "                var txt = obj[i].innerHTML.replace(htmlTags, '').replace(whiteSpace, ' ');\n";
+            $js .= "                if (txt != obj[i].innerHTML) {\n";
+            $js .= "                    remove_child_nodes(obj[i]);\n";
+            $js .= "                    obj[i].appendChild(document.createTextNode(txt));\n";
+            $js .= "                }\n";
+            $js .= "            }\n";
+            $js .= "        }\n";
+            $js .= "    }\n";
 
-            $output .= "    var obj = document.getElementsByTagName('UL');\n";
-            $output .= "    if (obj) {\n";
-            $output .= "        var i_max = obj.length;\n";
-            $output .= "        for (var i=0; i<i_max; i++) {\n";
-            $output .= "            if (match_classname(obj[i], new Array('publishers', 'levels', 'items'))) {\n";
-            $output .= "                obj[i].style.display = 'none';\n";
-            $output .= "            }\n";
-            $output .= "        }\n";
-            $output .= "    }\n";
-            $output .= "}\n";
+            $js .= "    var obj = document.getElementsByTagName('UL');\n";
+            $js .= "    if (obj) {\n";
+            $js .= "        var i_max = obj.length;\n";
+            $js .= "        for (var i=0; i<i_max; i++) {\n";
+            $js .= "            if (match_classname(obj[i], new Array('publishers', 'levels', 'items'))) {\n";
+            $js .= "                obj[i].style.display = 'none';\n";
+            $js .= "            }\n";
+            $js .= "        }\n";
+            $js .= "    }\n";
+            $js .= "}\n";
 
-            $output .= "function search_itemnames(btn) {\n";
-            $output .= "    clear_search_results();\n";
+            $js .= "function search_itemnames(btn) {\n";
+            $js .= "    clear_search_results();\n";
 
-            $output .= "    if (btn==null || btn.form==null || btn.form.searchtext==null) {\n";
-            $output .= "        return false;";
-            $output .= "    }\n";
+            $js .= "    if (btn==null || btn.form==null || btn.form.searchtext==null) {\n";
+            $js .= "        return false;";
+            $js .= "    }\n";
 
-            $output .= "    var searchtext = btn.form.searchtext.value.toLowerCase();\n";
-            $output .= "    if (searchtext=='') {\n";
-            $output .= "        return false;";
-            $output .= "    }\n";
+            $js .= "    var searchtext = btn.form.searchtext.value.toLowerCase();\n";
+            $js .= "    if (searchtext=='') {\n";
+            $js .= "        return false;";
+            $js .= "    }\n";
 
-            $output .= "    var obj = document.getElementsByTagName('SPAN');\n";
-            $output .= "    if (obj==null) {\n";
-            $output .= "        return false;";
-            $output .= "    }\n";
+            $js .= "    var obj = document.getElementsByTagName('SPAN');\n";
+            $js .= "    if (obj==null) {\n";
+            $js .= "        return false;";
+            $js .= "    }\n";
 
-            $output .= "    var i_max = obj.length;\n";
-            $output .= "    for (var i=0; i<i_max; i++) {\n";
+            $js .= "    var i_max = obj.length;\n";
+            $js .= "    for (var i=0; i<i_max; i++) {\n";
 
-            $output .= "        if (match_classname(obj[i], 'itemname')==false) {\n";
-            $output .= "            continue;\n";
-            $output .= "        }\n";
+            $js .= "        if (match_classname(obj[i], 'itemname')==false) {\n";
+            $js .= "            continue;\n";
+            $js .= "        }\n";
 
-            $output .= "        var txt = obj[i].innerHTML.toLowerCase();\n";
-            $output .= "        var pos = txt.indexOf(searchtext);\n";
-            $output .= "        if (pos < 0) {\n";
-            $output .= "            continue;\n";
-            $output .= "        }\n";
+            $js .= "        var txt = obj[i].innerHTML.toLowerCase();\n";
+            $js .= "        var pos = txt.indexOf(searchtext);\n";
+            $js .= "        if (pos < 0) {\n";
+            $js .= "            continue;\n";
+            $js .= "        }\n";
 
-            $output .= "        var string1 = obj[i].innerHTML.substr(0, pos);\n";
-            $output .= "        var string2 = obj[i].innerHTML.substr(pos, searchtext.length);\n";
-            $output .= "        var string3 = obj[i].innerHTML.substr(pos + searchtext.length);\n";
+            $js .= "        var string1 = obj[i].innerHTML.substr(0, pos);\n";
+            $js .= "        var string2 = obj[i].innerHTML.substr(pos, searchtext.length);\n";
+            $js .= "        var string3 = obj[i].innerHTML.substr(pos + searchtext.length);\n";
 
-            $output .= "        var span = document.createElement('SPAN');\n";
-            $output .= "        span.appendChild(document.createTextNode(string2));\n";
-            $output .= "        span.setAttribute(css_class_attribute(), 'matchedtext');\n";
+            $js .= "        var span = document.createElement('SPAN');\n";
+            $js .= "        span.appendChild(document.createTextNode(string2));\n";
+            $js .= "        span.setAttribute(css_class_attribute(), 'matchedtext');\n";
 
-            $output .= "        remove_child_nodes(obj[i]);\n";
+            $js .= "        remove_child_nodes(obj[i]);\n";
 
-            $output .= "        obj[i].appendChild(document.createTextNode(string1));\n";
-            $output .= "        obj[i].appendChild(span);\n";
-            $output .= "        obj[i].appendChild(document.createTextNode(string3));\n";
+            $js .= "        obj[i].appendChild(document.createTextNode(string1));\n";
+            $js .= "        obj[i].appendChild(span);\n";
+            $js .= "        obj[i].appendChild(document.createTextNode(string3));\n";
 
-            $output .= "        showhide_parent_lists(obj[i], '');\n"; // show
-            $output .= "    }\n";
-            $output .= "}\n";
+            $js .= "        showhide_parent_lists(obj[i], '');\n"; // show
+            $js .= "    }\n";
+            $js .= "}\n";
 
-            $output .= "//]]>\n";
-            $output .= '</script>'."\n";
+            $js .= "//]]>\n";
+            $js .= '</script>'."\n";
         }
-        return $output;
+        return $js;
     }
 
     /**
@@ -302,9 +302,9 @@ class mod_reader_download_renderer extends mod_reader_renderer {
      * @todo Finish documenting this function
      */
     public function form_js_end() {
-        $output = '';
-        $output .= $this->showhide_js_end();
-        return $output;
+        $js = '';
+        $js .= $this->showhide_js_end();
+        return $js;
     }
 
     /**
@@ -314,14 +314,14 @@ class mod_reader_download_renderer extends mod_reader_renderer {
      * @todo Finish documenting this function
      */
     public function showhide_js_end() {
-        $output = '';
-        $output .= '<script type="text/javascript">'."\n";
-        $output .= "//<![CDATA[\n";
-        $output .= "showhide_lists(-1);\n"; // hide all
-        $output .= "showhide_lists(1, 'publishers');\n";
-        $output .= "//]]>\n";
-        $output .= '</script>'."\n";
-        return $output;
+        $js = '';
+        $js .= '<script type="text/javascript">'."\n";
+        $js .= "//<![CDATA[\n";
+        $js .= "showhide_lists(-1);\n"; // hide all
+        $js .= "showhide_lists(1, 'publishers');\n";
+        $js .= "//]]>\n";
+        $js .= '</script>'."\n";
+        return $js;
     }
 
     /**
@@ -579,13 +579,14 @@ class mod_reader_download_renderer extends mod_reader_renderer {
         $output .= html_writer::tag('span', $text, array('class' => $cssclass));
         if ($count) {
             if ($newcount==$count) {
-                $msg = " - data for all $count book(s) is available";
+                $msg = get_string('dataallavailable', 'reader', $count);
             } else if ($newcount==0) {
-                $msg = " - data for all $count book(s) has been downloaded";
+                $msg = get_string('dataalldownloaded', 'reader', $count);
             } else {
-                $msg = " - data for $newcount out of $count book(s) is available";
+                $a = (object)array('new' => $newcount, 'all' => $count);
+                $msg = get_string('datasomeavailable', 'reader', $a);
             }
-            $output .= html_writer::tag('span', $msg, array('class' => 'itemcount'));
+            $output .= html_writer::tag('span', ' - '.$msg, array('class' => 'itemcount'));
         }
         if ($newcount) {
             $output .= html_writer::end_tag('label');
