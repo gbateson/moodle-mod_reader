@@ -3394,8 +3394,10 @@ function reader_search_books($cmid, $reader, $userid, $showform=false, $action='
 
         // make each $levels key the same as the value
         // and then prepend the (-1 => "none") key & value
-        $levels = array_combine($levels, $levels);
-        $levels = array(-1 => get_string('none')) + $levels;
+        if (count($levels)) {
+            $levels = array_combine($levels, $levels);
+            $levels = array(-1 => get_string('none')) + $levels;
+        }
 
         // add the "RL" (reading level) drop-down list
         $table->data[] = new html_table_row(array(

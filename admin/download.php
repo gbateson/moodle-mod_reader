@@ -73,18 +73,10 @@ switch ($type) {
         break;
 }
 
-if (!function_exists('file')) {
-   print_error('FILE function unavailable. ');
-}
-if (! is_dir($CFG->dirroot.'/question/type/ordering')){
-  print_error('Ordering question type is missign. Please install it the first.');
-}
-
-$readercfg = get_config('reader');
-$remotesite = new reader_remotesite_moodlereadernet($readercfg->serverlink,
-                                                    $readercfg->serverlogin,
-                                                    $readercfg->serverpassword);
-$downloader = new reader_downloader($course, $cm, $reader);
+$remotesite = new reader_remotesite_moodlereadernet(get_config('reader', 'serverlink'),
+                                                    get_config('reader', 'serverlogin'),
+                                                    get_config('reader', 'serverpassword'));
+$downloader = new reader_downloader($course, $cm, $reader, $output);
 $downloader->add_remotesite($remotesite);
 $downloader->get_downloaded_items($type);
 $downloader->add_available_items($type, $selecteditemids);

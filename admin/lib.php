@@ -60,16 +60,25 @@ class reader_downloader {
     public $course = null;
     public $cm     = null;
     public $reader = null;
+    public $output = null;
+
+    /** download progress bar */
+    public $bar = null;
 
     /**
      * __construct
      *
+     * @param xxx $course
+     * @param xxx $cm
+     * @param xxx $reader
+     * @param xxx $output renderer
      * @todo Finish documenting this function
      */
-    public function __construct($course, $cm, $reader) {
+    public function __construct($course, $cm, $reader, $output) {
         $this->course = $course;
         $this->cm     = $cm;
         $this->reader = $reader;
+        $this->output = $output;
     }
 
     /**
@@ -200,6 +209,8 @@ class reader_downloader {
             return false; // shouldn't happen !!
         }
 
+        $this->bar = reader_download_progress_bar::create($itemids, 'readerdownload');
+
         $output = '';
         $started_list = false;
         foreach ($xml['myxml']['#']['item'] as $i => $item) {
@@ -292,6 +303,9 @@ class reader_downloader {
             if ($started_list==false) {
                 $started_list = true;
                 $output .= html_writer::start_tag('div');
+                $output .= $this->output->showhide_js_start();
+                $output .= html_writer::tag('b', get_string('downloadedbooks', 'reader'));
+                $output .= $this->output->available_list_img();
                 $output .= html_writer::start_tag('ul');
             }
             $output .= html_writer::tag('li', $msg);
@@ -313,18 +327,34 @@ class reader_downloader {
             // add quiz if necessary
             if ($error==0 && $type==reader_downloader::BOOKS_WITH_QUIZZES) {
                 if ($quiz = $this->add_quiz($item, $book, $r)) {
-                    if ($book->quizid==0) {
-                        $output .= html_writer::tag('li', 'Quiz was successfully added');
-                    } else {
-                        $output .= html_writer::tag('li', 'Quiz was successfully updated');
+
+                    $link = new moodle_url('/mod/quiz/view.php', array('q' => $quiz->id));
+                    $link = html_writer::link($link, $quiz->name, array('onclick' => 'this.target="_blank"'));
+
+                    list($cheatsheeturl, $strcheatsheet) = reader_cheatsheet_init('takequiz');
+                    if ($cheatsheeturl) {
+                        if ($level && $level != '--') {
+                            $publisher .= ' - '.$level;
+                        }
+                        $link .= ' '.reader_cheatsheet_link($cheatsheeturl, $strcheatsheet, $publisher, $book);
                     }
+                    if ($book->quizid==0) {
+                        $output .= html_writer::tag('li', get_string('quizadded', 'reader').' '.$link);
+                    } else {
+                        $output .= html_writer::tag('li', get_string('quizupdated', 'reader').' '.$link);
+                    }
+
                     if ($book->id==0 || $book->quizid != $quiz->id) {
                         $book->quizid = $quiz->id;
                         $DB->set_field('reader_books', 'quizid', $book->quizid, array('id' => $book->id));
                     }
                 }
             }
+
+            // move the progress bar
+            $this->bar->childtasks['books']->childtasks[$itemid]->finish();
         }
+        $this->bar->finish();
 
         if ($started_list==true) {
             $output .= html_writer::end_tag('ul');
@@ -373,7 +403,7 @@ class reader_downloader {
      * @param integer $r (optional, default=0)
      * @todo Finish documenting this function
      */
-    function add_quiz($item, $book, $r=0) {
+    public function add_quiz($item, $book, $r=0) {
         global$DB;
 
         // get/create course to hold quiz
@@ -402,7 +432,7 @@ class reader_downloader {
      * @param boolean $set_config (optional, default=false)
      * @todo Finish documenting this function
      */
-    function set_quiz_courseid($courseid, $set_config=false) {
+    public function set_quiz_courseid($courseid, $set_config=false) {
         global $DB;
 
         if ($this->reader->usecourse==0) {
@@ -423,7 +453,7 @@ class reader_downloader {
      * @return integer $courseid
      * @todo Finish documenting this function
      */
-    function get_quiz_courseid($numsections=1) {
+    public function get_quiz_courseid($numsections=1) {
         global $DB;
 
         if ($courseid = $this->reader->usecourse) {
@@ -482,7 +512,7 @@ class reader_downloader {
      * @param object $book recently added/updated "reader_books" record
      * @todo Finish documenting this function
      */
-    function create_sectionname($book) {
+    public function create_sectionname($book) {
         if ($book->level=='' || $book->level=='--' || $book->level=='No Level') {
             return $book->publisher;
         } else {
@@ -501,7 +531,7 @@ class reader_downloader {
      * @return xxx
      * @todo Finish documenting this function
      */
-    function get_quiz_sectionnum($courseid, $book, $sectiontype=0, $sectionid=0) {
+    public function get_quiz_sectionnum($courseid, $book, $sectiontype=0, $sectionid=0) {
         global $DB;
 
         $sectionname = $this->create_sectionname($book);
@@ -590,7 +620,7 @@ class reader_downloader {
      * @return xxx
      * @todo Finish documenting this function
      */
-    function get_quiz_coursemodule($courseid, $sectionnum, $quizname) {
+    public function get_quiz_coursemodule($courseid, $sectionnum, $quizname) {
         global $DB, $USER;
         static $quizmoduleid = 0;
 
@@ -726,7 +756,7 @@ class reader_downloader {
      * @return xxx
      * @todo Finish documenting this function
      */
-    function add_question_categories($quiz, $cm, $item, $r=0) {
+    public function add_question_categories($quiz, $cm, $item, $r=0) {
         // extract $itemid
         $itemid = $item['@']['id'];
 
@@ -741,15 +771,18 @@ class reader_downloader {
         $this->prune_question_categories($module, $categories);
 
         // we need to track old and new question ids
-        $questionids = array();
+        $restoreids = new reader_restore_ids();
 
         foreach ($categories as $category) {
-            $this->add_question_category($questionids, $category, $quiz, $cm);
+            $this->add_question_category($restoreids, $category, $quiz, $cm);
         }
 
         foreach ($module->question_instances as $instance) {
-            $this->add_question_instance($questionids, $instance, $quiz);
+            $this->add_question_instance($restoreids, $instance, $quiz);
         }
+
+        // convert old ids to new ids and make other adjustments
+        $this->add_question_postprocessing($restoreids, $module, $quiz);
     }
 
     /**
@@ -760,8 +793,8 @@ class reader_downloader {
      * @return xxx
      * @todo Finish documenting this function
      */
-    function prune_question_categories(&$module, &$categories) {
-        // list of questions used in this $quiz
+    public function prune_question_categories(&$module, &$categories) {
+        // ids of questions used in this $quiz
         $ids = array();
 
         // get main questions used in this quiz
@@ -771,29 +804,35 @@ class reader_downloader {
 
         // get sub-questions used in this quiz
         foreach ($categories as $categoryid => $category) {
-            foreach ($category->questions as $questionid => $question) {
-                if (isset($ids[$question->id]) && $question->qtype=='random') {
-                    $ids[$question->id] = array_keys($category->questions);
-                } else if (isset($ids[$question->parent])) {
-                    $ids[$question->parent][] = $questionid;
+            if (isset($category->questions)) {
+                foreach ($category->questions as $questionid => $question) {
+                    if (isset($ids[$question->id]) && $question->qtype=='random') {
+                        // for random questions, we keep the whole category
+                        $ids[$question->id] = array_keys($category->questions);
+                    } else if (isset($ids[$question->parent])) {
+                        // otherwise we add this question to the list of child questions for this parent
+                        $ids[$question->parent][] = $questionid;
+                    }
                 }
             }
         }
 
         // flatten array of required question ids
-        $questionids = array();
+        $keepids = array();
         foreach (array_keys($ids) as $id) {
-            $questionids = array_merge($questionids, $ids[$id]);
+            $keepids = array_merge($keepids, $ids[$id]);
         }
-        $questionids = array_flip($questionids);
+        $keepids = array_flip($keepids);
 
         foreach ($categories as $categoryid => $category) {
-            // delete unneeded questions
-            foreach ($category->questions as $questionid => $question) {
-                if (array_key_exists($questionid, $questionids)) {
-                    continue; // keep this question
+            // delete unused questions
+            if (isset($category->questions)) {
+                foreach ($category->questions as $questionid => $question) {
+                    if (array_key_exists($questionid, $keepids)) {
+                        continue; // keep this question
+                    }
+                    unset($categories[$categoryid]->questions[$questionid]);
                 }
-                unset($categories[$categoryid]->questions[$questionid]);
             }
             // delete category if it now contains no questions
             if (empty($categories[$categoryid]->questions)) {
@@ -808,14 +847,14 @@ class reader_downloader {
      * add_question_category
      *
      * @uses $DB
-     * @param xxx $questionids (passed by reference)
+     * @param xxx $restoreids (passed by reference)
      * @param xxx $category
      * @param xxx $quiz
      * @param xxx $cm
      * @return xxx
      * @todo Finish documenting this function
      */
-    function add_question_category(&$newquestionids, $category, $quiz, $cm) {
+    public function add_question_category(&$restoreids, $category, $quiz, $cm) {
         global $DB;
 
         if (empty($category->questions)) {
@@ -867,157 +906,57 @@ class reader_downloader {
             return false;
         }
 
-        // get the ids of the old (=existing) questions
-        // which most closely match the questions in this category
-        $oldquestionids = $this->get_old_questionids($categoryid, $category);
+        $bestquestionids = $this->get_best_match_questions($categoryid, $category);
 
         foreach ($category->questions as $question) {
-            $this->add_question($oldquestionids, $newquestionids, $categoryid, $question);
+            $this->add_question($bestquestionids, $restoreids, $categoryid, $question);
         }
-    }
-
-    /**
-     * get_old_questionids
-     *
-     * @uses $DB
-     * @param xxx $category
-     * @param xxx $oldquestions
-     * @return xxx
-     * @todo Finish documenting this function
-     */
-    function get_old_questionids($categoryid, $category) {
-        global $DB;
-
-        $questionids = array();
-        if ($oldquestions = $DB->get_records('question', array('category' => $categoryid))) {
-            foreach ($category->questions as $questionid => $question) {
-                $questionids[$questionid] = array();
-
-                // set the $field will we use for comparison
-                if ($question->qtype=='random' || empty($question->questiontext)) {
-                    $field = 'name';
-                } else {
-                    $field = 'questiontext';
-                }
-
-                // set minimum required $levenshtein difference
-                // we will ignore any strings that differ
-                // by greater than $min_levenshtein
-                // we are aiming for the Fibonacci number
-                // $length => $min_levenshtein
-                //     3   =>   2
-                //     6   =>   3
-                //    10   =>   4
-                //    15   =>   5
-                //    21   =>   6
-                //    28   =>   7
-                $min_levenshtein = 2;
-                $length = strlen($question->$field);
-                while ((($min_levenshtein + 1) * $min_levenshtein / 2) < $length) {
-                    $min_levenshtein ++;
-                }
-
-                // compare this $question to all the old (=existing) questions
-                foreach ($oldquestions as $oldquestionid => $oldquestion) {
-
-                    $levenshtein = levenshtein($question->$field, $oldquestion->$field);
-                    if ($levenshtein <= $min_levenshtein) {
-                        $questionids[$questionid][$oldquestionid] = $levenshtein;
-                    }
-                }
-            }
-        }
-
-        // select best match not used by another question
-        $oldquestionids = array();
-        foreach ($questionids as $questionid => $ids) {
-
-            // sort old question ids by Levenshtein difference
-            // (lower difference is better match, 0 is a best)
-            asort($ids);
-
-            // remove ids that have already been used
-            $ids = array_keys($ids);
-            $ids = array_diff($ids, $oldquestionids);
-
-            // select the best remaining match
-            $oldquestionids[$questionid] = reset($ids);
-        }
-
-        return $oldquestionids;
     }
 
     /**
      * add_question
      *
      * @uses $DB
-     * @param xxx $oldquestionids (passed by reference)
-     * @param xxx $newquestionids (passed by reference)
+     * @param xxx $bestquestionids (passed by reference)
+     * @param xxx $restoreids (passed by reference)
      * @param xxx $categoryid of newly restored category
      * @param xxx $question from backup data
      * @return xxx
      * @todo Finish documenting this function
      */
-    function add_question(&$oldquestionids, &$newquestionids, $categoryid, $question) {
+    public function add_question(&$bestquestionids, &$restoreids, $categoryid, $question) {
         global $DB, $USER;
 
-        // store old question id (the one used in the backup file)
-        $oldid = $question->id;
-        unset($question->id);
-
-        // get defaults (from $DB if possible)
-        if (isset($oldquestionids[$oldid]) && $oldquestionids[$oldid]) {
-            $defaults = $DB->get_record('question', array('id' => $oldquestionids[$oldid]));
-            $defaults = get_object_vars($defaults);
-        } else {
-            $defaults = array(
-                'name'         => '',
-                'questiontext' => '',
-                'questiontextformat' => 0,
-                'generalfeedback' => '',
-                'generalfeedbackformat' => 0,
-                'defaultmark'  => 0,
-                'penalty'      => 0,
-                'qtype'        => '',
-                'length'       => 0,
-                'stamp'        => '',
-                'version'      => '',
-                'hidden'       => 0,
-                'timecreated'  => 0,
-                'timemodified' => 0,
-                'createdby'    => 0,
-                'modifiedby'   => 0
-            );
-        }
-
-        // transfer defaults to question
-        foreach ($defaults as $name => $value) {
-            if (isset($question->$name)) {
-                // do nothing
-            } else {
-                $question->$name = $value;
-            }
-        }
-
-        // ensure created/modified time and user are plausible
-        $time = time();
-        $fields = array('created', 'modified');
-        foreach ($fields as $field) {
-            $userfield = $field.'by';
-            $timefield = 'time'.$field;
-            if (! $question->$userfield = intval($question->$userfield)) {
-                $question->$userfield = $USER->id;
-            }
-            if (! $question->$timefield = intval($question->$timefield)) {
-                $question->$userfield = $time;
-            }
-        }
-
-        // set the question category
+        // set category id
         $question->category = $categoryid;
 
+        // set defaultmark (Moodle 2.x) from defaultgrade (Moodle 1.x)
+        if ($question->defaultgrade) {
+            $question->defaultmark = $question->defaultgrade;
+        }
+
+        // ensure created/modified time/user are plausible
+        if (! $question->createdby = intval($question->createdby)) {
+            $question->createdby = $USER->id;
+        }
+        if (! $question->modifiedby = intval($question->modifiedby)) {
+            $question->modifiedby = $USER->id;
+        }
+        $time = time();
+        if (! $question->timecreated = intval($question->timecreated)) {
+            $question->timecreated = $time;
+        }
+        if (! $question->timemodified = intval($question->timemodified)) {
+            $question->timemodified = $time;
+        }
+
+        // cache question id (from backup xml file)
+        $xmlquestionid = $question->id;
+        unset($question->id);
+
         // add/update the question record
-        if (isset($question->id)) {
+        if (isset($bestquestionids[$xmlquestionid]) && $bestquestionids[$xmlquestionid]) {
+            $question->id = $bestquestionids[$xmlquestionid];
             if (! $DB->update_record('question', $question)) {
                 throw new moodle_exception(get_string('cannotupdaterecord', 'error', 'question (id='.$question->id.')'));
             }
@@ -1028,72 +967,530 @@ class reader_downloader {
         }
 
         // map old (backup) question id to new $question->id in this Moodle $DB
-        $newquestionids[$oldid] = $question->id;
+        $restoreids->set_ids('question', $xmlquestionid, $question->id);
 
-        //question_bank::get_qtype($question->qtype)->save_question_options($question);
+        // perhaps we should save the options like this?
+        // question_bank::get_qtype($question->qtype)->save_question_options($question);
 
         switch ($question->qtype) {
-            case 'description':
-                echo 'Add DESCRIPTION question options to category '.$categoryid.'<br />';
-                die;
-                break;
-
-            case 'match':
-                echo 'Add MATCH question options to category '.$categoryid.'<br />';
-                break;
-
-            case 'multianswer':
-                echo 'Add MULTIANSWER question options to category '.$categoryid.'<br />';
-                break;
-
-            case 'multichoice':
-                echo 'Add MULTICHOICE question options to category '.$categoryid.'<br />';
-                break;
-
-            case 'ordering':
-                if ($question->ordering->id = $DB->get_field('question_ordering', 'id', array('question' => $question->id))) {
-                    if (! $DB->update_record('question_ordering', $question->ordering)) {
-                        throw new moodle_exception(get_string('cannotupdaterecord', 'error', 'question_ordering (id='.$question->ordering->id.')'));
-                    }
-                } else {
-                    unset($question->ordering->id);
-                    if (! $DB->insert_record('question_ordering', $question->ordering)) {
-                        throw new moodle_exception(get_string('cannotinsertrecord', 'error', 'question_ordering'));
-                    }
-                }
-                break;
-
-            case 'truefalse':
-                echo 'Add TRUEFALSE question options to category '.$categoryid.'<br />';
-                break;
-
-            case 'random':
-                // do nothing
-                // echo 'Add RANDOM question to category '.$categoryid.'<br />';
-                break;
+            case 'description': /* do nothing */ break;
+            case 'match'      : $this->add_question_match($restoreids, $question);       break;
+            case 'multianswer': $this->add_question_multianswer($restoreids, $question); break;
+            case 'multichoice': $this->add_question_multichoice($restoreids, $question); break;
+            case 'ordering'   : $this->add_question_ordering($restoreids, $question);    break;
+            case 'random'     : $this->add_question_random($restoreids, $question);      break;
+            case 'truefalse'  : $this->add_question_truefalse($restoreids, $question);   break;
 
             default: die('Unknown qtype: '.$question->qtype);
         }
     }
 
     /**
+     * add_question_match
+     *
+     * @uses $DB
+     * @param xxx $restoreids (passed by reference)
+     * @param xxx $question
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function add_question_match(&$restoreids, $question) {
+        global $DB;
+
+        $bestsubquestionids = $this->get_best_match_subquestions($question);
+
+        $question->subquestions = array();
+        foreach ($question->matchs as $match) {
+            $id = $match->id;
+            unset($match->id);
+            $match->question = $question->id;
+            if (empty($bestsubquestionids[$id])) {
+                if (! $match->id = $DB->insert_record('question_match_sub', $match)) {
+                    throw new moodle_exception(get_string('cannotinsertrecord', 'error', 'question_match_sub'));
+                }
+            } else {
+                $match->id = $bestsubquestionids[$id];
+                if (! $DB->update_record('question_match_sub', $match)) {
+                    throw new moodle_exception(get_string('cannotupdaterecord', 'error', 'question_match_sub (id='.$match->id.')'));
+                }
+            }
+            $question->subquestions[] = $match->id;
+        }
+        $question->subquestions = implode(',', $question->subquestions);
+
+        // create $options for this match question
+        $options = (object)array(
+            'question'        => $question->id,
+            'subquestions'    => $question->subquestions,
+            'shuffleanswers'  => $question->matchoptions->shuffleanswers,
+            'shownumcorrect'  => $question->matchoptions->shownumcorrect,
+
+            // feedback settings
+            'correctfeedback'          => $question->matchoptions->correctfeedback,
+            'incorrectfeedback'        => $question->matchoptions->incorrectfeedback,
+            'partiallycorrectfeedback' => $question->matchoptions->partiallycorrectfeedback,
+            'correctfeedbackformat'          => FORMAT_MOODLE, // =0,
+            'incorrectfeedbackformat'        => FORMAT_MOODLE, // =0,
+            'partiallycorrectfeedbackformat' => FORMAT_MOODLE, // =0,
+        );
+
+        // add/update $options for this match question
+        $this->add_question_options('match', $options, $question);
+    }
+
+    /**
+     * add_question_multianswer
+     *
+     * @uses $DB
+     * @param xxx $restoreids (passed by reference)
+     * @param xxx $question
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function add_question_multianswer(&$restoreids, $question) {
+        global $DB;
+
+        // create $options for this multichoice question
+        $options = (object)array(
+            'question' => $question->id,
+            'sequence' => $question->multianswers[0]->sequence,
+        );
+
+        // add/update $options for this multianswer question
+        $this->add_question_options('multianswer', $options, $question);
+    }
+
+    /**
+     * add_question_multichoice
+     *
+     * @uses $DB
+     * @param xxx $restoreids (passed by reference)
+     * @param xxx $question
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function add_question_multichoice(&$restoreids, $question) {
+        global $DB;
+
+        $bestanswerids = $this->get_best_match_answers($question);
+
+        $sumfraction = 0;
+        $maxfraction = -1;
+        foreach ($question->answers as $xmlanswer) {
+            $answer = (object)array(
+                'question' => $question->id,
+                'fraction' => $xmlanswer->fraction,
+                'answer'   => $xmlanswer->answer_text,
+                'answerformat' => FORMAT_MOODLE, // =0
+                'feedback' => '',
+                'feedbackformat' => FORMAT_MOODLE, // =0
+            );
+            $this->add_question_answer($restoreids, $bestanswerids, $xmlanswer, $answer);
+
+            if ($answer->fraction > 0) {
+                $sumfraction += $answer->fraction;
+            }
+            if ($maxfraction < $answer->fraction) {
+                $maxfraction = $answer->fraction;
+            }
+        }
+
+        // create $options for this multichoice question
+        $options = (object)array(
+            'question'        => $question->id,
+            'answers'         => $question->multichoice->answers,
+            'layout'          => $question->multichoice->layout,
+            'single'          => $question->multichoice->single,
+            'shuffleanswers'  => $question->multichoice->shuffleanswers,
+            'answernumbering' => $question->multichoice->answernumbering,
+            'shownumcorrect'  => $question->multichoice->shownumcorrect,
+
+            // feedback settings
+            'correctfeedback'          => $question->multichoice->correctfeedback,
+            'incorrectfeedback'        => $question->multichoice->incorrectfeedback,
+            'partiallycorrectfeedback' => $question->multichoice->partiallycorrectfeedback,
+            'correctfeedbackformat'          => FORMAT_MOODLE, // =0,
+            'incorrectfeedbackformat'        => FORMAT_MOODLE, // =0,
+            'partiallycorrectfeedbackformat' => FORMAT_MOODLE, // =0,
+        );
+
+        // add/update $options for this multichoice question
+        $this->add_question_options('multichoice', $options, $question);
+    }
+
+    /**
+     * add_question_ordering
+     *
+     * @uses $DB
+     * @param xxx $restoreids (passed by reference)
+     * @param xxx $question
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function add_question_ordering(&$restoreids, $question) {
+        global $DB;
+
+        $bestanswerids = $this->get_best_match_answers($question);
+
+        $sortorder = 1;
+        foreach ($question->answers as $xmlanswerid => $xmlanswer) {
+            $answer = (object)array(
+                'question' => $question->id,
+                'fraction' => $sortorder++,
+                'answer'   => $xmlanswer->answer_text,
+                'answerformat' => FORMAT_MOODLE, // =0
+                'feedback' => '',
+                'feedbackformat' => FORMAT_MOODLE, // =0
+            );
+            $this->add_question_answer($restoreids, $bestanswerids, $xmlanswer, $answer);
+        }
+
+        // create $options for this ordering question
+        $options = (object)array(
+            'question' => $question->id,
+            'logical' => $question->ordering->logical,
+            'studentsee' => $question->ordering->studentsee,
+            'correctfeedback' => $question->ordering->correctfeedback,
+            'incorrectfeedback' => $question->ordering->incorrectfeedback,
+            'partiallycorrectfeedback' => $question->ordering->partiallycorrectfeedback
+        );
+
+        // add/update $options for this ordering question
+        $this->add_question_options('ordering', $options, $question);
+    }
+
+    /**
+     * add_question_random
+     *
+     * set the "parent" field to be the same as the "id" field
+     * and force the question name to be "Random $categoryname"
+     *
+     * @uses $DB
+     * @param xxx $restoreids (passed by reference)
+     * @param xxx $question
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function add_question_random(&$restoreids, $question) {
+        global $DB;
+
+        // set parent field, if necessary
+        if (empty($question->parent)) {
+            $question->parent = $restoreids->get_oldid('question', $question->id);
+        }
+
+        // set question name depending on whether we include subcategories or not
+        // (Note: $question->questiontext is used as "include subcategories" flag)
+        if (empty($question->questiontext)) {
+            $strname = 'randomqname';
+        } else {
+            $strname = 'randomqplusname';
+        }
+        $question->name = $DB->get_field('question_categories', 'name', array('id' => $question->category));
+        $question->name = get_string($strname, 'qtype_random', shorten_text($question->name, 100));
+
+        // update record with new "parent" and "name"
+        $DB->update_record('question', $question);
+    }
+
+    /**
+     * add_question_truefalse
+     *
+     * @uses $DB
+     * @param xxx $restoreids (passed by reference)
+     * @param xxx $question
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function add_question_truefalse(&$restoreids, $question) {
+        global $DB;
+
+        $bestanswerids = $this->get_best_match_answers($question);
+
+        foreach ($question->answers as $xmlanswer) {
+            $answer = (object)array(
+                'question' => $question->id,
+                'fraction' => $xmlanswer->fraction,
+                'answer'   => $xmlanswer->answer_text,
+                'answerformat' => FORMAT_MOODLE, // =0
+                'feedback' => '',
+                'feedbackformat' => FORMAT_MOODLE, // =0
+            );
+            $this->add_question_answer($restoreids, $bestanswerids, $xmlanswer, $answer);
+        }
+
+        // create $options for this truefalse question
+        $options = (object)array(
+            'question' => $question->id,
+            'trueanswer' => $question->truefalse->trueanswer,
+            'falseanswer' => $question->truefalse->falseanswer,
+        );
+
+        // add/update $options for this truefalse question
+        $this->add_question_options('truefalse', $options, $question);
+    }
+
+    /**
+     * add_question_options
+     *
+     * @uses $DB
+     * @param string $table
+     * @param object $options
+     * @param object $question
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function add_question_options($type, $options, $question) {
+        global $DB;
+
+        // we need the db manager to detect the names of question options tables
+        $dbman = $DB->get_manager();
+
+        switch (true) {
+            // from Moodle 2.5, the table names start to change
+            case $dbman->table_exists('qtype_'.$type.'_options'):
+                $table = 'qtype_'.$type.'_options';
+                $field = 'questionid';
+                break;
+
+            // Moodle <= 2.4
+            case $dbman->table_exists('question_'.$type):
+                $table = 'question_'.$type;
+                $field = 'question';
+                break;
+
+            // table does not exist - shouldn't happen !!
+            default: return;
+        }
+
+        if ($options->id = $DB->get_field($table, 'id', array($field => $question->id))) {
+            if (! $DB->update_record($table, $options)) {
+                throw new moodle_exception(get_string('cannotupdaterecord', 'error', $table.' (id='.$options->id.')'));
+            }
+        } else {
+            if (! $options->id = $DB->insert_record($table, $options)) {
+                throw new moodle_exception(get_string('cannotinsertrecord', 'error', $table));
+            }
+        }
+    }
+
+    /**
+     * get_best_match_questions
+     *
+     * @uses $DB
+     * @param xxx $question
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function get_best_match_questions($categoryid, $category) {
+        // get the ids of the old (=existing) questions
+        // which most closely match the questions in this category
+        $table = 'question';
+        $params = array('category' => $categoryid);
+        $xmlrecords = $category->questions;
+        $xmlfield = array(
+            array('qtype', 'random', 'name'),  // if ($category->questions[$q]->qtype=='random')  {$xmlfield = 'name'}
+            array('questiontext', '', 'name'), // if ($category->questions[$q]->questiontext=='') {$xmlfield = 'name'}
+            'questiontext'                     // otherwise $xmlfield = 'questiontext'
+        );
+        return $this->get_best_matches($table, $params, $xmlrecords, $xmlfield);
+    }
+
+    /**
+     * get_best_match_answers
+     *
+     * @uses $DB
+     * @param xxx $question
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function get_best_match_answers($question) {
+        $table      = 'question_answers';
+        $params     = array('question' => $question->id);
+        $xmlrecords = $question->answers;
+        $xmlfield   = 'answer_text';
+        $dbfield    = 'answer';
+        return $this->get_best_matches($table, $params, $xmlrecords, $xmlfield, $dbfield);
+    }
+
+    /**
+     * get_best_match_subquestions
+     *
+     * @uses $DB
+     * @param xxx $question
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function get_best_match_subquestions($question) {
+        $table      = 'question_match_sub';
+        $params     = array('question' => $question->id);
+        $xmlrecords = $question->matchs;
+        $xmlfield   = 'questiontext';
+        return $this->get_best_matches($table, $params, $xmlrecords, $xmlfield);
+    }
+
+    /**
+     * get_best_matches
+     *
+     * @uses $DB
+     * @param string $table
+     * @param array  $params
+     * @param array  $xmlrecords
+     * @param mixed  $xmlfield either string or array
+     * @param string $dbfield (optional, default='')
+     * @return array
+     * @todo Finish documenting this function
+     */
+    public function get_best_matches($table, $params, $xmlrecords, $xmlfield, $dbfield='') {
+        global $DB;
+
+        $ids = array();
+        if ($dbrecords = $DB->get_records($table, $params)) {
+            foreach ($xmlrecords as $xmlrecordid => $xmlrecord) {
+                $ids[$xmlrecordid] = array();
+
+                // set the $xmlfield will we use for comparison
+                if (is_array($xmlfield)) {
+                    foreach ($xmlfield as $field) {
+                        if (is_array($field)) {
+                            list($conditionfield, $conditionvalue, $conditionfield) = $field;
+                            if ($xmlrecord->$conditionfield==$conditionvalue) {
+                                $xmlfield = $conditionfield;
+                                break;
+                            }
+                        } else if (is_string($field)) {
+                            $xmlfield = $field;
+                            break;
+                        }
+                    }
+                }
+
+                // set $dbfield, if necessary
+                if ($dbfield=='') {
+                    $dbfield = $xmlfield;
+                }
+
+                // get the minimum levenshtein difference for a string of this length
+                $min_levenshtein = $this->get_min_levenshtein($xmlrecord->$xmlfield);
+
+                // compare this $xmlrecord to all the db (=existing) records
+                foreach ($dbrecords as $dbrecordid => $dbrecord) {
+
+                    $levenshtein = levenshtein($xmlrecord->$xmlfield, $dbrecord->$dbfield);
+                    if ($levenshtein <= $min_levenshtein) {
+                        $ids[$xmlrecordid][$dbrecordid] = $levenshtein;
+                    }
+                }
+            }
+        }
+
+        // select best match not used by other records
+        $bestids = array();
+        foreach ($ids as $xmlrecordid => $dbrecordids) {
+
+            // sort db record ids by Levenshtein difference
+            // (lower difference is better match, 0 is a best)
+            asort($dbrecordids);
+
+            // remove ids that have already been used
+            $dbrecordids = array_keys($dbrecordids);
+            $dbrecordids = array_diff($dbrecordids, $bestids);
+
+            // select the best remaining match
+            $dbrecordid = reset($dbrecordids);
+            $bestids[$xmlrecordid] = $dbrecordid;
+        }
+
+        // hide db $records that were not selected
+        if ($dbrecords) {
+            foreach ($bestids as $xmlrecordid => $dbrecordid) {
+                unset($dbrecords[$dbrecordid]);
+            }
+            if (count($dbrecords)) {
+                $dbman = $DB->get_manager();
+                $ids = array_keys($dbrecords);
+                if ($dbman->field_exists($table, 'hidden')) {
+                    list($select, $params) = $DB->get_in_or_equal($ids);
+                    $DB->set_field_select($table, 'hidden', 1, "id $select", $params);
+                } else {
+                    $DB->delete_records_list($table, 'id', $ids);
+                }
+            }
+        }
+
+        return $bestids;
+    }
+
+    /**
+     * get_min_levenshtein
+     *
+     * @param string $str
+     * @return integer
+     * @todo Finish documenting this function
+     */
+    public function get_min_levenshtein($str) {
+        static $mins = array();
+
+        $length = strlen($str);
+        if (isset($mins[$length])) {
+            return $mins[$length];
+        }
+
+        // set minimum required $levenshtein difference
+        // we can then ignore any strings that differ
+        // by greater than $min levenshtein
+        // $length => $min levenshtein
+        //     3   =>   2 (  3 = 3 * 2 / 2)
+        //     6   =>   3 (  6 = 4 * 3 / 2)
+        //    10   =>   4 ( 10 = 5 * 4 / 2)
+        //    15   =>   5 ( 15 = 6 * 5 / 2)
+        //    21   =>   6 ( 21 = 7 * 6 / 2)
+        //    28   =>   7 ( 28 = 8 * 7 / 2)
+        $min = 2;
+        while ((($min + 1) * $min / 2) < $length) {
+            $min ++;
+        }
+
+        // cache and return the $min value
+        $mins[$length] = $min;
+        return $mins[$length];
+    }
+
+    public function add_question_answer(&$restoreids, $bestanswerids, $xmlanswer, $answer) {
+        global $DB;
+        if (isset($bestanswerids[$xmlanswer->id])) {
+            $answer->id = $bestanswerids[$xmlanswer->id];
+            if (! $DB->update_record('question_answers', $answer)) {
+                $result->error = get_string('cannotupdaterecord', 'error', 'question_answers (id='.$answer->id.')');
+                return $result;
+            }
+        } else {
+            if (! $answer->id = $DB->insert_record('question_answers', $answer)) {
+                $result->error = get_string('cannotinsertrecord', 'error', 'question_answers');
+                return $result;
+            }
+        }
+        $restoreids->set_ids('question_answers', $xmlanswer->id, $answer->id);
+    }
+
+    /**
      * add_question_instance
      *
      * @uses $DB
-     * @param xxx $questionids (passed by reference)
+     * @param xxx $restoreids (passed by reference)
      * @param xxx $category
      * @param xxx $quiz
      * @param xxx $cm
      * @return xxx
      * @todo Finish documenting this function
      */
-    function add_question_instance(&$questionids, $instance, $quiz) {
+    public function add_question_instance(&$restoreids, $instance, $quiz) {
         global $DB;
 
         // set up quiz/reader instance record
         $instance = (object)array(
             'quiz'     => $quiz->id,
-            'question' => $questionids[$instance->question],
+            'question' => $restoreids->get_newid('question', $instance->question),
             'grade'    => $instance->grade,
         );
 
@@ -1112,6 +1509,121 @@ class reader_downloader {
             if (! $id = $DB->insert_record('reader_question_instances', $instance)) {
                 throw new moodle_exception(get_string('cannotinsertrecord', 'error', 'reader_question_instances'));
             }
+        }
+    }
+
+    /**
+     * add_question_postprocessing
+     *
+     * @param xxx $restoreids (passed by reference)
+     * @param xxx $module
+     * @param xxx $quiz
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function add_question_postprocessing(&$restoreids, $module, $quiz) {
+        global $DB;
+
+        // $quiz->questions
+        $questions = explode(',', $module->questions);
+        foreach (array_keys($questions) as $q) {
+            $questions[$q] = $restoreids->get_newid('question', $questions[$q]);
+        }
+
+        $questions = array_filter($questions); // remove blanks
+        $questions = implode(',', $questions); // convert to string
+        $DB->set_field('quiz', 'questions', $questions, array('id' => $quiz->id));
+
+        // $quiz->sumgrades
+        $sumgrades = 0;
+        foreach ($module->question_instances as $instance) {
+            $sumgrades += $instance->grade;
+        }
+        $DB->set_field('quiz', 'sumgrades', $sumgrades, array('id' => $quiz->id));
+
+        // postprocessing for individual question types
+        foreach ($restoreids->get_newids('question') as $questionid) {
+            if ($parent = $DB->get_field('question', 'parent', array('id' => $questionid))) {
+                $parent = $restoreids->get_newid('question', $parent);
+                $DB->set_field('question', 'parent', $parent, array('id' => $questionid));
+            }
+            switch ($DB->get_field('question', 'qtype', array('id' => $questionid))) {
+                case 'multianswer': $this->add_question_postprocessing_multianswer($restoreids, $questionid); break;
+                case 'match'      : $this->add_question_postprocessing_match($restoreids, $questionid);       break;
+                case 'multichoice': $this->add_question_postprocessing_multichoice($restoreids, $questionid); break;
+                case 'truefalse'  : $this->add_question_postprocessing_truefalse($restoreids, $questionid);   break;
+            }
+        }
+    }
+
+    /**
+     * add_question_postprocessing_multianswer
+     *
+     * @param xxx $restoreids (passed by reference)
+     * @param xxx $module
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function add_question_postprocessing_multianswer(&$restoreids, $questionid) {
+        global $DB;
+        if ($options = $DB->get_record('question_multianswer', array('question' => $questionid))) {
+            $sequence = explode(',', $options->sequence);
+            foreach (array_keys($sequence) as $s) {
+                $sequence[$s] = $restoreids->get_newid('question', $sequence[$s]);
+            }
+            $sequence = array_filter($sequence);
+            $sequence = implode(',', $sequence);
+            $DB->set_field('question_multianswer', 'sequence', $sequence, array('question' => $questionid));
+        }
+    }
+
+    /**
+     * add_question_postprocessing_multichoice
+     *
+     * @param xxx $restoreids (passed by reference)
+     * @param xxx $module
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function add_question_postprocessing_multichoice(&$restoreids, $questionid) {
+        global $DB;
+        if ($options = $DB->get_record('question_multichoice', array('question' => $questionid))) {
+            $answers = explode(',', $options->answers);
+            foreach (array_keys($answers) as $a) {
+                $answers[$a] = $restoreids->get_newid('question_answers', $answers[$a]);
+            }
+            $answers = array_filter($answers);
+            $answers = implode(',', $answers);
+            $DB->set_field('question_multichoice', 'answers', $answers, array('question' => $questionid));
+        }
+    }
+
+    /**
+     * add_question_postprocessing_match
+     *
+     * @param xxx $restoreids (passed by reference)
+     * @param xxx $module
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function add_question_postprocessing_match(&$restoreids, $questionid) {
+        // the subquestions have already been set up with new ids
+    }
+
+    /**
+     * add_question_postprocessing_truefalse
+     *
+     * @param xxx $restoreids (passed by reference)
+     * @param xxx $questionid
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function add_question_postprocessing_truefalse(&$restoreids, $questionid) {
+        global $DB;
+        if ($options = $DB->get_record('question_truefalse', array('question' => $questionid))) {
+            $options->trueanswer = $restoreids->get_newid('question_answers', $options->trueanswer);
+            $options->falseanswer = $restoreids->get_newid('question_answers', $options->falseanswer);
+            $DB->update_record('question_truefalse', $options);
         }
     }
 }
@@ -1371,6 +1883,7 @@ class reader_remotesite {
         $post = $this->get_questions_post($itemid);
         $xml = $this->download_xml($url, $post);
 
+        // the data from a Moodle 1.x backup has the following structure:
         // MOODLE_BACKUP -> INFO
         // - MOODLE_VERSION, MOODLE_RELEASE, DATE, ORIGINAL_WWWROOT, ZIP_METHOD, DETAILS
         // MOODLE_BACKUP -> ROLES
@@ -1405,7 +1918,7 @@ class reader_remotesite {
      * @return xxx
      * @todo Finish documenting this function
      */
-    function get_xml_values_context(&$xml) {
+    public function get_xml_values_context(&$xml) {
         $defaults = array('level' => '', 'instance' => 0);
         return $this->get_xml_values($xml['0']['#'], $defaults);
     }
@@ -1417,7 +1930,7 @@ class reader_remotesite {
      * @return xxx
      * @todo Finish documenting this function
      */
-    function get_xml_values_categories(&$xml) {
+    public function get_xml_values_categories(&$xml) {
         $categories = array();
 
         if (isset($xml['0']['#']['QUESTION_CATEGORY'])) {
@@ -1439,7 +1952,7 @@ class reader_remotesite {
      * @return xxx
      * @todo Finish documenting this function
      */
-    function get_xml_values_category(&$xml) {
+    public function get_xml_values_category(&$xml) {
         $defaults = array('id' => '', 'name' => '', 'info' => '', 'stamp' => '', 'parent' => 0, 'sortorder' => 0);
         return $this->get_xml_values($xml, $defaults);
     }
@@ -1451,7 +1964,7 @@ class reader_remotesite {
      * @return xxx
      * @todo Finish documenting this function
      */
-    function get_xml_values_questions(&$xml) {
+    public function get_xml_values_questions(&$xml) {
         $questions = array();
         if (isset($xml['0']['#']['QUESTION'])) {
 
@@ -1459,7 +1972,8 @@ class reader_remotesite {
             foreach (array_keys($question) as $q) {
                 $defaults = array('id'              => 0,  'parent'             => 0,  'name'      => '',
                                   'questiontext'    => '', 'questiontextformat' => 0,  'image'     => '',
-                                  'generalfeedback' => 0,  'defaultgrade'       => 0,  'penalty'   => 0, 'qtype'      => '',
+                                  'generalfeedback' => '', 'generalfeedbackformat' => 0,
+                                  'defaultgrade'    => 0,  'defaultscore'       => 0,  'penalty'   => 0, 'qtype'      => '',
                                   'length'          => '', 'stamp'              => '', 'version'   => 0, 'hidden'     => '',
                                   'timecreated'     => 0,  'timemodified'       => 0,  'createdby' => 0, 'modifiedby' => 0);
                 $questions[$q] = $this->get_xml_values($question["$q"]['#'], $defaults);
@@ -1477,9 +1991,65 @@ class reader_remotesite {
      * @return xxx
      * @todo Finish documenting this function
      */
-    function get_xml_values_ordering(&$xml) {
+    public function get_xml_values_ordering(&$xml) {
         $defaults = array('logical' => 1, 'studentsee' => 6, 'correctfeedback' => '', 'partiallycorrectfeedback' => '', 'incorrectfeedback' => '');
         return $this->get_xml_values($xml['0']['#'], $defaults);
+    }
+
+    /*
+     * get_xml_values_matchoptions
+     *
+     * @param xxx $xml (passed by reference)
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function get_xml_values_matchoptions(&$xml) {
+        $defaults = array('id' => 0, 'question' => 0, 'subquestions' => '', 'shuffleanswers' => 1, 'shownumcorrect' => 0, 'correctfeedback' => '', 'partiallycorrectfeedback' => '', 'incorrectfeedback' => '');
+        return $this->get_xml_values($xml['0']['#'], $defaults);
+    }
+
+    /*
+     * get_xml_values_matchs
+     *
+     * @param xxx $xml (passed by reference)
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function get_xml_values_matchs(&$xml) {
+        $matchs = array();
+
+        if (isset($xml['0']['#']['MATCH'])) {
+            $match = &$xml['0']['#']['MATCH'];
+
+            foreach (array_keys($match) as $m) {
+                $defaults = array('id' => 0, 'code' => 0, 'questiontext' => '', 'questiontextformat' => 0, 'answertext' => '');
+                $matchs[$m] = $this->get_xml_values($match["$m"]['#'], $defaults);
+            }
+            unset($match);
+        }
+        return $matchs;
+    }
+
+    /*
+     * get_xml_values_multianswers
+     *
+     * @param xxx $xml (passed by reference)
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function get_xml_values_multianswers(&$xml) {
+        $multianswers = array();
+
+        if (isset($xml['0']['#']['MULTIANSWER'])) {
+            $multianswer = &$xml['0']['#']['MULTIANSWER'];
+
+            foreach (array_keys($multianswer) as $m) {
+                $defaults = array('id' => 0, 'question' => 0, 'sequence' => '');
+                $multianswers[$m] = $this->get_xml_values($multianswer["$m"]['#'], $defaults);
+            }
+            unset($multianswer);
+        }
+        return $multianswers;
     }
 
     /*
@@ -1489,8 +2059,8 @@ class reader_remotesite {
      * @return xxx
      * @todo Finish documenting this function
      */
-    function get_xml_values_multichoice(&$xml) {
-        $defaults = array('layout' => '0', 'answers' => array(), 'single' => 1, 'shuffleanswers' => 1, 'correctfeedback' => '', 'partiallycorrectfeedback' => '', 'incorrectfeedback' => '');
+    public function get_xml_values_multichoice(&$xml) {
+        $defaults = array('layout' => '0', 'answers' => array(), 'single' => 1, 'shuffleanswers' => 1, 'answernumbering' => 'abc', 'shownumcorrect' => 0, 'correctfeedback' => '', 'partiallycorrectfeedback' => '', 'incorrectfeedback' => '');
         return $this->get_xml_values($xml['0']['#'], $defaults);
     }
 
@@ -1501,7 +2071,7 @@ class reader_remotesite {
      * @return xxx
      * @todo Finish documenting this function
      */
-    function get_xml_values_truefalse(&$xml) {
+    public function get_xml_values_truefalse(&$xml) {
         $defaults = array('trueanswer' => 0, 'falseanswer' => 0);
         return $this->get_xml_values($xml['0']['#'], $defaults);
     }
@@ -1513,7 +2083,7 @@ class reader_remotesite {
      * @return xxx
      * @todo Finish documenting this function
      */
-    function get_xml_values_answers(&$xml) {
+    public function get_xml_values_answers(&$xml) {
         $answers = array();
 
         if (isset($xml['0']['#']['ANSWER'])) {
@@ -1535,7 +2105,7 @@ class reader_remotesite {
      * @return xxx
      * @todo Finish documenting this function
      */
-    function get_xml_values_mods(&$xml) {
+    public function get_xml_values_mods(&$xml) {
         $mods = array();
         if (isset($xml['0']['#']['MOD'])) {
             $mod = &$xml['0']['#']['MOD'];
@@ -1549,7 +2119,7 @@ class reader_remotesite {
         return $this->convert_to_assoc_array($mods, 'id');
     }
 
-    function get_xml_values_mod_defaults(&$xml) {
+    public function get_xml_values_mod_defaults(&$xml) {
         $modtype = $xml['MODTYPE']['0']['#'];
         if ($modtype=='quiz') {
             return array('id'              => 0, 'modtype'       => '', 'name'             => '', 'intro'            => '',
@@ -1573,7 +2143,7 @@ class reader_remotesite {
      * @return xxx
      * @todo Finish documenting this function
      */
-    function get_xml_values_question_instances(&$xml) {
+    public function get_xml_values_question_instances(&$xml) {
         $instances = array();
         if (isset($xml['0']['#']['QUESTION_INSTANCE'])) {
 
@@ -1594,7 +2164,7 @@ class reader_remotesite {
      * @return xxx
      * @todo Finish documenting this function
      */
-    function get_xml_values_feedbacks(&$xml) {
+    public function get_xml_values_feedbacks(&$xml) {
         $feedbacks = array();
         if (isset($xml['0']['#']['FEEDBACK'])) {
 
@@ -1616,7 +2186,7 @@ class reader_remotesite {
      * @return xxx
      * @todo Finish documenting this function
      */
-    function get_xml_values_sections(&$xml, &$mods) {
+    public function get_xml_values_sections(&$xml, &$mods) {
         $sections = array();
         if ($xml['0']['#']['SECTION']) {
             $section = $xml['0']['#']['SECTION'];
@@ -1639,7 +2209,7 @@ class reader_remotesite {
      * @return xxx
      * @todo Finish documenting this function
      */
-    function convert_to_assoc_array($items, $field) {
+    public function convert_to_assoc_array($items, $field) {
         $return = array();
         foreach ($items as $item) {
             $return[$item->$field] = $item;
@@ -1655,7 +2225,7 @@ class reader_remotesite {
      * @param xxx $stdclass (optional, default=null)
      * @todo Finish documenting this function
      */
-    function get_xml_values(&$xml, $defaults, $stdclass=null) {
+    public function get_xml_values(&$xml, $defaults, $stdclass=null) {
 
         if ($xml===null) {
             throw new moodle_exception('Oops $xml is NULL');
@@ -1911,7 +2481,7 @@ class reader_remotesite_moodlereadernet extends reader_remotesite {
      * @return xxx
      * @todo Finish documenting this function
      */
-    function sort_level_by_name($a, $b) {
+    public function sort_level_by_name($a, $b) {
 
         // search and replace strings
         $search1 = array('/^-+$/', '/\bLadder\s+([0-9]+)$/', '/\bLevel\s+([0-9]+)$/', '/\bStage\s+([0-9]+)$/', '/^Extra_Points|testing|_testing_only$/', '/Booksworms/');
@@ -1975,7 +2545,7 @@ class reader_remotesite_moodlereadernet extends reader_remotesite {
      * @return xxx
      * @todo Finish documenting this function
      */
-    function convert_level_to_number($matches) {
+    public function convert_level_to_number($matches) {
         $num = 0;
         switch ($matches[1]) {
             case 'Pre':   $num -= 10; break;
@@ -2024,4 +2594,447 @@ class reader_items {
 class reader_download_items extends reader_items {
     public $newcount = 0;
     public $needpassword = false;
+}
+
+/**
+ * reader_restore_ids
+ *
+ * @copyright  2013 Gordon Bateson (gordon.bateson@gmail.com)
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @since      Moodle 2.0
+ * @package    mod
+ * @subpackage reader
+ */
+class reader_restore_ids {
+    public $ids = array();
+
+    /**
+     * set_ids
+     *
+     * @param string  $type
+     * @param integer $oldid
+     * @param integer $newid
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function set_ids($type, $oldid, $newid) {
+        if (empty($this->ids[$type])) {
+            $this->ids[$type] = array();
+        }
+        $this->ids[$type][$oldid] = $newid;
+    }
+
+    /**
+     * get_newid
+     *
+     * @param string  $type
+     * @param integer $oldid
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function get_newid($type, $oldid) {
+        if (empty($this->ids[$type][$oldid])) {
+            return 0;
+        }
+        return $this->ids[$type][$oldid];
+    }
+
+    /**
+     * get_oldid
+     *
+     * @param string  $type
+     * @param integer $newid
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function get_oldid($type, $newid) {
+        if (empty($this->ids[$type])) {
+            return false;
+        }
+        return array_search($newid, $this->ids[$type]);
+    }
+
+    /**
+     * get_newids
+     *
+     * @param string $type
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function get_newids($type) {
+        if (empty($this->ids[$type])) {
+            return array();
+        }
+        return $this->ids[$type];
+    }
+}
+
+/**
+ * reader_download_progress_task
+ *
+ * @copyright  2013 Gordon Bateson (gordon.bateson@gmail.com)
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @since      Moodle 2.0
+ * @package    mod
+ * @subpackage reader
+ */
+class reader_download_progress_task {
+    /** the name of this task */
+    public $name = '';
+
+    /** the percentage to which this task is complete */
+    public $percent = 0;
+
+    /** the weighting of this task toward its parent task */
+    public $weighting = 0;
+
+    /** the total weighting of the child tasks */
+    public $childweighting = 0;
+
+    /** the parent task object */
+    public $parenttask = null;
+
+    /** an array of child tasks */
+    public $childtasks = array();
+
+    /**
+     * __construct
+     *
+     * @param xxx $name (optional, default="")
+     * @param xxx $weighting (optional, default=100)
+     * @param xxx $childtasks (optional, default=array())
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function __construct($name='', $weighting=100, $childtasks=array()) {
+        $this->name = $name;
+        $this->weighting = $weighting;
+        foreach ($childtasks as $childid => $childtask) {
+            $this->add_childtask($childid, $childtask);
+        }
+    }
+
+    /**
+     * set_parenttask
+     *
+     * @param xxx $parenttask (passed by reference)
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function set_parenttask($parenttask) {
+        $this->parenttask = $parenttask;
+    }
+
+    /**
+     * add_childtask
+     *
+     * @param xxx $childid
+     * @param xxx $childtask
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function add_childtask($childid, $childtask) {
+        if (is_string($childtask)) {
+            $childid = $childtask;
+            $childtask = new reader_download_progress_task();
+        }
+        $childtask->set_parenttask($this);
+        $this->childtasks[$childid] = $childtask;
+        $this->childweighting += $childtask->weighting;
+    }
+
+    /**
+     * get_childtask
+     *
+     * @param xxx $childid
+     * @param xxx $childtask
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function get_childtask($childid) {
+        if (empty($this->childtasks[$childid])) {
+            return false; // shouldn't happen !!
+        }
+        return $this->childtasks[$childid];
+    }
+
+    /**
+     * finish
+     *
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function finish() {
+        $this->set_percent(100);
+    }
+
+    /**
+     * set_percent
+     *
+     * @param integer $percent
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function set_percent($percent) {
+        $this->percent = $percent;
+        if ($this->parenttask) {
+            $this->parenttask->checkchildtasks();
+        }
+    }
+
+    /**
+     * checkchildtasks
+     *
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function checkchildtasks() {
+        if ($this->childweighting) {
+            $childweighting = 0;
+            foreach ($this->childtasks as $childtask) {
+                $childweighting += ($childtask->weighting * ($childtask->percent / 100));
+            }
+            $percent = round(100 * ($childweighting / $this->childweighting));
+        } else {
+            $percent = 0;
+        }
+        $this->set_percent($percent);
+    }
+}
+
+/**
+ * reader_download_progress_bar
+ *
+ * @copyright  2013 Gordon Bateson (gordon.bateson@gmail.com)
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @since      Moodle 2.0
+ * @package    mod
+ * @subpackage reader
+ */
+class reader_download_progress_bar extends reader_download_progress_task {
+
+    /** a Moodle progress bar to display the progress of the download */
+    private $bar = null;
+
+    /** the title displayed of this progress bar */
+    private $title = null;
+
+    /** the time after which more processing time will be requested */
+    private $timeout = 0;
+
+    /**
+     * __construct
+     *
+     * @param xxx $name
+     * @param xxx $weighting
+     * @param xxx $childtasks (optional, default=array())
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function __construct($name='', $weighting=100, $childtasks=array()) {
+        parent::__construct($name, $weighting, $childtasks);
+        $this->bar = new progress_bar($name, 500, true);
+        $this->title = get_string($this->name, 'reader');
+        $this->set_timeout();
+    }
+
+    /**
+     * create
+     *
+     * @param array $itemids
+     * @param string $name
+     * @param integer $weighting (optional, default=100)
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    static function create($itemids, $name, $weighting=100) {
+        $childtasks = array();
+        $childtasks['books'] = self::create_books($itemids);
+        return new reader_download_progress_bar($name, $weighting, $childtasks);
+    }
+
+    /**
+     * create_books
+     *
+     * @param array $books
+     * @param integer $weighting (optional, default=100)
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    static function create_books($books, $weighting=100) {
+        $childtasks = array();
+        foreach ($books as $book) {
+            $childid = (is_object($book) ? $book->id : $book);
+            $childtasks[$childid] = self::create_book($book);
+        }
+        return new reader_download_progress_task('books', $weighting, $childtasks);
+    }
+
+    /**
+     * create_book
+     *
+     * @param xxx $book
+     * @param integer $weighting (optional, default=100)
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    static function create_book($book, $weighting=100) {
+        $childtasks = array();
+        $childtasks['data'] = new reader_download_progress_task('data', 20);
+        if (isset($book->quiz)) {
+            $childtasks['quiz'] = self::create_quiz($book->quiz, 80);
+        }
+        return new reader_download_progress_task('book', $weighting, $childtasks);
+    }
+
+    /**
+     * create_quiz
+     *
+     * @param xxx $quiz
+     * @param integer $weighting (optional, default=100)
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    static function create_quiz($quiz, $weighting=100) {
+        $childtasks = array();
+        $childtasks['data'] = new reader_download_progress_task('data', 10);
+        if (isset($quiz->categories)) {
+            $childtasks['categories'] = self::create_categories($quiz->categories, 80);
+        }
+        if (isset($quiz->instances)) {
+            $childtasks['instances'] = self::create_instances($quiz->instances, 10);
+        }
+        return new reader_download_progress_task('quiz', $weighting, $childtasks);
+    }
+
+    /**
+     * create_instances
+     *
+     * @param array $instances
+     * @param integer $weighting (optional, default=100)
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    static function create_instances($instances, $weighting=100) {
+        $childtasks = array();
+        foreach ($instances as $instance) {
+            $childid = (is_object($instance) ? $instance->id : $instance);
+            $childtasks[$childid] = new reader_download_progress_task('instance');
+        }
+        return new reader_download_progress_task('instances', $weighting, $childtasks);
+    }
+
+    /**
+     * create_categories
+     *
+     * @param array $categories
+     * @param integer $weighting (optional, default=100)
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    static function create_categories($categories, $weighting=100) {
+        $childtasks = array();
+        foreach ($categories as $category) {
+            $childid = (is_object($category) ? $category->id : $category);
+            $childtasks[$childid] = self::create_category($category);
+        }
+        return new reader_download_progress_task('categories', $weighting, $childtasks);
+    }
+
+    /**
+     * create_category
+     *
+     * @param xxx $category
+     * @param integer $weighting (optional, default=100)
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    static function create_category($category, $weighting=100) {
+        $childtasks = array();
+        $childtasks['data'] = new reader_download_progress_task('data', 20);
+        if (isset($category->questions)) {
+            $childtasks['questions'] = self::create_questions($category->questions, 80);
+        }
+        return new reader_download_progress_task('category', $weighting, $childtasks);
+    }
+
+    /**
+     * create_questions
+     *
+     * @param array $questions
+     * @param integer $weighting (optional, default=100)
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    static function create_questions($questions, $weighting=100) {
+        $childtasks = array();
+        foreach ($questions as $question) {
+            $childid = (is_object($question) ? $question->id : $question);
+            $childtasks[$childid] = self::create_question($question);
+        }
+        return new reader_download_progress_task('questions', $weighting, $childtasks);
+    }
+
+    /**
+     * create_question
+     *
+     * @param xxx $question
+     * @param integer $weighting (optional, default=100)
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    static function create_question($question, $weighting=100) {
+        $childtasks = array();
+        $childtasks['data'] = new reader_download_progress_task('data', 10);
+        $childtasks['options'] = new reader_download_progress_task('options', 10);
+        if (isset($quiz->answers)) {
+            $childtasks['answers'] = self::create_answers($quiz->answers, 80);
+        }
+        return new reader_download_progress_task('question', $weighting, $childtasks);
+    }
+
+    /**
+     * create_answers
+     *
+     * @param array $answers
+     * @param integer $weighting (optional, default=100)
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    static function create_answers($answers, $weighting=100) {
+        $childtasks = array();
+        foreach ($answers as $answer) {
+            $childid = (is_object($answer) ? $answer->id : $answer);
+            $childtasks[$childid] = new reader_download_progress_task('answer');
+        }
+        return new reader_download_progress_task('answers', $weighting, $childtasks);
+    }
+
+    /**
+     * set_percent
+     *
+     * @param integer $percent
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function set_percent($percent) {
+        parent::set_percent($percent);
+        $this->set_timeout(); // request more time
+        $this->bar->update($this->percent, 100, '');
+    }
+
+    /**
+     * set_timeout
+     *
+     * @param integer $timeout (optional, default=300)
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function set_timeout($moretime=300) {
+        $time = time();
+        if ($this->timeout < $time && $this->percent < 100) {
+            $this->timeout = ($time + $moretime);
+            set_time_limit($moretime);
+        }
+    }
 }
