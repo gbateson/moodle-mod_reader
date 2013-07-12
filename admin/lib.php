@@ -152,6 +152,22 @@ class reader_downloader {
     }
 
     /**
+     * add_available_items
+     *
+     * @param xxx $type
+     * @param xxx $itemids
+     * @todo Finish documenting this function
+     */
+    public function has_available_items() {
+        foreach (array_keys($this->remotesites) as $r) {
+            if (count($this->available[$r]->items)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * check_selected_itemids
      *
      * @param xxx $publishers
@@ -1682,10 +1698,21 @@ class reader_remotesite {
      * @todo Finish documenting this function
      */
     public function download_xml($url, $post=null, $headers=null) {
-        if ($xml = download_file_content($url, $headers, $post)) {
-            return xmlize($xml);
+        global $OUTPUT;
+
+        // get "full response" from cURL so that we can handle errors
+        $response = download_file_content($url, $headers, $post, true);
+
+        if (empty($response->results)) {
+            $output = '';
+            $output .= html_writer::tag('h3', get_string('cannotdownloadata', 'reader'));
+            $output .= html_writer::tag('p', get_string('curlerror', 'reader', $response->error));
+            $output = $OUTPUT->notification($output);
+            echo $OUTPUT->box($output, 'generalbox', 'notice');
+            return false; // shouldn't happen !!
         }
-        return false; // shouldn't happen !!
+
+        return xmlize($response->results);
     }
 
     /**
@@ -2417,43 +2444,44 @@ class reader_remotesite_moodlereadernet extends reader_remotesite {
      * @todo Finish documenting this function
      */
     public function get_available_items($type, $itemids, $downloaded) {
-        $items = $this->download_publishers($type, $itemids);
-
         $available = new reader_download_items();
-        foreach ($items['myxml']['#']['item'] as $item) {
 
-            $publisher = $item['@']['publisher'];
-            $needpass  = $item['@']['needpass'];
-            $level     = $item['@']['level'];
-            $itemid    = $item['@']['id'];
-            $itemname  = $item['#'];
+        if ($items = $this->download_publishers($type, $itemids)) {
+            foreach ($items['myxml']['#']['item'] as $item) {
 
-            if ($publisher=='Extra_Points' || $publisher=='testing' || $publisher=='_testing_only') {
-                continue; // ignore these publisher categories
+                $publisher = $item['@']['publisher'];
+                $needpass  = $item['@']['needpass'];
+                $level     = $item['@']['level'];
+                $itemid    = $item['@']['id'];
+                $itemname  = $item['#'];
+
+                if ($publisher=='Extra_Points' || $publisher=='testing' || $publisher=='_testing_only') {
+                    continue; // ignore these publisher categories
+                }
+
+                if (! isset($available->items[$publisher])) {
+                    $available->items[$publisher] = new reader_download_items();
+                }
+                if (! isset($available->items[$publisher]->items[$level])) {
+                    $available->items[$publisher]->items[$level] = new reader_download_items();
+                }
+
+                if ($needpass=='true') {
+                    $available->items[$publisher]->items[$level]->needpassword = true;
+                }
+
+                $available->count++;
+                $available->items[$publisher]->count++;
+                $available->items[$publisher]->items[$level]->count++;
+
+                if (empty($downloaded->items[$publisher]->items[$level]->items[$itemname])) {
+                    $available->newcount++;
+                    $available->items[$publisher]->newcount++;
+                    $available->items[$publisher]->items[$level]->newcount++;
+                }
+
+                $available->items[$publisher]->items[$level]->items[$itemname] = $itemid;
             }
-
-            if (! isset($available->items[$publisher])) {
-                $available->items[$publisher] = new reader_download_items();
-            }
-            if (! isset($available->items[$publisher]->items[$level])) {
-                $available->items[$publisher]->items[$level] = new reader_download_items();
-            }
-
-            if ($needpass=='true') {
-                $available->items[$publisher]->items[$level]->needpassword = true;
-            }
-
-            $available->count++;
-            $available->items[$publisher]->count++;
-            $available->items[$publisher]->items[$level]->count++;
-
-            if (empty($downloaded->items[$publisher]->items[$level]->items[$itemname])) {
-                $available->newcount++;
-                $available->items[$publisher]->newcount++;
-                $available->items[$publisher]->items[$level]->newcount++;
-            }
-
-            $available->items[$publisher]->items[$level]->items[$itemname] = $itemid;
         }
 
         // define callback for sorting levels by name

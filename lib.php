@@ -28,10 +28,6 @@
 /** Prevent direct access to this script */
 defined('MOODLE_INTERNAL') || die;
 
-
-
-
-
 define('READER_GRADEHIGHEST', '1');
 define('READER_GRADEAVERAGE', '2');
 define('READER_ATTEMPTFIRST', '3');
@@ -2650,7 +2646,6 @@ function reader_copy_to_quizattempt($readerattempt) {
     }
 }
 
-
 /**
  * context
  *
@@ -3738,7 +3733,6 @@ function reader_available_users($cmid, $reader, $userid, $action='') {
     return $output;
 }
 
-
 /**
  * reader_cheatsheet_init
  *
@@ -3855,7 +3849,6 @@ function reader_get_new_uniqueid($contextid, $quizid, $defaultbehavior='deferred
     if ($tablename=='question_usages') {
         if (! $behaviour = $DB->get_field('quiz', 'preferredbehaviour', array('id' => $quizid))) {
             $behaviour = $defaultbehavior;
-
         }
         $record = (object)array('contextid' => $contextid,
                                 'component' => 'mod_'.$modulename,
@@ -3871,3 +3864,118 @@ function reader_get_new_uniqueid($contextid, $quizid, $defaultbehavior='deferred
 
     return 0; // shoudn't happen !!
 }
+
+////////////////////////////////////////////////////////////////////////////////
+// Navigation API                                                             //
+////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Extends the global navigation tree by adding reader nodes if there is a relevant content
+ *
+ * This can be called by an AJAX request so do not rely on $PAGE as it might not be set up properly.
+ *
+ * @param navigation_node $navref An object representing the navigation tree node of the reader module instance
+ * @param stdclass $course
+ * @param stdclass $module
+ * @param stdclass $cm
+ */
+function reader_extend_navigation(navigation_node $readernode, stdclass $course, stdclass $module, stdclass $cm) {
+    global $CFG, $DB, $USER;
+
+    if (reader_can_manage($cm->id, $USER->id)) {
+        $icon = new pix_icon('i/report', '');
+        $type = navigation_node::TYPE_SETTING;
+
+        $label = get_string('reports');
+        $reportnode = $readernode->add($label, null, $type, null, null, $icon);
+
+        $modes = array('usersummary', 'userdetailed', 'groupsummary', 'booksummary', 'bookdetailed');
+        foreach ($modes as $mode) {
+            $url = new moodle_url('/mod/reader/report.php', array('id' => $cm->id, 'mode' => $mode));
+            $label = get_string('report'.$mode, 'reader');
+            $reportnode->add($label, $url, $type, null, null, $icon);
+        }
+    }
+}
+
+/**
+ * Extends the settings navigation with the Reader settings
+
+ * This function is called when the context for the page is a reader module. This is not called by AJAX
+ * so it is safe to rely on the $PAGE.
+ *
+ * @param settings_navigation $settingsnav {@link settings_navigation}
+ * @param navigation_node $readernode {@link navigation_node}
+ */
+function reader_extend_settings_navigation(settings_navigation $settingsnav, navigation_node $readernode) {
+    global $CFG, $PAGE, $USER;
+
+    // create our new nodes
+    if (reader_can_manage($PAGE->cm->id, $USER->id)) {
+        require_once($CFG->dirroot.'/mod/reader/admin/lib.php');
+
+        $type = navigation_node::TYPE_SETTING;
+        $icon = new pix_icon('t/download', '');
+
+        $text   = get_string('download');
+        $node   = new navigation_node(array('text'=>$text, 'type'=>$type, 'icon'=>$icon));
+
+        $params = array('id' => $PAGE->cm->id, 'type' => reader_downloader::BOOKS_WITH_QUIZZES);
+        $action = new moodle_url('/mod/reader/admin/download.php', $params);
+        $key    = 'downloadbookswithquizzes';
+        $text   = get_string($key, 'reader');
+        $node->add_node(new navigation_node(array('text'=>$text, 'action'=>$action, 'key'=>$key, 'type'=>$type, 'icon'=>$icon)));
+
+        $params = array('id' => $PAGE->cm->id, 'type' => reader_downloader::BOOKS_WITHOUT_QUIZZES);
+        $action = new moodle_url('/mod/reader/admin/download.php', $params);
+        $key    = 'downloadbookswithoutquizzes';
+        $text   = get_string($key, 'reader');
+        $node->add_node(new navigation_node(array('text'=>$text, 'action'=>$action, 'key'=>$key, 'type'=>$type, 'icon'=>$icon)));
+
+        // We want to add this new node after the Edit settings node,
+        // and before the locally assigned roles node.
+
+        // detect Moodle >= 2.2 (it has an easy way to do what we want)
+        if (method_exists($readernode, 'get_children_key_list')) {
+
+            // in Moodle >= 2.2, we can locate the "Edit settings" node
+            // by its key and use that as the "beforekey" for the new nodes
+            $keys = $readernode->get_children_key_list();
+            $i = array_search('modedit', $keys);
+            if ($i===false) {
+                $i = 0;
+            } else {
+                $i = ($i + 1);
+            }
+            if (array_key_exists($i, $keys)) {
+                $beforekey = $keys[$i];
+            } else {
+                $beforekey = null;
+            }
+            $readernode->add_node($node, $beforekey);
+
+        } else {
+            // in Moodle 2.0 - 2.1, we don't have the $beforekey functionality,
+            // so instead, we create a new collection of child nodes by copying
+            // the current child nodes one by one and inserting our news nodes
+            // after the node whose plain url ends with "/course/modedit.php"
+            // Note: this would also work on Moodle >= 2.2, but is obviously
+            // rather a hack and not the way things should to be done
+            $found = false;
+            $children = new navigation_node_collection();
+            $max_i = ($readernode->children->count() - 1);
+            foreach ($readernode->children as $i => $child) {
+                $children->add($child);
+                if ($found==false) {
+                    $action = $child->action->out_omit_querystring();
+                    if (($i==$max_i) || substr($action, -19)=='/course/modedit.php') {
+                        $found = true;
+                        $children->add($node);
+                    }
+                }
+            }
+            $readernode->children = $children;
+        }
+    }
+}
+

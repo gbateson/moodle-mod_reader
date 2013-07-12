@@ -85,14 +85,17 @@ $downloader->check_selected_itemids($selectedpublishers,
                                     $selecteditemids);
 $downloader->add_selected_itemids($type, $selecteditemids);
 
-echo $output->box_start('generalbox', 'notice');
-echo $output->form_start();
+if ($downloader->has_available_items()) {
+    echo $output->box_start('generalbox', 'notice');
+    echo $output->form_start();
 
-echo $output->search_box();
-echo $output->showhide_menu();
+    echo $output->search_box();
+    echo $output->showhide_menu();
 
-echo $output->available_lists($downloader);
+    echo $output->available_lists($downloader);
 
-echo $output->form_end();
-echo $output->box_end();
+    echo $output->form_end();
+    echo $output->box_end();
+}
+
 echo $output->footer();
