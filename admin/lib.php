@@ -1313,8 +1313,9 @@ class reader_downloader {
 
         $bestsubquestionids = $this->get_best_match_subquestions($question);
 
-        list($table, $field) = $this->get_question_options_table('match');
-        $table .= '_sub'; // e.g. question_match_sub
+        list($table, $field) = $this->get_question_options_table('match', true);
+        // Moodle <= 2.4: question_match_sub (question)
+        // Moodle >= 2.5: qtype_match_subquestion (questionid)
 
         $subquestions = array();
         foreach ($question->matchs as $match) {
@@ -1631,24 +1632,40 @@ class reader_downloader {
      * @return array($table, $field)
      * @todo Finish documenting this function
      */
-    public function get_question_options_table($type) {
+    public function get_question_options_table($type, $sub=false) {
         global $DB;
 
         // we need the db manager to detect the names of question options tables
         $dbman = $DB->get_manager();
 
-        // from Moodle 2.5, the table names start to change
-        if ($dbman->table_exists('qtype_'.$type.'_options')) {
-            return array('qtype_'.$type.'_options', 'questionid');
+        switch (true) {
+
+            // from Moodle 2.5, the table names start to look like this
+            case $dbman->table_exists('qtype_'.$type.'_options'):
+                if ($sub) {
+                    $table = 'qtype_'.$type.'_subquestions';
+                } else {
+                    $table = 'qtype_'.$type.'_options';
+                }
+                $field = 'questionid';
+                break;
+
+            // Moodle <= 2.4
+            case $dbman->table_exists('question_'.$type):
+                if ($sub) {
+                    $table = 'question_'.$type.'_sub';
+                } else {
+                    $table = 'question_'.$type;
+                }
+                $field = 'question';
+                break;
+
+            default:
+                $table = '';
+                $field = '';
         }
 
-        // Moodle <= 2.4
-        if ($dbman->table_exists('question_'.$type)) {
-            return array('question_'.$type, 'question');
-        }
-
-        // table does not exist - shouldn't happen !!
-        return array('', '');
+        return array($table, $field);
     }
 
     /**
@@ -1747,7 +1764,7 @@ class reader_downloader {
                     $dbfield = $xmlfield;
                 }
 
-                // make sure the string is not too long
+                // make sure $str1 string is not too long
                 $str1 = $xmlrecord->$xmlfield;
                 if (strlen($str1) > 255) {
                     $str1 = substr(0, 255);
@@ -1759,7 +1776,7 @@ class reader_downloader {
                 // compare this $xmlrecord to all the db (=existing) records
                 foreach ($dbrecords as $dbrecordid => $dbrecord) {
 
-                    // make sure the string is not too long
+                    // make sure $str2 string is not too long
                     $str2 = $dbrecord->$dbfield;
                     if (strlen($str2) > 255) {
                         $str2 = substr(0, 255);
@@ -3320,7 +3337,7 @@ class reader_download_progress_bar extends reader_download_progress_task {
     /** a Moodle progress bar to display the progress of the download */
     private $bar = null;
 
-    /** the title displayed of this progress bar */
+    /** the title displayed in the progress bar */
     private $title = null;
 
     /** the time after which more processing time will be requested */

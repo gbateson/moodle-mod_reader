@@ -369,3 +369,7 @@ $string['youmusttakequizzes'] = ' You can take {$a} more quizzes ';
 $string['yourcurrentlevel'] = 'Your current level';
 $string['yourteacherhasstopped'] = ' Your teacher has stopped automatic promotion for you.';
 $string['youwerepromoted'] = 'You were promoted to RL-{$a->level} on {$a->date} at {$a->time}';
+
+$string['nodownloaditems'] = 'No items are available for download.';
+$string['definelogindetails'] = 'Please define login details: {$a}';
+$string['remotesitenotaccessible'] = 'Remote download site is not accessible.';

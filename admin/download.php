@@ -113,6 +113,16 @@ if ($downloader->has_available_items()) {
 
     echo $output->form_end();
     echo $output->box_end();
+
+} else if (get_config('reader', 'serverlink') && get_config('reader', 'serverlogin')) {
+    echo $output->heading(get_string('nodownloaditems', 'reader'), '3');
+} else {
+    echo $output->box_start('generalbox', 'notice');
+    $link = new moodle_url('/admin/settings.php', array('section' => 'modsettingreader'));
+    $link = html_writer::link($link, get_string('settings'));
+    echo html_writer::tag('p', get_string('remotesitenotaccessible', 'reader'));
+    echo html_writer::tag('p', get_string('definelogindetails', 'reader', $link));
+    echo $output->box_end();
 }
 
 echo $output->footer();

@@ -76,7 +76,28 @@ class mod_reader_download_renderer extends mod_reader_renderer {
             $js .= "    if (! evt) {\n";
             $js .= "        evt = window.event;\n"; // IE
             $js .= "    }\n";
-            $js .= "    window.reader_checkbox_shiftkey = (evt.shiftKey ? true : false);\n";
+            $js .= "    var target = null;\n";
+            $js .= "    if (evt) {\n";
+            $js .= "        if (evt.target) {\n";
+            $js .= "            target = event.target;\n";
+            $js .= "        } else if (evt.srcElement) {\n";
+            $js .= "            target = event.srcElement;\n"; // IE
+            $js .= "        }\n";
+            $js .= "    }\n";
+            $js .= "    if (target && target.nodeType==3) {\n";
+            $js .= "        target = target.parentNode;\n"; // Safari
+            $js .= "    }\n";
+            $js .= "    if (target && target.tagName.toUpperCase()=='INPUT' && target.type=='checkbox') {\n";
+            $js .= "        if (window.reader_checkbox_id1 && evt.shiftKey) {\n";
+            $js .= "            window.reader_checkbox_id2 = target.id;\n";
+            $js .= "        } else {\n";
+            $js .= "            window.reader_checkbox_id1 = target.id;\n";
+            $js .= "            window.reader_checkbox_id2 = '';\n";
+            $js .= "        }\n";
+            $js .= "    } else {\n";
+            $js .= "        window.reader_checkbox_id1 = '';\n";
+            $js .= "        window.reader_checkbox_id2 = '';\n";
+            $js .= "    }\n";
             $js .= "}\n";
 
             // handle the onchange event for checkboxes
@@ -84,16 +105,12 @@ class mod_reader_download_renderer extends mod_reader_renderer {
             // all the checkboxes in between will be toggled on or off
             // a normal mouse click will select the checkbox and any checkboxes in sublists
             $js .= "function reader_checkbox_onchange(checkbox) {\n";
-            $js .= "    if (window.reader_checkbox_shiftkey) {\n";
-            $js .= "        window.reader_checkbox_shiftkey = false;\n";
-            $js .= "        if (window.reader_checkbox_id) {\n";
-            $js .= "            var id1 = checkbox.id;\n";
-            $js .= "            var id2 = reader_checkbox_id;\n";
-            $js .= "            window.reader_checkbox_id = '';\n";
-            $js .= "            reader_checkbox_toggle_range(id1, id2, checkbox.checked);\n";
-            $js .= "        } else {\n";
-            $js .= "            window.reader_checkbox_id = checkbox.id;\n";
-            $js .= "        }\n";
+            $js .= "    if (window.reader_checkbox_id1 && window.reader_checkbox_id2) {\n";
+            $js .= "        var id1 = reader_checkbox_id1;\n";
+            $js .= "        var id2 = reader_checkbox_id2;\n";
+            $js .= "        window.reader_checkbox_id1 = id2;\n";
+            $js .= "        window.reader_checkbox_id2 = '';\n";
+            $js .= "        reader_checkbox_toggle_range(id1, id2, checkbox.checked);\n";
             $js .= "    } else {\n";
             $js .= "        var obj = checkbox.parentNode.getElementsByTagName('input');\n";
             $js .= "        if (obj) {\n";
@@ -105,11 +122,13 @@ class mod_reader_download_renderer extends mod_reader_renderer {
             $js .= "            }\n";
             $js .= "        }\n";
             $js .= "        obj = null;\n";
-            $js .= "        window.reader_checkbox_id = '';\n";
             $js .= "    }\n";
             $js .= "}\n";
 
             $js .= "function reader_checkbox_toggle_range(id1, id2, checked) {\n";
+            $js .= "    if (id1==null || id2==null) {\n";
+            $js .= "        return;\n";
+            $js .= "    }\n";
             $js .= "    switch (true) {\n";
             $js .= "        case (id1.indexOf('id_itemids_')==0):\n";
             $js .= "        case (id2.indexOf('id_itemids_')==0): var targetid = 'id_itemids_'; break;\n";
@@ -119,7 +138,7 @@ class mod_reader_download_renderer extends mod_reader_renderer {
             $js .= "        case (id2.indexOf('id_publishers_')==0): var targetid = 'id_publishers_'; break;\n";
             $js .= "        case (id1.indexOf('id_remotesites_')==0):\n";
             $js .= "        case (id2.indexOf('id_remotesites_')==0): var targetid = 'id_remotesites_'; break;\n";
-            $js .= "        default: targetid = checkbox.id;\n"; // shouldn't happen !!
+            $js .= "        default: return;\n"; // shouldn't happen !!
             $js .= "    }\n";
             $js .= "    var targetid = new RegExp('^' + targetid);\n";
             $js .= "    var obj = document.getElementsByTagName('input');\n";
