@@ -32,7 +32,7 @@ require_once($CFG->dirroot.'/mod/reader/admin/renderer.php');
 
 $id   = optional_param('id',   0, PARAM_INT); // course module id
 $r    = optional_param('r',    0, PARAM_INT); // reader id
-$type = optional_param('type', 0, PARAM_INT); // 0=books without quizzes, 1=books with quizzes
+$type = optional_param('type', 1, PARAM_INT); // 0=books without quizzes, 1=books with quizzes
 
 $selectedpublishers = reader_optional_param_array('publishers', array(), PARAM_CLEAN);
 $selectedlevels     = reader_optional_param_array('levels',     array(), PARAM_CLEAN);
@@ -63,29 +63,46 @@ $PAGE->set_heading($course->fullname);
 
 $output = $PAGE->get_renderer('mod_reader_download');
 
-echo $output->header();
 switch ($type) {
-    case reader_downloader::BOOKS_WITH_QUIZZES:
-        echo $output->heading(get_string('uploadquiztoreader', 'reader'));
-        break;
-    case reader_downloader::BOOKS_WITHOUT_QUIZZES:
-        echo $output->heading(get_string('uploaddatanoquizzes', 'reader'));
-        break;
+    case reader_downloader::BOOKS_WITH_QUIZZES: $str = 'uploadquiztoreader'; break;
+    case reader_downloader::BOOKS_WITHOUT_QUIZZES: $str = 'uploaddatanoquizzes'; break;
 }
 
+echo $output->header();
+echo $output->heading(get_string($str, 'reader'));
+
+// create an object to represent main download site (moodlereader.net)
 $remotesite = new reader_remotesite_moodlereadernet(get_config('reader', 'serverlink'),
                                                     get_config('reader', 'serverlogin'),
                                                     get_config('reader', 'serverpassword'));
+
+// create an object to handle the downloading of data from remote sites
 $downloader = new reader_downloader($course, $cm, $reader, $output);
+
+// register the known remote sites with the downloader
 $downloader->add_remotesite($remotesite);
+
+// get a list of items that have already been downloaded
+// from the remote site and are stored in the Moodle DB
 $downloader->get_downloaded_items($type);
+
+// download the list(s) of available items from each remote site
 $downloader->add_available_items($type, $selecteditemids);
+
+// if any itemids have been selected for download, check that
+// they are valid, and expand selected publishers and levels
 $downloader->check_selected_itemids($selectedpublishers,
                                     $selectedlevels,
                                     $selecteditemids);
+
+// download selected any itemids from the remote site(s)
+// and add them to this Moodle site
 $downloader->add_selected_itemids($type, $selecteditemids);
 
+// if any downloadable items were found on the remote sites,
+// show them in a selectable, hierarchical menu
 if ($downloader->has_available_items()) {
+
     echo $output->box_start('generalbox', 'notice');
     echo $output->form_start();
 

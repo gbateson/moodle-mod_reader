@@ -70,18 +70,81 @@ class mod_reader_download_renderer extends mod_reader_renderer {
 
             $js .= '<script type="text/javascript">'."\n";
             $js .= "//<![CDATA[\n";
-            $js .= "function reader_check_boxes(checkbox) {\n";
-            $js .= "    var obj = checkbox.parentNode.getElementsByTagName('input');\n";
+
+            // detect shift-click (and set a global variable)
+            $js .= "function reader_checkbox_onmousedown(evt) {\n";
+            $js .= "    if (! evt) {\n";
+            $js .= "        evt = window.event;\n"; // IE
+            $js .= "    }\n";
+            $js .= "    window.reader_checkbox_shiftkey = (evt.shiftKey ? true : false);\n";
+            $js .= "}\n";
+
+            // handle the onchange event for checkboxes
+            // if two checkboxes are selected with a shift-click, then
+            // all the checkboxes in between will be toggled on or off
+            // a normal mouse click will select the checkbox and any checkboxes in sublists
+            $js .= "function reader_checkbox_onchange(checkbox) {\n";
+            $js .= "    if (window.reader_checkbox_shiftkey) {\n";
+            $js .= "        window.reader_checkbox_shiftkey = false;\n";
+            $js .= "        if (window.reader_checkbox_id) {\n";
+            $js .= "            var id1 = checkbox.id;\n";
+            $js .= "            var id2 = reader_checkbox_id;\n";
+            $js .= "            window.reader_checkbox_id = '';\n";
+            $js .= "            reader_checkbox_toggle_range(id1, id2, checkbox.checked);\n";
+            $js .= "        } else {\n";
+            $js .= "            window.reader_checkbox_id = checkbox.id;\n";
+            $js .= "        }\n";
+            $js .= "    } else {\n";
+            $js .= "        var obj = checkbox.parentNode.getElementsByTagName('input');\n";
+            $js .= "        if (obj) {\n";
+            $js .= "            var i_max = obj.length;\n";
+            $js .= "            for (var i=0; i<i_max; i++) {\n";
+            $js .= "                if (obj[i].type=='checkbox') {\n";
+            $js .= "                    obj[i].checked = checkbox.checked;\n";
+            $js .= "                }\n";
+            $js .= "            }\n";
+            $js .= "        }\n";
+            $js .= "        obj = null;\n";
+            $js .= "        window.reader_checkbox_id = '';\n";
+            $js .= "    }\n";
+            $js .= "}\n";
+
+            $js .= "function reader_checkbox_toggle_range(id1, id2, checked) {\n";
+            $js .= "    switch (true) {\n";
+            $js .= "        case (id1.indexOf('id_itemids_')==0):\n";
+            $js .= "        case (id2.indexOf('id_itemids_')==0): var targetid = 'id_itemids_'; break;\n";
+            $js .= "        case (id1.indexOf('id_levels_')==0):\n";
+            $js .= "        case (id2.indexOf('id_levels_')==0): var targetid = 'id_levels_'; break;\n";
+            $js .= "        case (id1.indexOf('id_publishers_')==0):\n";
+            $js .= "        case (id2.indexOf('id_publishers_')==0): var targetid = 'id_publishers_'; break;\n";
+            $js .= "        case (id1.indexOf('id_remotesites_')==0):\n";
+            $js .= "        case (id2.indexOf('id_remotesites_')==0): var targetid = 'id_remotesites_'; break;\n";
+            $js .= "        default: targetid = checkbox.id;\n"; // shouldn't happen !!
+            $js .= "    }\n";
+            $js .= "    var targetid = new RegExp('^' + targetid);\n";
+            $js .= "    var obj = document.getElementsByTagName('input');\n";
             $js .= "    if (obj) {\n";
             $js .= "        var i_max = obj.length;\n";
-            $js .= "        for (var i=0; i<i_max; i++) {\n";
+            $js .= "        for (var i=0, m=0; (i<i_max && m<2); i++) {\n";
             $js .= "            if (obj[i].type=='checkbox') {\n";
-            $js .= "                obj[i].checked = checkbox.checked;\n";
+            $js .= "                var match = (obj[i].id==id1 || obj[i].id==id2);\n";
+            $js .= "                if (match || m) {\n";
+            $js .= "                    if (obj[i].id.match(targetid)) {\n";
+            $js .= "                        obj[i].checked = checked;\n";
+            $js .= "                        if (obj[i].onchange) {\n";
+            $js .= "                            obj[i].onchange(obj[i]);\n";
+            $js .= "                        }\n";
+            $js .= "                    }\n";
+            $js .= "                }\n";
+            $js .= "                if (match) {\n";
+            $js .= "                    m += 1;\n";
+            $js .= "                }\n";
             $js .= "            }\n";
             $js .= "        }\n";
             $js .= "    }\n";
-            $js .= "    var obj = null;\n";
+            $js .= "    obj = null;\n";
             $js .= "}\n";
+
             $js .= "//]]>\n";
             $js .= '</script>'."\n";
         }
@@ -213,15 +276,16 @@ class mod_reader_download_renderer extends mod_reader_renderer {
             $js .= "function clear_search_results() {\n";
             $js .= "    showhide_lists(-1);\n";
 
-            $js .= "    var whiteSpace = new RegExp('  +', 'g');\n";
-            $js .= "    var htmlTags = new RegExp('<[^>]*>', 'g');\n";
-
             $js .= "    var obj = document.getElementsByTagName('SPAN');\n";
             $js .= "    if (obj) {\n";
             $js .= "        var i_max = obj.length;\n";
             $js .= "        for (var i=0; i<i_max; i++) {\n";
             $js .= "            if (match_classname(obj[i], 'itemname')) {\n";
-            $js .= "                var txt = obj[i].innerHTML.replace(htmlTags, '').replace(whiteSpace, ' ');\n";
+            $js .= "                if (obj[i].textContent) {\n";
+            $js .= "                    var txt = obj[i].textContent;\n";
+            $js .= "                } else {\n";
+            $js .= "                    var txt = obj[i].innerText;\n"; // IE
+            $js .= "                }\n";
             $js .= "                if (txt != obj[i].innerHTML) {\n";
             $js .= "                    remove_child_nodes(obj[i]);\n";
             $js .= "                    obj[i].appendChild(document.createTextNode(txt));\n";
@@ -258,6 +322,7 @@ class mod_reader_download_renderer extends mod_reader_renderer {
             $js .= "        return false;";
             $js .= "    }\n";
 
+            $js .= "    var firstmatch = true;\n";
             $js .= "    var i_max = obj.length;\n";
             $js .= "    for (var i=0; i<i_max; i++) {\n";
 
@@ -265,15 +330,19 @@ class mod_reader_download_renderer extends mod_reader_renderer {
             $js .= "            continue;\n";
             $js .= "        }\n";
 
-            $js .= "        var txt = obj[i].innerHTML.toLowerCase();\n";
-            $js .= "        var pos = txt.indexOf(searchtext);\n";
+            $js .= "        if (obj[i].textContent) {\n";
+            $js .= "            var txt = obj[i].textContent;\n";
+            $js .= "        } else {\n";
+            $js .= "            var txt = obj[i].innerText;\n"; // IE
+            $js .= "        }\n";
+            $js .= "        var pos = txt.toLowerCase().indexOf(searchtext);\n";
             $js .= "        if (pos < 0) {\n";
             $js .= "            continue;\n";
             $js .= "        }\n";
 
-            $js .= "        var string1 = obj[i].innerHTML.substr(0, pos);\n";
-            $js .= "        var string2 = obj[i].innerHTML.substr(pos, searchtext.length);\n";
-            $js .= "        var string3 = obj[i].innerHTML.substr(pos + searchtext.length);\n";
+            $js .= "        var string1 = txt.substr(0, pos);\n";
+            $js .= "        var string2 = txt.substr(pos, searchtext.length);\n";
+            $js .= "        var string3 = txt.substr(pos + searchtext.length);\n";
 
             $js .= "        var span = document.createElement('SPAN');\n";
             $js .= "        span.appendChild(document.createTextNode(string2));\n";
@@ -286,6 +355,13 @@ class mod_reader_download_renderer extends mod_reader_renderer {
             $js .= "        obj[i].appendChild(document.createTextNode(string3));\n";
 
             $js .= "        showhide_parent_lists(obj[i], '');\n"; // show
+
+            $js .= "        if (firstmatch) {\n";
+            $js .= "            try {\n";
+            $js .= "                obj[i].parentNode.parentNode.firstChild.focus();\n";
+            $js .= "                firstmatch = false;\n";
+            $js .= "            } catch (err) { }\n";
+            $js .= "        }\n";
             $js .= "    }\n";
             $js .= "}\n";
 
@@ -516,7 +592,7 @@ class mod_reader_download_renderer extends mod_reader_renderer {
                         } else {
                             $img = ' '.html_writer::empty_tag('img', array('src' => $OUTPUT->pix_url('i/tick_green_big'), 'class' => 'icon'));
                             $output .= html_writer::tag('span', $img, array('class' => 'downloadeditem'));
-                            $output .= html_writer::tag('span', $itemname, array('class' => 'itemname'));
+                            $output .= html_writer::tag('span', s($itemname), array('class' => 'itemname'));
                         }
                         $output .= html_writer::end_tag('li'); // finish item
                     }
@@ -570,13 +646,13 @@ class mod_reader_download_renderer extends mod_reader_renderer {
         $output = '';
         if ($newcount) {
             $id = str_replace('[]', '_'.$value, 'id_'.$name);
-            $output .= html_writer::empty_tag('input', array('type' => 'checkbox', 'id' => $id, 'name' => $name, 'value' => $value, 'onchange' => 'reader_check_boxes(this)'));
+            $output .= html_writer::empty_tag('input', array('type' => 'checkbox', 'id' => $id, 'name' => $name, 'value' => $value, 'onchange' => 'reader_checkbox_onchange(this)', 'onmousedown' => 'reader_checkbox_onmousedown(event)'));
             $output .= html_writer::start_tag('label', array('for' => $id));
         } else {
             $img = ' '.html_writer::empty_tag('img', array('src' => $this->pix_url('i/tick_green_big'), 'class' => 'icon'));
             $output .= html_writer::tag('span', $img, array('class' => 'downloadeditems'));
         }
-        $output .= html_writer::tag('span', $text, array('class' => $cssclass));
+        $output .= html_writer::tag('span', s($text), array('class' => $cssclass));
         if ($count) {
             if ($newcount==$count) {
                 $msg = get_string('dataallavailable', 'reader', $count);
@@ -586,7 +662,7 @@ class mod_reader_download_renderer extends mod_reader_renderer {
                 $a = (object)array('new' => $newcount, 'all' => $count);
                 $msg = get_string('datasomeavailable', 'reader', $a);
             }
-            $output .= html_writer::tag('span', ' - '.$msg, array('class' => 'itemcount'));
+            $output .= html_writer::tag('span', s(' - '.$msg), array('class' => 'itemcount'));
         }
         if ($newcount) {
             $output .= html_writer::end_tag('label');

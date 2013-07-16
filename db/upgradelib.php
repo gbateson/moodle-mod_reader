@@ -670,7 +670,7 @@ function xmldb_reader_fix_wrong_sectionnames() {
                 if ($books = $DB->get_records_select('reader_books', "quizid $select", $params)) {
                     foreach ($books as $book) {
                         $sectionname = $book->publisher;
-                        if ($book->level=='' || $book->level=='--') {
+                        if ($book->level=='' || $book->level=='--' || $book->level=='No Level') {
                             // do nothing
                         } else {
                             $sectionname .= ' - '.$book->level;
@@ -792,7 +792,7 @@ function xmldb_reader_fix_wrong_quizids() {
 
         foreach ($books as $book) {
             $sectionname = $book->publisher;
-            if ($book->level=='' || $book->level=='--') {
+            if ($book->level=='' || $book->level=='--' || $book->level=='No Level') {
                 // do nothing
             } else {
                 $sectionname .= ' - '.$book->level;
@@ -1086,7 +1086,7 @@ function xmldb_reader_fix_nonunique_quizids() {
 
             // generate expected section name
             $sectionname = $book->publisher;
-            if ($book->level=='' || $book->level=='--') {
+            if ($book->level=='' || $book->level=='--' || $book->level=='No Level') {
                 // do nothing
             } else {
                 $sectionname .= ' - '.$book->level;
@@ -1318,7 +1318,7 @@ function reader_install_missingquizzes($books) {
 
         // create section if necessary
         $sectionname = $publisher;
-        if ($level=='' || $level=='--') {
+        if ($level=='' || $level=='--' || $book->level=='No Level') {
             // do nothing
         } else {
             $sectionname .= ' - '.$level;

@@ -388,7 +388,20 @@ function xmldb_reader_upgrade($oldversion) {
     $newversion = 2013052900;
     if ($result && $oldversion < $newversion) {
 
-        $keepoldquizzes = optional_param('keepoldquizzes', null, PARAM_INT);
+        // get previously saved "keepoldquizzes" setting
+        // (usually there won't be one, "get_config()" will return false)
+        $keepoldquizzes = get_config('reader', 'keepoldquizzes');
+
+        // if necessary, get default "keepoldquizzes" setting
+        if ($keepoldquizzes===null || $keepoldquizzes===false || $keepoldquizzes==='') {
+            if ($DB->record_exists_select('reader', 'id > ?', array(0))) {
+                $keepoldquizzes = optional_param('keepoldquizzes', null, PARAM_INT);
+            } else {
+                $keepoldquizzes = 0; // disable on sites not using the Reader module
+            }
+        }
+
+        // if this is the first time to set "keepoldquizzes", then check with user
         if ($keepoldquizzes===null || $keepoldquizzes===false || $keepoldquizzes==='') {
 
             $message = get_string('upgradeoldquizzesinfo', 'reader');
