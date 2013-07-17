@@ -101,7 +101,7 @@ class mod_reader_download_renderer extends mod_reader_renderer {
             $js .= "}\n";
 
             // handle the onchange event for checkboxes
-            // if two checkboxes are selected with a shift-click, then
+            // if a second checkbox is selected with a shift-click, then
             // all the checkboxes in between will be toggled on or off
             // a normal mouse click will select the checkbox and any checkboxes in sublists
             $js .= "function reader_checkbox_onchange(checkbox) {\n";
@@ -120,9 +120,61 @@ class mod_reader_download_renderer extends mod_reader_renderer {
             $js .= "                    obj[i].checked = checkbox.checked;\n";
             $js .= "                }\n";
             $js .= "            }\n";
+            $js .= "            reader_checkbox_onchange_parent(checkbox.parentNode.parentNode);\n";
             $js .= "        }\n";
             $js .= "        obj = null;\n";
             $js .= "    }\n";
+            $js .= "}\n";
+
+            $js .= "function reader_checkbox_onchange_parent(ul) {\n";
+            $js .= "    if (ul && ul.childNodes) {\n";
+            $js .= "        var count = 0;\n";
+            $js .= "        var count_checked = 0;\n";
+            $js .= "        var i_max = ul.childNodes.length;\n";
+            $js .= "        for (var i=0; i<i_max; i++) {\n";
+            $js .= "            var checkbox = reader_node(ul.childNodes[i].firstChild, 'input', 'checkbox');\n";
+            $js .= "            if (checkbox) {\n";
+            $js .= "                count++;\n";
+            $js .= "                if (checkbox.checked) {\n";
+            $js .= "                    count_checked++;\n";
+            $js .= "                }\n";
+            $js .= "            }\n";
+            $js .= "        }\n";
+            $js .= "        var checkbox = reader_node(ul.parentNode.firstChild, 'input', 'checkbox');\n";
+            $js .= "        if (checkbox) {\n";
+            $js .= "            var checked = (count > 0 && count==count_checked);\n";
+            $js .= "            if (checked != checkbox.checked) {\n";
+            $js .= "                checkbox.checked = checked;\n";
+            $js .= "                reader_checkbox_onchange_parent(ul.parentNode.parentNode)\n";
+            $js .= "            }\n";
+            $js .= "        }\n";
+            $js .= "    }\n";
+            $js .= "}\n";
+
+            $js .= "function reader_node(obj, tagName, type, nodeType) {\n";
+            $js .= "    if (obj==null) {\n";
+            $js .= "        return null;\n";
+            $js .= "    }\n";
+            $js .= "    if (tagName) {\n";
+            $js .= "        tagName = tagName.toLowerCase();\n";
+            $js .= "    }\n";
+            $js .= "    if (type) {\n";
+            $js .= "        type = type.toLowerCase();\n";
+            $js .= "    }\n";
+            $js .= "    if (nodeType==null) {\n";
+            $js .= "        nodeType = 1;\n"; // 1=elementNode 3=textNode
+            $js .= "    }\n";
+            $js .= "    while (obj) {\n";
+            $js .= "        if (obj.nodeType==nodeType) {\n";
+            $js .= "            if (tagName==null || tagName==obj.tagName.toLowerCase()) {\n";
+            $js .= "                if (type==null || type==obj.type.toLowerCase()) {\n";
+            $js .= "                    return obj;\n";
+            $js .= "                }\n";
+            $js .= "            }\n";
+            $js .= "        }\n";
+            $js .= "        obj = obj.nextSibling;\n";
+            $js .= "    }\n";
+            $js .= "    return null;\n";
             $js .= "}\n";
 
             $js .= "function reader_checkbox_toggle_range(id1, id2, checked) {\n";
@@ -241,7 +293,7 @@ class mod_reader_download_renderer extends mod_reader_renderer {
             $js .= "    if (typeof(targetClassName)=='undefined') {\n";
             $js .= "       targetClassName = '';\n";
             $js .= "    }\n";
-            $js .= "    var obj = img.nextSibling;\n";
+            $js .= "    var obj = reader_node(img.nextSibling);\n";
             $js .= "    var myClassName = obj.getAttribute(css_class_attribute());\n";
             $js .= "    if (obj && (targetClassName=='' || (myClassName && myClassName.match(new RegExp(targetClassName))))) {\n";
             $js .= "        if (force==1 || (force==0 && obj.style.display=='none')) {\n";
@@ -275,12 +327,9 @@ class mod_reader_download_renderer extends mod_reader_renderer {
             $js .= "            if (typeof(requireCheckbox)=='undefined') {\n";
             $js .= "                var ok = true;\n";
             $js .= "            } else {\n";
-            $js .= "                var obj = img[i].parentNode.firstChild;\n";
-            $js .= "                while (obj && obj.nodeType != 1) {\n";
-            $js .= "                    obj = obj.nextSibling;\n";
-            $js .= "                }\n";
+            $js .= "                var obj = reader_node(img[i].parentNode.firstChild);\n";
             $js .= "                requireCheckbox = (requireCheckbox ? true : false);\n"; // convert to boolean
-            $js .= "                var hascheckbox = (obj && obj.nodeType==1 && obj.nodeName.toUpperCase()=='INPUT');\n";
+            $js .= "                var hascheckbox = (obj && obj.nodeName.toUpperCase()=='INPUT');\n";
             $js .= "                var ok = (requireCheckbox==hascheckbox);\n";
             $js .= "                obj = null;\n";
             $js .= "            }\n";

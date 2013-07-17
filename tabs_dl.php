@@ -35,6 +35,7 @@ $activated = array();
 
 $row[] = new tabobject('quizzes', "view.php?a=quizzes&id=".$id, "Quizzes");
 $row[] = new tabobject('admin', "admin.php?a=admin&id=".$id, "Admin Area");
+$row[] = new tabobject('admin2x', 'admin/download.php?id='.$id, 'Admin 2.x');
 $row[] = new tabobject('download', "", "Download Quizzes");
 
 $tabs[] = $row;

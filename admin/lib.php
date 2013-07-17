@@ -228,6 +228,7 @@ class reader_downloader {
 
         $output = '';
         $started_list = false;
+        $starttime = microtime();
         $strquiz = get_string('modulename', 'quiz');
 
         $i_max = count($xml['myxml']['#']['item']);
@@ -266,7 +267,8 @@ class reader_downloader {
                          html_writer::tag('span', $name, array('style' => 'white-space: nowrap'));
 
             // show this book in the progress bar
-            $this->bar->set_title(($i + 1)." / $i_max ".$fulltitle);
+            $title = ($i + 1).' / '.$i_max.' '.$fulltitle;
+            $this->bar->start_item($itemid, $title);
 
             // set $params to select $book
             $params = array('publisher' => $publisher,
@@ -338,7 +340,7 @@ class reader_downloader {
                 echo $this->output->showhide_js_start();
                 echo html_writer::tag('b', get_string('downloadedbooks', 'reader'));
                 echo $this->output->available_list_img();
-                echo html_writer::start_tag('ul');
+                echo html_writer::start_tag('ol');
             }
 
             // update available book counters
@@ -410,9 +412,16 @@ class reader_downloader {
             echo html_writer::tag('li', $msg);
 
             // move the progress bar
-            $this->bar->childtasks['books']->childtasks[$itemid]->finish(($i + 1)." / $i_max ".$fulltitle);
+            $this->bar->finish_item();
+
+            // reclaim a bit of memory
+            unset($xml['myxml']['#']['item']);
         }
-        $this->bar->finish(($i + 1)." / $i_max ".get_string('success'));
+
+        // finish the progress bar
+        $duration = microtime_diff($starttime, microtime());
+        $title = ($i + 1)." / $i_max ".get_string('success').' ('.format_time(round($duration)).')';
+        $this->bar->finish($title);
 
         if ($started_list==true) {
             echo html_writer::end_tag('ul');
@@ -874,6 +883,10 @@ class reader_downloader {
         // fetch question categories
         list($module, $categories) = $remotesite->get_questions($itemid);
 
+        if (isset($module->question_instances)) {
+            $this->bar->add_quiz($categories, $module->question_instances);
+        }
+
         // create module - usually this is not necessary !!
         //if (empty($module)) {
         //    $this->create_question_module($module, $quiz);
@@ -892,12 +905,16 @@ class reader_downloader {
         $restoreids = new reader_restore_ids();
 
         foreach ($categories as $category) {
+            $this->bar->start_category($category->id);
             $this->add_question_category($restoreids, $category, $quiz, $cm);
+            $this->bar->finish_category();
         }
 
         if (isset($module->question_instances)) {
             foreach ($module->question_instances as $instance) {
+                $this->bar->start_instance($instance->id);
                 $this->add_question_instance($restoreids, $instance, $quiz);
+                $this->bar->finish_instance();
             }
         }
 
@@ -1120,6 +1137,7 @@ class reader_downloader {
      *
      * @uses $DB
      * @param xxx $restoreids (passed by reference)
+     * @param xxx $itemid
      * @param xxx $category
      * @param xxx $quiz
      * @param xxx $cm
@@ -1181,7 +1199,9 @@ class reader_downloader {
         $bestquestionids = $this->get_best_match_questions($categoryid, $category);
 
         foreach ($category->questions as $question) {
+            $this->bar->start_question($question->id);
             $this->add_question($bestquestionids, $restoreids, $categoryid, $question);
+            $this->bar->finish_question();
         }
     }
 
@@ -1294,7 +1314,6 @@ class reader_downloader {
             case 'random'      : $this->add_question_random($restoreids, $question);      break;
             case 'truefalse'   : $this->add_question_truefalse($restoreids, $question);   break;
             case 'shortanswer' : $this->add_question_shortanswer($restoreids, $question); break;
-
             default: die('Unknown qtype: '.$question->qtype);
         }
     }
@@ -1622,6 +1641,9 @@ class reader_downloader {
                 throw new moodle_exception(get_string('cannotinsertrecord', 'error', $table));
             }
         }
+
+        // update progress bar
+        $this->bar->finish_options();
     }
 
     /**
@@ -1875,19 +1897,19 @@ class reader_downloader {
 
     public function add_question_answer(&$restoreids, $bestanswerids, $xmlanswer, $answer) {
         global $DB;
+        $this->bar->start_answer($xmlanswer->id);
         if (isset($bestanswerids[$xmlanswer->id])) {
             $answer->id = $bestanswerids[$xmlanswer->id];
             if (! $DB->update_record('question_answers', $answer)) {
-                $result->error = get_string('cannotupdaterecord', 'error', 'question_answers (id='.$answer->id.')');
-                return $result;
+                throw new moodle_exception(get_string('cannotupdaterecord', 'error', 'question_answers (id='.$answer->id.')'));
             }
         } else {
             if (! $answer->id = $DB->insert_record('question_answers', $answer)) {
-                $result->error = get_string('cannotinsertrecord', 'error', 'question_answers');
-                return $result;
+                throw new moodle_exception(get_string('cannotinsertrecord', 'error', 'question_answers'));
             }
         }
         $restoreids->set_ids('question_answers', $xmlanswer->id, $answer->id);
+        $this->bar->finish_answer();
     }
 
     /**
@@ -3203,23 +3225,67 @@ class reader_download_progress_task {
     public $parenttask = null;
 
     /** an array of child tasks */
-    public $childtasks = array();
+    public $tasks = array();
 
     /**
      * __construct
      *
      * @param xxx $name (optional, default="")
      * @param xxx $weighting (optional, default=100)
-     * @param xxx $childtasks (optional, default=array())
+     * @param xxx $tasks (optional, default=array())
      * @return xxx
      * @todo Finish documenting this function
      */
-    public function __construct($name='', $weighting=100, $childtasks=array()) {
+    public function __construct($name='', $weighting=100, $tasks=array()) {
         $this->name = $name;
         $this->weighting = $weighting;
-        foreach ($childtasks as $childid => $childtask) {
-            $this->add_childtask($childid, $childtask);
+        $this->add_tasks($tasks);
+    }
+
+    /**
+     * add_tasks
+     *
+     * @param xxx $tasks
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function add_tasks($tasks) {
+        foreach ($tasks as $childid => $task) {
+            $this->add_task($childid, $task);
         }
+    }
+
+    /**
+     * add_task
+     *
+     * @param xxx $childid
+     * @param xxx $task
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function add_task($childid, $task) {
+        if (is_string($task)) {
+            $childid = $task;
+            $task = new reader_download_progress_task();
+        }
+        $task->set_parenttask($this);
+        $this->tasks[$childid] = $task;
+        $this->childweighting += $task->weighting;
+    }
+
+    /**
+     * get_task
+     *
+     * @param xxx $childid
+     * @param xxx $task
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function get_task($childid) {
+        if (empty($this->tasks[$childid])) {
+            return false; // shouldn't happen !!
+        }
+        return $this->tasks[$childid];
     }
 
     /**
@@ -3234,47 +3300,14 @@ class reader_download_progress_task {
     }
 
     /**
-     * add_childtask
-     *
-     * @param xxx $childid
-     * @param xxx $childtask
-     * @return xxx
-     * @todo Finish documenting this function
-     */
-    public function add_childtask($childid, $childtask) {
-        if (is_string($childtask)) {
-            $childid = $childtask;
-            $childtask = new reader_download_progress_task();
-        }
-        $childtask->set_parenttask($this);
-        $this->childtasks[$childid] = $childtask;
-        $this->childweighting += $childtask->weighting;
-    }
-
-    /**
-     * get_childtask
-     *
-     * @param xxx $childid
-     * @param xxx $childtask
-     * @return xxx
-     * @todo Finish documenting this function
-     */
-    public function get_childtask($childid) {
-        if (empty($this->childtasks[$childid])) {
-            return false; // shouldn't happen !!
-        }
-        return $this->childtasks[$childid];
-    }
-
-    /**
-     * start
+     * set_title
      *
      * @param string $title
      * @return xxx
      * @todo Finish documenting this function
      */
     public function set_title($title='') {
-        if ($this->parenttask) {
+        if ($this->parenttask && $title) {
             $this->parenttask->set_title($title);
         }
     }
@@ -3299,21 +3332,21 @@ class reader_download_progress_task {
     public function set_percent($percent, $title='') {
         $this->percent = $percent;
         if ($this->parenttask) {
-            $this->parenttask->checkchildtasks($title);
+            $this->parenttask->checktasks($title);
         }
     }
 
     /**
-     * checkchildtasks
+     * checktasks
      *
      * @return xxx
      * @todo Finish documenting this function
      */
-    public function checkchildtasks($title='') {
+    public function checktasks($title='') {
         if ($this->childweighting) {
             $childweighting = 0;
-            foreach ($this->childtasks as $childtask) {
-                $childweighting += ($childtask->weighting * ($childtask->percent / 100));
+            foreach ($this->tasks as $task) {
+                $childweighting += ($task->weighting * ($task->percent / 100));
             }
             $percent = round(100 * ($childweighting / $this->childweighting));
         } else {
@@ -3343,20 +3376,24 @@ class reader_download_progress_bar extends reader_download_progress_task {
     /** the time after which more processing time will be requested */
     private $timeout = 0;
 
+    /** object to store current ids */
+    public $current = null;
+
     /**
      * __construct
      *
      * @param xxx $name
      * @param xxx $weighting
-     * @param xxx $childtasks (optional, default=array())
+     * @param xxx $tasks (optional, default=array())
      * @return xxx
      * @todo Finish documenting this function
      */
-    public function __construct($name='', $weighting=100, $childtasks=array()) {
-        parent::__construct($name, $weighting, $childtasks);
+    public function __construct($name='', $weighting=100, $tasks=array()) {
+        parent::__construct($name, $weighting, $tasks);
         $this->bar = new progress_bar($name, 500, true);
         $this->title = get_string($this->name, 'reader');
-        $this->set_timeout();
+        $this->start_current();
+        $this->reset_timeout();
     }
 
     /**
@@ -3369,43 +3406,43 @@ class reader_download_progress_bar extends reader_download_progress_task {
      * @todo Finish documenting this function
      */
     static function create($itemids, $name, $weighting=100) {
-        $childtasks = array();
-        $childtasks['books'] = self::create_books($itemids);
-        return new reader_download_progress_bar($name, $weighting, $childtasks);
+        $tasks = array();
+        $tasks['items'] = self::create_items($itemids);
+        return new reader_download_progress_bar($name, $weighting, $tasks);
     }
 
     /**
-     * create_books
+     * create_items
      *
-     * @param array $books
+     * @param array $items
      * @param integer $weighting (optional, default=100)
      * @return xxx
      * @todo Finish documenting this function
      */
-    static function create_books($books, $weighting=100) {
-        $childtasks = array();
-        foreach ($books as $book) {
-            $childid = (is_object($book) ? $book->id : $book);
-            $childtasks[$childid] = self::create_book($book);
+    static function create_items($items, $weighting=100) {
+        $tasks = array();
+        foreach ($items as $item) {
+            $childid = (is_object($item) ? $item->id : $item);
+            $tasks[$childid] = self::create_item($item);
         }
-        return new reader_download_progress_task('books', $weighting, $childtasks);
+        return new reader_download_progress_task('items', $weighting, $tasks);
     }
 
     /**
-     * create_book
+     * create_item
      *
-     * @param xxx $book
+     * @param xxx $item
      * @param integer $weighting (optional, default=100)
      * @return xxx
      * @todo Finish documenting this function
      */
-    static function create_book($book, $weighting=100) {
-        $childtasks = array();
-        $childtasks['data'] = new reader_download_progress_task('data', 20);
-        if (isset($book->quiz)) {
-            $childtasks['quiz'] = self::create_quiz($book->quiz, 80);
+    static function create_item($item, $weighting=100) {
+        $tasks = array();
+        $tasks['data'] = new reader_download_progress_task('data', 20);
+        if (isset($item->quiz)) {
+            $tasks['quiz'] = self::create_quiz($item->quiz, 80);
         }
-        return new reader_download_progress_task('book', $weighting, $childtasks);
+        return new reader_download_progress_task('item', $weighting, $tasks);
     }
 
     /**
@@ -3417,15 +3454,15 @@ class reader_download_progress_bar extends reader_download_progress_task {
      * @todo Finish documenting this function
      */
     static function create_quiz($quiz, $weighting=100) {
-        $childtasks = array();
-        $childtasks['data'] = new reader_download_progress_task('data', 10);
+        $tasks = array();
+        $tasks['data'] = new reader_download_progress_task('data', 10);
         if (isset($quiz->categories)) {
-            $childtasks['categories'] = self::create_categories($quiz->categories, 80);
+            $tasks['categories'] = self::create_categories($quiz->categories, 80);
         }
         if (isset($quiz->instances)) {
-            $childtasks['instances'] = self::create_instances($quiz->instances, 10);
+            $tasks['instances'] = self::create_instances($quiz->instances, 10);
         }
-        return new reader_download_progress_task('quiz', $weighting, $childtasks);
+        return new reader_download_progress_task('quiz', $weighting, $tasks);
     }
 
     /**
@@ -3437,12 +3474,12 @@ class reader_download_progress_bar extends reader_download_progress_task {
      * @todo Finish documenting this function
      */
     static function create_instances($instances, $weighting=100) {
-        $childtasks = array();
+        $tasks = array();
         foreach ($instances as $instance) {
             $childid = (is_object($instance) ? $instance->id : $instance);
-            $childtasks[$childid] = new reader_download_progress_task('instance');
+            $tasks[$childid] = new reader_download_progress_task('instance');
         }
-        return new reader_download_progress_task('instances', $weighting, $childtasks);
+        return new reader_download_progress_task('instances', $weighting, $tasks);
     }
 
     /**
@@ -3454,12 +3491,12 @@ class reader_download_progress_bar extends reader_download_progress_task {
      * @todo Finish documenting this function
      */
     static function create_categories($categories, $weighting=100) {
-        $childtasks = array();
+        $tasks = array();
         foreach ($categories as $category) {
             $childid = (is_object($category) ? $category->id : $category);
-            $childtasks[$childid] = self::create_category($category);
+            $tasks[$childid] = self::create_category($category);
         }
-        return new reader_download_progress_task('categories', $weighting, $childtasks);
+        return new reader_download_progress_task('categories', $weighting, $tasks);
     }
 
     /**
@@ -3471,12 +3508,12 @@ class reader_download_progress_bar extends reader_download_progress_task {
      * @todo Finish documenting this function
      */
     static function create_category($category, $weighting=100) {
-        $childtasks = array();
-        $childtasks['data'] = new reader_download_progress_task('data', 20);
+        $tasks = array();
+        $tasks['data'] = new reader_download_progress_task('data', 20);
         if (isset($category->questions)) {
-            $childtasks['questions'] = self::create_questions($category->questions, 80);
+            $tasks['questions'] = self::create_questions($category->questions, 80);
         }
-        return new reader_download_progress_task('category', $weighting, $childtasks);
+        return new reader_download_progress_task('category', $weighting, $tasks);
     }
 
     /**
@@ -3488,12 +3525,12 @@ class reader_download_progress_bar extends reader_download_progress_task {
      * @todo Finish documenting this function
      */
     static function create_questions($questions, $weighting=100) {
-        $childtasks = array();
+        $tasks = array();
         foreach ($questions as $question) {
             $childid = (is_object($question) ? $question->id : $question);
-            $childtasks[$childid] = self::create_question($question);
+            $tasks[$childid] = self::create_question($question);
         }
-        return new reader_download_progress_task('questions', $weighting, $childtasks);
+        return new reader_download_progress_task('questions', $weighting, $tasks);
     }
 
     /**
@@ -3505,13 +3542,13 @@ class reader_download_progress_bar extends reader_download_progress_task {
      * @todo Finish documenting this function
      */
     static function create_question($question, $weighting=100) {
-        $childtasks = array();
-        $childtasks['data'] = new reader_download_progress_task('data', 10);
-        $childtasks['options'] = new reader_download_progress_task('options', 10);
-        if (isset($quiz->answers)) {
-            $childtasks['answers'] = self::create_answers($quiz->answers, 80);
+        $tasks = array();
+        $tasks['data'] = new reader_download_progress_task('data', 10);
+        $tasks['options'] = new reader_download_progress_task('options', 10);
+        if (isset($question->answers)) {
+            $tasks['answers'] = self::create_answers($question->answers, 80);
         }
-        return new reader_download_progress_task('question', $weighting, $childtasks);
+        return new reader_download_progress_task('question', $weighting, $tasks);
     }
 
     /**
@@ -3523,12 +3560,12 @@ class reader_download_progress_bar extends reader_download_progress_task {
      * @todo Finish documenting this function
      */
     static function create_answers($answers, $weighting=100) {
-        $childtasks = array();
+        $tasks = array();
         foreach ($answers as $answer) {
             $childid = (is_object($answer) ? $answer->id : $answer);
-            $childtasks[$childid] = new reader_download_progress_task('answer');
+            $tasks[$childid] = new reader_download_progress_task('answer');
         }
-        return new reader_download_progress_task('answers', $weighting, $childtasks);
+        return new reader_download_progress_task('answers', $weighting, $tasks);
     }
 
     /**
@@ -3550,7 +3587,9 @@ class reader_download_progress_bar extends reader_download_progress_task {
      * @todo Finish documenting this function
      */
     public function set_title($title='') {
-        $this->title = $title;
+        if ($title) {
+            $this->title = $title;
+        }
         $this->update();
     }
 
@@ -3561,22 +3600,236 @@ class reader_download_progress_bar extends reader_download_progress_task {
      * @todo Finish documenting this function
      */
     public function update() {
-        $this->set_timeout(); // request more time
+        $this->reset_timeout(); // request more time
         $this->bar->update($this->percent, 100, $this->title);
     }
 
     /**
-     * set_timeout
+     * reset_timeout
      *
      * @param integer $timeout (optional, default=300)
      * @return xxx
      * @todo Finish documenting this function
      */
-    public function set_timeout($moretime=300) {
+    public function reset_timeout($moretime=300) {
         $time = time();
         if ($this->timeout < $time && $this->percent < 100) {
             $this->timeout = ($time + $moretime);
             set_time_limit($moretime);
         }
+    }
+
+    /**
+     * start_current
+     *
+     * @param string  $type  (optional, default='')
+     * @param integer $id    (optional, default=0)
+     * @param string  $title (optional, default='')
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function start_current($type='', $id=0, $title='') {
+        $field = $type.'id';
+        if ($type && isset($this->current->$field)) {
+            $this->current->$field = $id;
+        } else {
+            $this->current = new stdClass();
+        }
+
+        // setup ids (drop-throughs are intentional)
+        switch ($type) {
+            case ''        : $this->current->itemid     = 0;
+            case 'item'    : $this->current->instanceid  = 0;
+            case 'instance': $this->current->categoryid = 0;
+            case 'category': $this->current->questionid = 0;
+            case 'question': $this->current->answerid   = 0;
+        }
+
+        $this->set_title($title);
+    }
+
+    /**
+     * finish_current
+     *
+     * @param string  $type  (optional, default='')
+     * @param string  $title (optional, default='')
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function finish_current($type='', $title='') {
+        // assemble required ids (drop-throughs are intentional)
+        switch ($type) {
+            case 'answer'  : $answerid   = $this->current->answerid;
+            case 'options' : // drop though
+            case 'question': $questionid = $this->current->questionid;
+            case 'instance': $instanceid = $this->current->instanceid;
+            case 'category': $categoryid = $this->current->categoryid;
+            case 'item'    : $itemid     = $this->current->itemid;
+        }
+
+        // initiate "finish()" method of appropriate object
+        switch ($type) {
+            case 'item'    : $this->tasks['items']->tasks[$itemid]->finish($title);
+                             unset($this->tasks['items']->tasks[$itemid]->tasks['quiz']);
+                             break;
+            case 'instance': $this->tasks['items']->tasks[$itemid]->tasks['quiz']->tasks['instances']->tasks[$instanceid]->finish($title);
+                             //unset($this->tasks['items']->tasks[$itemid]->tasks['quiz']->tasks['instances']->tasks[$instanceid]);
+                             break;
+            case 'category': $this->tasks['items']->tasks[$itemid]->tasks['quiz']->tasks['categories']->tasks[$categoryid]->finish($title);
+                             //unset($this->tasks['items']->tasks[$itemid]->tasks['quiz']->tasks['categories']->tasks[$categoryid]);
+                             break;
+            case 'question': $this->tasks['items']->tasks[$itemid]->tasks['quiz']->tasks['categories']->tasks[$categoryid]->tasks['questions']->tasks[$questionid]->finish($title);
+                             //unset($this->tasks['items']->tasks[$itemid]->tasks['quiz']->tasks['categories']->tasks[$categoryid]->tasks['questions']->tasks[$questionid]);
+                             break;
+            case 'options' : $this->tasks['items']->tasks[$itemid]->tasks['quiz']->tasks['categories']->tasks[$categoryid]->tasks['questions']->tasks[$questionid]->tasks['options']->finish($title);
+                             //unset($this->tasks['items']->tasks[$itemid]->tasks['quiz']->tasks['categories']->tasks[$categoryid]->tasks['questions']->tasks[$questionid]->tasks['options']);
+                             break;
+            case 'answer'  : $this->tasks['items']->tasks[$itemid]->tasks['quiz']->tasks['categories']->tasks[$categoryid]->tasks['questions']->tasks[$questionid]->tasks['answers']->tasks[$answerid]->finish($title);
+                             //unset($this->tasks['items']->tasks[$itemid]->tasks['quiz']->tasks['categories']->tasks[$categoryid]->tasks['questions']->tasks[$questionid]->tasks['answers']->tasks[$answerid]);
+                             break;
+        }
+    }
+
+    /**
+     * add_quiz
+     *
+     * @param xxx $categories
+     * @param xxx $instances
+     * @param integer $weighting (optional, default=80)
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function add_quiz($categories, $instances, $weighting=80) {
+        $itemid = $this->current->itemid;
+        $quiz = (object)array('categories' => $categories, 'instances' => $instances);
+        $this->tasks['items']->tasks[$itemid]->add_task('quiz', self::create_quiz($quiz, $weighting));
+    }
+
+    /**
+     * start_item
+     *
+     * @param xxx $id
+     * @param xxx $title (optional, default="")
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function start_item($id, $title='') {
+        $this->start_current('item', $id, $title);
+    }
+
+    /**
+     * start_instance
+     *
+     * @param xxx $id
+     * @param xxx $title (optional, default="")
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function start_instance($id, $title='') {
+        $this->start_current('instance', $id, $title);
+    }
+
+    /**
+     * start_category
+     *
+     * @param xxx $id
+     * @param xxx $title (optional, default="")
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function start_category($id, $title='') {
+        $this->start_current('category', $id, $title);
+    }
+
+    /**
+     * start_question
+     *
+     * @param xxx $id
+     * @param xxx $title (optional, default="")
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function start_question($id, $title='') {
+        $this->start_current('question', $id, $title);
+    }
+
+    /**
+     * start_answer
+     *
+     * @param xxx $id
+     * @param xxx $title (optional, default="")
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function start_answer($id, $title='') {
+        $this->start_current('answer', $id, $title);
+    }
+
+    /**
+     * finish_item
+     *
+     * @param xxx $itemid
+     * @param xxx $title (optional, default="")
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function finish_item($title='') {
+        $this->finish_current('item', $title);
+    }
+
+    /**
+     * finish_instances
+     *
+     * @param xxx $itemid
+     * @param xxx $instanceid
+     * @param xxx $title (optional, default="")
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function finish_instance($title='') {
+        $this->finish_current('instance', $title);
+    }
+
+    /**
+     * finish_category
+     *
+     * @param xxx $title (optional, default="")
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function finish_category($title='') {
+        $this->finish_current('category', $title);
+    }
+
+    /**
+     * finish_question
+     *
+     * @param xxx $title (optional, default="")
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function finish_question($title='') {
+        $this->finish_current('question', $title);
+    }
+
+    /**
+     * finish_options
+     *
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function finish_options($title='') {
+        $this->finish_current('options', $title);
+    }
+
+    /**
+     * finish_answer
+     *
+     * @param xxx $title (optional, default="")
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function finish_answer($title='') {
+        $this->finish_current('answer', $title);
     }
 }
