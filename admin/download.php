@@ -107,7 +107,7 @@ if ($downloader->has_available_items()) {
     echo $output->form_start();
 
     echo $output->search_box();
-    echo $output->showhide_menu();
+    echo $output->showhide_menu($downloader->has_updated_items());
 
     echo $output->available_lists($downloader);
 

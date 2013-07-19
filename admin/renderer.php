@@ -132,7 +132,7 @@ class mod_reader_download_renderer extends mod_reader_renderer {
             $js .= "        var count_checked = 0;\n";
             $js .= "        var i_max = ul.childNodes.length;\n";
             $js .= "        for (var i=0; i<i_max; i++) {\n";
-            $js .= "            var checkbox = reader_node(ul.childNodes[i].firstChild, 'input', 'checkbox');\n";
+            $js .= "            var checkbox = reader_node(ul.childNodes[i].firstChild, 'INPUT', 'checkbox');\n";
             $js .= "            if (checkbox) {\n";
             $js .= "                count++;\n";
             $js .= "                if (checkbox.checked) {\n";
@@ -140,7 +140,7 @@ class mod_reader_download_renderer extends mod_reader_renderer {
             $js .= "                }\n";
             $js .= "            }\n";
             $js .= "        }\n";
-            $js .= "        var checkbox = reader_node(ul.parentNode.firstChild, 'input', 'checkbox');\n";
+            $js .= "        var checkbox = reader_node(ul.parentNode.firstChild, 'INPUT', 'checkbox');\n";
             $js .= "        if (checkbox) {\n";
             $js .= "            var checked = (count > 0 && count==count_checked);\n";
             $js .= "            if (checked != checkbox.checked) {\n";
@@ -151,24 +151,30 @@ class mod_reader_download_renderer extends mod_reader_renderer {
             $js .= "    }\n";
             $js .= "}\n";
 
-            $js .= "function reader_node(obj, tagName, type, nodeType) {\n";
+            $js .= "function reader_node(obj, tagName, tagType, tagClassName, nodeType) {\n";
             $js .= "    if (obj==null) {\n";
             $js .= "        return null;\n";
             $js .= "    }\n";
             $js .= "    if (tagName) {\n";
             $js .= "        tagName = tagName.toLowerCase();\n";
             $js .= "    }\n";
-            $js .= "    if (type) {\n";
-            $js .= "        type = type.toLowerCase();\n";
+            $js .= "    if (tagType) {\n";
+            $js .= "        tagType = tagType.toLowerCase();\n";
             $js .= "    }\n";
             $js .= "    if (nodeType==null) {\n";
             $js .= "        nodeType = 1;\n"; // 1=elementNode 3=textNode
+            $js .= "    } else if (nodeType==3) {\n";
+            $js .= "        tagName = null;\n";
+            $js .= "        tagType = null;\n";
+            $js .= "        tagClassName = null;\n";
             $js .= "    }\n";
             $js .= "    while (obj) {\n";
             $js .= "        if (obj.nodeType==nodeType) {\n";
             $js .= "            if (tagName==null || tagName==obj.tagName.toLowerCase()) {\n";
-            $js .= "                if (type==null || type==obj.type.toLowerCase()) {\n";
-            $js .= "                    return obj;\n";
+            $js .= "                if (tagType==null || tagType==obj.type.toLowerCase()) {\n";
+            $js .= "                    if (tagClassName==null || tagClassName==obj.getAttribute(css_class_attribute())) {\n";
+            $js .= "                       return obj;\n";
+            $js .= "                    }\n";
             $js .= "                }\n";
             $js .= "            }\n";
             $js .= "        }\n";
@@ -308,7 +314,10 @@ class mod_reader_download_renderer extends mod_reader_renderer {
             $js .= "    }\n";
             $js .= "}\n";
 
-            $js .= "function showhide_lists(force, targetClassName, requireCheckbox) {\n";
+            $js .= "function showhide_lists(force, targetClassName, requireElement) {\n";
+
+            $js .= "    var requireCheckbox = (requireElement && requireElement==1);\n";
+            $js .= "    var requireNewImg   = (requireElement && requireElement==2);\n";
 
             $js .= "    switch (force) {\n";
             $js .= "        case -1: var targetImgName = 'minus';        break;\n"; // hide
@@ -324,15 +333,20 @@ class mod_reader_download_renderer extends mod_reader_renderer {
             $js .= "        var i_max = img.length;\n";
             $js .= "        for (var i=0; i<i_max; i++) {\n";
 
-            $js .= "            if (typeof(requireCheckbox)=='undefined') {\n";
-            $js .= "                var ok = true;\n";
-            $js .= "            } else {\n";
-            $js .= "                var obj = reader_node(img[i].parentNode.firstChild);\n";
-            $js .= "                requireCheckbox = (requireCheckbox ? true : false);\n"; // convert to boolean
-            $js .= "                var hascheckbox = (obj && obj.nodeName.toUpperCase()=='INPUT');\n";
-            $js .= "                var ok = (requireCheckbox==hascheckbox);\n";
-            $js .= "                obj = null;\n";
+            $js .= "            var ok = true;\n";
+            $js .= "            if (requireCheckbox) {\n";
+            $js .= "                var obj = reader_node(img[i].parentNode.firstChild, 'INPUT', 'checkbox');\n";
+            $js .= "                if (obj==null) {\n";
+            $js .= "                    ok = false;\n";
+            $js .= "                }\n";
             $js .= "            }\n";
+            $js .= "            if (requireNewImg) {\n";
+            $js .= "                var obj = reader_node(img[i].parentNode.firstChild, 'IMG', null, 'update');\n";
+            $js .= "                if (obj==null) {\n";
+            $js .= "                    ok = false;\n";
+            $js .= "                }\n";
+            $js .= "            }\n";
+            $js .= "            obj = null;\n";
 
             $js .= "            if (ok && img[i].src && img[i].src.match(targetImgName)) {\n";
             $js .= "                showhide_list(img[i], force, targetClassName);\n";
@@ -364,10 +378,29 @@ class mod_reader_download_renderer extends mod_reader_renderer {
 
             $js .= "    var obj = document.getElementsByTagName('UL');\n";
             $js .= "    if (obj) {\n";
+            $js .= "        var names = new Array('publishers', 'levels', 'items');\n";
             $js .= "        var i_max = obj.length;\n";
             $js .= "        for (var i=0; i<i_max; i++) {\n";
-            $js .= "            if (match_classname(obj[i], new Array('publishers', 'levels', 'items'))) {\n";
+            $js .= "            if (match_classname(obj[i], names)) {\n";
             $js .= "                obj[i].style.display = 'none';\n";
+            $js .= "            }\n";
+            $js .= "        }\n";
+            $js .= "    }\n";
+            $js .= "}\n";
+
+            $js .= "function showhide_new(img) {\n";
+            $js .= "    if (img==null) {\n";
+            $js .= "        var obj = document;\n";
+            $js .= "    } else {\n";
+            $js .= "        var obj = img.parent;\n";
+            $js .= "    }\n";
+            $js .= "    clear_search_results();\n";
+            $js .= "    var obj = obj.getElementsByTagName('IMG');\n";
+            $js .= "    if (obj) {\n";
+            $js .= "        var i_max = obj.length;\n";
+            $js .= "        for (var i=0; i<i_max; i++) {\n";
+            $js .= "            if (match_classname(obj[i], 'update')) {\n";
+            $js .= "                showhide_parent_lists(obj[i], '');\n"; // show
             $js .= "            }\n";
             $js .= "        }\n";
             $js .= "    }\n";
@@ -502,35 +535,36 @@ class mod_reader_download_renderer extends mod_reader_renderer {
     /**
      * showhide_menu
      *
+     * @param boolean $has_updated_items
      * @return xxx
      * @todo Finish documenting this function
      */
-    public function showhide_menu() {
-        $output = '';
-        $output .= html_writer::start_tag('p');
-        $output .= html_writer::tag('span', get_string('show').': ');
+    public function showhide_menu($has_updated_items) {
+        $menu = array();
 
         // Publishers
-        $onclick = 'clear_search_results(); showhide_lists(-1); showhide_lists(1, "publishers"); return false;';
-        $output .= html_writer::tag('a', get_string('publishers', 'reader'), array('onclick' => $onclick));
-        $output .= ' / ';
+        $onclick = 'clear_search_results(); showhide_lists(1, "publishers"); return false;';
+        $menu[] = html_writer::tag('a', get_string('publishers', 'reader'), array('onclick' => $onclick));
 
         // Levels
         $onclick = 'clear_search_results(); showhide_lists(1, "publishers"); showhide_lists(1, "levels"); return false;';
-        $output .= html_writer::tag('a', get_string('levels', 'reader'), array('onclick' => $onclick));
-        $output .= ' / ';
+        $menu[] = html_writer::tag('a', get_string('levels', 'reader'), array('onclick' => $onclick));
 
         // Books
         $onclick = 'clear_search_results(); showhide_lists(1, "publishers"); showhide_lists(1, "levels"); showhide_lists(1, "items"); return false;';
-        $output .= html_writer::tag('a', get_string('books', 'reader'), array('onclick' => $onclick));
-        $output .= ' / ';
+        $menu[] = html_writer::tag('a', get_string('books', 'reader'), array('onclick' => $onclick));
 
-        // Downloadable
-        $onclick = 'clear_search_results(); showhide_lists(1, "publishers", true); showhide_lists(1, "levels", true); showhide_lists(1, "items", true); return false;';
-        $output .= html_writer::tag('a', get_string('downloadable', 'reader'), array('onclick' => $onclick));
+        // Downloads
+        $onclick = 'clear_search_results(); showhide_lists(1, "publishers", 1); showhide_lists(1, "levels", 1); showhide_lists(1, "items", 1); return false;';
+        $menu[] = html_writer::tag('a', get_string('downloads', 'reader'), array('onclick' => $onclick));
 
-        $output .= html_writer::end_tag('p');
-        return $output;
+        // Updates
+        if ($has_updated_items) {
+            $onclick = 'clear_search_results(); showhide_lists(1, "publishers", 2); showhide_lists(1, "levels", 2); showhide_lists(1, "items", 2); return false;';
+            $menu[] = html_writer::tag('a', get_string('updates', 'reader'), array('onclick' => $onclick));
+        }
+
+        return html_writer::tag('p', html_writer::tag('span', get_string('show').': ').implode(' / ', $menu));
     }
 
     /**
@@ -627,7 +661,7 @@ class mod_reader_download_renderer extends mod_reader_renderer {
                             $started_publishers = true;
                             if ($showremotesites) {
                                 $output .= html_writer::start_tag('li', array('class' => 'remotesite'));
-                                $output .= $this->available_list_name('remotesites[]', 0, $remotesitename, 'remotesites', $available->count, $available->newcount);
+                                $output .= $this->available_list_name('remotesites[]', 0, $remotesitename, 'remotesites', $available->count, $available->newcount, $available->updatecount);
                             }
                             if ($showpublishers) {
                                 $output .= html_writer::start_tag('ul', array('class' => 'publishers'));
@@ -638,7 +672,7 @@ class mod_reader_download_renderer extends mod_reader_renderer {
                             $started_levels = true;
                             if ($showpublishers) {
                                 $output .= html_writer::start_tag('li', array('class' => 'publisher'));
-                                $output .= $this->available_list_name('publishers[]', $i, $publishername, 'publishername', $levels->count, $levels->newcount);
+                                $output .= $this->available_list_name('publishers[]', $i, $publishername, 'publishername', $levels->count, $levels->newcount, $levels->updatecount);
                             }
                             if ($showlevels) {
                                 $output .= html_writer::start_tag('ul', array('class' => 'levels'));
@@ -649,14 +683,16 @@ class mod_reader_download_renderer extends mod_reader_renderer {
                             $started_items = true;
                             if ($showlevels) {
                                 $output .= html_writer::start_tag('li', array('class' => 'level'));
-                                $output .= $this->available_list_name('levels[]', $i.'_'.$ii, $levelname, 'levelname', $items->count, $items->newcount);
+                                $output .= $this->available_list_name('levels[]', $i.'_'.$ii, $levelname, 'levelname', $items->count, $items->newcount, $items->updatecount);
                             }
                             $output .= html_writer::start_tag('ul', array('class' => 'items'));
                         }
 
                         $output .= html_writer::start_tag('li', array('class' => 'item'));
-                        if (empty($downloaded->items[$publishername]->items[$levelname]->items[$itemname])) {
+                        if (! isset($downloaded->items[$publishername]->items[$levelname]->items[$itemname])) {
                             $output .= $this->available_list_name('itemids[]', $itemid, $itemname, 'itemname', 0, 1);
+                        } else if ($filetime = $downloaded->items[$publishername]->items[$levelname]->items[$itemname]) {
+                            $output .= $this->available_list_name('itemids[]', $itemid, $itemname, 'itemname', 0, 0, 0, $filetime);
                         } else {
                             $img = ' '.html_writer::empty_tag('img', array('src' => $OUTPUT->pix_url('i/tick_green_big'), 'class' => 'icon'));
                             $output .= html_writer::tag('span', $img, array('class' => 'downloadeditem'));
@@ -707,12 +743,14 @@ class mod_reader_download_renderer extends mod_reader_renderer {
      * @param xxx $cssclass
      * @param xxx $count (optional, default=0)
      * @param xxx $newcount (optional, default=0)
+     * @param xxx $updatecount (optional, default=0)
+     * @param xxx $filetime (optional, default=0)
      * @return xxx
      * @todo Finish documenting this function
      */
-    public function available_list_name($name, $value, $text, $cssclass, $count=0, $newcount=0) {
+    public function available_list_name($name, $value, $text, $cssclass, $count=0, $newcount=0, $updatecount=0, $filetime=0) {
         $output = '';
-        if ($newcount) {
+        if ($newcount || $updatecount || $filetime) {
             $id = str_replace('[]', '_'.$value, 'id_'.$name);
             $output .= html_writer::empty_tag('input', array('type' => 'checkbox', 'id' => $id, 'name' => $name, 'value' => $value, 'onchange' => 'reader_checkbox_onchange(this)', 'onmousedown' => 'reader_checkbox_onmousedown(event)'));
             $output .= html_writer::start_tag('label', array('for' => $id));
@@ -723,17 +761,20 @@ class mod_reader_download_renderer extends mod_reader_renderer {
         $output .= html_writer::tag('span', s($text), array('class' => $cssclass));
         if ($count) {
             if ($newcount==$count) {
-                $msg = get_string('dataallavailable', 'reader', $count);
+                $msg = get_string('dataallavailable', 'reader', number_format($count));
             } else if ($newcount==0) {
-                $msg = get_string('dataalldownloaded', 'reader', $count);
+                $msg = get_string('dataalldownloaded', 'reader', number_format($count));
             } else {
-                $a = (object)array('new' => $newcount, 'all' => $count);
+                $a = (object)array('new' => number_format($newcount), 'all' => number_format($count));
                 $msg = get_string('datasomeavailable', 'reader', $a);
             }
             $output .= html_writer::tag('span', s(' - '.$msg), array('class' => 'itemcount'));
         }
-        if ($newcount) {
+        if ($newcount || $updatecount || $filetime) {
             $output .= html_writer::end_tag('label');
+        }
+        if ($updatecount || $filetime) {
+            $output .= $this->available_new_img($updatecount, $filetime);
         }
         if ($count) {
             $output .= $this->available_list_img();
@@ -752,6 +793,32 @@ class mod_reader_download_renderer extends mod_reader_renderer {
         global $OUTPUT;
         $src = $OUTPUT->pix_url('t/switch_minus');
         $img = html_writer::empty_tag('img', array('src' => $src, 'onclick' => 'showhide_list(this)', 'alt' => 'switch_minus'));
+        return ' '.$img;
+    }
+
+    /**
+     * available_list_img
+     *
+     * @uses $OUTPUT
+     * @param integer $updatecount (optional, default=0)
+     * @param integer $filetime (optional, default=0)
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function available_new_img($updatecount=0, $filetime=0) {
+        global $OUTPUT;
+        $src = $OUTPUT->pix_url('i/new');
+        if ($updatecount) {
+            $str = get_string('updatesavailable', 'reader', $updatecount);
+            $onclick = '';
+        } else if ($filetime) {
+            $str = get_string('updatedon', 'reader', userdate($filetime));
+            $onclick = '';
+        } else {
+            $str = get_string('update'); // shouldn't happen !!
+            $onclick = '';
+        }
+        $img = html_writer::empty_tag('img', array('src' => $src, 'alt' => $str, 'title' => $str, 'onclick' => $onclick, 'class' => 'update'));
         return ' '.$img;
     }
 }

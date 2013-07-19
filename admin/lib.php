@@ -105,27 +105,56 @@ class reader_downloader {
      * @todo Finish documenting this function
      */
     public function get_downloaded_items($type, $r=0) {
-        global $DB;
+        global $CFG, $DB;
 
         $this->downloaded[$r] = new reader_items();
 
+        $time = time();
         $booktable = $this->get_book_table($type);
-        if ($records = $DB->get_records($booktable)) {
+        if ($records = $DB->get_records($booktable, null, 'publisher,level,name')) {
+
             foreach ($records as $record) {
 
                 $publisher = $record->publisher;
                 $level     = $record->level;
                 $itemname  = $record->name;
 
+                // ensure the $downloaded array has the required structure
                 if (! isset($this->downloaded[$r]->items[$publisher])) {
                     $this->downloaded[$r]->items[$publisher] = new reader_items();
                 }
                 if (! isset($this->downloaded[$r]->items[$publisher]->items[$level])) {
                     $this->downloaded[$r]->items[$publisher]->items[$level] = new reader_items();
                 }
-                $this->downloaded[$r]->items[$publisher]->items[$level]->items[$itemname] = true;
+
+                // define image file(s) to search for
+                $imagefiles = array($record->image);
+                if (substr($record->image, 0, 1)=='-') {
+                    // this image doesn't have the expected publisher code prefix
+                    // so we add an alternative "tidy" image file name
+                    $imagefiles[] = substr($record->image, 1);
+                }
+
+                // get $time this book was last updated by checking
+                // the "last modified" time on the book's image file
+                $time = 0;
+                foreach ($imagefiles as $imagefile) {
+                    $imagefile = $CFG->dataroot.'/reader/images/'.$imagefile;
+                    if (file_exists($imagefile)) {
+                        $time = filemtime($imagefile);
+                    }
+                }
+
+                // use the last modified $time of the image, to determine whether updates are available for this item
+                if ($time==0) {
+                    $is_update_available = (empty($record->time) ? 0 : $record->time); // shouldn't happen !!
+                } else {
+                    $is_update_available = $this->remotesites[$r]->is_update_available($publisher, $level, $itemname, $time);
+                }
+                $this->downloaded[$r]->items[$publisher]->items[$level]->items[$itemname] = $is_update_available;
             }
         }
+        $this->remotesites[$r]->clear_filetimes();
     }
 
     /**
@@ -160,7 +189,22 @@ class reader_downloader {
      */
     public function has_available_items() {
         foreach (array_keys($this->remotesites) as $r) {
-            if (count($this->available[$r]->items)) {
+            if ($this->available[$r]->count) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * has_updated_items
+     *
+     * @return boolean
+     * @todo Finish documenting this function
+     */
+    public function has_updated_items() {
+        foreach (array_keys($this->remotesites) as $r) {
+            if ($this->available[$r]->updatecount) {
                 return true;
             }
         }
@@ -257,17 +301,17 @@ class reader_downloader {
                 continue;
             }
 
-            $fulltitle = $publisher;
+            $titletext = $publisher;
             if ($level=='' || $level=='--' || $level=='No Level') {
                 // do nothing
             } else {
-                $fulltitle .= " ($level)";
+                $titletext .= " ($level)";
             }
-            $fulltitle = html_writer::tag('span', $fulltitle, array('style' => 'font-weight: normal')).' '.
+            $titlehtml = html_writer::tag('span', $titletext, array('style' => 'font-weight: normal')).' '.
                          html_writer::tag('span', $name, array('style' => 'white-space: nowrap'));
 
             // show this book in the progress bar
-            $title = ($i + 1).' / '.$i_max.' '.$fulltitle;
+            $title = ($i + 1).' / '.$i_max.' '.$titlehtml;
             $this->bar->start_item($itemid, $title);
 
             // set $params to select $book
@@ -312,17 +356,17 @@ class reader_downloader {
             $error = 0;
             if (isset($book->id)) {
                 if ($DB->update_record($booktable, $book)) {
-                    $msg = get_string('bookupdated', 'reader', $fulltitle);
+                    $msg = get_string('bookupdated', 'reader', $titlehtml);
                 } else {
-                    $msg = get_string('booknotupdated', 'reader', $fulltitle);
+                    $msg = get_string('booknotupdated', 'reader', $titlehtml);
                     $error = 1;
                 }
             } else {
                 $book->quizid = 0;
                 if ($book->id = $DB->insert_record($booktable, $book)) {
-                    $msg = get_string('bookadded', 'reader', $fulltitle);
+                    $msg = get_string('bookadded', 'reader', $titlehtml);
                 } else {
-                    $msg = get_string('booknotadded', 'reader', $fulltitle);
+                    $msg = get_string('booknotadded', 'reader', $titlehtml);
                     $error = 1;
                 }
             }
@@ -343,7 +387,7 @@ class reader_downloader {
                 echo html_writer::start_tag('ol');
             }
 
-            // update available book counters
+            // update "newcount" (=downloadable) and "updatecount" (=updatable) counters
             if (! isset($this->downloaded[$r]->items[$book->publisher])) {
                 $this->downloaded[$r]->items[$publisher] = new reader_items();
             }
@@ -351,11 +395,18 @@ class reader_downloader {
                 $this->downloaded[$r]->items[$book->publisher]->items[$book->level] = new reader_items();
             }
             if (! isset($this->downloaded[$r]->items[$book->publisher]->items[$book->level]->items[$book->name])) {
-                $this->downloaded[$r]->items[$book->publisher]->items[$book->level]->items[$book->name] = true;
+                // a new item
                 $this->available[$r]->items[$book->publisher]->items[$book->level]->newcount--;
                 $this->available[$r]->items[$book->publisher]->newcount--;
                 $this->available[$r]->newcount--;
+            } else if ($this->downloaded[$r]->items[$book->publisher]->items[$book->level]->items[$book->name]) {
+                // an updated item
+                $this->available[$r]->items[$book->publisher]->items[$book->level]->updatecount--;
+                $this->available[$r]->items[$book->publisher]->updatecount--;
+                $this->available[$r]->updatecount--;
             }
+            // flag this item as "downloaded with no update available"
+            $this->downloaded[$r]->items[$book->publisher]->items[$book->level]->items[$book->name] = false;
 
             // add quiz if necessary
             if ($error==0 && $type==reader_downloader::BOOKS_WITH_QUIZZES) {
@@ -366,7 +417,7 @@ class reader_downloader {
 
                         list($cheatsheeturl, $strcheatsheet) = reader_cheatsheet_init('takequiz');
                         if ($cheatsheeturl) {
-                            $link .= ' '.reader_cheatsheet_link($cheatsheeturl, $strcheatsheet, $fulltitle, $book);
+                            $link .= ' '.reader_cheatsheet_link($cheatsheeturl, $strcheatsheet, $titletext, $book);
                         }
 
                         if ($book->quizid==0) {
@@ -426,7 +477,6 @@ class reader_downloader {
         if ($started_list==true) {
             echo html_writer::end_tag('ul');
             echo html_writer::end_tag('div');
-            echo $output;
             echo $this->output->box_end();
         }
     }
@@ -2118,6 +2168,12 @@ class reader_remotesite {
     const DEFAULT_BASEURL = '';
     const DEFAULT_SITENAME = '';
     const DEFAULT_FOLDERNAME = '';
+    const DEFAULT_FILESFOLDER = '';
+
+    /** recognized types of web server */
+    const SERVER_APACHE = 1;
+    const SERVER_IIS    = 2;
+    const SERVER_NGINX  = 3;
 
     /** the basic connection parameters */
     public $baseurl = '';
@@ -2127,6 +2183,12 @@ class reader_remotesite {
     /** identifiers for this remotesite */
     public $sitename = '';
     public $foldername = '';
+
+    /** path (below $baseurl) to "files" folder on remote server */
+    public $filesfolder = '';
+
+    /** cache of filetimes */
+    public $filetimes = null;
 
     /**
      * __construct
@@ -2138,12 +2200,249 @@ class reader_remotesite {
      * @param xxx $foldername (optional, default='')
      * @todo Finish documenting this function
      */
-    public function __construct($baseurl='', $username='', $password='', $sitename='', $foldername='') {
+    public function __construct($baseurl='', $username='', $password='', $sitename='', $foldername='', $filesfolder='') {
         $this->baseurl = ($baseurl ? $baseurl : $this::DEFAULT_BASEURL);
         $this->username = $username;
         $this->password = $password;
         $this->sitename = ($sitename ? $sitename : $this::DEFAULT_SITENAME);
         $this->foldername = ($foldername ? $foldername : $this::DEFAULT_FOLDERNAME);
+        $this->filesfolder = ($filesfolder ? $filesfolder : $this::DEFAULT_FILESFOLDER);
+    }
+
+    /**
+     * is_update_available
+     *
+     * @param xxx $publisher
+     * @param xxx $level
+     * @param xxx $name
+     * @param xxx $time
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function is_update_available($publisher, $level, $name, $time) {
+        static $namechars = array('"' => '', "'" => '', '&' => '', ' ' => '_');
+        //return mt_rand(0,1);
+
+        // get the last modified dates for the "publisher" folders
+        if ($this->filetimes===null) {
+            $this->filetimes = $this->get_remote_filetimes();
+        }
+
+        // if the publisher folder hasn't changed, there are no updates
+        if (isset($this->filetimes[$publisher]) && $this->filetimes[$publisher] < $time) {
+            return false;
+        }
+
+        // get the last modified dates for the "level" folders for this publisher
+        $leveldir = "$publisher/$level";
+        if (empty($this->filetimes[$leveldir])) {
+            $filepath = '/'.rawurlencode($publisher).'/';
+            $this->filetimes += $this->get_remote_filetimes($filepath);
+        }
+
+        // if the "level" folder hasn't changed, there are no updates
+        if (isset($this->filetimes[$leveldir]) && $this->filetimes[$leveldir] < $time) {
+            return false;
+        }
+
+        // define path to xml file
+        $xmlfile = strtr("$name.xml", $namechars);
+        $xmlfile = "$publisher/$level/$xmlfile";
+
+        // get the last modified dates for the files for this "level" and "publisher"
+        if (empty($this->filetimes[$xmlfile])) {
+            $filepath = '/'.rawurlencode($publisher).'/'.rawurlencode($level).'/';
+            $this->filetimes += $this->get_remote_filetimes($filepath);
+        }
+
+        // if the $xmlfile hasn't changed, there are no updates
+        if (isset($this->filetimes[$xmlfile]) && $this->filetimes[$xmlfile] < $time) {
+            return false;
+        }
+
+        // the xml file is newer than $time, so updates are available
+        // return the time that the xml file was updated
+        return $this->filetimes[$xmlfile];
+    }
+
+    /**
+     * clear_filetimes
+     *
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function clear_filetimes() {
+        $this->filetimes = null;
+    }
+
+    /**
+     * get_remote_filetimes
+     *
+     * @param xxx $path (optional, default="")
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function get_remote_filetimes($path='') {
+        static $server = null;
+        static $search = null;
+
+        $filetimes = array();
+
+        $url = new moodle_url($this->baseurl.$this->filesfolder.$path);
+        $response = download_file_content($url, null, null, true);
+
+        if ($server===null) {
+            list($server, $search) = $this->get_server_search($response->headers);
+        }
+
+        $dir = ltrim(urldecode($path), '/');
+
+        if (preg_match_all($search, $response->results, $matches)) {
+
+            $i_max = count($matches[0]);
+            for ($i=0; $i<$i_max; $i++) {
+
+                switch ($server) {
+
+                    case self::SERVER_APACHE:
+                        $file = trim($matches[1][$i], ' /');
+                        $time = trim($matches[2][$i]);
+                        $size = trim($matches[3][$i]);
+                        $datetime = strtotime($time);
+                        break;
+
+                    case self::SERVER_IIS:
+                        $date = trim($matches[1][$i]);
+                        $time = trim($matches[2][$i]);
+                        $size = trim($matches[3][$i]);
+                        $file = trim($matches[4][$i]);
+                        $datetime = strtotime("$date $time");
+                        break;
+
+                    case self::SERVER_NGINX:
+                        $file = trim($matches[1][$i]);
+                        $date = trim($matches[2][$i]);
+                        $time = trim($matches[3][$i]);
+                        $size = trim($matches[4][$i]);
+                        $datetime = strtotime("$date $time");
+                        break;
+                }
+
+                if ($file=='Parent Directory') {
+                    continue; // Apache
+                }
+
+                $filetimes[$dir.$file] = $datetime;
+            }
+        }
+
+        return $filetimes;
+    }
+
+    /**
+     * get_server_search
+     *
+     * return server type and search string to extract
+     * file names and times from an index listing page
+     *
+     * @param array $headers from a CURL request
+     * @return array($server, $search)
+     */
+    public function get_server_search($headers) {
+        $server = '';
+        $search = '';
+        foreach ($headers as $header) {
+
+            if ($pos = strpos($header, ':')) {
+                $name = trim(substr($header, 0, $pos));
+                $value = trim(substr($header, $pos+1));
+
+                if ($name=='Server') {
+                    switch (true) {
+
+                        case (substr($value, 0, 6)=='Apache'):
+                            $server = self::SERVER_APACHE;
+                            $search = '/<td[^>]*><a href="[^"]*">(.*?)<\/a><\/td><td[^>]*>(.*?)<\/td><td[^>]*>(.*?)<\/td>/i';
+                            break;
+
+                        case (substr($value, 0, 13)=='Microsoft-IIS'):
+                            $server = self::SERVER_IIS;
+                            $search = '/ +([^ ]+) +([^ ]+) +([^ ]+) +<a href="[^"]*">(.*?)<\/a>/i';
+                            break;
+
+                        case (substr($value, 0, 5)=='nginx'):
+                            $server = self::SERVER_NGINX;
+                            $search = '/<a href="[^"]*">(.*?)<\/a> +([^ ]+) +([^ ]+) +([^ ]+)/i';
+                            break;
+
+                        default;
+                            throw new moodle_exception('Unknown server type: '. $value);
+                    }
+                }
+            }
+        }
+        return array($server, $search);
+    }
+
+    /**
+     * is_update_available_old
+     * this function is not used
+     *
+     * @param xxx $filepath (optional, default="")
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function is_update_available_old($filepath='') {
+
+        // define list of locations to check ($filepath => $is_folder)
+        $filepaths = array("/$folder1/" => true, "/$folder1/$folder2/" => true, "/$folder1/$folder2/$xmlfile" => false);
+        foreach ($filepaths as $filepath => $is_folder) {
+
+            if ($is_folder && isset($filetimes[$filepath])) {
+                $filetime = $filetimes[$filepath];
+            } else {
+                $filetime = $this->get_remote_filetime($filepath);
+                if ($is_folder) {
+                    $filetimes[$filepath] = $filetime;
+                }
+            }
+            if ($filetime && $filetime < $time) {
+                return false;
+            }
+        }
+
+        return true; // all paths were more recent than $time i.e. update is available
+    }
+
+    /**
+     * get_remote_filetime
+     * this function is not used
+     *
+     * @param xxx $filepath
+     * @todo Finish documenting this function
+     */
+    public function get_remote_filetime_old($filepath) {
+        // construct url
+        // http://moodlereader.net/quizbank/files/Bunnicula/--/Bunnicula.xml
+        // http://moodlereader.net/quizbank/files/BlackCat%20Earlyreads/Level%201/A_Trip_to_the_Safari_Park.xml
+        $url = new moodle_url($this->baseurl.$this->filesfolder.$filepath);
+
+        // thanks to http://stackoverflow.com/questions/1378915/header-only-retrieval-in-php-via-curl
+        $curl = curl_init();
+        curl_setopt($curl, CURLOPT_URL, $url);
+        curl_setopt($curl, CURLOPT_FILETIME, true);
+        curl_setopt($curl, CURLOPT_NOBODY, true);
+        curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+        curl_exec($curl);
+        $filetime = curl_getinfo($curl, CURLINFO_FILETIME);
+        curl_close($curl);
+
+        if ($filetime < 0) {
+            $filetime = 0;
+        }
+
+        return $filetime;
+        //echo date('Y-m-d H:i:s', $filetime);
     }
 
     /**
@@ -2171,7 +2470,7 @@ class reader_remotesite {
                 $output = $OUTPUT->notification($output);
                 echo $OUTPUT->box($output, 'generalbox', 'notice');
             }
-            return false; // shouldn't happen !!
+            return false;
         }
 
         // make sure all lone ampersands are encoded as HTML entities
@@ -2791,6 +3090,7 @@ class reader_remotesite_moodlereadernet extends reader_remotesite {
     const DEFAULT_BASEURL = 'http://moodlereader.net/quizbank';
     const DEFAULT_SITENAME = 'MoodleReader.net Quiz Bank';
     const DEFAULT_FOLDERNAME = 'moodlereader.net';
+    const DEFAULT_FILESFOLDER = '/files';
 
     /**
      * get_publishers_url
@@ -2976,10 +3276,16 @@ class reader_remotesite_moodlereadernet extends reader_remotesite {
                 $available->items[$publisher]->count++;
                 $available->items[$publisher]->items[$level]->count++;
 
-                if (empty($downloaded->items[$publisher]->items[$level]->items[$itemname])) {
+                if (! isset($downloaded->items[$publisher]->items[$level]->items[$itemname])) {
+                    // this item has never been downloaded
                     $available->newcount++;
                     $available->items[$publisher]->newcount++;
                     $available->items[$publisher]->items[$level]->newcount++;
+                } else if ($downloaded->items[$publisher]->items[$level]->items[$itemname]) {
+                    // an update for this item is available
+                    $available->updatecount++;
+                    $available->items[$publisher]->updatecount++;
+                    $available->items[$publisher]->items[$level]->updatecount++;
                 }
 
                 $available->items[$publisher]->items[$level]->items[$itemname] = $itemid;
@@ -3108,8 +3414,11 @@ class reader_remotesite_moodlereadernet extends reader_remotesite {
  * @subpackage reader
  */
 class reader_items {
-    public $count = 0;
+    /** an array of items */
     public $items = array();
+
+    /** the number of items in the $items array */
+    public $count = 0;
 }
 
 /**
@@ -3122,7 +3431,13 @@ class reader_items {
  * @subpackage reader
  */
 class reader_download_items extends reader_items {
+    /** the number of items which have not been downloaded before */
     public $newcount = 0;
+
+    /** the number of items which have updates available */
+    public $updatecount = 0;
+
+    /** the password ,if any, that is required to access these items */
     public $needpassword = false;
 }
 

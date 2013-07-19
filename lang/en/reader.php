@@ -123,11 +123,11 @@ $string['defaultcoursename'] = 'Reader Quizzes';
 $string['defaultquestioncategoryinfo'] = '{$a->category} questions for {$a->quiz}';
 $string['definelogindetails'] = 'Please define login details: {$a}';
 $string['difficulty'] = 'RL';
-$string['downloadable'] = 'Downloadable';
 $string['downloadbookswithoutquizzes'] = 'Download books without quizzes';
 $string['downloadbookswithquizzes'] = 'Download books with quizzes';
 $string['downloadedbooks'] = 'Data for the following books was downloaded:';
 $string['downloadexcel'] = 'Download Excel';
+$string['downloads'] = 'Downloads';
 $string['duration'] = 'Duration';
 $string['editingteacherrole'] = 'Use Editing Teacher role';
 $string['editquiztoreader'] = 'Delete quizzes.';
@@ -320,7 +320,10 @@ $string['to'] = 'to';
 $string['totalwords'] = 'Total Words Read this Term';
 $string['totalwordsall'] = 'Total Words Read All Terms';
 $string['update'] = 'Check server for quiz updates?';
+$string['updatedon'] = 'Updated on {$a}';
 $string['updatequizzes'] = 'Update quizzes';
+$string['updates'] = 'Updates';
+$string['updatesavailable'] = '{$a} update(s) available';
 $string['upgradeoldquizzesinfo'] = 'The upgrade has been paused, so that you can decide whether or not you wish to keep old versions of the Reader module quizzes on this Moodle site.
 
 If you select "Yes", no quizzes will be deleted. Choose this option if you wish to keep all statistics about answers to individual questions on old quizzes.
