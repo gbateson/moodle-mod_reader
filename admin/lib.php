@@ -2256,7 +2256,7 @@ class reader_remotesite {
         }
 
         // if the $xmlfile hasn't changed, there are no updates
-        if (isset($this->filetimes[$xmlfile]) && $this->filetimes[$xmlfile] < $time) {
+        if (empty($this->filetimes[$xmlfile]) || $this->filetimes[$xmlfile] < $time) {
             return false;
         }
 
