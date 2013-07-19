@@ -1788,8 +1788,8 @@ class reader_downloader {
      * @todo Finish documenting this function
      */
     public function get_best_match_subquestions($question) {
-        $table      = 'question_match_sub';
-        $params     = array('question' => $question->id);
+        list($table, $field) = $this->get_question_options_table('match', true);
+        $params     = array($field => $question->id);
         $xmlrecords = $question->matchs;
         $xmlfield   = 'questiontext';
         return $this->get_best_matches($table, $params, $xmlrecords, $xmlfield);
@@ -1813,6 +1813,9 @@ class reader_downloader {
         $ids = array();
         if ($dbrecords = $DB->get_records($table, $params)) {
             foreach ($xmlrecords as $xmlrecordid => $xmlrecord) {
+                if (isset($xmlrecord->id)) {
+                    $xmlrecordid = $xmlrecord->id;
+                }
                 $ids[$xmlrecordid] = array();
 
                 // set the $xmlfield will we use for comparison
@@ -2416,18 +2419,17 @@ class reader_remotesite {
 
     /**
      * get_remote_filetime
-     * this function is not used
+     * this function is not used - but it works
      *
      * @param xxx $filepath
      * @todo Finish documenting this function
      */
     public function get_remote_filetime_old($filepath) {
         // construct url
-        // http://moodlereader.net/quizbank/files/Bunnicula/--/Bunnicula.xml
-        // http://moodlereader.net/quizbank/files/BlackCat%20Earlyreads/Level%201/A_Trip_to_the_Safari_Park.xml
         $url = new moodle_url($this->baseurl.$this->filesfolder.$filepath);
 
-        // thanks to http://stackoverflow.com/questions/1378915/header-only-retrieval-in-php-via-curl
+        // get remote file "last modified" date, thanks to following post:
+        // http://stackoverflow.com/questions/1378915/header-only-retrieval-in-php-via-curl
         $curl = curl_init();
         curl_setopt($curl, CURLOPT_URL, $url);
         curl_setopt($curl, CURLOPT_FILETIME, true);
@@ -2442,7 +2444,6 @@ class reader_remotesite {
         }
 
         return $filetime;
-        //echo date('Y-m-d H:i:s', $filetime);
     }
 
     /**
