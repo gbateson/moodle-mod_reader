@@ -2556,6 +2556,33 @@ function xmldb_reader_fix_multichoice_questions() {
  * @param string $msg
  * @todo Finish documenting this function
  */
+function xmldb_reader_fix_book_times() {
+    global $CFG, $DB;
+    if ($books = $DB->get_records('reader_books', array('time' => 0))) {
+
+        // define image file(s) to search for
+        $imagefiles = array($book->image);
+        if (substr($book->image, 0, 1)=='-') {
+            // this image doesn't have the expected publisher code prefix
+            // so we add an alternative "tidy" image file name
+            $imagefiles[] = substr($book->image, 1);
+        }
+
+        foreach ($imagefiles as $imagefile) {
+            $imagefile = $CFG->dataroot.'/reader/images/'.$imagefile;
+            if (file_exists($imagefile)) {
+                $DB->set_field('reader_books', 'time', filemtime($imagefile), array('id' => $book->id));
+            }
+        }
+    }
+}
+
+/**
+ * xmldb_reader_box_start
+ *
+ * @param string $msg
+ * @todo Finish documenting this function
+ */
 function xmldb_reader_box_start($msg) {
     global $OUTPUT;
     echo xmldb_reader_showhide_start_js();

@@ -66,7 +66,11 @@ if ($id) {
 require_login($course->id);
 
 $readercfg = get_config('reader');
-$readercfg->last_update -= (31 * 24 * 3600);
+if (isset($readercfg->last_update)) {
+    $readercfg->last_update = max(0, $readercfg->last_update - (4 * WEEKSECS));
+} else {
+    $readercfg->last_update = 0;
+}
 
 $context = reader_get_context(CONTEXT_COURSE, $course->id);
 $contextmodule = reader_get_context(CONTEXT_MODULE, $cm->id);
@@ -208,6 +212,30 @@ while (list($key,$book) = each($publishers)) {
             $data[$reader->id][$book->image]['short_name'] = $r[$reader->id]['short_name'];
         }
     }
+}
+
+$testing = true;
+if ($testing) {
+
+    $fakedata = array(
+        'userlogin'  => $readercfg->serverlogin,
+        'lastupdate' => 0,
+        'books'      => array(),
+        'readers'    => array(),
+    );
+    $fakedata = array(
+        'http' => array(
+            'method'  => 'POST',
+            'header'  => 'Content-type: application/x-www-form-urlencoded',
+            'content' => http_build_query(array('json' => json_encode($fakedata)))
+        )
+    );
+    $fakedata = stream_context_create($fakedata);
+
+    $url = new moodle_url($readercfg->serverlink.'/update_quizzes.php');
+    $result = file_get_contents($url, false, $fakedata);
+    print_object($result);
+    die;
 }
 
 $jdata['userlogin']  = $readercfg->serverlogin;

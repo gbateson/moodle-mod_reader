@@ -109,7 +109,6 @@ class reader_downloader {
 
         $this->downloaded[$r] = new reader_items();
 
-        $time = time();
         $booktable = $this->get_book_table($type);
         if ($records = $DB->get_records($booktable, null, 'publisher,level,name')) {
 
@@ -118,6 +117,7 @@ class reader_downloader {
                 $publisher = $record->publisher;
                 $level     = $record->level;
                 $itemname  = $record->name;
+                $time      = $record->time;
 
                 // ensure the $downloaded array has the required structure
                 if (! isset($this->downloaded[$r]->items[$publisher])) {
@@ -127,34 +127,45 @@ class reader_downloader {
                     $this->downloaded[$r]->items[$publisher]->items[$level] = new reader_items();
                 }
 
-                // define image file(s) to search for
-                $imagefiles = array($record->image);
-                if (substr($record->image, 0, 1)=='-') {
-                    // this image doesn't have the expected publisher code prefix
-                    // so we add an alternative "tidy" image file name
-                    $imagefiles[] = substr($record->image, 1);
-                }
-
-                // get $time this book was last updated by checking
-                // the "last modified" time on the book's image file
-                $time = 0;
-                foreach ($imagefiles as $imagefile) {
-                    $imagefile = $CFG->dataroot.'/reader/images/'.$imagefile;
-                    if (file_exists($imagefile)) {
-                        $time = filemtime($imagefile);
-                    }
-                }
-
-                // use the last modified $time of the image, to determine whether updates are available for this item
                 if ($time==0) {
-                    $is_update_available = (empty($record->time) ? 0 : $record->time); // shouldn't happen !!
-                } else {
-                    $is_update_available = $this->remotesites[$r]->is_update_available($publisher, $level, $itemname, $time);
+                    // get $time this book was last updated by checking
+                    // the "last modified" time on the book's image file
+                    $time = $this->get_imagefile_time($record->image);
                 }
-                $this->downloaded[$r]->items[$publisher]->items[$level]->items[$itemname] = $is_update_available;
+
+                // record the time this item was last updated
+                $this->downloaded[$r]->items[$publisher]->items[$level]->items[$itemname] = new reader_download_item($record->id, $time);
             }
         }
         $this->remotesites[$r]->clear_filetimes();
+    }
+
+    /**
+     * get_imagefile_time
+     *
+     * @param string $image
+     * @return integer
+     * @todo Finish documenting this function
+     */
+    public function get_imagefile_time($image) {
+        global $CFG;
+
+        // define image file(s) to search for
+        $imagefiles = array($image);
+        if (substr($image, 0, 1)=='-') {
+            // this image doesn't have the expected publisher code prefix
+            // so we add an alternative "tidy" image file name
+            $imagefiles[] = substr($image, 1);
+        }
+
+        foreach ($imagefiles as $imagefile) {
+            $imagefile = $CFG->dataroot.'/reader/images/'.$imagefile;
+            if (file_exists($imagefile)) {
+                return filemtime($imagefile);
+            }
+        }
+
+        return 0; // shouldn't happen !!
     }
 
     /**
@@ -234,9 +245,9 @@ class reader_downloader {
                     $ii++;
 
                     if (in_array($i, $selectedpublishers) || in_array($i.'_'.$ii, $selectedlevels)) {
-                        foreach ($items->items as $itemname => $itemid) {
-                            if (! in_array($itemid, $selecteditemids)) {
-                                $selecteditemids[] = $itemid;
+                        foreach ($items->items as $itemname => $item) {
+                            if (! in_array($item->id, $selecteditemids)) {
+                                $selecteditemids[] = $item->id;
                             }
                         }
                     }
@@ -271,6 +282,7 @@ class reader_downloader {
         $this->bar = reader_download_progress_bar::create($itemids, 'readerdownload');
 
         $output = '';
+        $time = time();
         $started_list = false;
         $starttime = microtime();
         $strquiz = get_string('modulename', 'quiz');
@@ -296,6 +308,7 @@ class reader_downloader {
             $level     = trim($item['@']['level']);
             $name      = trim($item['@']['title']);
             $itemid    = trim($item['@']['id']);
+            $itemtime  = trim($item['@']['time']);
 
             if ($publisher=='' || $name=='' || $itemid=='') { // $level can be empty
                 continue;
@@ -307,8 +320,10 @@ class reader_downloader {
             } else {
                 $titletext .= " ($level)";
             }
-            $titlehtml = html_writer::tag('span', $titletext, array('style' => 'font-weight: normal')).' '.
+            $titlehtml = html_writer::tag('span', $titletext, array('style' => 'font-weight: normal')).
+                         html_writer::empty_tag('br').
                          html_writer::tag('span', $name, array('style' => 'white-space: nowrap'));
+            $titletext .= " $name";
 
             // show this book in the progress bar
             $title = ($i + 1).' / '.$i_max.' '.$titlehtml;
@@ -342,6 +357,8 @@ class reader_downloader {
                 );
             }
 
+            $book->time = $time;
+
             // transfer values from this $item to this $book
             $fields = get_object_vars($book);
             foreach ($fields as $field => $defaultvalue) {
@@ -356,17 +373,17 @@ class reader_downloader {
             $error = 0;
             if (isset($book->id)) {
                 if ($DB->update_record($booktable, $book)) {
-                    $msg = get_string('bookupdated', 'reader', $titlehtml);
+                    $msg = get_string('bookupdated', 'reader', $titletext);
                 } else {
-                    $msg = get_string('booknotupdated', 'reader', $titlehtml);
+                    $msg = get_string('booknotupdated', 'reader', $titletext);
                     $error = 1;
                 }
             } else {
                 $book->quizid = 0;
                 if ($book->id = $DB->insert_record($booktable, $book)) {
-                    $msg = get_string('bookadded', 'reader', $titlehtml);
+                    $msg = get_string('bookadded', 'reader', $titletext);
                 } else {
-                    $msg = get_string('booknotadded', 'reader', $titlehtml);
+                    $msg = get_string('booknotadded', 'reader', $titletext);
                     $error = 1;
                 }
             }
@@ -399,14 +416,15 @@ class reader_downloader {
                 $this->available[$r]->items[$book->publisher]->items[$book->level]->newcount--;
                 $this->available[$r]->items[$book->publisher]->newcount--;
                 $this->available[$r]->newcount--;
-            } else if ($this->downloaded[$r]->items[$book->publisher]->items[$book->level]->items[$book->name]) {
+            } else if ($this->downloaded[$r]->items[$book->publisher]->items[$book->level]->items[$book->name]->time < $itemtime) {
                 // an updated item
                 $this->available[$r]->items[$book->publisher]->items[$book->level]->updatecount--;
                 $this->available[$r]->items[$book->publisher]->updatecount--;
                 $this->available[$r]->updatecount--;
             }
-            // flag this item as "downloaded with no update available"
-            $this->downloaded[$r]->items[$book->publisher]->items[$book->level]->items[$book->name] = false;
+
+            // flag this item as "downloaded" and set update $time
+            $this->downloaded[$r]->items[$book->publisher]->items[$book->level]->items[$book->name] = new reader_download_item($itemid, $time);
 
             // add quiz if necessary
             if ($error==0 && $type==reader_downloader::BOOKS_WITH_QUIZZES) {
@@ -1126,6 +1144,7 @@ class reader_downloader {
                 $categories[$categoryid]->context->level = 'module';
             }
 
+
             if (isset($category->questions)) {
                 $has_nonrandom = $this->has_nonrandom_questions($category);
                 foreach ($category->questions as $questionid => $question) {
@@ -1364,7 +1383,7 @@ class reader_downloader {
             case 'random'      : $this->add_question_random($restoreids, $question);      break;
             case 'truefalse'   : $this->add_question_truefalse($restoreids, $question);   break;
             case 'shortanswer' : $this->add_question_shortanswer($restoreids, $question); break;
-            default: die('Unknown qtype: '.$question->qtype);
+            default: throw new moodle_exception('Unknown qtype: '.$question->qtype);
         }
     }
 
@@ -1813,9 +1832,15 @@ class reader_downloader {
         $ids = array();
         if ($dbrecords = $DB->get_records($table, $params)) {
             foreach ($xmlrecords as $xmlrecordid => $xmlrecord) {
+
+                // make sure we have the "id" from the xmlrecord
+                // this is especially for "answers" and "matchs"
+                // which are not indexed by the "id" field
                 if (isset($xmlrecord->id)) {
                     $xmlrecordid = $xmlrecord->id;
                 }
+
+                // start setup for this $xmlrecord
                 $ids[$xmlrecordid] = array();
 
                 // set the $xmlfield will we use for comparison
@@ -1883,13 +1908,14 @@ class reader_downloader {
             $bestids[$xmlrecordid] = $dbrecordid;
         }
 
-        // hide db $records that were not selected
+        // hide/delete $dbrecords that were not selected
         if ($dbrecords) {
             $dbman = $DB->get_manager();
             $has_hidden_field = $dbman->field_exists($table, 'hidden');
 
             $ids = array_values($bestids); // dbrecordids
 
+            // unhide records that were selected
             if ($has_hidden_field) {
                 list($select, $params) = $DB->get_in_or_equal($ids);
                 $DB->set_field_select($table, 'hidden', 0, "id $select", $params);
@@ -1899,6 +1925,7 @@ class reader_downloader {
                 unset($dbrecords[$dbrecordid]);
             }
 
+            // hide/delete remaining records
             if (count($dbrecords)) {
                 $ids = array_keys($dbrecords);
                 if ($has_hidden_field) {
@@ -2213,7 +2240,7 @@ class reader_remotesite {
     }
 
     /**
-     * is_update_available
+     * remote_filetime
      *
      * @param xxx $publisher
      * @param xxx $level
@@ -2222,7 +2249,7 @@ class reader_remotesite {
      * @return xxx
      * @todo Finish documenting this function
      */
-    public function is_update_available($publisher, $level, $name, $time) {
+    public function get_remote_filetime($publisher, $level, $name, $time) {
         static $namechars = array('"' => '', "'" => '', '&' => '', ' ' => '_');
         //return mt_rand(0,1);
 
@@ -2231,9 +2258,9 @@ class reader_remotesite {
             $this->filetimes = $this->get_remote_filetimes();
         }
 
-        // if the publisher folder hasn't changed, there are no updates
+        // if the "publisher" folder hasn't changed, return the publisher update time
         if (isset($this->filetimes[$publisher]) && $this->filetimes[$publisher] < $time) {
-            return false;
+            return $this->filetimes[$publisher];
         }
 
         // get the last modified dates for the "level" folders for this publisher
@@ -2243,9 +2270,9 @@ class reader_remotesite {
             $this->filetimes += $this->get_remote_filetimes($filepath);
         }
 
-        // if the "level" folder hasn't changed, there are no updates
+        // if the "level" folder hasn't changed, return the level update time
         if (isset($this->filetimes[$leveldir]) && $this->filetimes[$leveldir] < $time) {
-            return false;
+            return $this->filetimes[$leveldir];
         }
 
         // define path to xml file
@@ -2258,14 +2285,12 @@ class reader_remotesite {
             $this->filetimes += $this->get_remote_filetimes($filepath);
         }
 
-        // if the $xmlfile hasn't changed, there are no updates
-        if (empty($this->filetimes[$xmlfile]) || $this->filetimes[$xmlfile] < $time) {
-            return false;
+        // return the $xmlfile update time
+        if (isset($this->filetimes[$xmlfile])) {
+            return $this->filetimes[$xmlfile];
+        } else {
+            return 0; // xml file not found - shouldn't happen !!
         }
-
-        // the xml file is newer than $time, so updates are available
-        // return the time that the xml file was updated
-        return $this->filetimes[$xmlfile];
     }
 
     /**
@@ -2296,6 +2321,9 @@ class reader_remotesite {
 
         if ($server===null) {
             list($server, $search) = $this->get_server_search($response->headers);
+            if ($server=='' || $search=='') {
+                throw new moodle_exception('Could not contact remote server');
+            }
         }
 
         $dir = ltrim(urldecode($path), '/');
@@ -2404,7 +2432,7 @@ class reader_remotesite {
             if ($is_folder && isset($filetimes[$filepath])) {
                 $filetime = $filetimes[$filepath];
             } else {
-                $filetime = $this->get_remote_filetime($filepath);
+                $filetime = $this->get_remote_filetime_old($filepath);
                 if ($is_folder) {
                     $filetimes[$filepath] = $filetime;
                 }
@@ -2418,7 +2446,7 @@ class reader_remotesite {
     }
 
     /**
-     * get_remote_filetime
+     * get_remote_filetime_old
      * this function is not used - but it works
      *
      * @param xxx $filepath
@@ -2532,6 +2560,56 @@ class reader_remotesite {
      * @todo Finish documenting this function
      */
     public function get_publishers_post($type, $itemids) {
+        return null;
+    }
+
+    /**
+     * download_items
+     *
+     * @param xxx $type
+     * @param xxx $itemids
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function download_items($type, $itemids) {
+        $url = $this->get_items_url($type, $itemids);
+        $post = $this->get_items_post($type, $itemids);
+        return $this->download_xml($url, $post);
+    }
+
+    /**
+     * get_items_url
+     *
+     * @param xxx $type
+     * @param xxx $itemids
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function get_items_url($type, $itemids) {
+        return $this->baseurl;
+    }
+
+    /**
+     * get_items_params
+     *
+     * @param xxx $type
+     * @param xxx $itemids
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function get_items_params($type, $itemids) {
+        return null;
+    }
+
+    /**
+     * get_items_post
+     *
+     * @param xxx $type
+     * @param xxx $itemids
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function get_items_post($type, $itemids) {
         return null;
     }
 
@@ -3124,6 +3202,36 @@ class reader_remotesite_moodlereadernet extends reader_remotesite {
     }
 
     /**
+     * get_items_url
+     *
+     * @param xxx $type
+     * @param xxx $itemids
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function get_items_url($type, $itemids) {
+        switch ($type) {
+            case reader_downloader::BOOKS_WITH_QUIZZES: $filepath = '/index.php'; break;
+            case reader_downloader::BOOKS_WITHOUT_QUIZZES: $filepath = '/index-noq.php'; break;
+            default: $filepath = ''; // shouldn't happen !!
+        }
+        $params = $this->get_items_params($type, $itemids);
+        return new moodle_url($this->baseurl.$filepath, $params);
+    }
+
+    /**
+     * get_items_params
+     *
+     * @param xxx $type
+     * @param xxx $itemids
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function get_items_params($type, $itemids) {
+        return array('a' => 'items', 'login' => $this->username, 'password' => $this->password);
+    }
+
+    /**
      * get_quizzes_url
      *
      * @param xxx $type
@@ -3230,7 +3338,7 @@ class reader_remotesite_moodlereadernet extends reader_remotesite {
     public function get_available_items($type, $itemids, $downloaded) {
         $available = new reader_download_items();
 
-        $items = $this->download_publishers($type, $itemids);
+        $items = $this->download_items($type, $itemids);
         if ($items && isset($items['myxml']['#']['item'])) {
 
             foreach ($items['myxml']['#']['item'] as $item) {
@@ -3257,6 +3365,12 @@ class reader_remotesite_moodlereadernet extends reader_remotesite {
                 $level     = trim($item['@']['level']);
                 $itemid    = trim($item['@']['id']);
                 $itemname  = trim($item['#']);
+                $time      = (empty($item['@']['time']) ? 0 : intval($item['@']['time']));
+
+                if ($time==0 && isset($downloaded->items[$publisher]->items[$level]->items[$itemname])) {
+                    $time = $downloaded->items[$publisher]->items[$level]->items[$itemname]->time;
+                    $time = $this->get_remote_filetime($publisher, $level, $itemname, $time);
+                }
 
                 if ($publisher=='Extra_Points' || $publisher=='testing' || $publisher=='_testing_only') {
                     continue; // ignore these publisher categories
@@ -3282,14 +3396,15 @@ class reader_remotesite_moodlereadernet extends reader_remotesite {
                     $available->newcount++;
                     $available->items[$publisher]->newcount++;
                     $available->items[$publisher]->items[$level]->newcount++;
-                } else if ($downloaded->items[$publisher]->items[$level]->items[$itemname]) {
+                } else if ($downloaded->items[$publisher]->items[$level]->items[$itemname]->time < $time) {
                     // an update for this item is available
                     $available->updatecount++;
                     $available->items[$publisher]->updatecount++;
                     $available->items[$publisher]->items[$level]->updatecount++;
                 }
 
-                $available->items[$publisher]->items[$level]->items[$itemname] = $itemid;
+                // flag this item as available
+                $available->items[$publisher]->items[$level]->items[$itemname] = new reader_download_item($itemid, $time);
             }
         }
 
@@ -3402,6 +3517,28 @@ class reader_remotesite_moodlereadernet extends reader_remotesite {
             case 'Advanced':     $num += 500; break;
         }
         return $num;
+    }
+}
+
+/**
+ * reader_download_item
+ *
+ * @copyright  2013 Gordon Bateson (gordon.bateson@gmail.com)
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @since      Moodle 2.0
+ * @package    mod
+ * @subpackage reader
+ */
+class reader_download_item {
+    /** the item id */
+    public $id = 0;
+
+    /** the last modified/updated time */
+    public $time = 0;
+
+    public function __construct($id, $time) {
+        $this->id  = $id;
+        $this->time = $time;
     }
 }
 
@@ -3566,42 +3703,42 @@ class reader_download_progress_task {
      * @todo Finish documenting this function
      */
     public function add_tasks($tasks) {
-        foreach ($tasks as $childid => $task) {
-            $this->add_task($childid, $task);
+        foreach ($tasks as $taskid => $task) {
+            $this->add_task($taskid, $task);
         }
     }
 
     /**
      * add_task
      *
-     * @param xxx $childid
+     * @param xxx $taskid
      * @param xxx $task
      * @return xxx
      * @todo Finish documenting this function
      */
-    public function add_task($childid, $task) {
+    public function add_task($taskid, $task) {
         if (is_string($task)) {
-            $childid = $task;
+            $taskid = $task;
             $task = new reader_download_progress_task();
         }
         $task->set_parenttask($this);
-        $this->tasks[$childid] = $task;
+        $this->tasks[$taskid] = $task;
         $this->childweighting += $task->weighting;
     }
 
     /**
      * get_task
      *
-     * @param xxx $childid
+     * @param xxx $taskid
      * @param xxx $task
      * @return xxx
      * @todo Finish documenting this function
      */
-    public function get_task($childid) {
-        if (empty($this->tasks[$childid])) {
+    public function get_task($taskid) {
+        if (empty($this->tasks[$taskid])) {
             return false; // shouldn't happen !!
         }
-        return $this->tasks[$childid];
+        return $this->tasks[$taskid];
     }
 
     /**
@@ -3738,8 +3875,8 @@ class reader_download_progress_bar extends reader_download_progress_task {
     static function create_items($items, $weighting=100) {
         $tasks = array();
         foreach ($items as $item) {
-            $childid = (is_object($item) ? $item->id : $item);
-            $tasks[$childid] = self::create_item($item);
+            $taskid = (is_object($item) ? $item->id : $item);
+            $tasks[$taskid] = self::create_item($item);
         }
         return new reader_download_progress_task('items', $weighting, $tasks);
     }
@@ -3792,8 +3929,8 @@ class reader_download_progress_bar extends reader_download_progress_task {
     static function create_instances($instances, $weighting=100) {
         $tasks = array();
         foreach ($instances as $instance) {
-            $childid = (is_object($instance) ? $instance->id : $instance);
-            $tasks[$childid] = new reader_download_progress_task('instance');
+            $taskid = (is_object($instance) ? $instance->id : $instance);
+            $tasks[$taskid] = new reader_download_progress_task('instance');
         }
         return new reader_download_progress_task('instances', $weighting, $tasks);
     }
@@ -3809,8 +3946,8 @@ class reader_download_progress_bar extends reader_download_progress_task {
     static function create_categories($categories, $weighting=100) {
         $tasks = array();
         foreach ($categories as $category) {
-            $childid = (is_object($category) ? $category->id : $category);
-            $tasks[$childid] = self::create_category($category);
+            $taskid = (is_object($category) ? $category->id : $category);
+            $tasks[$taskid] = self::create_category($category);
         }
         return new reader_download_progress_task('categories', $weighting, $tasks);
     }
@@ -3843,8 +3980,8 @@ class reader_download_progress_bar extends reader_download_progress_task {
     static function create_questions($questions, $weighting=100) {
         $tasks = array();
         foreach ($questions as $question) {
-            $childid = (is_object($question) ? $question->id : $question);
-            $tasks[$childid] = self::create_question($question);
+            $taskid = (is_object($question) ? $question->id : $question);
+            $tasks[$taskid] = self::create_question($question);
         }
         return new reader_download_progress_task('questions', $weighting, $tasks);
     }
@@ -3878,8 +4015,8 @@ class reader_download_progress_bar extends reader_download_progress_task {
     static function create_answers($answers, $weighting=100) {
         $tasks = array();
         foreach ($answers as $answer) {
-            $childid = (is_object($answer) ? $answer->id : $answer);
-            $tasks[$childid] = new reader_download_progress_task('answer');
+            $taskid = (is_object($answer) ? $answer->id : $answer);
+            $tasks[$taskid] = new reader_download_progress_task('answer');
         }
         return new reader_download_progress_task('answers', $weighting, $tasks);
     }
@@ -3955,7 +4092,7 @@ class reader_download_progress_bar extends reader_download_progress_task {
         // setup ids (drop-throughs are intentional)
         switch ($type) {
             case ''        : $this->current->itemid     = 0;
-            case 'item'    : $this->current->instanceid  = 0;
+            case 'item'    : $this->current->instanceid = 0;
             case 'instance': $this->current->categoryid = 0;
             case 'category': $this->current->questionid = 0;
             case 'question': $this->current->answerid   = 0;
@@ -3985,6 +4122,9 @@ class reader_download_progress_bar extends reader_download_progress_task {
 
         // initiate "finish()" method of appropriate object
         switch ($type) {
+            case ''        : $this->finish($title);
+                             unset($this->tasks['items']);
+                             break;
             case 'item'    : $this->tasks['items']->tasks[$itemid]->finish($title);
                              unset($this->tasks['items']->tasks[$itemid]->tasks['quiz']);
                              break;

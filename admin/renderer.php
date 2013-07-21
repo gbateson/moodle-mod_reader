@@ -645,7 +645,7 @@ class mod_reader_download_renderer extends mod_reader_renderer {
 
                 $iii = 0;
                 $started_items = false;
-                foreach ($items->items as $itemname => $itemid) {
+                foreach ($items->items as $itemname => $item) {
                     $iii++;
 
                     if ($itemname) {
@@ -690,9 +690,9 @@ class mod_reader_download_renderer extends mod_reader_renderer {
 
                         $output .= html_writer::start_tag('li', array('class' => 'item'));
                         if (! isset($downloaded->items[$publishername]->items[$levelname]->items[$itemname])) {
-                            $output .= $this->available_list_name('itemids[]', $itemid, $itemname, 'itemname', 0, 1);
-                        } else if ($filetime = $downloaded->items[$publishername]->items[$levelname]->items[$itemname]) {
-                            $output .= $this->available_list_name('itemids[]', $itemid, $itemname, 'itemname', 0, 0, 0, $filetime);
+                            $output .= $this->available_list_name('itemids[]', $item->id, $itemname, 'itemname', 0, 1);
+                        } else if ($downloaded->items[$publishername]->items[$levelname]->items[$itemname]->time < $item->time) {
+                            $output .= $this->available_list_name('itemids[]', $item->id, $itemname, 'itemname', 0, 0, 0, $item->time);
                         } else {
                             $img = ' '.html_writer::empty_tag('img', array('src' => $OUTPUT->pix_url('i/tick_green_big'), 'class' => 'icon'));
                             $output .= html_writer::tag('span', $img, array('class' => 'downloadeditem'));
@@ -744,13 +744,13 @@ class mod_reader_download_renderer extends mod_reader_renderer {
      * @param xxx $count (optional, default=0)
      * @param xxx $newcount (optional, default=0)
      * @param xxx $updatecount (optional, default=0)
-     * @param xxx $filetime (optional, default=0)
+     * @param xxx $updatetime (optional, default=0)
      * @return xxx
      * @todo Finish documenting this function
      */
-    public function available_list_name($name, $value, $text, $cssclass, $count=0, $newcount=0, $updatecount=0, $filetime=0) {
+    public function available_list_name($name, $value, $text, $cssclass, $count=0, $newcount=0, $updatecount=0, $updatetime=0) {
         $output = '';
-        if ($newcount || $updatecount || $filetime) {
+        if ($newcount || $updatecount || $updatetime) {
             $id = str_replace('[]', '_'.$value, 'id_'.$name);
             $output .= html_writer::empty_tag('input', array('type' => 'checkbox', 'id' => $id, 'name' => $name, 'value' => $value, 'onchange' => 'reader_checkbox_onchange(this)', 'onmousedown' => 'reader_checkbox_onmousedown(event)'));
             $output .= html_writer::start_tag('label', array('for' => $id));
@@ -770,11 +770,11 @@ class mod_reader_download_renderer extends mod_reader_renderer {
             }
             $output .= html_writer::tag('span', s(' - '.$msg), array('class' => 'itemcount'));
         }
-        if ($newcount || $updatecount || $filetime) {
+        if ($newcount || $updatecount || $updatetime) {
             $output .= html_writer::end_tag('label');
         }
-        if ($updatecount || $filetime) {
-            $output .= $this->available_new_img($updatecount, $filetime);
+        if ($updatecount || $updatetime) {
+            $output .= $this->available_new_img($updatecount, $updatetime);
         }
         if ($count) {
             $output .= $this->available_list_img();
@@ -801,18 +801,18 @@ class mod_reader_download_renderer extends mod_reader_renderer {
      *
      * @uses $OUTPUT
      * @param integer $updatecount (optional, default=0)
-     * @param integer $filetime (optional, default=0)
+     * @param integer $updatetime (optional, default=0)
      * @return xxx
      * @todo Finish documenting this function
      */
-    public function available_new_img($updatecount=0, $filetime=0) {
+    public function available_new_img($updatecount=0, $updatetime=0) {
         global $OUTPUT;
         $src = $OUTPUT->pix_url('i/new');
         if ($updatecount) {
             $str = get_string('updatesavailable', 'reader', $updatecount);
             $onclick = '';
-        } else if ($filetime) {
-            $str = get_string('updatedon', 'reader', userdate($filetime));
+        } else if ($updatetime) {
+            $str = get_string('updatedon', 'reader', userdate($updatetime));
             $onclick = '';
         } else {
             $str = get_string('update'); // shouldn't happen !!

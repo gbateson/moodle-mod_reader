@@ -531,5 +531,11 @@ function xmldb_reader_upgrade($oldversion) {
         upgrade_mod_savepoint(true, "$newversion", 'reader');
     }
 
+    $newversion = 2013072100;
+    if ($result && $oldversion < $newversion) {
+        xmldb_reader_fix_book_times();
+        upgrade_mod_savepoint(true, "$newversion", 'reader');
+    }
+
     return $result;
 }
