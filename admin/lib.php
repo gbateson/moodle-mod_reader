@@ -199,12 +199,11 @@ class reader_downloader {
      * @todo Finish documenting this function
      */
     public function has_available_items() {
+        $count = 0;
         foreach (array_keys($this->remotesites) as $r) {
-            if ($this->available[$r]->count) {
-                return true;
-            }
+            $count += $this->available[$r]->count;
         }
-        return false;
+        return $count;
     }
 
     /**
@@ -214,12 +213,11 @@ class reader_downloader {
      * @todo Finish documenting this function
      */
     public function has_updated_items() {
+        $updatecount = 0;
         foreach (array_keys($this->remotesites) as $r) {
-            if ($this->available[$r]->updatecount) {
-                return true;
-            }
+            $updatecount += $this->available[$r]->updatecount;
         }
-        return false;
+        return $updatecount;
     }
 
     /**
@@ -1143,7 +1141,6 @@ class reader_downloader {
             if ($category->context->level=='course' && ! $this->is_default_category($category)) {
                 $categories[$categoryid]->context->level = 'module';
             }
-
 
             if (isset($category->questions)) {
                 $has_nonrandom = $this->has_nonrandom_questions($category);
@@ -2250,7 +2247,7 @@ class reader_remotesite {
      * @todo Finish documenting this function
      */
     public function get_remote_filetime($publisher, $level, $name, $time) {
-        static $namechars = array('"' => '', "'" => '', '&' => '', ' ' => '_');
+        static $namechars = array('"' => '', "'" => '', ',' => '', '&' => '', ' ' => '_');
         //return mt_rand(0,1);
 
         // get the last modified dates for the "publisher" folders

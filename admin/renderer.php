@@ -266,7 +266,7 @@ class mod_reader_download_renderer extends mod_reader_renderer {
             $js .= "function showhide_parent_lists(obj, display) {\n";
             $js .= "    var p = obj.parentNode;\n";
             $js .= "    while (p) {\n";
-            $js .= "        if (p.nodeType==1 && p.nodeName.toUpperCase()=='UL') {\n";
+            $js .= "        if (p.nodeType==1 && (p.nodeName.toUpperCase()=='UL' || p.nodeName.toUpperCase()=='OL')) {\n";
             $js .= "            p.style.display = display;\n";
             $js .= "        }\n";
             $js .= "        p = p.parentNode;\n";
@@ -292,9 +292,9 @@ class mod_reader_download_renderer extends mod_reader_renderer {
             $js .= "    return false;\n";
             $js .= "}\n";
 
-            $js .= "function showhide_list(img, force, targetClassName) {\n";
-            $js .= "    if (typeof(force)=='undefined') {\n";
-            $js .= "       force = 0;\n"; // -1=hide, 0=toggle, 1=show
+            $js .= "function showhide_list(img, showhide, targetClassName) {\n";
+            $js .= "    if (typeof(showhide)=='undefined') {\n";
+            $js .= "       showhide = 0;\n"; // -1=hide, 0=toggle, 1=show
             $js .= "    }\n";
             $js .= "    if (typeof(targetClassName)=='undefined') {\n";
             $js .= "       targetClassName = '';\n";
@@ -302,7 +302,7 @@ class mod_reader_download_renderer extends mod_reader_renderer {
             $js .= "    var obj = reader_node(img.nextSibling);\n";
             $js .= "    var myClassName = obj.getAttribute(css_class_attribute());\n";
             $js .= "    if (obj && (targetClassName=='' || (myClassName && myClassName.match(new RegExp(targetClassName))))) {\n";
-            $js .= "        if (force==1 || (force==0 && obj.style.display=='none')) {\n";
+            $js .= "        if (showhide==1 || (showhide==0 && obj.style.display=='none')) {\n";
             $js .= "            obj.style.display = '';\n";
             $js .= "            var pix = 'minus';\n";
             $js .= "        } else {\n";
@@ -314,12 +314,12 @@ class mod_reader_download_renderer extends mod_reader_renderer {
             $js .= "    }\n";
             $js .= "}\n";
 
-            $js .= "function showhide_lists(force, targetClassName, requireElement) {\n";
+            $js .= "function showhide_lists(showhide, targetClassName, requireElement, checked) {\n";
 
-            $js .= "    var requireCheckbox = (requireElement && requireElement==1);\n";
-            $js .= "    var requireNewImg   = (requireElement && requireElement==2);\n";
+            $js .= "    var requireCheckbox = (requireElement && (requireElement & 1));\n";
+            $js .= "    var requireNewImg   = (requireElement && (requireElement & 2));\n";
 
-            $js .= "    switch (force) {\n";
+            $js .= "    switch (showhide) {\n";
             $js .= "        case -1: var targetImgName = 'minus';        break;\n"; // hide
             $js .= "        case  0: var targetImgName = '(minus|plus)'; break;\n"; // toggle
             $js .= "        case  1: var targetImgName = 'plus';         break;\n"; // show
@@ -334,23 +334,26 @@ class mod_reader_download_renderer extends mod_reader_renderer {
             $js .= "        for (var i=0; i<i_max; i++) {\n";
 
             $js .= "            var ok = true;\n";
-            $js .= "            if (requireCheckbox) {\n";
-            $js .= "                var obj = reader_node(img[i].parentNode.firstChild, 'INPUT', 'checkbox');\n";
-            $js .= "                if (obj==null) {\n";
-            $js .= "                    ok = false;\n";
-            $js .= "                }\n";
-            $js .= "            }\n";
             $js .= "            if (requireNewImg) {\n";
             $js .= "                var obj = reader_node(img[i].parentNode.firstChild, 'IMG', null, 'update');\n";
             $js .= "                if (obj==null) {\n";
             $js .= "                    ok = false;\n";
             $js .= "                }\n";
             $js .= "            }\n";
-            $js .= "            obj = null;\n";
+            $js .= "            if (requireCheckbox) {\n";
+            $js .= "                var obj = reader_node(img[i].parentNode.firstChild, 'INPUT', 'checkbox');\n";
+            $js .= "                if (obj==null) {\n";
+            $js .= "                    ok = false;\n";
+            $js .= "                }\n";
+            $js .= "            }\n";
 
             $js .= "            if (ok && img[i].src && img[i].src.match(targetImgName)) {\n";
-            $js .= "                showhide_list(img[i], force, targetClassName);\n";
+            $js .= "                if (requireCheckbox && typeof(checked)=='number') {\n";
+            $js .= "                    obj.checked = checked;\n";
+            $js .= "                }\n";
+            $js .= "                showhide_list(img[i], showhide, targetClassName);\n";
             $js .= "            }\n";
+            $js .= "            obj = null;\n";
             $js .= "        }\n";
             $js .= "    }\n";
             $js .= "}\n";
@@ -388,22 +391,27 @@ class mod_reader_download_renderer extends mod_reader_renderer {
             $js .= "    }\n";
             $js .= "}\n";
 
-            $js .= "function showhide_new(img) {\n";
-            $js .= "    if (img==null) {\n";
-            $js .= "        var obj = document;\n";
-            $js .= "    } else {\n";
-            $js .= "        var obj = img.parent;\n";
-            $js .= "    }\n";
+            $js .= "function select_updated(imgClassName, parentClassName) {\n";
             $js .= "    clear_search_results();\n";
-            $js .= "    var obj = obj.getElementsByTagName('IMG');\n";
-            $js .= "    if (obj) {\n";
-            $js .= "        var i_max = obj.length;\n";
+
+            $js .= "    var img = document.getElementsByTagName('IMG');\n";
+            $js .= "    if (img) {\n";
+            $js .= "        var i_max = img.length;\n";
             $js .= "        for (var i=0; i<i_max; i++) {\n";
-            $js .= "            if (match_classname(obj[i], 'update')) {\n";
-            $js .= "                showhide_parent_lists(obj[i], '');\n"; // show
+            $js .= "            if (match_classname(img[i], imgClassName) && match_classname(img[i].parentNode, parentClassName)) {\n";
+            $js .= "                var obj = reader_node(img[i].parentNode.firstChild, 'INPUT', 'checkbox');\n";
+            $js .= "                if (obj) {\n";
+            $js .= "                    obj.checked = 1;\n";
+            $js .= "                    if (obj.onchange) {\n";
+            $js .= "                        obj.onchange();\n";
+            $js .= "                    }\n";
+            $js .= "                    showhide_parent_lists(obj, '');\n"; // show
+            $js .= "                }\n";
+            $js .= "                obj = null;\n";
             $js .= "            }\n";
             $js .= "        }\n";
             $js .= "    }\n";
+            $js .= "    img = null;\n";
             $js .= "}\n";
 
             $js .= "function search_itemnames(btn) {\n";
@@ -565,6 +573,33 @@ class mod_reader_download_renderer extends mod_reader_renderer {
         }
 
         return html_writer::tag('p', html_writer::tag('span', get_string('show').': ').implode(' / ', $menu));
+    }
+
+    /**
+     * select_menu
+     *
+     * @param integer $updatecount
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function select_menu($updatecount) {
+        $menu = array();
+
+        // All
+        $onclick = 'clear_search_results(); showhide_lists(1, "publishers", 1, 1); return false;';
+        $menu[] = html_writer::tag('a', get_string('all'), array('onclick' => $onclick));
+
+        // None
+        $onclick = 'clear_search_results(); showhide_lists(1, "publishers", 1, 0); return false;';
+        $menu[] = html_writer::tag('a', get_string('none'), array('onclick' => $onclick));
+
+        // Updates
+        if ($updatecount) {
+            $onclick = 'select_updated("update", "item"); return false;';
+            $menu[] = html_writer::tag('a', get_string('updates', 'reader')." ($updatecount)", array('onclick' => $onclick));
+        }
+
+        return html_writer::tag('p', html_writer::tag('span', get_string('select').': ').implode(' / ', $menu));
     }
 
     /**

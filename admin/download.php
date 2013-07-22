@@ -108,6 +108,7 @@ if ($downloader->has_available_items()) {
 
     echo $output->search_box();
     echo $output->showhide_menu($downloader->has_updated_items());
+    echo $output->select_menu($downloader->has_updated_items());
 
     echo $output->available_lists($downloader);
 
