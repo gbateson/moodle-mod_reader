@@ -2666,7 +2666,7 @@ function reader_get_context($contextlevel, $instanceid=0, $strictness=0) {
         $class = context_helper::get_class_for_level($contextlevel);
         return call_user_func(array($class, 'instance'), $instanceid, $strictness);
     } else {
-        return reader_get_context($contextlevel, $instanceid);
+        return get_context_instance($contextlevel, $instanceid);
     }
 }
 
@@ -3924,13 +3924,21 @@ function reader_extend_settings_navigation(settings_navigation $settingsnav, nav
         $action = new moodle_url('/mod/reader/admin/download.php', $params);
         $key    = 'downloadbookswithquizzes';
         $text   = get_string($key, 'reader');
-        $node->add_node(new navigation_node(array('text'=>$text, 'action'=>$action, 'key'=>$key, 'type'=>$type, 'icon'=>$icon)));
+        if (method_exists($node, 'add_node')) {
+            $node->add_node(new navigation_node(array('text'=>$text, 'action'=>$action, 'key'=>$key, 'type'=>$type, 'icon'=>$icon)));
+        } else {
+            $node->children->add(new navigation_node(array('text'=>$text, 'action'=>$action, 'key'=>$key, 'type'=>$type, 'icon'=>$icon)));
+        }
 
         $params = array('id' => $PAGE->cm->id, 'type' => reader_downloader::BOOKS_WITHOUT_QUIZZES);
         $action = new moodle_url('/mod/reader/admin/download.php', $params);
         $key    = 'downloadbookswithoutquizzes';
         $text   = get_string($key, 'reader');
-        $node->add_node(new navigation_node(array('text'=>$text, 'action'=>$action, 'key'=>$key, 'type'=>$type, 'icon'=>$icon)));
+        if (method_exists($node, 'add_node')) {
+            $node->add_node(new navigation_node(array('text'=>$text, 'action'=>$action, 'key'=>$key, 'type'=>$type, 'icon'=>$icon)));
+        } else {
+            $node->children->add(new navigation_node(array('text'=>$text, 'action'=>$action, 'key'=>$key, 'type'=>$type, 'icon'=>$icon)));
+        }
 
         // We want to add this new node after the Edit settings node,
         // and before the locally assigned roles node.
