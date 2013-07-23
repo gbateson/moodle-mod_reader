@@ -229,6 +229,12 @@ class mod_reader_mod_form extends moodleform_mod {
             $mform->setDefault('timelimitenable', 1);
         //}
 
+        // Moodle >= 2.5 requires each field to have its "type" set
+        $fields = array('percentforreading', 'goal', 'nextlevel', 'quizpreviouslevel', 'quiznextlevel', 'promotionstop');
+        foreach ($fields as $field) {
+            $mform->setType($field, PARAM_INT);
+        }
+
 //-------------------------------------------------------------------------------
         // add standard elements, common to all modules
         $this->standard_coursemodule_elements();
