@@ -911,6 +911,9 @@ class reader_downloader {
         );
         events_trigger('mod_updated', $event);
 
+        // rebuild_course_cache (needed for Moodle 2.0)
+        rebuild_course_cache($courseid, true);
+
         return $newquiz;
     }
 
