@@ -101,14 +101,16 @@ $downloader->add_selected_itemids($type, $selecteditemids);
 
 // if any downloadable items were found on the remote sites,
 // show them in a selectable, hierarchical menu
-if ($downloader->has_available_items()) {
+if ($count = $downloader->has_available_items()) {
+    $newcount = $downloader->has_new_items();
+    $updatecount = $downloader->has_updated_items();
 
     echo $output->box_start('generalbox', 'notice');
     echo $output->form_start();
 
     echo $output->search_box();
-    echo $output->showhide_menu($downloader->has_updated_items());
-    echo $output->select_menu($downloader->has_updated_items());
+    echo $output->showhide_menu($count, $updatecount);
+    echo $output->select_menu($newcount, $updatecount);
 
     echo $output->available_lists($downloader);
 

@@ -117,7 +117,7 @@ class reader_downloader {
                 $publisher = $record->publisher;
                 $level     = $record->level;
                 $itemname  = $record->name;
-                $time      = $record->time;
+                $time      = (empty($record->time) ? 0 : $record->time);
 
                 // ensure the $downloaded array has the required structure
                 if (! isset($this->downloaded[$r]->items[$publisher])) {
@@ -218,6 +218,20 @@ class reader_downloader {
             $updatecount += $this->available[$r]->updatecount;
         }
         return $updatecount;
+    }
+
+    /**
+     * has_new_items
+     *
+     * @return boolean
+     * @todo Finish documenting this function
+     */
+    public function has_new_items() {
+        $newcount = 0;
+        foreach (array_keys($this->remotesites) as $r) {
+            $newcount += $this->available[$r]->newcount;
+        }
+        return $newcount;
     }
 
     /**

@@ -163,7 +163,8 @@
         <FIELD NAME="private" TYPE="int" LENGTH="2" NOTNULL="false" DEFAULT="0" SEQUENCE="false" PREVIOUS="length" NEXT="sametitle"/>
         <FIELD NAME="sametitle" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" PREVIOUS="private" NEXT="hidden"/>
         <FIELD NAME="hidden" TYPE="int" LENGTH="2" NOTNULL="false" DEFAULT="0" SEQUENCE="false" PREVIOUS="sametitle" NEXT="maxtime"/>
-        <FIELD NAME="maxtime" TYPE="int" LENGTH="3" NOTNULL="false" DEFAULT="0" SEQUENCE="false" PREVIOUS="hidden"/>
+        <FIELD NAME="maxtime" TYPE="int" LENGTH="3" NOTNULL="false" DEFAULT="0" SEQUENCE="false" PREVIOUS="hidden" NEXT="time"/>
+        <FIELD NAME="time" TYPE="int" LENGTH="11" NOTNULL="false" SEQUENCE="false" PREVIOUS="maxtime"/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>

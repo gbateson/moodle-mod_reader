@@ -543,63 +543,77 @@ class mod_reader_download_renderer extends mod_reader_renderer {
     /**
      * showhide_menu
      *
-     * @param boolean $has_updated_items
+     * @param integer $count
+     * @param boolean $updatecount
      * @return xxx
      * @todo Finish documenting this function
      */
-    public function showhide_menu($has_updated_items) {
+    public function showhide_menu($count, $updatecount) {
         $menu = array();
 
-        // Publishers
-        $onclick = 'clear_search_results(); showhide_lists(1, "publishers"); return false;';
-        $menu[] = html_writer::tag('a', get_string('publishers', 'reader'), array('onclick' => $onclick));
+        if ($count) {
+            // Publishers
+            $onclick = 'clear_search_results(); showhide_lists(1, "publishers"); return false;';
+            $menu[] = html_writer::tag('a', get_string('publishers', 'reader'), array('onclick' => $onclick));
 
-        // Levels
-        $onclick = 'clear_search_results(); showhide_lists(1, "publishers"); showhide_lists(1, "levels"); return false;';
-        $menu[] = html_writer::tag('a', get_string('levels', 'reader'), array('onclick' => $onclick));
+            // Levels
+            $onclick = 'clear_search_results(); showhide_lists(1, "publishers"); showhide_lists(1, "levels"); return false;';
+            $menu[] = html_writer::tag('a', get_string('levels', 'reader'), array('onclick' => $onclick));
 
-        // Books
-        $onclick = 'clear_search_results(); showhide_lists(1, "publishers"); showhide_lists(1, "levels"); showhide_lists(1, "items"); return false;';
-        $menu[] = html_writer::tag('a', get_string('books', 'reader'), array('onclick' => $onclick));
+            // Books
+            $onclick = 'clear_search_results(); showhide_lists(1, "publishers"); showhide_lists(1, "levels"); showhide_lists(1, "items"); return false;';
+            $menu[] = html_writer::tag('a', get_string('books', 'reader'), array('onclick' => $onclick));
 
-        // Downloads
-        $onclick = 'clear_search_results(); showhide_lists(1, "publishers", 1); showhide_lists(1, "levels", 1); showhide_lists(1, "items", 1); return false;';
-        $menu[] = html_writer::tag('a', get_string('downloads', 'reader'), array('onclick' => $onclick));
-
-        // Updates
-        if ($has_updated_items) {
-            $onclick = 'clear_search_results(); showhide_lists(1, "publishers", 2); showhide_lists(1, "levels", 2); showhide_lists(1, "items", 2); return false;';
-            $menu[] = html_writer::tag('a', get_string('updates', 'reader'), array('onclick' => $onclick));
+            // Downloads
+            $onclick = 'clear_search_results(); showhide_lists(1, "publishers", 1); showhide_lists(1, "levels", 1); showhide_lists(1, "items", 1); return false;';
+            $menu[] = html_writer::tag('a', get_string('downloads', 'reader'), array('onclick' => $onclick));
         }
 
-        return html_writer::tag('p', html_writer::tag('span', get_string('show').': ').implode(' / ', $menu));
+        if ($updatecount) {
+            // Updates
+            $onclick = 'clear_search_results(); showhide_lists(1, "publishers", 2); showhide_lists(1, "levels", 2); showhide_lists(1, "items", 2); return false;';
+            $menu[] = html_writer::tag('a', get_string('updates', 'reader')." ($updatecount)", array('onclick' => $onclick));
+        }
+
+        if ($menu = implode(' / ', $menu)) {
+            return html_writer::tag('p', html_writer::tag('span', get_string('show').': ').$menu);
+        } else {
+            return ''; // there are currently no downloadable or updatable items
+        }
     }
 
     /**
      * select_menu
      *
+     * @param integer $newcount
      * @param integer $updatecount
      * @return xxx
      * @todo Finish documenting this function
      */
-    public function select_menu($updatecount) {
+    public function select_menu($newcount, $updatecount) {
         $menu = array();
 
-        // All
-        $onclick = 'clear_search_results(); showhide_lists(1, "publishers", 1, 1); return false;';
-        $menu[] = html_writer::tag('a', get_string('all'), array('onclick' => $onclick));
+        if ($newcount) {
+            // All
+            $onclick = 'clear_search_results(); showhide_lists(1, "publishers", 1, 1); return false;';
+            $menu[] = html_writer::tag('a', get_string('all'), array('onclick' => $onclick));
 
-        // None
-        $onclick = 'clear_search_results(); showhide_lists(1, "publishers", 1, 0); return false;';
-        $menu[] = html_writer::tag('a', get_string('none'), array('onclick' => $onclick));
+            // None
+            $onclick = 'clear_search_results(); showhide_lists(1, "publishers", 1, 0); return false;';
+            $menu[] = html_writer::tag('a', get_string('none'), array('onclick' => $onclick));
+        }
 
-        // Updates
         if ($updatecount) {
+            // Updates
             $onclick = 'select_updated("update", "item"); return false;';
             $menu[] = html_writer::tag('a', get_string('updates', 'reader')." ($updatecount)", array('onclick' => $onclick));
         }
 
-        return html_writer::tag('p', html_writer::tag('span', get_string('select').': ').implode(' / ', $menu));
+        if ($menu = implode(' / ', $menu)) {
+            return html_writer::tag('p', html_writer::tag('span', get_string('select').': ').$menu);
+        } else {
+            return ''; // there are currently no downloadable or updatable items
+        }
     }
 
     /**

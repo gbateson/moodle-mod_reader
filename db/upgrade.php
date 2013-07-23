@@ -531,11 +531,23 @@ function xmldb_reader_upgrade($oldversion) {
         upgrade_mod_savepoint(true, "$newversion", 'reader');
     }
 
-    $newversion = 2013072100;
+    $newversion = 2013072300;
     if ($result && $oldversion < $newversion) {
+
+        // add "time" field to "reader_noquiz" table
+        $table = new xmldb_table('reader_noquiz');
+        $field = new xmldb_field('time', XMLDB_TYPE_INTEGER, '11', null, null, null, null, 'maxtime');
+
+        if (! $dbman->field_exists($table, $field)) {
+            xmldb_reader_fix_previous_field($dbman, $table, $field);
+            $dbman->add_field($table, $field);
+        }
+
+        // set "time" field to time of most recent update
         xmldb_reader_fix_book_times();
+
+        // reader savepoint reached
         upgrade_mod_savepoint(true, "$newversion", 'reader');
     }
-
     return $result;
 }
