@@ -258,7 +258,18 @@ class reader_downloader {
 
                     if (in_array($i, $selectedpublishers) || in_array($i.'_'.$ii, $selectedlevels)) {
                         foreach ($items->items as $itemname => $item) {
-                            if (! in_array($item->id, $selecteditemids)) {
+
+                            if (isset($this->downloaded[$r]->items[$publishername]->items[$levelname]->items[$itemname])) {
+                                $updatetime = $this->downloaded[$r]->items[$publishername]->items[$levelname]->items[$itemname]->time;
+                            } else {
+                                $updatetime = 0;
+                            }
+
+                            if (in_array($item->id, $selecteditemids)) {
+                                // this item has already been selected
+                            } else if ($updatetime >= $item->time) {
+                                // the most recent update of this item has already been downloaded
+                            } else {
                                 $selecteditemids[] = $item->id;
                             }
                         }
@@ -271,6 +282,7 @@ class reader_downloader {
     /**
      * add_selected_itemids
      *
+     * @uses $CFG
      * @uses $DB
      * @param xxx $type
      * @param xxx $itemids
@@ -279,7 +291,7 @@ class reader_downloader {
      * @todo Finish documenting this function
      */
     public function add_selected_itemids($type, $itemids, $r=0) {
-        global $DB;
+        global $CFG, $DB;
 
         if (empty($itemids)) {
             return false; // nothing to do
@@ -292,6 +304,9 @@ class reader_downloader {
         }
 
         $this->bar = reader_download_progress_bar::create($itemids, 'readerdownload');
+
+        // show memory on main Reader module developer site
+        $show_memory = (file_exists($CFG->dirroot.'/mod/reader/utilities/print_cheatsheet.php'));
 
         $output = '';
         $time = time();
@@ -330,12 +345,21 @@ class reader_downloader {
             if ($level=='' || $level=='--' || $level=='No Level') {
                 // do nothing
             } else {
-                $titletext .= " ($level)";
+                $titletext .= " - $level";
             }
             $titlehtml = html_writer::tag('span', $titletext, array('style' => 'font-weight: normal')).
                          html_writer::empty_tag('br').
                          html_writer::tag('span', $name, array('style' => 'white-space: nowrap'));
-            $titletext .= " $name";
+            $titletext .= ": $name";
+
+            if ($show_memory) {
+                $memory_usage = memory_get_usage();
+                $memory_usage = number_format($memory_usage/1000000).' MB';
+                $memory_peak_usage = memory_get_peak_usage();
+                $memory_peak_usage = number_format($memory_peak_usage/1000000).' MB';
+                $titletext .= " (memory=$memory_usage peak=$memory_peak_usage)";
+            }
+
 
             // show this book in the progress bar
             $title = ($i + 1).' / '.$i_max.' '.$titlehtml;
