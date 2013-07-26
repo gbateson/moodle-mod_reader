@@ -2647,7 +2647,7 @@ function reader_copy_to_quizattempt($readerattempt) {
 }
 
 /**
- * context
+ * reader_get_context
  *
  * a wrapper method to offer consistent API to get contexts
  * in Moodle 2.0 and 2.1, we use reader_get_context() function
@@ -2671,7 +2671,7 @@ function reader_get_context($contextlevel, $instanceid=0, $strictness=0) {
 }
 
 /**
- * textlib
+ * reader_textlib
  *
  * a wrapper method to offer consistent API for textlib class
  * in Moodle 2.0 and 2.1, $textlib is first initiated, then called.
@@ -3887,13 +3887,31 @@ function reader_extend_navigation(navigation_node $readernode, stdclass $course,
         $type = navigation_node::TYPE_SETTING;
 
         $label = get_string('reports');
-        $reportnode = $readernode->add($label, null, $type, null, null, $icon);
+        $node = $readernode->add($label, null, $type, null, null, $icon);
 
         $modes = array('usersummary', 'userdetailed', 'groupsummary', 'booksummary', 'bookdetailed');
         foreach ($modes as $mode) {
             $url = new moodle_url('/mod/reader/report.php', array('id' => $cm->id, 'mode' => $mode));
             $label = get_string('report'.$mode, 'reader');
-            $reportnode->add($label, $url, $type, null, null, $icon);
+            $node->add($label, $url, $type, null, null, $icon);
+        }
+
+        //////////////////////////
+        // Attempts sub-menu
+        //////////////////////////
+
+        $icon = new pix_icon('t/grades', '');
+        $type = navigation_node::TYPE_SETTING;
+
+        $label = get_string('attempts', 'reader');
+        $node = $readernode->add($label, null, $type, null, null, $icon);
+
+        $actions = array('deleteattempts', 'awardextrapoints', 'detectcheating');
+        foreach ($actions as $action) {
+            $params = array('id' => $cm->id, 'action' => $action);
+            $url = new moodle_url('/mod/reader/admin/attempts.php', $params);
+            $label = get_string($action, 'reader');
+            $node->add($label, $url, $type, null, null, $icon);
         }
     }
 }
@@ -3913,6 +3931,12 @@ function reader_extend_settings_navigation(settings_navigation $settingsnav, nav
     // create our new nodes
     if (reader_can_manage($PAGE->cm->id, $USER->id)) {
         require_once($CFG->dirroot.'/mod/reader/admin/lib.php');
+
+        $nodes = array();
+
+        //////////////////////////
+        // Download sub-menu
+        //////////////////////////
 
         $type = navigation_node::TYPE_SETTING;
         $icon = new pix_icon('t/download', '');
@@ -3940,7 +3964,84 @@ function reader_extend_settings_navigation(settings_navigation $settingsnav, nav
             $node->children->add(new navigation_node(array('text'=>$text, 'action'=>$action, 'key'=>$key, 'type'=>$type, 'icon'=>$icon)));
         }
 
-        // We want to add this new node after the Edit settings node,
+        $nodes[] = $node;
+
+        //////////////////////////
+        // Quizzes sub-menu
+        //////////////////////////
+
+        $type = navigation_node::TYPE_SETTING;
+        $icon = new pix_icon('t/edit', '');
+
+        $text   = get_string('modulenameplural', 'quiz');
+        $node   = new navigation_node(array('text'=>$text, 'type'=>$type, 'icon'=>$icon));
+
+        $actions = array('add', 'update', 'delete', 'showhide', 'setdelay', 'arrange');
+        foreach ($actions as $action) {
+            $params = array('id' => $PAGE->cm->id, 'action' => $action);
+            $url = new moodle_url('/mod/reader/admin/quizzes.php', $params);
+            $key = 'quizzes'.$action;
+            $text   = get_string($key, 'reader');
+            if (method_exists($node, 'add_node')) {
+                $node->add_node(new navigation_node(array('text'=>$text, 'action'=>$url, 'key'=>$key, 'type'=>$type, 'icon'=>$icon)));
+            } else {
+                $node->children->add(new navigation_node(array('text'=>$text, 'action'=>$url, 'key'=>$key, 'type'=>$type, 'icon'=>$icon)));
+            }
+        }
+
+        $nodes[] = $node;
+
+        //////////////////////////
+        // Books sub-menu
+        //////////////////////////
+
+        $type = navigation_node::TYPE_SETTING;
+        $icon = new pix_icon('t/edit', '');
+
+        $text   = get_string('books', 'reader');
+        $node   = new navigation_node(array('text'=>$text, 'type'=>$type, 'icon'=>$icon));
+
+        $actions = array('editdetails', 'viewratings');
+        foreach ($actions as $action) {
+            $params = array('id' => $PAGE->cm->id, 'action' => $action);
+            $url = new moodle_url('/mod/reader/admin/books.php', $params);
+            $key = 'books'.$action;
+            $text   = get_string($key, 'reader');
+            if (method_exists($node, 'add_node')) {
+                $node->add_node(new navigation_node(array('text'=>$text, 'action'=>$url, 'key'=>$key, 'type'=>$type, 'icon'=>$icon)));
+            } else {
+                $node->children->add(new navigation_node(array('text'=>$text, 'action'=>$url, 'key'=>$key, 'type'=>$type, 'icon'=>$icon)));
+            }
+        }
+
+        $nodes[] = $node;
+
+        //////////////////////////
+        // Users sub-menu
+        //////////////////////////
+
+        $type = navigation_node::TYPE_SETTING;
+        $icon = new pix_icon('t/edit', '');
+
+        $text   = get_string('users');
+        $node   = new navigation_node(array('text'=>$text, 'type'=>$type, 'icon'=>$icon));
+
+        $actions = array('setgoals', 'setlevels', 'sendmessage', 'import', 'export');
+        foreach ($actions as $action) {
+            $params = array('id' => $PAGE->cm->id, 'action' => $action);
+            $url = new moodle_url('/mod/reader/admin/books.php', $params);
+            $key = 'users'.$action;
+            $text   = get_string($key, 'reader');
+            if (method_exists($node, 'add_node')) {
+                $node->add_node(new navigation_node(array('text'=>$text, 'action'=>$url, 'key'=>$key, 'type'=>$type, 'icon'=>$icon)));
+            } else {
+                $node->children->add(new navigation_node(array('text'=>$text, 'action'=>$url, 'key'=>$key, 'type'=>$type, 'icon'=>$icon)));
+            }
+        }
+
+        $nodes[] = $node;
+
+        // We want to add the new nodes after the Edit settings node,
         // and before the locally assigned roles node.
 
         // detect Moodle >= 2.2 (it has an easy way to do what we want)
@@ -3960,7 +4061,9 @@ function reader_extend_settings_navigation(settings_navigation $settingsnav, nav
             } else {
                 $beforekey = null;
             }
-            $readernode->add_node($node, $beforekey);
+            foreach ($nodes as $node) {
+                $readernode->add_node($node, $beforekey);
+            }
 
         } else {
             // in Moodle 2.0 - 2.1, we don't have the $beforekey functionality,
@@ -3978,7 +4081,9 @@ function reader_extend_settings_navigation(settings_navigation $settingsnav, nav
                     $action = $child->action->out_omit_querystring();
                     if (($i==$max_i) || substr($action, -19)=='/course/modedit.php') {
                         $found = true;
-                        $children->add($node);
+                        foreach ($nodes as $node) {
+                            $children->add($node);
+                        }
                     }
                 }
             }
