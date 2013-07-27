@@ -27,14 +27,18 @@
 
 #page-mod-reader-view .readersearchform tr.advanced { display: none; }
 
+#page-mod-reader-admin-download div.generalbox { margin-top: 15px; margin-bottom: 15px; }
+
 #page-mod-reader-admin-download ul.remotesites,
 #page-mod-reader-admin-download ul.publishers,
 #page-mod-reader-admin-download ul.levels,
 #page-mod-reader-admin-download ul.items { list-style-type: none; margin: 6px 0px; padding: 6px; max-width: 600px; }
+
 #page-mod-reader-admin-download ul.remotesites li,
 #page-mod-reader-admin-download ul.publishers li,
 #page-mod-reader-admin-download ul.levels li,
 #page-mod-reader-admin-download ul.items li { margin-left: 6px; padding-left: 6px; }
+
 #page-mod-reader-admin-download span.publishername { font-weight: bold; }
 #page-mod-reader-admin-download span.itemcount { font-style: italic; font-size: 0.9em; }
 #page-mod-reader-admin-download span.levelname { font-weight: bold; }

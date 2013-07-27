@@ -3883,13 +3883,18 @@ function reader_extend_navigation(navigation_node $readernode, stdclass $course,
     global $CFG, $DB, $USER;
 
     if (reader_can_manage($cm->id, $USER->id)) {
+
+        //////////////////////////
+        // Reports sub-menu
+        //////////////////////////
+
         $icon = new pix_icon('i/report', '');
         $type = navigation_node::TYPE_SETTING;
 
         $label = get_string('reports');
         $node = $readernode->add($label, null, $type, null, null, $icon);
 
-        $modes = array('usersummary', 'userdetailed', 'groupsummary', 'booksummary', 'bookdetailed');
+        $modes = array('usersummary', 'userdetailed', 'groupsummary', 'booksummary', 'bookdetailed', 'bookratings');
         foreach ($modes as $mode) {
             $url = new moodle_url('/mod/reader/report.php', array('id' => $cm->id, 'mode' => $mode));
             $label = get_string('report'.$mode, 'reader');
@@ -3930,39 +3935,40 @@ function reader_extend_settings_navigation(settings_navigation $settingsnav, nav
 
     // create our new nodes
     if (reader_can_manage($PAGE->cm->id, $USER->id)) {
-        require_once($CFG->dirroot.'/mod/reader/admin/lib.php');
+        //require_once($CFG->dirroot.'/mod/reader/admin/lib.php');
 
         $nodes = array();
 
         //////////////////////////
-        // Download sub-menu
+        // Books sub-menu
         //////////////////////////
 
         $type = navigation_node::TYPE_SETTING;
         $icon = new pix_icon('t/download', '');
 
-        $text   = get_string('download');
-        $node   = new navigation_node(array('text'=>$text, 'type'=>$type, 'icon'=>$icon));
+        $text   = get_string('books', 'reader');
+        $node   = new navigation_node(array('text'=>$text, 'type'=>$type));
 
         $params = array('id' => $PAGE->cm->id, 'type' => reader_downloader::BOOKS_WITH_QUIZZES);
-        $action = new moodle_url('/mod/reader/admin/download.php', $params);
+        $url    = new moodle_url('/mod/reader/admin/download.php', $params);
         $key    = 'downloadbookswithquizzes';
         $text   = get_string($key, 'reader');
-        if (method_exists($node, 'add_node')) {
-            $node->add_node(new navigation_node(array('text'=>$text, 'action'=>$action, 'key'=>$key, 'type'=>$type, 'icon'=>$icon)));
-        } else {
-            $node->children->add(new navigation_node(array('text'=>$text, 'action'=>$action, 'key'=>$key, 'type'=>$type, 'icon'=>$icon)));
-        }
+        reader_navigation_add_node($node, $text, $url, $key, $type, $icon);
 
         $params = array('id' => $PAGE->cm->id, 'type' => reader_downloader::BOOKS_WITHOUT_QUIZZES);
-        $action = new moodle_url('/mod/reader/admin/download.php', $params);
+        $url    = new moodle_url('/mod/reader/admin/download.php', $params);
         $key    = 'downloadbookswithoutquizzes';
         $text   = get_string($key, 'reader');
-        if (method_exists($node, 'add_node')) {
-            $node->add_node(new navigation_node(array('text'=>$text, 'action'=>$action, 'key'=>$key, 'type'=>$type, 'icon'=>$icon)));
-        } else {
-            $node->children->add(new navigation_node(array('text'=>$text, 'action'=>$action, 'key'=>$key, 'type'=>$type, 'icon'=>$icon)));
-        }
+        reader_navigation_add_node($node, $text, $url, $key, $type, $icon);
+
+        $type = navigation_node::TYPE_SETTING;
+        $icon = new pix_icon('t/edit', '');
+
+        $params = array('id' => $PAGE->cm->id, 'action' => 'editdetails');
+        $url = new moodle_url('/mod/reader/admin/books.php', $params);
+        $key = 'editbookdetails';
+        $text   = get_string($key, 'reader');
+        reader_navigation_add_node($node, $text, $url, $key, $type, $icon);
 
         $nodes[] = $node;
 
@@ -3974,7 +3980,7 @@ function reader_extend_settings_navigation(settings_navigation $settingsnav, nav
         $icon = new pix_icon('t/edit', '');
 
         $text   = get_string('modulenameplural', 'quiz');
-        $node   = new navigation_node(array('text'=>$text, 'type'=>$type, 'icon'=>$icon));
+        $node   = new navigation_node(array('text'=>$text, 'type'=>$type));
 
         $actions = array('add', 'update', 'delete', 'showhide', 'setdelay', 'arrange');
         foreach ($actions as $action) {
@@ -3982,36 +3988,7 @@ function reader_extend_settings_navigation(settings_navigation $settingsnav, nav
             $url = new moodle_url('/mod/reader/admin/quizzes.php', $params);
             $key = 'quizzes'.$action;
             $text   = get_string($key, 'reader');
-            if (method_exists($node, 'add_node')) {
-                $node->add_node(new navigation_node(array('text'=>$text, 'action'=>$url, 'key'=>$key, 'type'=>$type, 'icon'=>$icon)));
-            } else {
-                $node->children->add(new navigation_node(array('text'=>$text, 'action'=>$url, 'key'=>$key, 'type'=>$type, 'icon'=>$icon)));
-            }
-        }
-
-        $nodes[] = $node;
-
-        //////////////////////////
-        // Books sub-menu
-        //////////////////////////
-
-        $type = navigation_node::TYPE_SETTING;
-        $icon = new pix_icon('t/edit', '');
-
-        $text   = get_string('books', 'reader');
-        $node   = new navigation_node(array('text'=>$text, 'type'=>$type, 'icon'=>$icon));
-
-        $actions = array('editdetails', 'viewratings');
-        foreach ($actions as $action) {
-            $params = array('id' => $PAGE->cm->id, 'action' => $action);
-            $url = new moodle_url('/mod/reader/admin/books.php', $params);
-            $key = 'books'.$action;
-            $text   = get_string($key, 'reader');
-            if (method_exists($node, 'add_node')) {
-                $node->add_node(new navigation_node(array('text'=>$text, 'action'=>$url, 'key'=>$key, 'type'=>$type, 'icon'=>$icon)));
-            } else {
-                $node->children->add(new navigation_node(array('text'=>$text, 'action'=>$url, 'key'=>$key, 'type'=>$type, 'icon'=>$icon)));
-            }
+            reader_navigation_add_node($node, $text, $url, $key, $type, $icon);
         }
 
         $nodes[] = $node;
@@ -4024,7 +4001,7 @@ function reader_extend_settings_navigation(settings_navigation $settingsnav, nav
         $icon = new pix_icon('t/edit', '');
 
         $text   = get_string('users');
-        $node   = new navigation_node(array('text'=>$text, 'type'=>$type, 'icon'=>$icon));
+        $node   = new navigation_node(array('text'=>$text, 'type'=>$type));
 
         $actions = array('setgoals', 'setlevels', 'sendmessage', 'import', 'export');
         foreach ($actions as $action) {
@@ -4032,11 +4009,7 @@ function reader_extend_settings_navigation(settings_navigation $settingsnav, nav
             $url = new moodle_url('/mod/reader/admin/books.php', $params);
             $key = 'users'.$action;
             $text   = get_string($key, 'reader');
-            if (method_exists($node, 'add_node')) {
-                $node->add_node(new navigation_node(array('text'=>$text, 'action'=>$url, 'key'=>$key, 'type'=>$type, 'icon'=>$icon)));
-            } else {
-                $node->children->add(new navigation_node(array('text'=>$text, 'action'=>$url, 'key'=>$key, 'type'=>$type, 'icon'=>$icon)));
-            }
+            reader_navigation_add_node($node, $text, $url, $key, $type, $icon);
         }
 
         $nodes[] = $node;
@@ -4092,3 +4065,27 @@ function reader_extend_settings_navigation(settings_navigation $settingsnav, nav
     }
 }
 
+/**
+ * reader_navigation_add_node
+ *
+ * a wrapper method to offer consistent API to add navigation nodes
+ * in Moodle 2.0 and 2.1, we use $node->children->add() method
+ * in Moodle >= 2.1, we use the $node->add_node() method instead
+ *
+ * @param navigation_node $node
+ * @param string $text
+ * @param moodle_url $action
+ * @param string $key
+ * @param int $type one of navigation_node::TYPE_xxx
+ * @param pix_icon $icon
+ * @todo Finish documenting this function
+ */
+function reader_navigation_add_node(navigation_node $node, $text, $action, $key, $type, $icon) {
+    if (method_exists($node, 'add_node')) {
+        // Moodle >= 2.1
+        $node->add_node(new navigation_node(array('text'=>$text, 'action'=>$action, 'key'=>$key, 'type'=>$type, 'icon'=>$icon)));
+    } else {
+        // Moodle = 2.0
+        $node->children->add(new navigation_node(array('text'=>$text, 'action'=>$action, 'key'=>$key, 'type'=>$type, 'icon'=>$icon)));
+    }
+}
