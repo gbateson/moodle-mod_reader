@@ -46,7 +46,7 @@ defined('MOODLE_INTERNAL') || die;
 function xmldb_reader_check_stale_files() {
     global $FULLME, $OUTPUT;
 
-    $dirpath = dirname(__DIR__);
+    $dirpath = dirname(dirname(__FILE__));
     $filenames = array(
         // moved to "js" folder
         'ajax.js', 'hide.js', 'jstimer.php', 'protect_js.php', 'quiz.js',

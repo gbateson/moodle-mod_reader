@@ -2844,10 +2844,15 @@ function reader_can_attemptreader($cmid, $userid) {
  * @param xxx $cmid
  * @param xxx $reader
  * @param xxx $userid
+ * @param xxx $noquiz
  * @return xxx
  * @todo Finish documenting this function
  */
-function reader_available_sql($cmid, $reader, $userid) {
+function reader_available_sql($cmid, $reader, $userid, $noquiz=false) {
+
+    if ($noquiz) {
+        return array('{reader_noquiz}', 'hidden = ?', array(0)); // $from, $where, $params
+    }
 
     // a teacher / admin can always access all the books
     if (reader_can_manage($cmid, $userid)) {
@@ -3044,7 +3049,7 @@ function reader_available_publishers($cmid, $action, $from, $where, $sqlparams, 
         }
         $record = null;
 
-        if ($action=='takequiz') {
+        if ($action=='takequiz' || $action=='noquiz') {
             $output .= html_writer::end_tag('select');
             $output .= html_writer::tag('div', '', array('id' => $target_div));
         }
@@ -3111,7 +3116,7 @@ function reader_available_levels($publisher, $cmid, $action, $from, $where, $sql
         }
         $record = null;
 
-        if ($action=='takequiz') {
+        if ($action=='takequiz' || $action=='noquiz') {
             $output .= html_writer::end_tag('select');
             $output .= html_writer::tag('div', '', array('id' => $target_div));
         }
@@ -3174,13 +3179,14 @@ function reader_available_bookids($publisher, $level, $cmid, $action, $from, $wh
         }
 
         $output .= html_writer::end_tag('select');
-        if ($action=='takequiz') {
+        if ($action=='takequiz' || $action=='noquiz') {
             $output .= html_writer::tag('div', '', array('id' => $target_div, 'style' => 'float: left; margin: 0px 9px;'));
         }
     }
 
     return $output;
 }
+
 
 /**
  * reader_available_books
@@ -3196,14 +3202,14 @@ function reader_available_books($cmid, $reader, $userid, $action='') {
     global $DB, $OUTPUT;
     $output = '';
 
-    // get SQL $from and $where statements to extract available books
-    list($from, $where, $sqlparams) = reader_available_sql($cmid, $reader, $userid);
-
     // get parameters passed from browser
     $publisher = optional_param('publisher', null, PARAM_CLEAN); // book publisher
     $level     = optional_param('level',     null, PARAM_CLEAN); // book level
     $bookid    = optional_param('bookid',    null, PARAM_INT  ); // book id
     $action    = optional_param('action', $action, PARAM_CLEAN);
+
+    // get SQL $from and $where statements to extract available books
+    list($from, $where, $sqlparams) = reader_available_sql($cmid, $reader, $userid, ($action=='noquiz'));
 
     if ($publisher===null) {
 
@@ -3249,7 +3255,12 @@ function reader_available_books($cmid, $reader, $userid, $action='') {
     }
 
     if ($book===null) {
-        $book = $DB->get_record('reader_books', array('id' => $bookid));
+        if ($action=='noquiz') {
+            $booktable = 'reader_noquiz';
+        } else {
+            $booktable = 'reader_books';
+        }
+        $book = $DB->get_record($booktable, array('id' => $bookid));
     }
 
     if ($action=='takequiz' && reader_can_attemptreader($cmid, $userid)) {
@@ -3266,6 +3277,12 @@ function reader_available_books($cmid, $reader, $userid, $action='') {
             }
             $output .= reader_cheatsheet_link($cheatsheeturl, $strcheatsheet, $publisher, $book);
         }
+    }
+
+    if ($action=='noquiz') {
+        $output .= $book->name;
+        $output .= html_writer::empty_tag('input', array('type' => 'hidden', 'name' => 'book', 'value' => $bookid)).' ';
+        $output .= html_writer::empty_tag('input', array('type' => 'submit', 'name' => 'submit', 'value' => get_string('go')));
     }
 
     return $output;
