@@ -293,13 +293,16 @@ class mod_reader {
     /**
      * @return moodle_url of this reader's view page
      */
-    public function report_url($mode='', $cm=null) {
+    public function report_url($mode='', $cm=null, $userid=0) {
         if (is_null($cm)) {
             $cm = $this->cm;
         }
         $params = array('id' => $cm->id);
         if ($mode) {
             $params['mode'] = $mode;
+        }
+        if ($userid) {
+            $params['userid'] = $userid;
         }
         return new moodle_url('/mod/reader/report.php', $params);
     }

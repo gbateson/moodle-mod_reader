@@ -72,6 +72,25 @@ class mod_reader_report_renderer extends mod_reader_renderer {
         echo $this->footer();
     }
 
+    /*
+     * get_tablecolumns
+     *
+     * @return array of column names
+     */
+    public function get_tablecolumns() {
+        $tablecolumns = $this->tablecolumns;
+
+        if (! $this->reader->can_manageattempts()) {
+            // remove the select column from students view
+            $i = array_search('selected', $tablecolumns);
+            if (is_numeric($i)) {
+                array_splice($tablecolumns, $i, 1);
+            }
+        }
+
+        return $tablecolumns;
+    }
+
     /**
      * reportcontent
      */
@@ -86,7 +105,7 @@ class mod_reader_report_renderer extends mod_reader_renderer {
         }
 
         // set baseurl for this page (used for filters and table)
-        $baseurl = $this->reader->report_url($this->mode); //->out()
+        $baseurl = $this->reader->report_url($this->mode);
 
         // display user and attempt filters
         $this->display_filters($baseurl);
@@ -95,15 +114,8 @@ class mod_reader_report_renderer extends mod_reader_renderer {
         $uniqueid = $this->page->pagetype.'-'.$this->mode;
         $table = new reader_report_table($uniqueid, $this);
 
-        // set the table columns
-        $tablecolumns = $this->tablecolumns;
-        if (! $this->reader->can_manageattempts()) {
-            // remove the select column from students view
-            $i = array_search('selected', $tablecolumns);
-            if (is_numeric($i)) {
-                array_splice($tablecolumns, $i, 1);
-            }
-        }
+        // get the table columns
+        $tablecolumns = $this->get_tablecolumns();
 
         // setup the report table
         $table->setup_report_table($tablecolumns, $baseurl);
@@ -245,6 +257,9 @@ class mod_reader_report_renderer extends mod_reader_renderer {
      */
     function select_sql_users($prefix='user') {
         global $DB;
+        if ($userid = optional_param('userid', 0, PARAM_INT)) {
+        //    return array(' = :userid', array('userid' => $userid));
+        }
         if ($this->users===null) {
             $this->users = get_enrolled_users($this->reader->context, 'mod/reader:viewbooks', 0, 'u.id', 'id');
         }

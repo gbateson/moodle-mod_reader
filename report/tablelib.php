@@ -525,6 +525,17 @@ class reader_report_table extends table_sql {
     }
 
     /**
+     * col_wordsthisterm
+     *
+     * @param xxx $row
+     * @return xxx
+     */
+    function col_wordsthisterm($row) {
+        $report_url = $this->output->reader->report_url('userdetailed', null, $row->userid);
+        return html_writer::link($report_url, number_format($row->wordsthisterm));
+    }
+
+    /**
      * col_totalwords
      *
      * @param xxx $row
@@ -550,6 +561,60 @@ class reader_report_table extends table_sql {
         }
 
         return number_format($totalwords);
+    }
+
+    /**
+     * col_totalwords
+     *
+     * @param xxx $row
+     * @return xxx
+     */
+    function col_goal($row)  {
+        global $DB;
+
+        // cache for goals defined for each group
+        static $goals = array();
+
+        if (empty($row->userid)) {
+            return ''; // shouldn't happen !!
+        }
+
+        $level = $row->currentlevel;
+        $readerid = $this->output->reader->id;
+        $courseid = $this->output->reader->course->id;
+
+        $goal = $DB->get_field('reader_levels', 'goal', array('userid' => $row->userid, 'readerid' => $readerid));
+
+        if ($goal===null || $goal===false) {
+            $goal = 0;
+            if ($groups = groups_get_all_groups($courseid, $row->userid)) {
+                foreach ($groups as $groupid => $group) {
+                    if (! array_key_exists($groupid, $goals)) {
+                        $goals[$groupid] = array();
+                    }
+                    if (! array_key_exists($level, $goals[$groupid])) {
+                        if ($groupgoal = $DB->get_field('reader_goal', 'goal', array('readerid' => $readerid, 'groupid' => $groupid, 'level' => $level))) {
+                            $goals[$groupid][$level] = $groupgoal; // level specific goal
+                        } else if ($groupgoal = $DB->get_field('reader_goal', 'goal', array('readerid' => $readerid, 'groupid' => $groupid, 'level' => 0))) {
+                            $goals[$groupid][$level] = $groupgoal; // any level
+                        } else {
+                            $goals[$groupid][$level] = 0;
+                        }
+                    }
+                    $goal = max($goal, $goals[$groupid][$level]);
+                }
+            }
+        }
+
+        if ($goal==0) {
+            $goal = $this->output->reader->goal;
+        }
+
+        if ($goal==0) {
+            return '';
+        } else {
+            return number_format($goal);
+        }
     }
 
     /**

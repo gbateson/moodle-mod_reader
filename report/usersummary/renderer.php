@@ -48,8 +48,7 @@ class mod_reader_report_usersummary_renderer extends mod_reader_report_renderer 
     public $tablecolumns = array(
         'selected', 'username', 'fullname', // , 'picture'
         'startlevel', 'currentlevel', 'nopromote',
-        'countpassed', 'countfailed', 'wordsthisterm', 'wordsallterms',
-        'goal', // 'grade'
+        'countpassed', 'countfailed', 'wordsthisterm', 'wordsallterms'
     );
 
     public $filterfields = array(
@@ -57,6 +56,26 @@ class mod_reader_report_usersummary_renderer extends mod_reader_report_renderer 
         //'startlevel' => 1, 'currentlevel' => 1, 'nopromote' => 1,
         //'countpassed' => 1, 'countfailed' => 1, 'countwords' => 1
     );
+
+    /*
+     * get_tablecolumns
+     *
+     * @return array of column names
+     */
+    public function get_tablecolumns() {
+        global $DB;
+
+        $tablecolumns = parent::get_tablecolumns();
+
+        // add "goal" column if required
+        $select = 'readerid = :readerid AND goal IS NOT NULL AND goal > :zero';
+        $params = array('readerid' => $this->reader->id, 'zero' => 0);
+        if ($this->reader->goal || $DB->record_exists_select('reader_goal', $select, $params) || $DB->record_exists_select('reader_levels', $select, $params)) {
+            $tablecolumns[] = 'goal';
+        }
+
+        return $tablecolumns;
+    }
 
     /**
      * count_sql
@@ -96,8 +115,7 @@ class mod_reader_report_usersummary_renderer extends mod_reader_report_renderer 
 
         $select = 'u.id AS userid, u.username, u.firstname, u.lastname, u.picture, u.imagealt, u.email, '.
                   'rx.countpassed, rx.countfailed, rx.wordsthisterm, rx.wordsallterms,'.
-                  'rl.startlevel, rl.currentlevel, rl.nopromote,'.
-                  '50000 AS goal';
+                  'rl.startlevel, rl.currentlevel, rl.nopromote, 0 AS goal';
         $from   = '{user} u '.
                   "LEFT JOIN ($attemptsql) rx ON rx.userid = u.id ".
                   'LEFT JOIN {reader_levels} rl ON u.id = rl.userid';
