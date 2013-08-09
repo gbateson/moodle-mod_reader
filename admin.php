@@ -248,7 +248,7 @@ if (empty($deletebook) || empty($deletequiz)) {
 $coursestudents = get_enrolled_users($context, '', $gid);
 $coursestudents = array_slice($coursestudents, 0, 400, true);
 
-if (has_capability('mod/reader:manage', $contextmodule) && $quizzesid) {
+if (has_capability('mod/reader:addinstance', $contextmodule) && $quizzesid) {
     if (empty($publisher) && ($publisherex == '0')) {
         error('Please choose publisher', 'admin.php?a=admin&id='.$id.'&act=addquiz');
     }
@@ -330,7 +330,7 @@ if (has_capability('mod/reader:manage', $contextmodule) && $quizzesid) {
     add_to_log($course->id, 'reader', 'AA-Quizzes Added', 'admin.php?id='.$id, $cm->instance);
 }
 
-if (has_capability('mod/reader:deletereaderattempts', $contextmodule) && $act == 'viewattempts' && $attemptid) {
+if (has_capability('mod/reader:manageattempts', $contextmodule) && $act == 'viewattempts' && $attemptid) {
     //if (authenticate_user_login($USER->username, $upassword)) {
         $readerattempt = $DB->get_record('reader_attempts', array('id' => $attemptid));
         // make sure "uniqueid" is in fact unique
@@ -343,7 +343,7 @@ if (has_capability('mod/reader:deletereaderattempts', $contextmodule) && $act ==
     //}
 }
 
-if (has_capability('mod/reader:deletereaderattempts', $contextmodule) && $act == 'viewattempts' && $bookquiznumber) {
+if (has_capability('mod/reader:manageattempts', $contextmodule) && $act == 'viewattempts' && $bookquiznumber) {
     if (empty($studentuserid)) {
         $data = $DB->get_record('user', array('username' => $studentusername));
         $studentuserid = $data->id;
@@ -358,7 +358,7 @@ if (has_capability('mod/reader:deletereaderattempts', $contextmodule) && $act ==
     }
 }
 
-if (has_capability('mod/reader:manage', $contextmodule) && $text && $activehours) {
+if (has_capability('mod/reader:addinstance', $contextmodule) && $text && $activehours) {
     $message = new object;
 
     foreach ($groupid as $groupkey => $groupvalue) {
@@ -383,18 +383,18 @@ if (has_capability('mod/reader:manage', $contextmodule) && $text && $activehours
     add_to_log($course->id, 'reader', 'AA-Message Added', 'admin.php?id='.$id, $cm->instance);
 }
 
-if (has_capability('mod/reader:manage', $contextmodule) && $deletemessage) {
+if (has_capability('mod/reader:addinstance', $contextmodule) && $deletemessage) {
     $DB->delete_records('reader_messages', array('id' => $deletemessage));
 
     add_to_log($course->id, 'reader', 'AA-Message Deleted', 'admin.php?id='.$id, $cm->instance);
 }
 
-if (has_capability('mod/reader:manage', $contextmodule) && $checkattempt && $ajax == 'true') {
+if (has_capability('mod/reader:addinstance', $contextmodule) && $checkattempt && $ajax == 'true') {
     $DB->set_field('reader_attempts',  'checkbox',  $checkattemptvalue, array('id' => $checkattempt));
     die;
 }
 
-if (has_capability('mod/reader:manage', $contextmodule) && $bookid) {
+if (has_capability('mod/reader:addinstance', $contextmodule) && $bookid) {
     if ($hidebooks) {
         foreach ($bookid as $bookidkey => $bookidvalue) {
             $DB->set_field('reader_books',  'hidden',  1, array('id' => $bookidkey));
@@ -409,13 +409,13 @@ if (has_capability('mod/reader:manage', $contextmodule) && $bookid) {
     add_to_log($course->id, 'reader', 'AA-Books status changed', 'admin.php?id='.$id, $cm->instance);
 }
 
-if (has_capability('mod/reader:manage', $contextmodule) && $deletequiz && $deleteallattempts) {
+if (has_capability('mod/reader:addinstance', $contextmodule) && $deletequiz && $deleteallattempts) {
     $DB->delete_records('reader_attempts', array('quizid' => $deletequiz, 'reader' => $reader->id));
 
     add_to_log($course->id, 'reader', 'AA-Attempts Deleted', 'admin.php?id='.$id, $cm->instance);
 }
 
-if (has_capability('mod/reader:manage', $contextmodule) && $deletebook && $deletequiz) {
+if (has_capability('mod/reader:addinstance', $contextmodule) && $deletebook && $deletequiz) {
     if ($DB->count_records('reader_attempts', array('quizid' => $deletequiz, 'reader' => $reader->id)) == 0) {
         $DB->delete_records('reader_books', array('id' => $deletebook));
     } else {
@@ -424,31 +424,31 @@ if (has_capability('mod/reader:manage', $contextmodule) && $deletebook && $delet
     add_to_log($course->id, 'reader', 'AA-Book Deleted', 'admin.php?id='.$id, $cm->instance);
 }
 
-if (has_capability('mod/reader:manage', $contextmodule) && $ajax == 'true' && isset($sametitlekey)) {
+if (has_capability('mod/reader:addinstance', $contextmodule) && $ajax == 'true' && isset($sametitlekey)) {
     $DB->set_field('reader_books',  'sametitle',  $sametitlekey, array('id' => $sametitleid));
     echo $sametitlekey;
     die;
 }
 
-if (has_capability('mod/reader:manage', $contextmodule) && $ajax == 'true' && isset($wordstitlekey)) {
+if (has_capability('mod/reader:addinstance', $contextmodule) && $ajax == 'true' && isset($wordstitlekey)) {
     $DB->set_field('reader_books',  'words',  $wordstitlekey, array('id' => $wordstitleid));
     echo $wordstitlekey;
     die;
 }
 
-if (has_capability('mod/reader:manage', $contextmodule) && $ajax == 'true' && isset($publishertitlekey)) {
+if (has_capability('mod/reader:addinstance', $contextmodule) && $ajax == 'true' && isset($publishertitlekey)) {
     $DB->set_field('reader_books',  'publisher',  $publishertitlekey, array('id' => $publishertitleid));
     echo $publishertitlekey;
     die;
 }
 
-if (has_capability('mod/reader:manage', $contextmodule) && $ajax == 'true' && isset($leveltitlekey)) {
+if (has_capability('mod/reader:addinstance', $contextmodule) && $ajax == 'true' && isset($leveltitlekey)) {
     $DB->set_field('reader_books',  'level',  $leveltitlekey, array('id' => $leveltitleid));
     echo $leveltitlekey;
     die;
 }
 
-if (has_capability('mod/reader:manage', $contextmodule) && ($changelevel || $changelevel == 0) && $slevel) {
+if (has_capability('mod/reader:addinstance', $contextmodule) && ($changelevel || $changelevel == 0) && $slevel) {
     if ($DB->get_record('reader_levels', array('userid' => $userid, 'readerid' => $reader->id))) {
         $DB->set_field('reader_levels',  $slevel,  $changelevel, array('userid' => $userid,  'readerid' => $reader->id));
         $DB->set_field('reader_levels', 'time', time(), array('userid' => $userid, 'readerid' => $reader->id));
@@ -471,7 +471,7 @@ if (has_capability('mod/reader:manage', $contextmodule) && ($changelevel || $cha
     }
 }
 
-if (has_capability('mod/reader:manage', $contextmodule) && $sctionoption == 'massdifficultychange' && (isset($difficulty) || $difficulty == 0) && (isset($todifficulty) || $todifficulty == 0) && isset($publisher)) {
+if (has_capability('mod/reader:addinstance', $contextmodule) && $sctionoption == 'massdifficultychange' && (isset($difficulty) || $difficulty == 0) && (isset($todifficulty) || $todifficulty == 0) && isset($publisher)) {
     if ($reader->bookinstances == 0) {
         $DB->set_field('reader_books',  'difficulty',  $todifficulty, array('difficulty' => $difficulty,  'publisher' => $publisher));
     } else {
@@ -485,17 +485,17 @@ if (has_capability('mod/reader:manage', $contextmodule) && $sctionoption == 'mas
     add_to_log($course->id, 'reader', substr("AA-Mass changes difficulty ({$difficulty} to {$todifficulty})", 0, 39), 'admin.php?id='.$id, $cm->instance);
 }
 
-if (has_capability('mod/reader:manage', $contextmodule) && $level && $tolevel && $publisher) {
+if (has_capability('mod/reader:addinstance', $contextmodule) && $level && $tolevel && $publisher) {
     $DB->set_field('reader_books',  'level',  $tolevel, array('level' => $level,  'publisher' => $publisher));
     add_to_log($course->id, 'reader', substr("AA-Mass changes level ({$level} to {$tolevel})", 0, 39), 'admin.php?id='.$id, $cm->instance);
 }
 
-if (has_capability('mod/reader:manage', $contextmodule) && $topublisher && $publisher) {
+if (has_capability('mod/reader:addinstance', $contextmodule) && $topublisher && $publisher) {
     $DB->set_field('reader_books',  'publisher',  $topublisher, array('publisher' => $publisher));
     add_to_log($course->id, 'reader', substr("AA-Mass changes publisher ({$publisher} to {$topublisher})", 0, 39), 'admin.php?id='.$id, $cm->instance);
 }
 
-if (has_capability('mod/reader:manage', $contextmodule) && $length && $tolength && $publisher) {
+if (has_capability('mod/reader:addinstance', $contextmodule) && $length && $tolength && $publisher) {
     if ($reader->bookinstances == 0) {
         $DB->set_field('reader_books',  'length',  $tolength, array('length' => $length,  'publisher' => $publisher));
     } else {
@@ -511,7 +511,7 @@ if (has_capability('mod/reader:manage', $contextmodule) && $length && $tolength 
 
 
 
-if (has_capability('mod/reader:manage', $contextmodule) && $act == 'changereaderlevel' && ($difficulty || $difficulty == 0) && empty($length)) {
+if (has_capability('mod/reader:addinstance', $contextmodule) && $act == 'changereaderlevel' && ($difficulty || $difficulty == 0) && empty($length)) {
   if ($reader->bookinstances == 0) {
     $params = array('id' => $bookid);
     if ($DB->get_record('reader_books', $params)) {
@@ -533,7 +533,7 @@ if (has_capability('mod/reader:manage', $contextmodule) && $act == 'changereader
 
 
 
-if (has_capability('mod/reader:manage', $contextmodule) && $act == 'changereaderlevel' && $length) {
+if (has_capability('mod/reader:addinstance', $contextmodule) && $act == 'changereaderlevel' && $length) {
   if ($reader->bookinstances == 0) {
     if ($DB->get_record('reader_books', array('id' => $bookid))) {
         $DB->set_field('reader_books',  'length',  $length, array('id' => $bookid));
@@ -554,7 +554,7 @@ if (has_capability('mod/reader:manage', $contextmodule) && $act == 'changereader
 
 
 
-if (has_capability('mod/reader:viewstudentreaderscreens', $contextmodule) && $viewasstudent > 1) {
+if (has_capability('mod/reader:manageattempts', $contextmodule) && $viewasstudent > 1) {
     $_SESSION['SESSION']->reader_changetostudentview = $USER->id;
     $_SESSION['SESSION']->reader_changetostudentviewlink = "gid={$gid}&searchtext={$searchtext}&page={$page}&sort={$sort}&orderby={$orderby}";
     $USER = $DB->get_record('user', array('id' => $viewasstudent));
@@ -564,7 +564,7 @@ if (has_capability('mod/reader:viewstudentreaderscreens', $contextmodule) && $vi
 
 
 
-if (has_capability('mod/reader:manage', $contextmodule) && $act == 'studentslevels' && $setgoal) {
+if (has_capability('mod/reader:addinstance', $contextmodule) && $act == 'studentslevels' && $setgoal) {
     if ($data = $DB->get_record('reader_levels', array('userid' => $userid, 'readerid' => $reader->id))) {
         $DB->set_field('reader_levels',  'goal',  $setgoal, array('id' => $data->id));
     } else {
@@ -588,7 +588,7 @@ if (has_capability('mod/reader:manage', $contextmodule) && $act == 'studentsleve
 
 
 
-if (has_capability('mod/reader:manage', $contextmodule) && isset($nopromote) && $userid) {
+if (has_capability('mod/reader:addinstance', $contextmodule) && isset($nopromote) && $userid) {
     if ($DB->get_record('reader_levels', array('userid' => $userid, 'readerid' => $reader->id))) {
         $DB->set_field('reader_levels',  'nopromote',  $nopromote, array('userid' => $userid,  'readerid' => $reader->id));
     }
@@ -602,7 +602,7 @@ if (has_capability('mod/reader:manage', $contextmodule) && isset($nopromote) && 
 
 
 
-if (has_capability('mod/reader:manage', $contextmodule) && isset($promotionstop) && $userid) {
+if (has_capability('mod/reader:addinstance', $contextmodule) && isset($promotionstop) && $userid) {
     if ($DB->get_record('reader_levels', array('userid' => $userid, 'readerid' => $reader->id))) {
         $DB->set_field('reader_levels',  'promotionstop',  $promotionstop, array('userid' => $userid,  'readerid' => $reader->id));
     }
@@ -617,7 +617,7 @@ if (has_capability('mod/reader:manage', $contextmodule) && isset($promotionstop)
 
 
 
-if (has_capability('mod/reader:manage', $contextmodule) && $setip) {
+if (has_capability('mod/reader:addinstance', $contextmodule) && $setip) {
     if ($DB->get_record('reader_strict_users_list', array('userid' => $userid, 'readerid' => $reader->id))) {
         $DB->set_field('reader_strict_users_list',  'needtocheckip',  $needip, array('userid' => $userid,  'readerid' => $reader->id));
     } else {
@@ -637,7 +637,7 @@ if (has_capability('mod/reader:manage', $contextmodule) && $setip) {
 
 
 
-if (has_capability('mod/reader:manage', $contextmodule) && $changeallstartlevel >= 0) {
+if (has_capability('mod/reader:addinstance', $contextmodule) && $changeallstartlevel >= 0) {
     foreach ($coursestudents as $coursestudent) {
         if ($DB->get_record('reader_levels', array('userid' => $coursestudent->id, 'readerid' => $reader->id))) {
             $DB->set_field('reader_levels',  'startlevel',  $changeallstartlevel, array('userid' => $coursestudent->id,  'readerid' => $reader->id));
@@ -655,7 +655,7 @@ if (has_capability('mod/reader:manage', $contextmodule) && $changeallstartlevel 
     }
 }
 
-if (has_capability('mod/reader:manage', $contextmodule) &&  $changeallcurrentlevel >= 0) {
+if (has_capability('mod/reader:addinstance', $contextmodule) &&  $changeallcurrentlevel >= 0) {
     foreach ($coursestudents as $coursestudent) {
         if ($DB->get_record('reader_levels', array('userid' => $coursestudent->id, 'readerid' => $reader->id))) {
             $DB->set_field('reader_levels',  'currentlevel',  $changeallcurrentlevel, array('userid' => $coursestudent->id,  'readerid' => $reader->id));
@@ -675,7 +675,7 @@ if (has_capability('mod/reader:manage', $contextmodule) &&  $changeallcurrentlev
 
 
 
-if (has_capability('mod/reader:manage', $contextmodule) && $changeallpromo) {
+if (has_capability('mod/reader:addinstance', $contextmodule) && $changeallpromo) {
     foreach ($coursestudents as $coursestudent) {
         if ($DB->get_record('reader_levels', array('userid' => $coursestudent->id, 'readerid' => $reader->id))) {
             if (strtolower($changeallpromo) == 'promo') {$nopromote = 0;} else {$nopromote = 1;}
@@ -685,7 +685,7 @@ if (has_capability('mod/reader:manage', $contextmodule) && $changeallpromo) {
     }
 }
 
-if (has_capability('mod/reader:manage', $contextmodule) && $changeallstoppromo >= 0 && $gid) {
+if (has_capability('mod/reader:addinstance', $contextmodule) && $changeallstoppromo >= 0 && $gid) {
     foreach ($coursestudents as $coursestudent) {
         if ($DB->get_record('reader_levels', array('userid' => $coursestudent->id, 'readerid' => $reader->id))) {
             $DB->set_field('reader_levels',  'promotionstop',  $changeallstoppromo, array('userid' => $coursestudent->id,  'readerid' => $reader->id));
@@ -696,7 +696,7 @@ if (has_capability('mod/reader:manage', $contextmodule) && $changeallstoppromo >
 
 
 
-if (has_capability('mod/reader:manage', $contextmodule) && $changeallcurrentgoal) {
+if (has_capability('mod/reader:addinstance', $contextmodule) && $changeallcurrentgoal) {
     foreach ($coursestudents as $coursestudent) {
         if ($data = $DB->get_record('reader_levels', array('userid' => $coursestudent->id, 'readerid' => $reader->id))) {
             $DB->set_field('reader_levels',  'goal',  $changeallcurrentgoal, array('id' => $data->id));
@@ -715,7 +715,7 @@ if (has_capability('mod/reader:manage', $contextmodule) && $changeallcurrentgoal
     }
 }
 
-if (has_capability('mod/reader:manage', $contextmodule) && $act == 'awardextrapoints' && $award && $student) {
+if (has_capability('mod/reader:addinstance', $contextmodule) && $act == 'awardextrapoints' && $award && $student) {
     $useridold = $USER->id;
     if ($bookdata = $DB->get_record('reader_books', array('name' => $award))) {
         foreach ($student as $student_) {
@@ -767,7 +767,7 @@ if (has_capability('mod/reader:manage', $contextmodule) && $act == 'awardextrapo
 
 
 
-if (has_capability('mod/reader:manage', $contextmodule) && $cheated) {
+if (has_capability('mod/reader:addinstance', $contextmodule) && $cheated) {
     list($cheated1, $cheated2) = explode('_', $cheated);
     $DB->set_field('reader_attempts',  'passed',  'cheated', array('id' => $cheated1));
     $DB->set_field('reader_attempts',  'passed',  'cheated', array('id' => $cheated2));
@@ -802,7 +802,7 @@ if (has_capability('mod/reader:manage', $contextmodule) && $cheated) {
 
 
 
-if (has_capability('mod/reader:manage', $contextmodule) && $uncheated) {
+if (has_capability('mod/reader:addinstance', $contextmodule) && $uncheated) {
     list($cheated1, $cheated2) = explode('_', $uncheated);
     $DB->set_field('reader_attempts',  'passed',  'true', array('id' => $cheated1));
     $DB->set_field('reader_attempts',  'passed',  'true', array('id' => $cheated2));
@@ -835,7 +835,7 @@ if (has_capability('mod/reader:manage', $contextmodule) && $uncheated) {
 
 
 
-if (has_capability('mod/reader:manage', $contextmodule) && $act == 'setgoal') {
+if (has_capability('mod/reader:addinstance', $contextmodule) && $act == 'setgoal') {
     if ($wordsorpoints) {
         $DB->set_field('reader',  'wordsorpoints',  $wordsorpoints, array('id' => $reader->id));
     }
@@ -873,7 +873,7 @@ if (has_capability('mod/reader:manage', $contextmodule) && $act == 'setgoal') {
     }
 }
 
-if (has_capability('mod/reader:manage', $contextmodule) && $act == 'setbookinstances' && is_array($quiz)) {
+if (has_capability('mod/reader:addinstance', $contextmodule) && $act == 'setbookinstances' && is_array($quiz)) {
     $DB->delete_records('reader_book_instances', array('readerid' => $reader->id));
     foreach ($quiz as $quiz_) {
         $oldbookdata = $DB->get_record('reader_books', array('id' => $quiz_));
@@ -887,7 +887,7 @@ if (has_capability('mod/reader:manage', $contextmodule) && $act == 'setbookinsta
     }
 }
 
-if (has_capability('mod/reader:manage', $contextmodule) && $act == 'forcedtimedelay' && is_array($levelc)) {
+if (has_capability('mod/reader:addinstance', $contextmodule) && $act == 'forcedtimedelay' && is_array($levelc)) {
     $DB->delete_records('reader_forcedtimedelay', array('readerid' => $reader->id, 'groupid' => $separategroups));
     foreach ($levelc as $key => $value) {
       if ($value != 0) {
@@ -902,7 +902,7 @@ if (has_capability('mod/reader:manage', $contextmodule) && $act == 'forcedtimede
     }
 }
 
-if (has_capability('mod/reader:manage', $contextmodule) && $book && is_array($noquizuserid)) {
+if (has_capability('mod/reader:addinstance', $contextmodule) && $book && is_array($noquizuserid)) {
     if (is_int($book) && $book > 0) {
         $quizid = $DB->get_field('reader_books', 'quizid', array('id' => $book));
         foreach ($noquizuserid as $key => $value) {
@@ -932,7 +932,7 @@ if (has_capability('mod/reader:manage', $contextmodule) && $book && is_array($no
     unset($book);
 }
 
-if ((has_capability('mod/reader:downloadquizzesfromthereaderquizdatabase', $contextmodule)) && $numberofsections && $act == 'changenumberofsectionsinquiz') {
+if ((has_capability('mod/reader:managequizzes', $contextmodule)) && $numberofsections && $act == 'changenumberofsectionsinquiz') {
     if ($reader->usecourse) {
         $DB->set_field('course',  'numsections',  $numberofsections, array('id' => $reader->usecourse));
     }
@@ -1021,7 +1021,7 @@ if (! $excel) {
 
 $alreadyansweredbooksid = array();
 
-if (has_capability('mod/reader:manage', $contextmodule)) {
+if (has_capability('mod/reader:addinstance', $contextmodule)) {
     if (! $excel) {
         require_once('tabs.php');
     }
@@ -1040,45 +1040,45 @@ if (isset($message_forteacher)) {
 if (! $excel) {
     $menu = array(
         'readerreports' => array(
-            new reader_menu_item('reportquiztoreader', 'readerviewreports', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'reports')),
-            new reader_menu_item('fullreportquiztoreader', 'readerviewreports', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'fullreports')),
-            new reader_menu_item('summaryreportbyclassgroup', 'readerviewreports', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'reportbyclass')),
-            new reader_menu_item('summaryreportbybooktitle', 'readerviewreports', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'summarybookreports')),
-            new reader_menu_item('fullreportbybooktitle', 'readerviewreports', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'fullbookreports')),
+            // new reader_menu_item($displaystring, $capability, $scriptname, $scriptparams)
+            new reader_menu_item('reportquiztoreader', 'viewreports', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'reports')),
+            new reader_menu_item('fullreportquiztoreader', 'viewreports', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'fullreports')),
+            new reader_menu_item('summaryreportbyclassgroup', 'viewreports', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'reportbyclass')),
+            new reader_menu_item('summaryreportbybooktitle', 'viewreports', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'summarybookreports')),
+            new reader_menu_item('fullreportbybooktitle', 'viewreports', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'fullbookreports')),
         ),
         'quizmanagement' => array(
-            // new reader_menu_item($displaystring, $capability, $scriptname, $scriptparams)
-            new reader_menu_item('addquiztoreader', 'addcoursequizzestoreaderquizzes', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'addquiz')),
-            new reader_menu_item('uploadquiztoreader', 'downloadquizzesfromthereaderquizdatabase', 'dlquizzes.php', array('id'=>$id)),
-            new reader_menu_item('uploaddatanoquizzes', 'downloadquizzesfromthereaderquizdatabase', 'dlquizzesnoq.php', array('id'=>$id)),
-            new reader_menu_item('updatequizzes', 'manage', 'updatecheck.php', array('id'=>$id, 'checker'=>1)),
-            new reader_menu_item('editquiztoreader', 'deletequizzes', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'editquiz')),
-            new reader_menu_item('setbookinstances', 'selectquizzestomakeavailabletostudents', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'setbookinstances')),
-            new reader_menu_item('forcedtimedelay', 'forcedtimedelay', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'forcedtimedelay')),
-            new reader_menu_item('changenumberofsectionsinquiz', 'downloadquizzesfromthereaderquizdatabase', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'changenumberofsectionsinquiz')),
+            new reader_menu_item('addquiztoreader', 'managequizzes', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'addquiz')),
+            new reader_menu_item('uploadquiztoreader', 'managequizzes', 'dlquizzes.php', array('id'=>$id)),
+            new reader_menu_item('uploaddatanoquizzes', 'managequizzes', 'dlquizzesnoq.php', array('id'=>$id)),
+            new reader_menu_item('updatequizzes', 'managequizzes', 'updatecheck.php', array('id'=>$id, 'checker'=>1)),
+            new reader_menu_item('editquiztoreader', 'managequizzes', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'editquiz')),
+            new reader_menu_item('setbookinstances', 'managequizzes', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'setbookinstances')),
+            new reader_menu_item('forcedtimedelay', 'managequizzes', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'forcedtimedelay')),
+            new reader_menu_item('changenumberofsectionsinquiz', 'managequizzes', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'changenumberofsectionsinquiz')),
         ),
         'attemptscoremanagement' => array(
-            new reader_menu_item('viewattempts', 'viewanddeleteattempts', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'viewattempts')),
-            new reader_menu_item('awardextrapoints', 'awardextrapoints', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'awardextrapoints')),
-            new reader_menu_item('assignpointsbookshavenoquizzes', 'changestudentslevelsandpromote', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'assignpointsbookshavenoquizzes')),
-            new reader_menu_item('adjustscores', 'manage', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'adjustscores')),
-            new reader_menu_item('checksuspiciousactivity', 'checklogsforsuspiciousactivity', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'checksuspiciousactivity')),
-            new reader_menu_item('viewlogsuspiciousactivity', 'readerviewreports', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'viewlogsuspiciousactivity')),
+            new reader_menu_item('viewattempts', 'manageusers', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'viewattempts')),
+            new reader_menu_item('awardextrapoints', 'manageusers', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'awardextrapoints')),
+            new reader_menu_item('assignpointsbookshavenoquizzes', 'manageusers', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'assignpointsbookshavenoquizzes')),
+            new reader_menu_item('adjustscores', 'manageusers', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'adjustscores')),
+            new reader_menu_item('checksuspiciousactivity', 'manageattempts', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'checksuspiciousactivity')),
+            new reader_menu_item('viewlogsuspiciousactivity', 'manageattempts', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'viewlogsuspiciousactivity')),
         ),
         'booklevelmanagement' => array(
             // new reader_menu_item($displaystring, $capability, $scriptname, $scriptparams)
-            new reader_menu_item('changereaderlevel', 'changereadinglevelorlengthfactor', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'changereaderlevel')),
-            //new reader_menu_item('createcoversets_t', 'createcoversetsbypublisherlevel', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'makepix_t')),
-            //new reader_menu_item('createcoversets_l', 'createcoversetsbypublisherlevel', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'makepix_l')),
-            new reader_menu_item('bookratingslevel', 'readerviewreports', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'bookratingslevel')),
+            new reader_menu_item('changereaderlevel', 'managebooks', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'changereaderlevel')),
+            //new reader_menu_item('createcoversets_t', 'managebooks', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'makepix_t')),
+            //new reader_menu_item('createcoversets_l', 'managebooks', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'makepix_l')),
+            new reader_menu_item('bookratingslevel', 'managebooks', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'bookratingslevel')),
         ),
         'studentmanagement' => array(
             // new reader_menu_item($displaystring, $capability, $scriptname, $scriptparams)
-            new reader_menu_item('setgoal', 'setgoal', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'setgoal')),
-            new reader_menu_item('studentslevels', 'changestudentslevelsandpromote', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'studentslevels')),
-            new reader_menu_item('sendmessage', 'sendmessage', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'sendmessage')),
-            new reader_menu_item('exportstudentrecords', 'userdbmanagement', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'exportstudentrecords', 'excel'=>1)),
-            new reader_menu_item('importstudentrecord', 'userdbmanagement', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'importstudentrecord')),
+            new reader_menu_item('setgoal', 'manageusers', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'setgoal')),
+            new reader_menu_item('studentslevels', 'manageusers', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'studentslevels')),
+            new reader_menu_item('sendmessage', 'manageusers', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'sendmessage')),
+            new reader_menu_item('exportstudentrecords', 'manageusers', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'exportstudentrecords', 'excel'=>1)),
+            new reader_menu_item('importstudentrecord', 'manageusers', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'importstudentrecord')),
         ),
     );
     $menu = new reader_menu($menu);
@@ -1120,7 +1120,7 @@ $options = array(
     'searchtext' => $searchtext,
 );
 
-if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquizzes', $contextmodule)) {
+if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodule)) {
     if (! $quizzesid) {
         if ($quizdata  = get_all_instances_in_course('quiz', $DB->get_record('course', array('id' => $reader->usecourse)), NULL, true)) {
         //if ($quizdata  = get_records('quiz')) {
@@ -1237,7 +1237,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
         }
     }
 
-} else if ($act == 'editquiz' && has_capability('mod/reader:deletequizzes', $contextmodule)) {
+} else if ($act == 'editquiz' && has_capability('mod/reader:managequizzes', $contextmodule)) {
     if ($sort == 'username') {
         $sort = 'title';
     }
@@ -1356,7 +1356,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
         echo '</center>';
     }
 
-} else if ($act == 'reports' && has_capability('mod/reader:readerviewreports', $contextmodule)) {
+} else if ($act == 'reports' && has_capability('mod/reader:viewreports', $contextmodule)) {
     $table = new html_table();
 
     $titles = array(
@@ -1442,7 +1442,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
             }
 
             $usernamelink = reader_username_link($coursestudent, $course->id, $excel);
-            if (has_capability('mod/reader:viewstudentreaderscreens', $contextmodule)) {
+            if (has_capability('mod/reader:manageattempts', $contextmodule)) {
                 $fullnamelink = reader_fullname_link_viewasstudent($coursestudent, $id, $excel);
             } else {
                 $fullnamelink = reader_fullname_link($coursestudent, $course->id, $excel);
@@ -1521,7 +1521,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
     $pagingbar = new paging_bar($totalcount, $page, $perpage, "admin.php?a=admin&id={$id}&act={$act}&sort={$sort}&orderby={$orderby}&gid={$gid}&amp;");
     echo $OUTPUT->render($pagingbar);
 
-} else if ($act == 'fullreports' && has_capability('mod/reader:readerviewreports', $contextmodule)) {
+} else if ($act == 'fullreports' && has_capability('mod/reader:viewreports', $contextmodule)) {
     $table = new html_table();
 
     $titles = array();
@@ -1651,7 +1651,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
 
                     if ($showuser) {
                         $linkusername = reader_username_link($coursestudent, $course->id, $excel);
-                        if (has_capability('mod/reader:viewstudentreaderscreens', $contextmodule)) {
+                        if (has_capability('mod/reader:manageattempts', $contextmodule)) {
                             $linkfullname = reader_fullname_link_viewasstudent($coursestudent, $id, $excel);
                         } else {
                             $linkfullname = reader_fullname_link($coursestudent, $course->id, $excel);
@@ -1689,7 +1689,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
                 if (reader_check_search_text($searchtext, $coursestudent, $readerattempt)) {
                     if ($showuser) {
                         $linkusername = reader_username_link($coursestudent, $course->id, $excel);
-                        if (has_capability('mod/reader:viewstudentreaderscreens', $contextmodule)) {
+                        if (has_capability('mod/reader:manageattempts', $contextmodule)) {
                             $linkfullname = reader_fullname_link_viewasstudent($coursestudent, $id, $excel);
                         } else {
                             $linkfullname = reader_fullname_link($coursestudent, $course->id, $excel);
@@ -1806,7 +1806,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
     $pagingbar = new paging_bar($totalcount, $page, $perpage, "admin.php?a=admin&id={$id}&act={$act}&sort={$sort}&orderby={$orderby}&gid={$gid}&ct={$ct}&amp;");
     echo $OUTPUT->render($pagingbar);
 
-} else if ($act == 'summarybookreports' && has_capability('mod/reader:readerviewreports', $contextmodule)) {
+} else if ($act == 'summarybookreports' && has_capability('mod/reader:viewreports', $contextmodule)) {
     if ($sort == 'username') {
         $sort = 'title';
     }
@@ -1922,7 +1922,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
     $pagingbar = new paging_bar($totalcount, $page, $perpage, "admin.php?a=admin&id={$id}&act={$act}&sort={$sort}&orderby={$orderby}&gid={$gid}&amp;");
     echo $OUTPUT->render($pagingbar);
 
-} else if ($act == 'fullbookreports' && has_capability('mod/reader:readerviewreports', $contextmodule)) {
+} else if ($act == 'fullbookreports' && has_capability('mod/reader:viewreports', $contextmodule)) {
     if ($sort == 'username') {
         $sort = 'title';
     }
@@ -2047,14 +2047,14 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
     $pagingbar = new paging_bar($totalcount, $page, $perpage, "admin.php?a=admin&id={$id}&act={$act}&sort={$sort}&orderby={$orderby}&gid={$gid}&amp;");
     echo $OUTPUT->render($pagingbar);
 
-} else if ($act == 'viewattempts' && has_capability('mod/reader:viewanddeleteattempts', $contextmodule)) {
+} else if ($act == 'viewattempts' && has_capability('mod/reader:manageattempts', $contextmodule)) {
 
     $table = new html_table();
 
     if (! $searchtext && !$gid) {
       echo "<center><h2><font color=\"red\">".get_string('pleasespecifyyourclassgroup', 'reader').'</font></h2></center>';
     } else {
-        if (has_capability('mod/reader:deletereaderattempts', $contextmodule)) {
+        if (has_capability('mod/reader:manageattempts', $contextmodule)) {
             $titles = array('Username'=>'username', 'Fullname'=>'fullname', 'Book Name'=>'bname', 'AttemptID'=>'attemptid', 'Score'=>'score', 'P/F/C'=>'', 'Finishtime'=>'timefinish', 'Option' => '');
         } else {
             $titles = array('Username'=>'username', 'Fullname'=>'fullname', 'Book Name'=>'bname', 'AttemptID'=>'attemptid', 'Score'=>'score', 'P/F/C'=>'', 'Finishtime'=>'timefinish');
@@ -2146,7 +2146,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
             $readerattempts = array();
         }
 
-        $can_deleteattempts = has_capability('mod/reader:deletereaderattempts', $contextmodule);
+        $can_deleteattempts = has_capability('mod/reader:manageattempts', $contextmodule);
 
         foreach ($readerattempts as $readerattempt) {
             $strpassed = reader_format_passed($readerattempt->passed);
@@ -2218,7 +2218,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
     $pagingbar = new paging_bar($totalcount, $page, $perpage, "admin.php?a=admin&id={$id}&act={$act}&sort={$sort}&orderby={$orderby}&gid={$gid}&amp;");
     echo $OUTPUT->render($pagingbar);
 
-    if (has_capability('mod/reader:deletequizzes', $contextmodule)) {
+    if (has_capability('mod/reader:managequizzes', $contextmodule)) {
       echo '<form action="?a=admin&id='.$id.'&act='.$act.'&sort='.$sort.'&orderby='.$orderby.'&gid='.$gid.'" method="post"><div> ';
       echo ' <div style="margin:20px 0;font-size:16px;">'.get_string('restoredeletedattempt', 'reader').'</div>';
       echo '<div style="float:left;width:200px;">'.get_string('studentuserid', 'reader').'</div>';
@@ -2235,7 +2235,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
 
   //}
 
-} else if ($act == 'studentslevels' && has_capability('mod/reader:changestudentslevelsandpromote', $contextmodule)) {
+} else if ($act == 'studentslevels' && has_capability('mod/reader:manageusers', $contextmodule)) {
 
     $table = new html_table();
 
@@ -2273,7 +2273,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
                 );
             }
 
-            if (has_capability('mod/reader:viewstudentreaderscreens', $contextmodule)) {
+            if (has_capability('mod/reader:manageattempts', $contextmodule)) {
                 $linkfullname = reader_fullname_link_viewasstudent($coursestudent, $id, $excel);
             } else {
                 $linkfullname = reader_fullname_link($coursestudent, $course->id, $excel);
@@ -2407,7 +2407,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
     $pagingbar = new paging_bar($totalcount, $page, $perpage, "admin.php?a=admin&id={$id}&act={$act}&sort={$sort}&orderby={$orderby}&gid={$gid}&amp;");
     echo $OUTPUT->render($pagingbar);
 
-} else if ($act == 'changereaderlevel' && has_capability('mod/reader:changereadinglevelorlengthfactor', $contextmodule)) {
+} else if ($act == 'changereaderlevel' && has_capability('mod/reader:managebooks', $contextmodule)) {
     //$reader->bookinstances = 1;
     $table = new html_table();
 
@@ -2444,7 +2444,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
       if (reader_check_search_text_quiz($searchtext, $book)) {
         if ((empty($publisher) || $publisher == $book->publisher) && (empty($level) || $level == $book->level)) {
 
-            $has_capability = has_capability('mod/reader:manage', $contextmodule);
+            $has_capability = has_capability('mod/reader:addinstance', $contextmodule);
             $wordstitle     = reader_ajax_textbox_title($has_capability, $book, 'words', $id, $act);
             $leveltitle     = reader_ajax_textbox_title($has_capability, $book, 'level', $id, $act);
             $publishertitle = reader_ajax_textbox_title($has_capability, $book, 'publisher', $id, $act);
@@ -2626,7 +2626,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
     $pagingbar = new paging_bar($totalcount, $page, $perpage, "admin.php?a=admin&id={$id}&act={$act}&sort={$sort}&orderby={$orderby}&gid={$gid}&publisher={$publisher}&amp;");
     echo $OUTPUT->render($pagingbar);
 
-} else if ($act == 'sendmessage' && has_capability('mod/reader:sendmessage', $contextmodule)) {
+} else if ($act == 'sendmessage' && has_capability('mod/reader:manageusers', $contextmodule)) {
 
     /**
      * mod_reader_message_form
@@ -2716,7 +2716,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
         echo '</div></td></tr></table></td></tr></table>'."\n\n";
     }
 
-} else if ($act == 'makepix_t' && has_capability('mod/reader:createcoversetsbypublisherlevel', $contextmodule)) {
+} else if ($act == 'makepix_t' && has_capability('mod/reader:managequizzes', $contextmodule)) {
     $allbooks = $DB->get_records_sql('SELECT * FROM {reader_books}  where hidden = 0 ORDER BY publisher ASC, level ASC');
     $prehtml = "<img width='110'  height='160'  border='0' src='{$CFG->wwwroot}/file.php/reader/images/";
     $posthtml = '/> ';
@@ -2750,7 +2750,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
     }
     echo "</tr></table>";
 
-} else if ($act == 'makepix_l' && has_capability('mod/reader:createcoversetsbypublisherlevel', $contextmodule)) {
+} else if ($act == 'makepix_l' && has_capability('mod/reader:managequizzes', $contextmodule)) {
     $allbooks = $DB->get_records_sql('SELECT * FROM {reader_books}  where hidden = 0 ORDER BY difficulty, publisher, level, name');
     $prehtml = "<img width='110'  height='160'  border='0' src='{$CFG->wwwroot}/file.php/reader/images/";
     $posthtml = '/> ';
@@ -2790,7 +2790,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
     }
     echo "</tr></table>";
 
-} else if ($act == 'awardextrapoints' && has_capability('mod/reader:awardextrapoints', $contextmodule)) {
+} else if ($act == 'awardextrapoints' && has_capability('mod/reader:manageattempts', $contextmodule)) {
     $table = new html_table();
 
     $groups = groups_get_all_groups($course->id);
@@ -2841,7 +2841,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
         echo "<center><h2><font color=\"red\">".get_string('pleasespecifyyourclassgroup', 'reader')."</font></h2></center>";
     }
 
-} else if ($act == 'checksuspiciousactivity' && has_capability('mod/reader:checklogsforsuspiciousactivity', $contextmodule)) {
+} else if ($act == 'checksuspiciousactivity' && has_capability('mod/reader:manageusers', $contextmodule)) {
 
     $table = new html_table();
 
@@ -3066,7 +3066,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
                     } else {
                         $logstatus[2] = '<font color="red">cheated</font>';
                     }
-                    if (! has_capability('mod/reader:checklogsforsuspiciousactivity', $contextmodule)) {
+                    if (! has_capability('mod/reader:manageusers', $contextmodule)) {
                         $cheatedstring = '';
                     }
 
@@ -3101,7 +3101,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
         //print_r($quizzes);
     }
 
-} else if ($act == 'reportbyclass' && has_capability('mod/reader:readerviewreports', $contextmodule)) {
+} else if ($act == 'reportbyclass' && has_capability('mod/reader:viewreports', $contextmodule)) {
     $groups = groups_get_all_groups($course->id);
 
     $table = new html_table();
@@ -3260,7 +3260,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
     $pagingbar = new paging_bar($totalcount, $page, $perpage, "admin.php?a=admin&id={$id}&act={$act}&sort={$sort}&orderby={$orderby}&gid={$gid}&fromtime={$fromtime}&amp;");
     echo $OUTPUT->render($pagingbar);
 
-} else if ($act == 'setgoal' && has_capability('mod/reader:setgoal', $contextmodule)) {
+} else if ($act == 'setgoal' && has_capability('mod/reader:manageusers', $contextmodule)) {
 
     /**
      * reader_setgoal_form
@@ -3332,7 +3332,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
     $mform = new reader_setgoal_form('admin.php?a='.$a.'&id='.$id.'&act='.$act);
     $mform->display();
 
-} else if ($act == 'forcedtimedelay' && has_capability('mod/reader:forcedtimedelay', $contextmodule)) {
+} else if ($act == 'forcedtimedelay' && has_capability('mod/reader:manageusers', $contextmodule)) {
 
     /**
      * reader_forcedtimedelay_form
@@ -3398,7 +3398,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
     $mform = new reader_forcedtimedelay_form('admin.php?a='.$a.'&id='.$id.'&act='.$act);
     $mform->display();
 
-} else if ($act == 'bookratingslevel' && has_capability('mod/reader:readerviewreports', $contextmodule)) {
+} else if ($act == 'bookratingslevel' && has_capability('mod/reader:viewreports', $contextmodule)) {
     $table = new html_table();
 
     echo '<form action="admin.php?a='.$a.'&id='.$id.'&act='.$act.'" method="post">';
@@ -3526,11 +3526,11 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
         }
     }
 
-} else if ($act == 'setbookinstances' && has_capability('mod/reader:selectquizzestomakeavailabletostudents', $contextmodule)) {
+} else if ($act == 'setbookinstances' && has_capability('mod/reader:managequizzes', $contextmodule)) {
 
         reader_setbookinstances($id, $reader);
 
-} else if ($act == 'viewlogsuspiciousactivity' && has_capability('mod/reader:readerviewreports', $contextmodule)) {
+} else if ($act == 'viewlogsuspiciousactivity' && has_capability('mod/reader:viewreports', $contextmodule)) {
     $table = new html_table();
 
     $titles = array('Image'=>'', 'By Username'=>'byusername', 'Student 1'=>'student1', 'Student 2'=>'student2', 'Quiz'=>'quiz', 'Status'=>'status', 'Date'=>'date');
@@ -3621,7 +3621,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
     $pagingbar = new paging_bar($totalcount, $page, $perpage, "admin.php?a=admin&id={$id}&act={$act}&sort={$sort}&orderby={$orderby}&gid={$gid}&amp;");
     echo $OUTPUT->render($pagingbar);
 
-} else if ($act == 'exportstudentrecords' && has_capability('mod/reader:userdbmanagement', $contextmodule)) {
+} else if ($act == 'exportstudentrecords' && has_capability('mod/reader:manageusers', $contextmodule)) {
 
     $users = array();
     $books = array();
@@ -3694,7 +3694,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
     }
     die;
 
-} else if ($act == 'importstudentrecord' && has_capability('mod/reader:userdbmanagement', $contextmodule)) {
+} else if ($act == 'importstudentrecord' && has_capability('mod/reader:manageusers', $contextmodule)) {
 
     /**
      * mod_reader_importstudentrecord_form
@@ -3876,7 +3876,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
         $mform->display();
     }
 
-} else if ($act == 'changenumberofsectionsinquiz' && has_capability('mod/reader:manage', $contextmodule)) {
+} else if ($act == 'changenumberofsectionsinquiz' && has_capability('mod/reader:addinstance', $contextmodule)) {
     if ($numberofsections) {
         echo "<h2>Done</h2>";
     }
@@ -3914,7 +3914,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
     $mform = new mod_reader_changenumberofsectionsinquiz_form("admin.php?a=admin&id={$id}&act=changenumberofsectionsinquiz");
     $mform->display();
 
-} else if ($act == 'assignpointsbookshavenoquizzes' && has_capability('mod/reader:changestudentslevelsandpromote', $contextmodule)) {
+} else if ($act == 'assignpointsbookshavenoquizzes' && has_capability('mod/reader:manageusers', $contextmodule)) {
     $table = new html_table();
 
     $titles = array('<input type="button" value="Select all" onclick="checkall();" />'=>'', 'Image'=>'', 'Username'=>'username', 'Fullname<br />Click to view screen'=>'fullname', 'Current level'=>'currentlevel', 'Total words<br /> this term'=>'totalwordsthisterm', 'Total words<br /> all terms'=>'totalwordsallterms');
@@ -3967,7 +3967,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
             }
 
             if ($readerattempt = reader_get_student_attempts($coursestudent->id, $reader)) {
-                if (has_capability('mod/reader:viewstudentreaderscreens', $contextmodule)) {
+                if (has_capability('mod/reader:manageattempts', $contextmodule)) {
                     $link = reader_fullname_link_viewasstudent($coursestudent, $id, $excel);
                 } else {
                     $link = reader_fullname_link($coursestudent, $course->id, $excel);
@@ -3983,7 +3983,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
                     $data['totalwordsallterms']
                 ));
             } else {
-                if (has_capability('mod/reader:viewstudentreaderscreens', $contextmodule)) {
+                if (has_capability('mod/reader:manageattempts', $contextmodule)) {
                     $link = reader_fullname_link_viewasstudent($coursestudent, $id, $excel);
                 } else {
                     $link = reader_fullname_link($coursestudent, $course->id, $excel);
@@ -4034,7 +4034,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:addcoursequizzestoreaderquiz
     echo $OUTPUT->render($pagingbar);
 
 
-} else if ($act == 'adjustscores' && has_capability('mod/reader:manage', $contextmodule)) {
+} else if ($act == 'adjustscores' && has_capability('mod/reader:addinstance', $contextmodule)) {
 
     $table = new html_table();
 

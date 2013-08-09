@@ -66,24 +66,18 @@ function xmldb_reader_upgrade($oldversion) {
         upgrade_mod_savepoint(true, "$newversion", 'reader');
     }
 
-    $newversion = 2013033102;
-    if ($result && $oldversion < $newversion) {
-        update_capabilities('mod/reader');
-        upgrade_mod_savepoint(true, "$newversion", 'reader');
-    }
-
     $newversion = 2013033104;
     if ($result && $oldversion < $newversion) {
 
         // rename tables "reader_publisher" and "reader_individual_books"
         $tables = array('reader_publisher'=>'reader_books', 'reader_individual_books'=>'reader_book_instances');
         foreach ($tables as $oldname => $newname) {
-            $oldtable = new xmldb_table($oldname);
+            $oldname = new xmldb_table($oldname);
             if ($dbman->table_exists($oldname)) {
                 if ($dbman->table_exists($newname)) {
-                    $dbman->drop_table($oldtable);
+                    $dbman->drop_table($oldname);
                 } else {
-                    $dbman->rename_table($oldtable, $newname);
+                    $dbman->rename_table($oldname, $newname);
                 }
             }
         }
@@ -549,5 +543,18 @@ function xmldb_reader_upgrade($oldversion) {
         // reader savepoint reached
         upgrade_mod_savepoint(true, "$newversion", 'reader');
     }
+
+    $newversion = 2013080100;
+    if ($result && $oldversion < $newversion) {
+        update_capabilities('mod/reader');
+        upgrade_mod_savepoint(true, "$newversion", 'reader');
+    }
+
+    //$newversion = 2013xxxx00;
+    //if ($result && $oldversion < $newversion) {
+    //    xmldb_reader_merge_tables($dbman, 'reader_noquiz', 'reader_books');
+    //    xmldb_reader_merge_tables($dbman, 'reader_deleted_attempts', 'reader_attempts');
+    //}
+
     return $result;
 }

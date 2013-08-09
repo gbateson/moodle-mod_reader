@@ -65,7 +65,7 @@ foreach ($readers as $reader) {
 }
 
 // get total number of attempts, users and details for these readers
-if (has_capability('mod/reader:readerviewreports', $PAGE->context)) {
+if (has_capability('mod/reader:viewreports', $PAGE->context)) {
     $show_aggregates = true;
     $single_user = false;
 } else {
@@ -152,7 +152,7 @@ foreach ($readers as $reader) {
         $text = html_writer::tag('a', $aggregates[$reader->id]->averagescore, $params);
         $row->cells[] = new html_table_cell($text);
 
-        $text = get_string('reader:readerviewreports', 'reader', $aggregates[$reader->id]->usercount);
+        $text = get_string('reader:viewreports', 'reader', $aggregates[$reader->id]->usercount);
         $text = html_writer::tag('a', $text, $params);
         $row->cells[] = new html_table_cell($text);
     }

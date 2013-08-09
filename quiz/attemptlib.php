@@ -239,7 +239,7 @@ class reader {
      */
     public function is_preview_user() {
         if (is_null($this->ispreviewuser)) {
-            $this->ispreviewuser = has_capability('mod/reader:previewreaders', $this->context);
+            $this->ispreviewuser = has_capability('mod/reader:viewbooks', $this->context);
         }
         return $this->ispreviewuser;
     }

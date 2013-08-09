@@ -2583,6 +2583,52 @@ function xmldb_reader_fix_book_times() {
 }
 
 /**
+ * xmldb_reader_merge_tables
+ *
+ * @param object $dbman (passed by reference)
+ * @param string $oldname
+ * @param string $newname
+ * @todo Finish documenting this function
+ */
+function xmldb_reader_merge_tables(&$dbman, $oldname, $newname) {
+    $oldtable = new xmldb_table($oldname);
+    $newtable = new xmldb_table($newname);
+    if ($dbman->table_exists($oldtable) && $dbman->table_exists($newtable)) {
+
+        if ($i_max = $DB->count_records_sql('SELECT COUNT(*) FROM {'.$oldname.'}')) {
+            $rs = $DB->get_recordset_sql('SELECT * FROM {'.$oldname.'}');
+        } else {
+            $rs = false;
+        }
+
+        if ($rs) {
+            $i = 0; // record counter
+            $bar = new progress_bar('readermergetable'.$oldname, 500, true);
+            //$a = (object)array('new' => $newname, 'old' => $oldname);
+            //$strupdating = get_string('mergingtables', 'reader', $a);
+            $strupdating = "Merging tables: $oldname - $newname";
+
+            // loop through answer records
+            foreach ($rs as $record) {
+                $i++; // increment record count
+
+                unset($record->id);
+                if (! $record->id = $DB->insert_record($newname, $record)) {
+                    throw new moodle_exception(get_string('cannotinsertrecord', 'error', $newname));
+                }
+
+                // update progress bar
+                $bar->update($i, $i_max, $strupdating.": ($i/$i_max)");
+            }
+            $rs->close();
+        }
+
+        // now we can remove the old table
+        $dbman->drop_table($oldtable);
+    }
+}
+
+/**
  * xmldb_reader_box_start
  *
  * @param string $msg

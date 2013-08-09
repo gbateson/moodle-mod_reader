@@ -110,7 +110,7 @@ echo '<script type="text/javascript" src="js/ajax.js"></script>';
 
 $alreadyansweredbooksid = array();
 
-if (has_capability('mod/reader:manage', $contextmodule)) {
+if (has_capability('mod/reader:addinstance', $contextmodule)) {
     require_once ('tabs.php');
 } else {
 /// Check subnet access
@@ -546,7 +546,7 @@ if (isset($_SESSION['SESSION']->reader_changetostudentview)) {
     }
 }
 
-if ($showform && has_capability('mod/reader:attemptreaders', $contextmodule)) {
+if ($showform && has_capability('mod/reader:viewbooks', $contextmodule)) {
 
     echo '<h3>'.get_string('searchforthebookthatyouwant', 'reader').':</h3>';
     echo reader_search_books($id, $reader, $USER->id, true, 'takequiz');

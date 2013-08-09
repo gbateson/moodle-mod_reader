@@ -60,14 +60,6 @@ class mod_reader_mod_form extends moodleform_mod {
 
         $mform    = &$this->_form;
 
-        $context = reader_get_context(CONTEXT_COURSE, $COURSE->id);
-        if (has_capability('mod/reader:cancreateinstance', $context) || $readercfg->editingteacherrole == 0) {
-
-        } else {
-            notify(get_string('nothavepermissioncreateinstance', 'reader'));
-            die;
-        }
-
 //-------------------------------------------------------------------------------
     /// Adding the "general" fieldset, where all the common settings are showed
         $mform->addElement('header', 'general', get_string('general', 'form'));

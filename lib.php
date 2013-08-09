@@ -2805,20 +2805,20 @@ function reader_can_accessallgroups($userid) {
 }
 
 /**
- * reader_can_manage
+ * reader_can_addinstance
  *
  * @param xxx $cmid
  * @param xxx $userid
  * @return xxx
  * @todo Finish documenting this function
  */
-function reader_can_manage($cmid, $userid) {
-    static $can_manage = null;
-    if ($can_manage===null) {
+function reader_can_addinstance($cmid, $userid) {
+    static $can_addinstance = null;
+    if ($can_addinstance===null) {
         $context = reader_get_context(CONTEXT_MODULE, $cmid);
-        $can_manage = has_capability('mod/reader:manage', $context, $userid);
+        $can_addinstance = has_capability('mod/reader:addinstance', $context, $userid);
     }
-    return $can_manage;
+    return $can_addinstance;
 }
 
 /**
@@ -2833,7 +2833,7 @@ function reader_can_attemptreader($cmid, $userid) {
     static $can_attemptreader = null;
     if ($can_attemptreader===null) {
         $context = reader_get_context(CONTEXT_MODULE, $cmid);
-        $can_attemptreader = has_capability('mod/reader:attemptreaders', $context, $userid);
+        $can_attemptreader = has_capability('mod/reader:viewbooks', $context, $userid);
     }
     return $can_attemptreader;
 }
@@ -2855,7 +2855,7 @@ function reader_available_sql($cmid, $reader, $userid, $noquiz=false) {
     }
 
     // a teacher / admin can always access all the books
-    if (reader_can_manage($cmid, $userid)) {
+    if (reader_can_addinstance($cmid, $userid)) {
         return array('{reader_books}', 'hidden = ?', array(0)); // $from, $where, $params
     }
 
@@ -3899,7 +3899,7 @@ function reader_get_new_uniqueid($contextid, $quizid, $defaultbehavior='deferred
 function reader_extend_navigation(navigation_node $readernode, stdclass $course, stdclass $module, stdclass $cm) {
     global $CFG, $DB, $USER;
 
-    if (reader_can_manage($cm->id, $USER->id)) {
+    if (reader_can_addinstance($cm->id, $USER->id)) {
 
         //////////////////////////
         // Reports sub-menu
@@ -3951,8 +3951,8 @@ function reader_extend_settings_navigation(settings_navigation $settingsnav, nav
     global $CFG, $PAGE, $USER;
 
     // create our new nodes
-    if (reader_can_manage($PAGE->cm->id, $USER->id)) {
-        //require_once($CFG->dirroot.'/mod/reader/admin/lib.php');
+    if (reader_can_addinstance($PAGE->cm->id, $USER->id)) {
+        require_once($CFG->dirroot.'/mod/reader/admin/download/downloader.php');
 
         $nodes = array();
 

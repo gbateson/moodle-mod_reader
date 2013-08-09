@@ -27,45 +27,43 @@
 
 /** Include required files */
 require_once('../../config.php');
-require_once($CFG->dirroot.'/mod/reader/lib.php');
+require_once($CFG->dirroot.'/mod/reader/locallib.php');
 
-$id = optional_param('id', 0, PARAM_INT); // cm id
-$q  = optional_param('q',  0, PARAM_INT); // quiz id
-$b  = optional_param('b',  0, PARAM_INT); // reader_books id
+$id   = optional_param('id',    0, PARAM_INT);   // course module id
+$r    = optional_param('r',     0, PARAM_INT);   // reader id
+$mode = optional_param('mode', '', PARAM_ALPHA); // report mode
 
-$cm = get_coursemodule_from_id('reader', $id, 0, false, MUST_EXIST);
-$course = $DB->get_record('course', array('id'=>$cm->course), '*', MUST_EXIST);
-$reader = $DB->get_record('reader', array('id'=>$cm->instance), '*', MUST_EXIST);
+if ($id) {
+    $cm = get_coursemodule_from_id('reader', $id, 0, false, MUST_EXIST);
+    $course = $DB->get_record('course', array('id' => $cm->course), '*', MUST_EXIST);
+    $reader = $DB->get_record('reader', array('id' => $cm->instance), '*', MUST_EXIST);
+    $r = $reader->id;
+} else {
+    $reader = $DB->get_record('reader', array('id' => $r), '*', MUST_EXIST);
+    $cm = get_coursemodule_from_instance('reader', $reader->id, 0, false, MUST_EXIST);
+    $course = $DB->get_record('course', array('id' => $cm->course), '*', MUST_EXIST);
+    $id = $cm->id;
+}
+
 require_course_login($course, true, $cm);
-
-$PAGE->set_url('/mod/reader/report.php', array('id' => $id, 'b' => $b, 'q' => $q));
+$PAGE->set_url('/mod/reader/report.php', array('id' => $id, 'mode' => $mode));
 
 $title = get_string('report');
 $PAGE->set_title($title);
 $PAGE->set_heading($title);
 
-if ($q) {
-    $book = $DB->get_record('reader_books', array('quizid' => $q));
-} else if ($b) {
-    $book = $DB->get_record('reader_books', array('id' => $b));
-} else {
-    $book = false;
+// load the appropriate renderer class for this report $mode
+require_once($CFG->dirroot.'/mod/reader/report/'.$mode.'/renderer.php');
+
+// create the renderer for this report
+$output = $PAGE->get_renderer('mod_reader', 'report_'.$mode);
+
+////////////////////////////////////////////////////////////////////////////////
+// Output starts here                                                         //
+////////////////////////////////////////////////////////////////////////////////
+
+$reader = mod_reader::create($reader, $cm, $course);
+if ($reader->can_viewreports()) {
+    echo $output->render_report($reader);
 }
 
-if ($book) {
-    if ($quizid = $book->quizid) {
-        if ($cm = get_coursemodule_from_instance('quiz', $quizid)) {
-            if ($attempts = $DB->get_records('reader_attempts', array('quizid' => $quizid))) {
-                foreach ($attempts as $attempt) {
-                    reader_copy_to_quizattempt($attempt);
-                }
-                $report = new moodle_url('/mod/quiz/report.php', array('id' => $cm->id, 'mode' => 'responses'));
-                redirect($report);
-            }
-        }
-    }
-}
-
-echo $OUTPUT->header();
-echo '<h1>No attempts found</h1>';
-echo $OUTPUT->footer();

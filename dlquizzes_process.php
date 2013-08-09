@@ -94,7 +94,7 @@ $QTYPES['match']       = new back_match_qtype();
 $QTYPES['description'] = new back_description_qtype();
 
 $contextmodule = reader_get_context(CONTEXT_MODULE, $cm->id);
-require_capability('mod/reader:manage', $contextmodule);
+require_capability('mod/reader:addinstance', $contextmodule);
 
 $readercfg = get_config('reader');
 $keepoldquizzes = get_config('reader', 'keepoldquizzes');

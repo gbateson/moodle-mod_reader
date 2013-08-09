@@ -29,7 +29,7 @@ $readercfg = get_config('reader');
 
 $context = get_context_instance(CONTEXT_COURSE, $course->id);
 $contextmodule = get_context_instance(CONTEXT_MODULE, $cm->id);
-if (!has_capability('mod/reader:manage', $contextmodule)) {
+if (!has_capability('mod/reader:addinstance', $contextmodule)) {
     error('You should be Admin');
 }
 

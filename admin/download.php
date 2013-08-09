@@ -118,8 +118,13 @@ if ($count = $downloader->has_available_items()) {
     echo $output->box_end();
 
 } else if (get_config('reader', 'serverlink') && get_config('reader', 'serverlogin')) {
+
+    // no items to download - probably internet connection has been lost
     echo $output->heading(get_string('nodownloaditems', 'reader'), '3');
+
 } else {
+
+    // no items to download - probably because remote settings have not been set up
     echo $output->box_start('generalbox', 'notice');
     $link = new moodle_url('/admin/settings.php', array('section' => 'modsettingreader'));
     $link = html_writer::link($link, get_string('settings'));

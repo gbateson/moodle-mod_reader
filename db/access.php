@@ -27,260 +27,84 @@
 
 $capabilities = array(
 
-    // Ability to add a new reader to the course.
     'mod/reader:addinstance' => array(
-        'riskbitmask'  => RISK_XSS,
         'captype'      => 'write',
         'contextlevel' => CONTEXT_COURSE,
         'archetypes'   => array(
             'editingteacher' => CAP_ALLOW,
-            'manager'  => CAP_ALLOW
+            'manager'        => CAP_ALLOW
         ),
         'clonepermissionsfrom' => 'moodle/course:manageactivities'
     ),
 
-    'mod/reader:attemptreaders' => array(
-        'riskbitmask' => RISK_PERSONAL,
-        'captype' => 'write',
+    'mod/reader:manageattempts' => array(
+        'captype'      => 'write',
         'contextlevel' => CONTEXT_MODULE,
-        'archetypes' => array(
-            'student' => CAP_ALLOW,
-            'teacher' => CAP_ALLOW,
+        'riskbitmask'  => RISK_DATALOSS,
+        'archetypes'   => array(
             'editingteacher' => CAP_ALLOW,
-            'manager' => CAP_ALLOW
+            'manager'        => CAP_ALLOW
         )
     ),
 
-    'mod/reader:deletereaderattempts' => array(
-        'riskbitmask' => RISK_PERSONAL,
-        'captype' => 'write',
+    'mod/reader:managebooks' => array(
+        'captype'      => 'write',
         'contextlevel' => CONTEXT_MODULE,
-        'archetypes' => array(
-            'manager' => CAP_ALLOW
-        )
-    ),
-
-    'mod/reader:ignorestimelimitonreaders' => array(
-        'riskbitmask' => RISK_PERSONAL,
-        'captype' => 'write',
-        'contextlevel' => CONTEXT_MODULE,
-        'archetypes' => array(
-            'teacher' => CAP_ALLOW,
+        'riskbitmask'  => RISK_DATALOSS,
+        'archetypes'   => array(
             'editingteacher' => CAP_ALLOW,
-            'manager' => CAP_ALLOW
+            'manager'        => CAP_ALLOW
         )
     ),
 
-    'mod/reader:managereaders' => array(
-        'riskbitmask' => RISK_PERSONAL,
-        'captype' => 'write',
+    'mod/reader:managequizzes' => array(
+        'captype'      => 'write',
+        'riskbitmask'  => RISK_DATALOSS,
         'contextlevel' => CONTEXT_MODULE,
-        'archetypes' => array(
+        'archetypes'   => array(
+            'manager'        => CAP_ALLOW
+        )
+    ),
+
+    'mod/reader:manageremotesites' => array(
+        'captype'      => 'write',
+        'contextlevel' => CONTEXT_SYSTEM,
+        'archetypes'   => array(
+            'manager'        => CAP_ALLOW
+        )
+    ),
+
+    'mod/reader:manageusers' => array(
+        'captype'      => 'write',
+        'contextlevel' => CONTEXT_MODULE,
+        'riskbitmask'  => RISK_PERSONAL,
+        'archetypes'   => array(
+            'teacher'        => CAP_ALLOW,
             'editingteacher' => CAP_ALLOW,
-            'manager' => CAP_ALLOW
+            'manager'        => CAP_ALLOW
         )
     ),
 
-    'mod/reader:previewreaders' => array(
-        'riskbitmask' => RISK_PERSONAL,
-        'captype' => 'write',
+    'mod/reader:viewbooks' => array(
+        'captype'      => 'read',
         'contextlevel' => CONTEXT_MODULE,
-        'archetypes' => array(
-            'teacher' => CAP_ALLOW,
+        'archetypes'   => array(
+            'student'        => CAP_ALLOW,
+            'teacher'        => CAP_ALLOW,
             'editingteacher' => CAP_ALLOW,
-            'manager' => CAP_ALLOW
+            'manager'        => CAP_ALLOW
         )
     ),
 
-    'mod/reader:viewstudentreaderscreens' => array(
-        'riskbitmask' => RISK_PERSONAL,
-        'captype' => 'write',
+
+    'mod/reader:viewreports' => array(
+        'captype'      => 'read',
         'contextlevel' => CONTEXT_MODULE,
-        'archetypes' => array(
+        'riskbitmask'  => RISK_PERSONAL,
+        'archetypes'   => array(
+            'teacher'        => CAP_ALLOW,
             'editingteacher' => CAP_ALLOW,
-            'manager' => CAP_ALLOW
+            'manager'        => CAP_ALLOW
         )
     ),
-
-    'mod/reader:readerviewreports' => array(
-        'riskbitmask' => RISK_PERSONAL,
-        'captype' => 'write',
-        'contextlevel' => CONTEXT_MODULE,
-        'archetypes' => array(
-            'teacher' => CAP_ALLOW,
-            'editingteacher' => CAP_ALLOW,
-            'manager' => CAP_ALLOW
-        )
-    ),
-
-    'mod/reader:viewanddeleteattempts' => array(
-        'riskbitmask' => RISK_PERSONAL,
-        'captype' => 'write',
-        'contextlevel' => CONTEXT_MODULE,
-        'archetypes' => array(
-            'editingteacher' => CAP_ALLOW,
-            'manager' => CAP_ALLOW
-        )
-    ),
-
-    'mod/reader:changestudentslevelsandpromote' => array(
-        'riskbitmask' => RISK_PERSONAL,
-        'captype' => 'write',
-        'contextlevel' => CONTEXT_MODULE,
-        'archetypes' => array(
-            'teacher' => CAP_ALLOW,
-            'editingteacher' => CAP_ALLOW,
-            'manager' => CAP_ALLOW
-        )
-    ),
-
-    'mod/reader:sendmessage' => array(
-        'riskbitmask' => RISK_PERSONAL,
-        'captype' => 'write',
-        'contextlevel' => CONTEXT_MODULE,
-        'archetypes' => array(
-            'editingteacher' => CAP_ALLOW,
-            'manager' => CAP_ALLOW
-        )
-    ),
-
-    'mod/reader:awardextrapoints' => array(
-        'riskbitmask' => RISK_PERSONAL,
-        'captype' => 'write',
-        'contextlevel' => CONTEXT_MODULE,
-        'archetypes' => array(
-            'teacher' => CAP_ALLOW,
-            'editingteacher' => CAP_ALLOW,
-            'manager' => CAP_ALLOW
-        )
-    ),
-
-    'mod/reader:addcoursequizzestoreaderquizzes' => array(
-        'riskbitmask' => RISK_PERSONAL,
-        'captype' => 'write',
-        'contextlevel' => CONTEXT_MODULE,
-        'archetypes' => array(
-            'editingteacher' => CAP_ALLOW,
-            'manager' => CAP_ALLOW
-        )
-    ),
-
-    'mod/reader:downloadquizzesfromthereaderquizdatabase' => array(
-        'riskbitmask' => RISK_PERSONAL,
-        'captype' => 'write',
-        'contextlevel' => CONTEXT_MODULE,
-        'archetypes' => array(
-            'coursecreator' => CAP_ALLOW,
-            'manager' => CAP_ALLOW
-        )
-    ),
-
-    'mod/reader:setgoal' => array(
-        'riskbitmask' => RISK_PERSONAL,
-        'captype' => 'write',
-        'contextlevel' => CONTEXT_MODULE,
-        'archetypes' => array(
-            'editingteacher' => CAP_ALLOW,
-            'manager' => CAP_ALLOW
-        )
-    ),
-
-    'mod/reader:forcedtimedelay' => array(
-        'riskbitmask' => RISK_PERSONAL,
-        'captype' => 'write',
-        'contextlevel' => CONTEXT_MODULE,
-        'archetypes' => array(
-            'editingteacher' => CAP_ALLOW,
-            'manager' => CAP_ALLOW
-        )
-    ),
-
-    'mod/reader:deletequizzes' => array(
-        'riskbitmask' => RISK_PERSONAL,
-        'captype' => 'write',
-        'contextlevel' => CONTEXT_MODULE,
-        'archetypes' => array(
-            'coursecreator' => CAP_ALLOW,
-            'manager' => CAP_ALLOW
-        )
-    ),
-
-    'mod/reader:checklogsforsuspiciousactivity' => array(
-        'riskbitmask' => RISK_PERSONAL,
-        'captype' => 'write',
-        'contextlevel' => CONTEXT_MODULE,
-        'archetypes' => array(
-            'editingteacher' => CAP_ALLOW,
-            'manager' => CAP_ALLOW
-        )
-    ),
-
-    'mod/reader:selectquizzestomakeavailabletostudents' => array(
-        'riskbitmask' => RISK_PERSONAL,
-        'captype' => 'write',
-        'contextlevel' => CONTEXT_MODULE,
-        'archetypes' => array(
-            'coursecreator' => CAP_ALLOW,
-            'manager' => CAP_ALLOW
-        )
-    ),
-
-    'mod/reader:changereadinglevelorlengthfactor' => array(
-        'riskbitmask' => RISK_PERSONAL,
-        'captype' => 'write',
-        'contextlevel' => CONTEXT_MODULE,
-        'archetypes' => array(
-            'coursecreator' => CAP_ALLOW,
-            'manager' => CAP_ALLOW
-        )
-    ),
-
-    'mod/reader:createcoversetsbypublisherlevel' => array(
-        'riskbitmask' => RISK_PERSONAL,
-        'captype' => 'write',
-        'contextlevel' => CONTEXT_MODULE,
-        'archetypes' => array(
-            'coursecreator' => CAP_ALLOW,
-            'manager' => CAP_ALLOW
-        )
-    ),
-
-    'mod/reader:createcoversetsbylevelpublisher' => array(
-        'riskbitmask' => RISK_PERSONAL,
-        'captype' => 'write',
-        'contextlevel' => CONTEXT_MODULE,
-        'archetypes' => array(
-            'coursecreator' => CAP_ALLOW,
-            'manager' => CAP_ALLOW
-        )
-    ),
-
-    'mod/reader:userdbmanagement' => array(//New by Tom 4 Jan 2011
-        'riskbitmask' => RISK_PERSONAL,
-        'captype' => 'write',
-        'contextlevel' => CONTEXT_MODULE,
-        'archetypes' => array(
-            'manager' => CAP_ALLOW
-        )
-    ),
-
-    'mod/reader:cancreateinstance' => array(
-        'riskbitmask' => RISK_PERSONAL,
-        'captype' => 'write',
-        'contextlevel' => CONTEXT_MODULE,
-        'archetypes' => array(
-            'editingteacher' => CAP_ALLOW,
-            'manager' => CAP_ALLOW
-        )
-    ),
-
-    'mod/reader:manage' => array(
-        'riskbitmask' => RISK_PERSONAL,
-        'captype' => 'write',
-        'contextlevel' => CONTEXT_MODULE,
-        'archetypes' => array(
-            'editingteacher' => CAP_ALLOW,
-            'manager' => CAP_ALLOW
-        )
-    )
 );

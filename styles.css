@@ -25,8 +25,10 @@
  * @since      Moodle 2.0
  */
 
+/** reader view **/
 #page-mod-reader-view .readersearchform tr.advanced { display: none; }
 
+/** reader download **/
 #page-mod-reader-admin-download div.generalbox { margin-top: 15px; margin-bottom: 15px; }
 
 #page-mod-reader-admin-download ul.remotesites,
@@ -49,3 +51,10 @@
 #page-mod-reader-admin-download ul.items { background-color: #eeeeee; border: 2px solid #dddddd; }
 
 #page-mod-reader-admin-download span.itemname span.matchedtext { font-weight: bold; font-size: 1.2em; text-decoration: underline; background-color: #ffffcc; }
+
+/** reader report **/
+#page-mod-reader-report table.flexible th { white-space: normal; }
+#page-mod-reader-report table.flexible th span.nowrap { white-space: nowrap; }
+#page-mod-reader-report table.flexible td span.passed { color: #00CC00; }
+#page-mod-reader-report table.flexible td span.failed { color: #CC0000; }
+#page-mod-reader-report table.flexible td span.cheated { color: #0000CC; }
