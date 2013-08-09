@@ -68,9 +68,9 @@ class reader_report_table extends table_sql {
      *
      * @param xxx $tablecolumns
      * @param xxx $baseurl
-     * @param xxx $usercount (optional, default value = 10)
+     * @param xxx $rowcount (optional, default value = 10)
      */
-    function setup_report_table($tablecolumns, $baseurl, $usercount=10)  {
+    function setup_report_table($tablecolumns, $baseurl)  {
 
         // generate headers (using "header_xxx()" methods below)
         $tableheaders = array();
@@ -85,7 +85,7 @@ class reader_report_table extends table_sql {
         if ($this->has_column('fullname')) {
             $this->pageable(true);
             $this->sortable(true);
-            $this->initialbars($usercount > 20);
+            $this->initialbars(true);
 
             // this information is only printed once per user
             $this->column_suppress('fullname');
@@ -101,6 +101,10 @@ class reader_report_table extends table_sql {
             // you can set specific columns to be unsortable:
             // $this->no_sorting('columnname');
         }
+
+        // add download buttons at bottom of page
+        $this->is_downloadable(true);
+        $this->show_download_buttons_at(array(TABLE_P_BOTTOM));
 
         // basically all columns are centered
         $this->column_style_all('text-align', 'center');

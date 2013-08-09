@@ -120,6 +120,7 @@ class mod_reader_report_renderer extends mod_reader_renderer {
         // extract attempt records
         $table->query_db($table->get_page_size());
 
+        // fix suppressed columns (those in which duplicate values for the same user are not repeated)
         $this->fix_suppressed_columns_in_rawdata($table);
 
         // display the table
@@ -280,8 +281,6 @@ class mod_reader_report_renderer extends mod_reader_renderer {
     /**
      * fix_suppressed_columns_in_rawdata
      *
-     * this function adjusts the grade values
-     *
      * @param xxx $table (passed by reference)
      * @return xxx
      */
@@ -301,8 +300,6 @@ class mod_reader_report_renderer extends mod_reader_renderer {
 
     /**
      * fix_suppressed_column_in_rawdata
-     *
-     * this function adjusts the grade values
      *
      * @param xxx $table (passed by reference)
      * @return xxx

@@ -66,14 +66,15 @@ class mod_reader_report_userdetailed_renderer extends mod_reader_report_renderer
     function count_sql($userid=0, $attemptid=0) {
 
         // get users who can access this Reader activity
-        list($where, $params) = $this->select_sql_users();
+        list($usersql, $userparams) = $this->select_sql_users();
 
         $select = 'COUNT(*)';
-        $from   = '{user} u';
-        $where  = "id $where";
+        $from   = '{reader_attempts} ra LEFT JOIN {user} u ON ra.userid = u.id';
+        $where  = "ra.reader = :reader AND ra.timefinish > :time AND ra.userid $usersql";
+        $params = array('reader' => $this->reader->id, 'time' => $this->reader->ignoredate);
 
         $userfields = '';
-        return $this->add_filter_params($userfields, $userid, $attemptid, $select, $from, $where, $params);
+        return $this->add_filter_params($userfields, $userid, $attemptid, $select, $from, $where, $params + $userparams);
     }
 
     /**
