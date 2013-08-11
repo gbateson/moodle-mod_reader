@@ -43,7 +43,7 @@ class reader_report_table extends table_sql {
     /** @var mod_reader_report_renderer for the current page */
     protected $output;
 
-    /** @var string time format used for the "timemodified" column */
+    /** @var name of lang pack string that holds format for "timemodified" column */
     protected $timeformat = 'strftimerecentfull';
 
     /** @var string localized format used for the "timemodified" column */
@@ -92,10 +92,9 @@ class reader_report_table extends table_sql {
             $this->column_suppress('picture');
             $this->column_suppress('username');
             $this->column_suppress('userlevel');
-            $this->column_suppress('grade');
 
-            // special css class for "picture" column
-            $this->column_class('picture', 'picture');
+            // disable sorting on "selected" field
+            $this->no_sorting('selected');
         } else {
             $this->pageable(false);
             $this->sortable(false);
@@ -145,7 +144,8 @@ class reader_report_table extends table_sql {
         }
 
         // start form
-        $url = $this->output->reader->report_url($this->output->mode);
+        $url = $this->output->reader->report_url($this->output->mode, null, 281);
+
         $params = array('id'=>'attemptsform', 'method'=>'post', 'action'=>$url->out_omit_querystring());
         echo html_writer::start_tag('form', $params);
 
@@ -337,6 +337,24 @@ class reader_report_table extends table_sql {
     }
 
     /**
+     * header_averageduration
+     *
+     * @return xxx
+     */
+    function header_averageduration()  {
+        return get_string('averageduration', 'reader');
+    }
+
+    /**
+     * header_averagegrade
+     *
+     * @return xxx
+     */
+    function header_averagegrade()  {
+        return get_string('averagegrade', 'reader');
+    }
+
+    /**
      * header_totalwords
      *
      * @return xxx
@@ -440,6 +458,105 @@ class reader_report_table extends table_sql {
     }
 
     /**
+     * header_groupname
+     *
+     * @return string
+     */
+    function header_groupname() {
+        return get_string('group');
+    }
+
+    /**
+     * header_countactive
+     *
+     * @return string
+     */
+    function header_countactive() {
+        return get_string('countactive', 'reader');
+    }
+
+    /**
+     * header_countinactive
+     *
+     * @return string
+     */
+    function header_countinactive() {
+        return get_string('countinactive', 'reader');
+    }
+
+    /**
+     * header_percentactive
+     *
+     * @return string
+     */
+    function header_percentactive() {
+        return get_string('percentactive', 'reader');
+    }
+
+    /**
+     * header_percentinactive
+     *
+     * @return string
+     */
+    function header_percentinactive() {
+        return get_string('percentinactive', 'reader');
+    }
+
+    /**
+     * header_averagetaken
+     *
+     * @return string
+     */
+    function header_averagetaken() {
+        return get_string('averagetaken', 'reader');
+    }
+
+    /**
+     * header_averagepassed
+     *
+     * @return string
+     */
+    function header_averagepassed() {
+        return get_string('averagepassed', 'reader');
+    }
+
+    /**
+     * header_averagefailed
+     *
+     * @return string
+     */
+    function header_averagefailed() {
+        return get_string('averagefailed', 'reader');
+    }
+
+    /**
+     * header_averagepoints
+     *
+     * @return string
+     */
+    function header_averagepercentgrade() {
+        return get_string('averagegrade', 'reader');
+    }
+
+    /**
+     * header_averagewordsthisterm
+     *
+     * @return string
+     */
+    function header_averagewordsthisterm() {
+        return get_string('averagewordsthisterm', 'reader');
+    }
+
+    /**
+     * header_averagewordsallterms
+     *
+     * @return string
+     */
+    function header_averagewordsallterms() {
+        return get_string('averagewordsallterms', 'reader');
+    }
+
+    /**
      * header_other
      *
      * @return xxx
@@ -507,6 +624,34 @@ class reader_report_table extends table_sql {
             return round($row->percentgrade).'%';
         } else {
             return '&nbsp;';
+        }
+    }
+
+    /**
+     * col_averagegrade
+     *
+     * @param xxx $row
+     * @return xxx
+     */
+    function col_averagegrade($row)  {
+        if (isset($row->averagegrade)) {
+            return round($row->averagegrade).'%';
+        } else {
+            return '&nbsp;';
+        }
+    }
+
+    /**
+     * col_averageduration
+     *
+     * @param xxx $row
+     * @return xxx
+     */
+    function col_averageduration($row)  {
+        if (empty($row->averageduration)) {
+            return '&nbsp;';
+        } else {
+            return format_time($row->averageduration);
         }
     }
 
@@ -632,6 +777,118 @@ class reader_report_table extends table_sql {
     }
 
     /**
+     * col_percentactive
+     *
+     * @param xxx $row
+     * @return xxx
+     */
+    function col_percentactive($row) {
+        if (empty($row->countusers)) {
+            return '';
+        } else {
+            return round($row->countactive / $row->countusers * 100).'%';
+        }
+    }
+
+    /**
+     * col_percentinactive
+     *
+     * @param xxx $row
+     * @return xxx
+     */
+    function col_percentinactive($row) {
+        if (empty($row->countusers)) {
+            return '';
+        } else {
+            return round($row->countinactive / $row->countusers * 100).'%';
+        }
+    }
+
+    /**
+     * col_averagetaken
+     *
+     * @param xxx $row
+     * @return xxx
+     */
+    function col_averagetaken($row) {
+        if (empty($row->countusers)) {
+            return '';
+        } else {
+            return round(($row->countpassed + $row->countfailed) / $row->countusers);
+        }
+    }
+
+    /**
+     * col_averagepassed
+     *
+     * @param xxx $row
+     * @return xxx
+     */
+    function col_averagepassed($row) {
+        if (empty($row->countusers)) {
+            return '';
+        } else {
+            return round($row->countpassed / $row->countusers);
+        }
+    }
+
+    /**
+     * col_averagefailed
+     *
+     * @param xxx $row
+     * @return xxx
+     */
+    function col_averagefailed($row) {
+        if (empty($row->countusers)) {
+            return '';
+        } else {
+            return round($row->countfailed / $row->countusers);
+        }
+    }
+
+    /**
+     * col_averagepercentgrade
+     *
+     * @param xxx $row
+     * @return xxx
+     */
+    function col_averagepercentgrade($row) {
+        if (empty($row->countusers)) {
+            return '';
+        } else {
+            return round($row->sumaveragegrade / $row->countusers).'%';
+        }
+    }
+
+    /**
+     * col_averagewordsthisterm
+     *
+     * @param xxx $row
+     * @return xxx
+     */
+    function col_averagewordsthisterm($row) {
+        if (empty($row->countusers)) {
+            return '';
+        } else {
+            return number_format(round($row->wordsthisterm / $row->countusers));
+        }
+    }
+
+    /**
+     * col_averagewordsallterms
+     *
+     * @param xxx $row
+     * @return xxx
+     */
+    function col_averagewordsallterms($row) {
+        if (empty($row->countusers)) {
+            return '';
+        } else {
+            return number_format(round($row->wordsallterms / $row->countusers));
+        }
+    }
+
+    /**
      * other_cols
      *
      * @param xxx $column
@@ -643,7 +900,6 @@ class reader_report_table extends table_sql {
             return "$column not found";
         }
 
-        // format columns Q-1 .. Q-99
         if (is_numeric($row->$column)) {
             return number_format($row->$column);
         } else {
@@ -651,30 +907,9 @@ class reader_report_table extends table_sql {
         }
     }
 
-    /**
-     * override parent class method, because we may want to specify a default sort
-     *
-     * @return xxx
-     */
-    function get_sql_sort()  {
-
-        // if user has specified a sort column, use that
-        if ($sort = parent::get_sql_sort()) {
-            return $sort;
-        }
-
-        // if there is a "fullname" column, sort by first/last name
-        if ($this->has_column('fullname')) {
-            $sort = 'u.firstname, u.lastname';
-            if ($this->has_column('attempt')) {
-                $sort .= ', ra.attempt ASC';
-            }
-            return $sort;
-        }
-
-        // no sort column, and no "fullname" column
-        return '';
-    }
+    ////////////////////////////////////////////////////////////////////////////////
+    // utility functions                                                          //
+    ////////////////////////////////////////////////////////////////////////////////
 
     /**
      * has_column
@@ -719,5 +954,34 @@ class reader_report_table extends table_sql {
         }
         // reset indexes on headers
         $this->headers = array_values($this->headers);
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////
+    // override parent functions                                                  //
+    ////////////////////////////////////////////////////////////////////////////////
+
+    /**
+     * override parent class method, because we may want to specify a default sort
+     *
+     * @return xxx
+     */
+    function get_sql_sort()  {
+
+        // if user has specified a sort column, use that
+        if ($sort = parent::get_sql_sort()) {
+            return $sort;
+        }
+
+        // if there is a "fullname" column, sort by first/last name
+        if ($this->has_column('fullname')) {
+            $sort = 'u.firstname, u.lastname';
+            if ($this->has_column('attempt')) {
+                $sort .= ', ra.attempt ASC';
+            }
+            return $sort;
+        }
+
+        // no sort column, and no "fullname" column
+        return '';
     }
 }

@@ -44,13 +44,12 @@ class mod_reader_report_usersummary_renderer extends mod_reader_report_renderer 
 
     public $mode = 'usersummary';
 
-    public $tablecolumns = array(
-        'selected', 'username', 'fullname', // , 'picture'
-        'startlevel', 'currentlevel', 'nopromote',
-        'countpassed', 'countfailed', 'wordsthisterm', 'wordsallterms'
+    protected $tablecolumns = array(
+        'selected', 'username', 'fullname', 'startlevel', 'currentlevel', 'nopromote',
+        'countpassed', 'countfailed', 'averageduration', 'averagegrade', 'wordsthisterm', 'wordsallterms'
     );
 
-    public $filterfields = array(
+    protected $filterfields = array(
         'group' => 0, 'realname'=>0, 'lastname'=>1, 'firstname'=>1, 'username'=>1,
         //'startlevel' => 1, 'currentlevel' => 1, 'nopromote' => 1,
         //'countpassed' => 1, 'countfailed' => 1, 'countwords' => 1
@@ -113,10 +112,12 @@ class mod_reader_report_usersummary_renderer extends mod_reader_report_renderer 
         list($usersql, $userparams) = $this->select_sql_users();
 
         $select = 'u.id AS userid, u.username, u.firstname, u.lastname, u.picture, u.imagealt, u.email, '.
-                  'rx.countpassed, rx.countfailed, rx.wordsthisterm, rx.wordsallterms,'.
+                  'raa.countpassed, raa.countfailed, '.
+                  'raa.averageduration, raa.averagegrade, '.
+                  'raa.wordsthisterm, raa.wordsallterms,'.
                   'rl.startlevel, rl.currentlevel, rl.nopromote, 0 AS goal';
         $from   = '{user} u '.
-                  "LEFT JOIN ($attemptsql) rx ON rx.userid = u.id ".
+                  "LEFT JOIN ($attemptsql) raa ON raa.userid = u.id ".
                   'LEFT JOIN {reader_levels} rl ON u.id = rl.userid';
         $where  = "rl.readerid = :readerid AND u.id $usersql";
 

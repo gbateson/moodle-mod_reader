@@ -392,3 +392,15 @@ $string['yourteacherhasstopped'] = ' Your teacher has stopped automatic promotio
 $string['youwerepromoted'] = 'You were promoted to RL-{$a->level} on {$a->date} at {$a->time}';
 
 $string['adminarea'] = 'Admin area 2.x';
+$string['averagegrade'] = 'Average grade';
+$string['averageduration'] = 'Average duration';
+
+$string['countactive'] = 'Number of students who have taken quizzes';
+$string['countinactive'] = 'Number of students who hove NOT taken quizzes';
+$string['percentactive'] = 'Percent of students who have taken quizzes';
+$string['percentinactive'] = 'Percent of students who have NOT taken quizzes';
+$string['averagetaken'] = 'Average number of quizzes taken';
+$string['averagepassed'] = 'Average number of quizzes passed';
+$string['averagefailed'] = 'Average number of quizzes failed';
+$string['averagewordsthisterm'] = 'Average number of words this term';
+$string['averagewordsallterms'] = 'Average number of words all terms';

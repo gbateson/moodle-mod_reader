@@ -475,8 +475,38 @@ class mod_reader {
      * @todo check for custom reports in "/mod/reader/report"
      */
     static public function get_report_modes() {
-        $modes = array('usersummary', 'userdetailed', 'groupsummary', 'booksummary', 'bookdetailed', 'bookratings');
+        static $modes = null;
+        if ($modes===null) {
+            // the order of the standard Reader reports
+            $modes = array('usersummary', 'userdetailed', 'groupsummary', 'booksummary', 'bookdetailed', 'bookratings');
+
+            // all report plugins
+            $plugins = get_list_of_plugins('mod/reader/report');
+
+            // remove missing standard reports
+            $modes = array_intersect($modes, $plugins);
+
+            // append custom reports, if any
+            $plugins = array_diff($plugins, $modes);
+            $modes = array_merge($modes, $plugins);
+        }
         return $modes;
+    }
+
+    /**
+     * validate_mode
+     *
+     * @param string $mode
+     * @return string a valid report mode
+     * @todo check for custom reports in "/mod/reader/report"
+     */
+    static public function validate_mode($mode) {
+        $modes = self::get_report_modes();
+        if ($mode && in_array($mode, $modes)) {
+            return $mode;
+        } else {
+            return reset($modes); // default
+        }
     }
 
     /**

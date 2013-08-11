@@ -32,6 +32,7 @@ require_once($CFG->dirroot.'/mod/reader/locallib.php');
 $id   = optional_param('id',    0, PARAM_INT);   // course module id
 $r    = optional_param('r',     0, PARAM_INT);   // reader id
 $mode = optional_param('mode', '', PARAM_ALPHA); // report mode
+$mode = mod_reader::validate_mode($mode);
 
 if ($id) {
     $cm = get_coursemodule_from_id('reader', $id, 0, false, MUST_EXIST);
@@ -48,7 +49,7 @@ if ($id) {
 require_course_login($course, true, $cm);
 $PAGE->set_url('/mod/reader/report.php', array('id' => $id, 'mode' => $mode));
 
-$title = get_string('report');
+$title = format_string($reader->name).': '.get_string('reports').': '.get_string('report'.$mode, 'reader');
 $PAGE->set_title($title);
 $PAGE->set_heading($title);
 

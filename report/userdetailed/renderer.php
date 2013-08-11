@@ -44,16 +44,18 @@ class mod_reader_report_userdetailed_renderer extends mod_reader_report_renderer
 
     public $mode = 'userdetailed';
 
-    public $tablecolumns = array(
+    protected $tablecolumns = array(
         'username', 'fullname', 'userlevel', // , 'picture'
         'selected', 'booklevel', 'booktitle', 'timefinish', 'percentgrade', 'passed', 'words', 'totalwords',
     );
 
-    public $filterfields = array(
+    protected $filterfields = array(
         'group' => 0, 'realname'=>0, 'lastname'=>1, 'firstname'=>1, 'username'=>1,
         //'currentlevel' => 1, 'booklevel' => 1, 'booktitle' => 1,
         //'percentgrade' => 1, 'passed' => 1, 'words' => 1
     );
+
+    protected $pageparams = array('userid' => 0);
 
     /**
      * count_sql

@@ -43,7 +43,7 @@ require_once($CFG->dirroot.'/mod/reader/report/renderer.php');
 class mod_reader_report_groupsummary_renderer extends mod_reader_report_renderer {
     public $mode = 'groupsummary';
 
-    public $tablecolumns = array(
+    protected $tablecolumns = array(
         'groupname',
         'countactive', // number of students who have taken quizzes
         'countinactive', // number of students who hove NOT taken quizzes
@@ -52,7 +52,7 @@ class mod_reader_report_groupsummary_renderer extends mod_reader_report_renderer
         'averagetaken',  // average number of quizzes taken
         'averagepassed', // average number of quizzes passed
         'averagefailed', // average number of quizzes failed
-        'averagepoints', // average number of points
+        'averagepercentgrade', // average percent grade average
         'averagewordsthisterm', // average number of words this term
         'averagewordsallterms'  // average number of words all terms
     );
@@ -85,19 +85,25 @@ class mod_reader_report_groupsummary_renderer extends mod_reader_report_renderer
         // get attempts at this Reader activity
         list($attemptsql, $attemptparams) = $this->select_sql_attempts();
 
-        $words  = 'CASE WHEN (ra.passed = :passed) THEN rb.words ELSE 0 END';
+        $select = 'g.id AS groupid, g.name AS groupname,'.
+                  'COUNT(u.id) AS countusers,'.
+                  'SUM(CASE WHEN (raa.userid IS NOT NULL AND (raa.countpassed > 0 OR raa.countfailed > 0)) THEN 1 ELSE 0 END) AS countactive,'.
+                  'SUM(CASE WHEN (raa.userid IS NOT NULL AND (raa.countpassed > 0 OR raa.countfailed > 0)) THEN 0 ELSE 1 END) AS countinactive,'.
+                  'SUM(raa.countpassed) AS countpassed,'.
+                  'SUM(raa.countfailed) AS countfailed,'.
+                  'SUM(raa.averagegrade) AS sumaveragegrade,'.
+                  'SUM(raa.wordsthisterm) AS wordsthisterm,'.
+                  'SUM(raa.wordsallterms) AS wordsallterms';
 
-        $select = 'u.id AS userid, u.username, u.firstname, u.lastname, u.picture, u.imagealt, u.email, '.
-                  'rx.countpassed, rx.countfailed, rx.wordsthisterm, rx.wordsallterms,'.
-                  'rl.startlevel, rl.currentlevel, rl.nopromote, 0 AS goal';
         $from   = '{user} u '.
-                  "LEFT JOIN ($attemptsql) rx ON rx.userid = u.id ".
-                  'LEFT JOIN {reader_levels} rl ON u.id = rl.userid';
-        $where  = "rl.readerid = :readerid AND u.id $usersql";
+                  "LEFT JOIN ($attemptsql) raa ON u.id = raa.userid ".
+                  'LEFT JOIN {groups_members} gm ON u.id = gm.userid '.
+                  'LEFT JOIN {groups} g ON gm.groupid = g.id';
 
-        $params = $attemptparams + array('readerid' => $this->reader->id) + $userparams;
+        $where  = 'g.courseid = :courseid GROUP BY g.id';
 
-        $userfields = '';
-        return $this->add_filter_params($userfields, $userid, $attemptid, $select, $from, $where, $params);
+        $params = array('courseid' => $this->reader->course->id) + $attemptparams;
+
+        return array($select, $from, $where, $params);
     }
 }

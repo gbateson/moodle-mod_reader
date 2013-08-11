@@ -44,9 +44,11 @@ class mod_reader_report_renderer extends mod_reader_renderer {
 
     protected $filterfields = array();
 
-    protected $userfilter = null;
+    protected $pageparams = array();
 
     protected $attemptfilter = null;
+
+    protected $userfilter = null;
 
     protected $users = null;
 
@@ -94,20 +96,38 @@ class mod_reader_report_renderer extends mod_reader_renderer {
     }
 
     /**
+     * baseurl for table
+     */
+    public function baseurl() {
+        $url = $this->page->url;
+        foreach ($this->pageparams as $param => $default) {
+            if (is_numeric($default)) {
+                $type = PARAM_INT;
+            } else {
+                $type = PARAM_CLEAN;
+            }
+            if ($value = optional_param($param, $default, $type)) {
+                $url->param($param, $value);
+            }
+        }
+        return $url;
+    }
+
+    /**
      * reportcontent
      */
     public function reportcontent()  {
-        global $DB, $USER;
+        global $DB, $FULLME, $USER;
 
         // check capabilities
         if ($this->reader->can_viewreports()) {
-            $userid = 0;  // all users
+            $userid = optional_param('userid', 0, PARAM_INT);
         } else {
             return false; // shouldn't happen !!
         }
 
         // set baseurl for this page (used for filters and table)
-        $baseurl = $this->reader->report_url($this->mode);
+        $baseurl = $this->baseurl();
 
         // display user and attempt filters
         $this->display_filters($baseurl);
@@ -128,11 +148,15 @@ class mod_reader_report_renderer extends mod_reader_renderer {
 
         // setup sql to SELECT records
         list($select, $from, $where, $params) = $this->select_sql($userid);
-
         $table->set_sql($select, $from, $where, $params);
 
-        // extract attempt records
+        // extract records
         $table->query_db($table->get_page_size());
+
+        // disable paging if it is not needed
+        if (empty($table->pagesize)) {
+            $table->use_pages = false;
+        }
 
         // fix suppressed columns (those in which duplicate values for the same user are not repeated)
         $this->fix_suppressed_columns_in_rawdata($table);
@@ -199,7 +223,7 @@ class mod_reader_report_renderer extends mod_reader_renderer {
         $require_attempttable = false;
 
         if ($userid) {
-            throw new moodle_exception('how do we filter specific user?');
+            $require_usertable = true;
         } else if ($this->userfilter) {
             list($filterwhere, $filterparams) = $this->userfilter;
             if ($filterwhere) {
@@ -211,7 +235,7 @@ class mod_reader_report_renderer extends mod_reader_renderer {
         }
 
         if ($attemptid) {
-            throw new moodle_exception('how do we filter specific user?');
+            throw new moodle_exception('how do we filter specific attempt?');
         } else if ($this->attemptfilter) {
             list($filterwhere, $filterparams) = $this->attemptfilter;
             if ($filterwhere) {
@@ -260,7 +284,7 @@ class mod_reader_report_renderer extends mod_reader_renderer {
     function select_sql_users($prefix='user') {
         global $DB;
         if ($userid = optional_param('userid', 0, PARAM_INT)) {
-        //    return array(' = :userid', array('userid' => $userid));
+            return array(' = :userid', array('userid' => $userid));
         }
         if ($this->users===null) {
             $this->users = get_enrolled_users($this->reader->context, 'mod/reader:viewbooks', 0, 'u.id', 'id');
@@ -281,7 +305,14 @@ class mod_reader_report_renderer extends mod_reader_renderer {
     function select_sql_attempts() {
         list($usersql, $userparams) = $this->select_sql_users();
 
+        $notfinished   = 'ra.timefinish IS NULL OR ra.timefinish = 0';
+        $countattempts = "SUM(CASE WHEN ($notfinished) THEN 0 ELSE 1 END)";
+        $sumgrade      = "SUM(CASE WHEN ($notfinished) THEN 0 ELSE (ra.percentgrade) END)";
+        $sumduration   = "SUM(CASE WHEN ($notfinished) THEN 0 ELSE (ra.timefinish - ra.timestart) END)";
+
         $select = "ra.userid,".
+                  "ROUND($sumgrade / $countattempts) AS averagegrade,".
+                  "ROUND($sumduration / $countattempts) AS averageduration,".
                   "SUM(CASE WHEN (ra.passed = :passed1 AND ra.timefinish > :time1) THEN 1 ELSE 0 END) AS countpassed,".
                   "SUM(CASE WHEN (ra.passed = :passed2 AND ra.timefinish > :time2) THEN 0 ELSE 1 END) AS countfailed,".
                   "SUM(CASE WHEN (ra.passed = :passed3 AND ra.timefinish > :time3) THEN rb.words ELSE 0 END) AS wordsthisterm,".
