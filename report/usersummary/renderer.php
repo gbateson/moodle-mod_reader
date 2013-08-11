@@ -43,7 +43,6 @@ require_once($CFG->dirroot.'/mod/reader/report/renderer.php');
 class mod_reader_report_usersummary_renderer extends mod_reader_report_renderer {
 
     public $mode = 'usersummary';
-    public $users = null;
 
     public $tablecolumns = array(
         'selected', 'username', 'fullname', // , 'picture'
@@ -125,33 +124,5 @@ class mod_reader_report_usersummary_renderer extends mod_reader_report_renderer 
 
         $userfields = '';
         return $this->add_filter_params($userfields, $userid, $attemptid, $select, $from, $where, $params);
-    }
-
-    /**
-     * select_sql_attempts
-     *
-     * @return xxx
-     */
-    function select_sql_attempts() {
-        list($usersql, $userparams) = $this->select_sql_users();
-
-        $select = "ra.userid,".
-                  "SUM(CASE WHEN (ra.passed = :passed1 AND ra.timefinish > :time1) THEN 1 ELSE 0 END) AS countpassed,".
-                  "SUM(CASE WHEN (ra.passed = :passed2 AND ra.timefinish > :time2) THEN 0 ELSE 1 END) AS countfailed,".
-                  "SUM(CASE WHEN (ra.passed = :passed3 AND ra.timefinish > :time3) THEN rb.words ELSE 0 END) AS wordsthisterm,".
-                  "SUM(CASE WHEN (ra.passed = :passed4 AND ra.timefinish > :time4) THEN rb.words ELSE 0 END) AS wordsallterms";
-
-        $from   = "{reader_attempts} ra ".
-                  "LEFT JOIN mdl_reader_books rb ON ra.quizid = rb.quizid";
-
-        $where  = "ra.reader = :reader AND ra.userid $usersql";
-
-        $params = array('passed1' => 'true', 'time1' => $this->reader->ignoredate, // countpassed (this term)
-                        'passed2' => 'true', 'time2' => $this->reader->ignoredate, // countfailed (this term)
-                        'passed3' => 'true', 'time3' => $this->reader->ignoredate, // wordsthisterm
-                        'passed4' => 'true', 'time4' => 0,                         // wordsallterms
-                        'reader'  => $this->reader->id) + $userparams;
-
-        return array("SELECT $select FROM $from WHERE $where GROUP BY userid", $params);
     }
 }

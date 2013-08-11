@@ -90,8 +90,9 @@ class reader_report_table extends table_sql {
             // this information is only printed once per user
             $this->column_suppress('fullname');
             $this->column_suppress('picture');
-            $this->column_suppress('grade');
+            $this->column_suppress('username');
             $this->column_suppress('userlevel');
+            $this->column_suppress('grade');
 
             // special css class for "picture" column
             $this->column_class('picture', 'picture');
@@ -177,20 +178,6 @@ class reader_report_table extends table_sql {
         $params = array('id' => 'commands');
         echo html_writer::start_tag('div', $params);
 
-        // add "select all" link
-        $text = get_string('selectall', 'quiz');
-        $href = "javascript:select_all_in('TABLE',null,'attempts');";
-        echo html_writer::tag('a', $text, array('href' => $href));
-
-        echo ' / ';
-
-        // add "deselect all" link
-        $text = get_string('selectnone', 'quiz');
-        $href = "javascript:deselect_all_in('TABLE',null,'attempts');";
-        echo html_writer::tag('a', $text, array('href' => $href));
-
-        echo ' &nbsp; ';
-
         echo 'Choose an action: ';
 
         // add button to delete attempts
@@ -274,7 +261,34 @@ class reader_report_table extends table_sql {
      * @return xxx
      */
     function header_selected()  {
-        return '';
+        $selectall = get_string('selectall', 'quiz');
+        $selectnone = get_string('selectnone', 'quiz');
+        $onclick = "if (this.checked) {".
+                       "select_all_in('TABLE',null,'attempts');".
+                       "this.title = '".addslashes_js($selectnone)."';".
+                   "} else {".
+                       "deselect_all_in('TABLE',null,'attempts');".
+                       "this.title = '".addslashes_js($selectall)."';".
+                   "}";
+        return get_string('select').html_writer::empty_tag('br').
+               html_writer::empty_tag('input', array('type' => 'checkbox', 'name' => 'selected[0]', 'title' => $selectall, 'onclick' => $onclick));
+    }
+
+    /**
+     * show_hide_link
+     *
+     * override default function so that certain columns are always visible
+     *
+     * @param string $column the column name, index into various names.
+     * @param int $index numerical index of the column.
+     * @return string HTML fragment.
+     */
+    protected function show_hide_link($column, $index) {
+        if ($column=='selected') {
+            return '';
+        } else {
+            return parent::show_hide_link($column, $index);
+        }
     }
 
     /**

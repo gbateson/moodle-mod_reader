@@ -43,11 +43,10 @@ require_once($CFG->dirroot.'/mod/reader/report/renderer.php');
 class mod_reader_report_userdetailed_renderer extends mod_reader_report_renderer {
 
     public $mode = 'userdetailed';
-    public $users = null;
 
     public $tablecolumns = array(
-        'selected', 'username', 'fullname', 'userlevel', // , 'picture'
-        'booklevel', 'booktitle', 'timefinish', 'percentgrade', 'passed', 'words', 'totalwords',
+        'username', 'fullname', 'userlevel', // , 'picture'
+        'selected', 'booklevel', 'booktitle', 'timefinish', 'percentgrade', 'passed', 'words', 'totalwords',
     );
 
     public $filterfields = array(

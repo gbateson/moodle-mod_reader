@@ -55,7 +55,7 @@ $row[] = new tabobject('quizzes', "view.php?a=quizzes&id=".$id, "Quizzes");
 $row[] = new tabobject('admin', "admin.php?a=admin&id=".$id, "Admin Area");
 
 if (file_exists($CFG->dirroot.'/mod/reader/utilities/print_cheatsheet.php')) {
-    $row[] = new tabobject('admin2x', 'admin/download.php?id='.$id, 'Admin 2.x');
+    $row[] = new tabobject('adminarea', 'admin/index.php?id='.$id, get_string('adminarea', 'reader'));
 }
 
 $tabs[] = $row;
