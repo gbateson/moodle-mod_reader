@@ -57,7 +57,7 @@ class reader_report_table extends table_sql {
      *
      * @param int $uniqueid
      */
-    function __construct($uniqueid, $output) {
+    public function __construct($uniqueid, $output) {
         parent::__construct($uniqueid);
         $this->output = $output;
         $this->strtimeformat = get_string($this->timeformat);
@@ -70,7 +70,7 @@ class reader_report_table extends table_sql {
      * @param xxx $baseurl
      * @param xxx $rowcount (optional, default value = 10)
      */
-    function setup_report_table($tablecolumns, $baseurl)  {
+    public function setup_report_table($tablecolumns, $baseurl)  {
 
         // generate headers (using "header_xxx()" methods below)
         $tableheaders = array();
@@ -131,7 +131,7 @@ class reader_report_table extends table_sql {
     /**
      * wrap_html_start
      */
-    function wrap_html_start() {
+    public function wrap_html_start() {
 
         // check this table has a "selected" column
         if (! $this->has_column('selected')) {
@@ -162,7 +162,7 @@ class reader_report_table extends table_sql {
     /**
      * wrap_html_finish
      */
-    function wrap_html_finish() {
+    public function wrap_html_finish() {
 
         // check this table has a "selected" column
         if (! $this->has_column('selected')) {
@@ -210,7 +210,7 @@ class reader_report_table extends table_sql {
      * @param xxx $tablecolumn
      * @return xxx
      */
-    function format_header($tablecolumn)  {
+    public function format_header($tablecolumn)  {
         $method = 'header_'.$tablecolumn;
         if (method_exists($this, $method)) {
             return $this->$method();
@@ -224,7 +224,7 @@ class reader_report_table extends table_sql {
      *
      * @return xxx
      */
-    function header_username()  {
+    public function header_username()  {
         return get_string('username');
     }
 
@@ -233,7 +233,7 @@ class reader_report_table extends table_sql {
      *
      * @return xxx
      */
-    function header_picture()  {
+    public function header_picture()  {
         return '';
     }
 
@@ -242,7 +242,7 @@ class reader_report_table extends table_sql {
      *
      * @return xxx
      */
-    function header_fullname()  {
+    public function header_fullname()  {
         return get_string('name');
     }
 
@@ -251,7 +251,7 @@ class reader_report_table extends table_sql {
      *
      * @return xxx
      */
-    function header_grade()  {
+    public function header_grade()  {
         return get_string('grade');
     }
 
@@ -260,7 +260,7 @@ class reader_report_table extends table_sql {
      *
      * @return xxx
      */
-    function header_selected()  {
+    public function header_selected()  {
         $selectall = get_string('selectall', 'quiz');
         $selectnone = get_string('selectnone', 'quiz');
         $onclick = "if (this.checked) {".
@@ -296,7 +296,7 @@ class reader_report_table extends table_sql {
      *
      * @return xxx
      */
-    function header_startlevel()  {
+    public function header_startlevel()  {
         return get_string('startlevel', 'reader');
     }
 
@@ -305,7 +305,7 @@ class reader_report_table extends table_sql {
      *
      * @return xxx
      */
-    function header_currentlevel()  {
+    public function header_currentlevel()  {
         return get_string('currentlevel', 'reader');
     }
 
@@ -314,7 +314,7 @@ class reader_report_table extends table_sql {
      *
      * @return xxx
      */
-    function header_nopromote()  {
+    public function header_nopromote()  {
         return get_string('nopromote', 'reader');
     }
 
@@ -323,7 +323,7 @@ class reader_report_table extends table_sql {
      *
      * @return xxx
      */
-    function header_countpassed()  {
+    public function header_countpassed()  {
         return get_string('countpassed', 'reader');
     }
 
@@ -332,7 +332,7 @@ class reader_report_table extends table_sql {
      *
      * @return xxx
      */
-    function header_countfailed()  {
+    public function header_countfailed()  {
         return get_string('countfailed', 'reader');
     }
 
@@ -341,7 +341,7 @@ class reader_report_table extends table_sql {
      *
      * @return xxx
      */
-    function header_averageduration()  {
+    public function header_averageduration()  {
         return get_string('averageduration', 'reader');
     }
 
@@ -350,7 +350,7 @@ class reader_report_table extends table_sql {
      *
      * @return xxx
      */
-    function header_averagegrade()  {
+    public function header_averagegrade()  {
         return get_string('averagegrade', 'reader');
     }
 
@@ -359,7 +359,7 @@ class reader_report_table extends table_sql {
      *
      * @return xxx
      */
-    function header_totalwords($type='')  {
+    public function header_totalwords($type='')  {
         $totalwords = get_string('totalwords', 'reader');
         if ($type) {
             $totalwords .= ' '.html_writer::tag('span', "($type)", array('class' => 'nowrap'));
@@ -372,7 +372,7 @@ class reader_report_table extends table_sql {
      *
      * @return xxx
      */
-    function header_wordsthisterm()  {
+    public function header_wordsthisterm()  {
         return $this->header_totalwords(get_string('thisterm', 'reader'));
     }
 
@@ -381,7 +381,7 @@ class reader_report_table extends table_sql {
      *
      * @return xxx
      */
-    function header_wordsallterms()  {
+    public function header_wordsallterms()  {
         return $this->header_totalwords(get_string('allterms', 'reader'));
     }
 
@@ -390,7 +390,7 @@ class reader_report_table extends table_sql {
      *
      * @return xxx
      */
-    function header_goal()  {
+    public function header_goal()  {
         return get_string('goal', 'reader');
     }
 
@@ -399,7 +399,7 @@ class reader_report_table extends table_sql {
      *
      * @return xxx
      */
-    function header_userlevel() {
+    public function header_userlevel() {
         return get_string('userlevel', 'reader');
     }
 
@@ -408,7 +408,7 @@ class reader_report_table extends table_sql {
      *
      * @return xxx
      */
-    function header_booklevel() {
+    public function header_booklevel() {
         return get_string('booklevel', 'reader');
     }
 
@@ -417,7 +417,7 @@ class reader_report_table extends table_sql {
      *
      * @return xxx
      */
-    function header_timefinish() {
+    public function header_timefinish() {
         return get_string('date');
     }
 
@@ -426,7 +426,7 @@ class reader_report_table extends table_sql {
      *
      * @return xxx
      */
-    function header_percentgrade() {
+    public function header_percentgrade() {
         return get_string('grade');
     }
 
@@ -435,7 +435,7 @@ class reader_report_table extends table_sql {
      *
      * @return xxx
      */
-    function header_words() {
+    public function header_words() {
         return get_string('words', 'reader');
     }
 
@@ -444,7 +444,7 @@ class reader_report_table extends table_sql {
      *
      * @return xxx
      */
-    function header_booktitle() {
+    public function header_booktitle() {
         return get_string('booktitle', 'reader');
     }
 
@@ -453,7 +453,7 @@ class reader_report_table extends table_sql {
      *
      * @return xxx
      */
-    function header_passed() {
+    public function header_passed() {
         return implode('/', array(get_string('passedshort', 'reader'), get_string('failedshort', 'reader'), get_string('cheatedshort', 'reader')));
     }
 
@@ -462,7 +462,7 @@ class reader_report_table extends table_sql {
      *
      * @return string
      */
-    function header_groupname() {
+    public function header_groupname() {
         return get_string('group');
     }
 
@@ -471,8 +471,8 @@ class reader_report_table extends table_sql {
      *
      * @return string
      */
-    function header_countactive() {
-        return get_string('countactive', 'reader');
+    public function header_countactive() {
+        return get_string('countactive', 'reader').' '.$this->help_icon('countactive');
     }
 
     /**
@@ -480,8 +480,8 @@ class reader_report_table extends table_sql {
      *
      * @return string
      */
-    function header_countinactive() {
-        return get_string('countinactive', 'reader');
+    public function header_countinactive() {
+        return get_string('countinactive', 'reader').' '.$this->help_icon('countinactive');
     }
 
     /**
@@ -489,8 +489,8 @@ class reader_report_table extends table_sql {
      *
      * @return string
      */
-    function header_percentactive() {
-        return get_string('percentactive', 'reader');
+    public function header_percentactive() {
+        return get_string('percentactive', 'reader').' '.$this->help_icon('percentactive');
     }
 
     /**
@@ -498,8 +498,8 @@ class reader_report_table extends table_sql {
      *
      * @return string
      */
-    function header_percentinactive() {
-        return get_string('percentinactive', 'reader');
+    public function header_percentinactive() {
+        return get_string('percentinactive', 'reader').' '.$this->help_icon('percentinactive');
     }
 
     /**
@@ -507,8 +507,8 @@ class reader_report_table extends table_sql {
      *
      * @return string
      */
-    function header_averagetaken() {
-        return get_string('averagetaken', 'reader');
+    public function header_averagetaken() {
+        return get_string('averagetaken', 'reader').' '.$this->help_icon('averagetaken');
     }
 
     /**
@@ -516,8 +516,8 @@ class reader_report_table extends table_sql {
      *
      * @return string
      */
-    function header_averagepassed() {
-        return get_string('averagepassed', 'reader');
+    public function header_averagepassed() {
+        return get_string('averagepassed', 'reader').' '.$this->help_icon('averagepassed');
     }
 
     /**
@@ -525,8 +525,8 @@ class reader_report_table extends table_sql {
      *
      * @return string
      */
-    function header_averagefailed() {
-        return get_string('averagefailed', 'reader');
+    public function header_averagefailed() {
+        return get_string('averagefailed', 'reader').' '.$this->help_icon('averagefailed');
     }
 
     /**
@@ -534,8 +534,23 @@ class reader_report_table extends table_sql {
      *
      * @return string
      */
-    function header_averagepercentgrade() {
-        return get_string('averagegrade', 'reader');
+    public function header_averagepercentgrade() {
+        return get_string('averagegrade', 'reader').' '.$this->help_icon('averagegrade');
+    }
+
+    /**
+     * header_averagewords
+     *
+     * @return xxx
+     */
+    public function header_averagewords($type='')  {
+        $averagewords = get_string('averagewords', 'reader');
+        if ($type) {
+            $strtype = get_string($type, 'reader');
+            $averagewords .= ' '.html_writer::tag('span', "($strtype)", array('class' => 'nowrap'));
+            $averagewords .= ' '.$this->help_icon('averagewords'.$type);
+        }
+        return $averagewords;
     }
 
     /**
@@ -543,8 +558,8 @@ class reader_report_table extends table_sql {
      *
      * @return string
      */
-    function header_averagewordsthisterm() {
-        return get_string('averagewordsthisterm', 'reader');
+    public function header_averagewordsthisterm() {
+        return $this->header_averagewords('thisterm');
     }
 
     /**
@@ -552,8 +567,8 @@ class reader_report_table extends table_sql {
      *
      * @return string
      */
-    function header_averagewordsallterms() {
-        return get_string('averagewordsallterms', 'reader');
+    public function header_averagewordsallterms() {
+        return $this->header_averagewords('allterms');
     }
 
     /**
@@ -561,7 +576,7 @@ class reader_report_table extends table_sql {
      *
      * @return xxx
      */
-    function header_other($column)  {
+    public function header_other($column)  {
         return 'header_'.$column.' is missing';
     }
 
@@ -575,7 +590,7 @@ class reader_report_table extends table_sql {
      * @param xxx $row
      * @return xxx
      */
-    function col_selected($row)  {
+    public function col_selected($row)  {
         $key = key($row); // name of first column
         return html_writer::checkbox('selected['.$key.']', 1, false);
     }
@@ -586,7 +601,7 @@ class reader_report_table extends table_sql {
      * @param xxx $row
      * @return xxx
      */
-    function col_picture($row)  {
+    public function col_picture($row)  {
         $courseid = $this->output->reader->course->id;
         $user = (object)array(
             'id'        => $row->userid,
@@ -605,7 +620,7 @@ class reader_report_table extends table_sql {
      * @param xxx $row
      * @return xxx
      */
-    function col_grade($row)  {
+    public function col_grade($row)  {
         if (isset($row->grade)) {
             return $row->grade.'%';
         } else {
@@ -619,7 +634,7 @@ class reader_report_table extends table_sql {
      * @param xxx $row
      * @return xxx
      */
-    function col_percentgrade($row)  {
+    public function col_percentgrade($row)  {
         if (isset($row->percentgrade)) {
             return round($row->percentgrade).'%';
         } else {
@@ -633,7 +648,7 @@ class reader_report_table extends table_sql {
      * @param xxx $row
      * @return xxx
      */
-    function col_averagegrade($row)  {
+    public function col_averagegrade($row)  {
         if (isset($row->averagegrade)) {
             return round($row->averagegrade).'%';
         } else {
@@ -647,7 +662,7 @@ class reader_report_table extends table_sql {
      * @param xxx $row
      * @return xxx
      */
-    function col_averageduration($row)  {
+    public function col_averageduration($row)  {
         if (empty($row->averageduration)) {
             return '&nbsp;';
         } else {
@@ -661,7 +676,7 @@ class reader_report_table extends table_sql {
      * @param xxx $row
      * @return xxx
      */
-    function col_passed($row)  {
+    public function col_passed($row)  {
         if (isset($row->passed) && $row->passed=='true') {
             return html_writer::tag('span', get_string('passedshort', 'reader'), array('class' => 'passed'));
         } else {
@@ -675,7 +690,7 @@ class reader_report_table extends table_sql {
      * @param xxx $row
      * @return xxx
      */
-    function col_timefinish($row)  {
+    public function col_timefinish($row)  {
         if (empty($row->timefinish)) {
             return '';
         } else {
@@ -689,7 +704,7 @@ class reader_report_table extends table_sql {
      * @param xxx $row
      * @return xxx
      */
-    function col_wordsthisterm($row) {
+    public function col_wordsthisterm($row) {
         $report_url = $this->output->reader->report_url('userdetailed', null, $row->userid);
         return html_writer::link($report_url, number_format($row->wordsthisterm));
     }
@@ -700,7 +715,7 @@ class reader_report_table extends table_sql {
      * @param xxx $row
      * @return xxx
      */
-    function col_totalwords($row)  {
+    public function col_totalwords($row)  {
         static $userid = 0;
         static $totalwords = 0;
 
@@ -728,7 +743,7 @@ class reader_report_table extends table_sql {
      * @param xxx $row
      * @return xxx
      */
-    function col_goal($row)  {
+    public function col_goal($row)  {
         global $DB;
 
         // cache for goals defined for each group
@@ -782,7 +797,7 @@ class reader_report_table extends table_sql {
      * @param xxx $row
      * @return xxx
      */
-    function col_percentactive($row) {
+    public function col_percentactive($row) {
         if (empty($row->countusers)) {
             return '';
         } else {
@@ -796,7 +811,7 @@ class reader_report_table extends table_sql {
      * @param xxx $row
      * @return xxx
      */
-    function col_percentinactive($row) {
+    public function col_percentinactive($row) {
         if (empty($row->countusers)) {
             return '';
         } else {
@@ -810,7 +825,7 @@ class reader_report_table extends table_sql {
      * @param xxx $row
      * @return xxx
      */
-    function col_averagetaken($row) {
+    public function col_averagetaken($row) {
         if (empty($row->countusers)) {
             return '';
         } else {
@@ -824,7 +839,7 @@ class reader_report_table extends table_sql {
      * @param xxx $row
      * @return xxx
      */
-    function col_averagepassed($row) {
+    public function col_averagepassed($row) {
         if (empty($row->countusers)) {
             return '';
         } else {
@@ -838,7 +853,7 @@ class reader_report_table extends table_sql {
      * @param xxx $row
      * @return xxx
      */
-    function col_averagefailed($row) {
+    public function col_averagefailed($row) {
         if (empty($row->countusers)) {
             return '';
         } else {
@@ -852,7 +867,7 @@ class reader_report_table extends table_sql {
      * @param xxx $row
      * @return xxx
      */
-    function col_averagepercentgrade($row) {
+    public function col_averagepercentgrade($row) {
         if (empty($row->countusers)) {
             return '';
         } else {
@@ -866,7 +881,7 @@ class reader_report_table extends table_sql {
      * @param xxx $row
      * @return xxx
      */
-    function col_averagewordsthisterm($row) {
+    public function col_averagewordsthisterm($row) {
         if (empty($row->countusers)) {
             return '';
         } else {
@@ -880,7 +895,7 @@ class reader_report_table extends table_sql {
      * @param xxx $row
      * @return xxx
      */
-    function col_averagewordsallterms($row) {
+    public function col_averagewordsallterms($row) {
         if (empty($row->countusers)) {
             return '';
         } else {
@@ -895,7 +910,7 @@ class reader_report_table extends table_sql {
      * @param xxx $row
      * @return xxx
      */
-    function other_cols($column, $row) {
+    public function other_cols($column, $row) {
         if (! property_exists($row, $column)) {
             return "$column not found";
         }
@@ -926,7 +941,7 @@ class reader_report_table extends table_sql {
      *
      * @param xxx $delete_rows
      */
-    function delete_rows($delete_rows)  {
+    public function delete_rows($delete_rows)  {
         foreach ($delete_rows as $id => $delete_flag) {
             if ($delete_flag) {
                 unset($this->rawdata[$id]);
@@ -939,7 +954,7 @@ class reader_report_table extends table_sql {
      *
      * @param xxx $delete_columns
      */
-    function delete_columns($delete_columns)  {
+    public function delete_columns($delete_columns)  {
         $newcolnum = 0;
         foreach($this->columns as $column => $oldcolnum) {
             if (empty($delete_columns[$column])) {
@@ -956,6 +971,17 @@ class reader_report_table extends table_sql {
         $this->headers = array_values($this->headers);
     }
 
+    /**
+     * Returns HTML to display a help icon
+     *
+     * @param string $column
+     * @return string HTML fragment
+     */
+    public function help_icon($column) {
+        global $OUTPUT;
+        return $OUTPUT->help_icon($column, 'reader');
+    }
+
     ////////////////////////////////////////////////////////////////////////////////
     // override parent functions                                                  //
     ////////////////////////////////////////////////////////////////////////////////
@@ -965,7 +991,7 @@ class reader_report_table extends table_sql {
      *
      * @return xxx
      */
-    function get_sql_sort()  {
+    public function get_sql_sort()  {
 
         // if user has specified a sort column, use that
         if ($sort = parent::get_sql_sort()) {
