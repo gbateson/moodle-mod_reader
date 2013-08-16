@@ -83,7 +83,7 @@ class mod_reader_report_groupsummary_renderer extends mod_reader_report_renderer
     function select_sql($userid=0, $attemptid=0) {
 
         // get attempts at this Reader activity
-        list($attemptsql, $attemptparams) = $this->select_sql_attempts();
+        list($attemptsql, $attemptparams) = $this->select_sql_attempts('userid');
 
         $select = 'g.id AS groupid, g.name AS groupname,'.
                   'COUNT(u.id) AS countusers,'.

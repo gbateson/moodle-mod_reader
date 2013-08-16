@@ -3900,6 +3900,7 @@ function reader_extend_navigation(navigation_node $readernode, stdclass $course,
     global $CFG, $DB, $USER;
 
     if (reader_can_addinstance($cm->id, $USER->id)) {
+        require_once($CFG->dirroot.'/mod/reader/locallib.php');
 
         //////////////////////////
         // Reports sub-menu
@@ -3911,7 +3912,8 @@ function reader_extend_navigation(navigation_node $readernode, stdclass $course,
         $label = get_string('reports');
         $node = $readernode->add($label, null, $type, null, null, $icon);
 
-        $modes = array('usersummary', 'userdetailed', 'groupsummary', 'booksummary', 'bookdetailed', 'bookratings');
+        //$modes = array('usersummary', 'userdetailed', 'groupsummary', 'booksummary', 'bookdetailed');
+        $modes = mod_reader::get_report_modes();
         foreach ($modes as $mode) {
             $url = new moodle_url('/mod/reader/report.php', array('id' => $cm->id, 'mode' => $mode));
             $label = get_string('report'.$mode, 'reader');

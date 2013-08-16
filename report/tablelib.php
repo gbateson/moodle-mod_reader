@@ -395,6 +395,24 @@ class reader_report_table extends table_sql {
     }
 
     /**
+     * header_averagerating
+     *
+     * @return xxx
+     */
+    public function header_averagerating()  {
+        return get_string('averagerating', 'reader');
+    }
+
+    /**
+     * header_countrating
+     *
+     * @return xxx
+     */
+    public function header_countrating()  {
+        return get_string('countrating', 'reader');
+    }
+
+    /**
      * header_userlevel
      *
      * @return xxx
@@ -446,6 +464,24 @@ class reader_report_table extends table_sql {
      */
     public function header_booktitle() {
         return get_string('booktitle', 'reader');
+    }
+
+    /**
+     * header_publisher
+     *
+     * @return xxx
+     */
+    public function header_publisher() {
+        return get_string('publisher', 'reader');
+    }
+
+    /**
+     * header_level
+     *
+     * @return xxx
+     */
+    public function header_level() {
+        return get_string('level', 'reader');
     }
 
     /**
@@ -705,8 +741,16 @@ class reader_report_table extends table_sql {
      * @return xxx
      */
     public function col_wordsthisterm($row) {
-        $report_url = $this->output->reader->report_url('userdetailed', null, $row->userid);
-        return html_writer::link($report_url, number_format($row->wordsthisterm));
+        $wordsthisterm = number_format($row->wordsthisterm);
+        switch (true) {
+            case isset($row->userid): $report_url = $this->output->reader->report_url('userdetailed', null, $row->userid); break;
+            case isset($row->bookid): $report_url = $this->output->reader->report_url('bookdetailed', null, $row->bookid); break;
+            default:                  $report_url = '';
+        }
+        if ($report_url) {
+            $wordsthisterm = html_writer::link($report_url, $wordsthisterm);
+        }
+        return $wordsthisterm;
     }
 
     /**

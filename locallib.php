@@ -478,7 +478,7 @@ class mod_reader {
         static $modes = null;
         if ($modes===null) {
             // the order of the standard Reader reports
-            $modes = array('usersummary', 'userdetailed', 'groupsummary', 'booksummary', 'bookdetailed', 'bookratings');
+            $modes = array('usersummary', 'userdetailed', 'groupsummary', 'booksummary', 'bookdetailed');
 
             // all report plugins
             $plugins = get_list_of_plugins('mod/reader/report');

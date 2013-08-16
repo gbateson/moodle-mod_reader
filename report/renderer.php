@@ -300,9 +300,10 @@ class mod_reader_report_renderer extends mod_reader_renderer {
     /**
      * select_sql_attempts
      *
+     * @params string $groupbyfield "reader_attempts" field name ("userid" or "quizid")
      * @return xxx
      */
-    function select_sql_attempts() {
+    function select_sql_attempts($groupbyfield) {
         list($usersql, $userparams) = $this->select_sql_users();
 
         $notfinished   = 'ra.timefinish IS NULL OR ra.timefinish = 0';
@@ -310,7 +311,58 @@ class mod_reader_report_renderer extends mod_reader_renderer {
         $sumgrade      = "SUM(CASE WHEN ($notfinished) THEN 0 ELSE (ra.percentgrade) END)";
         $sumduration   = "SUM(CASE WHEN ($notfinished) THEN 0 ELSE (ra.timefinish - ra.timestart) END)";
 
-        $select = "ra.userid,".
+        $select = "ra.$groupbyfield,".
+                  "ROUND($sumgrade / $countattempts) AS averagegrade,".
+                  "ROUND($sumduration / $countattempts) AS averageduration,".
+                  "SUM(CASE WHEN (ra.passed = :passed1 AND ra.timefinish > :time1) THEN 1 ELSE 0 END) AS countpassed,".
+                  "SUM(CASE WHEN (ra.passed = :passed2 AND ra.timefinish > :time2) THEN 0 ELSE 1 END) AS countfailed";
+
+        $from   = "{reader_attempts} ra ".
+                  "LEFT JOIN mdl_reader_books rb ON ra.quizid = rb.quizid";
+
+        $params = array('passed1' => 'true', 'time1' => $this->reader->ignoredate,  // countpassed (this term)
+                        'passed2' => 'true', 'time2' => $this->reader->ignoredate); // countfailed (this term)
+
+        switch ($groupbyfield) {
+            case 'userid':
+                $select .= ",SUM(CASE WHEN (ra.passed = :passed3 AND ra.timefinish > :time3) THEN rb.words ELSE 0 END) AS wordsthisterm".
+                           ",SUM(CASE WHEN (ra.passed = :passed4 AND ra.timefinish > :time4) THEN rb.words ELSE 0 END) AS wordsallterms";
+                $params += array('passed3' => 'true', 'time3' => $this->reader->ignoredate, // wordsthisterm
+                                 'passed4' => 'true', 'time4' => 0);                        // wordsallterms
+                break;
+
+            case 'quizid':
+                $notrated    = "$notfinished OR ra.bookrating IS NULL";
+                $countrating = "SUM(CASE WHEN ($notrated) THEN 0 ELSE 1 END)";
+                $sumrating   = "SUM(CASE WHEN ($notrated) THEN 0 ELSE ra.bookrating END)";
+                $select     .= ",$countrating AS countrating".
+                               ",ROUND($sumrating / $countrating) AS averagerating";
+                break;
+        }
+
+        $where  = "ra.reader = :reader AND ra.userid $usersql";
+
+        $params['reader'] = $this->reader->id;
+        $params += $userparams;
+
+        return array("SELECT $select FROM $from WHERE $where GROUP BY ra.$groupbyfield", $params);
+    }
+
+    /**
+     * select_sql_attempts
+     *
+     * @params string $groupbyfield "reader_attempts" field name ("userid" or "quizid")
+     * @return xxx
+     */
+    function select_sql_attempts_save($groupbyfield) {
+        list($usersql, $userparams) = $this->select_sql_users();
+
+        $notfinished   = 'ra.timefinish IS NULL OR ra.timefinish = 0';
+        $countattempts = "SUM(CASE WHEN ($notfinished) THEN 0 ELSE 1 END)";
+        $sumgrade      = "SUM(CASE WHEN ($notfinished) THEN 0 ELSE (ra.percentgrade) END)";
+        $sumduration   = "SUM(CASE WHEN ($notfinished) THEN 0 ELSE (ra.timefinish - ra.timestart) END)";
+
+        $select = "ra.$groupbyfield,".
                   "ROUND($sumgrade / $countattempts) AS averagegrade,".
                   "ROUND($sumduration / $countattempts) AS averageduration,".
                   "SUM(CASE WHEN (ra.passed = :passed1 AND ra.timefinish > :time1) THEN 1 ELSE 0 END) AS countpassed,".
@@ -329,7 +381,7 @@ class mod_reader_report_renderer extends mod_reader_renderer {
                         'passed4' => 'true', 'time4' => 0,                         // wordsallterms
                         'reader'  => $this->reader->id) + $userparams;
 
-        return array("SELECT $select FROM $from WHERE $where GROUP BY userid", $params);
+        return array("SELECT $select FROM $from WHERE $where GROUP BY ra.$groupbyfield", $params);
     }
 
     /**

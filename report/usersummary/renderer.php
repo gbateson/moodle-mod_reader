@@ -106,7 +106,7 @@ class mod_reader_report_usersummary_renderer extends mod_reader_report_renderer 
     function select_sql($userid=0, $attemptid=0) {
 
         // get attempts at this Reader activity
-        list($attemptsql, $attemptparams) = $this->select_sql_attempts();
+        list($attemptsql, $attemptparams) = $this->select_sql_attempts('userid');
 
         // get users who can access this Reader activity
         list($usersql, $userparams) = $this->select_sql_users();
