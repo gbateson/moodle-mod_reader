@@ -494,6 +494,15 @@ class reader_report_table extends table_sql {
     }
 
     /**
+     * header_bookrating
+     *
+     * @return xxx
+     */
+    public function header_bookrating() {
+        return get_string('bookrating', 'reader');
+    }
+
+    /**
      * header_groupname
      *
      * @return string
@@ -679,20 +688,6 @@ class reader_report_table extends table_sql {
     }
 
     /**
-     * col_averagegrade
-     *
-     * @param xxx $row
-     * @return xxx
-     */
-    public function col_averagegrade($row)  {
-        if (isset($row->averagegrade)) {
-            return round($row->averagegrade).'%';
-        } else {
-            return '&nbsp;';
-        }
-    }
-
-    /**
      * col_averageduration
      *
      * @param xxx $row
@@ -707,6 +702,30 @@ class reader_report_table extends table_sql {
     }
 
     /**
+     * col_averagegrade
+     *
+     * @param xxx $row
+     * @return xxx
+     */
+    public function col_averagegrade($row)  {
+        if (isset($row->averagegrade)) {
+            return round($row->averagegrade).'%';
+        } else {
+            return '&nbsp;';
+        }
+    }
+
+    /**
+     * col_averagerating
+     *
+     * @param xxx $row
+     * @return xxx
+     */
+    public function col_averagerating($row)  {
+        return $this->img_bookrating($row->averagerating);
+    }
+
+    /**
      * col_passed
      *
      * @param xxx $row
@@ -718,6 +737,37 @@ class reader_report_table extends table_sql {
         } else {
             return html_writer::tag('span', get_string('failedshort', 'reader'), array('class' => 'failed'));
         }
+    }
+
+    /**
+     * img_bookrating
+     *
+     * @param xxx $row
+     * @return xxx
+     */
+    public function img_bookrating($rating)  {
+        global $OUTPUT;
+        static $img = null;
+        $rating = intval($rating);
+        if ($rating >= 1 && $rating <= 3) {
+            if ($img===null) {
+                $src = $OUTPUT->pix_url('t/approve');
+                $img = html_writer::empty_tag('img', array('src' => $src, 'alt' => get_string('bookrating', 'reader')));
+            }
+            return str_repeat($img, $rating);
+        } else {
+            return '';
+        }
+    }
+
+    /**
+     * col_bookrating
+     *
+     * @param xxx $row
+     * @return xxx
+     */
+    public function col_bookrating($row)  {
+        return $this->img_bookrating($row->bookrating);
     }
 
     /**

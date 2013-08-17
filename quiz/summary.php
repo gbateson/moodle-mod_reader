@@ -100,10 +100,10 @@ echo "<br /><br />";
 
 echo '<form action="processattempt.php" method="post">';
 
-echo '<input type="radio" name="likebook" value="3" id="like-3"> <label for="like-3" style="cursor:pointer;">'.get_string('itwasgreat', 'reader').'.</label><br />';
-echo '<input type="radio" name="likebook" value="2" id="like-2"> <label for="like-2" style="cursor:pointer;">'.get_string('itwasokay', 'reader').'.</label><br />';
-echo '<input type="radio" name="likebook" value="1" id="like-1"> <label for="like-1" style="cursor:pointer;">'.get_string('itwasso', 'reader').'.</label><br />';
-echo '<input type="radio" name="likebook" value="0" id="like-0"> <label for="like-0" style="cursor:pointer;">'.get_string('ididntlikeitatall', 'reader').'.</label><br /><br />';
+echo '<input type="radio" name="likebook" value="3" id="like-3"> <label for="like-3" style="cursor:pointer;">'.get_string('bookrating3', 'reader').'.</label><br />';
+echo '<input type="radio" name="likebook" value="2" id="like-2"> <label for="like-2" style="cursor:pointer;">'.get_string('bookrating2', 'reader').'.</label><br />';
+echo '<input type="radio" name="likebook" value="1" id="like-1"> <label for="like-1" style="cursor:pointer;">'.get_string('bookrating1', 'reader').'.</label><br />';
+echo '<input type="radio" name="likebook" value="0" id="like-0"> <label for="like-0" style="cursor:pointer;">'.get_string('bookrating0', 'reader').'.</label><br /><br />';
 
 echo '<input name="attempt" value="'.$attemptid.'" type="hidden">';
 echo '<input name="finishattempt" value="1" type="hidden">';
@@ -111,7 +111,7 @@ echo '<input name="timeup" value="0" type="hidden">';
 echo '<input name="slots" value="" type="hidden">';
 echo '<input name="sesskey" value="'.sesskey().'" type="hidden">';
 
-echo '<center><input type="submit" value="Ok"></center>';
+echo '<center><input type="submit" value="OK"></center>';
 
 echo '</form>';
 

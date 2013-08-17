@@ -46,7 +46,7 @@ class mod_reader_report_bookdetailed_renderer extends mod_reader_report_renderer
 
     protected $tablecolumns = array(
         'booktitle', 'publisher', 'level', 'booklevel',
-        'username', 'fullname', 'passed'
+        'username', 'fullname', 'passed', 'bookrating'
     );
 
     protected $filterfields = array(
@@ -88,7 +88,7 @@ class mod_reader_report_bookdetailed_renderer extends mod_reader_report_renderer
         // get users who can access this Reader activity
         list($usersql, $userparams) = $this->select_sql_users();
 
-        $select = 'ra.id, ra.passed, '.
+        $select = 'ra.id, ra.passed, ra.bookrating, '.
                   'u.id AS userid, u.username, u.firstname, u.lastname, u.picture, u.imagealt, u.email, '.
                   'rb.name AS booktitle, rb.publisher, rb.level, rb.difficulty AS booklevel';
         $from   = '{reader_attempts} ra '.
