@@ -37,6 +37,18 @@ require_once($CFG->dirroot.'/lib//tablelib.php');
  */
 class reader_report_table extends table_sql {
 
+    /** @var is_sortable (from flexible table) */
+    public $is_sortable = true;
+
+    /** @var sort_default_column (from flexible table) */
+    public $sort_default_column = '';
+
+    /** @var use_pages (from flexible table) */
+    public $use_pages = true;
+
+    /** @var use_initials (from flexible table) */
+    public $use_initials = true;
+
     /** @var string field in the attempt records that refers to the user id */
     public $useridfield = 'userid';
 
@@ -49,8 +61,26 @@ class reader_report_table extends table_sql {
     /** @var string localized format used for the "timemodified" column */
     protected $strtimeformat;
 
-    /** @var array list of distinct values stored in response columns */
-    protected $legend = array();
+    /** @var array of enrolled users who are able to view the current Reader activity */
+    protected $users = null;
+
+    /** @var columns used in this table */
+    protected $tablecolumns = array();
+
+    /** @var suppressed columns in this table */
+    protected $suppresscolumns = array();
+
+    /** @var columns in this table that are not sortable */
+    protected $nosortcolumns = array();
+
+    /** @var sortable columns in this table */
+    protected $textcolumns = array();
+
+    /** @var columns that are not to be center aligned */
+    protected $leftaligncolumns = array();
+
+    /** @var default sort columns */
+    protected $defaultsortcolumns = array(); // $column => SORT_ASC/DESC
 
     /**
      * Constructor
@@ -63,6 +93,10 @@ class reader_report_table extends table_sql {
         $this->strtimeformat = get_string($this->timeformat);
     }
 
+    ////////////////////////////////////////////////////////////////////////////////
+    // functions to setup table                                                   //
+    ////////////////////////////////////////////////////////////////////////////////
+
     /**
      * setup_report_table
      *
@@ -70,7 +104,9 @@ class reader_report_table extends table_sql {
      * @param xxx $baseurl
      * @param xxx $rowcount (optional, default value = 10)
      */
-    public function setup_report_table($tablecolumns, $baseurl)  {
+    public function setup_report_table($baseurl)  {
+
+        $tablecolumns = $this->get_tablecolumns();
 
         // generate headers (using "header_xxx()" methods below)
         $tableheaders = array();
@@ -82,43 +118,32 @@ class reader_report_table extends table_sql {
         $this->define_headers($tableheaders);
         $this->define_baseurl($baseurl);
 
-        if ($this->has_column('fullname')) {
-            $this->pageable(true);
-            $this->sortable(true);
-            $this->initialbars(true);
-
-            // this information is only printed once per user
-            $this->column_suppress('fullname');
-            $this->column_suppress('picture');
-            $this->column_suppress('username');
-            $this->column_suppress('userlevel');
-
-            // disable sorting on "selected" field
+        // disable sorting on "selected" field
+        if ($this->has_column('selected')) {
             $this->no_sorting('selected');
-        } else {
-            $this->pageable(false);
-            $this->sortable(false);
-            // you can set specific columns to be unsortable:
-            // $this->no_sorting('columnname');
+        }
+
+        // basically all columns are centered
+        $this->column_style_all('text-align', 'center');
+
+        foreach ($this->tablecolumns as $column) {
+            if (in_array($column, $this->nosortcolumns)) {
+                $this->no_sorting($column);
+            }
+            if (in_array($column, $this->textcolumns)) {
+                $this->text_sorting($column);
+            }
+            if (in_array($column, $this->suppresscolumns)) {
+                $this->column_suppress($column);
+            }
+            if (in_array($column, $this->leftaligncolumns)) {
+                $this->column_style($column, 'text-align', '');
+            }
         }
 
         // add download buttons at bottom of page
         $this->is_downloadable(true);
         $this->show_download_buttons_at(array(TABLE_P_BOTTOM));
-
-        // basically all columns are centered
-        $this->column_style_all('text-align', 'center');
-
-        // some columns are not centered
-        if ($this->has_column('username')) {
-            $this->column_style('username', 'text-align', '');
-        }
-        if ($this->has_column('fullname')) {
-            $this->column_style('fullname', 'text-align', '');
-        }
-        if ($this->has_column('booktitle')) {
-            $this->column_style('booktitle', 'text-align', '');
-        }
 
         // attributes in the table tag
         $this->set_attribute('id', 'attempts');
@@ -126,7 +151,196 @@ class reader_report_table extends table_sql {
         $this->set_attribute('class', $this->output->mode);
 
         parent::setup();
+
+        // add default sort columns if necessary
+        foreach ($this->defaultsortcolumns as $column => $sortdirection) {
+            if ($this->has_column($column) || (($column=='firstname' || $column=='lastname') && $this->has_column('fullname'))) {
+                if (! isset($this->sess->sortby)) {
+                    $this->sess->sortby = array();
+                }
+                if (! array_key_exists($column, $this->sess->sortby)) {
+                    $this->sess->sortby[$column] = $sortdirection;
+                }
+            }
+        }
     }
+
+    /*
+     * get_tablecolumns
+     *
+     * @return array of column names
+     */
+    public function get_tablecolumns() {
+        $tablecolumns = $this->tablecolumns;
+
+        if (! $this->output->reader->can_manageattempts()) {
+            // remove the select column from students view
+            $i = array_search('selected', $tablecolumns);
+            if (is_numeric($i)) {
+                array_splice($tablecolumns, $i, 1);
+            }
+        }
+
+        return $tablecolumns;
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////
+    // functions to extract data from $DB                                         //
+    ////////////////////////////////////////////////////////////////////////////////
+
+    /**
+     * count_sql
+     *
+     * @return array($sql, $params)
+     */
+    function count_sql() {
+        return array('', array());
+    }
+
+    /**
+     * select_sql
+     *
+     * @return array($sql, $params)
+     */
+    function select_sql() {
+        return array('', array());
+    }
+
+    /**
+     * select_sql_users
+     *
+     * @uses $DB
+     * @param string $prefix (optional, default="") prefix for DB $params
+     * @return xxx
+     */
+    function select_sql_users($prefix='user') {
+        global $DB;
+        if ($this->users===null) {
+            $this->users = get_enrolled_users($this->output->reader->context, 'mod/reader:viewbooks', 0, 'u.id', 'id');
+        }
+        if ($prefix=='') {
+            $type = SQL_PARAMS_QM;
+        } else {
+            $type = SQL_PARAMS_NAMED;
+        }
+        return $DB->get_in_or_equal(array_keys($this->users), $type, $prefix);
+    }
+
+    /**
+     * select_sql_attempts
+     *
+     * @params string $groupbyfield "reader_attempts" field name ("userid" or "quizid")
+     * @return xxx
+     */
+    function select_sql_attempts($groupbyfield) {
+        list($usersql, $userparams) = $this->select_sql_users();
+
+        // we ignore attempts before the "ignoredate"
+        $ignoredate = $this->output->reader->ignoredate;
+
+        $notfinished   = 'ra.timefinish IS NULL OR ra.timefinish = 0';
+        $countattempts = "SUM(CASE WHEN ($notfinished) THEN 0 ELSE 1 END)";
+        $sumgrade      = "SUM(CASE WHEN ($notfinished) THEN 0 ELSE (ra.percentgrade) END)";
+        $sumduration   = "SUM(CASE WHEN ($notfinished) THEN 0 ELSE (ra.timefinish - ra.timestart) END)";
+
+        $select = "ra.$groupbyfield,".
+                  "ROUND($sumgrade / $countattempts) AS averagegrade,".
+                  "ROUND($sumduration / $countattempts) AS averageduration,".
+                  "SUM(CASE WHEN (ra.passed = :passed1 AND ra.timefinish > :time1) THEN 1 ELSE 0 END) AS countpassed,".
+                  "SUM(CASE WHEN (ra.passed = :passed2 AND ra.timefinish > :time2) THEN 0 ELSE 1 END) AS countfailed";
+
+        $from   = "{reader_attempts} ra ".
+                  "LEFT JOIN mdl_reader_books rb ON ra.quizid = rb.quizid";
+
+        $params = array('passed1' => 'true', 'time1' => $ignoredate,  // countpassed (this term)
+                        'passed2' => 'true', 'time2' => $ignoredate); // countfailed (this term)
+
+        switch ($groupbyfield) {
+            case 'userid':
+                $select .= ",SUM(CASE WHEN (ra.passed = :passed3 AND ra.timefinish > :time3) THEN rb.words ELSE 0 END) AS wordsthisterm".
+                           ",SUM(CASE WHEN (ra.passed = :passed4 AND ra.timefinish > :time4) THEN rb.words ELSE 0 END) AS wordsallterms";
+                $params += array('passed3' => 'true', 'time3' => $ignoredate, // wordsthisterm
+                                 'passed4' => 'true', 'time4' => 0);          // wordsallterms
+                break;
+
+            case 'quizid':
+                $notrated    = "$notfinished OR ra.bookrating IS NULL";
+                $countrating = "SUM(CASE WHEN ($notrated) THEN 0 ELSE 1 END)";
+                $sumrating   = "SUM(CASE WHEN ($notrated) THEN 0 ELSE ra.bookrating END)";
+                $select     .= ",$countrating AS countrating".
+                               ",ROUND($sumrating / $countrating) AS averagerating";
+                break;
+        }
+
+        $where  = "ra.reader = :reader AND ra.userid $usersql";
+
+        $params['reader'] = $this->output->reader->id;
+        $params += $userparams;
+
+        return array("SELECT $select FROM $from WHERE $where GROUP BY ra.$groupbyfield", $params);
+    }
+
+    /**
+     * add_filter_params
+     *
+     * @param string $select
+     * @param string $from
+     * @param string $where
+     * @param string $orderby
+     * @param string $groupby
+     * @param array $params
+     * @return void, but may modify $select $from $where $params
+     */
+    function add_filter_params($select, $from, $where, $orderby, $groupby, $params) {
+
+        // search string to detect db fieldname in a filter string
+        // - not preceded by {:`"'_. a-z 0-9
+        // - starts with lowercase a-z
+        // - followed by lowercase a-z, 0-9 or underscore
+        // - not followed by }:`"'_. a-z 0-9
+        $before = '[{:`"'."'".'a-zA-Z0-9_.]';
+        $after  = '[}:`"'."'".'a-zA-Z0-9_.]';
+        $search = "/(?<!$before)([a-z][a-z0-9_]*)(?!$after)/";
+
+        if (strpos($from, '{user}')===false) {
+            $has_usertable = false;
+        } else {
+            $has_usertable = true;
+        }
+        if (strpos($from, '{reader_attempts}')===false) {
+            $has_attempttable = false;
+        } else {
+            $has_attempttable = true;
+        }
+
+        $require_usertable = false;
+        $require_attempttable = false;
+
+        // get filter $sql and $params
+
+        // add user table if needed
+        if ($require_usertable && ! $has_usertable) {
+            $from   .= ', {user} u';
+        }
+
+        // add attempt table if needed
+        if ($require_attempttable && ! $has_attempttable) {
+            $from  .= ', {reader_attempts} ra';
+        }
+
+        if ($orderby) {
+            $where .= " ORDER BY $orderby";
+        }
+        if ($groupby) {
+            $where .= " GROUP BY $groupby";
+        }
+
+        return array($select, $from, $where, $params);
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////
+    // functions to tart and finish form (if required)                            //
+    ////////////////////////////////////////////////////////////////////////////////
 
     /**
      * wrap_html_start
@@ -144,7 +358,7 @@ class reader_report_table extends table_sql {
         }
 
         // start form
-        $url = $this->output->reader->report_url($this->output->mode, null, 281);
+        $url = $this->output->reader->report_url($this->output->mode);
 
         $params = array('id'=>'attemptsform', 'method'=>'post', 'action'=>$url->out_omit_querystring());
         echo html_writer::start_tag('form', $params);

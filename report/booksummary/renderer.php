@@ -44,64 +44,9 @@ class mod_reader_report_booksummary_renderer extends mod_reader_report_renderer 
 
     public $mode = 'booksummary';
 
-    protected $tablecolumns = array(
-        'selected', 'booktitle', 'publisher', 'level', 'booklevel',
-        'countpassed', 'countfailed', 'averageduration', 'averagegrade', 'averagerating', 'countrating'
-    );
-
     protected $filterfields = array(
         'group' => 0, 'realname'=>0, 'lastname'=>1, 'firstname'=>1, 'username'=>1,
         //'startlevel' => 1, 'currentlevel' => 1, 'nopromote' => 1,
         //'countpassed' => 1, 'countfailed' => 1, 'countwords' => 1
     );
-
-    /**
-     * count_sql
-     *
-     * @param xxx $userid (optional, default=0)
-     * @param xxx $attemptid (optional, default=0)
-     * @return xxx
-     */
-    function count_sql($userid=0, $attemptid=0) {
-
-        // get users who can access this Reader activity
-        list($where, $params) = $this->select_sql_users();
-
-        $select = 'COUNT(*)';
-        $from   = '{user} u';
-        $where  = "id $where";
-
-        $userfields = '';
-        return $this->add_filter_params($userfields, $userid, $attemptid, $select, $from, $where, $params);
-    }
-
-    /**
-     * select_sql
-     *
-     * @uses $DB
-     * @param xxx $userid (optional, default=0)
-     * @param xxx $attemptid (optional, default=0)
-     * @return xxx
-     */
-    function select_sql($userid=0, $attemptid=0) {
-
-        // get attempts at this Reader activity
-        list($attemptsql, $attemptparams) = $this->select_sql_attempts('quizid');
-
-        // get users who can access this Reader activity
-        list($usersql, $userparams) = $this->select_sql_users();
-
-        $select = 'rb.id AS bookid, rb.name AS booktitle, rb.publisher, rb.level, rb.difficulty AS booklevel, '.
-                  'raa.countpassed, raa.countfailed, '.
-                  'raa.averageduration, raa.averagegrade, '.
-                  'raa.countrating, raa.averagerating';
-        $from   = '{reader_books} rb '.
-                  "LEFT JOIN ($attemptsql) raa ON raa.quizid = rb.quizid";
-        $where  = 'raa.quizid IS NOT NULL';
-
-        $params = $attemptparams + array('readerid' => $this->reader->id) + $userparams;
-
-        $userfields = '';
-        return $this->add_filter_params($userfields, $userid, $attemptid, $select, $from, $where, $params);
-    }
 }

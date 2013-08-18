@@ -29,7 +29,7 @@ defined('MOODLE_INTERNAL') || die;
 /** Include required files */
 require_once($CFG->dirroot.'/mod/reader/renderer.php');
 require_once($CFG->dirroot.'/mod/reader/report/tablelib.php');
-require_once($CFG->dirroot.'/mod/reader/report/userfiltering.php');
+require_once($CFG->dirroot.'/mod/reader/report/filtering.php');
 
 /**
  * mod_reader_report_renderer
@@ -40,15 +40,11 @@ require_once($CFG->dirroot.'/mod/reader/report/userfiltering.php');
  */
 class mod_reader_report_renderer extends mod_reader_renderer {
 
-    protected $tablecolumns = array();
-
     protected $filterfields = array();
 
     protected $pageparams = array();
 
-    protected $attemptfilter = null;
-
-    protected $userfilter = null;
+    protected $filter = null;
 
     protected $users = null;
 
@@ -76,25 +72,6 @@ class mod_reader_report_renderer extends mod_reader_renderer {
         echo $this->footer();
     }
 
-    /*
-     * get_tablecolumns
-     *
-     * @return array of column names
-     */
-    public function get_tablecolumns() {
-        $tablecolumns = $this->tablecolumns;
-
-        if (! $this->reader->can_manageattempts()) {
-            // remove the select column from students view
-            $i = array_search('selected', $tablecolumns);
-            if (is_numeric($i)) {
-                array_splice($tablecolumns, $i, 1);
-            }
-        }
-
-        return $tablecolumns;
-    }
-
     /**
      * baseurl for table
      */
@@ -119,13 +96,6 @@ class mod_reader_report_renderer extends mod_reader_renderer {
     public function reportcontent()  {
         global $DB, $FULLME, $USER;
 
-        // check capabilities
-        if ($this->reader->can_viewreports()) {
-            $userid = optional_param('userid', 0, PARAM_INT);
-        } else {
-            return false; // shouldn't happen !!
-        }
-
         // set baseurl for this page (used for filters and table)
         $baseurl = $this->baseurl();
 
@@ -133,21 +103,19 @@ class mod_reader_report_renderer extends mod_reader_renderer {
         $this->display_filters($baseurl);
 
         // create report table
+        $tableclass = 'reader_report_'.$this->mode.'_table';
         $uniqueid = $this->page->pagetype.'-'.$this->mode;
-        $table = new reader_report_table($uniqueid, $this);
-
-        // get the table columns
-        $tablecolumns = $this->get_tablecolumns();
+        $table = new $tableclass($uniqueid, $this);
 
         // setup the report table
-        $table->setup_report_table($tablecolumns, $baseurl);
+        $table->setup_report_table($baseurl);
 
         // setup sql to COUNT records
-        list($select, $from, $where, $params) = $this->count_sql($userid);
+        list($select, $from, $where, $params) = $table->count_sql();
         $table->set_count_sql("SELECT $select FROM $from WHERE $where", $params);
 
         // setup sql to SELECT records
-        list($select, $from, $where, $params) = $this->select_sql($userid);
+        list($select, $from, $where, $params) = $table->select_sql();
         $table->set_sql($select, $from, $where, $params);
 
         // extract records
@@ -174,236 +142,15 @@ class mod_reader_report_renderer extends mod_reader_renderer {
     function display_filters($baseurl) {
         if (count($this->filterfields) && $this->reader->can_viewreports()) {
 
-            $user_filtering = new reader_user_filtering($this->filterfields, $baseurl);
+            $classname = 'reader_report_'.$this->mode.'_filtering';
+            $filter = new $classname($this->filterfields, $baseurl);
 
             // create user/attempt filters
-            $this->userfilter = $user_filtering->get_sql_filter();
-            $this->attemptfilter = $user_filtering->get_sql_filter_attempts();
+            $this->filter = $filter->get_sql_filter();
 
-            $user_filtering->display_add();
-            $user_filtering->display_active();
+            $filter->display_add();
+            $filter->display_active();
         }
-    }
-
-    /**
-     * add_filter_params
-     *
-     * @param string $userfields (can be "")
-     * @param integer $userid    (can be 0)
-     * @param integer $attemptid (can be 0)
-     * @param string $select
-     * @param string $from
-     * @param string $where
-     * @param array $params
-     * @return void, but may modify $select $from $where $params
-     */
-    function add_filter_params($userfields, $userid, $attemptid, $select, $from, $where, $params) {
-
-        // search string to detect db fieldname in a filter string
-        // - not preceded by {:`"'_. a-z 0-9
-        // - starts with lowercase a-z
-        // - followed by lowercase a-z, 0-9 or underscore
-        // - not followed by }:`"'_. a-z 0-9
-        $before = '[{:`"'."'".'a-zA-Z0-9_.]';
-        $after  = '[}:`"'."'".'a-zA-Z0-9_.]';
-        $search = "/(?<!$before)([a-z][a-z0-9_]*)(?!$after)/";
-
-        if (strpos($from, '{user}')===false) {
-            $has_usertable = false;
-        } else {
-            $has_usertable = true;
-        }
-        if (strpos($from, '{reader_attempts}')===false) {
-            $has_attempttable = false;
-        } else {
-            $has_attempttable = true;
-        }
-
-        $require_usertable = false;
-        $require_attempttable = false;
-
-        if ($userid) {
-            $require_usertable = true;
-        } else if ($this->userfilter) {
-            list($filterwhere, $filterparams) = $this->userfilter;
-            if ($filterwhere) {
-                $filterwhere = preg_replace($search, 'u.$1', $filterwhere);
-                $where  .= ' AND '.$filterwhere;
-                $params += $filterparams;
-                $require_usertable = true;
-            }
-        }
-
-        if ($attemptid) {
-            throw new moodle_exception('how do we filter specific attempt?');
-        } else if ($this->attemptfilter) {
-            list($filterwhere, $filterparams) = $this->attemptfilter;
-            if ($filterwhere) {
-                $filterwhere = preg_replace($search, 'ra.$1', $filterwhere);
-                $where  .= ' AND '.$filterwhere;
-                $params += $filterparams;
-                $require_attempttable = true;
-            }
-        }
-
-        // add user table if needed
-        if ($require_usertable && ! $has_usertable) {
-            $from   .= ', {user} u';
-        }
-
-        // add attempt table if needed
-        if ($require_attempttable && ! $has_attempttable) {
-            $from  .= ', {reader_attempts} ra';
-        }
-
-        // join to grade tables if necessary
-        if (strpos($select, 'gg')===false && strpos($where, 'gg')===false) {
-            // grade tables not required
-        } else if (strpos($from, 'grade_grades')===false) {
-            // grade tables are required, but missing, so add them to $from
-            // the "gg" table alias is added by the "set_sql()" method of this class
-            // or the "get_sql_filter_attempts()" method of the reader "grade" filter
-            $from   .= ', {grade_items} gi, {grade_grades} gg';
-            $where  .= ' AND ra.userid = gg.userid AND gg.itemid = gi.id'.
-                       ' AND gi.courseid = :courseid AND gi.itemtype = :itemtype'.
-                       ' AND gi.itemmodule = :itemmodule AND gi.iteminstance = :iteminstance';
-            $params += array('courseid' => $this->reader->course->id, 'itemtype' => 'mod',
-                             'itemmodule' => 'reader', 'iteminstance' => $this->reader->id);
-        }
-
-        return array($select, $from, $where, $params);
-    }
-
-    /**
-     * select_sql_users
-     *
-     * @uses $DB
-     * @param string $prefix (optional, default="") prefix for DB $params
-     * @return xxx
-     */
-    function select_sql_users($prefix='user') {
-        global $DB;
-        if ($userid = optional_param('userid', 0, PARAM_INT)) {
-            return array(' = :userid', array('userid' => $userid));
-        }
-        if ($this->users===null) {
-            $this->users = get_enrolled_users($this->reader->context, 'mod/reader:viewbooks', 0, 'u.id', 'id');
-        }
-        if ($prefix=='') {
-            $type = SQL_PARAMS_QM;
-        } else {
-            $type = SQL_PARAMS_NAMED;
-        }
-        return $DB->get_in_or_equal(array_keys($this->users), $type, $prefix);
-    }
-
-    /**
-     * select_sql_attempts
-     *
-     * @params string $groupbyfield "reader_attempts" field name ("userid" or "quizid")
-     * @return xxx
-     */
-    function select_sql_attempts($groupbyfield) {
-        list($usersql, $userparams) = $this->select_sql_users();
-
-        $notfinished   = 'ra.timefinish IS NULL OR ra.timefinish = 0';
-        $countattempts = "SUM(CASE WHEN ($notfinished) THEN 0 ELSE 1 END)";
-        $sumgrade      = "SUM(CASE WHEN ($notfinished) THEN 0 ELSE (ra.percentgrade) END)";
-        $sumduration   = "SUM(CASE WHEN ($notfinished) THEN 0 ELSE (ra.timefinish - ra.timestart) END)";
-
-        $select = "ra.$groupbyfield,".
-                  "ROUND($sumgrade / $countattempts) AS averagegrade,".
-                  "ROUND($sumduration / $countattempts) AS averageduration,".
-                  "SUM(CASE WHEN (ra.passed = :passed1 AND ra.timefinish > :time1) THEN 1 ELSE 0 END) AS countpassed,".
-                  "SUM(CASE WHEN (ra.passed = :passed2 AND ra.timefinish > :time2) THEN 0 ELSE 1 END) AS countfailed";
-
-        $from   = "{reader_attempts} ra ".
-                  "LEFT JOIN mdl_reader_books rb ON ra.quizid = rb.quizid";
-
-        $params = array('passed1' => 'true', 'time1' => $this->reader->ignoredate,  // countpassed (this term)
-                        'passed2' => 'true', 'time2' => $this->reader->ignoredate); // countfailed (this term)
-
-        switch ($groupbyfield) {
-            case 'userid':
-                $select .= ",SUM(CASE WHEN (ra.passed = :passed3 AND ra.timefinish > :time3) THEN rb.words ELSE 0 END) AS wordsthisterm".
-                           ",SUM(CASE WHEN (ra.passed = :passed4 AND ra.timefinish > :time4) THEN rb.words ELSE 0 END) AS wordsallterms";
-                $params += array('passed3' => 'true', 'time3' => $this->reader->ignoredate, // wordsthisterm
-                                 'passed4' => 'true', 'time4' => 0);                        // wordsallterms
-                break;
-
-            case 'quizid':
-                $notrated    = "$notfinished OR ra.bookrating IS NULL";
-                $countrating = "SUM(CASE WHEN ($notrated) THEN 0 ELSE 1 END)";
-                $sumrating   = "SUM(CASE WHEN ($notrated) THEN 0 ELSE ra.bookrating END)";
-                $select     .= ",$countrating AS countrating".
-                               ",ROUND($sumrating / $countrating) AS averagerating";
-                break;
-        }
-
-        $where  = "ra.reader = :reader AND ra.userid $usersql";
-
-        $params['reader'] = $this->reader->id;
-        $params += $userparams;
-
-        return array("SELECT $select FROM $from WHERE $where GROUP BY ra.$groupbyfield", $params);
-    }
-
-    /**
-     * select_sql_attempts
-     *
-     * @params string $groupbyfield "reader_attempts" field name ("userid" or "quizid")
-     * @return xxx
-     */
-    function select_sql_attempts_save($groupbyfield) {
-        list($usersql, $userparams) = $this->select_sql_users();
-
-        $notfinished   = 'ra.timefinish IS NULL OR ra.timefinish = 0';
-        $countattempts = "SUM(CASE WHEN ($notfinished) THEN 0 ELSE 1 END)";
-        $sumgrade      = "SUM(CASE WHEN ($notfinished) THEN 0 ELSE (ra.percentgrade) END)";
-        $sumduration   = "SUM(CASE WHEN ($notfinished) THEN 0 ELSE (ra.timefinish - ra.timestart) END)";
-
-        $select = "ra.$groupbyfield,".
-                  "ROUND($sumgrade / $countattempts) AS averagegrade,".
-                  "ROUND($sumduration / $countattempts) AS averageduration,".
-                  "SUM(CASE WHEN (ra.passed = :passed1 AND ra.timefinish > :time1) THEN 1 ELSE 0 END) AS countpassed,".
-                  "SUM(CASE WHEN (ra.passed = :passed2 AND ra.timefinish > :time2) THEN 0 ELSE 1 END) AS countfailed,".
-                  "SUM(CASE WHEN (ra.passed = :passed3 AND ra.timefinish > :time3) THEN rb.words ELSE 0 END) AS wordsthisterm,".
-                  "SUM(CASE WHEN (ra.passed = :passed4 AND ra.timefinish > :time4) THEN rb.words ELSE 0 END) AS wordsallterms";
-
-        $from   = "{reader_attempts} ra ".
-                  "LEFT JOIN mdl_reader_books rb ON ra.quizid = rb.quizid";
-
-        $where  = "ra.reader = :reader AND ra.userid $usersql";
-
-        $params = array('passed1' => 'true', 'time1' => $this->reader->ignoredate, // countpassed (this term)
-                        'passed2' => 'true', 'time2' => $this->reader->ignoredate, // countfailed (this term)
-                        'passed3' => 'true', 'time3' => $this->reader->ignoredate, // wordsthisterm
-                        'passed4' => 'true', 'time4' => 0,                         // wordsallterms
-                        'reader'  => $this->reader->id) + $userparams;
-
-        return array("SELECT $select FROM $from WHERE $where GROUP BY ra.$groupbyfield", $params);
-    }
-
-    /**
-     * count_sql
-     *
-     * @param xxx $userid (optional, default=0)
-     * @param xxx $attemptid (optional, default=0)
-     * @return xxx
-     */
-    function count_sql($userid=0, $attemptid=0) {
-        return array('', array());
-    }
-
-    /**
-     * select_sql
-     *
-     * @param xxx $userid (optional, default=0)
-     * @param xxx $attemptid (optional, default=0)
-     * @return xxx
-     */
-    function select_sql($userid=0, $attemptid=0) {
-        return array('', array());
     }
 
     /**
@@ -419,9 +166,10 @@ class mod_reader_report_renderer extends mod_reader_renderer {
         if (empty($table->column_suppress)) {
             return false; // no suppressed columns i.e. all columns are always printed
         }
+        $showrows = array();
         foreach ($table->column_suppress as $column => $suppress) {
             if ($suppress && $table->has_column($column)) {
-                $this->fix_suppressed_column_in_rawdata($table, $column);
+                $this->fix_suppressed_column_in_rawdata($table, $column, $showrows);
             }
         }
     }
@@ -430,39 +178,44 @@ class mod_reader_report_renderer extends mod_reader_renderer {
      * fix_suppressed_column_in_rawdata
      *
      * @param xxx $table (passed by reference)
+     * @param xxx $column
+     * @param xxx $showrows (passed by reference)
      * @return xxx
      */
-    function fix_suppressed_column_in_rawdata(&$table, $column)   {
-        $userid = 0;
+    function fix_suppressed_column_in_rawdata(&$table, $column, &$showrows)   {
         $value  = array();
         $prefix = array();
 
         foreach ($table->rawdata as $id => $record) {
-            if (isset($record->$column)) {
-                if ($userid) {
-                    if ($userid==$record->userid) {
-                        // same user - do nothing
-                    } else {
-                        if (isset($value[$column]) && $value[$column]==$record->$column) {
-                            // oops, same value as previous user - we must adjust the $column value,
-                            // so that "print_row()" (lib/tablelib.php) does not suppress this value
-                            if (isset($prefix[$column]) && $prefix[$column]) {
-                                $prefix[$column] = '';
-                            } else {
-                                // add an empty span tag to make this value different from previous user's
-                                $prefix[$column] = html_writer::tag('span', '');
-                            }
-                        } else {
-                            // different grade from previous user, so we can unset the prefix
-                            $prefix[$column] = '';
-                        }
-                    }
+            if (! isset($record->$column)) {
+                continue; // shouldn't happen !!
+            }
+
+            if (! isset($showrows[$id])) {
+                $showrows[$id] = false;
+            }
+
+            if (isset($value[$column]) && $value[$column]==$record->$column) {
+                if ($showrows[$id]) {
+                    // oops, same value as previous row - we must adjust the $column value,
+                    // so that "print_row()" (lib/tablelib.php) does not suppress this value
                     if (isset($prefix[$column]) && $prefix[$column]) {
-                        $table->rawdata[$id]->$column = $prefix[$column].$table->rawdata[$id]->$column;
+                        $prefix[$column] = '';
+                    } else {
+                        // add an empty span tag to make this value different from previous user's
+                        $prefix[$column] = html_writer::tag('span', '');
                     }
                 }
-                $userid = $record->userid;
-                $value[$column] = $record->$column;
+            } else {
+                // different value from previous row, so we can unset the prefix
+                $prefix[$column] = '';
+                $showrows[$id] = true;
+            }
+
+            $value[$column] = $record->$column;
+
+            if (isset($prefix[$column]) && $prefix[$column]) {
+                $table->rawdata[$id]->$column = $prefix[$column].$table->rawdata[$id]->$column;
             }
         }
     }

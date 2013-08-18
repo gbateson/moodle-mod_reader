@@ -480,8 +480,8 @@ class mod_reader {
             // the order of the standard Reader reports
             $modes = array('usersummary', 'userdetailed', 'groupsummary', 'booksummary', 'bookdetailed');
 
-            // all report plugins
-            $plugins = get_list_of_plugins('mod/reader/report');
+            // all report plugins (exclude "filter" directory)
+            $plugins = get_list_of_plugins('mod/reader/report', 'filters');
 
             // remove missing standard reports
             $modes = array_intersect($modes, $plugins);

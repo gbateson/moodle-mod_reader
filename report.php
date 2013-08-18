@@ -53,8 +53,10 @@ $title = format_string($reader->name).': '.get_string('reports').': '.get_string
 $PAGE->set_title($title);
 $PAGE->set_heading($title);
 
-// load the appropriate renderer class for this report $mode
+// load the appropriate renderer, table and filter class for this report $mode
 require_once($CFG->dirroot.'/mod/reader/report/'.$mode.'/renderer.php');
+require_once($CFG->dirroot.'/mod/reader/report/'.$mode.'/tablelib.php');
+require_once($CFG->dirroot.'/mod/reader/report/'.$mode.'/filtering.php');
 
 // create the renderer for this report
 $output = $PAGE->get_renderer('mod_reader', 'report_'.$mode);
