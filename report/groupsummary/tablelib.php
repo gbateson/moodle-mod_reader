@@ -125,7 +125,233 @@ class reader_report_groupsummary_table extends reader_report_table {
     // functions to format header cells                                           //
     ////////////////////////////////////////////////////////////////////////////////
 
+    /**
+     * header_groupname
+     *
+     * @return string
+     */
+    public function header_groupname() {
+        return get_string('group');
+    }
+
+    /**
+     * header_countactive
+     *
+     * @return string
+     */
+    public function header_countactive() {
+        return get_string('countactive', 'reader').' '.$this->help_icon('countactive');
+    }
+
+    /**
+     * header_countinactive
+     *
+     * @return string
+     */
+    public function header_countinactive() {
+        return get_string('countinactive', 'reader').' '.$this->help_icon('countinactive');
+    }
+
+    /**
+     * header_percentactive
+     *
+     * @return string
+     */
+    public function header_percentactive() {
+        return get_string('percentactive', 'reader').' '.$this->help_icon('percentactive');
+    }
+
+    /**
+     * header_percentinactive
+     *
+     * @return string
+     */
+    public function header_percentinactive() {
+        return get_string('percentinactive', 'reader').' '.$this->help_icon('percentinactive');
+    }
+
+    /**
+     * header_averagetaken
+     *
+     * @return string
+     */
+    public function header_averagetaken() {
+        return get_string('averagetaken', 'reader').' '.$this->help_icon('averagetaken');
+    }
+
+    /**
+     * header_averagepassed
+     *
+     * @return string
+     */
+    public function header_averagepassed() {
+        return get_string('averagepassed', 'reader').' '.$this->help_icon('averagepassed');
+    }
+
+    /**
+     * header_averagefailed
+     *
+     * @return string
+     */
+    public function header_averagefailed() {
+        return get_string('averagefailed', 'reader').' '.$this->help_icon('averagefailed');
+    }
+
+    /**
+     * header_averagepercentgrade
+     *
+     * @return string
+     */
+    public function header_averagepercentgrade() {
+        return get_string('averagegrade', 'reader').' '.$this->help_icon('averagegrade');
+    }
+
+    /**
+     * header_averagewords
+     *
+     * @return xxx
+     */
+    public function header_averagewords($type='')  {
+        $averagewords = get_string('averagewords', 'reader');
+        if ($type) {
+            $strtype = get_string($type, 'reader');
+            $averagewords .= ' '.html_writer::tag('span', "($strtype)", array('class' => 'nowrap'));
+            $averagewords .= ' '.$this->help_icon('averagewords'.$type);
+        }
+        return $averagewords;
+    }
+
+    /**
+     * header_averagewordsthisterm
+     *
+     * @return string
+     */
+    public function header_averagewordsthisterm() {
+        return $this->header_averagewords('thisterm');
+    }
+
+    /**
+     * header_averagewordsallterms
+     *
+     * @return string
+     */
+    public function header_averagewordsallterms() {
+        return $this->header_averagewords('allterms');
+    }
+
     ////////////////////////////////////////////////////////////////////////////////
     // functions to format data cells                                             //
     ////////////////////////////////////////////////////////////////////////////////
+
+    /**
+     * col_percentactive
+     *
+     * @param xxx $row
+     * @return xxx
+     */
+    public function col_percentactive($row) {
+        if (empty($row->countusers)) {
+            return '';
+        } else {
+            return round($row->countactive / $row->countusers * 100).'%';
+        }
+    }
+
+    /**
+     * col_percentinactive
+     *
+     * @param xxx $row
+     * @return xxx
+     */
+    public function col_percentinactive($row) {
+        if (empty($row->countusers)) {
+            return '';
+        } else {
+            return round($row->countinactive / $row->countusers * 100).'%';
+        }
+    }
+
+    /**
+     * col_averagetaken
+     *
+     * @param xxx $row
+     * @return xxx
+     */
+    public function col_averagetaken($row) {
+        if (empty($row->countusers)) {
+            return '';
+        } else {
+            return round(($row->countpassed + $row->countfailed) / $row->countusers);
+        }
+    }
+
+    /**
+     * col_averagepassed
+     *
+     * @param xxx $row
+     * @return xxx
+     */
+    public function col_averagepassed($row) {
+        if (empty($row->countusers)) {
+            return '';
+        } else {
+            return round($row->countpassed / $row->countusers);
+        }
+    }
+
+    /**
+     * col_averagefailed
+     *
+     * @param xxx $row
+     * @return xxx
+     */
+    public function col_averagefailed($row) {
+        if (empty($row->countusers)) {
+            return '';
+        } else {
+            return round($row->countfailed / $row->countusers);
+        }
+    }
+
+    /**
+     * col_averagepercentgrade
+     *
+     * @param xxx $row
+     * @return xxx
+     */
+    public function col_averagepercentgrade($row) {
+        if (empty($row->countusers)) {
+            return '';
+        } else {
+            return round($row->sumaveragegrade / $row->countusers).'%';
+        }
+    }
+
+    /**
+     * col_averagewordsthisterm
+     *
+     * @param xxx $row
+     * @return xxx
+     */
+    public function col_averagewordsthisterm($row) {
+        if (empty($row->countusers)) {
+            return '';
+        } else {
+            return number_format(round($row->wordsthisterm / $row->countusers));
+        }
+    }
+
+    /**
+     * col_averagewordsallterms
+     *
+     * @param xxx $row
+     * @return xxx
+     */
+    public function col_averagewordsallterms($row) {
+        if (empty($row->countusers)) {
+            return '';
+        } else {
+            return number_format(round($row->wordsallterms / $row->countusers));
+        }
+    }
 }

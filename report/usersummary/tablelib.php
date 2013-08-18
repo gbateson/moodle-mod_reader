@@ -133,7 +133,115 @@ class reader_report_usersummary_table extends reader_report_table {
     // functions to format header cells                                           //
     ////////////////////////////////////////////////////////////////////////////////
 
+    /**
+     * header_startlevel
+     *
+     * @return xxx
+     */
+    public function header_startlevel()  {
+        return get_string('startlevel', 'reader');
+    }
+
+    /**
+     * header_currentlevel
+     *
+     * @return xxx
+     */
+    public function header_currentlevel()  {
+        return get_string('currentlevel', 'reader');
+    }
+
+    /**
+     * header_nopromote
+     *
+     * @return xxx
+     */
+    public function header_nopromote()  {
+        return get_string('nopromote', 'reader');
+    }
+
+    /**
+     * header_wordsthisterm
+     *
+     * @return xxx
+     */
+    public function header_wordsthisterm()  {
+        return $this->header_totalwords(get_string('thisterm', 'reader'));
+    }
+
+    /**
+     * header_wordsallterms
+     *
+     * @return xxx
+     */
+    public function header_wordsallterms()  {
+        return $this->header_totalwords(get_string('allterms', 'reader'));
+    }
+
+    /**
+     * header_goal
+     *
+     * @return xxx
+     */
+    public function header_goal()  {
+        return get_string('goal', 'reader');
+    }
+
     ////////////////////////////////////////////////////////////////////////////////
     // functions to format data cells                                             //
     ////////////////////////////////////////////////////////////////////////////////
+
+    /**
+     * col_goal
+     *
+     * @param xxx $row
+     * @return xxx
+     */
+    public function col_goal($row)  {
+        global $DB;
+
+        // cache for goals defined for each group
+        static $goals = array();
+
+        if (empty($row->userid)) {
+            return ''; // shouldn't happen !!
+        }
+
+        $level = $row->currentlevel;
+        $readerid = $this->output->reader->id;
+        $courseid = $this->output->reader->course->id;
+
+        $goal = $DB->get_field('reader_levels', 'goal', array('userid' => $row->userid, 'readerid' => $readerid));
+
+        if ($goal===null || $goal===false) {
+            $goal = 0;
+            if ($groups = groups_get_all_groups($courseid, $row->userid)) {
+                foreach ($groups as $groupid => $group) {
+                    if (! array_key_exists($groupid, $goals)) {
+                        $goals[$groupid] = array();
+                    }
+                    if (! array_key_exists($level, $goals[$groupid])) {
+                        if ($groupgoal = $DB->get_field('reader_goal', 'goal', array('readerid' => $readerid, 'groupid' => $groupid, 'level' => $level))) {
+                            $goals[$groupid][$level] = $groupgoal; // level specific goal
+                        } else if ($groupgoal = $DB->get_field('reader_goal', 'goal', array('readerid' => $readerid, 'groupid' => $groupid, 'level' => 0))) {
+                            $goals[$groupid][$level] = $groupgoal; // any level
+                        } else {
+                            $goals[$groupid][$level] = 0;
+                        }
+                    }
+                    $goal = max($goal, $goals[$groupid][$level]);
+                }
+            }
+        }
+
+        if ($goal==0) {
+            $goal = $this->output->reader->goal;
+        }
+
+        if ($goal==0) {
+            return '';
+        } else {
+            return number_format($goal);
+        }
+    }
 }

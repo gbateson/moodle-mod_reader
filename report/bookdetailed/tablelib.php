@@ -113,7 +113,26 @@ class reader_report_bookdetailed_table extends reader_report_table {
     // functions to format header cells                                           //
     ////////////////////////////////////////////////////////////////////////////////
 
+    /**
+     * header_bookrating
+     *
+     * @return xxx
+     */
+    public function header_bookrating() {
+        return get_string('bookrating', 'reader');
+    }
+
     ////////////////////////////////////////////////////////////////////////////////
     // functions to format data cells                                             //
     ////////////////////////////////////////////////////////////////////////////////
+
+    /**
+     * col_bookrating
+     *
+     * @param xxx $row
+     * @return xxx
+     */
+    public function col_bookrating($row)  {
+        return $this->img_bookrating($row->bookrating);
+    }
 }

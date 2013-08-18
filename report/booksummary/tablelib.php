@@ -114,7 +114,35 @@ class reader_report_booksummary_table extends reader_report_table {
     // functions to format header cells                                           //
     ////////////////////////////////////////////////////////////////////////////////
 
+    /**
+     * header_averagerating
+     *
+     * @return xxx
+     */
+    public function header_averagerating()  {
+        return get_string('averagerating', 'reader');
+    }
+
+    /**
+     * header_countrating
+     *
+     * @return xxx
+     */
+    public function header_countrating()  {
+        return get_string('countrating', 'reader');
+    }
+
     ////////////////////////////////////////////////////////////////////////////////
     // functions to format data cells                                             //
     ////////////////////////////////////////////////////////////////////////////////
+
+    /**
+     * col_averagerating
+     *
+     * @param xxx $row
+     * @return xxx
+     */
+    public function col_averagerating($row)  {
+        return $this->img_bookrating($row->averagerating);
+    }
 }

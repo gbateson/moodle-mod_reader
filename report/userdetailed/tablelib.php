@@ -114,7 +114,90 @@ class reader_report_userdetailed_table extends reader_report_table {
     // functions to format header cells                                           //
     ////////////////////////////////////////////////////////////////////////////////
 
+    /**
+     * header_timefinish
+     *
+     * @return xxx
+     */
+    public function header_timefinish() {
+        return get_string('date');
+    }
+
+    /**
+     * header_percentgrade
+     *
+     * @return xxx
+     */
+    public function header_percentgrade() {
+        return get_string('grade');
+    }
+
+    /**
+     * header_words
+     *
+     * @return xxx
+     */
+    public function header_words() {
+        return get_string('words', 'reader');
+    }
+
     ////////////////////////////////////////////////////////////////////////////////
     // functions to format data cells                                             //
     ////////////////////////////////////////////////////////////////////////////////
+
+    /**
+     * col_timefinish
+     *
+     * @param xxx $row
+     * @return xxx
+     */
+    public function col_timefinish($row)  {
+        if (empty($row->timefinish)) {
+            return '';
+        } else {
+            return userdate($row->timefinish, get_string('strftimefinish', 'reader'));
+        }
+    }
+
+   /**
+     * col_percentgrade
+     *
+     * @param xxx $row
+     * @return xxx
+     */
+    public function col_percentgrade($row)  {
+        if (isset($row->percentgrade)) {
+            return round($row->percentgrade).'%';
+        } else {
+            return '&nbsp;';
+        }
+    }
+
+    /**
+     * col_totalwords
+     *
+     * @param xxx $row
+     * @return xxx
+     */
+    public function col_totalwords($row)  {
+        static $userid = 0;
+        static $totalwords = 0;
+
+        if (empty($row->userid)) {
+            return ''; // shouldn't happen !!
+        }
+
+        if ($userid && $userid==$row->userid) {
+            // same user
+        } else {
+            $userid = $row->userid;
+            $totalwords = 0;
+        }
+
+        if (isset($row->passed) && $row->passed=='true' && isset($row->words)) {
+            $totalwords += $row->words;
+        }
+
+        return number_format($totalwords);
+    }
 }

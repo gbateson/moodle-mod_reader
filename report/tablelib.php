@@ -506,33 +506,6 @@ class reader_report_table extends table_sql {
     }
 
     /**
-     * header_startlevel
-     *
-     * @return xxx
-     */
-    public function header_startlevel()  {
-        return get_string('startlevel', 'reader');
-    }
-
-    /**
-     * header_currentlevel
-     *
-     * @return xxx
-     */
-    public function header_currentlevel()  {
-        return get_string('currentlevel', 'reader');
-    }
-
-    /**
-     * header_nopromote
-     *
-     * @return xxx
-     */
-    public function header_nopromote()  {
-        return get_string('nopromote', 'reader');
-    }
-
-    /**
      * header_countpassed
      *
      * @return xxx
@@ -582,51 +555,6 @@ class reader_report_table extends table_sql {
     }
 
     /**
-     * header_wordsthisterm
-     *
-     * @return xxx
-     */
-    public function header_wordsthisterm()  {
-        return $this->header_totalwords(get_string('thisterm', 'reader'));
-    }
-
-    /**
-     * header_wordsallterms
-     *
-     * @return xxx
-     */
-    public function header_wordsallterms()  {
-        return $this->header_totalwords(get_string('allterms', 'reader'));
-    }
-
-    /**
-     * header_goal
-     *
-     * @return xxx
-     */
-    public function header_goal()  {
-        return get_string('goal', 'reader');
-    }
-
-    /**
-     * header_averagerating
-     *
-     * @return xxx
-     */
-    public function header_averagerating()  {
-        return get_string('averagerating', 'reader');
-    }
-
-    /**
-     * header_countrating
-     *
-     * @return xxx
-     */
-    public function header_countrating()  {
-        return get_string('countrating', 'reader');
-    }
-
-    /**
      * header_userlevel
      *
      * @return xxx
@@ -642,33 +570,6 @@ class reader_report_table extends table_sql {
      */
     public function header_booklevel() {
         return get_string('booklevel', 'reader');
-    }
-
-    /**
-     * header_timefinish
-     *
-     * @return xxx
-     */
-    public function header_timefinish() {
-        return get_string('date');
-    }
-
-    /**
-     * header_percentgrade
-     *
-     * @return xxx
-     */
-    public function header_percentgrade() {
-        return get_string('grade');
-    }
-
-    /**
-     * header_words
-     *
-     * @return xxx
-     */
-    public function header_words() {
-        return get_string('words', 'reader');
     }
 
     /**
@@ -705,129 +606,6 @@ class reader_report_table extends table_sql {
      */
     public function header_passed() {
         return implode('/', array(get_string('passedshort', 'reader'), get_string('failedshort', 'reader'), get_string('cheatedshort', 'reader')));
-    }
-
-    /**
-     * header_bookrating
-     *
-     * @return xxx
-     */
-    public function header_bookrating() {
-        return get_string('bookrating', 'reader');
-    }
-
-    /**
-     * header_groupname
-     *
-     * @return string
-     */
-    public function header_groupname() {
-        return get_string('group');
-    }
-
-    /**
-     * header_countactive
-     *
-     * @return string
-     */
-    public function header_countactive() {
-        return get_string('countactive', 'reader').' '.$this->help_icon('countactive');
-    }
-
-    /**
-     * header_countinactive
-     *
-     * @return string
-     */
-    public function header_countinactive() {
-        return get_string('countinactive', 'reader').' '.$this->help_icon('countinactive');
-    }
-
-    /**
-     * header_percentactive
-     *
-     * @return string
-     */
-    public function header_percentactive() {
-        return get_string('percentactive', 'reader').' '.$this->help_icon('percentactive');
-    }
-
-    /**
-     * header_percentinactive
-     *
-     * @return string
-     */
-    public function header_percentinactive() {
-        return get_string('percentinactive', 'reader').' '.$this->help_icon('percentinactive');
-    }
-
-    /**
-     * header_averagetaken
-     *
-     * @return string
-     */
-    public function header_averagetaken() {
-        return get_string('averagetaken', 'reader').' '.$this->help_icon('averagetaken');
-    }
-
-    /**
-     * header_averagepassed
-     *
-     * @return string
-     */
-    public function header_averagepassed() {
-        return get_string('averagepassed', 'reader').' '.$this->help_icon('averagepassed');
-    }
-
-    /**
-     * header_averagefailed
-     *
-     * @return string
-     */
-    public function header_averagefailed() {
-        return get_string('averagefailed', 'reader').' '.$this->help_icon('averagefailed');
-    }
-
-    /**
-     * header_averagepoints
-     *
-     * @return string
-     */
-    public function header_averagepercentgrade() {
-        return get_string('averagegrade', 'reader').' '.$this->help_icon('averagegrade');
-    }
-
-    /**
-     * header_averagewords
-     *
-     * @return xxx
-     */
-    public function header_averagewords($type='')  {
-        $averagewords = get_string('averagewords', 'reader');
-        if ($type) {
-            $strtype = get_string($type, 'reader');
-            $averagewords .= ' '.html_writer::tag('span', "($strtype)", array('class' => 'nowrap'));
-            $averagewords .= ' '.$this->help_icon('averagewords'.$type);
-        }
-        return $averagewords;
-    }
-
-    /**
-     * header_averagewordsthisterm
-     *
-     * @return string
-     */
-    public function header_averagewordsthisterm() {
-        return $this->header_averagewords('thisterm');
-    }
-
-    /**
-     * header_averagewordsallterms
-     *
-     * @return string
-     */
-    public function header_averagewordsallterms() {
-        return $this->header_averagewords('allterms');
     }
 
     /**
@@ -888,20 +666,6 @@ class reader_report_table extends table_sql {
     }
 
     /**
-     * col_percentgrade
-     *
-     * @param xxx $row
-     * @return xxx
-     */
-    public function col_percentgrade($row)  {
-        if (isset($row->percentgrade)) {
-            return round($row->percentgrade).'%';
-        } else {
-            return '&nbsp;';
-        }
-    }
-
-    /**
      * col_averageduration
      *
      * @param xxx $row
@@ -930,16 +694,6 @@ class reader_report_table extends table_sql {
     }
 
     /**
-     * col_averagerating
-     *
-     * @param xxx $row
-     * @return xxx
-     */
-    public function col_averagerating($row)  {
-        return $this->img_bookrating($row->averagerating);
-    }
-
-    /**
      * col_passed
      *
      * @param xxx $row
@@ -960,41 +714,16 @@ class reader_report_table extends table_sql {
      * @return xxx
      */
     public function img_bookrating($rating)  {
-        global $OUTPUT;
         static $img = null;
         $rating = intval($rating);
         if ($rating >= 1 && $rating <= 3) {
             if ($img===null) {
-                $src = $OUTPUT->pix_url('t/approve');
+                $src = $this->output->pix_url('t/approve');
                 $img = html_writer::empty_tag('img', array('src' => $src, 'alt' => get_string('bookrating', 'reader')));
             }
             return str_repeat($img, $rating);
         } else {
             return '';
-        }
-    }
-
-    /**
-     * col_bookrating
-     *
-     * @param xxx $row
-     * @return xxx
-     */
-    public function col_bookrating($row)  {
-        return $this->img_bookrating($row->bookrating);
-    }
-
-    /**
-     * col_timefinish
-     *
-     * @param xxx $row
-     * @return xxx
-     */
-    public function col_timefinish($row)  {
-        if (empty($row->timefinish)) {
-            return '';
-        } else {
-            return userdate($row->timefinish, get_string('strftimefinish', 'reader'));
         }
     }
 
@@ -1012,203 +741,9 @@ class reader_report_table extends table_sql {
             default:                  $report_url = '';
         }
         if ($report_url) {
-            $wordsthisterm = html_writer::link($report_url, $wordsthisterm);
+        //    $wordsthisterm = html_writer::link($report_url, $wordsthisterm);
         }
         return $wordsthisterm;
-    }
-
-    /**
-     * col_totalwords
-     *
-     * @param xxx $row
-     * @return xxx
-     */
-    public function col_totalwords($row)  {
-        static $userid = 0;
-        static $totalwords = 0;
-
-        if (empty($row->userid)) {
-            return ''; // shouldn't happen !!
-        }
-
-        if ($userid && $userid==$row->userid) {
-            // same user
-        } else {
-            $userid = $row->userid;
-            $totalwords = 0;
-        }
-
-        if (isset($row->passed) && $row->passed=='true' && isset($row->words)) {
-            $totalwords += $row->words;
-        }
-
-        return number_format($totalwords);
-    }
-
-    /**
-     * col_totalwords
-     *
-     * @param xxx $row
-     * @return xxx
-     */
-    public function col_goal($row)  {
-        global $DB;
-
-        // cache for goals defined for each group
-        static $goals = array();
-
-        if (empty($row->userid)) {
-            return ''; // shouldn't happen !!
-        }
-
-        $level = $row->currentlevel;
-        $readerid = $this->output->reader->id;
-        $courseid = $this->output->reader->course->id;
-
-        $goal = $DB->get_field('reader_levels', 'goal', array('userid' => $row->userid, 'readerid' => $readerid));
-
-        if ($goal===null || $goal===false) {
-            $goal = 0;
-            if ($groups = groups_get_all_groups($courseid, $row->userid)) {
-                foreach ($groups as $groupid => $group) {
-                    if (! array_key_exists($groupid, $goals)) {
-                        $goals[$groupid] = array();
-                    }
-                    if (! array_key_exists($level, $goals[$groupid])) {
-                        if ($groupgoal = $DB->get_field('reader_goal', 'goal', array('readerid' => $readerid, 'groupid' => $groupid, 'level' => $level))) {
-                            $goals[$groupid][$level] = $groupgoal; // level specific goal
-                        } else if ($groupgoal = $DB->get_field('reader_goal', 'goal', array('readerid' => $readerid, 'groupid' => $groupid, 'level' => 0))) {
-                            $goals[$groupid][$level] = $groupgoal; // any level
-                        } else {
-                            $goals[$groupid][$level] = 0;
-                        }
-                    }
-                    $goal = max($goal, $goals[$groupid][$level]);
-                }
-            }
-        }
-
-        if ($goal==0) {
-            $goal = $this->output->reader->goal;
-        }
-
-        if ($goal==0) {
-            return '';
-        } else {
-            return number_format($goal);
-        }
-    }
-
-    /**
-     * col_percentactive
-     *
-     * @param xxx $row
-     * @return xxx
-     */
-    public function col_percentactive($row) {
-        if (empty($row->countusers)) {
-            return '';
-        } else {
-            return round($row->countactive / $row->countusers * 100).'%';
-        }
-    }
-
-    /**
-     * col_percentinactive
-     *
-     * @param xxx $row
-     * @return xxx
-     */
-    public function col_percentinactive($row) {
-        if (empty($row->countusers)) {
-            return '';
-        } else {
-            return round($row->countinactive / $row->countusers * 100).'%';
-        }
-    }
-
-    /**
-     * col_averagetaken
-     *
-     * @param xxx $row
-     * @return xxx
-     */
-    public function col_averagetaken($row) {
-        if (empty($row->countusers)) {
-            return '';
-        } else {
-            return round(($row->countpassed + $row->countfailed) / $row->countusers);
-        }
-    }
-
-    /**
-     * col_averagepassed
-     *
-     * @param xxx $row
-     * @return xxx
-     */
-    public function col_averagepassed($row) {
-        if (empty($row->countusers)) {
-            return '';
-        } else {
-            return round($row->countpassed / $row->countusers);
-        }
-    }
-
-    /**
-     * col_averagefailed
-     *
-     * @param xxx $row
-     * @return xxx
-     */
-    public function col_averagefailed($row) {
-        if (empty($row->countusers)) {
-            return '';
-        } else {
-            return round($row->countfailed / $row->countusers);
-        }
-    }
-
-    /**
-     * col_averagepercentgrade
-     *
-     * @param xxx $row
-     * @return xxx
-     */
-    public function col_averagepercentgrade($row) {
-        if (empty($row->countusers)) {
-            return '';
-        } else {
-            return round($row->sumaveragegrade / $row->countusers).'%';
-        }
-    }
-
-    /**
-     * col_averagewordsthisterm
-     *
-     * @param xxx $row
-     * @return xxx
-     */
-    public function col_averagewordsthisterm($row) {
-        if (empty($row->countusers)) {
-            return '';
-        } else {
-            return number_format(round($row->wordsthisterm / $row->countusers));
-        }
-    }
-
-    /**
-     * col_averagewordsallterms
-     *
-     * @param xxx $row
-     * @return xxx
-     */
-    public function col_averagewordsallterms($row) {
-        if (empty($row->countusers)) {
-            return '';
-        } else {
-            return number_format(round($row->wordsallterms / $row->countusers));
-        }
     }
 
     /**
@@ -1286,8 +821,7 @@ class reader_report_table extends table_sql {
      * @return string HTML fragment
      */
     public function help_icon($column) {
-        global $OUTPUT;
-        return $OUTPUT->help_icon($column, 'reader');
+        return $this->output->help_icon($column, 'reader');
     }
 
     ////////////////////////////////////////////////////////////////////////////////
