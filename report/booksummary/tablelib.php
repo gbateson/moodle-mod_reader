@@ -58,6 +58,13 @@ class reader_report_booksummary_table extends reader_report_table {
     /** @var default sort columns */
     protected $defaultsortcolumns = array('publisher' => SORT_ASC, 'level' => SORT_ASC, 'booktitle' => SORT_ASC);
 
+    /** @var filter fields */
+    protected $filterfields = array(
+        'group'           => 0, 'publisher'    => 0, 'level'         => 1, 'booktitle'  => 0,
+        'booklevel'       => 1, 'countpassed'  => 1, 'countfailed'   => 1,
+        'averageduration' => 1, 'averagegrade' => 1, 'averagerating' => 1, 'countrating'  => 1,
+    );
+
     ////////////////////////////////////////////////////////////////////////////////
     // functions to extract data from $DB                                         //
     ////////////////////////////////////////////////////////////////////////////////

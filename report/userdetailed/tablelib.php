@@ -58,6 +58,15 @@ class reader_report_userdetailed_table extends reader_report_table {
     /** @var default sort columns */
     protected $defaultsortcolumns = array('username' => SORT_ASC, 'lastname' => SORT_ASC, 'firstname' => SORT_ASC, 'booktitle' => SORT_ASC); // timefinish => SORT_DESC
 
+    /** @var filter fields */
+    protected $filterfields = array(
+        'group'      => 0, 'realname'     => 0,
+        'lastname'   => 1, 'firstname'    => 1, 'userlevel'  => 1,
+        'booklevel'  => 1, 'booktitle'    => 1,
+        'timefinish' => 1, 'percentgrade' => 1, 'passed' => 1,
+        'words'      => 1, 'totalwords'   => 1
+    );
+
     ////////////////////////////////////////////////////////////////////////////////
     // functions to extract data from $DB                                         //
     ////////////////////////////////////////////////////////////////////////////////

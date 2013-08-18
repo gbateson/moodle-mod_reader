@@ -79,8 +79,11 @@ class reader_report_table extends table_sql {
     /** @var columns that are not to be center aligned */
     protected $leftaligncolumns = array();
 
-    /** @var default sort columns */
-    protected $defaultsortcolumns = array(); // $column => SORT_ASC/DESC
+    /** @var default sort columns array($column => SORT_ASC or SORT_DESC) */
+    protected $defaultsortcolumns = array();
+
+    /** @var filter fields */
+    protected $filterfields = array();
 
     /**
      * Constructor
@@ -851,5 +854,28 @@ class reader_report_table extends table_sql {
 
         // no sort column, and no "fullname" column
         return '';
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////
+    // filters                                                                    //
+    ////////////////////////////////////////////////////////////////////////////////
+
+    /**
+     * display_filters
+     *
+     * @uses $DB
+     */
+    function display_filters() {
+        if (count($this->filterfields) && $this->output->reader->can_viewreports()) {
+
+            $classname = 'reader_report_'.$this->output->mode.'_filtering';
+            $filter = new $classname($this->filterfields, $this->baseurl);
+
+            // create sql filters
+            $this->filter = $filter->get_sql_filter();
+
+            $filter->display_add();
+            $filter->display_active();
+        }
     }
 }

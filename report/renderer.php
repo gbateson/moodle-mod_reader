@@ -40,8 +40,6 @@ require_once($CFG->dirroot.'/mod/reader/report/filtering.php');
  */
 class mod_reader_report_renderer extends mod_reader_renderer {
 
-    protected $filterfields = array();
-
     protected $pageparams = array();
 
     protected $filter = null;
@@ -99,9 +97,6 @@ class mod_reader_report_renderer extends mod_reader_renderer {
         // set baseurl for this page (used for filters and table)
         $baseurl = $this->baseurl();
 
-        // display user and attempt filters
-        $this->display_filters($baseurl);
-
         // create report table
         $tableclass = 'reader_report_'.$this->mode.'_table';
         $uniqueid = $this->page->pagetype.'-'.$this->mode;
@@ -109,6 +104,9 @@ class mod_reader_report_renderer extends mod_reader_renderer {
 
         // setup the report table
         $table->setup_report_table($baseurl);
+
+        // display user and attempt filters
+        $table->display_filters();
 
         // setup sql to COUNT records
         list($select, $from, $where, $params) = $table->count_sql();
@@ -135,25 +133,6 @@ class mod_reader_report_renderer extends mod_reader_renderer {
     }
 
     /**
-     * display_filters
-     *
-     * @uses $DB
-     */
-    function display_filters($baseurl) {
-        if (count($this->filterfields) && $this->reader->can_viewreports()) {
-
-            $classname = 'reader_report_'.$this->mode.'_filtering';
-            $filter = new $classname($this->filterfields, $baseurl);
-
-            // create user/attempt filters
-            $this->filter = $filter->get_sql_filter();
-
-            $filter->display_add();
-            $filter->display_active();
-        }
-    }
-
-    /**
      * fix_suppressed_columns_in_rawdata
      *
      * @param xxx $table (passed by reference)
@@ -166,10 +145,10 @@ class mod_reader_report_renderer extends mod_reader_renderer {
         if (empty($table->column_suppress)) {
             return false; // no suppressed columns i.e. all columns are always printed
         }
-        $showrows = array();
+        $showcells = array();
         foreach ($table->column_suppress as $column => $suppress) {
             if ($suppress && $table->has_column($column)) {
-                $this->fix_suppressed_column_in_rawdata($table, $column, $showrows);
+                $this->fix_suppressed_column_in_rawdata($table, $column, $showcells);
             }
         }
     }
@@ -179,10 +158,10 @@ class mod_reader_report_renderer extends mod_reader_renderer {
      *
      * @param xxx $table (passed by reference)
      * @param xxx $column
-     * @param xxx $showrows (passed by reference)
+     * @param xxx $showcells (passed by reference)
      * @return xxx
      */
-    function fix_suppressed_column_in_rawdata(&$table, $column, &$showrows)   {
+    function fix_suppressed_column_in_rawdata(&$table, $column, &$showcells)   {
         $value  = array();
         $prefix = array();
 
@@ -191,12 +170,12 @@ class mod_reader_report_renderer extends mod_reader_renderer {
                 continue; // shouldn't happen !!
             }
 
-            if (! isset($showrows[$id])) {
-                $showrows[$id] = false;
+            if (! isset($showcells[$id])) {
+                $showcells[$id] = false;
             }
 
             if (isset($value[$column]) && $value[$column]==$record->$column) {
-                if ($showrows[$id]) {
+                if ($showcells[$id]) {
                     // oops, same value as previous row - we must adjust the $column value,
                     // so that "print_row()" (lib/tablelib.php) does not suppress this value
                     if (isset($prefix[$column]) && $prefix[$column]) {
@@ -209,9 +188,11 @@ class mod_reader_report_renderer extends mod_reader_renderer {
             } else {
                 // different value from previous row, so we can unset the prefix
                 $prefix[$column] = '';
-                $showrows[$id] = true;
+                // force the rest of the cells in this row to be shown too
+                $showcells[$id] = true;
             }
 
+            // cache this $column value
             $value[$column] = $record->$column;
 
             if (isset($prefix[$column]) && $prefix[$column]) {

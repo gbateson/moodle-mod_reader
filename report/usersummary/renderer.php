@@ -41,12 +41,5 @@ require_once($CFG->dirroot.'/mod/reader/report/renderer.php');
  * @subpackage reader
  */
 class mod_reader_report_usersummary_renderer extends mod_reader_report_renderer {
-
     public $mode = 'usersummary';
-
-    protected $filterfields = array(
-        'group' => 0, 'realname'=>0, 'lastname'=>1, 'firstname'=>1, 'username'=>1,
-        //'startlevel' => 1, 'currentlevel' => 1, 'nopromote' => 1,
-        //'countpassed' => 1, 'countfailed' => 1, 'countwords' => 1
-    );
 }

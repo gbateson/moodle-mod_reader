@@ -45,44 +45,18 @@ require_once($CFG->dirroot.'/mod/reader/report/filters/status.php');
 class reader_report_filtering extends user_filtering {
 
     /**
-     * get_field
+     * get_default_value
      *
-     * @param xxx $fieldname
-     * @param xxx $advanced
-     * @return xxx
+     * @param string $fieldname
+     * @return array sql string and $params
      */
-    function get_field($fieldname, $advanced)  {
-        // reader version of standard function
-
+    function get_default_value($fieldname) {
         $default = get_user_preferences('reader_'.$fieldname, '');
         $rawdata = data_submitted();
         if ($rawdata && isset($rawdata->$fieldname) && ! is_array($rawdata->$fieldname)) {
             $default = optional_param($fieldname, $default, PARAM_ALPHANUM);
         }
-        unset($rawdata);
-
-        switch ($fieldname) {
-            case 'group':
-            case 'grouping':
-                return new reader_report_filter_group($fieldname, $advanced, $default);
-            case 'grade':
-                $label = get_string('grade');
-                return new reader_report_filter_grade($fieldname, $label, $advanced, $default);
-            case 'timemodified':
-                $label = get_string('time', 'quiz');
-                return new user_filter_date($fieldname, $label, $advanced, $fieldname);
-            case 'status':
-                return new reader_report_filter_status($fieldname, $advanced, $default);
-            case 'duration':
-                $label = get_string('duration', 'reader');
-                return new reader_report_filter_duration($fieldname, $label, $advanced, $default);
-            case 'score':
-                $label = get_string('score', 'quiz');
-                return new reader_report_filter_number($fieldname, $label, $advanced, $default);
-            default:
-                // other fields (e.g. from user record)
-                return parent::get_field($fieldname, $advanced);
-        }
+        return $default;
     }
 
     /**

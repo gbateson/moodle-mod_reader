@@ -58,6 +58,16 @@ class reader_report_usersummary_table extends reader_report_table {
     /** @var default sort columns */
     protected $defaultsortcolumns = array('username' => SORT_ASC, 'lastname' => SORT_ASC, 'firstname' => SORT_ASC);
 
+    /** @var filter fields */
+    protected $filterfields = array(
+        'group'            =>0, 'realname'      => 0,
+        'lastname'        => 1, 'firstname'     => 1, 'username'  => 1,
+        'startlevel'      => 1, 'currentlevel'  => 1, 'nopromote' => 1,
+        'countpassed'     => 1, 'countfailed'   => 1,
+        'averageduration' => 1, 'averagegrade'  => 1,
+        'wordsthisterm'   => 1, 'wordsallterms' => 1
+    );
+
     /*
      * get_tablecolumns
      *

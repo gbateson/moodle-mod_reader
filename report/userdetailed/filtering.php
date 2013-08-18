@@ -36,4 +36,48 @@ require_once($CFG->dirroot.'/mod/reader/report/filtering.php');
  * @since     Moodle 2.0
  */
 class reader_report_userdetailed_filtering extends reader_report_filtering {
+
+    /**
+     * get_field
+     * reader version of standard function
+     *
+     * @param xxx $fieldname
+     * @param xxx $advanced
+     * @return xxx
+     */
+    function get_field($fieldname, $advanced)  {
+        $default = $this->get_default_value($fieldname);
+        switch ($fieldname) {
+            case 'group':
+            case 'grouping':
+                return new reader_report_filter_group($fieldname, $advanced, $default);
+
+            case 'userlevel':
+            case 'booklevel':
+            case 'words':
+            case 'totalwords':
+                $label = get_string($fieldname, 'reader');
+                return new reader_report_filter_number($fieldname, $label, $advanced, $default);
+
+            case 'percentgrade':
+                $label = get_string('grade');
+                return new reader_report_filter_number($fieldname, $label, $advanced, $default);
+
+            case 'booktitle':
+                $label = get_string($fieldname, 'reader');
+                return new user_filter_text($fieldname, $label, $advanced, $default);
+
+            case 'timefinish':
+                $label = get_string('date');
+                return new user_filter_date($fieldname, $label, $advanced, $default);
+
+            case 'passed':
+                $label = get_string($fieldname, 'reader');
+                return new user_filter_yesno($fieldname, $label, $advanced, $default);
+
+            default:
+                // other fields (e.g. from user record)
+                return parent::get_field($fieldname, $advanced);
+        }
+    }
 }

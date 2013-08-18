@@ -67,6 +67,15 @@ class reader_report_groupsummary_table extends reader_report_table {
     /** @var default sort columns */
     protected $defaultsortcolumns = array('groupname' => SORT_ASC);
 
+    /** @var filter fields */
+    protected $filterfields = array(
+        'groupname'     => 0,
+        'countactive'   => 1, 'countinactive'   => 1,
+        'percentactive' => 1, 'percentinactive' => 1,
+        'averagetaken'  => 1, 'averagepassed'   => 1, 'averagefailed' => 1,
+        'averagepercentgrade' => 1, 'averagewordsthisterm' => 1, 'averagewordsallterms' => 1
+    );
+
     ////////////////////////////////////////////////////////////////////////////////
     // functions to extract data from $DB                                         //
     ////////////////////////////////////////////////////////////////////////////////
