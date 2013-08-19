@@ -253,7 +253,7 @@ class reader_report_table extends table_sql {
                   "SUM(CASE WHEN (ra.passed = :passed2 AND ra.timefinish > :time2) THEN 0 ELSE 1 END) AS countfailed";
 
         $from   = "{reader_attempts} ra ".
-                  "LEFT JOIN mdl_reader_books rb ON ra.quizid = rb.quizid";
+                  "LEFT JOIN {reader_books} rb ON ra.quizid = rb.quizid";
 
         $params = array('passed1' => 'true', 'time1' => $ignoredate,  // countpassed (this term)
                         'passed2' => 'true', 'time2' => $ignoredate); // countfailed (this term)

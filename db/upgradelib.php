@@ -2330,8 +2330,8 @@ function xmldb_reader_fix_multichoice_questions() {
             // remove :MULTICHOICE: questions that have no correct answer
             // q1 is parent, q2 is (bad) child with no "=" in questiontext
             $select = 'q1.id, q1.questiontext, q1.qtype, MIN(q2.id) AS badid';
-            $from   = 'mdl_question q1 '.
-                      'RIGHT JOIN mdl_question q2 ON q1.id = q2.parent';
+            $from   = '{question} q1 '.
+                      'RIGHT JOIN {question} q2 ON q1.id = q2.parent';
             $where  = 'q1.category = ? '.
                       'AND q1.qtype = ? AND q2.qtype = ? '.
                       'AND '.$DB->sql_like('q2.questiontext', '?'). // LIKE
