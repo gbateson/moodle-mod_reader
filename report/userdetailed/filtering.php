@@ -73,7 +73,7 @@ class reader_report_userdetailed_filtering extends reader_report_filtering {
 
             case 'passed':
                 $label = get_string($fieldname, 'reader');
-                return new user_filter_yesno($fieldname, $label, $advanced, $default);
+                return new reader_report_filter_passed($fieldname, $label, $advanced, $default);
 
             default:
                 // other fields (e.g. from user record)

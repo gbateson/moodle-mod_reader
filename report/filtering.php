@@ -33,6 +33,7 @@ require_once($CFG->dirroot.'/mod/reader/report/filters/duration.php');
 require_once($CFG->dirroot.'/mod/reader/report/filters/grade.php');
 require_once($CFG->dirroot.'/mod/reader/report/filters/group.php');
 require_once($CFG->dirroot.'/mod/reader/report/filters/number.php');
+require_once($CFG->dirroot.'/mod/reader/report/filters/passed.php');
 require_once($CFG->dirroot.'/mod/reader/report/filters/status.php');
 
 /**
