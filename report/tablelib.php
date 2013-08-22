@@ -364,7 +364,17 @@ class reader_report_table extends table_sql {
             case 'currentlevel':
                 return array('reader_levels', 'rl');
 
-            default: die("What table alias for field: $fieldname");
+            case 'countpassed':
+            case 'countfailed':
+            case 'averageduration':
+            case 'averagegrade':
+            case 'wordsthisterm':
+            case 'wordsallterms':
+                return array('reader_attempts', 'raa');
+
+            default:
+                return array('reader_xxx_'.$fieldname, 'xxx');
+                die("What table alias for field: $fieldname");
         }
     }
 

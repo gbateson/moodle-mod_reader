@@ -99,7 +99,7 @@ class reader_report_usersummary_table extends reader_report_table {
      *
      * @return xxx
      */
-    function count_sql() {
+    function count_sql_old() {
 
         // get users who can access this Reader activity
         list($where, $params) = $this->select_sql_users();
@@ -107,6 +107,30 @@ class reader_report_usersummary_table extends reader_report_table {
         $select = 'COUNT(*)';
         $from   = '{user} u';
         $where  = "id $where";
+
+        return $this->add_filter_params($select, $from, $where, '', '', $params);
+    }
+
+    /**
+     * count_sql
+     *
+     * @return xxx
+     */
+    function count_sql() {
+
+        // get attempts at this Reader activity
+        list($attemptsql, $attemptparams) = $this->select_sql_attempts('userid');
+
+        // get users who can access this Reader activity
+        list($usersql, $userparams) = $this->select_sql_users();
+
+        $select = 'COUNT(*)';
+        $from   = '{user} u '.
+                  "LEFT JOIN ($attemptsql) raa ON raa.userid = u.id ".
+                  'LEFT JOIN {reader_levels} rl ON u.id = rl.userid';
+        $where  = "rl.readerid = :readerid AND u.id $usersql";
+
+        $params = $attemptparams + array('readerid' => $this->output->reader->id) + $userparams;
 
         return $this->add_filter_params($select, $from, $where, '', '', $params);
     }

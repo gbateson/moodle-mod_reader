@@ -119,7 +119,7 @@ class reader_report_filter_number extends user_filter_select {
             $field = $this->_name;
             switch($operator) {
                 case 1: // less than
-                    $filter = $field.'>:'.$name;
+                    $filter = $field.'<:'.$name;
                     $params[$name] = $value;
                     break;
                 case 2: // equal to
