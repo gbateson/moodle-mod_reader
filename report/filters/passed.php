@@ -58,13 +58,13 @@ class reader_report_filter_passed extends user_filter_simpleselect {
      */
     function get_sql_filter($data) {
         static $counter = 0;
-        $name = 'ex_passed'.$counter++;
+        $param = 'ex_passed'.$counter++;
 
         $value = $data['value'];
-        $field = $this->_field;
+        $field = $this->_name;
         if ($value == '') {
             return array();
         }
-        return array("$field = :$name", array($name => $value));
+        return array("$field = :$param", array($param => $value));
     }
 }

@@ -305,30 +305,27 @@ class reader_report_table extends table_sql {
         $after  = '[}:`"'."'".'a-zA-Z0-9_.]';
         $search = "/(?<!$before)([a-z][a-z0-9_]*)(?!$after)/";
 
-        if (strpos($from, '{user}')===false) {
-            $has_usertable = false;
-        } else {
-            $has_usertable = true;
-        }
-        if (strpos($from, '{reader_attempts}')===false) {
-            $has_attempttable = false;
-        } else {
-            $has_attempttable = true;
-        }
-
-        $require_usertable = false;
-        $require_attempttable = false;
-
         // get filter $sql and $params
-
-        // add user table if needed
-        if ($require_usertable && ! $has_usertable) {
-            $from   .= ', {user} u';
+        if ($this->filter) {
+            list($filterwhere, $filterparams) = $this->filter;
+            if ($filterwhere && $filterparams) {
+                $where .= " AND $filterwhere";
+                $params += $filterparams;
+            }
         }
 
-        // add attempt table if needed
-        if ($require_attempttable && ! $has_attempttable) {
-            $from  .= ', {reader_attempts} ra';
+        if (preg_match_all($search, $where, $matches, PREG_OFFSET_CAPTURE)) {
+            $i_max = count($matches[0]) - 1;
+            for ($i=$i_max; $i>=0; $i--) {
+                list($match, $start) = $matches[1][$i];
+                list($tablename, $tablealias) = $this->get_table_name_and_alias($match);
+                if ($tablename && $tablealias) {
+                    if (strpos($from, '{'.$tablename.'}')===false) {
+                        $from .= ', {'.$tablename.'} '.$tablealias;
+                    }
+                    $where = substr_replace($where, "$tablealias.$match", $start, strlen($match));
+                }
+            }
         }
 
         if ($orderby) {
@@ -339,6 +336,36 @@ class reader_report_table extends table_sql {
         }
 
         return array($select, $from, $where, $params);
+    }
+
+    /**
+     * get_table_name_and_alias
+     *
+     * @param string $fieldname
+     * @return array($tablename, $tablealias, $jointype, $jointable, $joinconditions)
+     * @todo Finish documenting this function
+     */
+    public function get_table_name_and_alias($fieldname) {
+        switch ($fieldname) {
+
+            case 'id':
+            case 'firstname':
+            case 'lastname':
+            case 'username':
+                return array('user', 'u');
+
+            case 'percentgrade':
+            case 'passed':
+            case 'timefinish':
+            case 'bookrating':
+                return array('reader_attempts', 'ra');
+
+            case 'startlevel':
+            case 'currentlevel':
+                return array('reader_levels', 'rl');
+
+            default: die("What table alias for field: $fieldname");
+        }
     }
 
     ////////////////////////////////////////////////////////////////////////////////

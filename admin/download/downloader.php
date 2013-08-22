@@ -511,7 +511,7 @@ class reader_downloader {
                     }
                 }
             }
-            echo html_writer::tag('li', $msg);
+            echo html_writer::tag('li', $msg, array('class' => 'downloaditem'));
 
             // move the progress bar
             $this->bar->finish_item();

@@ -110,17 +110,6 @@ class reader_report_filter_number extends user_filter_select {
      * @return xxx
      */
     function get_sql_filter($data)  {
-        // this field type doesn't affect the selection of users
-        return array('', array());
-    }
-
-    /**
-     * get_sql_filter_attempts
-     *
-     * @param xxx $data
-     * @return xxx
-     */
-    function get_sql_filter_attempts($data)  {
         static $counter = 0;
         $name = 'ex_number'.$counter++;
 
@@ -144,6 +133,17 @@ class reader_report_filter_number extends user_filter_select {
             }
         }
         return array($filter, $params);
+    }
+
+    /**
+     * get_sql_filter_attempts
+     *
+     * @param xxx $data
+     * @return xxx
+     */
+    function get_sql_filter_attempts($data)  {
+        // this field type doesn't affect the selection of attempts
+        return array('', array());
     }
 
     /**

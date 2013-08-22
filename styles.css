@@ -50,7 +50,10 @@
 #page-mod-reader-admin-download ul.levels { background-color: #ffeeee; border: 2px solid #ffdddd; }
 #page-mod-reader-admin-download ul.items { background-color: #eeeeee; border: 2px solid #dddddd; }
 
+#page-mod-reader-admin-download li.downloaditem { margin-top: 6px; margin-bottom: 6px; }
+
 #page-mod-reader-admin-download span.itemname span.matchedtext { font-weight: bold; font-size: 1.2em; text-decoration: underline; background-color: #ffffcc; }
+
 
 /** reader report **/
 #page-mod-reader-report table.flexible th { white-space: normal; }
