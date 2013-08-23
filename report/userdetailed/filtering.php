@@ -52,24 +52,24 @@ class reader_report_userdetailed_filtering extends reader_report_filtering {
             case 'grouping':
                 return new reader_report_filter_group($fieldname, $advanced, $default);
 
-            case 'userlevel':
-            case 'booklevel':
+            case 'currentlevel':
+            case 'difficulty':
             case 'words':
             case 'totalwords':
                 $label = get_string($fieldname, 'reader');
-                return new reader_report_filter_number($fieldname, $label, $advanced, $default);
+                return new reader_report_filter_number($fieldname, $label, $advanced, $fieldname, $default);
 
             case 'percentgrade':
                 $label = get_string('grade');
-                return new reader_report_filter_number($fieldname, $label, $advanced, $default);
+                return new reader_report_filter_number($fieldname, $label, $advanced, $fieldname, $default);
 
-            case 'booktitle':
-                $label = get_string($fieldname, 'reader');
-                return new user_filter_text($fieldname, $label, $advanced, $default);
+            case 'name':
+                $label = get_string('booktitle', 'reader');
+                return new user_filter_text($fieldname, $label, $advanced, $fieldname);
 
             case 'timefinish':
                 $label = get_string('date');
-                return new user_filter_date($fieldname, $label, $advanced, $default);
+                return new user_filter_date($fieldname, $label, $advanced, $fieldname);
 
             case 'passed':
                 $label = get_string($fieldname, 'reader');

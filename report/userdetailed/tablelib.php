@@ -39,32 +39,32 @@ class reader_report_userdetailed_table extends reader_report_table {
 
     /** @var columns used in this table */
     protected $tablecolumns = array(
-        'username', 'fullname', 'userlevel', // , 'picture'
-        'selected', 'booklevel', 'booktitle', 'timefinish', 'percentgrade', 'passed', 'words', 'totalwords',
+        'username', 'fullname', 'currentlevel', // , 'picture'
+        'selected', 'difficulty', 'name', 'timefinish', 'percentgrade', 'passed', 'words', 'totalwords',
     );
 
     /** @var suppressed columns in this table */
-    protected $suppresscolumns = array('username', 'fullname', 'userlevel');
+    protected $suppresscolumns = array('username', 'fullname', 'currentlevel');
 
     /** @var columns in this table that are not sortable */
     protected $nosortcolumns = array();
 
     /** @var text columns in this table */
-    protected $textcolumns = array('username', 'fullname', 'booktitle');
+    protected $textcolumns = array('username', 'fullname', 'name');
 
     /** @var columns that are not to be center aligned */
-    protected $leftaligncolumns = array('username', 'fullname', 'booktitle');
+    protected $leftaligncolumns = array('username', 'fullname', 'name');
 
     /** @var default sort columns */
-    protected $defaultsortcolumns = array('username' => SORT_ASC, 'lastname' => SORT_ASC, 'firstname' => SORT_ASC, 'booktitle' => SORT_ASC); // timefinish => SORT_DESC
+    protected $defaultsortcolumns = array('username' => SORT_ASC, 'lastname' => SORT_ASC, 'firstname' => SORT_ASC, 'name' => SORT_ASC); // timefinish => SORT_DESC
 
     /** @var filter fields */
     protected $filterfields = array(
-        'group'      => 0, 'realname'     => 0,
-        'lastname'   => 1, 'firstname'    => 1, 'userlevel'  => 1,
-        'booklevel'  => 1, 'booktitle'    => 1,
+        'group'      => 0, 'username'     => 1, 'realname'     => 0,
+        'lastname'   => 1, 'firstname'    => 1, 'currentlevel' => 1,
+        'difficulty' => 1, 'name'         => 1,
         'timefinish' => 1, 'percentgrade' => 1, 'passed' => 1,
-        'words'      => 1, 'totalwords'   => 1
+        //'words'      => 1, 'totalwords'   => 1
     );
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -84,9 +84,13 @@ class reader_report_userdetailed_table extends reader_report_table {
         list($usersql, $userparams) = $this->select_sql_users();
 
         $select = 'COUNT(*)';
-        $from   = '{reader_attempts} ra LEFT JOIN {user} u ON ra.userid = u.id';
-        $where  = "ra.reader = :reader AND ra.timefinish > :time AND ra.userid $usersql";
-        $params = array('reader' => $this->output->reader->id, 'time' => $this->output->reader->ignoredate);
+        $from   = '{reader_attempts} ra '.
+                  'LEFT JOIN {user} u ON ra.userid = u.id '.
+                  'LEFT JOIN {reader_levels} rl ON u.id = rl.userid '.
+                  'LEFT JOIN {reader_books} rb ON ra.quizid = rb.quizid';
+        $where  = "ra.reader = :reader AND rl.readerid = :readerid AND ra.timefinish > :time AND u.id $usersql";
+
+        $params = array('reader' => $this->output->reader->id, 'readerid' => $this->output->reader->id, 'time' => $this->output->reader->ignoredate);
 
         return $this->add_filter_params($select, $from, $where, '', '', $params + $userparams);
     }
@@ -107,7 +111,7 @@ class reader_report_userdetailed_table extends reader_report_table {
         $words  = 'CASE WHEN (ra.passed = :passed) THEN rb.words ELSE 0 END';
         $select = "ra.id, ra.timefinish, ra.percentgrade, ra.passed, ($words) AS words, 0 AS totalwords, ".
                   'u.id AS userid, u.username, u.firstname, u.lastname, u.picture, u.imagealt, u.email, '.
-                  'rl.currentlevel AS userlevel, rb.difficulty AS booklevel, rb.name AS booktitle';
+                  'rl.currentlevel, rb.difficulty, rb.name';
         $from   = '{reader_attempts} ra '.
                   'LEFT JOIN {user} u ON ra.userid = u.id '.
                   'LEFT JOIN {reader_levels} rl ON u.id = rl.userid '.
@@ -117,6 +121,34 @@ class reader_report_userdetailed_table extends reader_report_table {
         $params = array('reader' => $this->output->reader->id, 'readerid' => $this->output->reader->id, 'time' => $this->output->reader->ignoredate, 'passed' => 'true');
 
         return $this->add_filter_params($select, $from, $where, '', '', $params + $userparams);
+    }
+
+    /**
+     * get_table_name_and_alias
+     *
+     * @param string $fieldname
+     * @return array($tablename, $tablealias, $jointype, $jointable, $joinconditions)
+     * @todo Finish documenting this function
+     */
+    public function get_table_name_and_alias($fieldname) {
+        switch ($fieldname) {
+
+            case 'currentlevel':
+                return array('reader_levels', 'rl');
+
+            case 'name':
+            case 'difficulty':
+            case 'words':
+                return array('reader_levels', 'rb');
+
+            case 'timefinish':
+            case 'percentgrade':
+            case 'passed':
+                return array('reader_attempts', 'ra');
+
+            default:
+                return parent::get_table_name_and_alias($fieldname);
+        }
     }
 
     ////////////////////////////////////////////////////////////////////////////////

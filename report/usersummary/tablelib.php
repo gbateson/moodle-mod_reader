@@ -99,23 +99,6 @@ class reader_report_usersummary_table extends reader_report_table {
      *
      * @return xxx
      */
-    function count_sql_old() {
-
-        // get users who can access this Reader activity
-        list($where, $params) = $this->select_sql_users();
-
-        $select = 'COUNT(*)';
-        $from   = '{user} u';
-        $where  = "id $where";
-
-        return $this->add_filter_params($select, $from, $where, '', '', $params);
-    }
-
-    /**
-     * count_sql
-     *
-     * @return xxx
-     */
     function count_sql() {
 
         // get attempts at this Reader activity
@@ -161,6 +144,33 @@ class reader_report_usersummary_table extends reader_report_table {
         $params = $attemptparams + array('readerid' => $this->output->reader->id) + $userparams;
 
         return $this->add_filter_params($select, $from, $where, '', '', $params);
+    }
+
+    /**
+     * get_table_name_and_alias
+     *
+     * @param string $fieldname
+     * @return array($tablename, $tablealias, $jointype, $jointable, $joinconditions)
+     * @todo Finish documenting this function
+     */
+    public function get_table_name_and_alias($fieldname) {
+        switch ($fieldname) {
+
+            case 'startlevel':
+            case 'currentlevel':
+                return array('reader_levels', 'rl');
+
+            case 'countpassed':
+            case 'countfailed':
+            case 'averageduration':
+            case 'averagegrade':
+            case 'wordsthisterm':
+            case 'wordsallterms':
+                return array('reader_attempts', 'raa');
+
+            default:
+                return parent::get_table_name_and_alias($fieldname);
+        }
     }
 
     ////////////////////////////////////////////////////////////////////////////////

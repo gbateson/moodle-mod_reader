@@ -3413,7 +3413,7 @@ function reader_search_books($cmid, $reader, $userid, $showform=false, $action='
 
         // add the "RL" (reading level) drop-down list
         $table->data[] = new html_table_row(array(
-            html_writer::tag('b', get_string('difficulty', 'reader').':'),
+            html_writer::tag('b', get_string('difficultyshort', 'reader').':'),
             html_writer::select($levels, 'searchdifficulty', $searchdifficulty, '')
         ));
 
@@ -3506,7 +3506,7 @@ function reader_search_books($cmid, $reader, $userid, $showform=false, $action='
                 get_string('level', 'reader'),
                 get_string('booktitle', 'reader')." (".count($books)." books)",
                 get_string('genre', 'block_readerview'),
-                get_string('difficulty', 'reader')
+                get_string('difficultyshort', 'reader')
             );
 
             // add column for "takequiz" button, if required

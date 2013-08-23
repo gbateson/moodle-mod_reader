@@ -61,15 +61,15 @@ class reader_report_usersummary_filtering extends reader_report_filtering {
             case 'wordsthisterm':
             case 'wordsallterms':
                 $label = get_string($fieldname, 'reader');
-                return new reader_report_filter_number($fieldname, $label, $advanced, $default);
+                return new reader_report_filter_number($fieldname, $label, $advanced, $fieldname, $default);
 
             case 'nopromote':
                 $label = get_string($fieldname, 'reader');
-                return new user_filter_yesno($fieldname, $label, $advanced, $default);
+                return new user_filter_yesno($fieldname, $label, $advanced, $fieldname);
 
             case 'averageduration':
                 $label = get_string($fieldname, 'reader');
-                return new reader_report_filter_duration($fieldname, $label, $advanced, $default);
+                return new reader_report_filter_duration($fieldname, $label, $advanced, $fieldname);
 
             default:
                 // other fields (e.g. from user record)

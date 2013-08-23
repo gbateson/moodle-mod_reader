@@ -36,17 +36,21 @@ require_once($CFG->dirroot.'/user/filters/select.php');
  * @since     Moodle 2.0
  */
 class reader_report_filter_number extends user_filter_select {
+    var $_field;
+
     /**
      * Constructor
      *
      * @param string $name the name of the filter instance
+     * @param string $label the label of the filter instance
      * @param boolean $advanced advanced form element flag
-     * @param mixed $default option
+     * @param string $field user table filed name
+     * @param mixed $default (optional, default = null)
      */
-    function __construct($name, $label, $advanced, $default=null) {
+    function __construct($name, $label, $advanced, $field, $default=null) {
         parent::user_filter_type($name, $label, $advanced);
 
-        $this->_field   = '';
+        $this->_field   = $field;
         $this->_default = $default;
     }
 
@@ -77,7 +81,7 @@ class reader_report_filter_number extends user_filter_select {
         $mform->setType($this->_name.'_op', PARAM_INT);
         $mform->setType($this->_name, PARAM_INT);
 
-        if (!is_null($this->_default)) {
+        if (! is_null($this->_default)) {
             $mform->setDefault($this->_name, $this->_default);
         }
 
@@ -92,7 +96,7 @@ class reader_report_filter_number extends user_filter_select {
      * @return mixed array filter data or false when filter not set
      */
     function check_data($formdata) {
-        $field    = $this->_name;
+        $field    = $this->_field;
         $operator = $field.'_op';
 
         if (array_key_exists($field, $formdata) and !empty($formdata->$operator)) {
@@ -116,7 +120,7 @@ class reader_report_filter_number extends user_filter_select {
         $filter = '';
         $params = array();
         if (($value = $data['value']) && ($operator = $data['operator'])) {
-            $field = $this->_name;
+            $field = $this->_field;
             switch($operator) {
                 case 1: // less than
                     $filter = $field.'<:'.$name;

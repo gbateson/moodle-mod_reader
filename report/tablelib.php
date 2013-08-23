@@ -360,18 +360,6 @@ class reader_report_table extends table_sql {
             case 'bookrating':
                 return array('reader_attempts', 'ra');
 
-            case 'startlevel':
-            case 'currentlevel':
-                return array('reader_levels', 'rl');
-
-            case 'countpassed':
-            case 'countfailed':
-            case 'averageduration':
-            case 'averagegrade':
-            case 'wordsthisterm':
-            case 'wordsallterms':
-                return array('reader_attempts', 'raa');
-
             default:
                 return array('reader_xxx_'.$fieldname, 'xxx');
                 die("What table alias for field: $fieldname");
@@ -595,29 +583,32 @@ class reader_report_table extends table_sql {
     }
 
     /**
-     * header_userlevel
+     * header_currentlevel
      *
      * @return xxx
      */
-    public function header_userlevel() {
-        return get_string('userlevel', 'reader');
+    public function header_currentlevel() {
+        return get_string('currentlevel', 'reader');
     }
 
     /**
-     * header_booklevel
+     * header_difficulty
      *
      * @return xxx
      */
-    public function header_booklevel() {
-        return get_string('booklevel', 'reader');
+    public function header_difficulty() {
+        return get_string('difficulty', 'reader');
+        //$long = get_string('difficulty', 'reader');
+        //$short = get_string('difficultyshort', 'reader');
+        //return $long.html_writer::empty_tag('br')."($short)";
     }
 
     /**
-     * header_booktitle
+     * header_name
      *
      * @return xxx
      */
-    public function header_booktitle() {
+    public function header_name() {
         return get_string('booktitle', 'reader');
     }
 
