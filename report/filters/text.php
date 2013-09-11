@@ -26,64 +26,67 @@
 defined('MOODLE_INTERNAL') || die();
 
 // get parent class
-require_once($CFG->dirroot.'/user/filters/select.php');
+require_once($CFG->dirroot.'/user/filters/text.php');
 
 /**
- * reader_report_filter_status
+ * reader_report_filter_text
  *
  * @copyright 2013 Gordon Bateson
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @since     Moodle 2.0
  */
-class reader_report_filter_status extends user_filter_select {
+class reader_report_filter_text extends user_filter_text {
+
+    var $_type = '';
+
     /**
      * Constructor
      *
      * @param string $name the name of the filter instance
+     * @param string $label the label of the filter instance
      * @param boolean $advanced advanced form element flag
-     * @param mixed $default option
+     * @param string $field user table filed name
+     * @param mixed $default (optional, default = null)
+     * @param string $type (optional, default = "")
      */
-    function __construct($name, $advanced, $default=null) {
-        $label = get_string($name, 'reader');
-        $options = reader::available_statuses_list();
-        parent::__construct($name, $label, $advanced, '', $options, $default);
+    function __construct($name, $label, $advanced, $field, $default=null, $type='') {
+        parent::user_filter_text($name, $label, $advanced, $field);
+        $this->_default = $default;
+        $this->_type    = $type;
     }
 
     /**
-     * get_sql_filter
+     * get_sql
      *
-     * @param xxx $data
+     * @param array $data
+     * @param string $type ("where" or "having")
      * @return xxx
      */
-    function get_sql_filter($data)  {
-        // this field type doesn't affect the selection of users
-        return array('', array());
-    }
-
-    /**
-     * get_sql_filter_attempts
-     *
-     * @param xxx $data
-     * @return xxx
-     */
-    function get_sql_filter_attempts($data)  {
-        static $counter = 0;
-        $name = 'ex_status'.$counter++;
-
-        $filter = '';
-        $params = array();
-        if (($value = $data['value']) && ($operator = $data['operator'])) {
-            switch($operator) {
-                case 1: // is equal to
-                    $filter = 'status=:'.$name;
-                    $params[$name] = $value;
-                    break;
-                case 2: // isn't equal to
-                    $filter = 'status<>:'.$name;
-                    $params[$name] = $value;
-                    break;
-            }
+    function get_sql($data, $type)  {
+        if ($this->_type==$type) {
+            return $this->get_sql_filter($data);
+        } else {
+            return array('', array());
         }
-        return array($filter, $params);
+    }
+
+    /**
+     * get_sql_where
+     *
+     * @param xxx $data
+     * @return xxx
+     */
+    function get_sql_where($data)  {
+        return $this->get_sql($data, 'where');
+    }
+
+    /**
+     * get_sql_having
+     *
+     * @param xxx $data
+     * @return xxx
+     */
+    function get_sql_having($data)  {
+        return $this->get_sql($data, 'having');
     }
 }

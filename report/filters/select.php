@@ -29,42 +29,64 @@ defined('MOODLE_INTERNAL') || die();
 require_once($CFG->dirroot.'/user/filters/select.php');
 
 /**
- * reader_report_filter_passed
+ * reader_report_filter_select
  *
  * @copyright 2013 Gordon Bateson
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @since     Moodle 2.0
  */
-class reader_report_filter_passed extends user_filter_simpleselect {
+class reader_report_filter_select extends user_filter_select {
+
+    var $_type = '';
 
     /**
      * Constructor
+     *
      * @param string $name the name of the filter instance
      * @param string $label the label of the filter instance
      * @param boolean $advanced advanced form element flag
      * @param string $field user table filed name
+     * @param mixed $default (optional, default = null)
+     * @param string $type (optional, default = "")
      */
-    function reader_report_filter_passed($name, $label, $advanced, $field) {
-        $options = array('true'  => get_string('passedshort', 'reader').' - '.get_string('passed', 'reader'),
-                         'false' => get_string('failedshort', 'reader').' - '.get_string('failed', 'reader'));
-        parent::user_filter_simpleselect($name, $label, $advanced, $field, $options);
+    function __construct($name, $label, $advanced, $field, $default=null, $type='') {
+        parent::user_filter_select($name, $label, $advanced, $field);
+        $this->_default = $default;
+        $this->_type    = $type;
     }
 
     /**
-     * Returns the condition to be used with SQL
+     * get_sql
      *
-     * @param array $data filter settings
-     * @return array sql string and $params
+     * @param array $data
+     * @param string $type ("where" or "having")
+     * @return xxx
      */
-    function get_sql_filter($data) {
-        static $counter = 0;
-        $param = 'ex_passed'.$counter++;
-
-        $value = $data['value'];
-        $field = $this->_name;
-        if ($value == '') {
-            return array();
+    function get_sql($data, $type)  {
+        if ($this->_type==$type) {
+            return $this->get_sql_filter($data);
+        } else {
+            return array('', array());
         }
-        return array("$field = :$param", array($param => $value));
+    }
+
+    /**
+     * get_sql_where
+     *
+     * @param xxx $data
+     * @return xxx
+     */
+    function get_sql_where($data)  {
+        return $this->get_sql($data, 'where');
+    }
+
+    /**
+     * get_sql_having
+     *
+     * @param xxx $data
+     * @return xxx
+     */
+    function get_sql_having($data)  {
+        return $this->get_sql($data, 'having');
     }
 }
