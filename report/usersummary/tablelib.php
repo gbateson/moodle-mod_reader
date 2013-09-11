@@ -95,30 +95,6 @@ class reader_report_usersummary_table extends reader_report_table {
     ////////////////////////////////////////////////////////////////////////////////
 
     /**
-     * count_sql
-     *
-     * @return xxx
-     */
-    function count_sql() {
-
-        // get attempts at this Reader activity
-        list($attemptsql, $attemptparams) = $this->select_sql_attempts('userid');
-
-        // get users who can access this Reader activity
-        list($usersql, $userparams) = $this->select_sql_users();
-
-        $select = 'COUNT(*)';
-        $from   = '{user} u '.
-                  "LEFT JOIN ($attemptsql) raa ON raa.userid = u.id ".
-                  'LEFT JOIN {reader_levels} rl ON u.id = rl.userid';
-        $where  = "rl.readerid = :readerid AND u.id $usersql";
-
-        $params = $attemptparams + array('readerid' => $this->output->reader->id) + $userparams;
-
-        return $this->add_filter_params($select, $from, $where, '', '', $params);
-    }
-
-    /**
      * select_sql
      *
      * @return xxx
@@ -143,7 +119,7 @@ class reader_report_usersummary_table extends reader_report_table {
 
         $params = $attemptparams + array('readerid' => $this->output->reader->id) + $userparams;
 
-        return $this->add_filter_params($select, $from, $where, '', '', $params);
+        return $this->add_filter_params($select, $from, $where, '', '', '', $params);
     }
 
     /**
@@ -156,17 +132,20 @@ class reader_report_usersummary_table extends reader_report_table {
     public function get_table_name_and_alias($fieldname) {
         switch ($fieldname) {
 
+            // "reader_levels" fields
             case 'startlevel':
             case 'currentlevel':
                 return array('reader_levels', 'rl');
 
+            // "reader_attempts" aggregate fields
             case 'countpassed':
             case 'countfailed':
             case 'averageduration':
             case 'averagegrade':
             case 'wordsthisterm':
             case 'wordsallterms':
-                return array('reader_attempts', 'raa');
+                return array('', '');
+                //return array('reader_attempts', 'raa');
 
             default:
                 return parent::get_table_name_and_alias($fieldname);

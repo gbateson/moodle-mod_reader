@@ -49,20 +49,18 @@ class reader_report_bookdetailed_filtering extends reader_report_filtering {
         $default = $this->get_default_value($fieldname);
         switch ($fieldname) {
             case 'group':
-            case 'grouping':
-            case 'groupname':
-                return new reader_report_filter_group($fieldname, $advanced, $default);
+                return new reader_report_filter_group($fieldname, $advanced, $default, 'where');
 
             case 'publisher':
             case 'level':
             case 'booktitle':
                 $label = get_string($fieldname, 'reader');
-                return new user_filter_text($fieldname, $label, $advanced, $default);
+                return new reader_report_filter_text($fieldname, $label, $advanced, $fieldname, $default, 'where');
 
             case 'booklevel':
             case 'bookrating':
                 $label = get_string($fieldname, 'reader');
-                return new reader_report_filter_number($fieldname, $label, $advanced, $default);
+                return new reader_report_filter_number($fieldname, $label, $advanced, $fieldname, $default, 'where');
 
             case 'passed':
                 $label = get_string($fieldname, 'reader');

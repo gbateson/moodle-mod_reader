@@ -45,7 +45,7 @@ class reader_report_filter_date extends user_filter_date {
      * @param string $name the name of the filter instance
      * @param string $label the label of the filter instance
      * @param boolean $advanced advanced form element flag
-     * @param string $field user table filed name
+     * @param string $field user table field name
      * @param mixed $default (optional, default = null)
      * @param string $type (optional, default = "")
      */

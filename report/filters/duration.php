@@ -85,36 +85,4 @@ class reader_report_filter_duration extends reader_report_filter_number {
 
         return get_string('selectlabel', 'filters', $a);
     }
-
-    /**
-     * get_sql_filter_attempts
-     *
-     * @param xxx $data
-     * @return xxx
-     */
-    function get_sql_filter_attempts($data)  {
-        static $counter = 0;
-        $name = 'ex_duration'.$counter++;
-
-        $filter = '';
-        $params = array();
-        if (($value = $data['value']) && ($operator = $data['operator'])) {
-            $field = '(timemodified - timestart)'; // $this->_name;
-            switch($operator) {
-                case 1: // less than
-                    $filter = $field.'>:'.$name;
-                    $params[$name] = $value;
-                    break;
-                case 2: // equal to
-                    $filter = $field.'=:'.$name;
-                    $params[$name] = $value;
-                    break;
-                case 3: // greater than
-                    $filter = $field.'>:'.$name;
-                    $params[$name] = $value;
-                    break;
-            }
-        }
-        return array($filter, $params);
-    }
 }

@@ -49,11 +49,17 @@ class reader_report_usersummary_filtering extends reader_report_filtering {
         $default = $this->get_default_value($fieldname);
         switch ($fieldname) {
             case 'group':
-            case 'grouping':
-                return new reader_report_filter_group($fieldname, $advanced, $default);
+                return new reader_report_filter_group($fieldname, $advanced, $default, 'where');
 
             case 'startlevel':
             case 'currentlevel':
+                $label = get_string($fieldname, 'reader');
+                return new reader_report_filter_number($fieldname, $label, $advanced, $fieldname, $default, 'where');
+
+            case 'nopromote':
+                $label = get_string($fieldname, 'reader');
+                return new user_filter_yesno($fieldname, $label, $advanced, $fieldname);
+
             case 'countpassed':
             case 'countfailed':
             case 'countwords':
@@ -61,15 +67,11 @@ class reader_report_usersummary_filtering extends reader_report_filtering {
             case 'wordsthisterm':
             case 'wordsallterms':
                 $label = get_string($fieldname, 'reader');
-                return new reader_report_filter_number($fieldname, $label, $advanced, $fieldname, $default);
-
-            case 'nopromote':
-                $label = get_string($fieldname, 'reader');
-                return new user_filter_yesno($fieldname, $label, $advanced, $fieldname);
+                return new reader_report_filter_number($fieldname, $label, $advanced, $fieldname, $default, 'having');
 
             case 'averageduration':
                 $label = get_string($fieldname, 'reader');
-                return new reader_report_filter_duration($fieldname, $label, $advanced, $fieldname);
+                return new reader_report_filter_duration($fieldname, $label, $advanced, $fieldname, null, 'having');
 
             default:
                 // other fields (e.g. from user record)

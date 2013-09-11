@@ -81,21 +81,6 @@ class reader_report_groupsummary_table extends reader_report_table {
     ////////////////////////////////////////////////////////////////////////////////
 
     /**
-     * count_sql
-     *
-     * @param xxx $userid (optional, default=0)
-     * @param xxx $attemptid (optional, default=0)
-     * @return xxx
-     */
-    function count_sql($userid=0, $attemptid=0) {
-        $select = 'COUNT(*)';
-        $from   = '{groups}';
-        $where  = "courseid = :courseid";
-        $params = array('courseid' => $this->output->reader->course->id);
-        return array($select, $from, $where, $params);
-    }
-
-    /**
      * select_sql
      *
      * @uses $DB
@@ -123,11 +108,39 @@ class reader_report_groupsummary_table extends reader_report_table {
                   'LEFT JOIN {groups_members} gm ON u.id = gm.userid '.
                   'LEFT JOIN {groups} g ON gm.groupid = g.id';
 
-        $where  = 'g.courseid = :courseid GROUP BY g.id';
+        $where  = 'g.courseid = :courseid';
 
-        $params = array('courseid' => $this->output->reader->course->id) + $attemptparams;
+        $params = array('courseid' => $this->output->reader->course->id);
 
-        return array($select, $from, $where, $params);
+        return $this->add_filter_params($select, $from, $where, 'g.id', '', '', $params + $attemptparams);
+    }
+
+    /**
+     * get_table_name_and_alias
+     *
+     * @param string $fieldname
+     * @return array($tablename, $tablealias)
+     * @todo Finish documenting this function
+     */
+    public function get_table_name_and_alias($fieldname) {
+        switch ($fieldname) {
+
+            case 'groupname':
+            case 'countactive':
+            case 'countinactive':
+            case 'percentactive':
+            case 'percentinactive':
+            case 'averagetaken':
+            case 'averagepassed':
+            case 'averagefailed':
+            case 'averagepercentgrade':
+            case 'averagewordsthisterm':
+            case 'averagewordsallterms':
+                return array('', '');
+
+            default:
+                return parent::get_table_name_and_alias($fieldname);
+        }
     }
 
     ////////////////////////////////////////////////////////////////////////////////

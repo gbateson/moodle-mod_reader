@@ -70,25 +70,6 @@ class reader_report_bookdetailed_table extends reader_report_table {
     ////////////////////////////////////////////////////////////////////////////////
 
     /**
-     * count_sql
-     *
-     * @param xxx $userid (optional, default=0)
-     * @param xxx $attemptid (optional, default=0)
-     * @return xxx
-     */
-    function count_sql($userid=0, $attemptid=0) {
-        // get users who can access this Reader activity
-        list($usersql, $userparams) = $this->select_sql_users();
-
-        $select = 'COUNT(*)';
-        $from   = '{reader_attempts} ra LEFT JOIN {user} u ON ra.userid = u.id';
-        $where  = "ra.reader = :reader AND ra.timefinish > :time AND ra.userid $usersql";
-        $params = array('reader' => $this->output->reader->id, 'time' => $this->output->reader->ignoredate);
-
-        return $this->add_filter_params($select, $from, $where, '', '', $params + $userparams);
-    }
-
-    /**
      * select_sql
      *
      * @uses $DB
@@ -113,7 +94,39 @@ class reader_report_bookdetailed_table extends reader_report_table {
 
         $params = array('reader' => $this->output->reader->id, 'time' => $this->output->reader->ignoredate);
 
-        return $this->add_filter_params($select, $from, $where, '', '', $params + $userparams);
+        return $this->add_filter_params($select, $from, $where, '', '', '', $params + $userparams);
+    }
+
+    /**
+     * get_table_name_and_alias
+     *
+     * @param string $fieldname
+     * @return array($tablename, $tablealias, $jointype, $jointable, $joinconditions)
+     * @todo Finish documenting this function
+     */
+    public function get_table_name_and_alias($fieldname) {
+        switch ($fieldname) {
+
+            // "reader_levels" fields
+            case 'bookid':
+            case 'publisher':
+            case 'level':
+            case 'booktitle':
+            case 'booklevel':
+                return array('reader_books', 'rb');
+
+            // "reader_attempts" aggregate fields
+            case 'countpassed':
+            case 'countfailed':
+            case 'averageduration':
+            case 'averagegrade':
+            case 'countrating':
+            case 'averagerating':
+                return array('', '');
+
+            default:
+                return parent::get_table_name_and_alias($fieldname);
+        }
     }
 
     ////////////////////////////////////////////////////////////////////////////////

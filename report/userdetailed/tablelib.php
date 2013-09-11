@@ -64,36 +64,12 @@ class reader_report_userdetailed_table extends reader_report_table {
         'lastname'   => 1, 'firstname'    => 1, 'currentlevel' => 1,
         'difficulty' => 1, 'name'         => 1,
         'timefinish' => 1, 'percentgrade' => 1, 'passed' => 1,
-        //'words'      => 1, 'totalwords'   => 1
+        'words'      => 1, 'totalwords'   => 1
     );
 
     ////////////////////////////////////////////////////////////////////////////////
     // functions to extract data from $DB                                         //
     ////////////////////////////////////////////////////////////////////////////////
-
-    /**
-     * count_sql
-     *
-     * @param xxx $userid (optional, default=0)
-     * @param xxx $attemptid (optional, default=0)
-     * @return xxx
-     */
-    function count_sql($userid=0, $attemptid=0) {
-
-        // get users who can access this Reader activity
-        list($usersql, $userparams) = $this->select_sql_users();
-
-        $select = 'COUNT(*)';
-        $from   = '{reader_attempts} ra '.
-                  'LEFT JOIN {user} u ON ra.userid = u.id '.
-                  'LEFT JOIN {reader_levels} rl ON u.id = rl.userid '.
-                  'LEFT JOIN {reader_books} rb ON ra.quizid = rb.quizid';
-        $where  = "ra.reader = :reader AND rl.readerid = :readerid AND ra.timefinish > :time AND u.id $usersql";
-
-        $params = array('reader' => $this->output->reader->id, 'readerid' => $this->output->reader->id, 'time' => $this->output->reader->ignoredate);
-
-        return $this->add_filter_params($select, $from, $where, '', '', $params + $userparams);
-    }
 
     /**
      * select_sql
@@ -118,9 +94,12 @@ class reader_report_userdetailed_table extends reader_report_table {
                   'LEFT JOIN {reader_books} rb ON ra.quizid = rb.quizid';
         $where  = "ra.reader = :reader AND rl.readerid = :readerid AND ra.timefinish > :time AND u.id $usersql";
 
-        $params = array('reader' => $this->output->reader->id, 'readerid' => $this->output->reader->id, 'time' => $this->output->reader->ignoredate, 'passed' => 'true');
+        $params = array('reader'   => $this->output->reader->id,
+                        'readerid' => $this->output->reader->id,
+                        'time'     => $this->output->reader->ignoredate,
+                        'passed'   => 'true') + $userparams;
 
-        return $this->add_filter_params($select, $from, $where, '', '', $params + $userparams);
+        return $this->add_filter_params($select, $from, $where, '', '', '', $params);
     }
 
     /**
@@ -138,8 +117,10 @@ class reader_report_userdetailed_table extends reader_report_table {
 
             case 'name':
             case 'difficulty':
-            case 'words':
                 return array('reader_levels', 'rb');
+
+            case 'words':
+                return array('', '');
 
             case 'timefinish':
             case 'percentgrade':

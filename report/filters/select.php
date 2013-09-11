@@ -45,12 +45,12 @@ class reader_report_filter_select extends user_filter_select {
      * @param string $name the name of the filter instance
      * @param string $label the label of the filter instance
      * @param boolean $advanced advanced form element flag
-     * @param string $field user table filed name
+     * @param string $field user table field name
      * @param mixed $default (optional, default = null)
      * @param string $type (optional, default = "")
      */
-    function __construct($name, $label, $advanced, $field, $default=null, $type='') {
-        parent::user_filter_select($name, $label, $advanced, $field);
+    function __construct($name, $label, $advanced, $field, $options, $default=null, $type='') {
+        parent::user_filter_select($name, $label, $advanced, $field, $options);
         $this->_default = $default;
         $this->_type    = $type;
     }

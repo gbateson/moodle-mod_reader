@@ -36,7 +36,8 @@ require_once($CFG->dirroot.'/user/filters/select.php');
  * @since     Moodle 2.0
  */
 class reader_report_filter_number extends user_filter_select {
-    var $_field;
+
+    var $_type = '';
 
     /**
      * Constructor
@@ -44,12 +45,13 @@ class reader_report_filter_number extends user_filter_select {
      * @param string $name the name of the filter instance
      * @param string $label the label of the filter instance
      * @param boolean $advanced advanced form element flag
-     * @param string $field user table filed name
+     * @param string $field user table field name
      * @param mixed $default (optional, default = null)
      */
-    function __construct($name, $label, $advanced, $field, $default=null) {
+    function __construct($name, $label, $advanced, $field, $default=null, $type='') {
         parent::user_filter_type($name, $label, $advanced);
 
+        $this->_type    = $type;
         $this->_field   = $field;
         $this->_default = $default;
     }
@@ -108,46 +110,60 @@ class reader_report_filter_number extends user_filter_select {
     }
 
     /**
-     * get_sql_filter
+     * get_sql
      *
-     * @param xxx $data
+     * @param array $data
+     * @param string $type ("where" or "having")
      * @return xxx
      */
-    function get_sql_filter($data)  {
+    function get_sql($data, $type)  {
         static $counter = 0;
-        $name = 'ex_number'.$counter++;
 
         $filter = '';
         $params = array();
-        if (($value = $data['value']) && ($operator = $data['operator'])) {
-            $field = $this->_field;
-            switch($operator) {
-                case 1: // less than
-                    $filter = $field.'<:'.$name;
-                    $params[$name] = $value;
-                    break;
-                case 2: // equal to
-                    $filter = $field.'=:'.$name;
-                    $params[$name] = $value;
-                    break;
-                case 3: // greater than
-                    $filter = $field.'>:'.$name;
-                    $params[$name] = $value;
-                    break;
+
+        if ($this->_type==$type) {
+            $name = 'ex_num_'.$type.'_'.$counter++;
+            if (($value = $data['value']) && ($operator = $data['operator'])) {
+                $field = $this->_field;
+                switch($operator) {
+                    case 1: // less than
+                        $filter = $field.' < :'.$name;
+                        $params[$name] = $value;
+                        break;
+                    case 2: // equal to
+                        $filter = $field.' = :'.$name;
+                        $params[$name] = $value;
+                        break;
+                    case 3: // greater than
+                        $filter = $field.' > :'.$name;
+                        $params[$name] = $value;
+                        break;
+                }
             }
         }
+
         return array($filter, $params);
     }
 
     /**
-     * get_sql_filter_attempts
+     * get_sql_where
      *
      * @param xxx $data
      * @return xxx
      */
-    function get_sql_filter_attempts($data)  {
-        // this field type doesn't affect the selection of attempts
-        return array('', array());
+    function get_sql_where($data)  {
+        return $this->get_sql($data, 'where');
+    }
+
+    /**
+     * get_sql_having
+     *
+     * @param xxx $data
+     * @return xxx
+     */
+    function get_sql_having($data)  {
+        return $this->get_sql($data, 'having');
     }
 
     /**

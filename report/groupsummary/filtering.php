@@ -48,10 +48,8 @@ class reader_report_groupsummary_filtering extends reader_report_filtering {
     function get_field($fieldname, $advanced)  {
         $default = $this->get_default_value($fieldname);
         switch ($fieldname) {
-            case 'group':
-            case 'grouping':
             case 'groupname':
-                return new reader_report_filter_group($fieldname, $advanced, $default);
+                return new reader_report_filter_group($fieldname, $advanced, $default, 'where');
 
             case 'countactive':
             case 'countinactive':
@@ -63,11 +61,11 @@ class reader_report_groupsummary_filtering extends reader_report_filtering {
             case 'averagewordsthisterm':
             case 'averagewordsallterms':
                 $label = get_string($fieldname, 'reader');
-                return new reader_report_filter_number($fieldname, $label, $advanced, $default);
+                return new reader_report_filter_number($fieldname, $label, $advanced, $fieldname, $default, 'having');
 
             case 'averagepercentgrade':
                 $label = get_string('averagegrade', 'reader');
-                return new reader_report_filter_number($fieldname, $label, $advanced, $default);
+                return new reader_report_filter_number($fieldname, $label, $advanced, $fieldname, $default, 'having');
 
             default:
                 // other fields (e.g. from user record)

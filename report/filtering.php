@@ -29,12 +29,14 @@ defined('MOODLE_INTERNAL') || die();
 require_once($CFG->dirroot.'/user/filters/lib.php');
 
 // get child classes
+require_once($CFG->dirroot.'/mod/reader/report/filters/date.php');
+require_once($CFG->dirroot.'/mod/reader/report/filters/select.php');
+require_once($CFG->dirroot.'/mod/reader/report/filters/simpleselect.php');
+require_once($CFG->dirroot.'/mod/reader/report/filters/text.php');
+
 require_once($CFG->dirroot.'/mod/reader/report/filters/duration.php');
-require_once($CFG->dirroot.'/mod/reader/report/filters/grade.php');
 require_once($CFG->dirroot.'/mod/reader/report/filters/group.php');
 require_once($CFG->dirroot.'/mod/reader/report/filters/number.php');
-require_once($CFG->dirroot.'/mod/reader/report/filters/passed.php');
-require_once($CFG->dirroot.'/mod/reader/report/filters/status.php');
 
 /**
  * reader_report_filtering
@@ -64,61 +66,93 @@ class reader_report_filtering extends user_filtering {
      * Returns sql where statement based on active user filters
      * @param string $extra sql
      * @param array named params (recommended prefix ex)
-     * @return array sql string and $params
+     * @return array ($wherefilter, $havingfilter, $params)
      */
     function get_sql_filter($extra='', array $params=null) {
-        list($filter, $params) = parent::get_sql_filter($extra, $params);
+        list($wherefilter, $whereparams) = $this->get_sql_where($extra, $params);
+        list($havingfilter, $havingparams) = $this->get_sql_having($extra, $params);
 
         // remove empty " AND " conditions at start, middle and end of filter
         $search = array('/^(?: AND )+/', '/(<= AND )(?: AND )+/', '/(?: AND )+$/');
-        $filter = preg_replace($search, '', $filter);
 
-        return array($filter, $params);
+        $wherefilter = preg_replace($search, '', $wherefilter);
+        $havingfilter = preg_replace($search, '', $havingfilter);
+
+        if ($whereparams || $havingparams) {
+            if ($params===null) {
+                $params = array();
+            }
+            if ($whereparams) {
+                $params += $whereparams;
+            }
+            if ($havingparams) {
+                $params += $havingparams;
+            }
+        }
+
+        return array($wherefilter, $havingfilter, $params);
     }
 
     /**
      * Returns sql where statement based on active user filters
-     *
      * @param string $extra sql
      * @param array named params (recommended prefix ex)
      * @return array sql string and $params
      */
-    function get_sql_filter_attempts($extra='', $params=null) {
+    function get_sql_where($extra='', array $params=null) {
+        return $this->get_sql($extra, $params, 'where');
+    }
+
+    /**
+     * Returns sql where statement based on active filters
+     * @param string $extra sql
+     * @param array named params (recommended prefix ex)
+     * @return array sql string and $params
+     */
+    function get_sql_having($extra='', array $params=null) {
+        return $this->get_sql($extra, $params, 'having');
+    }
+
+    /**
+     * Returns sql having statement based on active filters
+     * @param string $extra sql
+     * @param array named params (recommended prefix ex)
+     * @param string $type (optional, default='')
+     * @return array sql string and $params
+     */
+    function get_sql($extra='', array $params=null, $type='filter') {
         global $SESSION;
 
-        $filters = array();
+        $sqls = array();
         if ($extra) {
-            $filters[] = $extra;
+            $sqls[] = $extra;
         }
-        if (is_null($params)) {
+        if ($params===null) {
             $params = array();
-        } else if (! is_array($params)) {
-            $params = (array)$params;
         }
+
+        $method = 'get_sql_'.$type;
 
         if (! empty($SESSION->user_filtering)) {
-            foreach ($SESSION->user_filtering as $fieldname=>$fielddata) {
-
+            foreach ($SESSION->user_filtering as $fieldname => $conditions) {
                 if (! array_key_exists($fieldname, $this->_fields)) {
-                    continue;
+                    continue; // filter not used
                 }
-
                 $field = $this->_fields[$fieldname];
-                if (! method_exists($field, 'get_sql_filter_attempts')) {
-                    continue;
+                if (! method_exists($field, $method)) {
+                    continue; // no $type sql for this $field
                 }
-
-                foreach($fielddata as $data) {
-                    list($f, $p) = $field->get_sql_filter_attempts($data);
-                    if ($f) {
-                        $filters[] = $f;
-                        $params = array_merge($params, $p);
+                foreach ($conditions as $condition) {
+                    list($s, $p) = $field->$method($condition);
+                    if ($s) {
+                        $sqls[] = $s;
+                        $params += $p;
                     }
                 }
             }
         }
 
-        $filter = implode(' AND ', $filters);
-        return array($filter, $params);
+        $sqls = implode(' AND ', $sqls);
+        return array($sqls, $params);
     }
 }

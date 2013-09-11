@@ -70,25 +70,6 @@ class reader_report_booksummary_table extends reader_report_table {
     ////////////////////////////////////////////////////////////////////////////////
 
     /**
-     * count_sql
-     *
-     * @param xxx $userid (optional, default=0)
-     * @param xxx $attemptid (optional, default=0)
-     * @return xxx
-     */
-    function count_sql($userid=0, $attemptid=0) {
-
-        // get users who can access this Reader activity
-        list($where, $params) = $this->select_sql_users();
-
-        $select = 'COUNT(*)';
-        $from   = '{user} u';
-        $where  = "id $where";
-
-        return $this->add_filter_params($select, $from, $where, '', '', $params);
-    }
-
-    /**
      * select_sql
      *
      * @uses $DB
@@ -104,7 +85,7 @@ class reader_report_booksummary_table extends reader_report_table {
         // get users who can access this Reader activity
         list($usersql, $userparams) = $this->select_sql_users();
 
-        $select = 'rb.id AS bookid, rb.name AS booktitle, rb.publisher, rb.level, rb.difficulty AS booklevel, '.
+        $select = 'rb.id AS bookid, rb.publisher, rb.level, rb.name AS booktitle, rb.difficulty AS booklevel, '.
                   'raa.countpassed, raa.countfailed, '.
                   'raa.averageduration, raa.averagegrade, '.
                   'raa.countrating, raa.averagerating';
@@ -114,7 +95,39 @@ class reader_report_booksummary_table extends reader_report_table {
 
         $params = $attemptparams + array('readerid' => $this->output->reader->id) + $userparams;
 
-        return $this->add_filter_params($select, $from, $where, '', '', $params);
+        return $this->add_filter_params($select, $from, $where, '', '', '', $params);
+    }
+
+    /**
+     * get_table_name_and_alias
+     *
+     * @param string $fieldname
+     * @return array($tablename, $tablealias, $jointype, $jointable, $joinconditions)
+     * @todo Finish documenting this function
+     */
+    public function get_table_name_and_alias($fieldname) {
+        switch ($fieldname) {
+
+            // "reader_levels" fields
+            case 'bookid':
+            case 'publisher':
+            case 'level':
+            case 'booktitle':
+            case 'booklevel':
+                return array('reader_books', 'rb');
+
+            // "reader_attempts" aggregate fields
+            case 'countpassed':
+            case 'countfailed':
+            case 'averageduration':
+            case 'averagegrade':
+            case 'countrating':
+            case 'averagerating':
+                return array('', '');
+
+            default:
+                return parent::get_table_name_and_alias($fieldname);
+        }
     }
 
     ////////////////////////////////////////////////////////////////////////////////

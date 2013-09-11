@@ -35,14 +35,16 @@ require_once($CFG->dirroot.'/user/filters/select.php');
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @since     Moodle 2.0
  */
-class reader_report_filter_group extends user_filter_select {
+class reader_report_filter_group extends reader_report_filter_select {
+
     /**
      * Constructor
      * @param string $name the name of the filter instance
      * @param boolean $advanced advanced form element flag
-     * @param mixed $default option
+     * @param mixed $default (optional, default = null)
+     * @param string $type (optional, default = "")
      */
-    function __construct($filtername, $advanced, $default=null) {
+    function __construct($filtername, $advanced, $default=null, $type='') {
         global $reader;
 
         $label = '';
@@ -92,7 +94,7 @@ class reader_report_filter_group extends user_filter_select {
             }
         }
 
-        parent::user_filter_select($filtername, $label, $advanced, '', $options, $default);
+        parent::__construct($filtername, $label, $advanced, $filtername, $options, $default, $type);
     }
 
     /**

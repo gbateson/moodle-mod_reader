@@ -194,19 +194,34 @@ class reader_report_table extends table_sql {
     /**
      * count_sql
      *
-     * @return array($sql, $params)
+     * @return array($select, $from, $where, $params)
      */
     function count_sql() {
-        return array('', array());
+        list($select, $from, $where, $params) = $this->select_sql();
+        $temptable = '';
+        if ($select) {
+            $temptable .= "SELECT $select";
+        }
+        if ($from) {
+            $temptable .= " FROM $from";
+        }
+        if ($where) {
+            $temptable .= " WHERE $where";
+        }
+        if ($temptable=='') {
+            return array('', '', '', array());
+        } else {
+            return array('COUNT(*)', "($temptable) temptable", '1', $params);
+        }
     }
 
     /**
      * select_sql
      *
-     * @return array($sql, $params)
+     * @return array($select, $from, $where, $params)
      */
     function select_sql() {
-        return array('', array());
+        return array('', '', '', array());
     }
 
     /**
@@ -294,7 +309,7 @@ class reader_report_table extends table_sql {
      * @param array $params
      * @return void, but may modify $select $from $where $params
      */
-    function add_filter_params($select, $from, $where, $orderby, $groupby, $params) {
+    function add_filter_params($select, $from, $where, $groupby, $having, $orderby, $params) {
 
         // search string to detect db fieldname in a filter string
         // - not preceded by {:`"'_. a-z 0-9
@@ -307,11 +322,26 @@ class reader_report_table extends table_sql {
 
         // get filter $sql and $params
         if ($this->filter) {
-            list($filterwhere, $filterparams) = $this->filter;
-            if ($filterwhere && $filterparams) {
-                $where .= " AND $filterwhere";
+            list($filterwhere, $filterhaving, $filterparams) = $this->filter;
+            if ($filterwhere) {
+                $where .= ($where=='' ? '' : ' AND ').$filterwhere;
+            }
+            if ($filterhaving) {
+                $having .= ($having=='' ? '' : ' AND ').$filterhaving;
+            }
+            if ($filterwhere || $filterhaving) {
                 $params += $filterparams;
             }
+        }
+
+        if ($groupby) {
+            $where .= " GROUP BY $groupby";
+        }
+        if ($having) {
+            $where .= " HAVING $having";
+        }
+        if ($orderby) {
+            $where .= " ORDER BY $orderby";
         }
 
         if (preg_match_all($search, $where, $matches, PREG_OFFSET_CAPTURE)) {
@@ -328,13 +358,6 @@ class reader_report_table extends table_sql {
             }
         }
 
-        if ($orderby) {
-            $where .= " ORDER BY $orderby";
-        }
-        if ($groupby) {
-            $where .= " GROUP BY $groupby";
-        }
-
         return array($select, $from, $where, $params);
     }
 
@@ -348,12 +371,14 @@ class reader_report_table extends table_sql {
     public function get_table_name_and_alias($fieldname) {
         switch ($fieldname) {
 
+            // "user" fields
             case 'id':
             case 'firstname':
             case 'lastname':
             case 'username':
                 return array('user', 'u');
 
+            // "reader_attempts" fields
             case 'percentgrade':
             case 'passed':
             case 'timefinish':
@@ -637,6 +662,24 @@ class reader_report_table extends table_sql {
      */
     public function header_passed() {
         return implode('/', array(get_string('passedshort', 'reader'), get_string('failedshort', 'reader'), get_string('cheatedshort', 'reader')));
+    }
+
+    /**
+     * header_booktitle
+     *
+     * @return xxx
+     */
+    public function header_booktitle()  {
+        return get_string('booktitle', 'reader');
+    }
+
+    /**
+     * header_booklevel
+     *
+     * @return xxx
+     */
+    public function header_booklevel()  {
+        return get_string('booklevel', 'reader');
     }
 
     /**
