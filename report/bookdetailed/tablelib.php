@@ -108,7 +108,6 @@ class reader_report_bookdetailed_table extends reader_report_table {
         switch ($fieldname) {
 
             // "reader_levels" fields
-            case 'bookid':
             case 'publisher':
             case 'level':
             case 'booktitle':
@@ -116,13 +115,9 @@ class reader_report_bookdetailed_table extends reader_report_table {
                 return array('reader_books', 'rb');
 
             // "reader_attempts" aggregate fields
-            case 'countpassed':
-            case 'countfailed':
-            case 'averageduration':
-            case 'averagegrade':
-            case 'countrating':
-            case 'averagerating':
-                return array('', '');
+            case 'passed':
+            case 'bookrating':
+                return array('reader_attempts', 'ra');
 
             default:
                 return parent::get_table_name_and_alias($fieldname);

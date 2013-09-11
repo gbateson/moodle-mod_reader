@@ -63,10 +63,10 @@ class reader_report_filter_date extends user_filter_date {
      * @return xxx
      */
     function get_sql($data, $type)  {
-        static $counter = 0;
 
         $filter = '';
         $params = array();
+        $counter = reader_report_filtering_uniqueid('ex_date_'.$type);
 
         $after = (empty($data['after']) ? 0 : (int)$data['after']);
         $before = (empty($data['before']) ? 0 : (int)$data['before']);
@@ -75,7 +75,6 @@ class reader_report_filter_date extends user_filter_date {
             $namezero = 'ex_date_'.$type.'_zero_'.$counter;
             $nameafter = 'ex_date_'.$type.'_after_'.$counter;
             $namebefore = 'ex_date_'.$type.'_before_'.$counter;
-            $counter++;
 
             $field  = $this->_field;
             $filter = "$field IS NOT NULL AND $field >= :$namezero" ;

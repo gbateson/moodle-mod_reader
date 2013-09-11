@@ -117,13 +117,12 @@ class reader_report_filter_number extends user_filter_select {
      * @return xxx
      */
     function get_sql($data, $type)  {
-        static $counter = 0;
-
         $filter = '';
         $params = array();
+        $counter = reader_report_filtering_uniqueid('ex_num_'.$type);
 
         if ($this->_type==$type) {
-            $name = 'ex_num_'.$type.'_'.$counter++;
+            $name = 'ex_num_'.$type.'_'.$counter;
             if (($value = $data['value']) && ($operator = $data['operator'])) {
                 $field = $this->_field;
                 switch($operator) {

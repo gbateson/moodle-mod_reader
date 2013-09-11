@@ -156,3 +156,19 @@ class reader_report_filtering extends user_filtering {
         return array($sqls, $params);
     }
 }
+
+/*
+ * reader_report_filtering_uniqueid
+ *
+ * @param string $type
+ * @return string
+ */
+function reader_report_filtering_uniqueid($type) {
+    static $types = array();
+    if (isset($types[$type])) {
+        $types[$type] ++;
+    } else {
+        $types[$type] = 0;
+    }
+    return $types[$type];
+}
