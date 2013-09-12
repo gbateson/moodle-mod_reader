@@ -39,7 +39,7 @@ class reader_report_booksummary_table extends reader_report_table {
 
     /** @var columns used in this table */
     protected $tablecolumns = array(
-        'selected', 'publisher', 'level', 'booktitle', 'booklevel',
+        'selected', 'publisher', 'level', 'name', 'difficulty',
         'countpassed', 'countfailed', 'averageduration', 'averagegrade', 'averagerating', 'countrating'
     );
 
@@ -50,18 +50,18 @@ class reader_report_booksummary_table extends reader_report_table {
     protected $nosortcolumns = array();
 
     /** @var text columns in this table */
-    protected $textcolumns = array('publisher', 'level', 'booktitle');
+    protected $textcolumns = array('publisher', 'level', 'name');
 
     /** @var columns that are not to be center aligned */
-    protected $leftaligncolumns = array('publisher', 'level', 'booktitle');
+    protected $leftaligncolumns = array('publisher', 'level', 'name');
 
     /** @var default sort columns */
-    protected $defaultsortcolumns = array('publisher' => SORT_ASC, 'level' => SORT_ASC, 'booktitle' => SORT_ASC);
+    protected $defaultsortcolumns = array('publisher' => SORT_ASC, 'level' => SORT_ASC, 'name' => SORT_ASC);
 
     /** @var filter fields */
     protected $filterfields = array(
-        'group'           => 0, 'publisher'    => 0, 'level'         => 1, 'booktitle'  => 0,
-        'booklevel'       => 1, 'countpassed'  => 1, 'countfailed'   => 1,
+        'group'           => 0, 'publisher'    => 0, 'level'         => 1, 'name'  => 0,
+        'difficulty'      => 1, 'countpassed'  => 1, 'countfailed'   => 1,
         'averageduration' => 1, 'averagegrade' => 1, 'averagerating' => 1, 'countrating'  => 1,
     );
 
@@ -85,7 +85,7 @@ class reader_report_booksummary_table extends reader_report_table {
         // get users who can access this Reader activity
         list($usersql, $userparams) = $this->select_sql_users();
 
-        $select = 'rb.id AS bookid, rb.publisher, rb.level, rb.name AS booktitle, rb.difficulty AS booklevel, '.
+        $select = 'rb.id AS bookid, rb.publisher, rb.level, rb.name, rb.difficulty, '.
                   'raa.countpassed, raa.countfailed, '.
                   'raa.averageduration, raa.averagegrade, '.
                   'raa.countrating, raa.averagerating';
@@ -112,8 +112,8 @@ class reader_report_booksummary_table extends reader_report_table {
             case 'bookid':
             case 'publisher':
             case 'level':
-            case 'booktitle':
-            case 'booklevel':
+            case 'name':
+            case 'difficulty':
                 return array('reader_books', 'rb');
 
             // "reader_attempts" aggregate fields

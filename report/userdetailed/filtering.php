@@ -56,14 +56,6 @@ class reader_report_userdetailed_filtering extends reader_report_filtering {
                 $label = get_string($fieldname, 'reader');
                 return new reader_report_filter_number($fieldname, $label, $advanced, $fieldname, $default, 'where');
 
-            case 'percentgrade':
-                $label = get_string('grade');
-                return new reader_report_filter_number($fieldname, $label, $advanced, $fieldname, $default, 'where');
-
-            case 'words':
-                $label = get_string('words', 'reader');
-                return new reader_report_filter_number($fieldname, $label, $advanced, $fieldname, $default, 'having');
-
             case 'name':
                 $label = get_string('booktitle', 'reader');
                 return new reader_report_filter_text($fieldname, $label, $advanced, $fieldname, $default, 'where');
@@ -72,11 +64,20 @@ class reader_report_userdetailed_filtering extends reader_report_filtering {
                 $label = get_string('date');
                 return new reader_report_filter_date($fieldname, $label, $advanced, $fieldname, $default, 'where');
 
+            case 'percentgrade':
+                $label = get_string('grade');
+                return new reader_report_filter_number($fieldname, $label, $advanced, $fieldname, $default, 'where');
+
             case 'passed':
                 $label = get_string($fieldname, 'reader');
                 $options = array('true'  => get_string('passedshort', 'reader').' - '.get_string('passed', 'reader'),
                                  'false' => get_string('failedshort', 'reader').' - '.get_string('failed', 'reader'));
                 return new reader_report_filter_simpleselect($fieldname, $label, $advanced, $fieldname, $options, $default, 'where');
+
+            case 'words':
+            case 'totalwords':
+                $label = get_string($fieldname, 'reader');
+                return new reader_report_filter_number($fieldname, $label, $advanced, $fieldname, $default, 'where');
 
             default:
                 // other fields (e.g. from user record)

@@ -46,7 +46,7 @@ class mod_reader_report_bookdetailed_renderer extends mod_reader_report_renderer
 
     protected $filterfields = array(
         'group' => 0, 'realname'=>0, 'lastname'=>1, 'firstname'=>1, 'username'=>1,
-        //'currentlevel' => 1, 'booklevel' => 1, 'booktitle' => 1,
-        //'percentgrade' => 1, 'passed' => 1, 'words' => 1
+        //'currentlevel' => 1, 'difficulty' => 1, 'name'  => 1,
+        //'percentgrade' => 1, 'passed'     => 1, 'words' => 1
     );
 }

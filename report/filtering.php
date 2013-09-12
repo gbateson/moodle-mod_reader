@@ -48,6 +48,39 @@ require_once($CFG->dirroot.'/mod/reader/report/filters/number.php');
 class reader_report_filtering extends user_filtering {
 
     /**
+     * get_field
+     * reader version of standard function
+     *
+     * @param xxx $fieldname
+     * @param xxx $advanced
+     * @return xxx
+     */
+    function get_field($fieldname, $advanced)  {
+        global $DB;
+
+        $default = $this->get_default_value($fieldname);
+        switch ($fieldname) {
+
+            case 'realname':
+                $label = get_string('fullname');
+                return new reader_report_filter_text($fieldname, $label, $advanced, $DB->sql_fullname(), $default, 'where');
+                break;
+
+            case 'lastname':
+            case 'firstname':
+            case 'username':
+                $label = get_string($fieldname);
+                return new reader_report_filter_text($fieldname, $label, $advanced, $fieldname, $default, 'where');
+                break;
+
+            default:
+                // other fields (e.g. from user record)
+                die("Unknown filter field: $fieldname");
+                return parent::get_field($fieldname, $advanced);
+        }
+    }
+
+    /**
      * get_default_value
      *
      * @param string $fieldname

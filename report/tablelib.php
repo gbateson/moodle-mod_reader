@@ -344,6 +344,7 @@ class reader_report_table extends table_sql {
             $where .= " ORDER BY $orderby";
         }
 
+        // extract all database table names from the SQL
         if (preg_match_all($search, $where, $matches, PREG_OFFSET_CAPTURE)) {
             $i_max = count($matches[0]) - 1;
             for ($i=$i_max; $i>=0; $i--) {
@@ -622,7 +623,7 @@ class reader_report_table extends table_sql {
      * @return xxx
      */
     public function header_difficulty() {
-        return get_string('difficulty', 'reader');
+        return get_string('bookdifficulty', 'reader');
         //$long = get_string('difficulty', 'reader');
         //$short = get_string('difficultyshort', 'reader');
         //return $long.html_writer::empty_tag('br')."($short)";
@@ -662,24 +663,6 @@ class reader_report_table extends table_sql {
      */
     public function header_passed() {
         return implode('/', array(get_string('passedshort', 'reader'), get_string('failedshort', 'reader'), get_string('cheatedshort', 'reader')));
-    }
-
-    /**
-     * header_booktitle
-     *
-     * @return xxx
-     */
-    public function header_booktitle()  {
-        return get_string('booktitle', 'reader');
-    }
-
-    /**
-     * header_booklevel
-     *
-     * @return xxx
-     */
-    public function header_booklevel()  {
-        return get_string('booklevel', 'reader');
     }
 
     /**

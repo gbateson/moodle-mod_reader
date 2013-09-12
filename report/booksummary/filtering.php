@@ -53,12 +53,15 @@ class reader_report_booksummary_filtering extends reader_report_filtering {
 
             case 'publisher':
             case 'level':
-            case 'booktitle':
                 $label = get_string($fieldname, 'reader');
                 return new reader_report_filter_text($fieldname, $label, $advanced, $fieldname, $default, 'where');
 
-            case 'booklevel':
-                $label = get_string($fieldname, 'reader');
+            case 'name':
+                $label = get_string('booktitle', 'reader');
+                return new reader_report_filter_text($fieldname, $label, $advanced, $fieldname, $default, 'where');
+
+            case 'difficulty':
+                $label = get_string('bookdifficulty', 'reader');
                 return new reader_report_filter_number($fieldname, $label, $advanced, $fieldname, $default, 'where');
 
             case 'countpassed':

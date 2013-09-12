@@ -47,7 +47,7 @@ class reader_report_userdetailed_table extends reader_report_table {
     protected $suppresscolumns = array('username', 'fullname', 'currentlevel');
 
     /** @var columns in this table that are not sortable */
-    protected $nosortcolumns = array();
+    protected $nosortcolumns = array('totalwords');
 
     /** @var text columns in this table */
     protected $textcolumns = array('username', 'fullname', 'name');
@@ -64,7 +64,7 @@ class reader_report_userdetailed_table extends reader_report_table {
         'lastname'   => 1, 'firstname'    => 1, 'currentlevel' => 1,
         'difficulty' => 1, 'name'         => 1,
         'timefinish' => 1, 'percentgrade' => 1, 'passed' => 1,
-        'words'      => 1, 'totalwords'   => 1
+        'words'      => 1, //'totalwords'   => 1
     );
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -116,10 +116,11 @@ class reader_report_userdetailed_table extends reader_report_table {
                 return array('reader_levels', 'rl');
 
             case 'name':
+            case 'words':
             case 'difficulty':
                 return array('reader_levels', 'rb');
 
-            case 'words':
+            case 'totalwords':
                 return array('', '');
 
             case 'timefinish':

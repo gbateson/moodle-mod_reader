@@ -53,18 +53,26 @@ class reader_report_bookdetailed_filtering extends reader_report_filtering {
 
             case 'publisher':
             case 'level':
-            case 'booktitle':
                 $label = get_string($fieldname, 'reader');
                 return new reader_report_filter_text($fieldname, $label, $advanced, $fieldname, $default, 'where');
 
-            case 'booklevel':
+             case 'name':
+                $label = get_string('booktitle', 'reader');
+                return new reader_report_filter_text($fieldname, $label, $advanced, $fieldname, $default, 'where');
+
+            case 'difficulty':
+                $label = get_string('bookdifficulty', 'reader');
+                return new reader_report_filter_number($fieldname, $label, $advanced, $fieldname, $default, 'where');
+
             case 'bookrating':
                 $label = get_string($fieldname, 'reader');
                 return new reader_report_filter_number($fieldname, $label, $advanced, $fieldname, $default, 'where');
 
             case 'passed':
                 $label = get_string($fieldname, 'reader');
-                return new user_filter_yesno($fieldname, $label, $advanced, $default);
+                $options = array('true'  => get_string('passedshort', 'reader').' - '.get_string('passed', 'reader'),
+                                 'false' => get_string('failedshort', 'reader').' - '.get_string('failed', 'reader'));
+                return new reader_report_filter_simpleselect($fieldname, $label, $advanced, $fieldname, $options, $default, 'where');
 
             default:
                 // other fields (e.g. from user record)

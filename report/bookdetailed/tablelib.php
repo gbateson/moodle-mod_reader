@@ -39,28 +39,28 @@ class reader_report_bookdetailed_table extends reader_report_table {
 
     /** @var columns used in this table */
     protected $tablecolumns = array(
-        'publisher', 'level', 'booktitle', 'booklevel',
+        'publisher', 'level', 'name', 'difficulty',
         'selected', 'username', 'fullname', 'passed', 'bookrating'
     );
 
     /** @var suppressed columns in this table */
-    protected $suppresscolumns = array('publisher', 'level', 'booktitle', 'booklevel');
+    protected $suppresscolumns = array('publisher', 'level', 'name', 'difficulty');
 
     /** @var columns in this table that are not sortable */
     protected $nosortcolumns = array();
 
     /** @var text columns in this table */
-    protected $textcolumns = array('publisher', 'level', 'booktitle', 'username', 'fullname');
+    protected $textcolumns = array('publisher', 'level', 'name', 'username', 'fullname');
 
     /** @var columns that are not to be center aligned */
-    protected $leftaligncolumns = array('publisher', 'level', 'booktitle', 'username', 'fullname');
+    protected $leftaligncolumns = array('publisher', 'level', 'name', 'username', 'fullname');
 
     /** @var default sort columns */
-    protected $defaultsortcolumns = array('publisher' => SORT_ASC, 'level' => SORT_ASC, 'booktitle' => SORT_ASC, 'username' => SORT_ASC);
+    protected $defaultsortcolumns = array('publisher' => SORT_ASC, 'level' => SORT_ASC, 'name' => SORT_ASC, 'username' => SORT_ASC);
 
     /** @var filter fields */
     protected $filterfields = array(
-        'group'    => 0, 'publisher'  => 0, 'level'    => 1, 'booktitle' => 0, 'booklevel' => 1,
+        'group'    => 0, 'publisher'  => 0, 'level'    => 1, 'name' => 0, 'difficulty' => 1,
         'username' => 1, 'firstname'  => 1, 'lastname' => 1,
         'passed'   => 1, 'bookrating' => 1,
     );
@@ -84,7 +84,7 @@ class reader_report_bookdetailed_table extends reader_report_table {
 
         $select = 'ra.id, ra.passed, ra.bookrating, '.
                   'u.id AS userid, u.username, u.firstname, u.lastname, u.picture, u.imagealt, u.email, '.
-                  'rb.name AS booktitle, rb.publisher, rb.level, rb.difficulty AS booklevel';
+                  'rb.publisher, rb.level, rb.name, rb.difficulty';
         $from   = '{reader_attempts} ra '.
                   'LEFT JOIN {user} u ON ra.userid = u.id '.
                   'LEFT JOIN {reader_books} rb ON ra.quizid = rb.quizid';
@@ -110,8 +110,8 @@ class reader_report_bookdetailed_table extends reader_report_table {
             // "reader_levels" fields
             case 'publisher':
             case 'level':
-            case 'booktitle':
-            case 'booklevel':
+            case 'name':
+            case 'difficulty':
                 return array('reader_books', 'rb');
 
             // "reader_attempts" aggregate fields
