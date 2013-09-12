@@ -34,6 +34,9 @@ $r    = optional_param('r',     0, PARAM_INT);   // reader id
 $mode = optional_param('mode', '', PARAM_ALPHA); // report mode
 $mode = mod_reader::validate_mode($mode);
 
+$action = optional_param('action', '', PARAM_ALPHA);
+$download = optional_param('download', '', PARAM_ALPHA);
+
 if ($id) {
     $cm = get_coursemodule_from_id('reader', $id, 0, false, MUST_EXIST);
     $course = $DB->get_record('course', array('id' => $cm->course), '*', MUST_EXIST);
@@ -67,6 +70,6 @@ $output = $PAGE->get_renderer('mod_reader', 'report_'.$mode);
 
 $reader = mod_reader::create($reader, $cm, $course);
 if ($reader->can_viewreports()) {
-    echo $output->render_report($reader);
+    echo $output->render_report($reader, $action, $download);
 }
 

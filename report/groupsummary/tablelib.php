@@ -237,8 +237,13 @@ class reader_report_groupsummary_table extends reader_report_table {
         $averagewords = get_string('averagewords', 'reader');
         if ($type) {
             $strtype = get_string($type, 'reader');
-            $averagewords .= ' '.html_writer::tag('span', "($strtype)", array('class' => 'nowrap'));
-            $averagewords .= ' '.$this->help_icon('averagewords'.$type);
+            if ($this->download) { // $this->is_downloading()
+                $averagewords .= " ($strtype)";
+            } else {
+                $averagewords .= ' '.html_writer::tag('span', "($strtype)", array('class' => 'nowrap'));
+                $averagewords .= ' '.$this->help_icon('averagewords'.$type);
+            }
+
         }
         return $averagewords;
     }

@@ -46,6 +46,8 @@ class mod_reader_report_renderer extends mod_reader_renderer {
 
     protected $users = null;
 
+    protected $download = '';
+
     public $mode = '';
 
     /**
@@ -54,20 +56,25 @@ class mod_reader_report_renderer extends mod_reader_renderer {
      * @param xxx $reader
      */
     protected function init($reader)   {
-        global $DB;
         $this->reader = $reader;
     }
 
     /**
      * render_report
      *
-     * @param xxx $reader
+     * @param object $reader
+     * @param string $action
+     * @param string $download
      */
-    public function render_report($reader)  {
+    public function render_report($reader, $action, $download)  {
         $this->init($reader);
-        echo $this->header();
-        echo $this->reportcontent();
-        echo $this->footer();
+        if ($download=='') {
+            echo $this->header();
+        }
+        echo $this->reportcontent($action, $download);
+        if ($download=='') {
+            echo $this->footer();
+        }
     }
 
     /**
@@ -90,8 +97,11 @@ class mod_reader_report_renderer extends mod_reader_renderer {
 
     /**
      * reportcontent
+     *
+     * @param string $action
+     * @param string $download
      */
-    public function reportcontent()  {
+    public function reportcontent($action, $download)  {
         global $DB, $FULLME, $USER;
 
         // set baseurl for this page (used for filters and table)
@@ -103,7 +113,7 @@ class mod_reader_report_renderer extends mod_reader_renderer {
         $table = new $tableclass($uniqueid, $this);
 
         // setup the report table
-        $table->setup_report_table($baseurl);
+        $table->setup_report_table($baseurl, $action, $download);
 
         // display user and attempt filters
         $table->display_filters();
@@ -129,7 +139,7 @@ class mod_reader_report_renderer extends mod_reader_renderer {
 
         // display the table
         $table->build_table();
-        $table->finish_html();
+        $table->finish_output();
     }
 
     /**

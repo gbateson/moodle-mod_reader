@@ -192,7 +192,7 @@ class reader_report_userdetailed_table extends reader_report_table {
         if (isset($row->percentgrade)) {
             return round($row->percentgrade).'%';
         } else {
-            return '&nbsp;';
+            return $this->empty_cell();
         }
     }
 

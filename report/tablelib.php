@@ -59,7 +59,7 @@ class reader_report_table extends table_sql {
     protected $timeformat = 'strftimerecentfull';
 
     /** @var string localized format used for the "timemodified" column */
-    protected $strtimeformat;
+    protected $strtimeformat = '';
 
     /** @var array of enrolled users who are able to view the current Reader activity */
     protected $users = null;
@@ -105,9 +105,23 @@ class reader_report_table extends table_sql {
      *
      * @param xxx $tablecolumns
      * @param xxx $baseurl
-     * @param xxx $rowcount (optional, default value = 10)
+     * @param xxx $action
+     * @param xxx $download
      */
-    public function setup_report_table($baseurl)  {
+    public function setup_report_table($baseurl, $action, $download)  {
+
+        // set up download, if requested
+        if ($download) {
+            $title = $this->output->reader->course->shortname;
+            $title .= ' '.$this->output->reader->name;
+            $title .= ' '.get_string('report'.$this->output->mode, 'reader');
+            $title = strip_tags(format_string($title, true));
+            $this->is_downloading($download, clean_filename($title), $title);
+
+            // disable initials bars and suppressed columns
+            $this->initialbars(false);
+            $this->suppresscolumns = array();
+        }
 
         $tablecolumns = $this->get_tablecolumns();
 
@@ -144,8 +158,11 @@ class reader_report_table extends table_sql {
             }
         }
 
-        // add download buttons at bottom of page
+
+        // make the page is downloadable
         $this->is_downloadable(true);
+
+        // add download buttons at bottom of page
         $this->show_download_buttons_at(array(TABLE_P_BOTTOM));
 
         // attributes in the table tag
@@ -176,8 +193,8 @@ class reader_report_table extends table_sql {
     public function get_tablecolumns() {
         $tablecolumns = $this->tablecolumns;
 
-        if (! $this->output->reader->can_manageattempts()) {
-            // remove the select column from students view
+        if ($this->download || ! $this->output->reader->can_manageattempts()) {
+            // remove the select column from downloads and from student's view
             $i = array_search('selected', $tablecolumns);
             if (is_numeric($i)) {
                 array_splice($tablecolumns, $i, 1);
@@ -393,7 +410,7 @@ class reader_report_table extends table_sql {
     }
 
     ////////////////////////////////////////////////////////////////////////////////
-    // functions to tart and finish form (if required)                            //
+    // functions to start and finish form (if required)                            //
     ////////////////////////////////////////////////////////////////////////////////
 
     /**
@@ -603,7 +620,11 @@ class reader_report_table extends table_sql {
     public function header_totalwords($type='')  {
         $totalwords = get_string('totalwords', 'reader');
         if ($type) {
-            $totalwords .= ' '.html_writer::tag('span', "($type)", array('class' => 'nowrap'));
+            if ($this->download) { // $this->is_downloading()
+                $totalwords .= " ($type)";
+            } else {
+                $totalwords .= ' '.html_writer::tag('span', "($type)", array('class' => 'nowrap'));
+            }
         }
         return $totalwords;
     }
@@ -679,6 +700,20 @@ class reader_report_table extends table_sql {
     ////////////////////////////////////////////////////////////////////////////////
 
     /**
+     * empty_cell
+     *
+     * @return xxx
+     */
+    public function empty_cell()  {
+        if ($this->download) { // $this->is_downloading()
+            return '';
+        } else {
+            return '&nbsp;';
+        }
+    }
+
+
+    /**
      * col_selected
      *
      * @param xxx $row
@@ -718,7 +753,7 @@ class reader_report_table extends table_sql {
         if (isset($row->grade)) {
             return $row->grade.'%';
         } else {
-            return '&nbsp;';
+            return $this->empty_cell();
         }
     }
 
@@ -730,7 +765,7 @@ class reader_report_table extends table_sql {
      */
     public function col_averageduration($row)  {
         if (empty($row->averageduration)) {
-            return '&nbsp;';
+            return $this->empty_cell();
         } else {
             return format_time($row->averageduration);
         }
@@ -746,7 +781,7 @@ class reader_report_table extends table_sql {
         if (isset($row->averagegrade)) {
             return round($row->averagegrade).'%';
         } else {
-            return '&nbsp;';
+            return $this->empty_cell();
         }
     }
 
@@ -928,8 +963,10 @@ class reader_report_table extends table_sql {
             // create sql filters
             $this->filter = $filter->get_sql_filter();
 
-            $filter->display_add();
-            $filter->display_active();
+            if ($this->download=='') {
+                $filter->display_add();
+                $filter->display_active();
+            }
         }
     }
 }
