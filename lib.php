@@ -3049,7 +3049,7 @@ function reader_available_publishers($cmid, $action, $from, $where, $sqlparams, 
         }
         $record = null;
 
-        if ($action=='takequiz' || $action=='noquiz') {
+        if ($action=='takequiz' || $action=='noquiz' || $action=='awardbookpoints') {
             $output .= html_writer::end_tag('select');
             $output .= html_writer::tag('div', '', array('id' => $target_div));
         }
@@ -3116,7 +3116,7 @@ function reader_available_levels($publisher, $cmid, $action, $from, $where, $sql
         }
         $record = null;
 
-        if ($action=='takequiz' || $action=='noquiz') {
+        if ($action=='takequiz' || $action=='noquiz' || $action=='awardbookpoints') {
             $output .= html_writer::end_tag('select');
             $output .= html_writer::tag('div', '', array('id' => $target_div));
         }
@@ -3179,7 +3179,7 @@ function reader_available_bookids($publisher, $level, $cmid, $action, $from, $wh
         }
 
         $output .= html_writer::end_tag('select');
-        if ($action=='takequiz' || $action=='noquiz') {
+        if ($action=='takequiz' || $action=='noquiz' || $action='awardbookpoints') {
             $output .= html_writer::tag('div', '', array('id' => $target_div, 'style' => 'float: left; margin: 0px 9px;'));
         }
     }
@@ -3209,7 +3209,8 @@ function reader_available_books($cmid, $reader, $userid, $action='') {
     $action    = optional_param('action', $action, PARAM_CLEAN);
 
     // get SQL $from and $where statements to extract available books
-    list($from, $where, $sqlparams) = reader_available_sql($cmid, $reader, $userid, ($action=='noquiz'));
+    $noquiz = ($action=='noquiz' || $action=='awardbookpoints');
+    list($from, $where, $sqlparams) = reader_available_sql($cmid, $reader, $userid, $noquiz);
 
     if ($publisher===null) {
 
@@ -3255,7 +3256,7 @@ function reader_available_books($cmid, $reader, $userid, $action='') {
     }
 
     if ($book===null) {
-        if ($action=='noquiz') {
+        if ($noquiz) {
             $booktable = 'reader_noquiz';
         } else {
             $booktable = 'reader_books';
@@ -3283,6 +3284,11 @@ function reader_available_books($cmid, $reader, $userid, $action='') {
         $output .= $book->name;
         $output .= html_writer::empty_tag('input', array('type' => 'hidden', 'name' => 'book', 'value' => $bookid)).' ';
         $output .= html_writer::empty_tag('input', array('type' => 'submit', 'name' => 'submit', 'value' => get_string('go')));
+    }
+
+    if ($action=='awardbookpoints') {
+        $output .= $book->name;
+        $output .= html_writer::empty_tag('input', array('type' => 'hidden', 'name' => 'book', 'value' => $bookid));
     }
 
     return $output;

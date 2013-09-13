@@ -62,3 +62,6 @@
 #page-mod-reader-report table.flexible td span.failed { color: #CC0000; }
 #page-mod-reader-report table.flexible td span.cheated { color: #0000CC; }
 #page-mod-reader-report table.flexible tr.emptyrow { display: none; }
+
+#page-mod-reader-report div.readerreportaction div.actionsettings { margin-left: 20px; clear: both; }
+#page-mod-reader-report div.readerreportsubmit { clear: both; }

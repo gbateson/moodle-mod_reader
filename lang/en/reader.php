@@ -421,3 +421,13 @@ $string['youwerepromoted'] = 'You were promoted to RL-{$a->level} on {$a->date} 
 
 $string['isgreaterthan'] = 'is greater than';
 $string['islessthan'] = 'is less than';
+
+$string['setcurrentlevel'] = 'Change reading level for selected students';
+$string['setreadinggoal'] = 'Set reading goal for selected students';
+$string['awardextrapoints'] = 'Award extra points to selected students';
+$string['awardbookpoints'] = 'Give credit for books that have no quizzes';
+$string['newreadinglevel'] = 'New reading level';
+$string['newreadinggoal'] = 'New reading goal';
+$string['numberofextrapoints'] = 'Number of extra points';
+$string['noaction'] = 'Take no action';
+$string['selectedbookname'] = 'Selected book name';

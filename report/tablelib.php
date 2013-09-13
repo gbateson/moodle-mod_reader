@@ -85,6 +85,9 @@ class reader_report_table extends table_sql {
     /** @var filter fields */
     protected $filterfields = array();
 
+    /** @var actions */
+    protected $actions = array();
+
     /**
      * Constructor
      *
@@ -195,7 +198,7 @@ class reader_report_table extends table_sql {
     public function get_tablecolumns() {
         $tablecolumns = $this->tablecolumns;
 
-        if ($this->download || ! $this->output->reader->can_manageattempts()) {
+        if (empty($this->actions) || $this->download || ! $this->output->reader->can_manageattempts()) {
             // remove the select column from downloads and from student's view
             $i = array_search('selected', $tablecolumns);
             if (is_numeric($i)) {
@@ -433,7 +436,7 @@ class reader_report_table extends table_sql {
         // start form
         $url = $this->output->reader->report_url($this->output->mode);
 
-        $params = array('id'=>'attemptsform', 'method'=>'post', 'action'=>$url->out_omit_querystring());
+        $params = array('id'=>'attemptsform', 'method'=>'post', 'action'=>$url->out_omit_querystring(), 'class'=>'mform');
         echo html_writer::start_tag('form', $params);
 
         // create hidden fields
@@ -462,12 +465,24 @@ class reader_report_table extends table_sql {
         }
 
         // start "commands" div
-        $params = array('id' => 'commands');
-        echo html_writer::start_tag('div', $params);
+        echo html_writer::start_tag('fieldset', array('class'=>'clearfix'));
+        echo html_writer::tag('legend', get_string('actions'));
 
-        echo 'Choose an action: ';
+        $actions = $this->actions;
+        array_unshift($this->actions, 'noaction');
+        $default = optional_param('action', reset($actions), PARAM_ALPHA);
 
-        // add button to delete attempts
+        foreach ($actions as $action) {
+            $method = 'display_action_settings_'.$action;
+            if (method_exists($this, $method)) {
+                $this->$method($action);
+            } else {
+                $this->display_action_settings($action);
+            }
+        }
+
+        // add action submit button
+        echo html_writer::start_tag('div', array('class'=>'readerreportsubmit'));
         $confirm = addslashes_js(get_string('confirm'));
         $onclick = ''
             ."if(confirm('$confirm') && this.form && this.form.elements['confirmed']) {"
@@ -477,14 +492,45 @@ class reader_report_table extends table_sql {
                 ."return false;"
             ."}"
         ;
-        echo html_writer::empty_tag('input', array('type'=>'submit', 'onclick'=>"$onclick", 'name'=>'go', 'value'=>get_string('go')));
+        echo html_writer::empty_tag('input', array('type'=>'submit', 'onclick'=>$onclick, 'name'=>'go', 'value'=>get_string('go')));
         echo html_writer::empty_tag('input', array('type'=>'hidden', 'name'=>'confirmed', 'value'=>'0'))."\n";
-
-        // finish "commands" div
         echo html_writer::end_tag('div');
 
-        // finish the "attemptsform" form
+        // finish "readerreportactions" fieldset
+        echo html_writer::end_tag('fieldset');
+
+        // finish the form
         echo html_writer::end_tag('form');
+    }
+
+    /**
+     * display_action_settings
+     *
+     * @param string $action
+     * @return xxx
+     */
+    public function display_action_settings($action, $settings='') {
+        echo html_writer::start_tag('div', array('class'=>'readerreportaction'));
+
+        $name = 'action';
+        $id = 'id_'.$name.'_'.$action;
+        $value = optional_param($name, '', PARAM_INT);
+        $onclick = '';
+
+        $params = array('type'=>'radio', 'name'=>$name, 'id'=> $id, 'value'=>$action, 'onclick'=>$onclick);
+        if ($action==$value) {
+            $params['selected'] = 'selected';
+        }
+        echo html_writer::empty_tag('input', $params);
+        echo html_writer::tag('label', get_string($action, 'reader'), array('for'=>$id));
+
+        if ($settings) {
+            echo html_writer::start_tag('div', array('class' => 'actionsettings'));
+            echo $settings;
+            echo html_writer::end_tag('div');
+        }
+
+        echo html_writer::end_tag('div');
     }
 
     ////////////////////////////////////////////////////////////////////////////////
