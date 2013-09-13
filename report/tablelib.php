@@ -148,7 +148,9 @@ class reader_report_table extends table_sql {
                 $this->no_sorting($column);
             }
             if (in_array($column, $this->textcolumns)) {
-                $this->text_sorting($column);
+                if (method_exists($this, 'text_sorting')) {
+                    $this->text_sorting($column); // Moodle >= 2.2
+                }
             }
             if (in_array($column, $this->suppresscolumns)) {
                 $this->column_suppress($column);
