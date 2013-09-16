@@ -1,7 +1,6 @@
 <?php
 // these strings are not used by the Reader module
 $string['attempt'] = 'Attempt {$a}';
-$string['book'] = 'book';
 $string['checkipandtook'] = ' took this quiz {$a} minutes ago. ';
 $string['checkipandwait'] = 'Please wait for <{$a} - minutes> before taking the test.';
 $string['confirmclose'] = 'You are about to close this attempt. Once you close the attempt you will no longer be able to change your answers.';

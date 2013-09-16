@@ -85,9 +85,6 @@ class reader_report_table extends table_sql {
     /** @var filter fields */
     protected $filterfields = array();
 
-    /** @var actions */
-    protected $actions = array();
-
     /**
      * Constructor
      *
@@ -198,7 +195,8 @@ class reader_report_table extends table_sql {
     public function get_tablecolumns() {
         $tablecolumns = $this->tablecolumns;
 
-        if (empty($this->actions) || $this->download || ! $this->output->reader->can_manageattempts()) {
+        // empty($this->actions) ||
+        if ($this->download || ! $this->output->reader->can_manageattempts()) {
             // remove the select column from downloads and from student's view
             $i = array_search('selected', $tablecolumns);
             if (is_numeric($i)) {
@@ -510,24 +508,21 @@ class reader_report_table extends table_sql {
      * @return xxx
      */
     public function display_action_settings($action, $settings='') {
-        echo html_writer::start_tag('div', array('class'=>'readerreportaction'));
+        echo html_writer::start_tag('div', array('id' => "readerreportaction_$action", 'class'=>'readerreportaction'));
 
         $name = 'action';
         $id = 'id_'.$name.'_'.$action;
-        $value = optional_param($name, '', PARAM_INT);
         $onclick = '';
 
         $params = array('type'=>'radio', 'name'=>$name, 'id'=> $id, 'value'=>$action, 'onclick'=>$onclick);
-        if ($action==$value) {
+        if ($action==optional_param($name, '', PARAM_INT)) {
             $params['selected'] = 'selected';
         }
         echo html_writer::empty_tag('input', $params);
         echo html_writer::tag('label', get_string($action, 'reader'), array('for'=>$id));
 
         if ($settings) {
-            echo html_writer::start_tag('div', array('class' => 'actionsettings'));
-            echo $settings;
-            echo html_writer::end_tag('div');
+            echo html_writer::tag('div', $settings, array('class' => 'actionsettings'));
         }
 
         echo html_writer::end_tag('div');

@@ -276,7 +276,7 @@ class reader_report_usersummary_table extends reader_report_table {
     ////////////////////////////////////////////////////////////////////////////////
 
     /**
-     * display_action_settings_setcurrentlevel
+     * action_settings_setcurrentlevel
      *
      * @param string $action
      * @return xxx
@@ -286,11 +286,11 @@ class reader_report_usersummary_table extends reader_report_table {
         $settings = '';
         $settings .= get_string('newreadinglevel', 'reader').': ';
         $settings .= html_writer::select(range(0, 15), $action, $value, '', array());
-        $this->display_action_settings($action, $settings);
+        return $this->display_action_settings($action, $settings);
     }
 
     /**
-     * display_action_settings_setreadinggoal
+     * action_settings_setreadinggoal
      *
      * @param string $action
      * @return xxx
@@ -302,11 +302,11 @@ class reader_report_usersummary_table extends reader_report_table {
         $settings = '';
         $settings .= get_string('newreadinggoal', 'reader').': ';
         $settings .= html_writer::select($options, $action, $value, '', array());
-        $this->display_action_settings($action, $settings);
+        return $this->display_action_settings($action, $settings);
     }
 
     /**
-     * display_action_settings_awardextrapoints
+     * action_settings_awardextrapoints
      *
      * @param string $action
      * @return xxx
@@ -316,83 +316,17 @@ class reader_report_usersummary_table extends reader_report_table {
         $settings = '';
         $settings .= get_string('numberofextrapoints', 'reader').': ';
         $settings .= html_writer::empty_tag('input', array('type'=>'input', 'value'=>$value, 'name'=>$action, 'id'=>'id_'.$action, 'size'=>8, 'maxlength'=>8));
-        $this->display_action_settings($action, $settings);
+        return $this->display_action_settings($action, $settings);
     }
 
     /**
-     * display_action_settings_awardbookpoints
+     * action_settings_awardbookpoints
      *
      * @param string $action
      * @return xxx
      */
     public function display_action_settings_awardbookpoints($action) {
-        $settings = '';
-        $settings .= $this->request_js();
-        $settings .= reader_available_books($this->output->reader->cm->id, $this->output->reader, 0, $action);
-        //$settings .= html_writer::tag('div', '', array('id'=>'booknamediv', 'style'=>'clear:both;'));
-        $this->display_action_settings($action, $settings);
-    }
-
-    /**
-     * request_js
-     *
-     * @return string
-     */
-    public function request_js() {
-        $js = '';
-
-        $js .= '<script type="text/javascript">'."\n";
-        $js .= "//<![CDATA[\n";
-
-        $js .= "window.loading = '".'<img src="pix/ajax-loader.gif" alt="loading..."/>'."';\n";
-        $js .= "window.req = false;\n";
-
-        $js .= "function request(url, target, callback) {\n";
-        $js .= "	var obj = document.getElementById(target);\n";
-        $js .= "	if (obj==null) {\n";
-        $js .= "	    if(!window.gdb)window.gdb=!confirm('Oops, obj not found: ' + target);\n";
-        $js .= "	}\n";
-        $js .= "	if (obj) {\n";
-        $js .= "        if (loading) {\n";
-        $js .= "            obj.innerHTML = loading;\n";
-        $js .= "        }\n";
-        $js .= "	    obj = null;\n";
-
-        $js .= "        if (window.ActiveXObject) {\n";
-        $js .= "            req = new ActiveXObject('Microsoft.XMLHTTP');\n";
-        $js .= "        } else if (window.XMLHttpRequest) {\n";
-        $js .= "            req = new XMLHttpRequest();\n";
-        $js .= "        }\n";
-
-        $js .= "        if (req) {\n";
-        $js .= "            if (callback) {\n";
-        $js .= "                req.onreadystatechange = eval(callback);\n";
-        $js .= "            } else {\n";
-        $js .= "                req.onreadystatechange = function() { response(url, target); }\n";
-        $js .= "            }\n";
-        $js .= "            req.open('GET', url, true);\n";
-        $js .= "            req.send(null);\n";
-        $js .= "        }\n";
-        $js .= "	}\n";
-        $js .= "}\n";
-
-        $js .= "function response(url, target) {\n";
-        $js .= "	var obj = document.getElementById(target);\n";
-        $js .= "	if (obj) {\n";
-        $js .= "        if (req.readyState == 4) {\n";
-        $js .= "            obj.innerHTML = (req.status==200 ? req.responseText : ('An error was encountered: ' + req.status));\n";
-        $js .= "        }\n";
-        $js .= "	    obj = null;\n";
-        $js .= "	}\n";
-        $js .= "}\n";
-
-        $js .= "function setLoadMessage(msg) {\n";
-        $js .= "	loading = msg;\n";
-        $js .= "}\n";
-
-        $js .= "//]]>\n";
-        $js .= "</script>\n";
-
-        return $js;
+        $settings = $this->output->available_items($action);
+        return $this->display_action_settings($action, $settings);
     }
 }

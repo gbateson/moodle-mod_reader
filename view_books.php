@@ -50,6 +50,23 @@ require_course_login($course, true, $cm);
 
 add_to_log($course->id, 'reader', 'Ajax get list of books', "view.php?id=$id", "$cm->instance");
 
+if ($mode = optional_param('mode', '', PARAM_ALPHA)) {
+
+    // load mod_reader class
+    require_once($CFG->dirroot.'/mod/reader/locallib.php');
+    $reader = mod_reader::create($reader, $cm, $course);
+    $mode = mod_reader::validate_mode($mode);
+
+    // create the appropriate renderer class for this report $mode
+    require_once($CFG->dirroot.'/mod/reader/report/'.$mode.'/renderer.php');
+    $output = $PAGE->get_renderer('mod_reader', 'report_'.$mode);
+    $output->init($reader);
+
+    // send $output to browser
+    echo $output->available_items();
+    exit;
+}
+
 // if we are a teacher logged in as a student, then fix the $USER object
 if (isset($_SESSION['SESSION']->reader_lastuser) && $_SESSION['SESSION']->reader_lastuser > 0) {
     $_SESSION['SESSION']->reader_teacherview = 'studentview';

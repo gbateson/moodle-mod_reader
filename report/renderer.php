@@ -55,7 +55,7 @@ class mod_reader_report_renderer extends mod_reader_renderer {
      *
      * @param xxx $reader
      */
-    protected function init($reader)   {
+    public function init($reader)   {
         $this->reader = $reader;
     }
 
