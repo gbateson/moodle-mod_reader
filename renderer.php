@@ -242,7 +242,7 @@ class mod_reader_renderer extends plugin_renderer_base {
             $count = 0;
         }
 
-        $output .= html_writer::tag('div', get_string('level', 'reader'), array('class' => 'selecteditemhdr'));
+        $selecteditemhdr = html_writer::tag('div', get_string('level', 'reader'), array('class' => 'selecteditemhdr'));
 
         if ($count==0) {
             $output .= 'Sorry, there are currently no books for you by '.$publisher;
@@ -252,15 +252,18 @@ class mod_reader_renderer extends plugin_renderer_base {
             if ($record->level=='' || $record->level=='--' || $record->level=='No Level') {
                 // do nothing
             } else {
+                $output .= $selecteditemhdr;
                 $output .= html_writer::tag('div', $record->level, array('class' => 'selecteditemtxt'));
             }
             $output .= html_writer::empty_tag('input', array('type' => 'hidden', 'name' => 'level', 'value' => $record->level));
 
             $output .= html_writer::start_tag('div', array('id' => 'books'));
-            $output .= $this->available_books($record->publisher, $record->level, $action, $from, $where, $sqlparams);
+            $output .= $this->available_books($publisher, $record->level, $action, $from, $where, $sqlparams);
             $output .= html_writer::end_tag('div');
 
         } else if ($count > 1) {
+            $output .= $selecteditemhdr;
+
             $params = array('action'    => $action,
                             'mode'      => $this->mode,
                             'id'        => $this->reader->cm->id,
