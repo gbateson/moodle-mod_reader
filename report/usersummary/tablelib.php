@@ -297,8 +297,11 @@ class reader_report_usersummary_table extends reader_report_table {
      */
     public function display_action_settings_setreadinggoal($action) {
         $value = optional_param($action, '', PARAM_INT);
+
         $options = array_merge(range(1000, 20000, 1000), range(25000, 100000, 5000));
+        $options = array_combine($options, $options);
         $options = array_map('number_format', $options);
+
         $settings = '';
         $settings .= get_string('newreadinggoal', 'reader').': ';
         $settings .= html_writer::select($options, $action, $value, '', array());
@@ -328,5 +331,67 @@ class reader_report_usersummary_table extends reader_report_table {
     public function display_action_settings_awardbookpoints($action) {
         $settings = $this->output->available_items($action);
         return $this->display_action_settings($action, $settings);
+    }
+
+    /**
+     * execute_action_setcurrentlevel
+     *
+     * @param string $action
+     * @return xxx
+     */
+    public function execute_action_setcurrentlevel($action) {
+        global $DB;
+
+        $currentlevel = optional_param($action, null, PARAM_INT);
+        if ($currentlevel===null) {
+            return; // no current level specified
+        }
+
+        if ($userids = $this->get_selected('userid')) {
+            list($select, $params) = $this->select_sql_users();
+            $userids = array_intersect($userids, $params);
+        }
+
+        if (empty($userids)) {
+            return; // no (valid) userids selected
+        }
+
+        // update selected userids to the new currentlevel
+        list($select, $params) = $DB->get_in_or_equal($userids);
+        $DB->set_field_select('reader_levels', 'currentlevel', $currentlevel, "userid $select", $params);
+
+        // send "Changes saved" message to browser
+        echo $this->output->notification(get_string('changessaved'), 'notifysuccess');
+    }
+
+    /**
+     * execute_action_setreadinggoal
+     *
+     * @param string $action
+     * @return xxx
+     */
+    public function execute_action_setreadinggoal($action) {
+        global $DB;
+
+        $readinggoal = optional_param($action, null, PARAM_INT);
+        if ($readinggoal===null) {
+            return; // no current level specified
+        }
+
+        if ($userids = $this->get_selected('userid')) {
+            list($select, $params) = $this->select_sql_users();
+            $userids = array_intersect($userids, $params);
+        }
+
+        if (empty($userids)) {
+            return; // no (valid) userids selected
+        }
+
+        // update selected userids to the new readinggoal
+        list($select, $params) = $DB->get_in_or_equal($userids);
+        $DB->set_field_select('reader_levels', 'goal', $readinggoal, "userid $select", $params);
+
+        // send "Changes saved" message to browser
+        echo $this->output->notification(get_string('changessaved'), 'notifysuccess');
     }
 }

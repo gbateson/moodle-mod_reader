@@ -85,6 +85,9 @@ class reader_report_table extends table_sql {
     /** @var filter fields */
     protected $filterfields = array();
 
+    /** @var actions */
+    protected $actions = array();
+
     /**
      * Constructor
      *
@@ -195,8 +198,7 @@ class reader_report_table extends table_sql {
     public function get_tablecolumns() {
         $tablecolumns = $this->tablecolumns;
 
-        // empty($this->actions) ||
-        if ($this->download || ! $this->output->reader->can_manageattempts()) {
+        if (empty($this->actions) || $this->download || ! $this->output->reader->can_manageattempts()) {
             // remove the select column from downloads and from student's view
             $i = array_search('selected', $tablecolumns);
             if (is_numeric($i)) {
@@ -462,40 +464,41 @@ class reader_report_table extends table_sql {
             return false;
         }
 
-        // start "commands" div
-        echo html_writer::start_tag('fieldset', array('class'=>'clearfix'));
-        echo html_writer::tag('legend', get_string('actions'));
-
         $actions = $this->actions;
-        array_unshift($this->actions, 'noaction');
-        $default = optional_param('action', reset($actions), PARAM_ALPHA);
+        if (count($actions)) {
+            array_unshift($actions, 'noaction');
 
-        foreach ($actions as $action) {
-            $method = 'display_action_settings_'.$action;
-            if (method_exists($this, $method)) {
-                $this->$method($action);
-            } else {
-                $this->display_action_settings($action);
+            // start "commands" div
+            echo html_writer::start_tag('fieldset', array('class'=>'clearfix'));
+            echo html_writer::tag('legend', get_string('actions'));
+
+            foreach ($actions as $action) {
+                $method = 'display_action_settings_'.$action;
+                if (method_exists($this, $method)) {
+                    $this->$method($action);
+                } else {
+                    $this->display_action_settings($action);
+                }
             }
+
+            // add action submit button
+            echo html_writer::start_tag('div', array('class'=>'readerreportsubmit'));
+            $confirm = addslashes_js(get_string('confirm'));
+            $onclick = ''
+                ."if(confirm('$confirm') && this.form && this.form.elements['confirmed']) {"
+                    ."this.form.elements['confirmed'].value = '1';"
+                    ."return true;"
+                ."} else {"
+                    ."return false;"
+                ."}"
+            ;
+            echo html_writer::empty_tag('input', array('type'=>'submit', 'onclick'=>$onclick, 'name'=>'go', 'value'=>get_string('go')));
+            echo html_writer::empty_tag('input', array('type'=>'hidden', 'name'=>'confirmed', 'value'=>'0'))."\n";
+            echo html_writer::end_tag('div'); // readerreportsubmit DIV
+
+            // finish "readerreportactions" fieldset
+            echo html_writer::end_tag('fieldset'); // clearfix FIEDLSET
         }
-
-        // add action submit button
-        echo html_writer::start_tag('div', array('class'=>'readerreportsubmit'));
-        $confirm = addslashes_js(get_string('confirm'));
-        $onclick = ''
-            ."if(confirm('$confirm') && this.form && this.form.elements['confirmed']) {"
-                ."this.form.elements['confirmed'].value = '1';"
-                ."return true;"
-            ."} else {"
-                ."return false;"
-            ."}"
-        ;
-        echo html_writer::empty_tag('input', array('type'=>'submit', 'onclick'=>$onclick, 'name'=>'go', 'value'=>get_string('go')));
-        echo html_writer::empty_tag('input', array('type'=>'hidden', 'name'=>'confirmed', 'value'=>'0'))."\n";
-        echo html_writer::end_tag('div');
-
-        // finish "readerreportactions" fieldset
-        echo html_writer::end_tag('fieldset');
 
         // finish the form
         echo html_writer::end_tag('form');
@@ -515,9 +518,10 @@ class reader_report_table extends table_sql {
         $onclick = '';
 
         $params = array('type'=>'radio', 'name'=>$name, 'id'=> $id, 'value'=>$action, 'onclick'=>$onclick);
-        if ($action==optional_param($name, '', PARAM_INT)) {
-            $params['selected'] = 'selected';
+        if ($action==optional_param($name, 'noaction', PARAM_ALPHA)) {
+            $params['checked'] = 'checked';
         }
+
         echo html_writer::empty_tag('input', $params);
         echo html_writer::tag('label', get_string($action, 'reader'), array('for'=>$id));
 
@@ -526,6 +530,44 @@ class reader_report_table extends table_sql {
         }
 
         echo html_writer::end_tag('div');
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////
+    // functions to execute requested $action                                     //
+    ////////////////////////////////////////////////////////////////////////////////
+
+    /**
+     * execute_action
+     *
+     * @param string $action
+     * @return xxx
+     */
+    public function execute_action($action) {
+        if ($action && in_array($action, $this->actions)) {
+            $method = 'execute_action_'.$action;
+            if (method_exists($this, $method)) {
+                echo $this->$method($action);
+            } else {
+                debugging("Oops, action handler not found: $method");
+            }
+        }
+    }
+
+    /**
+     * get_selected
+     *
+     * @param string $name
+     * @param mixed  $default (optional, default=null)
+     * @param mixed  $type    (optional, default=PARAM_INT) the PARAM type
+     * @return xxx
+     */
+    public function get_selected($name, $default=null, $type=PARAM_INT) {
+        if ($selected = reader_optional_param_array('selected', null, $type)) {
+            if (isset($selected[$name])) {
+                return $selected[$name];
+            }
+        }
+        return $default;
     }
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -763,8 +805,14 @@ class reader_report_table extends table_sql {
      * @return xxx
      */
     public function col_selected($row)  {
+        $checked = false;
         $key = key($row); // name of first column
-        return html_writer::checkbox('selected['.$key.']', 1, false);
+        if ($selected = $this->get_selected($key)) {
+            if (in_array($row->$key, $selected)) {
+                $checked = true;
+            }
+        }
+        return html_writer::checkbox('selected['.$key.'][]', $row->$key, $checked);
     }
 
     /**

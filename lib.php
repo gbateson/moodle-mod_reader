@@ -2764,14 +2764,19 @@ function reader_set_numsections($course, $numsections) {
  * @return either an array of form values or the $default value
  */
 function reader_optional_param_array($name, $default, $type) {
-    $optional_param_array = 'optional_param';
-    if (function_exists('optional_param_array')) {
-        switch (true) {
-            case (isset($_POST[$name]) && is_array($_POST[$name])): $optional_param_array = 'optional_param_array'; break;
-            case (isset($_GET[$name])  && is_array($_GET[$name])) : $optional_param_array = 'optional_param_array'; break;
-        }
+
+    switch (true) {
+        case isset($_POST[$name]): $param = $_POST[$name]; break;
+        case isset($_GET[$name]) : $param = $_GET[$name]; break;
+        default: return $default; // param not found
     }
-    return $optional_param_array($name, $default, $type);
+
+    if (is_array($param) && function_exists('clean_param_array')) {
+        return clean_param_array($param, $type, true);
+    }
+
+    // not an array (or Moodle <= 2.1)
+    return clean_param($param, $type);
 }
 
 /**

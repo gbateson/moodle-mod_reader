@@ -115,6 +115,9 @@ class mod_reader_report_renderer extends mod_reader_renderer {
         // setup the report table
         $table->setup_report_table($baseurl, $action, $download);
 
+        // execute required $action
+        $table->execute_action($action);
+
         // display user and attempt filters
         $table->display_filters();
 

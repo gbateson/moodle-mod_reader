@@ -54,7 +54,7 @@ class mod_reader_renderer extends plugin_renderer_base {
         }
 
         // a teacher / admin can always access all the books
-        if ($this->reader->can_addinstance()) {
+        if ($this->reader->can_managebooks()) {
             return array('{reader_books}', 'hidden = ?', array(0)); // $from, $where, $params
         }
 
@@ -180,8 +180,12 @@ class mod_reader_renderer extends plugin_renderer_base {
 
         $output .= html_writer::tag('div', get_string('publisher', 'reader'), array('class' => 'selecteditemhdr'));
 
-        if ($count==0) {
-            $output .= 'Sorry, there are currently no books for you';
+        if ($count>=0) {
+            if ($this->reader->can_managebooks()) {
+                $output .= get_string('nobooksfound', 'reader');
+            } else {
+                $output .= get_string('nobooksinlist', 'reader');
+            }
 
         } else if ($count==1) {
             $record = reset($records);
