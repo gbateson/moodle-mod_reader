@@ -29,6 +29,10 @@
 require_once('../../config.php');
 require_once($CFG->dirroot.'/mod/reader/lib.php');
 
+//print_object($_POST);
+//print_object($_GET);
+//die;
+
 require_once($CFG->dirroot.'/course/moodleform_mod.php');
 require_once($CFG->dirroot.'/lib/excellib.class.php');
 require_once($CFG->dirroot.'/lib/tablelib.php');
@@ -87,7 +91,7 @@ $changeallpromo         = optional_param('changeallpromo', NULL, PARAM_CLEAN);
 $changeallstoppromo     = optional_param('changeallstoppromo', -1, PARAM_INT);
 $userimagename          = optional_param('userimagename', NULL, PARAM_CLEAN);
 $award                  = optional_param('award', NULL, PARAM_CLEAN);
-$student                = optional_param('student', NULL, PARAM_CLEAN);
+$student                = reader_optional_param_array('student', NULL, PARAM_CLEAN);
 $useonlythiscourse      = optional_param('useonlythiscourse', NULL, PARAM_CLEAN);
 $ipmask                 = optional_param('ipmask', 3, PARAM_CLEAN);
 $fromtime               = optional_param('fromtime', 86400, PARAM_CLEAN);
@@ -733,8 +737,8 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $act == 'awardex
 
             $USER->id = $student_;
 
-            $attempt = reader_create_attempt($reader, $attemptnumber, $bookdata->id);
-            $attempt->ip = getremoteaddr();
+            $attempt = reader_create_attempt($reader, $attemptnumber, $bookdata->id, true);
+
             // Save the attempt
             if (! $attempt->id = $DB->insert_record('reader_attempts', $attempt)) {
                 throw new reader_exception('Could not create new attempt');
@@ -746,19 +750,17 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $act == 'awardex
                 $totalgrade += $answersgrade_->grade;
             }
 
-            $attemptnew               = new object;
-            $attemptnew->id           = $attempt->id;
-            $attemptnew->sumgrades    = $totalgrade;
-            $attemptnew->percentgrade      = 100;
-            $attemptnew->passed       = 'true';
+            $attempt->sumgrades    = $totalgrade;
+            $attempt->percentgrade = 100;
+            $attempt->passed       = 'true';
 
             //if ($reader->attemptsofday != 0) {
-                $attemptnew->timefinish   = time() - $reader->attemptsofday * 3600 * 24;
-                $attemptnew->timecreated  = time() - $reader->attemptsofday * 3600 * 24;
-                $attemptnew->timemodified = time() - $reader->attemptsofday * 3600 * 24;
+                $attempt->timefinish   = time() - $reader->attemptsofday * 3600 * 24;
+                $attempt->timecreated  = time() - $reader->attemptsofday * 3600 * 24;
+                $attempt->timemodified = time() - $reader->attemptsofday * 3600 * 24;
             //}
 
-            $DB->update_record('reader_attempts', $attemptnew);
+            $DB->update_record('reader_attempts', $attempt);
             add_to_log($course->id, 'reader', "AWP (userid: {$student_}; set: {$award})", 'admin.php?id='.$id, $cm->instance);
         }
     }

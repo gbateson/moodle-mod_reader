@@ -180,7 +180,7 @@ class mod_reader_renderer extends plugin_renderer_base {
 
         $output .= html_writer::tag('div', get_string('publisher', 'reader'), array('class' => 'selecteditemhdr'));
 
-        if ($count>=0) {
+        if ($count==0) {
             if ($this->reader->can_managebooks()) {
                 $output .= get_string('nobooksfound', 'reader');
             } else {
@@ -383,12 +383,12 @@ class mod_reader_renderer extends plugin_renderer_base {
         global $DB;
         $output = '';
 
-        $select = 'id, publisher, level, name';
+        $select = 'id, publisher, level, name, words';
         $where .= " AND id = ?";
         array_push($sqlparams, (is_int($book) ? $book : $book->id));
 
         if ($record = $DB->get_record_sql("SELECT $select FROM $from WHERE $where", $sqlparams)) {
-            $output .= $record->name;
+            $output .= "$record->name (".number_format($record->words)." words)";
         }
 
         return $output;

@@ -502,12 +502,13 @@ function reader_get_user_attempts($readerid, $userid, $status = 'finished', $inc
  * @uses $DB
  * @uses $USER
  * @param xxx $reader
- * @param xxx $attemptnumber
- * @param xxx $bookid
+ * @param integer $attemptnumber
+ * @param integer $bookid
+ * @param boolean $adduniqueid (optional, default = false)
  * @return xxx
  * @todo Finish documenting this function
  */
-function reader_create_attempt($reader, $attemptnumber, $bookid) {
+function reader_create_attempt($reader, $attemptnumber, $bookid, $adduniqueid=false) {
     global $CFG, $DB, $USER;
 
     $book = $DB->get_record('reader_books', array('id' => $bookid));
@@ -543,7 +544,12 @@ function reader_create_attempt($reader, $attemptnumber, $bookid) {
     $attempt->timestart    = $time;
     $attempt->timefinish   = 0;
     $attempt->timemodified = $time;
-    //$attempt->uniqueid = reader_new_attempt_uniqueid();
+
+    $attempt->ip = getremoteaddr();
+
+    if ($adduniqueid) {
+        $attempt->uniqueid = reader_get_new_uniqueid();
+    }
 
     $questionids = explode (',', $attempt->layout);
     $questionids = array_filter($questionids); // remove blanks
@@ -2761,9 +2767,10 @@ function reader_set_numsections($course, $numsections) {
  * @param string $name the name of the parameter
  * @param mixed $default
  * @param mixed $type one of the PARAM_xxx constants
+ * @param mixed $recursive (optional, default = true)
  * @return either an array of form values or the $default value
  */
-function reader_optional_param_array($name, $default, $type) {
+function reader_optional_param_array($name, $default, $type, $recursive=true) {
 
     switch (true) {
         case isset($_POST[$name]): $param = $_POST[$name]; break;
@@ -2772,7 +2779,7 @@ function reader_optional_param_array($name, $default, $type) {
     }
 
     if (is_array($param) && function_exists('clean_param_array')) {
-        return clean_param_array($param, $type, true);
+        return clean_param_array($param, $type, $recursive);
     }
 
     // not an array (or Moodle <= 2.1)
@@ -3854,6 +3861,10 @@ function reader_format_users_fullname(&$users) {
 function reader_get_new_uniqueid($contextid, $quizid, $defaultbehavior='deferredfeedback', $modulename='reader') {
     global $DB;
     static $tablename = null;
+
+    // set name of table whose "id" will be used as the "uniqueid"
+    //     Moodle == 2.0 : question_attempts
+    //     Moodle >= 2.1 : question_usages
 
     if ($tablename===null) {
         $dbman = $DB->get_manager();

@@ -375,7 +375,7 @@ class reader_report_usersummary_table extends reader_report_table {
 
         $readinggoal = optional_param($action, null, PARAM_INT);
         if ($readinggoal===null) {
-            return; // no current level specified
+            return; // no reading goal specified
         }
 
         if ($userids = $this->get_selected('userid')) {
@@ -393,5 +393,71 @@ class reader_report_usersummary_table extends reader_report_table {
 
         // send "Changes saved" message to browser
         echo $this->output->notification(get_string('changessaved'), 'notifysuccess');
+    }
+
+    /**
+     * execute_action_awardextrapoints
+     *
+     * @param string $action
+     * @return xxx
+     */
+    public function execute_action_awardextrapoints($action) {
+        global $DB;
+
+        $extrapoints = optional_param($action, null, PARAM_INT);
+        if ($extrapoints===null) {
+            return; // no extra points specified
+        }
+
+        if ($userids = $this->get_selected('userid')) {
+            list($select, $params) = $this->select_sql_users();
+            $userids = array_intersect($userids, $params);
+        }
+
+        if (empty($userids)) {
+            return; // no (valid) userids selected
+        }
+
+        // update selected userids to the new extrapoints
+        list($select, $params) = $DB->get_in_or_equal($userids);
+        //echo 'Add '.number_format($extrapoints).' points to the following users: id(s)='.implode(',', $params);
+        //$DB->set_field_select('reader_levels', 'goal', $extrapoints, "userid $select", $params);
+
+        // send "Changes saved" message to browser
+        //echo $this->output->notification(get_string('changessaved'), 'notifysuccess');
+    }
+
+    /**
+     * execute_action_awardbookpoints
+     *
+     * @param string $action
+     * @return xxx
+     */
+    public function execute_action_awardbookpoints($action) {
+        global $DB;
+
+        if (! $bookid = optional_param('bookid', 0, PARAM_INT)) {
+            return; // no book id specified
+        }
+        if (! $bookpoints = $DB->get_field('reader_noquiz', 'words', array('id' => $bookid))) {
+            return; // invalid bookid specified
+        }
+
+        if ($userids = $this->get_selected('userid')) {
+            list($select, $params) = $this->select_sql_users();
+            $userids = array_intersect($userids, $params);
+        }
+
+        if (empty($userids)) {
+            return; // no (valid) userids selected
+        }
+
+        // update selected userids to the new bookpoints
+        list($select, $params) = $DB->get_in_or_equal($userids);
+        //echo 'Add '.number_format($bookpoints).' points to the following users: id(s)='.implode(',', $params);
+        //$DB->set_field_select('reader_levels', 'goal', $bookpoints, "userid $select", $params);
+
+        // send "Changes saved" message to browser
+        //echo $this->output->notification(get_string('changessaved'), 'notifysuccess');
     }
 }
