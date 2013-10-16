@@ -1000,11 +1000,15 @@ class reader_report_table extends table_sql {
     /**
      * Returns HTML to display a help icon
      *
-     * @param string $column
+     * @param string $strname
      * @return string HTML fragment
      */
-    public function help_icon($column) {
-        return $this->output->help_icon($column, 'reader');
+    public function help_icon($strname) {
+        if ($this->is_downloading()) {
+            return ''; // no help icon required
+        } else {
+            return ' '.$this->output->help_icon($strname, 'reader');
+        }
     }
 
     ////////////////////////////////////////////////////////////////////////////////

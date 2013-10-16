@@ -434,7 +434,7 @@ class mod_reader_renderer extends plugin_renderer_base {
         $js .= "window.req = false;\n";
 
         $js .= "function request(url, targetids, callback) {\n";
-        $js .= "	url = url.replace(new RegExp('&amp;', 'g'), '&');\n";
+        $js .= "    url = url.replace(new RegExp('&amp;', 'g'), '&');\n";
 
         $js .= "    if (typeof(targetids)=='string') {\n";
         $js .= "        targetids = targetids.split(',');\n";
@@ -449,10 +449,10 @@ class mod_reader_renderer extends plugin_renderer_base {
         $js .= "    	}\n";
         $js .= "    }\n";
 
-        $js .= "    if (window.ActiveXObject) {\n";
-        $js .= "        req = new ActiveXObject('Microsoft.XMLHTTP');\n";
-        $js .= "    } else if (window.XMLHttpRequest) {\n";
+        $js .= "    if (window.XMLHttpRequest) {\n"; // modern browser (incl. IE7+)
         $js .= "        req = new XMLHttpRequest();\n";
+        $js .= "    } else if (window.ActiveXObject) {\n"; // IE6, IE5
+        $js .= "        req = new ActiveXObject('Microsoft.XMLHTTP');\n";
         $js .= "    }\n";
 
         $js .= "    if (req) {\n";
@@ -491,7 +491,7 @@ class mod_reader_renderer extends plugin_renderer_base {
         $js .= "}\n";
 
         $js .= "function setLoadMessage(msg) {\n";
-        $js .= "	loading = msg;\n";
+        $js .= "    loading = msg;\n";
         $js .= "}\n";
 
         $js .= "//]]>\n";

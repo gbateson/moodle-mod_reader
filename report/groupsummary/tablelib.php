@@ -162,7 +162,7 @@ class reader_report_groupsummary_table extends reader_report_table {
      * @return string
      */
     public function header_countactive() {
-        return get_string('countactive', 'reader').' '.$this->help_icon('countactive');
+        return get_string('countactive', 'reader').$this->help_icon('countactive');
     }
 
     /**
@@ -171,7 +171,7 @@ class reader_report_groupsummary_table extends reader_report_table {
      * @return string
      */
     public function header_countinactive() {
-        return get_string('countinactive', 'reader').' '.$this->help_icon('countinactive');
+        return get_string('countinactive', 'reader').$this->help_icon('countinactive');
     }
 
     /**
@@ -180,7 +180,7 @@ class reader_report_groupsummary_table extends reader_report_table {
      * @return string
      */
     public function header_percentactive() {
-        return get_string('percentactive', 'reader').' '.$this->help_icon('percentactive');
+        return get_string('percentactive', 'reader').$this->help_icon('percentactive');
     }
 
     /**
@@ -189,7 +189,7 @@ class reader_report_groupsummary_table extends reader_report_table {
      * @return string
      */
     public function header_percentinactive() {
-        return get_string('percentinactive', 'reader').' '.$this->help_icon('percentinactive');
+        return get_string('percentinactive', 'reader').$this->help_icon('percentinactive');
     }
 
     /**
@@ -198,7 +198,7 @@ class reader_report_groupsummary_table extends reader_report_table {
      * @return string
      */
     public function header_averagetaken() {
-        return get_string('averagetaken', 'reader').' '.$this->help_icon('averagetaken');
+        return get_string('averagetaken', 'reader').$this->help_icon('averagetaken');
     }
 
     /**
@@ -207,7 +207,7 @@ class reader_report_groupsummary_table extends reader_report_table {
      * @return string
      */
     public function header_averagepassed() {
-        return get_string('averagepassed', 'reader').' '.$this->help_icon('averagepassed');
+        return get_string('averagepassed', 'reader').$this->help_icon('averagepassed');
     }
 
     /**
@@ -216,7 +216,7 @@ class reader_report_groupsummary_table extends reader_report_table {
      * @return string
      */
     public function header_averagefailed() {
-        return get_string('averagefailed', 'reader').' '.$this->help_icon('averagefailed');
+        return get_string('averagefailed', 'reader').$this->help_icon('averagefailed');
     }
 
     /**
@@ -225,23 +225,24 @@ class reader_report_groupsummary_table extends reader_report_table {
      * @return string
      */
     public function header_averagepercentgrade() {
-        return get_string('averagegrade', 'reader').' '.$this->help_icon('averagegrade');
+        return get_string('averagegrade', 'reader').$this->help_icon('averagegrade');
     }
 
     /**
      * header_averagewords
      *
+     * @param xxx $type (optional, default="") "", "thisterm" or "allterms"
      * @return xxx
      */
     public function header_averagewords($type='')  {
         $averagewords = get_string('averagewords', 'reader');
         if ($type) {
-            $strtype = get_string($type, 'reader');
-            if ($this->download) { // $this->is_downloading()
-                $averagewords .= " ($strtype)";
+            $strtype = get_string($type, 'reader').' ';
+            if ($this->is_downloading()) { // $this->download
+                $averagewords .= "($strtype)";
             } else {
-                $averagewords .= ' '.html_writer::tag('span', "($strtype)", array('class' => 'nowrap'));
-                $averagewords .= ' '.$this->help_icon('averagewords'.$type);
+                $averagewords .= html_writer::tag('span', "($strtype)", array('class' => 'nowrap'));
+                $averagewords .= $this->help_icon('averagewords'.$type);
             }
 
         }
