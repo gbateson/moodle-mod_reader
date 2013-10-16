@@ -206,9 +206,6 @@ function xmldb_reader_fix_duplicate_books($course, $keepoldquizzes) {
                                     $rebuild_course_cache = true;
                                 }
                             } else {
-                                if ($book->quizid==1 || $book->quizid==22 || $book->quizid==1464) {
-                                    die('Oops we are trying to delete one of the Cinderella quizzes'. " (quiz id = $book->quizid)");
-                                }
                                 echo '<li><span style="color: red;">DELETED</span> '."Duplicate quiz (course module id=$cm->id, quiz id=$book->quizid)".'</li>';
                                 xmldb_reader_remove_coursemodule($cm->id);
                                 $rebuild_course_cache = true;
@@ -938,7 +935,7 @@ function xmldb_reader_fix_uniqueids(&$dbman) {
     }
 
     // extract reader_attempts with invalid unqueid
-    // i.e. one that is not am id in the "question_usages" table
+    // i.e. one that is not an id in the "question_usages" table
     if ($dbman->table_exists('question_usages')) { // Moodle >= 2.1
         $select = 'ra.*, qu.id AS questionusageid';
         $from   = '{reader_attempts} ra LEFT JOIN {question_usages} qu ON ra.uniqueid = qu.id';
@@ -1446,11 +1443,25 @@ function reader_xmldb_get_targetcourse($numsections=1) {
     global $CFG;
     require_once($CFG->dirroot.'/course/lib.php');
 
+    if (file_exists($CFG->dirroot.'/lib/coursecatlib.php')) {
+        require_once($CFG->dirroot.'/lib/coursecatlib.php');
+    }
+
+    // disable warnings about upgrade running
+    $upgraderunning = $CFG->upgraderunning;
+    $CFG->upgraderunning = false;
+
+    // get list of course categories
+    if (class_exists('coursecat')) {
+        $category_list = coursecat::make_categories_list();
+    } else { // Moodle <= 2.4
+        $category_list = array();
+        $category_parents = array();
+        make_categories_list($category_list, $category_parents);
+    }
+
     // get the first valid $category_id
-    $category_list = array();
-    $category_parents = array();
-    make_categories_list($category_list, $category_parents);
-    list($category_id, $category_name) = each($category_list);
+    $category_id = key($category_list);
 
     $targetcourse = (object)array(
         'category'      => $category_id, // crucial !!
@@ -1466,7 +1477,13 @@ function reader_xmldb_get_targetcourse($numsections=1) {
         'numsections'   => $numsections
     );
 
-    if ($targetcourse = create_course($targetcourse)) {
+    // create new course
+    $targetcourse = create_course($targetcourse);
+
+    // re-enable warnings about rebuild_course_cache
+    $CFG->upgraderunning = $upgraderunning;
+
+    if ($targetcourse) {
         return $targetcourse;
     } else {
         return false;
@@ -1543,7 +1560,8 @@ function reader_xmldb_get_quiz_images($readercfg, $xml, $targetcourseid) {
  * @todo Finish documenting this function
  */
 function reader_xmldb_get_sectionnum(&$targetcourse, $sectionname) {
-    global $DB;
+    global $CFG, $DB;
+    require_once($CFG->dirroot.'/mod/reader/lib.php');
 
     $select = 'course = ? AND (name = ? OR summary = ?)';
     $params = array($targetcourse->id, $sectionname, $sectionname);
@@ -2551,9 +2569,8 @@ function xmldb_reader_fix_multichoice_questions() {
 }
 
 /**
- * xmldb_reader_box_start
+ * xmldb_reader_fix_book_times
  *
- * @param string $msg
  * @todo Finish documenting this function
  */
 function xmldb_reader_fix_book_times() {
@@ -2578,6 +2595,103 @@ function xmldb_reader_fix_book_times() {
                     $DB->set_field($tablename, 'time', filemtime($imagefile), array('id' => $book->id));
                 }
             }
+        }
+    }
+}
+
+/**
+ * xmldb_reader_fix_extrapoints
+ *
+ * @todo Finish documenting this function
+ */
+function xmldb_reader_fix_extrapoints() {
+    global $DB;
+
+    // cache the timemodified
+    $time = time();
+
+    // define publisher name (also used as section name)
+    $publisher = get_string('extrapoints', 'reader');
+    $level = '99';
+    $old_publisher = 'Extra_Points';
+
+    // cache quiz module id
+    $quizmodule = $DB->get_record('modules', array('name' => 'quiz'));
+
+    // get/create Reader quizzes course record
+    $courseids = xmldb_reader_quiz_courseids();
+    if ($courseid = array_shift($courseids)) {
+        $course = $DB->get_record('course', array('id' => $courseid));
+    } else {
+        $course = reader_xmldb_get_targetcourse();
+    }
+
+    // reset legacy book publisher names and section names
+    $tables = array('reader_books' => 'publisher', 'course_sections' => 'name');
+    foreach ($tables as $table => $field) {
+        $DB->set_field($table, $field, $publisher, array($field => $old_publisher));
+    }
+
+    // reset legacy point descriptions (upper/lower case difference is intentional)
+    $oldnames = array('0.5 Points', 'One Point', 'Two points', 'Three points', 'Four points', 'Five points');
+    foreach ($oldnames as $i => $oldname) {
+        $newname = get_string('extrapoints'.$i, 'reader');
+        $DB->set_field('reader_books', 'name', $newname, array('name' => $oldname));
+        $DB->set_field('quiz', 'name', $newname, array('course' => $course->id, 'name' => $oldname));
+    }
+
+    // get / create course section (name = $publisher)
+    $sectionnum = reader_xmldb_get_sectionnum($course, $publisher);
+
+    $i_max = 5; // maximum number of extra points
+    for ($i=0; $i<=$i_max; $i++) {
+
+        // set quiz / book name
+        $name = get_string('extrapoints'.$i, 'reader');
+
+        // get / create quiz's course_module record
+        $select = 'cm.*, q.name AS quizname';
+        $from   = '{course_modules} cm '.
+                  'INNER JOIN {course_sections} cs ON cm.section  = cs.id '.
+                  'INNER JOIN {quiz} q             ON cm.instance = q.id ';
+        $where  = 'cm.course = ? AND cm.module = ? AND cs.section = ? AND q.name = ?';
+        $params = array($course->id, $quizmodule->id, $sectionnum, $name);
+
+        if ($cm = $DB->get_records_sql("SELECT $select FROM $from WHERE $where", $params)) {
+            // remove any (recent) duplicates
+            $cmids = array_keys($cm);
+            $i_max = count($cmids) - 1;
+            for ($i=$i_max; $i>0; $i--) {
+                xmldb_reader_remove_coursemodule($cmids[$i]);
+            }
+            // get (oldest) quiz activity
+            $cm = reset($cm);
+        } else {
+            $cm = reader_xmldb_get_newquiz($course->id, $sectionnum, $quizmodule, $name);
+        }
+
+        // create new book
+        $book = (object)array(
+            'publisher'  => $publisher,
+            'level'      => $level,
+            'difficulty' => '99',
+            'name'       => $name,
+            'words'      => 1000 * pow(2, $i-1), // 500, 1000, 2000, 4000, 8000, ...
+            'fiction'    => 'f',
+            'quizid'     => $cm->instance,
+            'image'      => ($i==0 ? '0.5' : "$i").($i==1 ? 'point' : 'points').'.jpg',
+            'length'     => ($i==0 ? '0.5' : "$i.0"),
+            'time'       => $time,
+        );
+
+        // should we add a token question too?
+        // maybe just set quiz's "sumgrades" field?
+
+        $params = array('publisher' => $publisher, 'level' => $level, 'name' => $name);
+        if ($book->id = $DB->get_field('reader_books', 'id', $params)) {
+            $DB->update_record('reader_books', $book);
+        } else {
+            $book->id = $DB->insert_record('reader_books', $book);
         }
     }
 }

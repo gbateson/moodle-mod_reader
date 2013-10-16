@@ -106,8 +106,14 @@ $url = new moodle_url($readercfg->serverlink.'/index-noq.php', $params);
 $items = reader_curlfile($url);
 $items = xmlize(reader_makexml($items));
 
+if (isset($items['myxml']['#']['item'])) {
+    $items = $items['myxml']['#']['item'];
+} else {
+    $items = array();
+}
+
 $available = (object)array('count' => 0, 'newcount' => 0, 'items' => array());
-foreach ($items['myxml']['#']['item'] as $item) {
+foreach ($items as $item) {
 
     $publisher = $item['@']['publisher'];
     $needpass  = $item['@']['needpass'];
@@ -308,7 +314,7 @@ $output .= ' / ';
 
 // Downloadable
 $onclick = 'clear_search_results(); showhide_lists(1, "publishers", true); showhide_lists(1, "levels", true); showhide_lists(1, "items", true); return false;';
-$output .= html_writer::tag('a', get_string('downloadable', 'reader'), array('onclick' => $onclick));
+$output .= html_writer::tag('a', get_string('downloads', 'reader'), array('onclick' => $onclick));
 
 $output .= html_writer::end_tag('p');
 

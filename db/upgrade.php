@@ -550,6 +550,12 @@ function xmldb_reader_upgrade($oldversion) {
         upgrade_mod_savepoint(true, "$newversion", 'reader');
     }
 
+    $newversion = 2013101500;
+    if ($result && $oldversion < $newversion) {
+        xmldb_reader_fix_extrapoints();
+        upgrade_mod_savepoint(true, "$newversion", 'reader');
+    }
+
     //$newversion = 2013xxxx00;
     //if ($result && $oldversion < $newversion) {
     //    xmldb_reader_merge_tables($dbman, 'reader_noquiz', 'reader_books');

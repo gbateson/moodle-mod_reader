@@ -31,11 +31,37 @@ defined('MOODLE_INTERNAL') || die;
 /** Include required files */
 require_once($CFG->dirroot.'/mod/reader/lib.php');
 
-$pagetitle = get_string('modulename', 'reader');
-
 $readercfg = get_config('reader');
+$defaults = array(
+    'attemptsofday'       => 0,
+    'bookcovers'          => 0,
+    'cheated_message'     => '',
+    'checkbox'            => 0,
+    'editingteacherrole'  => 0,
+    'levelcheck'          => 0,
+    'not_cheated_message' => '',
+    'percentforreading'   => 0,
+    'pointreport'         => 0,
+    'questionmark'        => 0,
+    'quiznextlevel'       => 0,
+    'quizonnextlevel'     => 0,
+    'quizpreviouslevel'   => 0,
+    'quiztimeout'         => 0,
+    'reportwordspoints'   => 0,
+    'sendmessagesaboutcheating' => 0,
+    'update'              => 0,
+    'usecourse'           => 0,
+    'wordsprogressbar'    => 0,
+);
+foreach ($defaults as $name => $value) {
+    if (! isset($readercfg->$name)) {
+        $readercfg->$name = $value;
+    }
+}
 
-$readersettings = new admin_settingpage('modsettingreader', $pagetitle, 'moodle/site:config');
+// create new setting page ($text = title)
+$text = get_string('modulename', 'reader');
+$readersettings = new admin_settingpage('modsettingreader', $text, 'moodle/site:config');
 
 // Introductory explanation that all the settings are defaults for the add quiz form.
 $readersettings->add(new admin_setting_heading('configintro', '', get_string('configintro', 'reader')));
@@ -260,7 +286,7 @@ $readersettings->add(new admin_setting_configselect_with_advanced($name, $text, 
 $ADMIN->add('modsettings', $readersettings);
 
 // reclaim some memory
-unset($name, $text, $help, $default, $paramtype, $options, $readersettings);
+unset($value, $name, $text, $help, $default, $defaults, $paramtype, $options, $readersettings, $readercfg);
 
 // remove standard settings
 $settings = null;

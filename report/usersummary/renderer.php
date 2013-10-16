@@ -42,4 +42,13 @@ require_once($CFG->dirroot.'/mod/reader/report/renderer.php');
  */
 class mod_reader_report_usersummary_renderer extends mod_reader_report_renderer {
     public $mode = 'usersummary';
+
+    public function available_extrapoints() {
+        $options = array();
+        $i_max = 5;
+        for ($i=0; $i<=$i_max; $i++) {
+            $options[$i] = get_string('extrapoints'.$i, 'reader').' / '.get_string('extrawords', 'reader', number_format(1000 * pow(2, $i-1)));
+        }
+        return $options;
+    }
 }

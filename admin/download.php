@@ -61,7 +61,7 @@ $title = $course->shortname . ': ' . format_string($reader->name);
 $PAGE->set_title($title);
 $PAGE->set_heading($course->fullname);
 
-$output = $PAGE->get_renderer('mod_reader_admin_download');
+$output = $PAGE->get_renderer('mod_reader', 'admin_download');
 
 switch ($type) {
     case reader_downloader::BOOKS_WITH_QUIZZES: $str = 'uploadquiztoreader'; break;

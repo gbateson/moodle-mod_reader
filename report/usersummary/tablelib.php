@@ -318,7 +318,9 @@ class reader_report_usersummary_table extends reader_report_table {
         $value = optional_param($action, '', PARAM_INT);
         $settings = '';
         $settings .= get_string('numberofextrapoints', 'reader').': ';
-        $settings .= html_writer::empty_tag('input', array('type'=>'input', 'value'=>$value, 'name'=>$action, 'id'=>'id_'.$action, 'size'=>8, 'maxlength'=>8));
+        $options = $this->output->available_extrapoints();
+        $settings .= html_writer::select($options, $action, $value, '', array());
+        //$settings .= html_writer::empty_tag('input', array('type'=>'input', 'value'=>$value, 'name'=>$action, 'id'=>'id_'.$action, 'size'=>8, 'maxlength'=>8));
         return $this->display_action_settings($action, $settings);
     }
 

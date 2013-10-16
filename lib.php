@@ -2057,7 +2057,11 @@ function reader_select_length_form($length, $bookid, $reader) {
  * @todo Finish documenting this function
  */
 function reader_makexml($xml) {
-    return implode('', $xml);
+    if (empty($xml)) {
+        return '';
+    } else {
+        return implode('', $xml);
+    }
 }
 
 /**
@@ -3782,7 +3786,7 @@ function reader_cheatsheet_init($action) {
     $strcheatsheet = '';
 
     // if there is a "cheatsheet" script, make it available (for developer site admins only)
-    if ($action=='takequiz' && has_capability('moodle/site:config', get_context_instance(CONTEXT_SYSTEM))) {
+    if ($action=='takequiz' && has_capability('moodle/site:config', reader_get_context(CONTEXT_SYSTEM))) {
         if (file_exists($CFG->dirroot.'/mod/reader/utilities/print_cheatsheet.php')) {
             $cheatsheeturl = $CFG->wwwroot.'/mod/reader/utilities/print_cheatsheet.php';
             $strcheatsheet = get_string('cheatsheet', 'reader');

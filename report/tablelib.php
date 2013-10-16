@@ -287,7 +287,7 @@ class reader_report_table extends table_sql {
                   "ROUND($sumgrade / $countattempts) AS averagegrade,".
                   "ROUND($sumduration / $countattempts) AS averageduration,".
                   "SUM(CASE WHEN (ra.passed = :passed1 AND ra.timefinish > :time1) THEN 1 ELSE 0 END) AS countpassed,".
-                  "SUM(CASE WHEN (ra.passed = :passed2 AND ra.timefinish > :time2) THEN 0 ELSE 1 END) AS countfailed";
+                  "SUM(CASE WHEN (ra.passed <> :passed2 AND ra.timefinish > :time2) THEN 1 ELSE 0 END) AS countfailed";
 
         $from   = "{reader_attempts} ra ".
                   "LEFT JOIN {reader_books} rb ON ra.quizid = rb.quizid";
