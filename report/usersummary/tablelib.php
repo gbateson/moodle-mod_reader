@@ -110,7 +110,7 @@ class reader_report_usersummary_table extends reader_report_table {
         // get users who can access this Reader activity
         list($usersql, $userparams) = $this->select_sql_users();
 
-        $select = 'u.id AS userid, u.username, u.firstname, u.lastname, u.picture, u.imagealt, u.email, '.
+        $select = $this->get_userfields('u', array('username'), 'userid').', '.
                   'raa.countpassed, raa.countfailed, '.
                   'raa.averageduration, raa.averagegrade, '.
                   'raa.wordsthisterm, raa.wordsallterms,'.

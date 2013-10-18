@@ -86,7 +86,7 @@ class reader_report_userdetailed_table extends reader_report_table {
 
         $words  = 'CASE WHEN (ra.passed = :passed) THEN rb.words ELSE 0 END';
         $select = "ra.id, ra.timefinish, ra.percentgrade, ra.passed, ($words) AS words, 0 AS totalwords, ".
-                  'u.id AS userid, u.username, u.firstname, u.lastname, u.picture, u.imagealt, u.email, '.
+                  $this->get_userfields('u', array('username'), 'userid').', '.
                   'rl.currentlevel, rb.difficulty, rb.name';
         $from   = '{reader_attempts} ra '.
                   'LEFT JOIN {user} u ON ra.userid = u.id '.

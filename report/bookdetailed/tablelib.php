@@ -83,7 +83,7 @@ class reader_report_bookdetailed_table extends reader_report_table {
         list($usersql, $userparams) = $this->select_sql_users();
 
         $select = 'ra.id, ra.passed, ra.bookrating, '.
-                  'u.id AS userid, u.username, u.firstname, u.lastname, u.picture, u.imagealt, u.email, '.
+                  $this->get_userfields('u', array('username'), 'userid').', '.
                   'rb.publisher, rb.level, rb.name, rb.difficulty';
         $from   = '{reader_attempts} ra '.
                   'LEFT JOIN {user} u ON ra.userid = u.id '.

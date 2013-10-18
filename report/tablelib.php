@@ -267,6 +267,42 @@ class reader_report_table extends table_sql {
     }
 
     /**
+     * get_userfields
+     *
+     * @param string $tableprefix name of database table prefix in query
+     * @param array  $extrafields extra fields to be included in result (do not include TEXT columns because it would break SELECT DISTINCT in MSSQL and ORACLE)
+     * @param string $idalias     alias of id field
+     * @param string $fieldprefix prefix to add to all columns in their aliases, does not apply to 'id'
+     * @return string
+     */
+     function get_userfields($tableprefix = '', array $extrafields = NULL, $idalias = 'id', $fieldprefix = '') {
+        if (class_exists('user_picture')) { // Moodle >= 2.6
+            return user_picture::fields($tableprefix, $extrafields, $idalias, $fieldprefix);
+        }
+        // Moodle <= 2.5
+        $fields = array('id', 'firstname', 'lastname', 'picture', 'imagealt', 'email');
+        if ($tableprefix || $extrafields || $idalias) {
+            if ($tableprefix) {
+                $tableprefix .= '.';
+            }
+            if ($extrafields) {
+                $fields = array_unique(array_merge($fields, $extrafields));
+            }
+            if ($idalias) {
+                $idalias = " AS $idalias";
+            }
+            if ($fieldprefix) {
+                $fieldprefix = " AS $fieldprefix";
+            }
+            foreach ($fields as $i => $field) {
+                $fields[$i] = "$tableprefix$field".($field=='id' ? $idalias : ($fieldprefix=='' ? '' : "$fieldprefix$field"));
+            }
+        }
+        return implode(',', $fields);
+        //return 'u.id AS userid, u.username, u.firstname, u.lastname, u.picture, u.imagealt, u.email';
+    }
+
+    /**
      * select_sql_attempts
      *
      * @params string $groupbyfield "reader_attempts" field name ("userid" or "quizid")

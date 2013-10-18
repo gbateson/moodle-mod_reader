@@ -3920,9 +3920,9 @@ function reader_get_new_uniqueid($contextid, $quizid, $defaultbehavior='deferred
  * @param navigation_node $navref An object representing the navigation tree node of the reader module instance
  * @param stdclass $course
  * @param stdclass $module
- * @param stdclass $cm
+ * @param cm_info  $cm
  */
-function reader_extend_navigation(navigation_node $readernode, stdclass $course, stdclass $module, stdclass $cm) {
+function reader_extend_navigation(navigation_node $readernode, stdclass $course, stdclass $module, cm_info $cm) {
     global $CFG, $DB, $USER;
 
     if (reader_can_addinstance($cm->id, $USER->id)) {
