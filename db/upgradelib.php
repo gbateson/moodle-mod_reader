@@ -1440,11 +1440,17 @@ function reader_xmldb_get_tempdir($restore) {
  * @todo Finish documenting this function
  */
 function reader_xmldb_get_targetcourse($numsections=1) {
-    global $CFG;
+    global $CFG, $DB;
     require_once($CFG->dirroot.'/course/lib.php');
 
     if (file_exists($CFG->dirroot.'/lib/coursecatlib.php')) {
         require_once($CFG->dirroot.'/lib/coursecatlib.php');
+    }
+
+    // check the course has not already been created
+    $coursename = 'Reader Quizzes';
+    if ($targetcourse = $DB->get_records('course', array('shortname' => $coursename))) {
+        return reset($targetcourse);
     }
 
     // disable warnings about upgrade running
@@ -1465,9 +1471,9 @@ function reader_xmldb_get_targetcourse($numsections=1) {
 
     $targetcourse = (object)array(
         'category'      => $category_id, // crucial !!
-        'fullname'      => 'Reader Quizzes',
-        'shortname'     => 'Reader Quizzes',
-        'name'          => 'Reader Quizzes',
+        'fullname'      => $coursename,
+        'shortname'     => $coursename,
+        'name'          => $coursename,
         'summary'       => '',
         'summaryformat' => FORMAT_PLAIN, // plain text
         'format'        => 'topics',
@@ -2640,6 +2646,9 @@ function xmldb_reader_fix_extrapoints() {
         $DB->set_field('quiz', 'name', $newname, array('course' => $course->id, 'name' => $oldname));
     }
 
+    // assume we won't need to reset the course cache
+    $rebuild_course_cache = false;
+
     // get / create course section (name = $publisher)
     $sectionnum = reader_xmldb_get_sectionnum($course, $publisher);
 
@@ -2663,11 +2672,13 @@ function xmldb_reader_fix_extrapoints() {
             $i_max = count($cmids) - 1;
             for ($i=$i_max; $i>0; $i--) {
                 xmldb_reader_remove_coursemodule($cmids[$i]);
+                $rebuild_course_cache = true;
             }
             // get (oldest) quiz activity
             $cm = reset($cm);
         } else {
             $cm = reader_xmldb_get_newquiz($course->id, $sectionnum, $quizmodule, $name);
+            $rebuild_course_cache = true;
         }
 
         // create new book
@@ -2693,6 +2704,11 @@ function xmldb_reader_fix_extrapoints() {
         } else {
             $book->id = $DB->insert_record('reader_books', $book);
         }
+    }
+
+    if ($rebuild_course_cache) {
+        echo html_writer::tag('div', "Re-building course cache: $course->shortname ... ", array('class' => 'notifysuccess'));
+        rebuild_course_cache($course->id, true); // $clearonly must be set to true
     }
 }
 

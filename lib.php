@@ -3991,20 +3991,21 @@ function reader_extend_settings_navigation(settings_navigation $settingsnav, nav
         $type = navigation_node::TYPE_SETTING;
         $icon = new pix_icon('t/download', '');
 
+        $key    = 'readerbooks';
         $text   = get_string('books', 'reader');
-        $node   = new navigation_node(array('text'=>$text, 'type'=>$type));
+        $node   = new navigation_node(array('type'=>$type, 'key'=>$key, 'text'=>$text));
 
         $params = array('id' => $PAGE->cm->id, 'type' => reader_downloader::BOOKS_WITH_QUIZZES);
         $url    = new moodle_url('/mod/reader/admin/download.php', $params);
         $key    = 'downloadbookswithquizzes';
         $text   = get_string($key, 'reader');
-        reader_navigation_add_node($node, $text, $url, $key, $type, $icon);
+        reader_navigation_add_node($node, $type, $key, $text, $url, $icon);
 
         $params = array('id' => $PAGE->cm->id, 'type' => reader_downloader::BOOKS_WITHOUT_QUIZZES);
         $url    = new moodle_url('/mod/reader/admin/download.php', $params);
         $key    = 'downloadbookswithoutquizzes';
         $text   = get_string($key, 'reader');
-        reader_navigation_add_node($node, $text, $url, $key, $type, $icon);
+        reader_navigation_add_node($node, $type, $key, $text, $url, $icon);
 
         $type = navigation_node::TYPE_SETTING;
         $icon = new pix_icon('t/edit', '');
@@ -4013,7 +4014,7 @@ function reader_extend_settings_navigation(settings_navigation $settingsnav, nav
         $url = new moodle_url('/mod/reader/admin/books.php', $params);
         $key = 'editbookdetails';
         $text   = get_string($key, 'reader');
-        reader_navigation_add_node($node, $text, $url, $key, $type, $icon);
+        reader_navigation_add_node($node, $type, $key, $text, $url, $icon);
 
         $nodes[] = $node;
 
@@ -4022,10 +4023,11 @@ function reader_extend_settings_navigation(settings_navigation $settingsnav, nav
         //////////////////////////
 
         $type = navigation_node::TYPE_SETTING;
-        $icon = new pix_icon('t/edit', '');
+        $icon = new pix_icon('i/navigationitem', '');
 
+        $key    = 'readerquizzes';
         $text   = get_string('modulenameplural', 'quiz');
-        $node   = new navigation_node(array('text'=>$text, 'type'=>$type));
+        $node   = new navigation_node(array('type'=>$type, 'key'=>$key, 'text'=>$text));
 
         $actions = array('add', 'update', 'delete', 'showhide', 'setdelay', 'arrange');
         foreach ($actions as $action) {
@@ -4033,7 +4035,7 @@ function reader_extend_settings_navigation(settings_navigation $settingsnav, nav
             $url = new moodle_url('/mod/reader/admin/quizzes.php', $params);
             $key = 'quizzes'.$action;
             $text   = get_string($key, 'reader');
-            reader_navigation_add_node($node, $text, $url, $key, $type, $icon);
+            reader_navigation_add_node($node, $type, $key, $text, $url, $icon);
         }
 
         $nodes[] = $node;
@@ -4043,10 +4045,11 @@ function reader_extend_settings_navigation(settings_navigation $settingsnav, nav
         //////////////////////////
 
         $type = navigation_node::TYPE_SETTING;
-        $icon = new pix_icon('t/edit', '');
+        $icon = new pix_icon('i/navigationitem', '');
 
+        $key    = 'readerusers';
         $text   = get_string('users');
-        $node   = new navigation_node(array('text'=>$text, 'type'=>$type));
+        $node   = new navigation_node(array('type'=>$type, 'key'=>$key, 'text'=>$text));
 
         $actions = array('setgoals', 'setlevels', 'sendmessage', 'import', 'export');
         foreach ($actions as $action) {
@@ -4054,7 +4057,7 @@ function reader_extend_settings_navigation(settings_navigation $settingsnav, nav
             $url = new moodle_url('/mod/reader/admin/books.php', $params);
             $key = 'users'.$action;
             $text   = get_string($key, 'reader');
-            reader_navigation_add_node($node, $text, $url, $key, $type, $icon);
+            reader_navigation_add_node($node, $type, $key, $text, $url, $icon);
         }
 
         $nodes[] = $node;
@@ -4125,12 +4128,12 @@ function reader_extend_settings_navigation(settings_navigation $settingsnav, nav
  * @param pix_icon $icon
  * @todo Finish documenting this function
  */
-function reader_navigation_add_node(navigation_node $node, $text, $action, $key, $type, $icon) {
+function reader_navigation_add_node(navigation_node $node, $type, $key, $text, $action, $icon) {
     if (method_exists($node, 'add_node')) {
         // Moodle >= 2.1
-        $node->add_node(new navigation_node(array('text'=>$text, 'action'=>$action, 'key'=>$key, 'type'=>$type, 'icon'=>$icon)));
+        $node->add_node(new navigation_node(array('type'=>$type, 'key'=>$key, 'text'=>$text, 'action'=>$action, 'icon'=>$icon)));
     } else {
         // Moodle = 2.0
-        $node->children->add(new navigation_node(array('text'=>$text, 'action'=>$action, 'key'=>$key, 'type'=>$type, 'icon'=>$icon)));
+        $node->children->add(new navigation_node(array('type'=>$type, 'key'=>$key, 'text'=>$text, 'action'=>$action, 'icon'=>$icon)));
     }
 }
