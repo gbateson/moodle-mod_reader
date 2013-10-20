@@ -16,7 +16,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * mod/reader/version.php
+ * mod/reader/admin/attempts/renderer.php
  *
  * @package    mod
  * @subpackage reader
@@ -25,12 +25,20 @@
  * @since      Moodle 2.0
  */
 
-// prevent direct access to this script
-defined('MOODLE_INTERNAL') || die();
+/** Prevent direct access to this script */
+defined('MOODLE_INTERNAL') || die;
 
-$module->cron      = 3600;
-$module->component = 'mod_reader';
-$module->maturity  = MATURITY_BETA; // ALPHA=50, BETA=100, RC=150, STABLE=200
-$module->release   = '2013-10-20 (01)';
-$module->version   = 2013102001;
-$module->requires  = 2010112400; // Moodle 2.0
+/** Include required files */
+require_once($CFG->dirroot.'/mod/reader/admin/renderer.php');
+
+/**
+ * mod_reader_admin_attempts_renderer
+ *
+ * @copyright  2013 Gordon Bateson (gordon.bateson@gmail.com)
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @since      Moodle 2.0
+ * @package    mod
+ * @subpackage reader
+ */
+class mod_reader_admin_attempts_renderer extends mod_reader_admin_renderer {
+}
