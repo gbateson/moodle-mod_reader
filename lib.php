@@ -508,13 +508,14 @@ function reader_get_user_attempts($readerid, $userid, $status = 'finished', $inc
  * @return xxx
  * @todo Finish documenting this function
  */
-function reader_create_attempt($reader, $attemptnumber, $bookid, $adduniqueid=false) {
+function reader_create_attempt($reader, $attemptnumber, $book, $adduniqueid=false, $booktable='reader_books') {
     global $CFG, $DB, $USER;
 
-    $book = $DB->get_record('reader_books', array('id' => $bookid));
+    if (is_numeric($book)) {
+        $book = $DB->get_record($booktable, array('id' => $book));
+    }
 
-    if (empty($book) || empty($book->quizid)) {
-        die('Oops, no $book or $book->quizid');
+    if (empty($book)) {
         return false; // invalid $bookid or $book->quizid
     }
 
@@ -548,7 +549,7 @@ function reader_create_attempt($reader, $attemptnumber, $bookid, $adduniqueid=fa
     $attempt->ip = getremoteaddr();
 
     if ($adduniqueid) {
-        $attempt->uniqueid = reader_get_new_uniqueid();
+        $attempt->uniqueid = reader_get_new_uniqueid($reader->context->id, $book->quizid);
     }
 
     $questionids = explode (',', $attempt->layout);
@@ -870,9 +871,8 @@ function reader_grade_item_update($reader, $grades=NULL) {
  * @todo Finish documenting this function
  */
 function reader_repaginate($layout, $perpage, $shuffle=false) {
-    $layout = preg_replace('/,+/',',', $layout);
-    $layout = str_replace(',0', '', $layout); // remove existing page breaks
     $questions = explode(',', $layout);
+    $questions = array_filter($questions); // remove blanks
     if ($shuffle) {
         srand((float)microtime() * 1000000); // for php < 4.2
         shuffle($questions);
@@ -880,7 +880,7 @@ function reader_repaginate($layout, $perpage, $shuffle=false) {
     $i = 1;
     $layout = '';
     foreach ($questions as $question) {
-        if ($perpage and $i > $perpage) {
+        if ($perpage && $i > $perpage) {
             $layout .= '0,';
             $i = 1;
         }
@@ -4054,7 +4054,7 @@ function reader_extend_settings_navigation(settings_navigation $settingsnav, nav
         $actions = array('setgoals', 'setlevels', 'sendmessage', 'import', 'export');
         foreach ($actions as $action) {
             $params = array('id' => $PAGE->cm->id, 'action' => $action);
-            $url = new moodle_url('/mod/reader/admin/books.php', $params);
+            $url = new moodle_url('/mod/reader/admin/users.php', $params);
             $key = 'users'.$action;
             $text   = get_string($key, 'reader');
             reader_navigation_add_node($node, $type, $key, $text, $url, $icon);

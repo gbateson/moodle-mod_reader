@@ -16,7 +16,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * mod/reader/report/usersummary/renderer.php
+ * mod/reader/admin/users/renderer.php
  *
  * @package    mod
  * @subpackage reader
@@ -29,10 +29,10 @@
 defined('MOODLE_INTERNAL') || die;
 
 /** Include required files */
-require_once($CFG->dirroot.'/mod/reader/report/renderer.php');
+require_once($CFG->dirroot.'/mod/reader/admin/renderer.php');
 
 /**
- * mod_reader_report_usersummary_renderer
+ * mod_reader_admin_users_renderer
  *
  * @copyright  2013 Gordon Bateson (gordon.bateson@gmail.com)
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -40,23 +40,5 @@ require_once($CFG->dirroot.'/mod/reader/report/renderer.php');
  * @package    mod
  * @subpackage reader
  */
-class mod_reader_report_usersummary_renderer extends mod_reader_report_renderer {
-    public $mode = 'usersummary';
-
-    public function available_extrapoints() {
-        global $DB;
-        $options = array();
-        if ($books = $DB->get_records('reader_books', array('publisher' => get_string('extrapoints', 'reader')), 'length')) {
-            foreach ($books as $book) {
-                $i = intval($book->length);
-                $options[$i] = $book->name.' / '.get_string('extrawords', 'reader', number_format($book->words));
-            }
-        } else {
-            $i_max = 5;
-            for ($i=0; $i<=$i_max; $i++) {
-                $options[$i] = get_string('extrapoints'.$i, 'reader').' / '.get_string('extrawords', 'reader', number_format(1000 * pow(2, $i-1)));
-            }
-        }
-        return $options;
-    }
+class mod_reader_admin_users_renderer extends mod_reader_admin_renderer {
 }

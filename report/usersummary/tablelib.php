@@ -320,7 +320,6 @@ class reader_report_usersummary_table extends reader_report_table {
         $settings .= get_string('numberofextrapoints', 'reader').': ';
         $options = $this->output->available_extrapoints();
         $settings .= html_writer::select($options, $action, $value, '', array());
-        //$settings .= html_writer::empty_tag('input', array('type'=>'input', 'value'=>$value, 'name'=>$action, 'id'=>'id_'.$action, 'size'=>8, 'maxlength'=>8));
         return $this->display_action_settings($action, $settings);
     }
 
@@ -407,26 +406,22 @@ class reader_report_usersummary_table extends reader_report_table {
         global $DB;
 
         $extrapoints = optional_param($action, null, PARAM_INT);
-        if ($extrapoints===null) {
-            return; // no extra points specified
+        if ($extrapoints===null || $extrapoints < 0 || $extrapoints > 5) {
+            return false; // no extra points specified
         }
 
-        if ($userids = $this->get_selected('userid')) {
-            list($select, $params) = $this->select_sql_users();
-            $userids = array_intersect($userids, $params);
+        // set $params to select the dummy $book for these extra points
+        $publisher = get_string('extrapoints', 'reader');
+        $length = ($extrapoints==0 ? '0.5' : "$extrapoints.0");
+        $params = array('publisher' => $publisher, 'length' => $length);
+
+        if (! $book = $DB->get_records('reader_books', $params)) {
+            return false; // shouldn't happen !!
         }
+        $book = reset($book);
 
-        if (empty($userids)) {
-            return; // no (valid) userids selected
-        }
-
-        // update selected userids to the new extrapoints
-        list($select, $params) = $DB->get_in_or_equal($userids);
-        //echo 'Add '.number_format($extrapoints).' points to the following users: id(s)='.implode(',', $params);
-        //$DB->set_field_select('reader_levels', 'goal', $extrapoints, "userid $select", $params);
-
-        // send "Changes saved" message to browser
-        //echo $this->output->notification(get_string('changessaved'), 'notifysuccess');
+        // award extrapoints to selected userids
+        $this->execute_action_awardpoints($book);
     }
 
     /**
@@ -441,25 +436,92 @@ class reader_report_usersummary_table extends reader_report_table {
         if (! $bookid = optional_param('bookid', 0, PARAM_INT)) {
             return; // no book id specified
         }
-        if (! $bookpoints = $DB->get_field('reader_noquiz', 'words', array('id' => $bookid))) {
-            return; // invalid bookid specified
+
+        if (! $book = $DB->get_record('reader_noquiz', array('id' => $bookid))) {
+            return false; // invalid book id
         }
 
+        // award points for this book
+        $this->execute_action_awardpoints($book);
+    }
+
+    /**
+     * execute_action_awardpoints
+     *
+     * @param string $booktable "reader_books" OR "reader_noquiz"
+     * @param string $book
+     * @param array  $userids
+     * @return xxx
+     */
+    public function execute_action_awardpoints($book) {
+        global $DB;
+
+        // get selected userids
         if ($userids = $this->get_selected('userid')) {
             list($select, $params) = $this->select_sql_users();
             $userids = array_intersect($userids, $params);
         }
 
         if (empty($userids)) {
-            return; // no (valid) userids selected
+            return false; // no (valid) userids selected
         }
 
-        // update selected userids to the new bookpoints
-        list($select, $params) = $DB->get_in_or_equal($userids);
-        //echo 'Add '.number_format($bookpoints).' points to the following users: id(s)='.implode(',', $params);
-        //$DB->set_field_select('reader_levels', 'goal', $bookpoints, "userid $select", $params);
+        // cache common settings
+        $cmid  = $this->output->reader->cm->id;
+        $contextid = $this->output->reader->context->id;
+
+        // we make the $time in the past, so it doesn't interfere with
+        // the restriction on the frequency at which quizzes can be taken
+        // "attemptsofday" is the minimum number of days (0..3) between quizzes
+        $time  = time() - ($this->output->reader->attemptsofday * 3600 * 24);
+
+        // loop through userids
+        foreach ($userids as $userid) {
+
+            // get next attempt number
+            $select = 'MAX(attempt)';
+            $from   = '{reader_attempts}';
+            $where  = 'reader = ? AND userid = ? AND timefinish > ? AND preview != ?';
+            $params = array($this->output->reader->id, $userid, 0, 1);
+
+            if($attemptnumber = $DB->get_field_sql("SELECT $select FROM $from WHERE $where", $params)) {
+                $attemptnumber += 1;
+            } else {
+                $attemptnumber = 1;
+            }
+
+            $attempt = (object)array(
+                'uniqueid'     => reader_get_new_uniqueid($contextid, $book->quizid),
+                'reader'       => $this->output->reader->id,
+                'userid'       => $userid,
+                'attempt'      => $attemptnumber,
+                'sumgrades'    => 100.0,
+                'percentgrade' => 100.0,
+                'passed'       => 'true',
+                'checkbox'     => 0,
+                'timestart'    => $time,
+                'timefinish'   => $time,
+                'timecreated'  => $time,
+                'timemodified' => $time,
+                'layout'       => '0',
+                'preview'      => 0,
+                'quizid'       => $book->quizid,
+                'bookrating'   => 0,
+                'ip'           => getremoteaddr(),
+            );
+
+            // add new attempt record to $DB
+            if ($attempt->id = $DB->insert_record('reader_attempts', $attempt)) {
+                echo 'Added '.number_format($book->words).' points to the user: '.$userid.'<br />';
+            } else {
+                throw new reader_exception('Oops, could not create new attempt'); // shouldn't happen !!
+            }
+
+            // log this action
+            add_to_log($this->output->reader->course->id, 'reader', "AWP (userid: $userid; set: $book->words)", 'admin.php?id='.$cmid, $cmid);
+        }
 
         // send "Changes saved" message to browser
-        //echo $this->output->notification(get_string('changessaved'), 'notifysuccess');
+        echo $this->output->notification(get_string('changessaved'), 'notifysuccess');
     }
 }
