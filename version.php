@@ -25,6 +25,12 @@
  * @since      Moodle 2.0
  */
 
-$module->version   = 2013101900; // The current module version (Date: YYYYMMDDXX)
-$module->cron      = 3600;       // Period for cron to check this module (secs)
+// prevent direct access to this script
+defined('MOODLE_INTERNAL') || die();
+
+$module->cron      = 3600;
 $module->component = 'mod_reader';
+$module->maturity  = MATURITY_BETA; // ALPHA=50, BETA=100, RC=150, STABLE=200
+$module->release   = '2013-10-19.00';
+$module->version   = 2013101900;
+$module->requires  = 2010112400; // Moodle 2.0
