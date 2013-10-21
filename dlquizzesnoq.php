@@ -121,7 +121,7 @@ foreach ($items as $item) {
     $itemid    = $item['@']['id'];
     $itemname  = $item['#'];
 
-    if ($publisher=='Extra_Points' || $publisher=='testing') {
+    if ($publisher=='Extra_Points' || $publisher=='testing' || $publisher=='_testing_only') {
         continue; // ignore these publisher categories
     }
 
