@@ -1124,6 +1124,12 @@ function xmldb_reader_fix_nonunique_quizids() {
     $fixmissingquizzes = optional_param('fixmissingquizzes', null, PARAM_INT);
     if (count($missingquizids)) {
 
+        // if this is not an interactive upgrade (i.e. a CLI upgrade)
+        // then assume enable $fixmissingquizzes and continue
+        if (xmldb_reader_interactive()==false) {
+            $fixmissingquizzes = 1;
+        }
+
         if ($fixmissingquizzes===null || $fixmissingquizzes===false || $fixmissingquizzes==='') {
 
             $message = get_string('fixmissingquizzesinfo', 'reader');
@@ -2755,6 +2761,20 @@ function xmldb_reader_merge_tables(&$dbman, $oldname, $newname) {
 
         // now we can remove the old table
         $dbman->drop_table($oldtable);
+    }
+}
+
+/**
+ * xmldb_reader_box_end
+ *
+ * @todo Finish documenting this function
+ */
+function xmldb_reader_interactive() {
+    if (defined('CLI_SCRIPT') && isset($GLOBALS['interactive'])) {
+        // $interactive variable is set in "admin/cli/upgrade.php"
+        return $GLOBALS['interactive'];
+    } else {
+        return true; // assume browser-initiated update
     }
 }
 
