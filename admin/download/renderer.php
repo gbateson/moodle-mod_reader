@@ -801,7 +801,7 @@ class mod_reader_admin_download_renderer extends mod_reader_admin_renderer {
         $output = '';
         if ($newcount || $updatecount || $updatetime) {
             $id = str_replace('[]', '_'.$value, 'id_'.$name);
-            $output .= html_writer::empty_tag('input', array('type' => 'checkbox', 'id' => $id, 'name' => $name, 'value' => $value, 'onchange' => 'reader_checkbox_onchange(this)', 'onmousedown' => 'reader_checkbox_onmousedown(event)'));
+            $output .= html_writer::empty_tag('input', array('type' => 'checkbox', 'id' => $id, 'name' => $name, 'value' => $value, 'onchange' => 'reader_checkbox_onchange(this)', 'onmousedown' => 'reader_checkbox_onmousedown()'));
             $output .= html_writer::start_tag('label', array('for' => $id));
         } else {
             $img = ' '.html_writer::empty_tag('img', array('src' => $this->pix_url('i/tick_green_big'), 'class' => 'icon'));
