@@ -418,17 +418,17 @@ class mod_reader_admin_download_renderer extends mod_reader_admin_renderer {
             $js .= "    clear_search_results();\n";
 
             $js .= "    if (btn==null || btn.form==null || btn.form.searchtext==null) {\n";
-            $js .= "        return false;";
+            $js .= "        return false;\n";
             $js .= "    }\n";
 
             $js .= "    var searchtext = btn.form.searchtext.value.toLowerCase();\n";
             $js .= "    if (searchtext=='') {\n";
-            $js .= "        return false;";
+            $js .= "        return false;\n";
             $js .= "    }\n";
 
             $js .= "    var obj = document.getElementsByTagName('SPAN');\n";
             $js .= "    if (obj==null) {\n";
-            $js .= "        return false;";
+            $js .= "        return false;\n";
             $js .= "    }\n";
 
             $js .= "    var firstmatch = true;\n";
@@ -649,7 +649,6 @@ class mod_reader_admin_download_renderer extends mod_reader_admin_renderer {
     /**
      * available_list
      *
-     * @uses $OUTPUT
      * @param xxx $remotesite
      * @param xxx $available
      * @param xxx $downloaded
@@ -657,7 +656,6 @@ class mod_reader_admin_download_renderer extends mod_reader_admin_renderer {
      * @todo Finish documenting this function
      */
     public function available_list($remotesite, $available, $downloaded) {
-        global $OUTPUT;
         $output = '';
 
         $started_remotesites = false;
@@ -743,7 +741,7 @@ class mod_reader_admin_download_renderer extends mod_reader_admin_renderer {
                         } else if ($downloaded->items[$publishername]->items[$levelname]->items[$itemname]->time < $item->time) {
                             $output .= $this->available_list_name('itemids[]', $item->id, $itemname, 'itemname', 0, 0, 0, $item->time);
                         } else {
-                            $img = ' '.html_writer::empty_tag('img', array('src' => $OUTPUT->pix_url('i/tick_green_big'), 'class' => 'icon'));
+                            $img = ' '.$this->downloaded_img();
                             $output .= html_writer::tag('span', $img, array('class' => 'downloadeditem'));
                             $output .= html_writer::tag('span', s($itemname), array('class' => 'itemname'));
                         }
@@ -804,7 +802,7 @@ class mod_reader_admin_download_renderer extends mod_reader_admin_renderer {
             $output .= html_writer::empty_tag('input', array('type' => 'checkbox', 'id' => $id, 'name' => $name, 'value' => $value, 'onchange' => 'reader_checkbox_onchange(this)', 'onmousedown' => 'reader_checkbox_onmousedown()'));
             $output .= html_writer::start_tag('label', array('for' => $id));
         } else {
-            $img = ' '.html_writer::empty_tag('img', array('src' => $this->pix_url('i/tick_green_big'), 'class' => 'icon'));
+            $img = $this->downloaded_img();
             $output .= html_writer::tag('span', $img, array('class' => 'downloadeditems'));
         }
         $output .= html_writer::tag('span', s($text), array('class' => $cssclass));
@@ -832,31 +830,52 @@ class mod_reader_admin_download_renderer extends mod_reader_admin_renderer {
     }
 
     /**
-     * available_list_img
+     * downloaded_img
      *
-     * @uses $OUTPUT
+     * @uses $CFG
      * @return xxx
      * @todo Finish documenting this function
      */
-    public function available_list_img() {
-        global $OUTPUT;
-        $src = $OUTPUT->pix_url('t/switch_minus');
-        $img = html_writer::empty_tag('img', array('src' => $src, 'onclick' => 'showhide_list(this)', 'alt' => 'switch_minus'));
-        return ' '.$img;
+    public function downloaded_img() {
+        global $CFG;
+        static $img = null;
+        if ($img==null) {
+            switch (true) {
+                case file_exists($CFG->dirroot.'/pix/e/tick.png'): $img = 'e/tick'; break; // Moodle >= 2.6
+                case file_exists($CFG->dirroot.'/pix/i/tick_green_big.png'): $img = 'i/tick_green_big'; break;
+                default: $img = ''; // shouldn't happen !!
+            }
+            if ($img=='') {
+                $img = mod_reader::textlib('entities_to_utf8', '&#x2714;'); // Unicode tick ✔
+            } else {
+                $img = html_writer::empty_tag('img', array('src' => $this->pix_url($img), 'class' => 'icon'));
+            }
+        }
+        return $img;
     }
 
     /**
      * available_list_img
      *
-     * @uses $OUTPUT
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function available_list_img() {
+        $src = $this->pix_url('t/switch_minus');
+        $img = html_writer::empty_tag('img', array('src' => $src, 'onclick' => 'showhide_list(this)', 'alt' => 'switch_minus'));
+        return ' '.$img;
+    }
+
+    /**
+     * available_new_img
+     *
      * @param integer $updatecount (optional, default=0)
      * @param integer $updatetime (optional, default=0)
      * @return xxx
      * @todo Finish documenting this function
      */
     public function available_new_img($updatecount=0, $updatetime=0) {
-        global $OUTPUT;
-        $src = $OUTPUT->pix_url('i/new');
+        $src = $this->pix_url('i/new');
         if ($updatecount) {
             $str = get_string('updatesavailable', 'reader', $updatecount);
             $onclick = '';
