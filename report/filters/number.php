@@ -94,14 +94,13 @@ class reader_report_filter_number extends user_filter_select {
 
     /**
      * Retrieves data from the form data
-     * @param object $formdata data submited with the form
+     * @param object $formdata data submitted with the form
      * @return mixed array filter data or false when filter not set
      */
     function check_data($formdata) {
         $field    = $this->_field;
         $operator = $field.'_op';
-
-        if (array_key_exists($field, $formdata) and !empty($formdata->$operator)) {
+        if (isset($formdata->$field) && isset($formdata->$operator)) {
             return array('operator' => (int)$formdata->$operator,
                          'value'    => (int)$formdata->$field);
         }
@@ -123,20 +122,20 @@ class reader_report_filter_number extends user_filter_select {
 
         if ($this->_type==$type) {
             $name = 'ex_num_'.$type.'_'.$counter;
-            if (($value = $data['value']) && ($operator = $data['operator'])) {
+            if (array_key_exists('value', $data) && array_key_exists('operator', $data)) {
                 $field = $this->_field;
-                switch($operator) {
+                switch($data['operator']) {
                     case 1: // less than
                         $filter = $field.' < :'.$name;
-                        $params[$name] = $value;
+                        $params[$name] = $data['value'];
                         break;
                     case 2: // equal to
                         $filter = $field.' = :'.$name;
-                        $params[$name] = $value;
+                        $params[$name] = $data['value'];
                         break;
                     case 3: // greater than
                         $filter = $field.' > :'.$name;
-                        $params[$name] = $value;
+                        $params[$name] = $data['value'];
                         break;
                 }
             }
