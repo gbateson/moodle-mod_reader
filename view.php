@@ -202,7 +202,7 @@ if (count($attempts)) {
                 }
             } else { // not the first attempt
                 if ($lastattemptdate < $promotiondate && $attempt['timefinish'] > $promotiondate) {
-                    reader_add_table_promotiondate($table, $leveldata, $promotiondate);
+                    reader_add_table_promotiondate($table, $leveldata, $promotiondate, $timeformat, $dateformat);
                 }
             }
         }
