@@ -2155,13 +2155,15 @@ class reader_downloader {
         global $DB;
         list($table, $field) = $this->get_question_options_table('multichoice');
         if ($options = $DB->get_record($table, array($field => $questionid))) {
-            $answers = explode(',', $options->answers);
-            foreach (array_keys($answers) as $a) {
-                $answers[$a] = $restoreids->get_newid('question_answers', $answers[$a]);
+            if (isset($options->answers)) { // Moodle <= 2.5
+                $answers = explode(',', $options->answers);
+                foreach (array_keys($answers) as $a) {
+                    $answers[$a] = $restoreids->get_newid('question_answers', $answers[$a]);
+                }
+                $answers = array_filter($answers);
+                $answers = implode(',', $answers);
+                $DB->set_field($table, 'answers', $answers, array($field => $questionid));
             }
-            $answers = array_filter($answers);
-            $answers = implode(',', $answers);
-            $DB->set_field($table, 'answers', $answers, array($field => $questionid));
         }
     }
 

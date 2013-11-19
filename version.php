@@ -31,6 +31,6 @@ defined('MOODLE_INTERNAL') || die();
 $module->cron      = 3600;
 $module->component = 'mod_reader';
 $module->maturity  = MATURITY_BETA; // ALPHA=50, BETA=100, RC=150, STABLE=200
-$module->release   = '2013-10-31 (03)';
-$module->version   = 2013103103;
+$module->release   = '2013-11-19 (04)';
+$module->version   = 2013111904;
 $module->requires  = 2010112400; // Moodle 2.0
