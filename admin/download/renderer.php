@@ -889,4 +889,85 @@ class mod_reader_admin_download_renderer extends mod_reader_admin_renderer {
         $img = html_writer::empty_tag('img', array('src' => $src, 'alt' => $str, 'title' => $str, 'onclick' => $onclick, 'class' => 'update'));
         return ' '.$img;
     }
+
+    /**
+     * course_list
+     *
+     * @param object $downloader
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function course_list($downloader) {
+        global $USER;
+        $courseid = $downloader->get_quiz_courseid();
+
+        $capability = 'moodle/course:manageactivities';
+        if (has_capability($capability, reader_get_context(CONTEXT_SYSTEM))) {
+            $courses = get_courses(); // system admin
+        } else if (function_exists('enrol_get_users_courses')) {
+            $courses = enrol_get_users_courses($USER->id);
+        } else {
+            $access = (isset($USER->access) ? $USER->access : get_user_access_sitewide($USER->id));
+            $courses = get_user_courses_bycap($USER->id, $capability, $access, true);
+        }
+
+        $menu = array();
+        if ($courses) {
+            foreach ($courses as $course) {
+                if ($course->id==SITEID) {
+                    continue;
+                }
+                $menu[$course->id] = $course->shortname;
+            }
+        }
+        unset($courses);
+
+        $menu = html_writer::select($menu, 'targetcourseid', $courseid, null);
+        return html_writer::tag('p', html_writer::tag('span', get_string('targetcourse', 'reader').': ').$menu);
+    }
+
+    /**
+     * section_list
+     *
+     * @param object $downloader
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function section_list($downloader) {
+        global $DB;
+
+        $courseid = $downloader->get_quiz_courseid();
+        $sectionnum = $downloader->get_quiz_sectionnum($courseid);
+
+        $types = array(
+            reader_downloader::SECTIONTYPE_BOTTOM   => get_string('sectiontypebottom',   'reader'),
+            reader_downloader::SECTIONTYPE_SORTED   => get_string('sectiontypesorted',   'reader'),
+            reader_downloader::SECTIONTYPE_SPECIFIC => get_string('sectiontypespecific', 'reader')
+        );
+
+        $menu = array();
+        if ($courseid) {
+            $select = "course = ? AND section > ? AND name NOT IN (?, ?)";
+            $params = array($courseid, 0, 'Extra Points', '');
+            if ($sections = $DB->get_records_select('course_sections', $select, $params, 'section')) {
+                foreach ($sections as $section) {
+                    $menu[$section->section] = $section->name;
+                }
+            }
+            unset($sections);
+        }
+
+        if (empty($menu)) {
+            $menu = '';
+            unset($types[reader_downloader::SECTIONTYPE_SPECIFIC]);
+        } else {
+            $menu = html_writer::select($menu, 'targetsectionnum', $sectionnum, null);
+        }
+
+        $sectiontype = reader_downloader::SECTIONTYPE_SORTED; // default
+        $sectiontype = optional_param('targetsectiontype', $sectiontype, PARAM_INT);
+        $types = html_writer::select($types, 'targetsectiontype', $sectiontype, null);
+
+        return html_writer::tag('p', html_writer::tag('span', get_string('targetsection', 'reader').': ').$types.' '.$menu);
+    }
 }

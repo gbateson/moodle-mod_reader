@@ -39,25 +39,53 @@ defined('MOODLE_INTERNAL') || die;
  */
 class reader_downloader {
 
-    /** values for download $type */
+    /**#@+
+    * values for download $type
+    *
+    * @const integer
+    */
     const BOOKS_WITH_QUIZZES    = 1;
     const BOOKS_WITHOUT_QUIZZES = 0;
+    /**#@-*/
 
-    /** values for section type */
+    /**#@+
+    * values for section $type
+    *
+    * @const integer
+    */
     const SECTIONTYPE_BOTTOM   = 1;
     const SECTIONTYPE_SORTED   = 2;
     const SECTIONTYPE_SPECIFIC = 3;
+    /**#@-*/
 
+    /** sites from which we can download */
     public $remotesites = array();
 
-    public $downloaded = array();
-
+    /** items that are available for download */
     public $available = array();
 
+    /** items that have already been downloaded */
+    public $downloaded = array();
+
+    /**#@+
+    * current course, course module, reader and renderer
+    *
+    * @var mixed
+    */
     public $course = null;
     public $cm     = null;
     public $reader = null;
     public $output = null;
+    /**#@-*/
+
+    /**#@+
+    * target course id and section number
+    *
+    * @var integer
+    */
+    public $targetcourseid = 0;
+    public $targetsectionnum = 0;
+    /**#@-*/
 
     /** download progress bar */
     public $bar = null;
@@ -595,18 +623,22 @@ class reader_downloader {
      *
      * @uses $DB
      * @param integer $courseid
+     * @param boolean $set_reader (optional, default=false)
      * @param boolean $set_config (optional, default=false)
      * @todo Finish documenting this function
      */
-    public function set_quiz_courseid($courseid, $set_config=false) {
+    public function set_quiz_courseid($courseid, $set_reader=false, $set_config=false) {
         global $DB;
 
-        if ($this->reader->usecourse==0) {
+        // cache this course id
+        $this->targetcourseid = $courseid;
+
+        if ($set_reader && $this->reader->usecourse==0) {
             $this->reader->usecourse = $courseid;
             $DB->update_record('reader', $this->reader);
         }
 
-        if ($set_config) {
+        if ($set_config && get_config('reader', 'usecourse')==0) {
             set_config('usecourse', $courseid, 'reader');
         }
     }
@@ -622,54 +654,103 @@ class reader_downloader {
     public function get_quiz_courseid($numsections=1) {
         global $DB;
 
-        if ($courseid = $this->reader->usecourse) {
+        // course id is cached
+        if ($courseid = $this->targetcourseid) {
             return $courseid;
         }
 
+        // course id specified in input form
+        if ($courseid = optional_param('targetcourseid', 0, PARAM_INT)) {
+            if ($this->can_manage_course($courseid)) {
+                $this->set_quiz_courseid($courseid);
+                return $courseid;
+            }
+        }
+
+        // course id specified by this reader activity
+        if ($courseid = $this->reader->usecourse) {
+            if ($this->can_manage_course($courseid)) {
+                return $courseid;
+            }
+        }
+
+        // course id specified by site config settings
         if ($courseid = get_config('reader', 'usecourse')) {
-            $this->set_quiz_courseid($courseid);
-            return $courseid;
+            if ($this->can_manage_course($courseid)) {
+                $this->set_quiz_courseid($courseid);
+                return $courseid;
+            }
         }
 
         // get default name for Reader quiz course
         $coursename = get_string('defaultcoursename', 'reader');
 
+        // course with default Reader course name
         if ($courseid = $DB->get_field('course', 'id', array('fullname' => $coursename, 'shortname' => $coursename))) {
-            $this->set_quiz_courseid($courseid, true);
-            return $courseid;
+            if ($this->can_manage_course($courseid)) {
+                $this->set_quiz_courseid($courseid, true);
+                return $courseid;
+            }
         }
 
         // otherwise we create a new course to hold the quizzes
 
-        // get the first valid $category_id
-        $category_list = array();
-        $category_parents = array();
-        make_categories_list($category_list, $category_parents);
-        list($category_id, $category_name) = each($category_list);
+        // check user is allowed to create new courses
+        $context = reader_get_context(CONTEXT_SYSTEM);
+        if (has_capability('moodle/course:create', $context)) {
 
-        // setup new course
-        $course = (object)array(
-            'category'      => $category_id, // crucial !!
-            'fullname'      => $coursename,
-            'shortname'     => $coursename,
-            'summary'       => '',
-            'summaryformat' => FORMAT_PLAIN, // plain text
-            'format'        => 'topics',
-            'newsitems'     => 0,
-            'startdate'     => time(),
-            'visible'       => 0, // hidden
-            'numsections'   => $numsections
-        );
+            // get a first valid $category_id
+            $category_list = array();
+            $category_parents = array();
+            make_categories_list($category_list, $category_parents);
+            list($category_id, $category_name) = each($category_list);
 
-        // create new course
-        $course = create_course($course);
+            // setup new course
+            $course = (object)array(
+                'category'      => $category_id, // crucial !!
+                'fullname'      => $coursename,
+                'shortname'     => $coursename,
+                'summary'       => '',
+                'summaryformat' => FORMAT_PLAIN, // plain text
+                'format'        => 'topics',
+                'newsitems'     => 0,
+                'startdate'     => time(),
+                'visible'       => 0, // hidden
+                'numsections'   => $numsections
+            );
 
-        // save new course id
-        $this->set_quiz_courseid($course->id, true);
+            // create new course
+            $course = create_course($course);
 
-        // return new course id
-        return $course->id;
+            // save new course id
+            $this->set_quiz_courseid($course->id, true);
 
+            // return new course id
+            return $course->id;
+        }
+
+        // we should be able to restore into the current course
+        if ($courseid = $this->reader->course) {
+            if ($this->can_manage_course($courseid)) {
+                $this->set_quiz_courseid($courseid);
+                return $courseid;
+            }
+        }
+
+        // this user is not allowed to create new courses
+        // or add stuff to the current course, so abort
+        throw new moodle_exception('cannotcreatecourse', 'reader');
+    }
+
+    /**
+     * can_manage_course
+     *
+     * @param integer $courseid
+     * @todo Finish documenting this function
+     */
+    public function can_manage_course($courseid) {
+        $context = reader_get_context(CONTEXT_COURSE, $courseid);
+        return has_capability('moodle/course:manageactivities', $context);
     }
 
     /**
@@ -679,6 +760,9 @@ class reader_downloader {
      * @todo Finish documenting this function
      */
     public function create_sectionname($book) {
+        if (empty($book)) {
+            return '';
+        }
         if ($book->level=='' || $book->level=='--' || $book->level=='No Level') {
             return $book->publisher;
         } else {
@@ -691,27 +775,29 @@ class reader_downloader {
      *
      * @uses $DB
      * @param xxx $courseid where Reader quizzes are stored
-     * @param xxx $book recently added/modified book
-     * @param xxx $sectiontype (optional, default=0)
-     * @param xxx $sectionid (optional, default=0)
+     * @param xxx $book (optional, default="") recently added/modified book
      * @return xxx
      * @todo Finish documenting this function
      */
-    public function get_quiz_sectionnum($courseid, $book, $sectiontype=0, $sectionid=0) {
+    public function get_quiz_sectionnum($courseid, $book='') {
         global $DB;
 
+        // use cached sectionnum, if possible
+        if ($sectionnum = $this->targetsectionnum) {
+            return $sectionnum;
+        }
+
+        // get expected section name
         $sectionname = $this->create_sectionname($book);
 
-        $sectionnum = 0;
+        $sectiontype = optional_param('targetsectiontype', 0, PARAM_INT);
         switch ($sectiontype) {
 
             case self::SECTIONTYPE_BOTTOM:
                 $params = array('course' => $courseid);
                 if ($coursesections = $DB->get_records('course_sections', $params, 'section DESC', '*', 0, 1)) {
                     $coursesection = reset($coursesections);
-                    if ($coursesection->name == $sectionname) {
-                        $sectionnum = $coursesection->section;
-                    }
+                    $sectionnum = $coursesection->section;
                 }
                 break;
 
@@ -727,9 +813,13 @@ class reader_downloader {
 
             case self::SECTIONTYPE_SPECIFIC:
             default: // shouldn't happen !!
-                $params = array('course' => $courseid, 'section' => $section);
-                if ($coursesection = $DB->get_record('course_sections', $params)) {
-                    $sectionnum = $coursesection->section;
+                if ($sectionnum = optional_param('targetsectionnum', 0, PARAM_INT)) {
+                    $params = array('course' => $courseid, 'section' => $sectionnum);
+                    if ($coursesection = $DB->get_record('course_sections', $params)) {
+                        $sectionnum = $coursesection->section;
+                    } else {
+                        $sectionnum = 0;
+                    }
                 }
                 break;
         }
@@ -771,6 +861,9 @@ class reader_downloader {
         if ($sectionnum > reader_get_numsections($courseid)) {
             reader_set_numsections($courseid, $sectionnum);
         }
+
+        // cache this section number
+        $this->targetsectionnum = $sectionnum;
 
         return $sectionnum;
     }
