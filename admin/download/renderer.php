@@ -50,8 +50,115 @@ class mod_reader_admin_download_renderer extends mod_reader_admin_renderer {
      */
     public function form_js_start() {
         $js = '';
+        $js .= $this->ajax_request_js();
         $js .= $this->check_boxes_js();
         $js .= $this->showhide_js_start();
+        return $js;
+    }
+
+    /**
+     * ajax_request_js
+     *
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function ajax_request_js() {
+        global $CFG;
+        $js = '';
+
+        static $done = false;
+        if ($done==false) {
+            $done = true;
+
+            $js .= '<script type="text/javascript">'."\n";
+            $js .= "//<![CDATA[\n";
+
+            $js .= "function RDR_request(url, targetids, callback) {\n";
+            $js .= "    url = url.replace(new RegExp('&amp;', 'g'), '&');\n";
+
+            $js .= "    if (typeof(targetids)=='string') {\n";
+            $js .= "        targetids = targetids.split(',');\n";
+            $js .= "    }\n";
+
+            $js .= "    var i_max = targetids.length;\n";
+            $js .= "    for (var i=0; i<i_max; i++) {\n";
+            $js .= "        var obj = document.getElementById(targetids[i]);\n";
+            $js .= "    	if (obj) {\n";
+            $js .= "            obj.innerHTML = (i ? '' : '".'<img src="'.$CFG->wwwroot.'/pix/i/ajaxloader.gif" alt="loading ..." />'."');\n";
+            $js .= "    	    obj = null;\n";
+            $js .= "    	}\n";
+            $js .= "    }\n";
+
+            $js .= "    window.RDR_xmlhttp = false;\n";
+            $js .= "    if (window.XMLHttpRequest) {\n"; // modern browser (incl. IE7+)
+            $js .= "        RDR_xmlhttp = new XMLHttpRequest();\n";
+            $js .= "    } else if (window.ActiveXObject) {\n"; // IE6, IE5
+            $js .= "        RDR_xmlhttp = new ActiveXObject('Microsoft.XMLHTTP');\n";
+            $js .= "    }\n";
+
+            $js .= "    if (RDR_xmlhttp) {\n";
+            $js .= "        if (callback) {\n";
+            $js .= "            RDR_xmlhttp.onreadystatechange = eval(callback);\n";
+            $js .= "        } else {\n";
+            $js .= "            RDR_xmlhttp.onreadystatechange = function() {\n";
+            $js .= "                RDR_response(url, targetids);\n";
+            $js .= "            }\n";
+            $js .= "        }\n";
+            $js .= "        RDR_xmlhttp.open('GET', url, true);\n";
+            $js .= "        RDR_xmlhttp.send(null);\n";
+            $js .= "    }\n";
+            $js .= "}\n";
+
+            $js .= "function RDR_response(url, targetids) {\n";
+            $js .= "    if (RDR_xmlhttp.readyState==4) {\n";
+
+            $js .= "        if (typeof(targetids)=='string') {\n";
+            $js .= "            targetids = targetids.split(',');\n";
+            $js .= "        }\n";
+
+            $js .= "        var i_max = targetids.length;\n";
+            $js .= "        for (var i=0; i<i_max; i++) {\n";
+            $js .= "            var obj = document.getElementById(targetids[i]);\n";
+            $js .= "            if (obj) {\n";
+            $js .= "                if (RDR_xmlhttp.status==200) {\n";
+            $js .= "                    obj.innerHTML = RDR_xmlhttp.responseText;\n";
+            $js .= "                } else {\n";
+            $js .= "                    obj.innerHTML = (i ? '' : 'Error: ' + RDR_xmlhttp.status);\n";
+            $js .= "                }\n";
+            $js .= "                obj = null;\n";
+            $js .= "            }\n";
+            $js .= "        }\n";
+            $js .= "    }\n";
+            $js .= "}\n";
+
+            $js .= "function RDR_get_id() {\n";
+            $js .= "    return location.href.replace(new RegExp('^.*?id=([0-9]+).*\$'), '$1');\n";
+            $js .= "}\n";
+
+            $js .= "function RDR_set_sectionnums() {\n";
+            $js .= "    var courseid = document.getElementById('menutargetcourseid');\n";
+            $js .= "    if (courseid) {\n";
+            $js .= "        courseid = courseid.options[courseid.selectedIndex].value;\n";
+            $js .= "    }\n";
+            $js .= "    var sectiontype = document.getElementById('menutargetsectiontype');\n";
+            $js .= "    if (sectiontype) {\n";
+            $js .= "        sectiontype = sectiontype.options[sectiontype.selectedIndex].value;\n";
+            $js .= "    }\n";
+            $js .= "    var sectionnum = document.getElementById('targetsectionnum');\n";
+            $js .= "    if (sectionnum) {\n";
+            $js .= "        if (sectiontype==".reader_downloader::SECTIONTYPE_SPECIFIC.") {\n";
+            $js .= "            var url = '".$CFG->wwwroot."/mod/reader/admin/download.js.php';\n";
+            $js .= "            url += '?targetcourseid=' + courseid + '&id=' + RDR_get_id();\n";
+            $js .= "            RDR_request(url, 'targetsectionnum');\n";
+            $js .= "        } else {\n";
+            $js .= "            sectionnum.innerHTML = '';\n";
+            $js .= "        }\n";
+            $js .= "    }\n";
+            $js .= "}\n";
+
+            $js .= "//]]>\n";
+            $js .= '</script>'."\n";
+        }
         return $js;
     }
 
@@ -911,19 +1018,21 @@ class mod_reader_admin_download_renderer extends mod_reader_admin_renderer {
             $courses = get_user_courses_bycap($USER->id, $capability, $access, true);
         }
 
-        $menu = array();
+        $courseids = array();
         if ($courses) {
             foreach ($courses as $course) {
                 if ($course->id==SITEID) {
                     continue;
                 }
-                $menu[$course->id] = $course->shortname;
+                $courseids[$course->id] = $course->shortname;
             }
+            unset($courses);
         }
-        unset($courses);
 
-        $menu = html_writer::select($menu, 'targetcourseid', $courseid, null);
-        return html_writer::tag('p', html_writer::tag('span', get_string('targetcourse', 'reader').': ').$menu);
+        $courseids = html_writer::select($courseids, 'targetcourseid', $courseid, null, array('onchange' => 'RDR_set_sectionnums()'));
+        $courseids = html_writer::tag('span', $courseids, array('id' => 'targetcourseid'));
+
+        return html_writer::tag('p', html_writer::tag('span', get_string('targetcourse', 'reader').': ').$courseids);
     }
 
     /**
@@ -939,35 +1048,40 @@ class mod_reader_admin_download_renderer extends mod_reader_admin_renderer {
         $courseid = $downloader->get_quiz_courseid();
         $sectionnum = $downloader->get_quiz_sectionnum($courseid);
 
-        $types = array(
-            reader_downloader::SECTIONTYPE_BOTTOM   => get_string('sectiontypebottom',   'reader'),
+        $sectiontype = reader_downloader::SECTIONTYPE_SORTED; // default
+        $sectiontype = optional_param('targetsectiontype', $sectiontype, PARAM_INT);
+
+        $sectiontypes = array(
+            reader_downloader::SECTIONTYPE_NEW      => get_string('sectiontypenew',      'reader'),
             reader_downloader::SECTIONTYPE_SORTED   => get_string('sectiontypesorted',   'reader'),
-            reader_downloader::SECTIONTYPE_SPECIFIC => get_string('sectiontypespecific', 'reader')
+            reader_downloader::SECTIONTYPE_SPECIFIC => get_string('sectiontypespecific', 'reader'),
+            reader_downloader::SECTIONTYPE_LAST     => get_string('sectiontypelast',     'reader'),
         );
 
-        $menu = array();
-        if ($courseid) {
+        $sectionnums = array();
+        if ($courseid && $sectiontype==reader_downloader::SECTIONTYPE_SPECIFIC) {
             $select = "course = ? AND section > ? AND name NOT IN (?, ?)";
             $params = array($courseid, 0, 'Extra Points', '');
             if ($sections = $DB->get_records_select('course_sections', $select, $params, 'section')) {
                 foreach ($sections as $section) {
-                    $menu[$section->section] = $section->name;
+                    $sectionnums[$section->section] = $section->name;
                 }
+                unset($sections);
             }
-            unset($sections);
         }
 
-        if (empty($menu)) {
-            $menu = '';
-            unset($types[reader_downloader::SECTIONTYPE_SPECIFIC]);
+        if (empty($sectionnums)) {
+            $sectionnums = '';
+            //unset($sectiontypes[reader_downloader::SECTIONTYPE_SPECIFIC]);
         } else {
-            $menu = html_writer::select($menu, 'targetsectionnum', $sectionnum, null);
+            $params = array('class' => 'targetsectionnum');
+            $sectionnums = html_writer::select($sectionnums, 'targetsectionnum', $sectionnum, null, $params);
         }
+        $sectionnums = html_writer::tag('span', $sectionnums, array('id' => 'targetsectionnum'));
 
-        $sectiontype = reader_downloader::SECTIONTYPE_SORTED; // default
-        $sectiontype = optional_param('targetsectiontype', $sectiontype, PARAM_INT);
-        $types = html_writer::select($types, 'targetsectiontype', $sectiontype, null);
+        $sectiontypes = html_writer::select($sectiontypes, 'targetsectiontype', $sectiontype, null, array('onchange' => 'RDR_set_sectionnums()'));
+        $sectiontypes = html_writer::tag('span', $sectiontypes, array('id' => 'targetsectiontype'));
 
-        return html_writer::tag('p', html_writer::tag('span', get_string('targetsection', 'reader').': ').$types.' '.$menu);
+        return html_writer::tag('p', html_writer::tag('span', get_string('targetsection', 'reader').': ').$sectiontypes.' '.$sectionnums);
     }
 }

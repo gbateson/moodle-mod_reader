@@ -39,7 +39,14 @@
 #page-mod-reader-admin-download ul.remotesites li,
 #page-mod-reader-admin-download ul.publishers li,
 #page-mod-reader-admin-download ul.levels li,
-#page-mod-reader-admin-download ul.items li { margin-left: 6px; padding-left: 6px; }
+#page-mod-reader-admin-download ul.items li { list-style-type: none; margin-left: 6px; padding-left: 6px; }
+
+/** for Moodle 2.0 **
+#page-mod-reader-admin-download ul li span.downloadeditems,
+#page-mod-reader-admin-download ul li input[type=checkbox],
+#page-mod-reader-admin-download ul li span.downloadeditems,
+#page-mod-reader-admin-download ul li input[type=radio] { margin-right: 7px; }
+*/
 
 #page-mod-reader-admin-download span.publishername { font-weight: bold; }
 #page-mod-reader-admin-download span.itemcount { font-style: italic; font-size: 0.9em; }

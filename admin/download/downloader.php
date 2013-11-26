@@ -53,9 +53,10 @@ class reader_downloader {
     *
     * @const integer
     */
-    const SECTIONTYPE_BOTTOM   = 1;
-    const SECTIONTYPE_SORTED   = 2;
-    const SECTIONTYPE_SPECIFIC = 3;
+    const SECTIONTYPE_LAST     = 1;
+    const SECTIONTYPE_NEW      = 2;
+    const SECTIONTYPE_SORTED   = 3;
+    const SECTIONTYPE_SPECIFIC = 4;
     /**#@-*/
 
     /** sites from which we can download */
@@ -786,6 +787,7 @@ class reader_downloader {
         if ($sectionnum = $this->targetsectionnum) {
             return $sectionnum;
         }
+        $cache = false;
 
         // get expected section name
         $sectionname = $this->create_sectionname($book);
@@ -793,12 +795,17 @@ class reader_downloader {
         $sectiontype = optional_param('targetsectiontype', 0, PARAM_INT);
         switch ($sectiontype) {
 
-            case self::SECTIONTYPE_BOTTOM:
+            case self::SECTIONTYPE_LAST:
                 $params = array('course' => $courseid);
                 if ($coursesections = $DB->get_records('course_sections', $params, 'section DESC', '*', 0, 1)) {
                     $coursesection = reset($coursesections);
                     $sectionnum = $coursesection->section;
+                    $cache = true;
                 }
+                break;
+
+            case self::SECTIONTYPE_NEW:
+                $cache = true;
                 break;
 
             case 0:
@@ -817,6 +824,7 @@ class reader_downloader {
                     $params = array('course' => $courseid, 'section' => $sectionnum);
                     if ($coursesection = $DB->get_record('course_sections', $params)) {
                         $sectionnum = $coursesection->section;
+                        $cache = true;
                     } else {
                         $sectionnum = 0;
                     }
@@ -863,7 +871,9 @@ class reader_downloader {
         }
 
         // cache this section number
-        $this->targetsectionnum = $sectionnum;
+        if ($cache) {
+            $this->targetsectionnum = $sectionnum;
+        }
 
         return $sectionnum;
     }
