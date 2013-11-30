@@ -37,7 +37,7 @@ $module->version   = 2013113006;
 
 if (defined('ANY_VERSION')) {
     // Moodle >= 2.2
-    $plugin->dependencies = array('qtype_ordering' => ANY_VERSION);
+    $module->dependencies = array('qtype_ordering' => ANY_VERSION);
 } else if (isset($CFG) && ! file_exists($CFG->dirroot.'/question/type/ordering')) {
     // Moodle <= 2.1
     // installing new site: upgrade_plugins() in "lib/upgradelib.php"
