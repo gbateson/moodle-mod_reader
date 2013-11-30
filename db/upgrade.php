@@ -100,11 +100,55 @@ function xmldb_reader_upgrade($oldversion) {
 
     $newversion = 2013033105;
     if ($result && $oldversion < $newversion) {
-        xmldb_reader_check_stale_files();
+
+        ////////////////////////////////////////////////////////
+        // fix the "quizid" field in the "reader_attempts" table
+        ////////////////////////////////////////////////////////
+        // it currently contains an id from "reader_books"
+        // so we create a new "bookid" field, copy "quizid",
+        // then set correct "quizid", and remove "bookid"
+
+        $table = new xmldb_table('reader_attempts');
+        $field = new xmldb_field('bookid', XMLDB_TYPE_INTEGER, '11');
+        $index = new xmldb_index('bookid_key', XMLDB_INDEX_NOTUNIQUE, array('bookid'));
+
+        // add "bookid" field and index
+        if (! $dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+        if (! $dbman->index_exists($table, $index)) {
+            $dbman->add_index($table, $index);
+        }
+
+        // copy "bookid" to "quizid"
+        $DB->execute('UPDATE {reader_attempts} SET bookid = quizid');
+        $DB->execute('UPDATE {reader_attempts} SET quizid = 0');
+
+        // transfer correct "quizid" from "reader_books" table
+        if ($DB->get_dbfamily()=='mysql') {
+            $DB->execute('UPDATE {reader_attempts} ra JOIN {reader_books} rb ON ra.bookid = rb.id SET ra.quizid = rb.quizid');
+        } else {
+            $DB->execute('UPDATE {reader_attempts} SET ra.quizid = (SELECT rb.quizid FROM {reader_books} rb WHERE ra.bookid = rb.id)');
+        }
+
+        // drop "bookid" index and field
+        if ($dbman->index_exists($table, $index)) {
+            $dbman->drop_index($table, $index);
+        }
+        if ($dbman->field_exists($table, $field)) {
+            $dbman->drop_field($table, $field);
+        }
+
         upgrade_mod_savepoint(true, "$newversion", 'reader');
     }
 
     $newversion = 2013033106;
+    if ($result && $oldversion < $newversion) {
+        xmldb_reader_check_stale_files();
+        upgrade_mod_savepoint(true, "$newversion", 'reader');
+    }
+
+    $newversion = 2013033107;
     if ($result && $oldversion < $newversion) {
         // fix incorrectly set version of "readerview" block (it is one digit too long !)
         $DB->set_field('block', 'version', 2012011910, array('name'=>'readerview', 'version'=>'20120119101'));
@@ -392,6 +436,14 @@ function xmldb_reader_upgrade($oldversion) {
                 $keepoldquizzes = optional_param('keepoldquizzes', null, PARAM_INT);
             } else {
                 $keepoldquizzes = 0; // disable on sites not using the Reader module
+            }
+        }
+
+        // if this is not an interactive upgrade (i.e. a CLI upgrade) and
+        // $keepoldquizzes is not set, then assume it is disabled and continue
+        if ($keepoldquizzes===null || $keepoldquizzes===false || $keepoldquizzes==='') {
+            if (xmldb_reader_interactive()==false) {
+                $keepoldquizzes = 0;
             }
         }
 

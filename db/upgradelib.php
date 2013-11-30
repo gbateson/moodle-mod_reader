@@ -2770,7 +2770,7 @@ function xmldb_reader_merge_tables(&$dbman, $oldname, $newname) {
  * @todo Finish documenting this function
  */
 function xmldb_reader_interactive() {
-    if (defined('CLI_SCRIPT') && isset($GLOBALS['interactive'])) {
+    if (defined('STDIN') && defined('CLI_SCRIPT') && isset($GLOBALS['interactive'])) {
         // $interactive variable is set in "admin/cli/upgrade.php"
         return $GLOBALS['interactive'];
     } else {
