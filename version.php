@@ -31,10 +31,16 @@ defined('MOODLE_INTERNAL') || die();
 $module->cron      = 3600;
 $module->component = 'mod_reader';
 $module->maturity  = MATURITY_BETA; // ALPHA=50, BETA=100, RC=150, STABLE=200
-$module->release   = '2013-11-19 (05)';
-$module->version   = 2013111905;
 $module->requires  = 2010112400; // Moodle 2.0
+$module->release   = '2013-11-30 (06)';
+$module->version   = 2013113006;
 
 if (defined('ANY_VERSION')) {
-    $module->dependencies = array('qtype_ordering' => ANY_VERSION);
+    // Moodle >= 2.2
+    $plugin->dependencies = array('qtype_ordering' => ANY_VERSION);
+} else if (isset($CFG) && ! file_exists($CFG->dirroot.'/question/type/ordering')) {
+    // Moodle <= 2.1
+    // installing new site: upgrade_plugins() in "lib/upgradelib.php"
+    // admin just logged in: moodle_needs_upgrading() in "lib/moodlelib.php"
+    throw new moodle_exception('requireqtypeordering', 'reader', new moodle_url('/admin/index.php'), $CFG->dirroot);
 }

@@ -297,6 +297,7 @@ $string['reportquiztoreader'] = 'Summary Report by Student';
 $string['reportuserdetailed'] = 'Students (full)';
 $string['reportusersummary'] = 'Students (summary)';
 $string['reportwordspoints'] = 'Report';
+$string['requireqtypeordering'] = 'The Reader activity module cannot be installed or updated because the Ordering question type is missing. Please download the Ordering question type, put it at {$a}/question/type/ordering, and reload this page.';
 $string['restoredeletedattempt'] = 'Restore deleted attempt';
 $string['returntocoursepage'] = 'Return to Course Page';
 $string['returntostudentlist'] = 'Return to Student List';
