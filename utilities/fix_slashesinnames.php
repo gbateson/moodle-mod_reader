@@ -58,6 +58,68 @@ if ($books = $DB->get_records ('reader_books')) {
     }
 }
 
+if (! $reader_usecourse = get_config('reader', 'usecourse')) {
+    $params = array('fullname' => 'Reader Quizzes', 'visible' => 0);
+    if (! $reader_usecourse = $DB->get_field('course', 'id', $params)) {
+        // look for external "usecourse" in Reader activities
+        $select = 'r.id, r.course, r.usecourse, c.id AS courseid, c.visible';
+        $from   = '{reader} r LEFT JOIN {course} c ON r.usecourse = c.id';
+        $where  = 'r.usecourse IS NOT NULL AND r.course <> r.usecourse AND c.id IS NOT NULL AND c.visible=0';
+        $reader_usecourses = array();
+        if ($readers = $DB->get_records_sql("SELECT $select FROM $from WHERE $where")) {
+            $reader = reset($readers);
+            $reader_usecourse = $reader->usecourse;
+        }
+    }
+}
+
+// get reader course activity contexts
+if ($reader_usecourse) {
+    $coursecontext  = reader_get_context(CONTEXT_COURSE, $reader_usecourse);
+    $select         = '(contextlevel = ? AND path = ?) OR (contextlevel = ? AND '.$DB->sql_like('path', '?').')';
+    $params         = array(CONTEXT_COURSE, $coursecontext->path, CONTEXT_MODULE, $coursecontext->path.'/%');
+    $modulecontexts = $DB->get_records_select('context', $select, $params);
+} else {
+    $modulecontexts = null;
+}
+
+// get question categories for Reader course activities
+if (is_array($modulecontexts) && count($modulecontexts)) {
+    list($select, $params) = $DB->get_in_or_equal(array_keys($modulecontexts));
+    $categories = $DB->get_records_select('question_categories', 'contextid '.$select, $params);
+} else {
+    $categories = null;
+}
+
+// check Reader question categories
+if (is_array($categories) && count($categories)) {
+    foreach ($categories as $category) {
+        $msg = '';
+        // remove slashes from category name
+        if (strpos($category->name, '\\') !== false) {
+            $msg = '<span style="color: brown;">FIX</span> slashes in category name: '.$category->name.'';
+            $DB->set_field('question_categories', 'name', stripslashes($category->name), array('id' => $category->id));
+        }
+        // fix case of category name
+        if ($category->name=='ordering' || $category->name=='ORDERING') {
+            $msg = '<span style="color: brown;">FIX</span> category name: '.$category->name.' =&gt; Ordering';
+            $DB->set_field('question_categories', 'name', 'Ordering', array('id' => $category->id));
+        }
+        // remove slashes from category info
+        if (strpos($category->info, '\\') !== false) {
+            $msg = '<span style="color: brown;">FIX</span> slashes in category info: '.$category->info.'';
+            $DB->set_field('question_categories', 'info', stripslashes($category->info), array('id' => $category->id));
+        }
+        if ($msg) {
+            if ($startedlist==false) {
+                $startedlist = true;
+                echo "<ul>\n";
+            }
+            echo "<li>..$msg</li>\n";
+        }
+    }
+}
+
 if ($startedlist) {
     echo "</ul>\n";
 } else {

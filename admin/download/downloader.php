@@ -44,12 +44,33 @@ class reader_downloader {
     *
     * @const integer
     */
-    const BOOKS_WITH_QUIZZES    = 1;
     const BOOKS_WITHOUT_QUIZZES = 0;
+    const BOOKS_WITH_QUIZZES    = 1;
     /**#@-*/
 
     /**#@+
-    * values for section $type
+    * values for download $mode
+    *
+    * @const integer
+    */
+    const NORMAL_MODE           = 0;
+    const REPAIR_MODE           = 1;
+    /**#@-*/
+
+    /**#@+
+    * values for $targetcoursetype
+    *
+    * @const integer
+    */
+    const COURSETYPE_ALL        = 0;
+    const COURSETYPE_HIDDEN     = 1;
+    const COURSETYPE_VISIBLE    = 2;
+    const COURSETYPE_CURRENT    = 3;
+    const COURSETYPE_NEW        = 4;
+    /**#@-*/
+
+    /**#@+
+    * values for $targetsectiontype
     *
     * @const integer
     */
@@ -80,12 +101,17 @@ class reader_downloader {
     /**#@-*/
 
     /**#@+
-    * target course id and section number
+    * form parameters and their default values
     *
     * @var integer
     */
-    public $targetcourseid = 0;
-    public $targetsectionnum = 0;
+    public $targetcategoryid  =  0;
+    public $targetcoursetype  =  0;
+    public $targetcourseid    =  0;
+    public $targetcoursetext  = '';
+    public $targetsectiontype =  0;
+    public $targetsectiontext = '';
+    public $targetsectionnum  =  0;
     /**#@-*/
 
     /** download progress bar */
@@ -127,13 +153,17 @@ class reader_downloader {
      *
      * @uses $DB
      * @param xxx $type
+     * @param xxx $mode
      * @param xxx $r (optional, default=0)
      * @todo Finish documenting this function
      */
-    public function get_downloaded_items($type, $r=0) {
+    public function get_downloaded_items($type, $mode, $r=0) {
         global $CFG, $DB;
 
         $this->downloaded[$r] = new reader_items();
+
+        // cache $isrepairmode flag
+        $isrepairmode = ($mode==reader_downloader::REPAIR_MODE);
 
         $booktable = $this->get_book_table($type);
         if ($records = $DB->get_records($booktable, null, 'publisher,level,name')) {
@@ -143,7 +173,16 @@ class reader_downloader {
                 $publisher = $record->publisher;
                 $level     = $record->level;
                 $itemname  = $record->name;
-                $time      = (empty($record->time) ? 0 : $record->time);
+
+                if ($isrepairmode) {
+                    $time = 0;
+                } else if ($record->time) {
+                    $time = $record->time;
+                } else {
+                    // get $time this book was last updated by checking
+                    // the "last modified" time on the book's image file
+                    $time = $this->get_imagefile_time($record->image);
+                }
 
                 // ensure the $downloaded array has the required structure
                 if (! isset($this->downloaded[$r]->items[$publisher])) {
@@ -151,12 +190,6 @@ class reader_downloader {
                 }
                 if (! isset($this->downloaded[$r]->items[$publisher]->items[$level])) {
                     $this->downloaded[$r]->items[$publisher]->items[$level] = new reader_items();
-                }
-
-                if ($time==0) {
-                    // get $time this book was last updated by checking
-                    // the "last modified" time on the book's image file
-                    $time = $this->get_imagefile_time($record->image);
                 }
 
                 // record the time this item was last updated
@@ -367,16 +400,16 @@ class reader_downloader {
                 continue;
             }
 
-            $titletext = $publisher;
+            $publisherlevel = $publisher;
             if ($level=='' || $level=='--' || $level=='No Level') {
                 // do nothing
             } else {
-                $titletext .= " - $level";
+                $publisherlevel .= " - $level";
             }
-            $titlehtml = html_writer::tag('span', $titletext, array('style' => 'font-weight: normal')).
+            $titlehtml = html_writer::tag('span', $publisherlevel, array('style' => 'font-weight: normal')).
                          html_writer::empty_tag('br').
                          html_writer::tag('span', $name, array('style' => 'white-space: nowrap'));
-            $titletext .= ": $name";
+            $titletext = "$publisherlevel: $name";
 
             if ($show_memory) {
                 $memory_usage = memory_get_usage();
@@ -497,7 +530,7 @@ class reader_downloader {
 
                         list($cheatsheeturl, $strcheatsheet) = reader_cheatsheet_init('takequiz');
                         if ($cheatsheeturl) {
-                            $link .= ' '.reader_cheatsheet_link($cheatsheeturl, $strcheatsheet, $titletext, $book);
+                            $link .= ' '.reader_cheatsheet_link($cheatsheeturl, $strcheatsheet, $publisherlevel, $book);
                         }
 
                         if ($book->quizid==0) {
@@ -624,15 +657,35 @@ class reader_downloader {
      *
      * @uses $DB
      * @param integer $courseid
+     * @param boolean $coursetype (optional, default=0)
+     * @param boolean $categoryid (optional, default=0)
      * @param boolean $set_reader (optional, default=false)
      * @param boolean $set_config (optional, default=false)
      * @todo Finish documenting this function
      */
-    public function set_quiz_courseid($courseid, $set_reader=false, $set_config=false) {
+    public function set_quiz_courseid($courseid, $coursetype=0, $categoryid=0, $set_reader=false, $set_config=false) {
         global $DB;
 
         // cache this course id
         $this->targetcourseid = $courseid;
+
+        // cache this course type
+        if ($coursetype) {
+            $this->targetcoursetype = $coursetype;
+        } else if ($courseid==$this->reader->course) {
+            $this->targetcoursetype = self::COURSETYPE_CURRENT; // 3
+        } else if ($DB->get_field('course', 'visible', array('id' => $courseid))) {
+            $this->targetcoursetype = self::COURSETYPE_VISIBLE; // 2
+        } else {
+            $this->targetcoursetype = self::COURSETYPE_HIDDEN;  // 1
+        }
+
+        // cache this category id
+        if ($categoryid) {
+            $this->targetcategoryid = $categoryid;
+        } else {
+            $this->targetcategoryid = $DB->get_field('course', 'category', array('id' => $courseid));
+        }
 
         if ($set_reader && $this->reader->usecourse==0) {
             $this->reader->usecourse = $courseid;
@@ -642,6 +695,59 @@ class reader_downloader {
         if ($set_config && get_config('reader', 'usecourse')==0) {
             set_config('usecourse', $courseid, 'reader');
         }
+    }
+
+    /**
+     * get_course_categoryid
+     *
+     * @uses $DB
+     * @param integer $numsections (optional, default=1)
+     * @return integer $courseid
+     * @todo Finish documenting this function
+     */
+    public function get_course_categoryid() {
+        global $DB;
+
+        // category id is cached
+        if ($categoryid = $this->targetcategoryid) {
+            return $categoryid;
+        }
+
+        // derive categoryid from courseid
+        if ($courseid = $this->get_quiz_courseid()) {
+            if ($categoryid = $this->targetcategoryid) {
+                return $this->targetcategoryid;
+            }
+        }
+
+        return 0; // shoudn't happen !!
+    }
+
+
+    /**
+     * get_quiz_coursetype
+     *
+     * @uses $DB
+     * @param integer $numsections (optional, default=1)
+     * @return integer $courseid
+     * @todo Finish documenting this function
+     */
+    public function get_quiz_coursetype() {
+        global $DB;
+
+        // course type is cached
+        if ($coursetype = $this->targetcoursetype) {
+            return $coursetype;
+        }
+
+        // derive coursetype from courseid
+        if ($courseid = $this->get_quiz_courseid()) {
+            if ($coursetype = $this->targetcoursetype) {
+                return $this->targetcoursetype;
+            }
+        }
+
+        return 0; // shoudn't happen !!
     }
 
     /**
@@ -671,6 +777,7 @@ class reader_downloader {
         // course id specified by this reader activity
         if ($courseid = $this->reader->usecourse) {
             if ($this->can_manage_course($courseid)) {
+                $this->set_quiz_courseid($courseid);
                 return $courseid;
             }
         }
@@ -689,7 +796,7 @@ class reader_downloader {
         // course with default Reader course name
         if ($courseid = $DB->get_field('course', 'id', array('fullname' => $coursename, 'shortname' => $coursename))) {
             if ($this->can_manage_course($courseid)) {
-                $this->set_quiz_courseid($courseid, true);
+                $this->set_quiz_courseid($courseid, 0, 0, true);
                 return $courseid;
             }
         }
@@ -697,18 +804,28 @@ class reader_downloader {
         // otherwise we create a new course to hold the quizzes
 
         // check user is allowed to create new courses
-        $context = reader_get_context(CONTEXT_SYSTEM);
-        if (has_capability('moodle/course:create', $context)) {
+        // in the target category
+        if ($categoryid = $this->targetcategoryid) {
+            if (! $this->can_create_course($categoryid)) {
+                $categoryid = 0; // invalid category id
+            }
+        }
 
-            // get a first valid $category_id
+        // allow system admin to create courses anywhere
+        if ($categoryid==0 && $this->can_create_course()) {
             $category_list = array();
             $category_parents = array();
             make_categories_list($category_list, $category_parents);
-            list($category_id, $category_name) = each($category_list);
+            // get first valid category $categoryid (Miscellaneous)
+            list($categoryid, $category_name) = each($category_list);
+        }
+
+        // create course if allowed
+        if ($categoryid) {
 
             // setup new course
             $course = (object)array(
-                'category'      => $category_id, // crucial !!
+                'category'      => $categoryid, // crucial !!
                 'fullname'      => $coursename,
                 'shortname'     => $coursename,
                 'summary'       => '',
@@ -724,7 +841,7 @@ class reader_downloader {
             $course = create_course($course);
 
             // save new course id
-            $this->set_quiz_courseid($course->id, true);
+            $this->set_quiz_courseid($course->id, self::COURSETYPE_NEW, $categoryid, true);
 
             // return new course id
             return $course->id;
@@ -733,7 +850,7 @@ class reader_downloader {
         // we should be able to restore into the current course
         if ($courseid = $this->reader->course) {
             if ($this->can_manage_course($courseid)) {
-                $this->set_quiz_courseid($courseid);
+                $this->set_quiz_courseid($courseid, self::COURSETYPE_CURRENT);
                 return $courseid;
             }
         }
@@ -741,6 +858,21 @@ class reader_downloader {
         // this user is not allowed to create new courses
         // or add stuff to the current course, so abort
         throw new moodle_exception('cannotcreatecourse', 'reader');
+    }
+
+    /**
+     * can_create_course
+     *
+     * @param integer $categoryid (optional, default=0)
+     * @todo Finish documenting this function
+     */
+    public function can_create_course($categoryid=0) {
+        if ($categoryid) {
+            $context = reader_get_context(CONTEXT_COURSECAT, $categoryid);
+        } else {
+            $context = reader_get_context(CONTEXT_SYSTEM); // SITE context
+        }
+        return has_capability('moodle/course:create', $context);
     }
 
     /**
@@ -772,6 +904,29 @@ class reader_downloader {
     }
 
     /**
+     * get_quiz_sectiontype
+     *
+     * @uses $DB
+     * @param integer $numsections (optional, default=1)
+     * @return integer $courseid
+     * @todo Finish documenting this function
+     */
+    public function get_quiz_sectiontype() {
+
+        // get cached value, if possible
+        if ($sectiontype = $this->targetsectiontype) {
+            return $sectiontype;
+        }
+
+        // get form value
+        $sectiontype = self::SECTIONTYPE_SORTED; // default
+        $sectiontype = optional_param('sectiontype', $sectiontype, PARAM_INT);
+
+        $this->targetsectiontype = $sectiontype;
+        return $sectiontype;
+    }
+
+    /**
      * get_quiz_sectionnum
      *
      * @uses $DB
@@ -787,12 +942,14 @@ class reader_downloader {
         if ($sectionnum = $this->targetsectionnum) {
             return $sectionnum;
         }
-        $cache = false;
+
+        // get required section type
+        $sectiontype = $this->get_quiz_sectiontype();
 
         // get expected section name
         $sectionname = $this->create_sectionname($book);
 
-        $sectiontype = optional_param('targetsectiontype', 0, PARAM_INT);
+        $cache = false;
         switch ($sectiontype) {
 
             case self::SECTIONTYPE_LAST:
@@ -824,11 +981,11 @@ class reader_downloader {
                     $params = array('course' => $courseid, 'section' => $sectionnum);
                     if ($coursesection = $DB->get_record('course_sections', $params)) {
                         $sectionnum = $coursesection->section;
-                        $cache = true;
                     } else {
                         $sectionnum = 0;
                     }
                 }
+                $cache = true;
                 break;
         }
 
@@ -870,7 +1027,7 @@ class reader_downloader {
             reader_set_numsections($courseid, $sectionnum);
         }
 
-        // cache this section number
+        // cache this section type and number
         if ($cache) {
             $this->targetsectionnum = $sectionnum;
         }
@@ -1054,19 +1211,27 @@ class reader_downloader {
         if (! $deleteinstancefunction($cm->instance)) {
             throw new moodle_exception("Could not delete the $cm->modname (instance id=$cm->instance)");
         }
-        if (! delete_course_module($cm->id)) {
-            throw new moodle_exception("Could not delete the $cm->modname (coursemodule, id=$cm->id)");
-        }
-        if (! $sectionid = $DB->get_field('course_sections', 'id', array('course' => $cm->course, 'section' => $cm->sectionnum))) {
-            throw new moodle_exception("Could not get section id (course id=$cm->course, section num=$cm->sectionnum)");
-        }
-        if (! delete_mod_from_section($cm->id, $sectionid)) {
-            throw new moodle_exception("Could not delete the $cm->modname (id=$cm->id) from that section (id=$sectionid)");
+        if (function_exists('course_delete_module')) {
+            // Moodle >= 2.5
+            if (! course_delete_module($cm->id)) {
+                throw new moodle_exception("Could not delete the $cm->modname (coursemodule, id=$cm->id)");
+            }
+        } else {
+            // Moodle <= 2.4
+            if (! delete_course_module($cm->id)) {
+                throw new moodle_exception("Could not delete the $cm->modname (coursemodule, id=$cm->id)");
+            }
+            if (! $sectionid = $DB->get_field('course_sections', 'id', array('course' => $cm->course, 'section' => $cm->sectionnum))) {
+                throw new moodle_exception("Could not get section id (course id=$cm->course, section num=$cm->sectionnum)");
+            }
+            if (! delete_mod_from_section($cm->id, $sectionid)) {
+                throw new moodle_exception("Could not delete the $cm->modname (id=$cm->id) from that section (id=$sectionid)");
+            }
         }
 
         add_to_log($cm->course, 'course', 'delete mod', "view.php?id=$cm->course", "$cm->modname $cm->instance", $cm->id);
 
-        // Note: course cache was rebuilt in "delete_mod_from_section()"
+        // Note: course cache was rebuilt in "delete_mod_from_section()" or "course_delete_module()"
     }
 
     /**
@@ -1423,10 +1588,13 @@ class reader_downloader {
         global $DB;
 
         $params = array('contextid' => $category->contextid, 'name' => $category->name);
-        if ($record = $DB->get_record('question_categories', $params)) {
-            if ($record->info != $category->info) {
-                $record->info = $category->info;
-                $DB->update_record('question_categories', $record);
+        if ($records = $DB->get_records('question_categories', $params)) {
+            // we only expect one record, but there can be duplicates
+            foreach ($records as $record) {
+                if ($record->info != $category->info) {
+                    $record->info = $category->info;
+                    $DB->update_record('question_categories', $record);
+                }
             }
         } else {
             $record = (object)array(
@@ -1470,6 +1638,15 @@ class reader_downloader {
      */
     public function add_question(&$bestquestionids, &$restoreids, $categoryid, $question) {
         global $DB, $USER;
+        static $numfields = null;
+
+        // setup $numfields ($fieldname => $defaultvalue)
+        if ($numfields===null) {
+            $numfields = array('timecreated'  => time(),
+                               'timemodified' => time(),
+                               'createdby'    => $USER->id,
+                               'modifiedby'   => $USER->id);
+        }
 
         // set category id
         $question->category = $categoryid;
@@ -1494,6 +1671,15 @@ class reader_downloader {
 
         // add/update the question record
         if (isset($bestquestionids[$xmlquestionid]) && $bestquestionids[$xmlquestionid]) {
+
+            // sanity check on numeric fields
+            // e.g. "$@NULL@$" in "createdby" field
+            foreach ($numfields as $fieldname => $defaultvalue) {
+                if (! is_numeric($question->$fieldname)) {
+                    $question->$fieldname = $defaultvalue;
+                }
+            }
+
             $question->id = $bestquestionids[$xmlquestionid];
             if (! $DB->update_record('question', $question)) {
                 throw new moodle_exception(get_string('cannotupdaterecord', 'error', 'question (id='.$question->id.')'));
@@ -2312,13 +2498,15 @@ class reader_downloader {
         global $DB;
         list($table, $field) = $this->get_question_options_table('shortanswer');
         if ($options = $DB->get_record($table, array($field => $questionid))) {
-            $answers = explode(',', $options->answers);
-            foreach ($answers as $a => $answer) {
-                $answers[$a] = $restoreids->get_newid('question_answers', $answer);
+            if (isset($options->answers)) { // Moodle <= 2.4
+                $answers = explode(',', $options->answers);
+                foreach ($answers as $a => $answer) {
+                    $answers[$a] = $restoreids->get_newid('question_answers', $answer);
+                }
+                $answers = array_filter($answers);
+                $options->answers = implode(',', $answers);
+                $DB->update_record($table, $options);
             }
-            $answers = array_filter($answers);
-            $options->answers = implode(',', $answers);
-            $DB->update_record($table, $options);
         }
     }
 }

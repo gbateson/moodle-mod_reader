@@ -137,6 +137,7 @@ $string['alreadyclosed'] = 'Sorry, this activity is no longer available. It clos
 $string['attempts'] = 'Attempts';
 $string['attemptscoremanagement'] = 'Attempt and score management';
 $string['attemptsofday'] = 'Quiz for days';
+$string['availableitems'] = 'Available items';
 $string['averageduration'] = 'Average duration';
 $string['averageduration_help'] = 'The average duration of attempts at Reader quizzes';
 $string['averagefailed'] = 'Average failed';
@@ -168,8 +169,11 @@ $string['bookrating1'] = 'It was so-so';
 $string['bookrating2'] = 'It was okay';
 $string['bookrating3'] = 'It was great';
 $string['books'] = 'Books';
+$string['bookswithoutquizzes'] = 'Books without quizzes';
+$string['bookswithquizzes'] = 'Books with quizzes';
 $string['booktitle'] = 'Book title';
 $string['bookupdated'] = 'Book updated: {$a}';
+$string['cannotcreatecourse'] = 'Sorry, the download cannot proceed because you do not have permission to create a new course or edit the current course.';
 $string['cannotdownloadata'] = 'Sorry, there was a problem downloading data for the Reader module';
 $string['changeallstoppromoto'] = 'Change all Stop Promo to ';
 $string['changeallto'] = 'Change all to ';
@@ -216,6 +220,7 @@ $string['countpassed'] = 'Passed quizzes';
 $string['countrating'] = 'Number of ratings';
 $string['coursespecificquizselection'] = 'Course-specific quiz selection" to "Yes" in the module set-up screen.';
 $string['curlerror'] = 'CURL error: {$a}';
+$string['current'] = 'Current';
 $string['currentlevel'] = 'Current level';
 $string['dataallavailable'] = 'data for all {$a} book(s) is available';
 $string['dataalldownloaded'] = 'data for all {$a} book(s) has been downloaded';
@@ -232,6 +237,7 @@ $string['downloadbookswithquizzes'] = 'Download books with quizzes';
 $string['downloadedbooks'] = 'Data for the following books was downloaded:';
 $string['downloadexcel'] = 'Download Excel';
 $string['downloads'] = 'Downloads';
+$string['downloadsettings'] = 'Download settings';
 $string['duration'] = 'Duration';
 $string['editbookdetails'] = 'Edit details';
 $string['editingteacherrole'] = 'Use Editing Teacher role';
@@ -263,6 +269,7 @@ $string['fixwrongquizidinfo'] = 'The upgrade has been paused, so that you can de
 
 Please review the information below and select the quiz you wish to be associated with this book.';
 $string['goal'] = 'Goal';
+$string['hidden'] = 'Hidden';
 $string['imageadded'] = 'Image added: {$a}';
 $string['in1000sofwords'] = 'In 1000s of words';
 $string['includepublishers'] = 'Search publisher names too?';
@@ -276,6 +283,14 @@ $string['makenewquizzesavailable'] = 'Make new quizzes available in this course 
 $string['makenewquizzesavailable2'] = 'Make new quizzes available in all courses on this site [default]';
 $string['max'] = 'Less than or equal to';
 $string['min'] = 'Greater than or equal to';
+$string['mode'] = 'Mode';
+$string['mode_help'] = 'This page can be in the following two modes:
+
+**Normal**
+: In normal mode, only books whose data has not already been downloaded, or books whose data has been updated, will be available. Books for whom the most recent data has already been downloaded will not be available.
+
+**Repair**
+: In repair mode, all books are available for download. If any data has been previously downloaded, it will be overwritten by the newly downloaded data. Use this mode if you want to repair faulty quizzes or incorrect data. Note that even if quizzes are overloaded, data about students attempts at those quizzes will be retained.';
 $string['modulename_help'] = 'The Reader module allows teachers to set reading goals for students, and allows students to demonstrate they have achieved the specified reading goals.';
 $string['modulename_link'] = 'mod/reader/view';
 $string['mybooks'] = 'Only books already installed on this site';
@@ -288,12 +303,14 @@ $string['nodownloaditems'] = 'No items are available for download';
 $string['nopromote'] = 'Do not promote';
 $string['noquizzesfound'] = 'No quizzes found';
 $string['noreaders'] = 'No Reader activities found in this course';
+$string['normalmode'] = 'Normal';
 $string['nosearchresults'] = 'No books matching your search are available';
 $string['not_cheated_message'] = 'Points restored notice';
 $string['nothavepermissioncreateinstance'] = 'Sorry you do not have permission to do this';
 $string['notopenyet'] = 'Sorry, this activity is not available yet. It will open {$a}.';
 $string['numberofextrapoints'] = 'Number of extra points';
 $string['onlybookswithmorethan'] = 'Only books with more than';
+$string['pagesettings'] = 'Page settings';
 $string['passed'] = 'Passed';
 $string['passedshort'] = 'P';
 $string['percentactive'] = 'Active percent';
@@ -344,6 +361,7 @@ $string['reader:viewreports'] = 'View reports';
 $string['readerdownload'] = 'Download Reader books (and quizzes)';
 $string['readerreports'] = 'Reader module reports';
 $string['remotesitenotaccessible'] = 'Remote download site is not accessible';
+$string['repairmode'] = 'Repair';
 $string['reportbookdetailed'] = 'Books (full)';
 $string['reportbookratings'] = 'Book ratings';
 $string['reportbooksummary'] = 'Books (summary)';
@@ -351,6 +369,7 @@ $string['reportgroupsummary'] = 'Groups';
 $string['reportuserdetailed'] = 'Students (full)';
 $string['reportusersummary'] = 'Students (summary)';
 $string['reportwordspoints'] = 'Report';
+$string['requireqtypeordering'] = 'The Reader activity module cannot be installed or updated because the Ordering question type is missing. Please download the Ordering question type, put it at {$a}/question/type/ordering, and reload this page.';
 $string['restoredeletedattempt'] = 'Restore deleted attempt';
 $string['returntostudentlist'] = 'Return to Student List';
 $string['s_bookinstances'] = 'Course-specific quiz selection';
@@ -363,8 +382,15 @@ $string['s_sectiontothebottom'] = 'add all quizzes to the bottom of the hidden c
 $string['s_sectiontothissection'] = 'add selected quizzes to this section';
 $string['s_sendmessagesaboutcheating'] = 'Send messages about cheating?';
 $string['s_wordsprogressbar'] = 'Word Count Progress Bar';
+$string['search_help'] = 'To search for a particular book, enter some text contained in the title of the book and click the "Go" button';
 $string['searchforthebookthatyouwant'] = 'Search for the book that you want to take a quiz on';
 $string['sectionname'] = 'Section name';
+$string['sectiontypelast'] = 'The last section';
+$string['sectiontypenew'] = 'A new section';
+$string['sectiontypesorted'] = 'A sorted section';
+$string['sectiontypespecific'] = 'A specific section';
+$string['select'] = 'Select';
+$string['select_help'] = 'Click on the kind of items you wish to be selected in the list below';
 $string['selectedbookname'] = 'Selected book name';
 $string['selectsomeattempts'] = 'Select one or more attempts';
 $string['selectsomebooks'] = 'Select one or more books';
@@ -379,6 +405,8 @@ $string['setcurrentlevel'] = 'Change reading level for selected students';
 $string['setreadinggoal'] = 'Set reading goal for selected students';
 $string['setuniformgoalinpoints'] = 'Set uniform goal in points';
 $string['setuniformgoalinwords'] = 'Set uniform goal in words';
+$string['show'] = 'Show';
+$string['show_help'] = 'Click on the kind of items you wish to be shown in the list below';
 $string['showattempts'] = 'Show attempts matching these conditions';
 $string['showlevel'] = 'Show Level';
 $string['sincedate'] = '(since {$a})';
@@ -390,12 +418,58 @@ $string['studentuserid'] = 'Student user ID';
 $string['studentusername'] = 'Student username';
 $string['takequizfor'] = 'Take the quiz for "{$a}"';
 $string['takethisquiz'] = 'Take this quiz';
+$string['targetcategory'] = 'Target category';
+$string['targetcategory_help'] = 'The course category containing the course into which you wish to download the new book data.';
+$string['targetcourse'] = 'Target course';
+$string['targetcourse_help'] = 'Select the course into which you wish to download the new book quizzes. Usually you should download to a hidden course that is used solely to store quizzes used by the Reader module.
+
+Select the type of course from one of the following options:
+
+**All**
+: Choose from a list of all the courses on this Moodle site.
+
+**Hidden**
+: Choose from a list of courses that are visible to you but hidden from students. Usually you should choose this option.
+
+**Visible**
+: Choose from a list of courses that are visible to you and enrolled students.
+
+**Current**
+: Reader quizzes will be downloaded into the current course.
+
+**New**
+: Reader quizzes will be downloaded into a new course. Enter a name for the new course in the text box.';
+$string['targetsection'] = 'Target section';
+$string['targetsection_help'] = 'Select the course section i.e. the week or topic, into which you want to download the quizzes.
+
+First, select the type of section from one of the following:
+
+**A new section**
+: The quizzes will be added to a new section. Enter a name for the new section in the text box.
+
+**A sorted section**
+: The quizzes will be grouped and placed in sections according to the "Publisher - Level" of their respective books.
+
+**A specific section**
+: The quizzes will be put into the specific section that you select from the section menu.
+
+**The last section**
+: The quizzes will be added to the last section of the course';
 $string['term'] = 'Term';
 $string['therehavebeennonewquizzesorupdates'] = 'There have been no new quizzes or updates added to the MoodleReader quiz bank since the last time you checked.';
 $string['thisblockunavailable'] = 'This block is currently unavailable to this student';
 $string['thisterm'] = 'this term';
 $string['totalwords'] = 'Total words';
 $string['totalwordsall'] = 'Total Words Read All Terms';
+$string['type'] = 'Type';
+$string['type_help'] = 'Select the type of books you want to be displayed in the list below:
+
+**Books with quizzes**
+: The page will show a list of books with quizzes that are available for download.
+
+**Books without quizzes**
+: The page will show a list of books for which data such as difficulty and word counts exist, but for which no quiz has yet been created.
+';
 $string['update'] = 'Check server for quiz updates?';
 $string['updatedon'] = 'Updated on {$a}';
 $string['updatequizzes'] = 'Update quizzes';

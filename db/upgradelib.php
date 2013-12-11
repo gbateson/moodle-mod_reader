@@ -379,14 +379,22 @@ function xmldb_reader_remove_coursemodule($cmid) {
     if (! $deleteinstancefunction($cm->instance)) {
         notify("Could not delete the $cm->modname (instance id=$cm->instance)");
     }
-    if (! delete_course_module($cm->id)) {
-        notify("Could not delete the $cm->modname (coursemodule, id=$cm->id)");
-    }
-    if (! $sectionid = $DB->get_field('course_sections', 'id', array('course' => $cm->course, 'section' => $cm->sectionnum))) {
-        notify("Could not get section id (course id=$cm->course, section num=$cm->sectionnum)");
-    }
-    if (! delete_mod_from_section($cm->id, $sectionid)) {
-        notify("Could not delete the $cm->modname (id=$cm->id) from that section (id=$sectionid)");
+    if (function_exists('course_delete_module')) {
+        // Moodle >= 2.5
+        if (! course_delete_module($cm->id)) {
+            notify("Could not delete the $cm->modname (coursemodule, id=$cm->id)");
+        }
+    } else {
+        // Moodle <= 2.4
+        if (! delete_course_module($cm->id)) {
+            notify("Could not delete the $cm->modname (coursemodule, id=$cm->id)");
+        }
+        if (! $sectionid = $DB->get_field('course_sections', 'id', array('course' => $cm->course, 'section' => $cm->sectionnum))) {
+            notify("Could not get section id (course id=$cm->course, section num=$cm->sectionnum)");
+        }
+        if (! delete_mod_from_section($cm->id, $sectionid)) {
+            notify("Could not delete the $cm->modname (id=$cm->id) from that section (id=$sectionid)");
+        }
     }
 
     add_to_log($cm->course, 'course', 'delete mod', "view.php?id=$cm->course", "$cm->modname $cm->instance", $cm->id);

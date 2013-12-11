@@ -35,6 +35,7 @@ $string['atlevelbeforebeingpromoted'] = ' at level {$a} before being promoted.';
 $string['attempts'] = 'Attempts';
 $string['attemptscoremanagement'] = 'Attempt and score management';
 $string['attemptsofday'] = 'Quiz for days';
+$string['availableitems'] = 'Available items';
 $string['averageduration'] = 'Average duration';
 $string['averageduration_help'] = 'The average duration of attempts at Reader quizzes';
 $string['averagefailed'] = 'Average failed';
@@ -72,6 +73,8 @@ $string['bookratingslevel'] = 'Display student book ratings for each book level'
 $string['books'] = 'Books';
 $string['booksreadinpreviousterms'] = 'Books read in previous terms';
 $string['booksreadthisterm'] = 'Books read this term';
+$string['bookswithoutquizzes'] = 'Books without quizzes';
+$string['bookswithquizzes'] = 'Books with quizzes';
 $string['booktitle'] = 'Book title';
 $string['bookupdated'] = 'Book updated: {$a}';
 $string['butyoumaytakequizzes'] = ' But you may take quizzes on books at any level.';
@@ -134,6 +137,7 @@ $string['coursespecificquizselection'] = 'Course-specific quiz selection" to "Ye
 $string['createcoversets_l'] = 'Create Cover Sets by Level & Publisher';
 $string['createcoversets_t'] = 'Create Cover Sets by Publisher &amp; Level';
 $string['curlerror'] = 'CURL error: {$a}';
+$string['current'] = 'Current';
 $string['currentlevel'] = 'Current level';
 $string['dataallavailable'] = 'data for all {$a} book(s) is available';
 $string['dataalldownloaded'] = 'data for all {$a} book(s) has been downloaded';
@@ -150,6 +154,7 @@ $string['downloadbookswithquizzes'] = 'Download books with quizzes';
 $string['downloadedbooks'] = 'Data for the following books was downloaded:';
 $string['downloadexcel'] = 'Download Excel';
 $string['downloads'] = 'Downloads';
+$string['downloadsettings'] = 'Download settings';
 $string['duration'] = 'Duration';
 $string['editbookdetails'] = 'Edit details';
 $string['editingteacherrole'] = 'Use Editing Teacher role';
@@ -187,6 +192,7 @@ $string['fromthistime'] = 'From this time';
 $string['fullreportbybooktitle'] = 'Full Report by Book Title';
 $string['fullreportquiztoreader'] = 'Full Report by Student';
 $string['goal'] = 'Goal';
+$string['hidden'] = 'Hidden';
 $string['ifimagealreadyexists'] = 'If image already exists in images folder (name)';
 $string['image'] = 'Image';
 $string['imageadded'] = 'Image added: {$a}';
@@ -214,6 +220,14 @@ $string['maxtimebetweenquizzes'] = 'Max time between quizzes';
 $string['menu'] = 'Menu';
 $string['messagefromyourteacher'] = 'Message from your teacher';
 $string['min'] = 'Greater than or equal to';
+$string['mode'] = 'Mode';
+$string['mode_help'] = 'This page can be in the following two modes:
+
+**Normal**
+: In normal mode, only books whose data has not already been downloaded, or books whose data has been updated, will be available. Books for whom the most recent data has already been downloaded will not be available.
+
+**Repair**
+: In repair mode, all books are available for download. If any data has been previously downloaded, it will be overwritten by the newly downloaded data. Use this mode if you want to repair faulty quizzes or incorrect data. Note that even if quizzes are overloaded, data about students attempts at those quizzes will be retained.';
 $string['mybooks'] = 'Only books already installed on this site';
 $string['needdeletethisattemptstoo'] = 'Need delete this Attempts too';
 $string['needtocheckupdates'] = 'This site has not checked for quiz updates in ({$a} days). Check now?';
@@ -229,12 +243,14 @@ $string['noincorrectquizzes'] = 'You have not failed any quizzes';
 $string['nopromote'] = 'Do not promote';
 $string['noquizzesfound'] = 'No quizzes found';
 $string['noreaders'] = 'No Reader activities found in this course';
+$string['normalmode'] = 'Normal';
 $string['nosearchresults'] = 'No books matching your search are available';
 $string['not_cheated_message'] = 'Points restored notice';
 $string['nothavepermissioncreateinstance'] = 'Sorry you do not have permission to do this';
 $string['notopenyet'] = 'Sorry, this activity is not available yet. It will open {$a}.';
 $string['numberofextrapoints'] = 'Number of extra points';
 $string['onlybookswithmorethan'] = 'Only books with more than';
+$string['pagesettings'] = 'Page settings';
 $string['passed'] = 'Passed';
 $string['passedshort'] = 'P';
 $string['passwords_list'] = 'Passwords list';
@@ -289,6 +305,7 @@ $string['readerreports'] = 'Reader module reports';
 $string['readinglevel'] = 'Reading Level';
 $string['readingreportfor'] = 'Reading Report For';
 $string['remotesitenotaccessible'] = 'Remote download site is not accessible';
+$string['repairmode'] = 'Repair';
 $string['reportbookdetailed'] = 'Books (full)';
 $string['reportbookratings'] = 'Book ratings';
 $string['reportbooksummary'] = 'Books (summary)';
@@ -331,13 +348,16 @@ $string['s_sendmessagesaboutcheating'] = 'Send messages about cheating?';
 $string['s_totalpointsgoal'] = 'Total point goal for the entire term';
 $string['s_wordsprogressbar'] = 'Word Count Progress Bar';
 $string['search'] = 'Search';
+$string['search_help'] = 'To search for a particular book, enter some text contained in the title of the book and click the "Go" button';
 $string['searchforthebookthatyouwant'] = 'Search for the book that you want to take a quiz on';
 $string['sectionname'] = 'Section name';
 $string['sectiontypelast'] = 'The last section';
 $string['sectiontypenew'] = 'A new section';
 $string['sectiontypesorted'] = 'A sorted section';
 $string['sectiontypespecific'] = 'A specific section';
+$string['select'] = 'Select';
 $string['select_course'] = 'Select Course';
+$string['select_help'] = 'Click on the kind of items you wish to be selected in the list below';
 $string['selectalreadyexist'] = 'Select already exist';
 $string['selectedbookname'] = 'Selected book name';
 $string['selectipmask'] = 'Select ip mask';
@@ -363,6 +383,8 @@ $string['setings'] = 'Settings';
 $string['setreadinggoal'] = 'Set reading goal for selected students';
 $string['setuniformgoalinpoints'] = 'Set uniform goal in points';
 $string['setuniformgoalinwords'] = 'Set uniform goal in words';
+$string['show'] = 'Show';
+$string['show_help'] = 'Click on the kind of items you wish to be shown in the list below';
 $string['showall'] = 'Show All';
 $string['showattempts'] = 'Show attempts matching these conditions';
 $string['showlevel'] = 'Show Level';
@@ -377,10 +399,43 @@ $string['studentuserid'] = 'Student user ID';
 $string['studentusername'] = 'Student username';
 $string['summaryreportbybooktitle'] = 'Summary Report by Book Title';
 $string['summaryreportbyclassgroup'] = 'Summary Report by Class Group';
-$string['targetcourse'] = 'Target course';
-$string['targetsection'] = 'Target section';
 $string['takequizfor'] = 'Take the quiz for "{$a}"';
 $string['takethisquiz'] = 'Take this quiz';
+$string['targetcategory'] = 'Target category';
+$string['targetcategory_help'] = 'The course category containing the course into which you wish to download the quizzes for the selected books.';
+$string['targetcourse'] = 'Target course';
+$string['targetcourse_help'] = 'Select the course into which you wish to download the quizzes for the selected books. Usually you should download to a hidden course that is used solely to store quizzes used by the Reader module.
+
+Select the type of course from one of the following options:
+
+**All**
+: Choose from a list of all the courses on this Moodle site.
+
+**Hidden**
+: Choose from a list of courses that are visible to you but hidden from students. Usually you should choose this option.
+
+**Visible**
+: Choose from a list of courses that are visible to you and enrolled students.
+
+**Current**
+: Reader quizzes will be downloaded into the current course.
+
+**New**
+: Reader quizzes will be downloaded into a new course. Enter a name for the new course in the text box.';
+$string['targetsection'] = 'Target section';
+$string['targetsection_help'] = 'Specify the course section i.e. the week or topic, into which you want to download the quizzes. The following types of section are available:
+
+**A new section**
+: The quizzes will be added to a new section. Enter a name for the new section in the text box.
+
+**A sorted section**
+: The quizzes will be grouped and placed in sections according to the "Publisher - Level" of their respective books.
+
+**A specific section**
+: The quizzes will be put into the specific section that you select from the section menu.
+
+**The last section**
+: The quizzes will be added to the last section of the course';
 $string['term'] = 'Term';
 $string['therehavebeennonewquizzesorupdates'] = 'There have been no new quizzes or updates added to the MoodleReader quiz bank since the last time you checked.';
 $string['thisblockunavailable'] = 'This block is currently unavailable to this student';
@@ -389,6 +444,15 @@ $string['timeleft'] = 'Time Remaining';
 $string['to'] = 'to';
 $string['totalwords'] = 'Total words';
 $string['totalwordsall'] = 'Total Words Read All Terms';
+$string['type'] = 'Type';
+$string['type_help'] = 'Select the type of books you want to be displayed in the list below:
+
+**Books with quizzes**
+: The page will show a list of books with quizzes that are available for download.
+
+**Books without quizzes**
+: The page will show a list of books for which data such as difficulty and word counts exist, but for which no quiz has yet been created.
+';
 $string['update'] = 'Check server for quiz updates?';
 $string['updatedon'] = 'Updated on {$a}';
 $string['updatequizzes'] = 'Update quizzes';

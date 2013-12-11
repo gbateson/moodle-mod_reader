@@ -73,6 +73,7 @@ class mod_reader_admin_download_renderer extends mod_reader_admin_renderer {
             $js .= '<script type="text/javascript">'."\n";
             $js .= "//<![CDATA[\n";
 
+
             $js .= "function RDR_request(url, targetids, callback) {\n";
             $js .= "    url = url.replace(new RegExp('&amp;', 'g'), '&');\n";
 
@@ -154,6 +155,14 @@ class mod_reader_admin_download_renderer extends mod_reader_admin_renderer {
             $js .= "            sectionnum.innerHTML = '';\n";
             $js .= "        }\n";
             $js .= "    }\n";
+            $js .= "}\n";
+
+            $js .= "function RDR_set_location_from_select(obj) {\n";
+            $js .= "    var name = obj.name;\n";
+            $js .= "    var href = location.href;\n";
+            $js .= "    href = href.replace(new RegExp('&' + name + '=[0-9]+'), '');\n";
+            $js .= "    href = href + '&' + name + '=' + obj.options[obj.selectedIndex].value;\n";
+            $js .= "    location.assign(href);\n"; // simulate GET form submit
             $js .= "}\n";
 
             $js .= "//]]>\n";
@@ -632,26 +641,73 @@ class mod_reader_admin_download_renderer extends mod_reader_admin_renderer {
     }
 
     /**
+     * form_end
+     *
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function form_end() {
+        $output = '';
+        $params = array('type'  => 'submit',
+                        'value' => get_string('download'),
+                        'class' => 'downloadbutton');
+        $output .= html_writer::empty_tag('input', $params);
+        $output .= html_writer::end_tag('div');
+        $output .= html_writer::end_tag('form');
+        $output .= $this->form_js_end();
+        return $output;
+    }
+
+    /**
+     * mode_menu
+     *
+     * @param string $mode "normal" or "repair"
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function mode_menu($mode) {
+        $label = get_string('mode', 'reader');
+        $onchange = 'RDR_set_location_from_select(this)';
+        $modes = array(reader_downloader::NORMAL_MODE => get_string('normalmode', 'reader'),
+                       reader_downloader::REPAIR_MODE => get_string('repairmode', 'reader'));
+        $modes = html_writer::select($modes, 'mode', $mode, null, array('onchange' => $onchange));
+        return $this->formitem($label, $modes, 'mode');
+    }
+
+    /**
+     * type_menu
+     *
+     * @param integer $type reader_downloader::BOOKS_xxx_QUIZZES
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function type_menu($type) {
+        $label = get_string('type', 'reader');
+        $onchange = 'RDR_set_location_from_select(this)';
+        $types = array(reader_downloader::BOOKS_WITH_QUIZZES => get_string('bookswithquizzes', 'reader'),
+                       reader_downloader::BOOKS_WITHOUT_QUIZZES => get_string('bookswithoutquizzes', 'reader'));
+        $types = html_writer::select($types, 'type', $type, null, array('onchange' => $onchange));
+        return $this->formitem($label, $types, 'type');
+    }
+
+    /**
      * search_box
      *
      * @return xxx
      * @todo Finish documenting this function
      */
     public function search_box() {
-        $output = '';
-        $output .= html_writer::start_tag('p');
-        $output .= html_writer::tag('span', get_string('search').': ');
-        $output .= html_writer::empty_tag('input', array('type' => 'text', 'name' => 'searchtext')).' ';
-        $output .= html_writer::empty_tag('input', array('type' => 'submit', 'value' => get_string('go'), 'onclick' => 'search_itemnames(this); return false;'));
-        $output .= html_writer::end_tag('p');
-        return $output;
+        $label = get_string('search');
+        $input = html_writer::empty_tag('input', array('type' => 'text', 'name' => 'searchtext'));
+        $onclick = 'search_itemnames(this); return false;';
+        return $this->formitem($label, $input, 'search', $onclick);
     }
 
     /**
      * showhide_menu
      *
      * @param integer $count
-     * @param boolean $updatecount
+     * @param integer $updatecount
      * @return xxx
      * @todo Finish documenting this function
      */
@@ -683,7 +739,7 @@ class mod_reader_admin_download_renderer extends mod_reader_admin_renderer {
         }
 
         if ($menu = implode(' / ', $menu)) {
-            return html_writer::tag('p', html_writer::tag('span', get_string('show').': ').$menu);
+            return $this->formitem(get_string('show'), $menu, '', 'show');
         } else {
             return ''; // there are currently no downloadable or updatable items
         }
@@ -717,25 +773,10 @@ class mod_reader_admin_download_renderer extends mod_reader_admin_renderer {
         }
 
         if ($menu = implode(' / ', $menu)) {
-            return html_writer::tag('p', html_writer::tag('span', get_string('select').': ').$menu);
+            return $this->formitem(get_string('select'), $menu, '', 'select');
         } else {
             return ''; // there are currently no downloadable or updatable items
         }
-    }
-
-    /**
-     * form_end
-     *
-     * @return xxx
-     * @todo Finish documenting this function
-     */
-    public function form_end() {
-        $output = '';
-        $output .= html_writer::empty_tag('input', array('type' => 'submit', 'value' => get_string('download')));
-        $output .= html_writer::end_tag('div');
-        $output .= html_writer::end_tag('form');
-        $output .= $this->form_js_end();
-        return $output;
     }
 
     /**
@@ -891,6 +932,7 @@ class mod_reader_admin_download_renderer extends mod_reader_admin_renderer {
     /**
      * available_list_name
      *
+     * @param xxx $forcecheckbox
      * @param xxx $name
      * @param xxx $value
      * @param xxx $text
@@ -948,14 +990,22 @@ class mod_reader_admin_download_renderer extends mod_reader_admin_renderer {
         static $img = null;
         if ($img==null) {
             switch (true) {
-                case file_exists($CFG->dirroot.'/pix/e/tick.png'): $img = 'e/tick'; break; // Moodle >= 2.6
-                case file_exists($CFG->dirroot.'/pix/i/tick_green_big.png'): $img = 'i/tick_green_big'; break;
-                default: $img = ''; // shouldn't happen !!
+                case file_exists($CFG->dirroot.'/pix/i/grade_correct.png'):
+                    // Moodle >= 2.4
+                    $img = 'i/grade_correct';
+                    break;
+                case file_exists($CFG->dirroot.'/pix/i/tick_green_big.png'):
+                    // Moodle 2.0 - 2.5
+                    $img = 'i/tick_green_big';
+                    break;
+                default:
+                    $img = ''; // shouldn't happen !!
             }
             if ($img=='') {
                 $img = mod_reader::textlib('entities_to_utf8', '&#x2714;'); // Unicode tick ✔
+                $img = html_writer::tag('span', $img, array('style' => 'color: #00FF00;')).' '; // green
             } else {
-                $img = html_writer::empty_tag('img', array('src' => $this->pix_url($img), 'class' => 'icon'));
+                $img = html_writer::empty_tag('img', array('src' => $this->pix_url($img), 'class' => 'icon', 'alt' => $img));
             }
         }
         return $img;
@@ -998,15 +1048,14 @@ class mod_reader_admin_download_renderer extends mod_reader_admin_renderer {
     }
 
     /**
-     * course_list
+     * get_mycourses
      *
      * @param object $downloader
      * @return xxx
      * @todo Finish documenting this function
      */
-    public function course_list($downloader) {
+    public function get_mycourses() {
         global $USER;
-        $courseid = $downloader->get_quiz_courseid();
 
         $capability = 'moodle/course:manageactivities';
         if (has_capability($capability, reader_get_context(CONTEXT_SYSTEM))) {
@@ -1014,25 +1063,107 @@ class mod_reader_admin_download_renderer extends mod_reader_admin_renderer {
         } else if (function_exists('enrol_get_users_courses')) {
             $courses = enrol_get_users_courses($USER->id);
         } else {
+            // this is probably not necessary, because even Moodle 2.0 has "enrol_get_users_courses()"
             $access = (isset($USER->access) ? $USER->access : get_user_access_sitewide($USER->id));
             $courses = get_user_courses_bycap($USER->id, $capability, $access, true);
         }
+        return $courses;
+    }
+
+    /**
+     * category_list
+     *
+     * @param object $downloader
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function category_list($downloader) {
+        global $DB;
+
+        $categoryid = $downloader->get_course_categoryid();
+
+        // to get all categories we coud use:
+        //    $categories = get_categories();
+        // but it is better select only categories
+        // containing courses relevant to this user,
+        // so we derive categories from mycourses
+
+        $categoryids = array();
+        if ($courses = $this->get_mycourses()) {
+
+            foreach ($courses as $course) {
+                if ($course->category) {
+                    $categoryids[$course->category] = true;
+                }
+            }
+            unset($courses);
+
+            if (count($categoryids)) {
+                $categoryids = array_keys($categoryids);
+                list($select, $params) = $DB->get_in_or_equal($categoryids);
+                if ($categoryids = $DB->get_records_select('course_categories', "id $select", $params)) {
+                    foreach ($categoryids as $id => $category) {
+                        $categoryids[$id] = $category->name;
+                    }
+                } else {
+                    $categoryids = array(); // shouldn't happen !!
+                }
+            }
+        }
+
+        $categoryids = html_writer::select($categoryids, 'targetcategoryid', $categoryid, null);
+        $categoryids = html_writer::tag('span', $categoryids, array('id' => 'targetcategoryid'));
+
+        //$label = get_string('targetcategory', 'reader');
+        $label = get_string('category');
+        return $this->formitem($label, $categoryids, 'targetcategory');
+    }
+
+    /**
+     * course_list
+     *
+     * @param object $downloader
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function course_list($downloader) {
+        $courseid = $downloader->get_quiz_courseid();
+        $categoryid = $downloader->get_course_categoryid();
+
+        $coursetype = $downloader->get_quiz_coursetype();
+        //$coursetype = reader_downloader::COURSETYPE_HIDDEN; // default
+        //$coursetype = optional_param('targetcoursetype', $coursetype, PARAM_INT);
+        $coursetypes = array(
+            reader_downloader::COURSETYPE_ALL     => get_string('all'),
+            reader_downloader::COURSETYPE_HIDDEN  => get_string('hidden', 'reader'),
+            reader_downloader::COURSETYPE_VISIBLE => get_string('visible'),
+            reader_downloader::COURSETYPE_CURRENT => get_string('current', 'reader'),
+            reader_downloader::COURSETYPE_NEW     => get_string('new'),
+        );
+        $coursetypes = html_writer::select($coursetypes, 'targetcoursetype', $coursetype, null);
+        $coursetypes = html_writer::tag('span', $coursetypes, array('id' => 'targetcoursetype'));
+        //$coursetypes = get_string('type', 'reader').': '.$coursetypes;
 
         $courseids = array();
-        if ($courses) {
+        if ($courses = $this->get_mycourses()) {
             foreach ($courses as $course) {
                 if ($course->id==SITEID) {
                     continue;
                 }
-                $courseids[$course->id] = $course->shortname;
+                if ($course->category==$categoryid) {
+                    $courseids[$course->id] = $course->shortname;
+                }
             }
-            unset($courses);
         }
+        unset($courses);
 
         $courseids = html_writer::select($courseids, 'targetcourseid', $courseid, null, array('onchange' => 'RDR_set_sectionnums()'));
         $courseids = html_writer::tag('span', $courseids, array('id' => 'targetcourseid'));
+        //$courseids = get_string('name').': '.$courseids;
 
-        return html_writer::tag('p', html_writer::tag('span', get_string('targetcourse', 'reader').': ').$courseids);
+        //$label = get_string('targetcourse', 'reader');
+        $label = get_string('course');
+        return $this->formitem($label, $coursetypes.' '.$courseids, 'targetcourse');
     }
 
     /**
@@ -1045,11 +1176,10 @@ class mod_reader_admin_download_renderer extends mod_reader_admin_renderer {
     public function section_list($downloader) {
         global $DB;
 
-        $courseid = $downloader->get_quiz_courseid();
-        $sectionnum = $downloader->get_quiz_sectionnum($courseid);
-
-        $sectiontype = reader_downloader::SECTIONTYPE_SORTED; // default
-        $sectiontype = optional_param('targetsectiontype', $sectiontype, PARAM_INT);
+        $categoryid  = $downloader->get_course_categoryid();
+        $courseid    = $downloader->get_quiz_courseid();
+        $sectionnum  = $downloader->get_quiz_sectionnum($courseid);
+        $sectiontype = $downloader->get_quiz_sectiontype($courseid, $sectionnum);
 
         $sectiontypes = array(
             reader_downloader::SECTIONTYPE_NEW      => get_string('sectiontypenew',      'reader'),
@@ -1057,6 +1187,9 @@ class mod_reader_admin_download_renderer extends mod_reader_admin_renderer {
             reader_downloader::SECTIONTYPE_SPECIFIC => get_string('sectiontypespecific', 'reader'),
             reader_downloader::SECTIONTYPE_LAST     => get_string('sectiontypelast',     'reader'),
         );
+        $sectiontypes = html_writer::select($sectiontypes, 'targetsectiontype', $sectiontype, null, array('onchange' => 'RDR_set_sectionnums()'));
+        $sectiontypes = html_writer::tag('span', $sectiontypes, array('id' => 'targetsectiontype'));
+        //$sectiontypes = get_string('type', 'reader').': '.$sectiontypes;
 
         $sectionnums = array();
         if ($courseid && $sectiontype==reader_downloader::SECTIONTYPE_SPECIFIC) {
@@ -1078,10 +1211,113 @@ class mod_reader_admin_download_renderer extends mod_reader_admin_renderer {
             $sectionnums = html_writer::select($sectionnums, 'targetsectionnum', $sectionnum, null, $params);
         }
         $sectionnums = html_writer::tag('span', $sectionnums, array('id' => 'targetsectionnum'));
+        //$sectionnums = get_string('name').': '.$sectionnums;
 
-        $sectiontypes = html_writer::select($sectiontypes, 'targetsectiontype', $sectiontype, null, array('onchange' => 'RDR_set_sectionnums()'));
-        $sectiontypes = html_writer::tag('span', $sectiontypes, array('id' => 'targetsectiontype'));
+        //$label = get_string('targetsection', 'reader');
+        $label = get_string('section');
+        return $this->formitem($label, $sectiontypes.' '.$sectionnums, 'targetsection');
+    }
 
-        return html_writer::tag('p', html_writer::tag('span', get_string('targetsection', 'reader').': ').$sectiontypes.' '.$sectionnums);
+    /**
+     * formheader
+     *
+     * @param string $header
+     * @return string
+     * @todo Finish documenting this function
+     **/
+    public function formheader($header) {
+        return html_writer::tag('h3', $header, array('class' => 'formheader'));
+    }
+
+    /**
+     * formitem
+     *
+     * @param string $label
+     * @param string $element
+     * @param string $action  (optional, default="")
+     * @param string $onclick (optional, default="")
+     * @return string
+     * @todo Finish documenting this function
+     **/
+    public function formitem($label, $element, $action='', $onclick='') {
+        $output = '';
+        if ($action) {
+            $label .= $this->help_icon($action, 'reader');
+        } else if ($onclick) {
+            $label .= $this->help_icon($onclick, 'reader');
+        }
+        $output .= html_writer::tag('div', $label, array('class' => 'label'));
+        $output .= html_writer::tag('div', $element, array('class' => 'element'));
+        if ($action) {
+            $buttonid = 'id_button'.$action;
+            $params = array('type' => 'submit', 'name' => 'action'.$action, 'value' => get_string('go'), 'class' => 'button');
+            if ($onclick=='') {
+                $hidebutton = true;
+            } else {
+                $hidebutton = false;
+                $params['onclick'] = $onclick; // e.g. search button
+            }
+            $button = html_writer::empty_tag('input', $params);
+            $output .= html_writer::tag('div', $button, array('class' => 'button', 'id' => $buttonid));
+            if ($hidebutton) {
+                $output .= '<script type="text/javascript">'."\n";
+                $output .= "//<![CDATA[\n";
+                $output .= "var obj = document.getElementById('$buttonid');\n";
+                $output .= "if (obj) {\n";
+                $output .= "    obj.style.display = 'none';\n";
+                $output .= "}\n";
+                $output .= "//]]>\n";
+                $output .= '</script>'."\n";
+            }
+        }
+        $output = html_writer::tag('div', $output, array('class' => 'formitem'));
+        return $output.html_writer::tag('div', '', array('style' => 'clear: both;'));
+    }
+
+    /**
+     * form_sections
+     *
+     * @param array $sections
+     * @return string
+     * @todo Finish documenting this function
+     **/
+    public function form_sections($sections, $formid='mform1') {
+        // $sections will look something like this
+        $sample_sections = array(
+            // section
+            'name' => (object)array(
+                'title' => '',
+                'items' => array(
+                    // item
+                    'name' => (object)array(
+                        'title' => '',
+                        'element' => '',
+                        'button' => '',
+                    )
+                )
+            )
+        );
+
+        $output = '';
+        $output .= html_writer::start_tag('form', array('id' => $formid, 'class' => 'mform'));
+        foreach ($sections as $section) {
+            $output .= html_writer::start_tag('legend', array('class' => 'ftoggler'));
+            $output .= $section->title;
+            $output .= html_writer::start_tag('div', array('class' => 'fcontainer'));
+            foreach ($section->items as $name => $item) {
+                $output .= html_writer::tag('div', $item->title,   array('class' => 'fitemtitle'));
+                $output .= html_writer::tag('div', $item->element, array('class' => 'felement'));
+                if ($item->button) {
+                    $onclick = '';
+                    $params = array('name' => 'action_'.$name, 'onclick' => $onclick);
+                    $button = html_writer::tag('button', get_string('go'), $params);
+                    $output .= html_writer::tag('div', $button,  array('class' => 'fbutton'));
+                }
+            }
+            $output .= html_writer::end_tag('div');
+            $output .= html_writer::end_tag('legend');
+        }
+        $output .= html_writer::end_tag('form');
+        return $output;
     }
 }

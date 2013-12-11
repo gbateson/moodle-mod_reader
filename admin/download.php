@@ -33,6 +33,7 @@ require_once($CFG->dirroot.'/mod/reader/admin/download/renderer.php');
 $id   = optional_param('id',   0, PARAM_INT); // course module id
 $r    = optional_param('r',    0, PARAM_INT); // reader id
 $type = optional_param('type', 1, PARAM_INT); // 0=books without quizzes, 1=books with quizzes
+$mode = optional_param('mode', 0, PARAM_INT); // 0=normal, 1=repair
 
 $selectedpublishers = reader_optional_param_array('publishers', array(), PARAM_CLEAN);
 $selectedlevels     = reader_optional_param_array('levels',     array(), PARAM_CLEAN);
@@ -84,7 +85,7 @@ $downloader->add_remotesite($remotesite);
 
 // get a list of items that have already been downloaded
 // from the remote site and are stored in the Moodle DB
-$downloader->get_downloaded_items($type);
+$downloader->get_downloaded_items($type, $mode);
 
 // download the list(s) of available items from each remote site
 $downloader->add_available_items($type, $selecteditemids);
@@ -108,12 +109,18 @@ if ($count = $downloader->has_available_items()) {
     echo $output->box_start('generalbox', 'notice');
     echo $output->form_start();
 
+    //echo $output->formheader(get_string('pagesettings', 'reader'));
+    echo $output->mode_menu($mode); // "normal" or "repair" mode
+    echo $output->type_menu($type); // "with" or "without" quizzes
     echo $output->search_box();
     echo $output->showhide_menu($count, $updatecount);
     echo $output->select_menu($newcount, $updatecount);
 
+    //echo $output->formheader(get_string('availableitems', 'reader'));
     echo $output->available_lists($downloader);
 
+    //echo $output->formheader(get_string('downloadsettings', 'reader'));
+    echo $output->category_list($downloader);
     echo $output->course_list($downloader);
     echo $output->section_list($downloader);
 

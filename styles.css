@@ -61,6 +61,25 @@
 
 #page-mod-reader-admin-download span.itemname span.matchedtext { font-weight: bold; font-size: 1.2em; text-decoration: underline; background-color: #ffffcc; }
 
+#page-mod-reader-admin-download h3.formheader { margin: 6px; }
+#page-mod-reader-admin-download div.formitem div.label { text-align: right; width: 15%; min-width: 4.5em; }
+#page-mod-reader-admin-download div.formitem div.label,
+#page-mod-reader-admin-download div.formitem div.element,
+#page-mod-reader-admin-download div.formitem div.button { float: left; margin: 4px 8px; }
+#page-mod-reader-admin-download div.formitem div.element select { margin: 0px; }
+#page-mod-reader-admin-download form input.downloadbutton {
+    background : #dddddd;
+    color      : #000000;
+    font-size  : 250%;
+    margin     : 12px 48px;
+    padding    : 12px;
+    /* cross-browser rounded corners (Note: Safari and Chrome use Webkit) */
+    /* css3    */ border-top-left-radius: 12px; border-top-right-radius: 12px; border-bottom-left-radius: 12px; border-bottom-right-radius: 12px;
+    /* Opera   */ -o-border-top-left-radius: 12px; -o-border-top-right-radius: 12px; -o-border-bottom-left-radius: 12px; -o-border-bottom-right-radius: 12px;
+    /* Firefox */ -moz-border-top-left-radius: 12px; -moz-border-top-right-radius: 12px; -moz-border-bottom-left-radius: 12px; -moz-border-bottom-right-radius: 12px;
+    /* Webkit  */ -webkit-border-top-left-radius: 12px; -webkit-border-top-right-radius: 12px; -webkit-border-bottom-left-radius: 12px; -webkit-border-bottom-right-radius: 12px;
+}
+#page-mod-reader-admin-download form input.downloadbutton:hover { background-color: #cc3333; color: #eeeeee; }
 
 /** reader report **/
 #page-mod-reader-report table.flexible th { white-space: normal; }
