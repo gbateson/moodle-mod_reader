@@ -87,7 +87,6 @@ function reader_get_config_defaults() {
 
     $readercfg = get_config('reader');
     foreach ($defaults as $name => $value) {
-        //$name = 'reader_'.$name;
         if (! isset($readercfg->$name)) {
             set_config($name, $value, 'reader');
             $readercfg->$name = $value;
@@ -2838,6 +2837,91 @@ function reader_can_addinstance($cmid, $userid) {
 }
 
 /**
+ * reader_can_manageattempts
+ *
+ * @param xxx $cmid
+ * @param xxx $userid
+ * @return xxx
+ * @todo Finish documenting this function
+ */
+function reader_can_manageattempts($cmid, $userid) {
+    static $can_manageattempts = null;
+    if ($can_manageattempts===null) {
+        $context = reader_get_context(CONTEXT_MODULE, $cmid);
+        $can_manageattempts = has_capability('mod/reader:manageattempts', $context, $userid);
+    }
+    return $can_manageattempts;
+}
+
+/**
+ * reader_can_managebooks
+ *
+ * @param xxx $cmid
+ * @param xxx $userid
+ * @return xxx
+ * @todo Finish documenting this function
+ */
+function reader_can_managebooks($cmid, $userid) {
+    static $can_managebooks = null;
+    if ($can_managebooks===null) {
+        $context = reader_get_context(CONTEXT_MODULE, $cmid);
+        $can_managebooks = has_capability('mod/reader:managebooks', $context, $userid);
+    }
+    return $can_managebooks;
+}
+
+/**
+ * reader_can_managequizzes
+ *
+ * @param xxx $cmid
+ * @param xxx $userid
+ * @return xxx
+ * @todo Finish documenting this function
+ */
+function reader_can_managequizzes($cmid, $userid) {
+    static $can_managequizzes = null;
+    if ($can_managequizzes===null) {
+        $context = reader_get_context(CONTEXT_MODULE, $cmid);
+        $can_managequizzes = has_capability('mod/reader:managequizzes', $context, $userid);
+    }
+    return $can_managequizzes;
+}
+
+/**
+ * reader_can_manageusers
+ *
+ * @param xxx $cmid
+ * @param xxx $userid
+ * @return xxx
+ * @todo Finish documenting this function
+ */
+function reader_can_manageusers($cmid, $userid) {
+    static $can_manageusers = null;
+    if ($can_manageusers===null) {
+        $context = reader_get_context(CONTEXT_MODULE, $cmid);
+        $can_manageusers = has_capability('mod/reader:manageusers', $context, $userid);
+    }
+    return $can_manageusers;
+}
+
+/**
+ * reader_can_viewreports
+ *
+ * @param xxx $cmid
+ * @param xxx $userid
+ * @return xxx
+ * @todo Finish documenting this function
+ */
+function reader_can_viewreports($cmid, $userid) {
+    static $can_viewreports = null;
+    if ($can_viewreports===null) {
+        $context = reader_get_context(CONTEXT_MODULE, $cmid);
+        $can_viewreports = has_capability('mod/reader:viewreports', $context, $userid);
+    }
+    return $can_viewreports;
+}
+
+/**
  * reader_can_attemptreader
  *
  * @param xxx $cmid
@@ -3925,7 +4009,7 @@ function reader_get_new_uniqueid($contextid, $quizid, $defaultbehavior='deferred
 function reader_extend_navigation(navigation_node $readernode, stdclass $course, stdclass $module, cm_info $cm) {
     global $CFG, $DB, $USER;
 
-    if (reader_can_addinstance($cm->id, $USER->id)) {
+    if (reader_can_viewreports($cm->id, $USER->id)) {
         require_once($CFG->dirroot.'/mod/reader/locallib.php');
 
         //////////////////////////
@@ -3945,6 +4029,10 @@ function reader_extend_navigation(navigation_node $readernode, stdclass $course,
             $label = get_string('report'.$mode, 'reader');
             $node->add($label, $url, $type, null, null, $icon);
         }
+    }
+
+    if (reader_can_manageattempts($cm->id, $USER->id)) {
+        require_once($CFG->dirroot.'/mod/reader/locallib.php');
 
         //////////////////////////
         // Attempts sub-menu
@@ -3978,11 +4066,11 @@ function reader_extend_navigation(navigation_node $readernode, stdclass $course,
 function reader_extend_settings_navigation(settings_navigation $settingsnav, navigation_node $readernode) {
     global $CFG, $PAGE, $USER;
 
-    // create our new nodes
-    if (reader_can_addinstance($PAGE->cm->id, $USER->id)) {
-        require_once($CFG->dirroot.'/mod/reader/admin/download/downloader.php');
+    $nodes = array();
 
-        $nodes = array();
+    // create our new nodes
+    if (reader_can_managebooks($PAGE->cm->id, $USER->id)) {
+        require_once($CFG->dirroot.'/mod/reader/admin/download/downloader.php');
 
         //////////////////////////
         // Books sub-menu
@@ -4017,7 +4105,9 @@ function reader_extend_settings_navigation(settings_navigation $settingsnav, nav
         reader_navigation_add_node($node, $type, $key, $text, $url, $icon);
 
         $nodes[] = $node;
+    }
 
+    if (reader_can_managequizzes($PAGE->cm->id, $USER->id)) {
         //////////////////////////
         // Quizzes sub-menu
         //////////////////////////
@@ -4039,7 +4129,9 @@ function reader_extend_settings_navigation(settings_navigation $settingsnav, nav
         }
 
         $nodes[] = $node;
+    }
 
+    if (reader_can_manageusers($PAGE->cm->id, $USER->id)) {
         //////////////////////////
         // Users sub-menu
         //////////////////////////
@@ -4061,7 +4153,9 @@ function reader_extend_settings_navigation(settings_navigation $settingsnav, nav
         }
 
         $nodes[] = $node;
+    }
 
+    if (count($nodes)) {
         // We want to add the new nodes after the Edit settings node,
         // and before the locally assigned roles node.
 

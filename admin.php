@@ -1023,7 +1023,7 @@ if (! $excel) {
 
 $alreadyansweredbooksid = array();
 
-if (has_capability('mod/reader:addinstance', $contextmodule)) {
+if (has_capability('mod/reader:viewreports', $contextmodule)) {
     if (! $excel) {
         require_once('tabs.php');
     }
@@ -4247,15 +4247,30 @@ class reader_menu {
      * @todo Finish documenting this function
      */
     public function out($context) {
-        $out = ''; // '<h3>'.get_string('menu', 'reader').':</h3><ul>';
+        $out = ''; // '<h3>'.get_string('menu', 'reader').':</h3>';
+        $started_sections = false;
         foreach ($this->sections as $sectionname => $items) {
-            $out .= '<li><b>'.get_string($sectionname, 'reader').'</b><ul>';
+            $started_items = false;
             foreach ($items as $item) {
-                $out .= '<li>'.$item->out($context).'</li>';
+                if ($itemtext = $item->out($context)) {
+                    if ($started_sections==false) {
+                        $started_sections = true;
+                        $out .= '<ul>';
+                    }
+                    if ($started_items==false) {
+                        $started_items = true;
+                        $out .= '<li><b>'.get_string($sectionname, 'reader').'</b><ul>';
+                    }
+                    $out .= '<li>'.$itemtext.'</li>';
+                }
             }
-            $out .= '</ul></li>';
+            if ($started_items) {
+                $out .= '</ul></li>';
+            }
         }
-        $out .= '</ul>';
+        if ($started_sections) {
+            $out .= '</ul>';
+        }
         return $out;
     }
 }

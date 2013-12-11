@@ -110,7 +110,7 @@ echo '<script type="text/javascript" src="js/ajax.js"></script>';
 
 $alreadyansweredbooksid = array();
 
-if (has_capability('mod/reader:addinstance', $contextmodule)) {
+if (has_capability('mod/reader:viewreports', $contextmodule)) {
     require_once ('tabs.php');
 } else {
 /// Check subnet access

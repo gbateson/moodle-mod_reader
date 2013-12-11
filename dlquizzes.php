@@ -62,6 +62,12 @@ if ($id) {
     }
 }
 
+$context = reader_get_context(CONTEXT_COURSE, $course->id);
+$contextmodule = reader_get_context(CONTEXT_MODULE, $cm->id);
+if (! has_capability('mod/reader:addinstance', $contextmodule)) {
+    throw new reader_exception("You should be an 'Editing' Teacher");
+}
+
 require_login($course->id);
 
 add_to_log($course->id, 'reader', 'Download Quizzes', "dlquizzes.php?id=$id", "$cm->instance");
@@ -154,12 +160,6 @@ foreach ($quizzes as $publisher =>$levels) {
 }
 
 require_once ($CFG->dirroot.'/mod/reader/tabs_dl.php');
-
-$context = reader_get_context(CONTEXT_COURSE, $course->id);
-$contextmodule = reader_get_context(CONTEXT_MODULE, $cm->id);
-if (! has_capability('mod/reader:addinstance', $contextmodule)) {
-    throw new reader_exception("You should be an 'Editing' Teacher");
-}
 
 if (empty($quiz)) {
     $quiz = array();
