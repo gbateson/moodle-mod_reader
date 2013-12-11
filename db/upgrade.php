@@ -550,20 +550,6 @@ function xmldb_reader_upgrade($oldversion) {
         upgrade_mod_savepoint(true, "$newversion", 'reader');
     }
 
-    $newversion = 2013062200;
-    if ($result && $oldversion < $newversion) {
-        $readercfg = get_config('reader');
-        $vars = get_object_vars($readercfg);
-        foreach ($vars as $oldname => $value) {
-            if (substr($oldname, 0, 7)=='reader_') {
-                unset_config($oldname, 'reader');
-                $newname = substr($oldname, 7);
-                set_config($newname, $value, 'reader');
-            }
-        }
-        upgrade_mod_savepoint(true, "$newversion", 'reader');
-    }
-
     $newversion = 2013062600;
     if ($result && $oldversion < $newversion) {
         xmldb_reader_fix_uniqueids($dbman);
@@ -605,6 +591,24 @@ function xmldb_reader_upgrade($oldversion) {
     $newversion = 2013101500;
     if ($result && $oldversion < $newversion) {
         xmldb_reader_fix_extrapoints();
+        upgrade_mod_savepoint(true, "$newversion", 'reader');
+    }
+
+    $newversion = 2013121107;
+    if ($result && $oldversion < $newversion) {
+        $readercfg = get_config('reader');
+        $vars = get_object_vars($readercfg);
+        foreach ($vars as $oldname => $value) {
+            if (substr($oldname, 0, 7)=='reader_') {
+                unset_config($oldname, 'reader');
+                $newname = substr($oldname, 7);
+                if (isset($readercfg->$newname)) {
+                    // do nothing
+                } else {
+                    set_config($newname, $value, 'reader');
+                }
+            }
+        }
         upgrade_mod_savepoint(true, "$newversion", 'reader');
     }
 

@@ -54,7 +54,7 @@ echo $OUTPUT->box_start('generalbox');
 
 if ($checker == 1) {
     echo html_writer::start_tag('center');
-    print_string('lastupdatedtime', 'reader', date('d M Y', $readercfg->reader_last_update));
+    print_string('lastupdatedtime', 'reader', date('d M Y', $readercfg->last_update));
     echo html_writer::empty_tag('br');
     echo html_writer::link(new moodle_url('/mod/reader/updatecheck.php', array('id'=>$id)), 'YES');
     echo ' / ';
@@ -90,7 +90,7 @@ if ($readers = $DB->get_records('reader')) {
 $books = $DB->get_records_sql('SELECT * FROM {reader_books} WHERE hidden != ?', array(1));
 while (list($key,$book) = each($books)) {
     if ($book->time < 10) {
-        $book->time = $readercfg->reader_last_update;
+        $book->time = $readercfg->last_update;
     }
 
     $attempts = $DB->get_records_sql('SELECT id,passed,bookrating,reader FROM {reader_attempts} WHERE quizid = ?', array($book->quizid));
@@ -136,7 +136,7 @@ if ($testing) {
 
     $fakedata = array(
         'userlogin'  => $readercfg->serverlogin,
-        'lastupdate' => $readercfg->reader_last_update,
+        'lastupdate' => $readercfg->last_update,
         'books'      => array(),
         'readers'    => array(),
     );
@@ -156,8 +156,8 @@ if ($testing) {
     die;
 }
 
-$jdata['userlogin']  = $readercfg->reader_serverlogin;
-$jdata['lastupdate'] = $readercfg->reader_last_update;
+$jdata['userlogin']  = $readercfg->serverlogin;
+$jdata['lastupdate'] = $readercfg->last_update;
 $jdata['books']      = $data;
 $jdata['readers']    = $datareaders;
 
@@ -179,7 +179,7 @@ $opts = array('http' =>
 
 $context  = stream_context_create($opts);
 
-$result = file_get_contents($readercfg->reader_serverlink.'/update_quizzes.php', false, $context);
+$result = file_get_contents($readercfg->serverlink.'/update_quizzes.php', false, $context);
 
 $publishers = json_decode(stripslashes($result));
 

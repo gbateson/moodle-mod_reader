@@ -87,7 +87,7 @@ function reader_get_config_defaults() {
 
     $readercfg = get_config('reader');
     foreach ($defaults as $name => $value) {
-        $name = 'reader_'.$name;
+        //$name = 'reader_'.$name;
         if (! isset($readercfg->$name)) {
             set_config($name, $value, 'reader');
             $readercfg->$name = $value;

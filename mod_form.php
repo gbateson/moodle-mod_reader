@@ -30,6 +30,7 @@ defined('MOODLE_INTERNAL') || die;
 
 /** Include required files */
 require_once($CFG->dirroot.'/course/moodleform_mod.php');
+require_once($CFG->dirroot.'/mod/reader/lib.php');
 
 /**
  * mod_reader_mod_form
@@ -88,12 +89,12 @@ class mod_reader_mod_form extends moodleform_mod {
         $timelimitgrprules['timelimit'][] = array(null, 'numeric', null, 'client');
         $mform->addGroupRule('timelimitgrp', $timelimitgrprules);
         $mform->disabledIf('timelimitgrp', 'timelimitenable');
-        if (isset($readercfg->reader_fix_timelimit)) {
-            $mform->setAdvanced('timelimitgrp', $readercfg->reader_fix_timelimit);
+        if (isset($readercfg->fix_timelimit)) {
+            $mform->setAdvanced('timelimitgrp', $readercfg->fix_timelimit);
         }
         //$mform->setHelpButton('timelimitgrp', array("timelimit", get_string('quiztimer',"quiz"), "quiz"));
-        if (isset($readercfg->reader_timelimit)) {
-            $mform->setDefault('timelimit', $readercfg->reader_timelimit);
+        if (isset($readercfg->timelimit)) {
+            $mform->setDefault('timelimit', $readercfg->timelimit);
         }
 //-------------------------------------------------------------------------------
 
@@ -143,32 +144,32 @@ class mod_reader_mod_form extends moodleform_mod {
 
         $mform->addElement('selectyesno', 'popup', get_string('popup', 'quiz'));
         //$mform->setHelpButton('popup', array("popup", get_string('popup', 'quiz'), "quiz"));
-        if (isset($readercfg->reader_fix_popup)) {
-            $mform->setAdvanced('popup', $readercfg->reader_fix_popup);
+        if (isset($readercfg->fix_popup)) {
+            $mform->setAdvanced('popup', $readercfg->fix_popup);
         }
-        if (isset($readercfg->reader_popup)) {
-            $mform->setDefault('popup', $readercfg->reader_popup);
+        if (isset($readercfg->popup)) {
+            $mform->setDefault('popup', $readercfg->popup);
         }
 
         $mform->addElement('passwordunmask', 'password', get_string('requirepassword', 'quiz'));
         $mform->setType('password', PARAM_TEXT);
         //$mform->setHelpButton('password', array("requirepassword", get_string('requirepassword', 'quiz'), "quiz"));
 
-        if (isset($readercfg->reader_fix_password)) {
-            $mform->setAdvanced('password', $readercfg->reader_fix_password);
+        if (isset($readercfg->fix_password)) {
+            $mform->setAdvanced('password', $readercfg->fix_password);
         }
-        if (isset($readercfg->reader_password)) {
-            $mform->setDefault('password', $readercfg->reader_password);
+        if (isset($readercfg->password)) {
+            $mform->setDefault('password', $readercfg->password);
         }
 
         $mform->addElement('text', 'subnet', get_string('requiresubnet', 'quiz'));
         $mform->setType('subnet', PARAM_TEXT);
         //$mform->setHelpButton('subnet', array("requiresubnet", get_string('requiresubnet', 'quiz'), "quiz"));
-        if (isset($readercfg->reader_fix_subnet)) {
-            $mform->setAdvanced('subnet', $readercfg->reader_fix_subnet);
+        if (isset($readercfg->fix_subnet)) {
+            $mform->setAdvanced('subnet', $readercfg->fix_subnet);
         }
-        if (isset($readercfg->reader_subnet)) {
-            $mform->setDefault('subnet', $readercfg->reader_subnet);
+        if (isset($readercfg->subnet)) {
+            $mform->setDefault('subnet', $readercfg->subnet);
         }
 
         $mform->addElement('select', 'individualstrictip', get_string('s_individualstrictip', 'reader'), array('0'=>'No', '1'=>'yes'));
@@ -197,11 +198,11 @@ class mod_reader_mod_form extends moodleform_mod {
         $mform->setDefault('questionmark', $readercfg->questionmark);
         $mform->setDefault('bookcovers', $readercfg->bookcovers);
         $mform->setDefault('attemptsofday', $readercfg->attemptsofday);
-        if (isset($readercfg->reader_goal)) {
-            $mform->setDefault('goal', $readercfg->reader_goal);
+        if (isset($readercfg->goal)) {
+            $mform->setDefault('goal', $readercfg->goal);
         }
-        if (isset($readercfg->reader_secmeass)) {
-            $mform->setDefault('secmeass', $readercfg->reader_secmeass);
+        if (isset($readercfg->secmeass)) {
+            $mform->setDefault('secmeass', $readercfg->secmeass);
         }
         $mform->setDefault('levelcheck', $readercfg->levelcheck);
 

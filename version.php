@@ -32,8 +32,8 @@ $module->cron      = 3600;
 $module->component = 'mod_reader';
 $module->maturity  = MATURITY_BETA; // ALPHA=50, BETA=100, RC=150, STABLE=200
 $module->requires  = 2010112400; // Moodle 2.0
-$module->release   = '2013-11-30 (06)';
-$module->version   = 2013113006;
+$module->release   = '2013-12-11 (07)';
+$module->version   = 2013121107;
 
 if (defined('ANY_VERSION')) {
     // Moodle >= 2.2
