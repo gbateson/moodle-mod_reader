@@ -142,6 +142,7 @@ $string['currentlevel'] = 'Current level';
 $string['dataallavailable'] = 'data for all {$a} book(s) is available';
 $string['dataalldownloaded'] = 'data for all {$a} book(s) has been downloaded';
 $string['datasomeavailable'] = 'data for {$a->new} out of {$a->all} book(s) is available';
+$string['defaultcategoryname'] = 'Reader Quizzes';
 $string['defaultcoursename'] = 'Reader Quizzes';
 $string['defaultquestioncategoryinfo'] = '{$a->category} questions for {$a->quiz}';
 $string['definelogindetails'] = 'Please define login details: {$a}';

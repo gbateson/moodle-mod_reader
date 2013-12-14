@@ -2113,12 +2113,17 @@ function reader_file($url, $post = false) {
  * @todo Finish documenting this function
  */
 function reader_remove_directory($dir) {
-    if ($objs = glob($dir."/*")) {
-        foreach($objs as $obj) {
-            is_dir($obj) ? reader_remove_directory($obj) : unlink($obj);
+    if ($items = glob($dir.'/*')) {
+        foreach($items as $item) {
+            switch (true) {
+                case ($item=='.'):
+                case ($case=='..') : break; // do nothing
+                case is_file($item): unlink($item); break;
+                case is_dir($item) : reader_remove_directory($item); break;
+            }
         }
     }
-    rmdir($dir);
+    return rmdir($dir);
 }
 
 /**
@@ -4068,7 +4073,7 @@ function reader_extend_settings_navigation(settings_navigation $settingsnav, nav
 
     $nodes = array();
 
-    // create our new nodes
+    // create book nodes
     if (reader_can_managebooks($PAGE->cm->id, $USER->id)) {
         require_once($CFG->dirroot.'/mod/reader/admin/download/downloader.php');
 
@@ -4107,7 +4112,9 @@ function reader_extend_settings_navigation(settings_navigation $settingsnav, nav
         $nodes[] = $node;
     }
 
+    // create quiz nodes
     if (reader_can_managequizzes($PAGE->cm->id, $USER->id)) {
+
         //////////////////////////
         // Quizzes sub-menu
         //////////////////////////
@@ -4131,7 +4138,9 @@ function reader_extend_settings_navigation(settings_navigation $settingsnav, nav
         $nodes[] = $node;
     }
 
+    // create user nodes
     if (reader_can_manageusers($PAGE->cm->id, $USER->id)) {
+
         //////////////////////////
         // Users sub-menu
         //////////////////////////
@@ -4155,7 +4164,9 @@ function reader_extend_settings_navigation(settings_navigation $settingsnav, nav
         $nodes[] = $node;
     }
 
+    // add new nodes
     if (count($nodes)) {
+
         // We want to add the new nodes after the Edit settings node,
         // and before the locally assigned roles node.
 

@@ -119,10 +119,12 @@ if ($count = $downloader->has_available_items()) {
     //echo $output->formheader(get_string('availableitems', 'reader'));
     echo $output->available_lists($downloader);
 
-    //echo $output->formheader(get_string('downloadsettings', 'reader'));
-    echo $output->category_list($downloader);
-    echo $output->course_list($downloader);
-    echo $output->section_list($downloader);
+    if ($type==reader_downloader::BOOKS_WITH_QUIZZES) {
+        //echo $output->formheader(get_string('downloadsettings', 'reader'));
+        echo $output->category_list($downloader);
+        echo $output->course_list($downloader);
+        echo $output->section_list($downloader);
+    }
 
     echo $output->form_end();
     echo $output->box_end();

@@ -44,7 +44,8 @@ defined('MOODLE_INTERNAL') || die;
  * @todo Finish documenting this function
  */
 function xmldb_reader_check_stale_files() {
-    global $FULLME, $OUTPUT;
+    global $CFG, $FULLME, $OUTPUT;
+    //require_once($CFG->dirroot.'/mod/reader/lib.php');
 
     $dirpath = dirname(dirname(__FILE__));
     $filenames = array(
@@ -56,7 +57,11 @@ function xmldb_reader_check_stale_files() {
         'accessrules.php', 'attempt.php', 'attemptlib.php',
         'processattempt.php', 'startattempt.php', 'summary.php',
         // moved to "utilities" folder
-        'checkemail.php', 'fixslashesinnames.php'
+        'checkemail.php', 'fixslashesinnames.php',
+        // replaced by "admin/download"
+        'dlquizzes_form.php', 'dlquizzes_process.php',
+        'dlquizzes.php', 'dlquizzesnoq.php',
+        'updatecheck.php', 'lib',
     );
 
     $stalefilenames = array();
@@ -65,7 +70,7 @@ function xmldb_reader_check_stale_files() {
         $filepath = $dirpath.'/'.$filename;
         $exists = file_exists($filepath);
 
-        if ($exists && is_writable($filepath) && @unlink($filepath)) {
+        if ($exists && xmldb_reader_rm($filepath)) {
             $exists = false; // successfully deleted
         }
 
@@ -381,9 +386,7 @@ function xmldb_reader_remove_coursemodule($cmid) {
     }
     if (function_exists('course_delete_module')) {
         // Moodle >= 2.5
-        if (! course_delete_module($cm->id)) {
-            notify("Could not delete the $cm->modname (coursemodule, id=$cm->id)");
-        }
+        course_delete_module($cm->id);
     } else {
         // Moodle <= 2.4
         if (! delete_course_module($cm->id)) {
@@ -2812,4 +2815,70 @@ function xmldb_reader_box_end() {
     echo html_writer::end_tag('div');
     echo $OUTPUT->box_end();
     echo xmldb_reader_showhide_end_js();
+}
+
+/**
+ * xmldb_reader_move_images
+ *
+ * @todo Finish documenting this function
+ */
+function xmldb_reader_move_images() {
+
+    // create "reader" folder within Moodle data folder
+    make_upload_directory('reader');
+
+    $courseids = xmldb_reader_quiz_courseids();
+    if ($courseid = reset($courseids)) {
+
+        $oldname = $CFG->dataroot."/$courseid/images";
+        $newname = $CFG->dataroot.'/reader/images';
+
+        // move "images" folder to new location
+        if (file_exists($newname)) {
+            // do nothing
+        } else if (file_exists($oldname)) {
+            @rename($oldname, $newname);
+        }
+
+        // remove old "images" folder (if necessary)
+        if (file_exists($oldname)) {
+            xmldb_reader_rm($oldname);
+        }
+
+        // remove old "script.txt" file (if necessary)
+        $oldname = $CFG->dirroot.'/blocks/readerview/script.txt';
+        if (file_exists($oldname)) {
+            @unlink($oldname);
+        }
+    }
+}
+
+/**
+ * xmldb_reader_rm
+ *
+ * @param string  $target
+ * @todo Finish documenting this function
+ */
+function xmldb_reader_rm($target) {
+    $ok = true;
+    switch (true) {
+        case empty($target):
+            break;
+        case is_link($target): // unusual !!
+        case is_file($target):
+            $ok = @unlink($target);
+            break;
+        case is_dir($target):
+            $dir = dir($target);
+            while(false !== ($item = $dir->read())) {
+                if ($item=='.' || $item=='..') {
+                    continue;
+                }
+                $ok = $ok && xmldb_reader_rm($target.DIRECTORY_SEPARATOR.$item);
+            }
+            $dir->close();
+            $ok = $ok && @rmdir($target);
+            break;
+    }
+    return $ok;
 }

@@ -117,19 +117,53 @@ class mod_reader_admin_download_renderer extends mod_reader_admin_renderer {
             $js .= "            targetids = targetids.split(',');\n";
             $js .= "        }\n";
 
-            $js .= "        var i_max = targetids.length;\n";
-            $js .= "        for (var i=0; i<i_max; i++) {\n";
-            $js .= "            var obj = document.getElementById(targetids[i]);\n";
-            $js .= "            if (obj) {\n";
-            $js .= "                if (RDR_xmlhttp.status==200) {\n";
-            $js .= "                    obj.innerHTML = RDR_xmlhttp.responseText;\n";
-            $js .= "                } else {\n";
-            $js .= "                    obj.innerHTML = (i ? '' : 'Error: ' + RDR_xmlhttp.status);\n";
+
+            $js .= "        if (RDR_xmlhttp.status==200) {\n";
+            //$js .= "            var reponse = RDR_parseJSON(RDR_xmlhttp.responseText);\n";
+            $js .= "            var reponse = RDR_xmlhttp.responseText;\n";
+            $js .= "        } else {\n";
+            $js .= "            var reponse = 'Error: ' + RDR_xmlhttp.status;\n";
+            $js .= "        }\n";
+
+            $js .= "        if (typeof(reponse)=='string') {\n";
+            $js .= "            var i_max = targetids.length;\n";
+            $js .= "            for (var i=0; i<i_max; i++) {\n";
+            $js .= "                var obj = document.getElementById(targetids[i]);\n";
+            $js .= "                if (obj) {\n";
+            $js .= "                    obj.innerHTML = reponse;\n";
+            $js .= "                }\n";
+            $js .= "                obj = null;\n";
+            $js .= "            }\n";
+            $js .= "        } else {\n";
+            $js .= "            var id = '';\n";
+            $js .= "            for (id in reponse) {\n";
+            $js .= "                var obj = document.getElementById(id);\n";
+            $js .= "                if (obj) {\n";
+            $js .= "                    obj.innerHTML = reponse[id];\n";
             $js .= "                }\n";
             $js .= "                obj = null;\n";
             $js .= "            }\n";
             $js .= "        }\n";
+
             $js .= "    }\n";
+            $js .= "}\n";
+
+            $js .= "function RDR_parseJSON(str) {\n";
+            $js .= "    if (typeof str !== 'string' || ! str) {\n";
+            $js .= "        return null;\n";
+            $js .= "    }\n";
+            $js .= "    str = str.replace(/^\s+/, '').replace(/\s+\$/, '');\n"; // for IE
+            $js .= "    if (window.JSON && window.JSON.parse) {\n";
+            $js .= "        return window.JSON.parse(str);\n";
+            $js .= "    }\n";
+            //$js .= "    var validchars  = new RegExp('^[\],:{}\s]*\$');\n";
+            //$js .= "    var validescape = new RegExp('\\(?:[\"\\\/bfnrt]|u[0-9a-fA-F]{4})', 'g');\n";
+            //$js .= "    var validtokens = new RegExp('\"[^\"\\\n\r]*\"|true|false|null|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?', 'g');\n";
+            //$js .= "    var validbraces = new RegExp('(?:^|:|,)(?:\s*\[)+', 'g');\n";
+            //$js .= "    if (validchars.test(str.replace(validescape, '@').replace(validtokens, ']').replace(validbraces, ''))) {\n";
+            //$js .= "        return (new Function('return ' + str))();\n"; // =eval(str)
+            //$js .= "    }\n";
+            $js .= "    return 'Invalid JSON: ' + str;\n"; // shouldn't happen !!
             $js .= "}\n";
 
             $js .= "function RDR_get_id() {\n";
@@ -1081,6 +1115,17 @@ class mod_reader_admin_download_renderer extends mod_reader_admin_renderer {
         global $DB;
 
         $categoryid = $downloader->get_course_categoryid();
+        $categorytype = $downloader->get_course_categorytype();
+
+        $categorytypes = array(
+            reader_downloader::CATEGORYTYPE_DEFAULT => get_string('default'),
+            reader_downloader::CATEGORYTYPE_HIDDEN  => get_string('hidden', 'reader'),
+            reader_downloader::CATEGORYTYPE_VISIBLE => get_string('visible'),
+            reader_downloader::CATEGORYTYPE_CURRENT => get_string('current', 'reader'),
+            reader_downloader::CATEGORYTYPE_NEW     => get_string('new'),
+        );
+        $categorytypes = html_writer::select($categorytypes, 'targetcategorytype', $categorytype, null);
+        $categorytypes = html_writer::tag('span', $categorytypes, array('id' => 'targetcategorytype'));
 
         // to get all categories we coud use:
         //    $categories = get_categories();
@@ -1116,7 +1161,7 @@ class mod_reader_admin_download_renderer extends mod_reader_admin_renderer {
 
         //$label = get_string('targetcategory', 'reader');
         $label = get_string('category');
-        return $this->formitem($label, $categoryids, 'targetcategory');
+        return $this->formitem($label, $categorytypes.' '.$categoryids, 'targetcategory');
     }
 
     /**

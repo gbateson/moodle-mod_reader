@@ -58,6 +58,18 @@ class reader_downloader {
     /**#@-*/
 
     /**#@+
+    * values for $targetcategorytype
+    *
+    * @const integer
+    */
+    const CATEGORYTYPE_DEFAULT  = 0;
+    const CATEGORYTYPE_HIDDEN   = 1;
+    const CATEGORYTYPE_VISIBLE  = 2;
+    const CATEGORYTYPE_CURRENT  = 3;
+    const CATEGORYTYPE_NEW      = 4;
+    /**#@-*/
+
+    /**#@+
     * values for $targetcoursetype
     *
     * @const integer
@@ -74,10 +86,10 @@ class reader_downloader {
     *
     * @const integer
     */
-    const SECTIONTYPE_LAST     = 1;
-    const SECTIONTYPE_NEW      = 2;
-    const SECTIONTYPE_SORTED   = 3;
-    const SECTIONTYPE_SPECIFIC = 4;
+    const SECTIONTYPE_NEW       = 1;
+    const SECTIONTYPE_SORTED    = 2;
+    const SECTIONTYPE_SPECIFIC  = 3;
+    const SECTIONTYPE_LAST      = 4;
     /**#@-*/
 
     /** sites from which we can download */
@@ -105,13 +117,14 @@ class reader_downloader {
     *
     * @var integer
     */
-    public $targetcategoryid  =  0;
-    public $targetcoursetype  =  0;
-    public $targetcourseid    =  0;
-    public $targetcoursetext  = '';
-    public $targetsectiontype =  0;
-    public $targetsectiontext = '';
-    public $targetsectionnum  =  0;
+    public $targetcategorytype =  0;
+    public $targetcategoryid   =  0;
+    public $targetcoursetype   =  0;
+    public $targetcourseid     =  0;
+    public $targetcoursetext   = '';
+    public $targetsectiontype  =  0;
+    public $targetsectiontext  = '';
+    public $targetsectionnum   =  0;
     /**#@-*/
 
     /** download progress bar */
@@ -663,11 +676,12 @@ class reader_downloader {
      * @param boolean $set_config (optional, default=false)
      * @todo Finish documenting this function
      */
-    public function set_quiz_courseid($courseid, $coursetype=0, $categoryid=0, $set_reader=false, $set_config=false) {
+    public function set_quiz_courseid($courseid, $categorytype=0, $coursetype=0, $categoryid=0, $set_reader=false, $set_config=false) {
         global $DB;
 
         // cache this course id
         $this->targetcourseid = $courseid;
+        $course = $DB->get_record('course', array('id' => $courseid));
 
         // cache this course type
         if ($coursetype) {
@@ -687,6 +701,17 @@ class reader_downloader {
             $this->targetcategoryid = $DB->get_field('course', 'category', array('id' => $courseid));
         }
 
+        // cache this category type
+        if ($categorytype) {
+            $this->targetcoursetype = $categorytype;
+        } else if ($course->category==$this->course->category) {
+            $this->targetcategorytype = self::CATEGORYTYPE_CURRENT; // 3
+        } else if ($DB->get_field('course_categories', 'visible', array('id' => $course->category))) {
+            $this->targetcategorytype = self::CATEGORYTYPE_VISIBLE; // 2
+        } else {
+            $this->targetcategorytype = self::CATEGORYTYPE_HIDDEN;  // 1
+        }
+
         if ($set_reader && $this->reader->usecourse==0) {
             $this->reader->usecourse = $courseid;
             $DB->update_record('reader', $this->reader);
@@ -698,6 +723,31 @@ class reader_downloader {
     }
 
     /**
+     * get_course_categorytype
+     *
+     * @uses $DB
+     * @param integer $numsections (optional, default=1)
+     * @return integer $courseid
+     * @todo Finish documenting this function
+     */
+    public function get_course_categorytype() {
+
+        // category id is cached
+        if ($categorytype = $this->targetcategorytype) {
+            return $categorytype;
+        }
+
+        // derive categorytype from courseid
+        if ($courseid = $this->get_quiz_courseid()) {
+            if ($categorytype = $this->targetcategorytype) {
+                return $this->targetcategorytype;
+            }
+        }
+
+        return self::CATEGORYTYPE_DEFAULT;
+    }
+
+    /**
      * get_course_categoryid
      *
      * @uses $DB
@@ -706,7 +756,6 @@ class reader_downloader {
      * @todo Finish documenting this function
      */
     public function get_course_categoryid() {
-        global $DB;
 
         // category id is cached
         if ($categoryid = $this->targetcategoryid) {
@@ -723,7 +772,6 @@ class reader_downloader {
         return 0; // shoudn't happen !!
     }
 
-
     /**
      * get_quiz_coursetype
      *
@@ -733,7 +781,6 @@ class reader_downloader {
      * @todo Finish documenting this function
      */
     public function get_quiz_coursetype() {
-        global $DB;
 
         // course type is cached
         if ($coursetype = $this->targetcoursetype) {
@@ -796,7 +843,7 @@ class reader_downloader {
         // course with default Reader course name
         if ($courseid = $DB->get_field('course', 'id', array('fullname' => $coursename, 'shortname' => $coursename))) {
             if ($this->can_manage_course($courseid)) {
-                $this->set_quiz_courseid($courseid, 0, 0, true);
+                $this->set_quiz_courseid($courseid, 0, 0, 0, true);
                 return $courseid;
             }
         }
@@ -811,13 +858,81 @@ class reader_downloader {
             }
         }
 
+        // try to find suitable category
+        if ($categoryid==0) {
+
+            $categorytype = self::CATEGORYTYPE_DEFAULT;
+            $categorytype = optional_param('targetcategorytype', $categorytype, PARAM_INT);
+
+            // get list of course categories
+            $requiredcapability = 'moodle/course:create';
+            if (class_exists('coursecat')) {
+                $category_list = coursecat::make_categories_list($requiredcapability);
+            } else { // Moodle <= 2.4
+                $category_list = array();
+                $category_parents = array();
+                make_categories_list($category_list, $category_parents, $requiredcapability);
+            }
+
+            // get first category of required type
+            foreach ($category_list as $categoryid => $category_name) {
+                switch ($categorytype) {
+                    case self::CATEGORYTYPE_HIDDEN:
+                        $keep = ! $DB->get_field('course_categories', 'visible', array('id' => $categoryid));
+                        break;
+                    case self::CATEGORYTYPE_VISIBLE:
+                        $keep = $DB->get_field('course_categories', 'visible', array('id' => $categoryid));
+                        break;
+                    case self::CATEGORYTYPE_CURRENT:
+                        $keep = ($categoryid==$this->course->category);
+                        break;
+                    case self::CATEGORYTYPE_NEW:
+                        $keep = false;
+                        break;
+                    case self::CATEGORYTYPE_DEFAULT:
+                    default:
+                        $keep = true;
+                }
+                if (! $keep) {
+                    unset($category_list[$categoryid]);
+                }
+            }
+
+            // get first valid category $categoryid (e.g. Miscellaneous)
+            reset($category_list);
+            list($categoryid, $category_name) = each($category_list);
+        }
+
         // allow system admin to create courses anywhere
         if ($categoryid==0 && $this->can_create_course()) {
-            $category_list = array();
-            $category_parents = array();
-            make_categories_list($category_list, $category_parents);
-            // get first valid category $categoryid (Miscellaneous)
-            list($categoryid, $category_name) = each($category_list);
+
+            // setup new course category
+            $category = (object)array(
+                'name'          => get_string('defaultcategoryname', 'reader'),
+                'idnumber'      => '',
+                'description'   => '',
+                'descriptionformat' => FORMAT_PLAIN, // plain text
+                'parent'        => 0,
+                'sortorder'     => 0,
+                'coursecount'   => 0,
+                'visible'       => 0,
+                'visibleold'    => 0,
+                'timemodified'  => 0,
+                'depth'         => 0,
+                'path'          => '',
+                'theme'         => '',
+            );
+
+            if (class_exists('coursecat')) {
+                // Moodle >= 2.5
+                $category = coursecat::create($category);
+            } else {
+                // Moodle <= 2.4
+                $category = create_course_category($category);
+            }
+
+            $categoryid = $category->id;
+            $categorytype = self::CATEGORYTYPE_HIDDEN;
         }
 
         // create course if allowed
@@ -841,7 +956,7 @@ class reader_downloader {
             $course = create_course($course);
 
             // save new course id
-            $this->set_quiz_courseid($course->id, self::COURSETYPE_NEW, $categoryid, true);
+            $this->set_quiz_courseid($course->id, $categorytype, self::COURSETYPE_NEW, $categoryid, true);
 
             // return new course id
             return $course->id;
@@ -1196,28 +1311,26 @@ class reader_downloader {
             }
         }
 
-        $libfile = $CFG->dirroot.'/mod/'.$cm->modname.'/lib.php';
-        if (! file_exists($libfile)) {
-            throw new moodle_exception("$cm->modname lib.php not accessible ($libfile)");
-        }
-        require_once($libfile);
-
-        $deleteinstancefunction = $cm->modname.'_delete_instance';
-        if (! function_exists($deleteinstancefunction)) {
-            throw new moodle_exception("$cm->modname delete function not found ($deleteinstancefunction)");
-        }
-
-        // copied from 'course/mod.php'
-        if (! $deleteinstancefunction($cm->instance)) {
-            throw new moodle_exception("Could not delete the $cm->modname (instance id=$cm->instance)");
-        }
         if (function_exists('course_delete_module')) {
             // Moodle >= 2.5
-            if (! course_delete_module($cm->id)) {
-                throw new moodle_exception("Could not delete the $cm->modname (coursemodule, id=$cm->id)");
-            }
+            course_delete_module($cm->id);
         } else {
             // Moodle <= 2.4
+            $libfile = $CFG->dirroot.'/mod/'.$cm->modname.'/lib.php';
+            if (! file_exists($libfile)) {
+                throw new moodle_exception("$cm->modname lib.php not accessible ($libfile)");
+            }
+            require_once($libfile);
+
+            $deleteinstancefunction = $cm->modname.'_delete_instance';
+            if (! function_exists($deleteinstancefunction)) {
+                throw new moodle_exception("$cm->modname delete function not found ($deleteinstancefunction)");
+            }
+
+            // copied from 'course/mod.php'
+            if (! $deleteinstancefunction($cm->instance)) {
+                throw new moodle_exception("Could not delete the $cm->modname (instance id=$cm->instance)");
+            }
             if (! delete_course_module($cm->id)) {
                 throw new moodle_exception("Could not delete the $cm->modname (coursemodule, id=$cm->id)");
             }
@@ -1426,12 +1539,14 @@ class reader_downloader {
      */
     public function prune_question_categories(&$module, &$categories) {
         // ids of questions used in this $quiz
-        $ids = array();
+        $mainids = array();
+        $keepids = array();
+        $skipids = array();
 
         // get main questions used in this quiz
         if (isset($module->question_instances)) {
             foreach ($module->question_instances as $instance) {
-                $ids[$instance->question] = array($instance->question);
+                $mainids[$instance->question] = array($instance->question);
             }
         }
 
@@ -1448,36 +1563,38 @@ class reader_downloader {
                 $categories[$categoryid]->context->level = 'module';
             }
 
+            // prune random questions
             if (isset($category->questions)) {
                 $has_nonrandom = $this->has_nonrandom_questions($category);
                 foreach ($category->questions as $questionid => $question) {
-                    if (isset($ids[$question->id]) && $question->qtype=='random') {
+                    if ($question->qtype=='multianswer' && ! isset($question->answers)) {
+                        $skipids[] = $questionid;
+                    } else if (isset($mainids[$question->id]) && $question->qtype=='random') {
                         if ($has_nonrandom) {
                             // for random questions, we keep the whole category
-                            $ids[$question->id] = array_keys($category->questions);
+                            $mainids[$questionid] = array_keys($category->questions);
                         } else {
                             // this question is a "random" question in a
                             // category that contains ONLY "random" questions
                             // Therefore, there is no point in keeping this question
-                            unset($ids[$question->id]);
+                            unset($mainids[$questionid]);
                         }
-                    } else if (isset($ids[$question->parent])) {
+                    } else if (isset($mainids[$question->parent])) {
                         // otherwise we add this question to the list of child questions for this parent
-                        $ids[$question->parent][] = $questionid;
+                        $mainids[$question->parent][] = $questionid;
                     }
                 }
             }
         }
 
         // flatten array of required question ids
-        $keepids = array();
-        foreach (array_keys($ids) as $id) {
-            $keepids = array_merge($keepids, $ids[$id]);
+        foreach (array_keys($mainids) as $mainid) {
+            $keepids = array_merge($keepids, array_diff($mainids[$mainid], $skipids));
         }
         $keepids = array_flip($keepids);
 
         foreach ($categories as $categoryid => $category) {
-            // delete unused questions
+            // delete unused or faulty questions
             if (isset($category->questions)) {
                 foreach ($category->questions as $questionid => $question) {
                     if (array_key_exists($questionid, $keepids)) {
@@ -1817,23 +1934,40 @@ class reader_downloader {
 
         $sumfraction = 0;
         $maxfraction = -1;
-        foreach ($question->answers as $xmlanswer) {
-            $answer = (object)array(
-                'question' => $question->id,
-                'fraction' => $xmlanswer->fraction,
-                'answer'   => $xmlanswer->answer_text,
-                'answerformat' => FORMAT_MOODLE, // =0
-                'feedback' => '',
-                'feedbackformat' => FORMAT_MOODLE, // =0
-            );
-            $this->add_question_answer($restoreids, $bestanswerids, $xmlanswer, $answer);
+        if (isset($question->answers)) {
+            foreach ($question->answers as $xmlanswer) {
+                $answer = (object)array(
+                    'question' => $question->id,
+                    'fraction' => $xmlanswer->fraction,
+                    'answer'   => $xmlanswer->answer_text,
+                    'answerformat' => FORMAT_MOODLE, // =0
+                    'feedback' => '',
+                    'feedbackformat' => FORMAT_MOODLE, // =0
+                );
+                $this->add_question_answer($restoreids, $bestanswerids, $xmlanswer, $answer);
 
-            if ($answer->fraction > 0) {
-                $sumfraction += $answer->fraction;
+                if ($answer->fraction > 0) {
+                    $sumfraction += $answer->fraction;
+                }
+                if ($maxfraction < $answer->fraction) {
+                    $maxfraction = $answer->fraction;
+                }
             }
-            if ($maxfraction < $answer->fraction) {
-                $maxfraction = $answer->fraction;
-            }
+        }
+
+        // fix missing multichoice settings - shoudln't happen !!
+        if (empty($question->multichoice)) {
+            $question->multichoice = (object)array(
+                'answers'         => '',
+                'layout'          => 0,
+                'single'          => 0,
+                'shuffleanswers'  => 0,
+                'answernumbering' => '',
+                'shownumcorrect'  => 0,
+                'correctfeedback' => '',
+                'incorrectfeedback' => '',
+                'partiallycorrectfeedback' => '',
+            );
         }
 
         // create $options for this multichoice question
@@ -2114,6 +2248,9 @@ class reader_downloader {
      * @todo Finish documenting this function
      */
     public function get_best_match_answers($question) {
+        if (empty($question->answers)) {
+            return array(); // shouldn't happen !!
+        }
         $table      = 'question_answers';
         $params     = array('question' => $question->id);
         $xmlrecords = $question->answers;
