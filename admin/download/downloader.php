@@ -1567,9 +1567,15 @@ class reader_downloader {
             if (isset($category->questions)) {
                 $has_nonrandom = $this->has_nonrandom_questions($category);
                 foreach ($category->questions as $questionid => $question) {
+                    if ($question->qtype=='multichoice' && ! isset($question->answers)) {
+                        $skipids[] = $questionid;
+                        continue; // shouldn't happen !!
+                    }
                     if ($question->qtype=='multianswer' && ! isset($question->answers)) {
                         $skipids[] = $questionid;
-                    } else if (isset($mainids[$question->id]) && $question->qtype=='random') {
+                        continue; // shouldn't happen !!
+                    }
+                    if (isset($mainids[$question->id]) && $question->qtype=='random') {
                         if ($has_nonrandom) {
                             // for random questions, we keep the whole category
                             $mainids[$questionid] = array_keys($category->questions);
