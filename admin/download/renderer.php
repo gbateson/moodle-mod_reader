@@ -307,7 +307,7 @@ class mod_reader_admin_download_renderer extends mod_reader_admin_renderer {
             $js .= "        }\n";
             $js .= "    }\n";
             $js .= "    var url = RDR_get_wwwroot() + '/mod/reader/admin/download.js.php' + '?' + query.join('&');\n";
-            $js .= "    if (confirm(url)) RDR_request(url);\n";
+            $js .= "    RDR_request(url);\n"; // if (confirm(url))
             $js .= "}\n";
 
             $js .= "//]]>\n";
