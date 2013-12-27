@@ -1054,6 +1054,7 @@ if (! $excel) {
             //new reader_menu_item('uploadquiztoreader', 'managequizzes', 'dlquizzes.php', array('id'=>$id)),
             //new reader_menu_item('uploaddatanoquizzes', 'managequizzes', 'dlquizzesnoq.php', array('id'=>$id)),
             //new reader_menu_item('updatequizzes', 'managequizzes', 'updatecheck.php', array('id'=>$id, 'checker'=>1)),
+            new reader_menu_item('updatequizzes', 'managequizzes', 'admin/download.php', array('id'=>$id, 'type' => 1)), // 1=with quizzes
             new reader_menu_item('uploadquiztoreader', 'managequizzes', 'admin/download.php', array('id'=>$id, 'type' => 1)), // 1=with quizzes
             new reader_menu_item('uploaddatanoquizzes', 'managequizzes', 'admin/download.php', array('id'=>$id, 'type' => 0)), // 0=without quizzes
             new reader_menu_item('editquiztoreader', 'managequizzes', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'editquiz')),
@@ -1101,15 +1102,15 @@ if (! $excel) {
     echo html_writer::end_tag('div');
     echo html_writer::end_tag('form');
 
-    //if ($readercfg->update == 1) {
-    //    if (time() - $readercfg->last_update > $readercfg->update_interval) {
-    //      echo $OUTPUT->box_start('generalbox');
-    //      $days = round((time() - $readercfg->last_update) / (24 * 3600));
-    //      print_string('needtocheckupdates', 'reader', $days);
-    //      echo ' <a href="updatecheck.php?id='.$id.'">YES</a> / <a href="admin.php?a=admin&id='.$id.'">NO</a></center>';
-    //      echo $OUTPUT->box_end();
-    //    }
-    //}
+    if ($readercfg->update == 1) {
+        if (time() - $readercfg->last_update > $readercfg->update_interval) {
+          echo $OUTPUT->box_start('generalbox');
+          $days = round((time() - $readercfg->last_update) / (24 * 3600));
+          print_string('needtocheckupdates', 'reader', $days);
+          echo ' <a href="admin/download.php?id='.$id.'">YES</a> / <a href="admin.php?a=admin&id='.$id.'">NO</a></center>';
+          echo $OUTPUT->box_end();
+        }
+    }
 }
 
 $options = array(

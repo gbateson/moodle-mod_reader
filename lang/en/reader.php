@@ -352,10 +352,11 @@ $string['search'] = 'Search';
 $string['search_help'] = 'To search for a particular book, enter some text contained in the title of the book and click the "Go" button';
 $string['searchforthebookthatyouwant'] = 'Search for the book that you want to take a quiz on';
 $string['sectionname'] = 'Section name';
+$string['sectiontypedefault'] = 'The default section(s)';
+$string['sectiontypehidden'] = 'A hidden section';
 $string['sectiontypelast'] = 'The last section';
 $string['sectiontypenew'] = 'A new section';
-$string['sectiontypesorted'] = 'A sorted section';
-$string['sectiontypespecific'] = 'A specific section';
+$string['sectiontypevisible'] = 'A visible section';
 $string['select'] = 'Select';
 $string['select_course'] = 'Select Course';
 $string['select_help'] = 'Click on the kind of items you wish to be selected in the list below';
@@ -426,17 +427,20 @@ Select the type of course from one of the following options:
 $string['targetsection'] = 'Target section';
 $string['targetsection_help'] = 'Specify the course section i.e. the week or topic, into which you want to download the quizzes. The following types of section are available:
 
-**A new section**
-: The quizzes will be added to a new section. Enter a name for the new section in the text box.
-
-**A sorted section**
+**The default section(s)**
 : The quizzes will be grouped and placed in sections according to the "Publisher - Level" of their respective books.
 
-**A specific section**
-: The quizzes will be put into the specific section that you select from the section menu.
+**A hidden section**
+: The quizzes will be put into the selected hidden section of the course.
+
+**A visible section**
+: The quizzes will be put into the selected visible section of the course.
 
 **The last section**
-: The quizzes will be added to the last section of the course';
+: The quizzes will be added to the last section of the course
+
+**A new section**
+: The quizzes will be added to a new section. Enter a name for the new section in the text box.';
 $string['term'] = 'Term';
 $string['therehavebeennonewquizzesorupdates'] = 'There have been no new quizzes or updates added to the MoodleReader quiz bank since the last time you checked.';
 $string['thisblockunavailable'] = 'This block is currently unavailable to this student';

@@ -101,7 +101,7 @@ if (is_array($categories) && count($categories)) {
             $DB->set_field('question_categories', 'name', stripslashes($category->name), array('id' => $category->id));
         }
         // fix case of category name
-        if ($category->name=='ordering' || $category->name=='ORDERING') {
+        if ($category->name=='ordering' || $category->name=='ORDERING' || $category->name=='ORDER') {
             $msg = '<span style="color: brown;">FIX</span> category name: '.$category->name.' =&gt; Ordering';
             $DB->set_field('question_categories', 'name', 'Ordering', array('id' => $category->id));
         }

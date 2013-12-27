@@ -77,17 +77,18 @@ class mod_reader_admin_download_renderer extends mod_reader_admin_renderer {
             $js .= "function RDR_request(url, targetids, callback) {\n";
             $js .= "    url = url.replace(new RegExp('&amp;', 'g'), '&');\n";
 
-            $js .= "    if (typeof(targetids)=='string') {\n";
-            $js .= "        targetids = targetids.split(',');\n";
-            $js .= "    }\n";
-
-            $js .= "    var i_max = targetids.length;\n";
-            $js .= "    for (var i=0; i<i_max; i++) {\n";
-            $js .= "        var obj = document.getElementById(targetids[i]);\n";
-            $js .= "    	if (obj) {\n";
-            $js .= "            obj.innerHTML = (i ? '' : '".'<img src="'.$CFG->wwwroot.'/pix/i/ajaxloader.gif" alt="loading ..." />'."');\n";
-            $js .= "    	    obj = null;\n";
-            $js .= "    	}\n";
+            $js .= "    if (targetids) {\n";
+            $js .= "        if (typeof(targetids)=='string') {\n";
+            $js .= "            targetids = targetids.split(',');\n";
+            $js .= "        }\n";
+            $js .= "        var i_max = targetids.length;\n";
+            $js .= "        for (var i=0; i<i_max; i++) {\n";
+            $js .= "            var obj = document.getElementById(targetids[i]);\n";
+            $js .= "            if (obj) {\n";
+            $js .= "                obj.innerHTML = (i ? '' : '".'<img src="'.$CFG->wwwroot.'/pix/i/ajaxloader.gif" alt="loading ..." />'."');\n";
+            $js .= "                obj = null;\n";
+            $js .= "            }\n";
+            $js .= "        }\n";
             $js .= "    }\n";
 
             $js .= "    window.RDR_xmlhttp = false;\n";
@@ -119,32 +120,76 @@ class mod_reader_admin_download_renderer extends mod_reader_admin_renderer {
 
 
             $js .= "        if (RDR_xmlhttp.status==200) {\n";
-            //$js .= "            var reponse = RDR_parseJSON(RDR_xmlhttp.responseText);\n";
-            $js .= "            var reponse = RDR_xmlhttp.responseText;\n";
+            $js .= "            var response = RDR_parseJSON(RDR_xmlhttp.responseText);\n";
             $js .= "        } else {\n";
-            $js .= "            var reponse = 'Error: ' + RDR_xmlhttp.status;\n";
+            $js .= "            var response = 'Error: ' + RDR_xmlhttp.status;\n";
             $js .= "        }\n";
 
-            $js .= "        if (typeof(reponse)=='string') {\n";
-            $js .= "            var i_max = targetids.length;\n";
-            $js .= "            for (var i=0; i<i_max; i++) {\n";
-            $js .= "                var obj = document.getElementById(targetids[i]);\n";
-            $js .= "                if (obj) {\n";
-            $js .= "                    obj.innerHTML = reponse;\n";
+            $js .= "        if (typeof(response)=='string') {\n";
+            $js .= "            if (targetids) {\n";
+            $js .= "                var i_max = targetids.length;\n";
+            $js .= "                for (var i=0; i<i_max; i++) {\n";
+            $js .= "                    var obj = document.getElementById(targetids[i]);\n";
+            $js .= "                    if (obj) {\n";
+            $js .= "                        obj.innerHTML = response;\n";
+            $js .= "                    }\n";
+            $js .= "                    obj = null;\n";
             $js .= "                }\n";
-            $js .= "                obj = null;\n";
             $js .= "            }\n";
             $js .= "        } else {\n";
             $js .= "            var id = '';\n";
-            $js .= "            for (id in reponse) {\n";
+            $js .= "            for (id in response) {\n";
             $js .= "                var obj = document.getElementById(id);\n";
             $js .= "                if (obj) {\n";
-            $js .= "                    obj.innerHTML = reponse[id];\n";
+            $js .= "                    var tmp = document.createDocumentFragment();\n";
+            $js .= "                    var div = document.createElement('DIV');\n";
+            $js .= "                    div.innerHTML = response[id];\n";
+            $js .= "                    var child = null;\n";
+            $js .= "                    while (child = div.firstChild) {\n";
+            $js .= "                        tmp.appendChild(child)\n";
+            $js .= "                    }\n";
+            $js .= "                    obj.parentNode.replaceChild(tmp, obj)\n";
+            $js .= "                    div= null;\n";
+            $js .= "                    tmp= null;\n";
             $js .= "                }\n";
             $js .= "                obj = null;\n";
             $js .= "            }\n";
             $js .= "        }\n";
+            $js .= "        RDR_showhide_textboxes();\n";
+            $js .= "    }\n";
+            $js .= "}\n";
 
+            $js .= "function RDR_showhide_textboxes(buttonid) {\n";
+            $js .= "    if (buttonid==null) {\n";
+            $js .= "        var items= new Array('category', 'course', 'section');\n";
+            $js .= "    } else {\n";
+            $js .= "        var items= new Array(buttonid.replace('button', '').replace('target', ''));\n";
+            $js .= "        var obj = document.getElementById(buttonid);\n";
+            $js .= "        if (obj) {\n";
+            $js .= "            obj.style.display = 'none';\n";
+            $js .= "        }\n";
+            $js .= "    }\n";
+            $js .= "    for (var i in items) {\n";
+            $js .= "        var obj = document.getElementById('menutarget' + items[i] + 'type');\n";
+            $js .= "        if (obj) {\n";
+            $js .= "            var is_default = (obj.options[obj.selectedIndex].value==0);\n";
+            $js .= "            var is_new = (obj.options[obj.selectedIndex].value==4);\n";
+            $js .= "        } else {\n";
+            $js .= "            var is_default = false;\n";
+            $js .= "            var is_new = false;\n";
+            $js .= "        }\n";
+            $js .= "        var obj = document.getElementById('menutarget' + items[i] + 'id');\n";
+            $js .= "        if (obj) {\n";
+            $js .= "            obj.style.display = (is_new ? 'none' : '');\n";
+            $js .= "        }\n";
+            $js .= "        var obj = document.getElementById('menutarget' + items[i] + 'num');\n";
+            $js .= "        if (obj) {\n";
+            $js .= "            obj.style.display = ((is_new || is_default) ? 'none' : '');\n";
+            $js .= "        }\n";
+            $js .= "        var obj = document.getElementById('texttarget' + items[i] + 'text');\n";
+            $js .= "        if (obj) {\n";
+            $js .= "            obj.style.display = (is_new ? '' : 'none');\n";
+            $js .= "        }\n";
             $js .= "    }\n";
             $js .= "}\n";
 
@@ -166,37 +211,103 @@ class mod_reader_admin_download_renderer extends mod_reader_admin_renderer {
             $js .= "    return 'Invalid JSON: ' + str;\n"; // shouldn't happen !!
             $js .= "}\n";
 
-            $js .= "function RDR_get_id() {\n";
-            $js .= "    return location.href.replace(new RegExp('^.*?id=([0-9]+).*\$'), '$1');\n";
-            $js .= "}\n";
-
-            $js .= "function RDR_set_sectionnums() {\n";
-            $js .= "    var courseid = document.getElementById('menutargetcourseid');\n";
-            $js .= "    if (courseid) {\n";
-            $js .= "        courseid = courseid.options[courseid.selectedIndex].value;\n";
-            $js .= "    }\n";
-            $js .= "    var sectiontype = document.getElementById('menutargetsectiontype');\n";
-            $js .= "    if (sectiontype) {\n";
-            $js .= "        sectiontype = sectiontype.options[sectiontype.selectedIndex].value;\n";
-            $js .= "    }\n";
-            $js .= "    var sectionnum = document.getElementById('targetsectionnum');\n";
-            $js .= "    if (sectionnum) {\n";
-            $js .= "        if (sectiontype==".reader_downloader::SECTIONTYPE_SPECIFIC.") {\n";
-            $js .= "            var url = '".$CFG->wwwroot."/mod/reader/admin/download.js.php';\n";
-            $js .= "            url += '?targetcourseid=' + courseid + '&id=' + RDR_get_id();\n";
-            $js .= "            RDR_request(url, 'targetsectionnum');\n";
-            $js .= "        } else {\n";
-            $js .= "            sectionnum.innerHTML = '';\n";
-            $js .= "        }\n";
-            $js .= "    }\n";
-            $js .= "}\n";
-
             $js .= "function RDR_set_location_from_select(obj) {\n";
             $js .= "    var name = obj.name;\n";
             $js .= "    var href = location.href;\n";
             $js .= "    href = href.replace(new RegExp('&' + name + '=[0-9]+'), '');\n";
             $js .= "    href = href + '&' + name + '=' + obj.options[obj.selectedIndex].value;\n";
             $js .= "    location.assign(href);\n"; // simulate GET form submit
+            $js .= "}\n";
+
+            $js .= "function RDR_get_id() {\n";
+            $js .= "    return location.href.replace(new RegExp('^.*?id=([0-9]+).*\$'), '\$1');\n";
+            $js .= "}\n";
+
+            $js .= "function RDR_get_wwwroot() {\n";
+            $js .= "    return location.href.replace(new RegExp('^(.*)/mod/reader/.*\$'), '\$1');\n";
+            $js .= "}\n";
+
+            $js .= "function RDR_get_value(id, is_integer) {\n";
+            $js .= "    var obj = document.getElementById(id);\n";
+            $js .= "    if (obj==null || obj.type==null) {\n";
+            $js .= "        return ;\n";
+            $js .= "    }\n";
+            $js .= "    var v = '';\n";
+            $js .= "    switch (obj.type) {\n";
+            $js .= "        case 'text':\n";
+            $js .= "        case 'textarea':\n";
+            $js .= "        case 'password':\n";
+            $js .= "        case 'hidden':\n";
+            $js .= "            v = obj.value;\n";
+            $js .= "            break;\n";
+            $js .= "        case 'radio':\n";
+            $js .= "        case 'checkbox':\n";
+            $js .= "            if (obj.checked) {\n";
+            $js .= "                v = obj.value;\n";
+            $js .= "            }\n";
+            $js .= "            break;\n";
+            $js .= "        case 'select-one':\n";
+            $js .= "        case 'select-multiple':\n";
+            $js .= "            var i_max = obj.options.length;\n";
+            $js .= "            for (var i=0; i<i_max; i++) {\n";
+            $js .= "                if (obj.options[i].selected) {\n";
+            $js .= "                    v += (v=='' ? '' : ',') + obj.options[i].value;\n";
+            $js .= "                }\n";
+            $js .= "            }\n";
+            $js .= "            break;\n";
+            $js .= "        case 'button':\n";
+            $js .= "        case 'reset':\n";
+            $js .= "        case 'submit':\n";
+            $js .= "            break;\n";
+            $js .= "        default:\n";
+            $js .= "            // radio or checkbox groups\n";
+            $js .= "            var i_max = obj.length || 0;\n";
+            $js .= "            for (var i=0; i<i_max; i++) {\n";
+            $js .= "                if (obj[i].checked) {\n";
+            $js .= "                    v += (v=='' ? '' : ',') + obj[i].value;\n";
+            $js .= "                }\n";
+            $js .= "            }\n";
+            $js .= "    }\n";
+            $js .= "    if (is_integer) {\n";
+            $js .= "        return parseInt(v);\n";
+            $js .= "    } else {\n";
+            $js .= "        return encodeURIComponent(v);\n";
+            $js .= "    }\n";
+            $js .= "}\n";
+
+            $js .= "function RDR_set_menuitems(obj, action) {\n";
+            $js .= "    var query = new Array();\n";
+            $js .= "    query.push('id' + '=' + RDR_get_id());\n";
+            $js .= "    query.push('action' + '=' + action);\n";
+            $js .= "    var items = new Array('mode', 'type');\n";
+            $js .= "    for (var i in items) {\n";
+            $js .= "        var id = 'menu' + items[i];\n";
+            $js .= "        var value = RDR_get_value(id, true);\n";
+            $js .= "        if (value) {\n";
+            $js .= "            query.push(items[i] + '=' + value);\n";
+            $js .= "        }\n";
+            $js .= "    }\n";
+            $js .= "    var items = new Array();\n";
+            $js .= "    items['category'] = new Array('type', 'id',  'text');\n";
+            $js .= "    items['course']   = new Array('type', 'id',  'text');\n";
+            $js .= "    items['section']  = new Array('type', 'num', 'text');\n";
+            $js .= "    for (var item in items) {\n";
+            $js .= "        for (var i in items[item]) {\n";
+            $js .= "            var name = item + items[item][i];\n";
+            $js .= "            if (name.substr(name.length-4)=='text') {\n";
+            $js .= "                var id = 'texttarget' + name;\n";
+            $js .= "                var value = RDR_get_value(id);\n";
+            $js .= "            } else {\n";
+            $js .= "                var id = 'menutarget' + name;\n";
+            $js .= "                var value = RDR_get_value(id, true);\n";
+            $js .= "            }\n";
+            $js .= "            if (value) {\n";
+            $js .= "                query.push(name + '=' + value);\n";
+            $js .= "            }\n";
+            $js .= "        }\n";
+            $js .= "    }\n";
+            $js .= "    var url = RDR_get_wwwroot() + '/mod/reader/admin/download.js.php' + '?' + query.join('&');\n";
+            $js .= "    if (confirm(url)) RDR_request(url);\n";
             $js .= "}\n";
 
             $js .= "//]]>\n";
@@ -450,17 +561,19 @@ class mod_reader_admin_download_renderer extends mod_reader_admin_renderer {
             $js .= "       targetClassName = '';\n";
             $js .= "    }\n";
             $js .= "    var obj = reader_node(img.nextSibling);\n";
-            $js .= "    var myClassName = obj.getAttribute(css_class_attribute());\n";
-            $js .= "    if (obj && (targetClassName=='' || (myClassName && myClassName.match(new RegExp(targetClassName))))) {\n";
-            $js .= "        if (showhide==1 || (showhide==0 && obj.style.display=='none')) {\n";
-            $js .= "            obj.style.display = '';\n";
-            $js .= "            var pix = 'minus';\n";
-            $js .= "        } else {\n";
-            $js .= "            obj.style.display = 'none';\n";
-            $js .= "            var pix = 'plus';\n";
+            $js .= "    if (obj) {\n";
+            $js .= "        var myClassName = obj.getAttribute(css_class_attribute());\n";
+            $js .= "        if (targetClassName=='' || (myClassName && myClassName.match(new RegExp(targetClassName)))) {\n";
+            $js .= "            if (showhide==1 || (showhide==0 && obj.style.display=='none')) {\n";
+            $js .= "                obj.style.display = '';\n";
+            $js .= "                var pix = 'minus';\n";
+            $js .= "            } else {\n";
+            $js .= "                obj.style.display = 'none';\n";
+            $js .= "                var pix = 'plus';\n";
+            $js .= "            }\n";
+            $js .= "            img.alt = 'switch_' + pix;\n";
+            $js .= "            img.src = img.src.replace(new RegExp('switch_[a-z]+'), 'switch_' + pix);\n";
             $js .= "        }\n";
-            $js .= "        img.alt = 'switch_' + pix;\n";
-            $js .= "        img.src = img.src.replace(new RegExp('switch_[a-z]+'), 'switch_' + pix);\n";
             $js .= "    }\n";
             $js .= "}\n";
 
@@ -705,7 +818,7 @@ class mod_reader_admin_download_renderer extends mod_reader_admin_renderer {
         $modes = array(reader_downloader::NORMAL_MODE => get_string('normalmode', 'reader'),
                        reader_downloader::REPAIR_MODE => get_string('repairmode', 'reader'));
         $modes = html_writer::select($modes, 'mode', $mode, null, array('onchange' => $onchange));
-        return $this->formitem($label, $modes, 'mode');
+        return $this->formitem('mode', $label, $modes, 'mode');
     }
 
     /**
@@ -721,7 +834,7 @@ class mod_reader_admin_download_renderer extends mod_reader_admin_renderer {
         $types = array(reader_downloader::BOOKS_WITH_QUIZZES => get_string('bookswithquizzes', 'reader'),
                        reader_downloader::BOOKS_WITHOUT_QUIZZES => get_string('bookswithoutquizzes', 'reader'));
         $types = html_writer::select($types, 'type', $type, null, array('onchange' => $onchange));
-        return $this->formitem($label, $types, 'type');
+        return $this->formitem('type', $label, $types, 'type');
     }
 
     /**
@@ -734,7 +847,7 @@ class mod_reader_admin_download_renderer extends mod_reader_admin_renderer {
         $label = get_string('search');
         $input = html_writer::empty_tag('input', array('type' => 'text', 'name' => 'searchtext'));
         $onclick = 'search_itemnames(this); return false;';
-        return $this->formitem($label, $input, 'search', $onclick);
+        return $this->formitem('search', $label, $input, 'search', $onclick);
     }
 
     /**
@@ -773,7 +886,7 @@ class mod_reader_admin_download_renderer extends mod_reader_admin_renderer {
         }
 
         if ($menu = implode(' / ', $menu)) {
-            return $this->formitem(get_string('show'), $menu, '', 'show');
+            return $this->formitem('show', get_string('show'), $menu, '', 'show');
         } else {
             return ''; // there are currently no downloadable or updatable items
         }
@@ -807,7 +920,7 @@ class mod_reader_admin_download_renderer extends mod_reader_admin_renderer {
         }
 
         if ($menu = implode(' / ', $menu)) {
-            return $this->formitem(get_string('select'), $menu, '', 'select');
+            return $this->formitem('select', get_string('select'), $menu, '', 'select');
         } else {
             return ''; // there are currently no downloadable or updatable items
         }
@@ -1114,18 +1227,8 @@ class mod_reader_admin_download_renderer extends mod_reader_admin_renderer {
     public function category_list($downloader) {
         global $DB;
 
-        $categoryid = $downloader->get_course_categoryid();
         $categorytype = $downloader->get_course_categorytype();
-
-        $categorytypes = array(
-            reader_downloader::CATEGORYTYPE_DEFAULT => get_string('default'),
-            reader_downloader::CATEGORYTYPE_HIDDEN  => get_string('hidden', 'reader'),
-            reader_downloader::CATEGORYTYPE_VISIBLE => get_string('visible'),
-            reader_downloader::CATEGORYTYPE_CURRENT => get_string('current', 'reader'),
-            reader_downloader::CATEGORYTYPE_NEW     => get_string('new'),
-        );
-        $categorytypes = html_writer::select($categorytypes, 'targetcategorytype', $categorytype, null);
-        $categorytypes = html_writer::tag('span', $categorytypes, array('id' => 'targetcategorytype'));
+        $categoryid = $downloader->get_course_categoryid();
 
         // to get all categories we coud use:
         //    $categories = get_categories();
@@ -1133,6 +1236,9 @@ class mod_reader_admin_download_renderer extends mod_reader_admin_renderer {
         // containing courses relevant to this user,
         // so we derive categories from mycourses
 
+        $count_hidden = 0;
+        $count_visible = 0;
+        $sortorders = array();
         $categoryids = array();
         if ($courses = $this->get_mycourses()) {
 
@@ -1145,10 +1251,51 @@ class mod_reader_admin_download_renderer extends mod_reader_admin_renderer {
 
             if (count($categoryids)) {
                 $categoryids = array_keys($categoryids);
+
+                // add ids of parent categories
                 list($select, $params) = $DB->get_in_or_equal($categoryids);
-                if ($categoryids = $DB->get_records_select('course_categories', "id $select", $params)) {
+                if ($paths = $DB->get_records_select('course_categories', "id $select", $params, '', 'id,path')) {
+                    $categoryids = '';
+                    foreach ($paths as $path) {
+                        $categoryids .= $path->path;
+                    }
+                    $categoryids = explode('/', $categoryids);
+                    $categoryids = array_filter($categoryids); // remove blanks
+                    $categoryids = array_unique($categoryids); // remove duplicates
+                }
+
+                list($select, $params) = $DB->get_in_or_equal($categoryids);
+                if ($categoryids = $DB->get_records_select('course_categories', "id $select", $params, 'sortorder')) {
                     foreach ($categoryids as $id => $category) {
-                        $categoryids[$id] = $category->name;
+                        if ($visible = intval($category->visible)) {
+                            $count_visible++;
+                        } else {
+                            $count_hidden++;
+                        }
+                        switch ($categorytype) {
+                            case reader_downloader::CATEGORYTYPE_DEFAULT: // 0
+                                $keep = ($id == $downloader->defaultcategoryid);
+                                break;
+                            case reader_downloader::CATEGORYTYPE_HIDDEN:  // 1
+                                $keep = ($visible == 0);
+                                break;
+                            case reader_downloader::CATEGORYTYPE_VISIBLE: // 2
+                                $keep = ($visible == 1);
+                                break;
+                            case reader_downloader::CATEGORYTYPE_CURRENT: // 3
+                                $keep = ($id == $downloader->course->category);
+                                break;
+                            default:
+                                $keep = false; // shouldn't happen !!
+                        }
+                        if ($keep) {
+                            $categoryids[$id] = reader_textlib('substr', $category->name, 0, 50);
+                            if ($category->parent) {
+                                $categoryids[$id] = $categoryids[$category->parent].' / '.$categoryids[$id];
+                            }
+                        } else {
+                            unset($categoryids[$id]);
+                        }
                     }
                 } else {
                     $categoryids = array(); // shouldn't happen !!
@@ -1156,12 +1303,42 @@ class mod_reader_admin_download_renderer extends mod_reader_admin_renderer {
             }
         }
 
-        $categoryids = html_writer::select($categoryids, 'targetcategoryid', $categoryid, null);
-        $categoryids = html_writer::tag('span', $categoryids, array('id' => 'targetcategoryid'));
+        $action = reader_downloader::ACTION_CATEGORYTEXT;
+        $params = array('type' => 'text',
+                        'name' => 'targetcategorytext',
+                        'id'   => 'texttargetcategorytext',
+                        'value' => $downloader->targetcategorytext,
+                        'onchange' => 'RDR_set_menuitems(this, '.$action.')');
+        $categorytext = html_writer::empty_tag('input', $params);
 
-        //$label = get_string('targetcategory', 'reader');
+        $action = reader_downloader::ACTION_CATEGORYTYPE;
+        $params = array('onchange' => 'RDR_set_menuitems(this, '.$action.')');
+
+        $categorytypes = array();
+        if ($downloader->defaultcategoryid) {
+            $categorytypes[reader_downloader::CATEGORYTYPE_DEFAULT] = get_string('default');
+        }
+        if ($downloader->course->category) {
+            $categorytypes[reader_downloader::CATEGORYTYPE_CURRENT] = get_string('current', 'reader');
+        }
+        if ($count_hidden) {
+            $categorytypes[reader_downloader::CATEGORYTYPE_HIDDEN] = get_string('hidden', 'reader');
+        }
+        if ($count_visible) {
+            $categorytypes[reader_downloader::CATEGORYTYPE_VISIBLE] = get_string('visible');
+        }
+        $context = reader_get_context(CONTEXT_SYSTEM);
+        if (has_capability('moodle/category:manage', $context)) {
+            $categorytypes[reader_downloader::CATEGORYTYPE_NEW] = get_string('new');
+        }
+        $categorytypes = html_writer::select($categorytypes, 'targetcategorytype', $categorytype, null, $params);
+
+        $action = reader_downloader::ACTION_CATEGORYID;
+        $params = array('onchange' => 'RDR_set_menuitems(this, '.$action.')');
+        $categoryids = html_writer::select($categoryids, 'targetcategoryid', $categoryid, null, $params);
+
         $label = get_string('category');
-        return $this->formitem($label, $categorytypes.' '.$categoryids, 'targetcategory');
+        return $this->formitem('targetcategory', $label, $categorytypes.' '.$categoryids.' '.$categorytext, 'targetcategory');
     }
 
     /**
@@ -1172,43 +1349,93 @@ class mod_reader_admin_download_renderer extends mod_reader_admin_renderer {
      * @todo Finish documenting this function
      */
     public function course_list($downloader) {
-        $courseid = $downloader->get_quiz_courseid();
+        global $DB;
+
+        $categorytype = $downloader->get_course_categorytype();
         $categoryid = $downloader->get_course_categoryid();
-
         $coursetype = $downloader->get_quiz_coursetype();
-        //$coursetype = reader_downloader::COURSETYPE_HIDDEN; // default
-        //$coursetype = optional_param('targetcoursetype', $coursetype, PARAM_INT);
-        $coursetypes = array(
-            reader_downloader::COURSETYPE_ALL     => get_string('all'),
-            reader_downloader::COURSETYPE_HIDDEN  => get_string('hidden', 'reader'),
-            reader_downloader::COURSETYPE_VISIBLE => get_string('visible'),
-            reader_downloader::COURSETYPE_CURRENT => get_string('current', 'reader'),
-            reader_downloader::COURSETYPE_NEW     => get_string('new'),
-        );
-        $coursetypes = html_writer::select($coursetypes, 'targetcoursetype', $coursetype, null);
-        $coursetypes = html_writer::tag('span', $coursetypes, array('id' => 'targetcoursetype'));
-        //$coursetypes = get_string('type', 'reader').': '.$coursetypes;
+        $courseid = $downloader->get_quiz_courseid();
 
+        $count_hidden = 0;
+        $count_visible = 0;
         $courseids = array();
+
         if ($courses = $this->get_mycourses()) {
             foreach ($courses as $course) {
                 if ($course->id==SITEID) {
                     continue;
                 }
                 if ($course->category==$categoryid) {
-                    $courseids[$course->id] = $course->shortname;
+                    if ($visible = intval($course->visible)) {
+                        $count_visible++;
+                    } else {
+                        $count_hidden++;
+                    }
+                    switch ($coursetype) {
+                        case reader_downloader::COURSETYPE_DEFAULT: // 0
+                            $keep = ($course->id == $downloader->defaultcourseid);
+                            break;
+                        case reader_downloader::COURSETYPE_HIDDEN:  // 1
+                            $keep = ($visible == 0);
+                            break;
+                        case reader_downloader::COURSETYPE_VISIBLE: // 2
+                            $keep = ($visible == 1);
+                            break;
+                        case reader_downloader::COURSETYPE_CURRENT: // 3
+                            $keep = ($course->id == $downloader->reader->course);
+                            break;
+                        default:
+                            $keep = false; // shouldn't happen !!
+                    }
+                    if ($keep) {
+                        $courseids[$course->id] = reader_textlib('substr', $course->fullname, 0, 50);
+                    } else {
+                        unset($courseids[$course->id]);
+                    }
                 }
             }
         }
         unset($courses);
 
-        $courseids = html_writer::select($courseids, 'targetcourseid', $courseid, null, array('onchange' => 'RDR_set_sectionnums()'));
-        $courseids = html_writer::tag('span', $courseids, array('id' => 'targetcourseid'));
-        //$courseids = get_string('name').': '.$courseids;
+        $action = reader_downloader::ACTION_COURSEID;
+        $params = array('onchange' => 'RDR_set_menuitems(this, '.$action.')');
+        $courseids = html_writer::select($courseids, 'targetcourseid', $courseid, null, $params);
 
-        //$label = get_string('targetcourse', 'reader');
-        $label = get_string('course');
-        return $this->formitem($label, $coursetypes.' '.$courseids, 'targetcourse');
+        $action = reader_downloader::ACTION_COURSETEXT;
+        $params = array('type' => 'text',
+                        'name' => 'targetcoursetext',
+                        'id'   => 'texttargetcoursetext',
+                        'value' => $downloader->targetcoursetext,
+                        'onchange' => 'RDR_set_menuitems(this, '.$action.')');
+        $coursetext = html_writer::empty_tag('input', $params);
+
+        $action = reader_downloader::ACTION_COURSETYPE;
+        $params = array('onchange' => 'RDR_set_menuitems(this, '.$action.')');
+        $coursetypes = array();
+        if ($categoryid == $downloader->defaultcategoryid) {
+            $coursetypes[reader_downloader::COURSETYPE_DEFAULT] = get_string('default');
+        }
+        if ($categoryid == $downloader->course->category) {
+            $coursetypes[reader_downloader::COURSETYPE_CURRENT] = get_string('current', 'reader');
+        }
+        if ($count_hidden) {
+            $coursetypes[reader_downloader::COURSETYPE_HIDDEN] = get_string('hidden', 'reader');
+        }
+        if ($count_visible) {
+            $coursetypes[reader_downloader::COURSETYPE_VISIBLE] = get_string('visible');
+        }
+        if ($categoryid) {
+            $context = reader_get_context(CONTEXT_COURSECAT, $categoryid);
+        } else {
+            $context = reader_get_context(CONTEXT_SYSTEM);
+        }
+        if (has_capability('moodle/course:create', $context)) {
+            $coursetypes[reader_downloader::COURSETYPE_NEW] = get_string('new');
+        }
+        $coursetypes = html_writer::select($coursetypes, 'targetcoursetype', $coursetype, null, $params);
+
+        $label = get_string('course'); // get_string('targetcourse', 'reader');
+        return $this->formitem('targetcourse', $label, $coursetypes.' '.$courseids.' '.$coursetext, 'targetcourse');
     }
 
     /**
@@ -1226,41 +1453,90 @@ class mod_reader_admin_download_renderer extends mod_reader_admin_renderer {
         $sectionnum  = $downloader->get_quiz_sectionnum($courseid);
         $sectiontype = $downloader->get_quiz_sectiontype($courseid, $sectionnum);
 
-        $sectiontypes = array(
-            reader_downloader::SECTIONTYPE_NEW      => get_string('sectiontypenew',      'reader'),
-            reader_downloader::SECTIONTYPE_SORTED   => get_string('sectiontypesorted',   'reader'),
-            reader_downloader::SECTIONTYPE_SPECIFIC => get_string('sectiontypespecific', 'reader'),
-            reader_downloader::SECTIONTYPE_LAST     => get_string('sectiontypelast',     'reader'),
-        );
-        $sectiontypes = html_writer::select($sectiontypes, 'targetsectiontype', $sectiontype, null, array('onchange' => 'RDR_set_sectionnums()'));
-        $sectiontypes = html_writer::tag('span', $sectiontypes, array('id' => 'targetsectiontype'));
-        //$sectiontypes = get_string('type', 'reader').': '.$sectiontypes;
+        $select = "course = ? AND section > ? AND name NOT IN (?, ?)";
+        $params = array($courseid, 0, 'Extra Points', '');
 
+        if ($sectiontype==reader_downloader::SECTIONTYPE_LAST) {
+            $sql = "SELECT MAX(section) FROM {course_sections} WHERE $select";
+            $lastsectionnum = $DB->get_field_sql($sql, $params);
+        } else {
+            $lastsectionnum = 0;
+        }
+
+        $count_hidden = 0;
+        $count_visible = 0;
         $sectionnums = array();
-        if ($courseid && $sectiontype==reader_downloader::SECTIONTYPE_SPECIFIC) {
-            $select = "course = ? AND section > ? AND name NOT IN (?, ?)";
-            $params = array($courseid, 0, 'Extra Points', '');
+        if ($courseid) {
             if ($sections = $DB->get_records_select('course_sections', $select, $params, 'section')) {
                 foreach ($sections as $section) {
-                    $sectionnums[$section->section] = $section->name;
+                    if ($visible = intval($section->visible)) {
+                        $count_visible++;
+                    } else {
+                        $count_hidden++;
+                    }
+                    switch ($sectiontype) {
+                        case reader_downloader::SECTIONTYPE_DEFAULT:
+                            $keep = false;
+                            break;
+                        case reader_downloader::SECTIONTYPE_HIDDEN:
+                            $keep = ($visible == 1);
+                            break;
+                        case reader_downloader::SECTIONTYPE_VISIBLE:
+                            $keep = ($visible == 1);
+                            break;
+                        case reader_downloader::SECTIONTYPE_LAST:
+                            $keep = ($section->section == $lastsectionnum);
+                            break;
+                        case reader_downloader::SECTIONTYPE_NEW:
+                            $keep = false;
+                            break;
+                    }
+                    if ($keep) {
+                        $sectionnums[$section->section] = reader_textlib('substr', $section->name, 0, 40);
+                    } else {
+                        unset($sectionnums[$section->section]);
+                    }
                 }
                 unset($sections);
             }
         }
 
-        if (empty($sectionnums)) {
-            $sectionnums = '';
-            //unset($sectiontypes[reader_downloader::SECTIONTYPE_SPECIFIC]);
-        } else {
-            $params = array('class' => 'targetsectionnum');
-            $sectionnums = html_writer::select($sectionnums, 'targetsectionnum', $sectionnum, null, $params);
+        $action = reader_downloader::ACTION_SECTIONNUM;
+        $params = array('class' => 'targetsectionnum', 'onchange' => 'RDR_set_menuitems(this, '.$action.')');
+        $sectionnums = html_writer::select($sectionnums, 'targetsectionnum', $sectionnum, null, $params);
+
+        $action = reader_downloader::ACTION_SECTIONTEXT;
+        $params = array('type' => 'text',
+                        'name' => 'targetsectiontext',
+                        'id'   => 'texttargetsectiontext',
+                        'value' => $downloader->targetsectiontext,
+                        'onchange' => 'RDR_set_menuitems(this, '.$action.')');
+        $sectiontext = html_writer::empty_tag('input', $params);
+
+        $sectiontypes = array();
+        if ($downloader->can_manage_course($courseid)) {
+            $sectiontypes[reader_downloader::SECTIONTYPE_DEFAULT] = get_string('sectiontypedefault', 'reader');
         }
-        $sectionnums = html_writer::tag('span', $sectionnums, array('id' => 'targetsectionnum'));
-        //$sectionnums = get_string('name').': '.$sectionnums;
+        if ($count_visible) {
+            $sectiontypes[reader_downloader::SECTIONTYPE_VISIBLE] = get_string('sectiontypevisible', 'reader');
+        }
+        if ($count_hidden) {
+            $sectiontypes[reader_downloader::SECTIONTYPE_HIDDEN] = get_string('sectiontypehidden', 'reader');
+        }
+        if ($count_visible || $count_hidden) {
+            $sectiontypes[reader_downloader::SECTIONTYPE_LAST] = get_string('sectiontypelast', 'reader');
+        }
+        if ($downloader->can_manage_course($courseid)) {
+            $sectiontypes[reader_downloader::SECTIONTYPE_NEW] = get_string('sectiontypenew', 'reader');
+        }
+
+        $action = reader_downloader::ACTION_SECTIONTYPE;
+        $params = array('onchange' => 'RDR_set_menuitems(this, '.$action.')');
+        $sectiontypes = html_writer::select($sectiontypes, 'targetsectiontype', $sectiontype, null, $params);
 
         //$label = get_string('targetsection', 'reader');
         $label = get_string('section');
-        return $this->formitem($label, $sectiontypes.' '.$sectionnums, 'targetsection');
+        return $this->formitem('targetsection', $label, $sectiontypes.' '.$sectionnums.' '.$sectiontext, 'targetsection');
     }
 
     /**
@@ -1284,17 +1560,20 @@ class mod_reader_admin_download_renderer extends mod_reader_admin_renderer {
      * @return string
      * @todo Finish documenting this function
      **/
-    public function formitem($label, $element, $action='', $onclick='') {
+    public function formitem($id, $label, $element, $action='', $onclick='') {
+        if (defined('AJAX_SCRIPT') && AJAX_SCRIPT) {
+            return html_writer::tag('div', $element, array('id' => $id.'element', 'class' => 'element'));
+        }
         $output = '';
         if ($action) {
             $label .= $this->help_icon($action, 'reader');
         } else if ($onclick) {
             $label .= $this->help_icon($onclick, 'reader');
         }
-        $output .= html_writer::tag('div', $label, array('class' => 'label'));
-        $output .= html_writer::tag('div', $element, array('class' => 'element'));
+        $output .= html_writer::tag('div', $label, array('id' => $id.'label', 'class' => 'label'));
+        $output .= html_writer::tag('div', $element, array('id' => $id.'element', 'class' => 'element'));
         if ($action) {
-            $buttonid = 'id_button'.$action;
+            $buttonid = 'button'.$id;
             $params = array('type' => 'submit', 'name' => 'action'.$action, 'value' => get_string('go'), 'class' => 'button');
             if ($onclick=='') {
                 $hidebutton = true;
@@ -1307,62 +1586,12 @@ class mod_reader_admin_download_renderer extends mod_reader_admin_renderer {
             if ($hidebutton) {
                 $output .= '<script type="text/javascript">'."\n";
                 $output .= "//<![CDATA[\n";
-                $output .= "var obj = document.getElementById('$buttonid');\n";
-                $output .= "if (obj) {\n";
-                $output .= "    obj.style.display = 'none';\n";
-                $output .= "}\n";
+                $output .= "RDR_showhide_textboxes('$buttonid');\n";
                 $output .= "//]]>\n";
                 $output .= '</script>'."\n";
             }
         }
-        $output = html_writer::tag('div', $output, array('class' => 'formitem'));
+        $output = html_writer::tag('div', $output, array('id' => $id.'formitem', 'class' => 'formitem'));
         return $output.html_writer::tag('div', '', array('style' => 'clear: both;'));
-    }
-
-    /**
-     * form_sections
-     *
-     * @param array $sections
-     * @return string
-     * @todo Finish documenting this function
-     **/
-    public function form_sections($sections, $formid='mform1') {
-        // $sections will look something like this
-        $sample_sections = array(
-            // section
-            'name' => (object)array(
-                'title' => '',
-                'items' => array(
-                    // item
-                    'name' => (object)array(
-                        'title' => '',
-                        'element' => '',
-                        'button' => '',
-                    )
-                )
-            )
-        );
-
-        $output = '';
-        $output .= html_writer::start_tag('form', array('id' => $formid, 'class' => 'mform'));
-        foreach ($sections as $section) {
-            $output .= html_writer::start_tag('legend', array('class' => 'ftoggler'));
-            $output .= $section->title;
-            $output .= html_writer::start_tag('div', array('class' => 'fcontainer'));
-            foreach ($section->items as $name => $item) {
-                $output .= html_writer::tag('div', $item->title,   array('class' => 'fitemtitle'));
-                $output .= html_writer::tag('div', $item->element, array('class' => 'felement'));
-                if ($item->button) {
-                    $onclick = '';
-                    $params = array('name' => 'action_'.$name, 'onclick' => $onclick);
-                    $button = html_writer::tag('button', get_string('go'), $params);
-                    $output .= html_writer::tag('div', $button,  array('class' => 'fbutton'));
-                }
-            }
-            $output .= html_writer::end_tag('div');
-            $output .= html_writer::end_tag('legend');
-        }
-        $output .= html_writer::end_tag('form');
-        return $output;
     }
 }

@@ -58,6 +58,26 @@ class reader_downloader {
     /**#@-*/
 
     /**#@+
+    * values for $action
+    *
+    * @const integer
+    */
+    const ACTION_NONE           = 0;
+
+    const ACTION_CATEGORYTYPE   = 1;
+    const ACTION_CATEGORYID     = 2;
+    const ACTION_CATEGORYTEXT   = 3;
+
+    const ACTION_COURSETYPE     = 4;
+    const ACTION_COURSEID       = 5;
+    const ACTION_COURSETEXT     = 6;
+
+    const ACTION_SECTIONTYPE    = 7;
+    const ACTION_SECTIONNUM     = 8;
+    const ACTION_SECTIONTEXT    = 9;
+    /**#@-*/
+
+    /**#@+
     * values for $targetcategorytype
     *
     * @const integer
@@ -74,7 +94,7 @@ class reader_downloader {
     *
     * @const integer
     */
-    const COURSETYPE_ALL        = 0;
+    const COURSETYPE_DEFAULT    = 0;
     const COURSETYPE_HIDDEN     = 1;
     const COURSETYPE_VISIBLE    = 2;
     const COURSETYPE_CURRENT    = 3;
@@ -86,10 +106,11 @@ class reader_downloader {
     *
     * @const integer
     */
-    const SECTIONTYPE_NEW       = 1;
-    const SECTIONTYPE_SORTED    = 2;
-    const SECTIONTYPE_SPECIFIC  = 3;
-    const SECTIONTYPE_LAST      = 4;
+    const SECTIONTYPE_DEFAULT   = 0;
+    const SECTIONTYPE_HIDDEN    = 1;
+    const SECTIONTYPE_VISIBLE   = 2;
+    const SECTIONTYPE_LAST      = 3;
+    const SECTIONTYPE_NEW       = 4;
     /**#@-*/
 
     /** sites from which we can download */
@@ -102,14 +123,23 @@ class reader_downloader {
     public $downloaded = array();
 
     /**#@+
-    * current course, course module, reader and renderer
+    * current course, course module, reader and output renderer
     *
-    * @var mixed
+    * @var object
     */
     public $course = null;
     public $cm     = null;
     public $reader = null;
     public $output = null;
+    /**#@-*/
+
+    /**#@+
+    * default categoryid and courseid
+    *
+    * @var integer
+    */
+    public $defaultcategoryid = 0;
+    public $defaultcourseid   = 0;
     /**#@-*/
 
     /**#@+
@@ -119,12 +149,15 @@ class reader_downloader {
     */
     public $targetcategorytype =  0;
     public $targetcategoryid   =  0;
+    public $targetcategorytext = '';
+
     public $targetcoursetype   =  0;
     public $targetcourseid     =  0;
     public $targetcoursetext   = '';
+
     public $targetsectiontype  =  0;
-    public $targetsectiontext  = '';
     public $targetsectionnum   =  0;
+    public $targetsectiontext  = '';
     /**#@-*/
 
     /** download progress bar */
@@ -140,10 +173,448 @@ class reader_downloader {
      * @todo Finish documenting this function
      */
     public function __construct($course, $cm, $reader, $output) {
+        global $DB;
+
         $this->course = $course;
         $this->cm     = $cm;
         $this->reader = $reader;
         $this->output = $output;
+
+        // set default course and category
+        if ($reader->usecourse) {
+            $this->defaultcourseid = $reader->usecourse;
+        } else {
+            $this->defaultcourseid = get_config('reader', 'usecourse');
+        }
+        if ($this->defaultcourseid) {
+            $this->defaultcategoryid = $DB->get_field('course', 'category', array('id' => $this->defaultcourseid));
+        }
+
+        // get page parameters
+        $action = optional_param('action', self::ACTION_NONE, PARAM_INT);
+        $params = (object)array(
+            'targetcategorytype' => optional_param('categorytype', 0,  PARAM_INT),
+            'targetcategoryid'   => optional_param('categoryid',   0,  PARAM_INT),
+            'targetcategorytext' => optional_param('categorytext', '', PARAM_TEXT),
+            'targetcoursetype'   => optional_param('coursetype',   0,  PARAM_INT),
+            'targetcourseid'     => optional_param('courseid',     0,  PARAM_INT),
+            'targetcoursetext'   => optional_param('coursetext',   '', PARAM_TEXT),
+            'targetsectiontype'  => optional_param('sectiontype',  0,  PARAM_INT),
+            'targetsectionnum'   => optional_param('sectionnum',   0,  PARAM_INT),
+            'targetsectiontext'  => optional_param('sectiontext',  '', PARAM_TEXT),
+        );
+
+        // check consistency of child parameters
+        switch ($action) {
+            case self::ACTION_NONE:
+            case self::ACTION_CATEGORYTYPE : $this->check_categorytype($params, 1); // 1
+            case self::ACTION_CATEGORYID   : $this->check_categoryid($params,   1); // 2
+            case self::ACTION_CATEGORYTEXT : $this->check_categorytext($params, 1); // 3
+
+            case self::ACTION_COURSETYPE   : $this->check_coursetype($params,   1); // 4
+            case self::ACTION_COURSEID     : $this->check_courseid($params,     1); // 5
+            case self::ACTION_COURSETEXT   : $this->check_coursetext($params,   1); // 6
+
+            case self::ACTION_SECTIONTYPE  : $this->check_sectiontype($params,  1); // 7
+            case self::ACTION_SECTIONNUM   : $this->check_sectionnum($params,   1); // 8
+            case self::ACTION_SECTIONTEXT  : $this->check_sectiontext($params,  1); // 9
+        }
+
+        // check consistency of parent parameters
+        switch ($action) {
+            case self::ACTION_SECTIONTEXT  : $this->check_sectiontext($params,  2); // 9
+            case self::ACTION_SECTIONNUM   : $this->check_sectionnum($params,   2); // 8
+            case self::ACTION_SECTIONTYPE  : $this->check_sectiontype($params,  2); // 7
+
+            case self::ACTION_COURSETEXT   : $this->check_coursetext($params,   2); // 6
+            case self::ACTION_COURSEID     : $this->check_courseid($params,     2); // 5
+            case self::ACTION_COURSETYPE   : $this->check_coursetype($params,   2); // 4
+
+            case self::ACTION_CATEGORYTEXT : $this->check_categorytext($params, 2); // 3
+            case self::ACTION_CATEGORYID   : $this->check_categoryid($params,   2); // 2
+            case self::ACTION_CATEGORYTYPE : $this->check_categorytype($params, 2); // 1
+        }
+
+        // cache $param values in this object
+        foreach (get_object_vars($params) as $name => $value) {
+            $this->$name = $value;
+        }
+    }
+
+    /**
+     * check_type
+     *
+     * @param  array   $params       (passed by reference)
+     * @param  string  $type         "category", "course" or "section"
+     * @param  array   $SUBTYPES     names of valid subtypes
+     * @param  string  $DEFAULT      default subtype
+     * @param  integer $contextlevel (optional, default=0) one of CONTEXT_xxx constants
+     * @param  integer $contextid    (optional, default=0)
+     * @return void    but may update $params
+     */
+    public function check_type(&$params, $type, $SUBTYPES, $DEFAULT, $contextlevel=0, $contextid=0) {
+        $ok   = false;
+        $name = 'target'.$type.'type';    // e.g. targetcoursetype
+        $TYPE = strtoupper($type.'type'); // e.g. COURSETYPE
+        foreach ($SUBTYPES as $SUBTYPE => $capability) {
+            if ($params->$name==constant('self::'.$TYPE.'_'.$SUBTYPE)) {
+                if ($capability) {
+                    if ($context = reader_get_context($contextlevel, $contextid)) {
+                        $ok = has_capability($capability, $context);
+                    } else {
+                        $ok = false; // invalid $contextid
+                    }
+                } else {
+                    $ok = true; // no capability required
+                }
+                break;
+            }
+        }
+        if ($ok==false) {
+            $params->$name = constant('self::'.$TYPE.'_'.$DEFAULT);
+        }
+        return $params->$name;
+    }
+
+    /**
+     * check_categorytype
+     *
+     * @param  array   $params (passed by reference)
+     * @param  integer $check  1=child, 2=parent
+     * @return void    but may update $params
+     */
+    public function check_categorytype(&$params, $check=1, $default=self::CATEGORYTYPE_DEFAULT) {
+        global $DB;
+        if ($check==1) {
+            // check type
+            $types = array('DEFAULT' => null,
+                           'HIDDEN'  => 'moodle/category:viewhiddencategories',
+                           'VISIBLE' => null,
+                           'CURRENT' => null,
+                           'NEW'     => 'moodle/category:manage');
+            $this->check_type($params, 'category', $types, 'DEFAULT', CONTEXT_SYSTEM);
+
+            // fix categoryid, as necesasry
+            switch ($params->targetcategorytype) {
+
+                case self::CATEGORYTYPE_DEFAULT:
+                    $params->targetcategoryid = $this->defaultcategoryid;
+                    break;
+
+                case self::CATEGORYTYPE_HIDDEN:
+                    $params->targetcategoryid = $this->get_default_recordid('course_categories', $params->targetcategoryid, array('visible' => 0));
+                    break;
+
+                case self::CATEGORYTYPE_VISIBLE:
+                    $params->targetcategoryid = $this->get_default_recordid('course_categories', $params->targetcategoryid, array('visible' => 1));
+                    break;
+
+                case self::CATEGORYTYPE_CURRENT:
+                    $params->targetcategoryid = $this->course->category;
+                    break;
+
+                case self::CATEGORYTYPE_NEW:
+                    $params->targetcategoryid = 0;
+                    break;
+            }
+
+        } else {
+            // check parent - nothing to do :-)
+        }
+    }
+
+    /**
+     * get_default_recordid
+     *
+     * @param  string   $table ("course" or "course_categories")
+     * @param  integer  $id
+     * @param  array    (optional, default=null) $params to select records from $DB
+     * @param  boolean  (optional, default=true) true=first record, false=last record
+     * @return integer  id of first (or last) visible (or hidden) record in $table
+     */
+    public function get_default_recordid($table, $id, $params=null, $first=true) {
+        global $DB;
+
+        if (isset($params) && empty($params['visible'])) {
+            $visible = 0;
+        } else {
+            $visible = 1;
+        }
+
+        if ($id) {
+            if ($DB->get_field($table, 'visible', array('id' => $id))==$visible) {
+                return $id;
+            }
+        }
+
+        $sort = 'sortorder '.($first ? 'ASC' : 'DESC');
+        if ($records = $DB->get_records($table, $params, $sort, 'id,sortorder', 0, 1)) {
+            return key($records);
+        }
+        return 0;
+    }
+
+    /**
+     * check_categoryid
+     *
+     * @param  array   $params (passed by reference)
+     * @param  integer $check  1=child, 2=parent
+     * @return void    but may update $params
+     */
+    public function check_categoryid(&$params, $check=1) {
+        global $DB;
+        if ($check==1) {
+            // check $params->categoryid is valid
+            if ($params->targetcategoryid && ! $DB->record_exists('course_categories', array('id' => $params->targetcategoryid))) {
+                $params->targetcategoryid = 0;
+            }
+
+            // clear categorytext, if necessary
+            if ($params->targetcategoryid) {
+                // check targetcoursetype is suitable for this categorytype + categoryid
+
+                $hidden_exists = $DB->record_exists('course', array('category' => $params->targetcategoryid, 'visible' => 0));
+                $visible_exists = $DB->record_exists('course', array('category' => $params->targetcategoryid, 'visible' => 1));
+                $current_exists = $DB->record_exists('course', array('id' => $this->course->id, 'category' => $params->targetcategoryid));
+
+                switch (true) {
+                    case ($params->targetcategorytype==self::CATEGORYTYPE_DEFAULT):
+                        $defaultcoursetype = self::COURSETYPE_DEFAULT;
+                        break;
+                    case ($current_exists):
+                        $defaultcoursetype = self::COURSETYPE_CURRENT;
+                        break;
+                    case ($hidden_exists):
+                        $defaultcoursetype = self::COURSETYPE_HIDDEN;
+                        break;
+                    case ($visible_exists):
+                        $defaultcoursetype = self::COURSETYPE_VISIBLE;
+                        break;
+                    default:
+                        $defaultcoursetype = 0;
+                }
+
+                switch ($params->targetcoursetype) {
+                    case self::COURSETYPE_DEFAULT:
+                        if (! $DB->record_exists('course', array('id' => $this->defaultcourseid, 'category' => $params->targetcategoryid))) {
+                            $params->targetcoursetype = $defaultcoursetype;
+                        }
+                        break;
+                    case self::COURSETYPE_VISIBLE:
+                        if (! $visible_exists) {
+                            $params->targetcoursetype = $defaultcoursetype;
+                        }
+                        break;
+                    case self::COURSETYPE_HIDDEN:
+                        if (! $hidden_exists) {
+                            $params->targetcoursetype = $defaultcoursetype;
+                        }
+                        break;
+                    case self::COURSETYPE_CURRENT:
+                        if (! $current_exists) {
+                            $params->targetcoursetype = $defaultcoursetype;
+                        }
+                        break;
+                    case self::COURSETYPE_NEW:
+                        if (! $this->can_create_course($params->targetcategoryid)) {
+                            $params->targetcoursetype = $defaultcoursetype;
+                        }
+                        break;
+                }
+                $params->targetcategorytext = '';
+            } else {
+                switch ($params->targetcoursetype) {
+                    case self::COURSETYPE_DEFAULT:
+                    case self::COURSETYPE_NEW:
+                        // do nothing - these types are allowed
+                        break;
+                    default:
+                        // other types are NOT allowed
+                        $params->targetsectiontype = self::COURSETYPE_DEFAULT;
+                }
+            }
+        } else {
+            // check $params->categoryid matches $params->categorytext
+        }
+    }
+
+    /**
+     * check_categorytext
+     *
+     * @param  array   $params (passed by reference)
+     * @param  integer $check  1=child, 2=parent
+     * @return void    but may update $params
+     */
+    public function check_categorytext(&$params, $check=1) {
+        if ($check==1) {
+            // check $params->categorytext is valid
+            // check $params->categorytext matches $params->categorytype
+        }
+    }
+
+    /**
+     * check_coursetype
+     *
+     * @param  array   $params (passed by reference)
+     * @param  integer $check  1=child, 2=parent
+     * @return void    but may update $params
+     */
+    public function check_coursetype(&$params, $check=1) {
+        global $DB;
+        if ($check==1) {
+            // check $params->coursetype is valid
+            $types = array('DEFAULT' => null,
+                           'HIDDEN'  => 'moodle/course:viewhiddencourses',
+                           'VISIBLE' => null,
+                           'CURRENT' => null,
+                           'NEW'     => 'moodle/course:create');
+            $this->check_type($params, 'course', $types, 'DEFAULT', CONTEXT_COURSECAT, $params->targetcategoryid);
+
+            // fix courseid, as necesasry
+            switch ($params->targetcoursetype) {
+                case self::COURSETYPE_DEFAULT:
+                    $params->targetcourseid = $this->defaultcourseid;
+                    break;
+                case self::COURSETYPE_HIDDEN:
+                    $params->targetcourseid = $this->get_default_recordid('course', $params->targetcourseid, array('visible' => 0, 'category' => $params->targetcategoryid));
+                    break;
+                case self::COURSETYPE_VISIBLE:
+                    $params->targetcourseid = $this->get_default_recordid('course', $params->targetcourseid, array('visible' => 1, 'category' => $params->targetcategoryid));
+                    break;
+                case self::COURSETYPE_CURRENT:
+                    $params->targetcourseid = $this->course->id;
+                    break;
+                case self::COURSETYPE_NEW:
+                    $params->targetcourseid = 0;
+                    break;
+            }
+        } else {
+            // check $params->coursetype matches $params->courseid
+        }
+    }
+
+    /**
+     * check_courseid
+     *
+     * @param  array   $params (passed by reference)
+     * @param  integer $check  1=child, 2=parent
+     * @return void    but may update $params
+     */
+    public function check_courseid(&$params, $check=1) {
+        global $DB;
+        if ($check==1) {
+            // check $params->courseid is valid
+            if ($params->targetcourseid && ! $DB->record_exists('course', array('id' => $params->targetcourseid))) {
+                $params->targetcourseid = 0;
+            }
+
+            // unset coursetext, if necessary
+            if ($params->targetcourseid) {
+                $params->targetcoursetext = '';
+            } else {
+                switch ($params->targetsectiontype) {
+                    case self::SECTIONTYPE_DEFAULT:
+                    case self::SECTIONTYPE_NEW:
+                        // do nothing - these types are allowed
+                        break;
+                    default:
+                        // other types are NOT allowed
+                        $params->targetsectiontype = 0;
+                }
+            }
+        } else {
+            // check $params->courseid matches $params->coursetext
+        }
+    }
+
+    /**
+     * check_coursetext
+     *
+     * @param  array   $params (passed by reference)
+     * @param  integer $check  1=child, 2=parent
+     * @return void    but may update $params
+     */
+    public function check_coursetext(&$params, $check=1) {
+        if ($check==1) {
+            // check $params->coursetext is valid
+            // check $params->coursetext matches $params->coursetype
+        }
+    }
+
+    /**
+     * check_sectiontype
+     *
+     * @param  array   $params (passed by reference)
+     * @param  integer $check  1=child, 2=parent
+     * @return void    but may update $params
+     */
+    public function check_sectiontype(&$params, $check=1) {
+        global $DB;
+        if ($check==1) {
+            // check $params->sectiontype is valid
+            $types = array('DEFAULT'  => null,
+                           'HIDDEN'   => 'moodle/course:viewhiddensections',
+                           'VISIBLE'  => null,
+                           'LAST'     => null,
+                           'NEW'      => 'moodle/course:viewhiddensections');
+            $this->check_type($params, 'section', $types, 'SORTED', CONTEXT_COURSE, $params->targetcourseid);
+
+            // fix courseid, as necesasry
+            switch ($params->targetsectiontype) {
+                case self::SECTIONTYPE_DEFAULT:
+                    $params->targetsectionnum = 0;
+                    break;
+                case self::SECTIONTYPE_LAST:
+                    $sql = "SELECT MAX(section) FROM {course_sections} WHERE course = ?";
+                    $params->targetsectionnum = $DB->get_field_sql($sql, array($params->targetcourseid));
+                    break;
+                case self::SECTIONTYPE_VISIBLE:
+                    if ($params->targetsectionnum && $DB->get_field('course_sections', 'visible', array('course' => $params->targetcourseid, 'section' => $params->targetsectionnum))==0) {
+                        $params->targetsectionnum = 0;
+                    }
+                    break;
+                case self::SECTIONTYPE_HIDDEN:
+                    if ($params->targetsectionnum && $DB->get_field('course_sections', 'visible', array('course' => $params->targetcourseid, 'section' => $params->targetsectionnum))==1) {
+                        $params->targetsectionnum = 0;
+                    }
+                    break;
+                case self::SECTIONTYPE_NEW:
+                    $params->targetsectionnum = 0;
+                    break;
+            }
+        } else {
+            // check $params->sectiontype matches $params->sectionnum
+        }
+    }
+
+    /**
+     * check_sectionnum
+     *
+     * @param  array   $params (passed by reference)
+     * @param  integer $check  1=child, 2=parent
+     * @return void    but may update $params
+     */
+    public function check_sectionnum(&$params, $check=1) {
+        if ($check==1) {
+            // check $params->sectionnum is valid
+            // check $params->sectionnum matches $params->coursetype/courseid/sectiontype
+        } else {
+            // check $params->sectionnum matches $params->sectiontext
+        }
+    }
+
+    /**
+     * check_sectiontext
+     *
+     * @param  array   $params (passed by reference)
+     * @param  integer $check  1=child, 2=parent
+     * @return void    but may update $params
+     */
+    public function check_sectiontext(&$params, $check=1) {
+        if ($check==1) {
+            // check $params->sectiontext is valid
+            // check $params->sectiontext matches $params->sectiontype
+        }
     }
 
     /**
@@ -676,7 +1147,7 @@ class reader_downloader {
      * @param boolean $set_config (optional, default=false)
      * @todo Finish documenting this function
      */
-    public function set_quiz_courseid($courseid, $categorytype=0, $coursetype=0, $categoryid=0, $set_reader=false, $set_config=false) {
+    public function set_quiz_courseid($courseid, $categorytype=null, $coursetype=null, $categoryid=null, $set_reader=false, $set_config=false) {
         global $DB;
 
         // cache this course id
@@ -684,7 +1155,7 @@ class reader_downloader {
         $course = $DB->get_record('course', array('id' => $courseid));
 
         // cache this course type
-        if ($coursetype) {
+        if (isset($coursetype)) {
             $this->targetcoursetype = $coursetype;
         } else if ($courseid==$this->reader->course) {
             $this->targetcoursetype = self::COURSETYPE_CURRENT; // 3
@@ -695,15 +1166,15 @@ class reader_downloader {
         }
 
         // cache this category id
-        if ($categoryid) {
+        if (isset($categoryid)) {
             $this->targetcategoryid = $categoryid;
         } else {
             $this->targetcategoryid = $DB->get_field('course', 'category', array('id' => $courseid));
         }
 
         // cache this category type
-        if ($categorytype) {
-            $this->targetcoursetype = $categorytype;
+        if (isset($categorytype)) {
+            $this->targetcategorytype = $categorytype;
         } else if ($course->category==$this->course->category) {
             $this->targetcategorytype = self::CATEGORYTYPE_CURRENT; // 3
         } else if ($DB->get_field('course_categories', 'visible', array('id' => $course->category))) {
@@ -731,6 +1202,7 @@ class reader_downloader {
      * @todo Finish documenting this function
      */
     public function get_course_categorytype() {
+        //return $this->targetcategorytype;
 
         // category id is cached
         if ($categorytype = $this->targetcategorytype) {
@@ -794,7 +1266,7 @@ class reader_downloader {
             }
         }
 
-        return 0; // shoudn't happen !!
+        return self::COURSETYPE_DEFAULT;
     }
 
     /**
@@ -814,7 +1286,7 @@ class reader_downloader {
         }
 
         // course id specified in input form
-        if ($courseid = optional_param('targetcourseid', 0, PARAM_INT)) {
+        if ($courseid = optional_param('courseid', 0, PARAM_INT)) {
             if ($this->can_manage_course($courseid)) {
                 $this->set_quiz_courseid($courseid);
                 return $courseid;
@@ -862,7 +1334,7 @@ class reader_downloader {
         if ($categoryid==0) {
 
             $categorytype = self::CATEGORYTYPE_DEFAULT;
-            $categorytype = optional_param('targetcategorytype', $categorytype, PARAM_INT);
+            $categorytype = optional_param('categorytype', $categorytype, PARAM_INT);
 
             // get list of course categories
             $requiredcapability = 'moodle/course:create';
@@ -1034,7 +1506,7 @@ class reader_downloader {
         }
 
         // get form value
-        $sectiontype = self::SECTIONTYPE_SORTED; // default
+        $sectiontype = self::SECTIONTYPE_DEFAULT;
         $sectiontype = optional_param('sectiontype', $sectiontype, PARAM_INT);
 
         $this->targetsectiontype = $sectiontype;
@@ -1067,6 +1539,28 @@ class reader_downloader {
         $cache = false;
         switch ($sectiontype) {
 
+            case self::SECTIONTYPE_DEFAULT:
+                $select = 'course = ? AND (name = ? OR summary = ?)';
+                $params = array($courseid, $sectionname, $sectionname);
+                if ($coursesections = $DB->get_records_select('course_sections', $select, $params, 'section', '*', 0, 1)) {
+                    $coursesection = reset($coursesections);
+                    $sectionnum = $coursesection->section;
+                }
+                break;
+
+            case self::SECTIONTYPE_HIDDEN:
+            case self::SECTIONTYPE_VISIBLE:
+                if ($sectionnum = optional_param('sectionnum', 0, PARAM_INT)) {
+                    $params = array('course' => $courseid, 'section' => $sectionnum);
+                    if ($coursesection = $DB->get_record('course_sections', $params)) {
+                        $sectionnum = $coursesection->section;
+                    } else {
+                        $sectionnum = 0;
+                    }
+                }
+                $cache = true;
+                break;
+
             case self::SECTIONTYPE_LAST:
                 $params = array('course' => $courseid);
                 if ($coursesections = $DB->get_records('course_sections', $params, 'section DESC', '*', 0, 1)) {
@@ -1077,29 +1571,6 @@ class reader_downloader {
                 break;
 
             case self::SECTIONTYPE_NEW:
-                $cache = true;
-                break;
-
-            case 0:
-            case self::SECTIONTYPE_SORTED:
-                $select = 'course = ? AND (name = ? OR summary = ?)';
-                $params = array($courseid, $sectionname, $sectionname);
-                if ($coursesections = $DB->get_records_select('course_sections', $select, $params, 'section', '*', 0, 1)) {
-                    $coursesection = reset($coursesections);
-                    $sectionnum = $coursesection->section;
-                }
-                break;
-
-            case self::SECTIONTYPE_SPECIFIC:
-            default: // shouldn't happen !!
-                if ($sectionnum = optional_param('targetsectionnum', 0, PARAM_INT)) {
-                    $params = array('course' => $courseid, 'section' => $sectionnum);
-                    if ($coursesection = $DB->get_record('course_sections', $params)) {
-                        $sectionnum = $coursesection->section;
-                    } else {
-                        $sectionnum = 0;
-                    }
-                }
                 $cache = true;
                 break;
         }
@@ -1297,7 +1768,7 @@ class reader_downloader {
      * @return xxx
      * @todo Finish documenting this function
      */
-    function remove_coursemodule($cmid_or_instanceid, $modname='') {
+    public function remove_coursemodule($cmid_or_instanceid, $modname='') {
         global $CFG, $DB, $OUTPUT;
 
         // get course module - with sectionnum :-)
@@ -1554,7 +2025,7 @@ class reader_downloader {
         foreach ($categories as $categoryid => $category) {
 
             // fix category name, if necessary
-            if ($category->name=='ordering' || $category->name=='ORDERING') {
+            if ($category->name=='ordering' || $category->name=='ORDERING' || $category->name=='ORDER') {
                 $categories[$categoryid]->name = 'Ordering';
             }
 
@@ -1567,13 +2038,26 @@ class reader_downloader {
             if (isset($category->questions)) {
                 $has_nonrandom = $this->has_nonrandom_questions($category);
                 foreach ($category->questions as $questionid => $question) {
-                    if ($question->qtype=='multichoice' && empty($question->answers)) {
-                        $skipids[] = $questionid;
-                        continue; // shouldn't happen !!
-                    }
                     if ($question->qtype=='multianswer' && empty($question->multianswers)) {
                         $skipids[] = $questionid;
                         continue; // shouldn't happen !!
+                    }
+                    if ($question->qtype=='multichoice' && empty($question->multichoice)) {
+                        $skipids[] = $questionid;
+                        continue; // shouldn't happen !!
+                    }
+                    if ($question->qtype=='multichoice') { // remove blank and missing answers
+                        $answers = array();
+                        foreach ($question->answers as $a => $answer) {
+                            if (isset($answer->answer_text) && strlen($answer->answer_text)) {
+                                $answers[] = $answer->id; // keep this answer
+                            } else {
+                                unset($question->answers[$a]); // skip this answer
+                            }
+                        }
+                        $answers = implode(',', $answers);
+                        $question->multichoice->answers = $answers;
+                        $category->questions[$questionid] = $question;
                     }
                     if (isset($mainids[$question->id]) && $question->qtype=='random') {
                         if ($has_nonrandom) {
@@ -1959,21 +2443,6 @@ class reader_downloader {
                     $maxfraction = $answer->fraction;
                 }
             }
-        }
-
-        // fix missing multichoice settings - shoudln't happen !!
-        if (empty($question->multichoice)) {
-            $question->multichoice = (object)array(
-                'answers'         => '',
-                'layout'          => 0,
-                'single'          => 0,
-                'shuffleanswers'  => 0,
-                'answernumbering' => '',
-                'shownumcorrect'  => 0,
-                'correctfeedback' => '',
-                'incorrectfeedback' => '',
-                'partiallycorrectfeedback' => '',
-            );
         }
 
         // create $options for this multichoice question

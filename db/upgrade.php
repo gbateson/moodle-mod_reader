@@ -125,10 +125,23 @@ function xmldb_reader_upgrade($oldversion) {
         $DB->execute('UPDATE {reader_attempts} SET quizid = 0');
 
         // transfer correct "quizid" from "reader_books" table
-        if ($DB->get_dbfamily()=='mysql') {
-            $DB->execute('UPDATE {reader_attempts} ra JOIN {reader_books} rb ON ra.bookid = rb.id SET ra.quizid = rb.quizid');
-        } else {
-            $DB->execute('UPDATE {reader_attempts} SET ra.quizid = (SELECT rb.quizid FROM {reader_books} rb WHERE ra.bookid = rb.id)');
+        // Note: syntax for UPDATE with JOIN depends on DB type
+        switch ($DB->get_dbfamily()) {
+            case 'mysql':
+                $DB->execute('UPDATE {reader_attempts} ra JOIN {reader_books} rb ON ra.bookid = rb.id SET ra.quizid = rb.quizid');
+                break;
+            case 'mssql': // not tested
+                $DB->execute('UPDATE ra SET quizid = rb.quizid FROM {reader_attempts} ra JOIN {reader_books} rb ON ra.bookid = rb.id');
+                break;
+            case 'oracle': // not tested
+                $select = 'SELECT rb.quizid FROM {reader_books} rb WHERE ra.bookid = rb.id';
+                $DB->execute('UPDATE {reader_attempts} ra SET ra.quizid = ('.$select.') AND EXISTS ('.$select.')');
+                break;
+            case 'postgres': // not tested
+                $DB->execute('UPDATE {reader_attempts} ra SET quizid = rb.quizid FROM {reader_books} rb WHERE ra.bookid = rb.id');
+                break;
+            default:
+                $DB->execute('UPDATE {reader_attempts} ra SET ra.quizid = (SELECT rb.quizid FROM {reader_books} rb WHERE ra.bookid = rb.id)');
         }
 
         // drop "bookid" index and field
