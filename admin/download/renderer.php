@@ -276,38 +276,35 @@ class mod_reader_admin_download_renderer extends mod_reader_admin_renderer {
             $js .= "}\n";
 
             $js .= "function RDR_set_menuitems(obj, action) {\n";
-            $js .= "    var query = new Array();\n";
-            $js .= "    query.push('id' + '=' + RDR_get_id());\n";
-            $js .= "    query.push('action' + '=' + action);\n";
-            $js .= "    var items = new Array('mode', 'type');\n";
-            $js .= "    for (var i in items) {\n";
-            $js .= "        var id = 'menu' + items[i];\n";
-            $js .= "        var value = RDR_get_value(id, true);\n";
-            $js .= "        if (value) {\n";
-            $js .= "            query.push(items[i] + '=' + value);\n";
-            $js .= "        }\n";
-            $js .= "    }\n";
             $js .= "    var items = new Array();\n";
-            $js .= "    items['category'] = new Array('type', 'id',  'text');\n";
-            $js .= "    items['course']   = new Array('type', 'id',  'text');\n";
-            $js .= "    items['section']  = new Array('type', 'num', 'text');\n";
-            $js .= "    for (var item in items) {\n";
-            $js .= "        for (var i in items[item]) {\n";
-            $js .= "            var name = item + items[item][i];\n";
-            $js .= "            if (name.substr(name.length-4)=='text') {\n";
-            $js .= "                var id = 'texttarget' + name;\n";
-            $js .= "                var value = RDR_get_value(id);\n";
-            $js .= "            } else {\n";
-            $js .= "                var id = 'menutarget' + name;\n";
-            $js .= "                var value = RDR_get_value(id, true);\n";
-            $js .= "            }\n";
-            $js .= "            if (value) {\n";
-            $js .= "                query.push(name + '=' + value);\n";
-            $js .= "            }\n";
+
+            $js .= "    items['id'] = RDR_get_id();\n";
+            $js .= "    items['action'] = action;\n";
+
+            $js .= "    items['mode'] = RDR_get_value('menumode', true);\n";
+            $js .= "    items['type'] = RDR_get_value('menutype', true);\n";
+
+            $js .= "    items['targetcategorytype'] = RDR_get_value('menutargetcategorytype', true);\n";
+            $js .= "    items['targetcategoryid']   = RDR_get_value('menutargetcategoryid',   true);\n";
+            $js .= "    items['targetcategorytext'] = RDR_get_value('texttargetcategorytext', false);\n";
+
+            $js .= "    items['targetcoursetype']   = RDR_get_value('menutargetcoursetype',   true);\n";
+            $js .= "    items['targetcourseid']     = RDR_get_value('menutargetcourseid',     true);\n";
+            $js .= "    items['targetcoursetext']   = RDR_get_value('texttargetcoursetext',   false);\n";
+
+            $js .= "    items['targetsectiontype']  = RDR_get_value('menutargetsectiontype',  true);\n";
+            $js .= "    items['targetsectionnum']   = RDR_get_value('menutargetsectionnum',   true);\n";
+            $js .= "    items['targetsectiontext']  = RDR_get_value('texttargetsectiontext',  false);\n";
+
+            $js .= "    var url = RDR_get_wwwroot() + '/mod/reader/admin/download.js.php';\n";
+            $js .= "    var amp = '?';\n";
+            $js .= "    for (var i in items) {\n";
+            $js .= "        if (items[i]) {\n";
+            $js .= "            url += amp + i + '=' + items[i];\n";
+            $js .= "            amp = '&';\n";
             $js .= "        }\n";
             $js .= "    }\n";
-            $js .= "    var url = RDR_get_wwwroot() + '/mod/reader/admin/download.js.php' + '?' + query.join('&');\n";
-            $js .= "    RDR_request(url);\n"; // if (confirm(url))
+            $js .= "    RDR_request(url);\n";
             $js .= "}\n";
 
             $js .= "//]]>\n";
