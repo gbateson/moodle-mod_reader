@@ -304,7 +304,7 @@ class mod_reader_admin_download_renderer extends mod_reader_admin_renderer {
             $js .= "            amp = '&';\n";
             $js .= "        }\n";
             $js .= "    }\n";
-            $js .= "    RDR_request(url);\n";
+            $js .= "    RDR_request(url);\n"; // if (confirm(url)) 
             $js .= "}\n";
 
             $js .= "//]]>\n";
@@ -1233,12 +1233,13 @@ class mod_reader_admin_download_renderer extends mod_reader_admin_renderer {
         // containing courses relevant to this user,
         // so we derive categories from mycourses
 
-        $count_hidden = 0;
-        $count_visible = 0;
-        $sortorders = array();
         $categoryids = array();
-        if ($courses = $this->get_mycourses()) {
+        if ($is_admin = $downloader->can_manage_category()) {
+            // system admin can see all categories
+            $categoryids = $DB->get_records('course_categories', null, 'sortorder', 'id,sortorder');
+            $categoryids = array_keys($categoryids);
 
+        } else if ($courses = $this->get_mycourses()) {
             foreach ($courses as $course) {
                 if ($course->category) {
                     $categoryids[$course->category] = true;
@@ -1246,57 +1247,58 @@ class mod_reader_admin_download_renderer extends mod_reader_admin_renderer {
             }
             unset($courses);
 
-            if (count($categoryids)) {
-                $categoryids = array_keys($categoryids);
+            $categoryids = array_keys($categoryids);
 
-                // add ids of parent categories
-                list($select, $params) = $DB->get_in_or_equal($categoryids);
-                if ($paths = $DB->get_records_select('course_categories', "id $select", $params, '', 'id,path')) {
-                    $categoryids = '';
-                    foreach ($paths as $path) {
-                        $categoryids .= $path->path;
-                    }
-                    $categoryids = explode('/', $categoryids);
-                    $categoryids = array_filter($categoryids); // remove blanks
-                    $categoryids = array_unique($categoryids); // remove duplicates
+            // add ids of parent categories
+            list($select, $params) = $DB->get_in_or_equal($categoryids);
+            if ($paths = $DB->get_records_select('course_categories', "id $select", $params, '', 'id,path')) {
+                $categoryids = '';
+                foreach ($paths as $path) {
+                    $categoryids .= $path->path;
                 }
+                $categoryids = explode('/', $categoryids);
+                $categoryids = array_filter($categoryids); // remove blanks
+                $categoryids = array_unique($categoryids); // remove duplicates
+            }
+        }
 
-                list($select, $params) = $DB->get_in_or_equal($categoryids);
-                if ($categoryids = $DB->get_records_select('course_categories', "id $select", $params, 'sortorder')) {
-                    foreach ($categoryids as $id => $category) {
-                        if ($visible = intval($category->visible)) {
-                            $count_visible++;
-                        } else {
-                            $count_hidden++;
-                        }
-                        switch ($categorytype) {
-                            case reader_downloader::CATEGORYTYPE_DEFAULT: // 0
-                                $keep = ($id == $downloader->defaultcategoryid);
-                                break;
-                            case reader_downloader::CATEGORYTYPE_HIDDEN:  // 1
-                                $keep = ($visible == 0);
-                                break;
-                            case reader_downloader::CATEGORYTYPE_VISIBLE: // 2
-                                $keep = ($visible == 1);
-                                break;
-                            case reader_downloader::CATEGORYTYPE_CURRENT: // 3
-                                $keep = ($id == $downloader->course->category);
-                                break;
-                            default:
-                                $keep = false; // shouldn't happen !!
-                        }
-                        if ($keep) {
-                            $categoryids[$id] = reader_textlib('substr', $category->name, 0, 50);
-                            if ($category->parent) {
-                                $categoryids[$id] = $categoryids[$category->parent].' / '.$categoryids[$id];
-                            }
-                        } else {
-                            unset($categoryids[$id]);
-                        }
+        $count_hidden = 0;
+        $count_visible = 0;
+        if (count($categoryids)) {
+            list($select, $params) = $DB->get_in_or_equal($categoryids);
+            $categoryids = array();
+            if ($categories = $DB->get_records_select('course_categories', "id $select", $params, 'sortorder')) {
+                foreach ($categories as $id => $category) {
+                    if ($visible = intval($category->visible)) {
+                        $count_visible++;
+                    } else {
+                        $count_hidden++;
                     }
-                } else {
-                    $categoryids = array(); // shouldn't happen !!
+                    switch ($categorytype) {
+                        case reader_downloader::CATEGORYTYPE_DEFAULT: // 0
+                            $keep = ($id == $downloader->defaultcategoryid);
+                            break;
+                        case reader_downloader::CATEGORYTYPE_HIDDEN:  // 1
+                            $keep = ($visible == 0);
+                            break;
+                        case reader_downloader::CATEGORYTYPE_VISIBLE: // 2
+                            $keep = ($visible == 1);
+                            break;
+                        case reader_downloader::CATEGORYTYPE_CURRENT: // 3
+                            $keep = ($id == $downloader->course->category);
+                            break;
+                        default:
+                            $keep = false; // shouldn't happen !!
+                    }
+                    if ($keep) {
+                        if ($category->parent) {
+                            $categories[$id]->name = $categories[$category->parent]->name.' / '.$categories[$id]->name;
+                            $category->name = $categories[$id]->name; 
+                        }
+                        $categoryids[$id] = $category->name;
+                    }
                 }
+                unset($categories);
             }
         }
 
@@ -1324,8 +1326,7 @@ class mod_reader_admin_download_renderer extends mod_reader_admin_renderer {
         if ($count_visible) {
             $categorytypes[reader_downloader::CATEGORYTYPE_VISIBLE] = get_string('visible');
         }
-        $context = reader_get_context(CONTEXT_SYSTEM);
-        if (has_capability('moodle/category:manage', $context)) {
+        if ($is_admin) {
             $categorytypes[reader_downloader::CATEGORYTYPE_NEW] = get_string('new');
         }
         $categorytypes = html_writer::select($categorytypes, 'targetcategorytype', $categorytype, null, $params);
@@ -1353,11 +1354,19 @@ class mod_reader_admin_download_renderer extends mod_reader_admin_renderer {
         $coursetype = $downloader->get_quiz_coursetype();
         $courseid = $downloader->get_quiz_courseid();
 
+        if ($is_admin = $downloader->can_create_course($categoryid)) {
+            // admin can see all courses
+            $courses = $DB->get_records('course', array('category' => $categoryid), 'sortorder');
+        } else {
+            // teacher can only access certain categories
+            $courses = $this->get_mycourses();
+        }
+
         $count_hidden = 0;
         $count_visible = 0;
         $courseids = array();
 
-        if ($courses = $this->get_mycourses()) {
+        if ($courses) {
             foreach ($courses as $course) {
                 if ($course->id==SITEID) {
                     continue;
@@ -1421,12 +1430,7 @@ class mod_reader_admin_download_renderer extends mod_reader_admin_renderer {
         if ($count_visible) {
             $coursetypes[reader_downloader::COURSETYPE_VISIBLE] = get_string('visible');
         }
-        if ($categoryid) {
-            $context = reader_get_context(CONTEXT_COURSECAT, $categoryid);
-        } else {
-            $context = reader_get_context(CONTEXT_SYSTEM);
-        }
-        if (has_capability('moodle/course:create', $context)) {
+        if ($is_admin) {
             $coursetypes[reader_downloader::COURSETYPE_NEW] = get_string('new');
         }
         $coursetypes = html_writer::select($coursetypes, 'targetcoursetype', $coursetype, null, $params);
