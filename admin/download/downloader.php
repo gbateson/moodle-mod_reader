@@ -193,15 +193,15 @@ class reader_downloader {
         // get page parameters
         $action = optional_param('action', self::ACTION_NONE, PARAM_INT);
         $params = (object)array(
-            'targetcategorytype' => optional_param('categorytype', 0,  PARAM_INT),
-            'targetcategoryid'   => optional_param('categoryid',   0,  PARAM_INT),
-            'targetcategorytext' => optional_param('categorytext', '', PARAM_TEXT),
-            'targetcoursetype'   => optional_param('coursetype',   0,  PARAM_INT),
-            'targetcourseid'     => optional_param('courseid',     0,  PARAM_INT),
-            'targetcoursetext'   => optional_param('coursetext',   '', PARAM_TEXT),
-            'targetsectiontype'  => optional_param('sectiontype',  0,  PARAM_INT),
-            'targetsectionnum'   => optional_param('sectionnum',   0,  PARAM_INT),
-            'targetsectiontext'  => optional_param('sectiontext',  '', PARAM_TEXT),
+            'targetcategorytype' => optional_param('targetcategorytype', 0,  PARAM_INT),
+            'targetcategoryid'   => optional_param('targetcategoryid',   0,  PARAM_INT),
+            'targetcategorytext' => optional_param('targetcategorytext', '', PARAM_TEXT),
+            'targetcoursetype'   => optional_param('targetcoursetype',   0,  PARAM_INT),
+            'targetcourseid'     => optional_param('targetcourseid',     0,  PARAM_INT),
+            'targetcoursetext'   => optional_param('targetcoursetext',   '', PARAM_TEXT),
+            'targetsectiontype'  => optional_param('targetsectiontype',  0,  PARAM_INT),
+            'targetsectionnum'   => optional_param('targetsectionnum',   0,  PARAM_INT),
+            'targetsectiontext'  => optional_param('targetsectiontext',  '', PARAM_TEXT),
         );
 
         // check consistency of child parameters
@@ -277,9 +277,40 @@ class reader_downloader {
     }
 
     /**
+     * get_default_recordid
+     *
+     * @param  string   $table ("course" or "course_categories")
+     * @param  integer  $id
+     * @param  array    (optional, default=null) $params to select records from $DB
+     * @param  boolean  (optional, default=true) true=first record, false=last record
+     * @return integer  id of first (or last) visible (or hidden) record in $table
+     */
+    public function get_default_recordid($table, $id, $params=null, $first=true) {
+        global $DB;
+
+        if (isset($params) && empty($params['visible'])) {
+            $visible = 0;
+        } else {
+            $visible = 1;
+        }
+
+        if ($id) {
+            if ($DB->get_field($table, 'visible', array('id' => $id))==$visible) {
+                return $id;
+            }
+        }
+
+        $sort = 'sortorder '.($first ? 'ASC' : 'DESC');
+        if ($records = $DB->get_records($table, $params, $sort, 'id,sortorder', 0, 1)) {
+            return key($records);
+        }
+        return 0;
+    }
+
+    /**
      * check_categorytype
      *
-     * @param  array   $params (passed by reference)
+     * @param  object  $params (passed by reference)
      * @param  integer $check  1=child, 2=parent
      * @return void    but may update $params
      */
@@ -324,40 +355,9 @@ class reader_downloader {
     }
 
     /**
-     * get_default_recordid
-     *
-     * @param  string   $table ("course" or "course_categories")
-     * @param  integer  $id
-     * @param  array    (optional, default=null) $params to select records from $DB
-     * @param  boolean  (optional, default=true) true=first record, false=last record
-     * @return integer  id of first (or last) visible (or hidden) record in $table
-     */
-    public function get_default_recordid($table, $id, $params=null, $first=true) {
-        global $DB;
-
-        if (isset($params) && empty($params['visible'])) {
-            $visible = 0;
-        } else {
-            $visible = 1;
-        }
-
-        if ($id) {
-            if ($DB->get_field($table, 'visible', array('id' => $id))==$visible) {
-                return $id;
-            }
-        }
-
-        $sort = 'sortorder '.($first ? 'ASC' : 'DESC');
-        if ($records = $DB->get_records($table, $params, $sort, 'id,sortorder', 0, 1)) {
-            return key($records);
-        }
-        return 0;
-    }
-
-    /**
      * check_categoryid
      *
-     * @param  array   $params (passed by reference)
+     * @param  object  $params (passed by reference)
      * @param  integer $check  1=child, 2=parent
      * @return void    but may update $params
      */
@@ -377,6 +377,7 @@ class reader_downloader {
                 $visible_exists = $DB->record_exists('course', array('category' => $params->targetcategoryid, 'visible' => 1));
                 $current_exists = $DB->record_exists('course', array('id' => $this->course->id, 'category' => $params->targetcategoryid));
 
+                // set default course type
                 switch (true) {
                     case ($params->targetcategorytype==self::CATEGORYTYPE_DEFAULT):
                         $defaultcoursetype = self::COURSETYPE_DEFAULT;
@@ -423,6 +424,7 @@ class reader_downloader {
                 }
                 $params->targetcategorytext = '';
             } else {
+                // targetcategoryid was not specified (or invalid)
                 switch ($params->targetcoursetype) {
                     case self::COURSETYPE_DEFAULT:
                     case self::COURSETYPE_NEW:
@@ -430,7 +432,7 @@ class reader_downloader {
                         break;
                     default:
                         // other types are NOT allowed
-                        $params->targetsectiontype = self::COURSETYPE_DEFAULT;
+                        $params->targetcoursetype = self::COURSETYPE_DEFAULT;
                 }
             }
         } else {
@@ -441,7 +443,7 @@ class reader_downloader {
     /**
      * check_categorytext
      *
-     * @param  array   $params (passed by reference)
+     * @param  object  $params (passed by reference)
      * @param  integer $check  1=child, 2=parent
      * @return void    but may update $params
      */
@@ -455,20 +457,28 @@ class reader_downloader {
     /**
      * check_coursetype
      *
-     * @param  array   $params (passed by reference)
+     * @param  object  $params (passed by reference)
      * @param  integer $check  1=child, 2=parent
      * @return void    but may update $params
      */
     public function check_coursetype(&$params, $check=1) {
         global $DB;
         if ($check==1) {
+
+            // set default coursetype
+            if ($params->targetcategorytype==self::CATEGORYTYPE_NEW) {
+                $default = 'NEW';
+            } else {
+                $default = 'DEFAULT';
+            }
+
             // check $params->coursetype is valid
             $types = array('DEFAULT' => null,
                            'HIDDEN'  => 'moodle/course:viewhiddencourses',
                            'VISIBLE' => null,
                            'CURRENT' => null,
                            'NEW'     => 'moodle/course:create');
-            $this->check_type($params, 'course', $types, 'DEFAULT', CONTEXT_COURSECAT, $params->targetcategoryid);
+            $this->check_type($params, 'course', $types, $default, CONTEXT_COURSECAT, $params->targetcategoryid);
 
             // fix courseid, as necesasry
             switch ($params->targetcoursetype) {
@@ -496,7 +506,7 @@ class reader_downloader {
     /**
      * check_courseid
      *
-     * @param  array   $params (passed by reference)
+     * @param  object  $params (passed by reference)
      * @param  integer $check  1=child, 2=parent
      * @return void    but may update $params
      */
@@ -530,7 +540,7 @@ class reader_downloader {
     /**
      * check_coursetext
      *
-     * @param  array   $params (passed by reference)
+     * @param  object  $params (passed by reference)
      * @param  integer $check  1=child, 2=parent
      * @return void    but may update $params
      */
@@ -544,20 +554,21 @@ class reader_downloader {
     /**
      * check_sectiontype
      *
-     * @param  array   $params (passed by reference)
+     * @param  object  $params (passed by reference)
      * @param  integer $check  1=child, 2=parent
      * @return void    but may update $params
      */
     public function check_sectiontype(&$params, $check=1) {
         global $DB;
         if ($check==1) {
+
             // check $params->sectiontype is valid
             $types = array('DEFAULT'  => null,
                            'HIDDEN'   => 'moodle/course:viewhiddensections',
                            'VISIBLE'  => null,
                            'LAST'     => null,
                            'NEW'      => 'moodle/course:viewhiddensections');
-            $this->check_type($params, 'section', $types, 'SORTED', CONTEXT_COURSE, $params->targetcourseid);
+            $this->check_type($params, 'section', $types, 'DEFAULT', CONTEXT_COURSE, $params->targetcourseid);
 
             // fix courseid, as necesasry
             switch ($params->targetsectiontype) {
@@ -590,7 +601,7 @@ class reader_downloader {
     /**
      * check_sectionnum
      *
-     * @param  array   $params (passed by reference)
+     * @param  object  $params (passed by reference)
      * @param  integer $check  1=child, 2=parent
      * @return void    but may update $params
      */
@@ -606,7 +617,7 @@ class reader_downloader {
     /**
      * check_sectiontext
      *
-     * @param  array   $params (passed by reference)
+     * @param  object  $params (passed by reference)
      * @param  integer $check  1=child, 2=parent
      * @return void    but may update $params
      */
@@ -978,6 +989,8 @@ class reader_downloader {
                 echo $this->output->box_start('generalbox', 'notice');
                 echo html_writer::start_tag('div');
                 echo $this->output->showhide_js_start();
+                //echo html_writer::tag('p', get_string('targetcategory', 'reader').': '.$DB->get_field('course_categories', 'name', array('id' => $this->targetcategoryid)));
+                //echo html_writer::tag('p', get_string('targetcourse', 'reader').': '.$DB->get_field('course', 'fullname', array('id' => $this->targetcourseid)));
                 echo html_writer::tag('b', get_string('downloadedbooks', 'reader'));
                 echo $this->output->available_list_img();
                 echo html_writer::start_tag('ol');
@@ -1202,21 +1215,10 @@ class reader_downloader {
      * @todo Finish documenting this function
      */
     public function get_course_categorytype() {
-        //return $this->targetcategorytype;
-
-        // category id is cached
-        if ($categorytype = $this->targetcategorytype) {
-            return $categorytype;
+        if ($this->targetcategorytype) {
+            $this->get_quiz_courseid();
         }
-
-        // derive categorytype from courseid
-        if ($courseid = $this->get_quiz_courseid()) {
-            if ($categorytype = $this->targetcategorytype) {
-                return $this->targetcategorytype;
-            }
-        }
-
-        return self::CATEGORYTYPE_DEFAULT;
+        return $this->targetcategorytype;
     }
 
     /**
@@ -1237,11 +1239,11 @@ class reader_downloader {
         // derive categoryid from courseid
         if ($courseid = $this->get_quiz_courseid()) {
             if ($categoryid = $this->targetcategoryid) {
-                return $this->targetcategoryid;
+                return $categoryid;
             }
         }
 
-        return 0; // shoudn't happen !!
+        return 0;
     }
 
     /**
@@ -1280,61 +1282,23 @@ class reader_downloader {
     public function get_quiz_courseid($numsections=1) {
         global $DB;
 
-        // course id is cached
+        if (defined('AJAX_SCRIPT') && AJAX_SCRIPT==true) {
+            return $this->targetcourseid;
+        }
+
+        // course id is usually cached
         if ($courseid = $this->targetcourseid) {
             return $courseid;
         }
+        $coursetype   = $this->targetcoursetype;
+        $coursetext   = $this->targetcoursetext;
 
-        // course id specified in input form
-        if ($courseid = optional_param('courseid', 0, PARAM_INT)) {
-            if ($this->can_manage_course($courseid)) {
-                $this->set_quiz_courseid($courseid);
-                return $courseid;
-            }
-        }
-
-        // course id specified by this reader activity
-        if ($courseid = $this->reader->usecourse) {
-            if ($this->can_manage_course($courseid)) {
-                $this->set_quiz_courseid($courseid);
-                return $courseid;
-            }
-        }
-
-        // course id specified by site config settings
-        if ($courseid = get_config('reader', 'usecourse')) {
-            if ($this->can_manage_course($courseid)) {
-                $this->set_quiz_courseid($courseid);
-                return $courseid;
-            }
-        }
-
-        // get default name for Reader quiz course
-        $coursename = get_string('defaultcoursename', 'reader');
-
-        // course with default Reader course name
-        if ($courseid = $DB->get_field('course', 'id', array('fullname' => $coursename, 'shortname' => $coursename))) {
-            if ($this->can_manage_course($courseid)) {
-                $this->set_quiz_courseid($courseid, 0, 0, 0, true);
-                return $courseid;
-            }
-        }
-
-        // otherwise we create a new course to hold the quizzes
-
-        // check user is allowed to create new courses
-        // in the target category
-        if ($categoryid = $this->targetcategoryid) {
-            if (! $this->can_create_course($categoryid)) {
-                $categoryid = 0; // invalid category id
-            }
-        }
+        $categorytype = $this->targetcategorytype;
+        $categoryid   = $this->targetcategoryid;
+        $categorytext = $this->targetcategorytext;
 
         // try to find suitable category
         if ($categoryid==0) {
-
-            $categorytype = self::CATEGORYTYPE_DEFAULT;
-            $categorytype = optional_param('categorytype', $categorytype, PARAM_INT);
 
             // get list of course categories
             $requiredcapability = 'moodle/course:create';
@@ -1378,16 +1342,21 @@ class reader_downloader {
         // allow system admin to create courses anywhere
         if ($categoryid==0 && $this->can_create_course()) {
 
+            if ($categorytext=='') {
+                $categorytext = get_string('defaultcategoryname', 'reader');
+            }
+            $categorytext = $this->get_unique_name($categorytext, 'course_categories', 'name');
+
             // setup new course category
             $category = (object)array(
-                'name'          => get_string('defaultcategoryname', 'reader'),
+                'name'          => $categorytext,
                 'idnumber'      => '',
                 'description'   => '',
                 'descriptionformat' => FORMAT_PLAIN, // plain text
                 'parent'        => 0,
                 'sortorder'     => 0,
                 'coursecount'   => 0,
-                'visible'       => 0,
+                'visible'       => 0, // hidden
                 'visibleold'    => 0,
                 'timemodified'  => 0,
                 'depth'         => 0,
@@ -1410,11 +1379,16 @@ class reader_downloader {
         // create course if allowed
         if ($categoryid) {
 
+            if ($coursetext=='') {
+                $coursetext = get_string('defaultcoursename', 'reader');
+            }
+            $coursetext = $this->get_unique_name($coursetext, 'course', 'shortname');
+
             // setup new course
             $course = (object)array(
                 'category'      => $categoryid, // crucial !!
-                'fullname'      => $coursename,
-                'shortname'     => $coursename,
+                'fullname'      => $coursetext,
+                'shortname'     => $coursetext,
                 'summary'       => '',
                 'summaryformat' => FORMAT_PLAIN, // plain text
                 'format'        => 'topics',
@@ -1428,16 +1402,43 @@ class reader_downloader {
             $course = create_course($course);
 
             // save new course id
-            $this->set_quiz_courseid($course->id, $categorytype, self::COURSETYPE_NEW, $categoryid, true);
+            $this->set_quiz_courseid($course->id, $categorytype, self::COURSETYPE_HIDDEN, $categoryid, true);
 
             // return new course id
             return $course->id;
         }
 
+        // use course id specified by this reader activity
+        if ($courseid = $this->reader->usecourse) {
+            if ($this->can_manage_course($courseid)) {
+                $this->set_quiz_courseid($courseid);
+                return $courseid;
+            }
+        }
+
+        // use course id specified by site config settings
+        if ($courseid = get_config('reader', 'usecourse')) {
+            if ($this->can_manage_course($courseid)) {
+                $this->set_quiz_courseid($courseid);
+                return $courseid;
+            }
+        }
+
+        // get default name for Reader quiz course
+        $coursetext = get_string('defaultcoursename', 'reader');
+
+        // course with default Reader course name
+        if ($courseid = $DB->get_field('course', 'id', array('shortname' => $coursetext))) {
+            if ($this->can_manage_course($courseid)) {
+                $this->set_quiz_courseid($courseid, 0, 0, 0, true);
+                return $courseid;
+            }
+        }
+
         // we should be able to restore into the current course
         if ($courseid = $this->reader->course) {
             if ($this->can_manage_course($courseid)) {
-                $this->set_quiz_courseid($courseid, self::COURSETYPE_CURRENT);
+                $this->set_quiz_courseid($courseid);
                 return $courseid;
             }
         }
@@ -1445,6 +1446,44 @@ class reader_downloader {
         // this user is not allowed to create new courses
         // or add stuff to the current course, so abort
         throw new moodle_exception('cannotcreatecourse', 'reader');
+    }
+
+    /**
+     * get_unique_name
+     *
+     * @param string $name
+     * @param string $table
+     * @param string $field
+     * @todo Finish documenting this function
+     */
+    public function get_unique_name($name, $table, $namefield) {
+        global $DB;
+        $i = 1;
+        $uniquename = $name;
+        while ($DB->record_exists($table, array($namefield => $uniquename))) {
+            $i++;
+            $uniquename = "$name $i";
+        }
+        return $uniquename;
+    }
+
+    /**
+     * can_manage_category
+     *
+     * @param integer $categoryid (optional, default=0)
+     * @todo Finish documenting this function
+     */
+    public function can_manage_category($categoryid=0) {
+        if ($categoryid) {
+            $context = reader_get_context(CONTEXT_COURSECAT, $categoryid);
+        } else {
+            $context = reader_get_context(CONTEXT_SYSTEM); // SITE context
+        }
+        if ($context) {
+            return has_capability('moodle/category:manage', $context);
+        } else {
+            return false; // shouldn't happen !!
+        }
     }
 
     /**
@@ -1459,7 +1498,11 @@ class reader_downloader {
         } else {
             $context = reader_get_context(CONTEXT_SYSTEM); // SITE context
         }
-        return has_capability('moodle/course:create', $context);
+        if ($context) {
+            return has_capability('moodle/course:create', $context);
+        } else {
+            return false; // shouldn't happen !!
+        }
     }
 
     /**
@@ -1469,8 +1512,16 @@ class reader_downloader {
      * @todo Finish documenting this function
      */
     public function can_manage_course($courseid) {
-        $context = reader_get_context(CONTEXT_COURSE, $courseid);
-        return has_capability('moodle/course:manageactivities', $context);
+        if ($courseid) {
+            $context = reader_get_context(CONTEXT_COURSE, $courseid);
+        } else {
+            $context = reader_get_context(CONTEXT_SYSTEM); // SITE context
+        }
+        if ($context) {
+            return has_capability('moodle/course:manageactivities', $context);
+        } else {
+            return false; // shouldn't happen !!
+        }
     }
 
     /**
@@ -1505,12 +1556,7 @@ class reader_downloader {
             return $sectiontype;
         }
 
-        // get form value
-        $sectiontype = self::SECTIONTYPE_DEFAULT;
-        $sectiontype = optional_param('sectiontype', $sectiontype, PARAM_INT);
-
-        $this->targetsectiontype = $sectiontype;
-        return $sectiontype;
+        return self::SECTIONTYPE_DEFAULT;
     }
 
     /**
@@ -1532,14 +1578,13 @@ class reader_downloader {
 
         // get required section type
         $sectiontype = $this->get_quiz_sectiontype();
-
-        // get expected section name
-        $sectionname = $this->create_sectionname($book);
+        $sectionname = '';
 
         $cache = false;
         switch ($sectiontype) {
 
             case self::SECTIONTYPE_DEFAULT:
+                $sectionname = $this->create_sectionname($book);
                 $select = 'course = ? AND (name = ? OR summary = ?)';
                 $params = array($courseid, $sectionname, $sectionname);
                 if ($coursesections = $DB->get_records_select('course_sections', $select, $params, 'section', '*', 0, 1)) {
@@ -1571,6 +1616,7 @@ class reader_downloader {
                 break;
 
             case self::SECTIONTYPE_NEW:
+                $sectionname = $this->targetsectiontext;
                 $cache = true;
                 break;
         }
