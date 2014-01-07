@@ -356,39 +356,46 @@ function xmldb_reader_fix_quiz_ids($newid, $oldid) {
 /**
  * xmldb_reader_remove_coursemodule
  *
- * @param integer $cmid
+ * @param integer $cmid_or_instanceid
+ * @param integer $modname (optional, default="")
  * @return xxx
  * @todo Finish documenting this function
  */
-function xmldb_reader_remove_coursemodule($cmid) {
+function xmldb_reader_remove_coursemodule($cmid_or_instanceid, $modname='') {
     global $CFG, $DB;
     require_once($CFG->dirroot.'/course/lib.php');
 
     // get course module - with sectionnum :-)
-    if (! $cm = get_coursemodule_from_id('', $cmid, 0, true)) {
-        print_error('invalidcoursemodule');
+    if ($modname) {
+        if (! $cm = get_coursemodule_from_instance($modname, $cmid_or_instanceid, 0, true)) {
+            throw new moodle_exception(get_string('invalidmodulename', 'error', "$modname (id=$cmid_or_instanceid)"));
+        }
+    } else {
+        if (! $cm = get_coursemodule_from_id('', $cmid_or_instanceid, 0, true)) {
+            throw new moodle_exception(get_string('invalidmoduleid', 'error', $cmid_or_instanceid));
+        }
     }
 
-    $libfile = $CFG->dirroot.'/mod/'.$cm->modname.'/lib.php';
-    if (! file_exists($libfile)) {
-        notify("$cm->modname lib.php not accessible ($libfile)");
-    }
-    require_once($libfile);
-
-    $deleteinstancefunction = $cm->modname.'_delete_instance';
-    if (! function_exists($deleteinstancefunction)) {
-        notify("$cm->modname delete function not found ($deleteinstancefunction)");
-    }
-
-    // copied from 'course/mod.php'
-    if (! $deleteinstancefunction($cm->instance)) {
-        notify("Could not delete the $cm->modname (instance id=$cm->instance)");
-    }
     if (function_exists('course_delete_module')) {
         // Moodle >= 2.5
         course_delete_module($cm->id);
     } else {
         // Moodle <= 2.4
+        $libfile = $CFG->dirroot.'/mod/'.$cm->modname.'/lib.php';
+        if (! file_exists($libfile)) {
+            notify("$cm->modname lib.php not accessible ($libfile)");
+        }
+        require_once($libfile);
+
+        $deleteinstancefunction = $cm->modname.'_delete_instance';
+        if (! function_exists($deleteinstancefunction)) {
+            notify("$cm->modname delete function not found ($deleteinstancefunction)");
+        }
+
+        // copied from 'course/mod.php'
+        if (! $deleteinstancefunction($cm->instance)) {
+            notify("Could not delete the $cm->modname (instance id=$cm->instance)");
+        }
         if (! delete_course_module($cm->id)) {
             notify("Could not delete the $cm->modname (coursemodule, id=$cm->id)");
         }
@@ -639,6 +646,8 @@ function xmldb_reader_fix_slashes() {
 function xmldb_reader_fix_wrong_sectionnames() {
     global $DB, $OUTPUT;
 
+    $quizmoduleid = 0;
+
     $courseids = xmldb_reader_quiz_courseids();
     foreach ($courseids as $courseid) {
 
@@ -660,14 +669,19 @@ function xmldb_reader_fix_wrong_sectionnames() {
                 continue; // ignore empty section
             }
 
+            if ($quizmoduleid==0) {
+                $quizmoduleid = $DB->get_field('modules', 'id', array('name' => 'quiz'));
+            }
+
             $cmids = explode(',', $section->sequence);
             $cmids = array_filter($cmids); // remove blanks
 
             $quizids = array();
             foreach ($cmids as $cmid) {
-                $cm = get_coursemodule_from_id('', $cmid);
-                if ($cm->modname=='quiz') {
-                    $quizids[] = $cm->instance;
+                if ($cm = $DB->get_record('course_modules', array('id' => $cmid))) {
+                    if ($cm->module==$quizmoduleid) {
+                        $quizids[] = $cm->instance;
+                    }
                 }
             }
 
@@ -2823,6 +2837,7 @@ function xmldb_reader_box_end() {
  * @todo Finish documenting this function
  */
 function xmldb_reader_move_images() {
+    global $CFG;
 
     // create "reader" folder within Moodle data folder
     make_upload_directory('reader');

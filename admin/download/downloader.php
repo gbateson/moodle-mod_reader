@@ -471,7 +471,7 @@ class reader_downloader {
             } else {
                 $default = 'DEFAULT';
             }
-            
+
             // check $params->coursetype is valid
             $types = array('DEFAULT' => null,
                            'HIDDEN'  => 'moodle/course:viewhiddencourses',
@@ -562,20 +562,13 @@ class reader_downloader {
         global $DB;
         if ($check==1) {
 
-            // set default sectiontype
-            if ($params->targetcoursetype==self::COURSETYPE_NEW) {
-                $default = 'NEW';
-            } else {
-                $default = 'DEFAULT';
-            }
-
             // check $params->sectiontype is valid
             $types = array('DEFAULT'  => null,
                            'HIDDEN'   => 'moodle/course:viewhiddensections',
                            'VISIBLE'  => null,
                            'LAST'     => null,
                            'NEW'      => 'moodle/course:viewhiddensections');
-            $this->check_type($params, 'section', $types, $default, CONTEXT_COURSE, $params->targetcourseid);
+            $this->check_type($params, 'section', $types, 'DEFAULT', CONTEXT_COURSE, $params->targetcourseid);
 
             // fix courseid, as necesasry
             switch ($params->targetsectiontype) {
@@ -1246,9 +1239,11 @@ class reader_downloader {
         // derive categoryid from courseid
         if ($courseid = $this->get_quiz_courseid()) {
             if ($categoryid = $this->targetcategoryid) {
+                return $categoryid;
             }
         }
-        return $this->targetcategoryid;
+
+        return 0;
     }
 
     /**
@@ -1291,7 +1286,7 @@ class reader_downloader {
             return $this->targetcourseid;
         }
 
-        // course id is usually cached 
+        // course id is usually cached
         if ($courseid = $this->targetcourseid) {
             return $courseid;
         }
@@ -1561,12 +1556,7 @@ class reader_downloader {
             return $sectiontype;
         }
 
-        // get form value
-        $sectiontype = self::SECTIONTYPE_DEFAULT;
-        $sectiontype = optional_param('sectiontype', $sectiontype, PARAM_INT);
-
-        $this->targetsectiontype = $sectiontype;
-        return $sectiontype;
+        return self::SECTIONTYPE_DEFAULT;
     }
 
     /**
@@ -1588,14 +1578,13 @@ class reader_downloader {
 
         // get required section type
         $sectiontype = $this->get_quiz_sectiontype();
-
-        // get expected section name
-        $sectionname = $this->targetsectiontext;
+        $sectionname = '';
 
         $cache = false;
         switch ($sectiontype) {
 
             case self::SECTIONTYPE_DEFAULT:
+                $sectionname = $this->create_sectionname($book);
                 $select = 'course = ? AND (name = ? OR summary = ?)';
                 $params = array($courseid, $sectionname, $sectionname);
                 if ($coursesections = $DB->get_records_select('course_sections', $select, $params, 'section', '*', 0, 1)) {
