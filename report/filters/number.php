@@ -101,10 +101,12 @@ class reader_report_filter_number extends user_filter_select {
         $field    = $this->_field;
         $operator = $field.'_op';
         if (isset($formdata->$field) && isset($formdata->$operator)) {
-            return array('operator' => (int)$formdata->$operator,
-                         'value'    => (int)$formdata->$field);
+            if (is_numeric($formdata->$field) && is_numeric($formdata->$operator)) {
+                if ($formdata->$operator > 0) { // 0 = any value
+                    return array('operator' => (int)$formdata->$operator, 'value' => (int)$formdata->$field);
+                }
+            }
         }
-
         return false;
     }
 

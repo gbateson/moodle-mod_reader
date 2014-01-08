@@ -2221,47 +2221,62 @@ function reader_get_goal_progress($progress, $reader) {
         $progress = 0;
     }
 
-    $goal = $DB->get_field('reader_levels', 'goal', array('userid' => $USER->id, 'readerid' => $reader->id));
+    //$params = array('userid' => $USER->id, 'readerid' => $reader->id);
+    //if (! $levels = $DB->get_record('reader_levels', $params)) {
+    //    $levels = (object)array(
+    //        'userid'        => $USER->id,
+    //        'startlevel'    => 0,
+    //        'currentlevel'  => 0,
+    //        'readerid'      => $reader->id,
+    //        'promotionstop' => $reader->promotionstop,
+    //        'time'          => time(),
+    //    );
+    //    $levels->id = $DB->insert_record('reader_levels', $levels);
+    //    $levels = $DB->get_record('reader_levels', $params);
+    //}
 
-    if (empty($goal)) {
-        $data = $DB->get_records('reader_goal', array('readerid' => $reader->id));
-        foreach ($data as $data_) {
-            if (! empty($data_->groupid)) {
-                if (! groups_is_member($data_->groupid, $USER->id)) {
-                    $noneed = true;
+    $params = array('userid' => $USER->id, 'readerid' => $reader->id);
+    if ($record = $DB->get_record('reader_levels', $params)) {
+        $goal = $record->goal;
+        $currentlevel = $record->currentlevel;
+    } else {
+        $goal = 0;
+        $currentlevel = 0;
+    }
+
+    if (! $goal) {
+        if ($records = $DB->get_records('reader_goal', array('readerid' => $reader->id))) {
+            foreach ($records as $record) {
+                if ($record->groupid && ! groups_is_member($record->groupid, $USER->id)) {
+                    continue; // wrong group
                 }
-            }
-            if (! empty($data_->level)) {
-                if ($dataofuserlevels->currentlevel != $data_->level) {
-                    $noneed = true;
+                if ($currentlevel != $record->level) {
+                    continue; // wrong level
                 }
-            }
-            if (! $noneed) {
-                $goal = $data_->goal;
+                $goal = $record->goal;
             }
         }
     }
-    if (empty($goal) || !empty($reader->goal)) {
+
+    if (! $goal) {
         $goal = $reader->goal;
     }
 
-    $goalchecker = $goal;
     if ($progress > $goal) {
         $goalchecker = $progress;
+    } else {
+        $goalchecker = $goal;
     }
     if ($goalchecker <= 50000) {
         $img = 5;
         $bgcolor = "#00FFFF";
-    }
-    else if ($goalchecker <= 100000) {
+    } else if ($goalchecker <= 100000) {
         $img = 10;
         $bgcolor = "#FF00FF";
-    }
-    else if ($goalchecker <= 500000) {
+    } else if ($goalchecker <= 500000) {
         $img = 50;
         $bgcolor = "#FFFF00";
-    }
-    else {
+    } else {
         $img = 100;
         $bgcolor = "#0000FF";
     }
@@ -2325,7 +2340,7 @@ function reader_get_goal_progress($progress, $reader) {
     $html .= '<img class="grey" src="'.$CFG->wwwroot.'/mod/reader/img/colorscale800px'.$img.'gs.png">'."\n";
     $html .= '<img class="mark" src="'.$CFG->wwwroot.'/mod/reader/img/now.png">'."\n";
 
-    if (! empty($goal)) {
+    if ($goal) {
         $html .= '<img class="goal" src="'.$CFG->wwwroot.'/mod/reader/img/goal.png">';
     }
 

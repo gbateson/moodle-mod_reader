@@ -54,7 +54,7 @@ class reader_report_filter_duration extends reader_report_filter_number {
         $mform->setType($this->_name.'[number]', PARAM_INT);
         $mform->setType($this->_name.'[timeunit]', PARAM_INT);
 
-        if (!is_null($this->_default)) {
+        if (! is_null($this->_default)) {
             $mform->setDefault($this->_name, $this->_default);
         }
 
@@ -76,10 +76,14 @@ class reader_report_filter_duration extends reader_report_filter_number {
         if (empty($operator)) {
             return '';
         }
-
+        if ($value==0) {
+            $value = '0';
+        } else {
+            $value = format_time($value);
+        }
         $a = (object)array(
             'label'    => $this->_label,
-            'value'    => '"'.s(format_time($value)).'"',
+            'value'    => '"'.s($value).'"',
             'operator' => $operators[$operator]
         );
 

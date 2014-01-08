@@ -1010,6 +1010,16 @@ function xmldb_reader_fix_uniqueid(&$dbman, &$contexts, &$quizzes, &$attempt, &$
         }
     }
 
+    // fetch quiz record, if necessary
+    if (empty($quizzes[$attempt->quizid])) {
+        if (! $quizzes[$attempt->quizid] = $DB->get_record('quiz', array('id' => $attempt->quizid))) {
+            // shouldn't happen - but we can continue if we create a dummy quiz record ...
+            $quizzes[$attempt->quizid] = (object)array('id' => $attempt->quizid,
+                                                       'name' => "Invalid quizid = $attempt->quizid",
+                                                       'preferredbehaviour' => 'deferredfeedback');
+        }
+    }
+
     $dbman = $DB->get_manager();
     if ($dbman->table_exists('question_usages')) {
         // Moodle >= 2.1
@@ -1038,16 +1048,6 @@ function xmldb_reader_fix_uniqueid(&$dbman, &$contexts, &$quizzes, &$attempt, &$
                     // otherwise use the system context - should never happen !!
                     $contexts[$attempt->reader] = reader_get_context(CONTEXT_SYSTEM);
                 }
-            }
-        }
-
-        // fetch quiz record, if necessary
-        if (empty($quizzes[$attempt->quizid])) {
-            if (! $quizzes[$attempt->quizid] = $DB->get_record('quiz', array('id' => $attempt->quizid))) {
-                // shouldn't happen - but we can continue if we create a dummy quiz record ...
-                $quizzes[$attempt->quizid] = (object)array('id' => $attempt->quizid,
-                                                           'name' => "Invalid quizid = $attempt->quizid",
-                                                           'preferredbehaviour' => 'deferredfeedback');
             }
         }
 
@@ -1081,6 +1081,7 @@ function xmldb_reader_fix_uniqueid(&$dbman, &$contexts, &$quizzes, &$attempt, &$
         $started_box = true;
         echo xmldb_reader_box_start('The following reader attempts had their uniqueids fixed');
     }
+
     echo html_writer::tag('li', $quizzes[$attempt->quizid]->name.": OLD: $olduniqueid => NEW: $newuniqueid");
 }
 
