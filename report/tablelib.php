@@ -88,6 +88,9 @@ class reader_report_table extends table_sql {
     /** @var actions */
     protected $actions = array();
 
+    /** @var date_strings */
+    protected $date_strings = null;
+
     /**
      * Constructor
      *
@@ -891,11 +894,30 @@ class reader_report_table extends table_sql {
      * @return xxx
      */
     public function col_averageduration($row)  {
+        static $str = null;
+
         if (empty($row->averageduration)) {
             return $this->empty_cell();
-        } else {
-            return format_time($row->averageduration);
         }
+
+        // prevent warnings on Moodle 2.0
+        // and speed up later versions too
+        if ($this->date_strings===null) {
+            $this->date_strings = (object)array(
+                'day'   => get_string('day'),
+                'days'  => get_string('days'),
+                'hour'  => get_string('hour'),
+                'hours' => get_string('hours'),
+                'min'   => get_string('min'),
+                'mins'  => get_string('mins'),
+                'sec'   => get_string('sec'),
+                'secs'  => get_string('secs'),
+                'year'  => get_string('year'),
+                'years' => get_string('years'),
+            );
+        }
+
+        return format_time($row->averageduration, $this->date_strings);
     }
 
     /**
@@ -933,11 +955,16 @@ class reader_report_table extends table_sql {
      * @return xxx
      */
     public function img_bookrating($rating)  {
+        global  $CFG;
         static $img = null;
         $rating = intval($rating);
         if ($rating >= 1 && $rating <= 3) {
             if ($img===null) {
-                $src = $this->output->pix_url('t/approve');
+                if (file_exists($CFG->dirroot.'/pix/t/approve.png')) {
+                    $src = $this->output->pix_url('t/approve'); // Moodle >= 2.4
+                } else {
+                    $src = $this->output->pix_url('t/clear'); // Moodle >= 2.0
+                }
                 $img = html_writer::empty_tag('img', array('src' => $src, 'alt' => get_string('bookrating', 'reader')));
             }
             return str_repeat($img, $rating);
