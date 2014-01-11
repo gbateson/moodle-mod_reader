@@ -97,9 +97,58 @@ class reader_report_table extends table_sql {
      * @param int $uniqueid
      */
     public function __construct($uniqueid, $output) {
+        global $DB, $USER;
+
         parent::__construct($uniqueid);
         $this->output = $output;
         $this->strtimeformat = get_string($this->timeformat);
+
+        // remove group filter if it is not needed
+        if (isset($this->filterfields['group'])) {
+
+            $courseid  = $this->output->reader->course->id;
+            $groupmode = $this->output->reader->course->groupmode;
+
+            if ($groupmode==SEPARATEGROUPS) {
+                $context = reader_get_context(CONTEXT_COURSE, $courseid);
+                if (has_capability('moodle/site:accessallgroups', $context)) {
+                    $groupmode = VISIBLEGROUPS; // user can access all groups
+                }
+            }
+
+            // set $has_groups
+            switch ($groupmode) {
+
+                case VISIBLEGROUPS:
+                    $has_groups = $DB->record_exists('groups', array('courseid' => $courseid));
+                    break;
+
+                case SEPARATEGROUPS:
+                    $select = 'gm.id, gm.groupid, g.courseid';
+                    $from   = '{groups_members} gm JOIN {groups} g ON gm.groupid = g.id';
+                    $where  = 'gm.userid = ? AND g.courseid = ?';
+                    $params = array($USER->id, $courseid);
+
+                    if ($defaultgroupingid = $this->output->reader->course->defaultgroupingid) {
+                        $select .= ', gg.groupingid';
+                        $from   .= ' JOIN {groupings_groups} gg ON g.id = gg.groupid';
+                        $where  .= ' AND gg.groupingid = ?';
+                        $params[] = $defaultgroupingid;
+                    }
+
+                    $has_groups = $DB->record_exists_sql("SELECT $select FROM $from WHERE $where", $params);
+                    break;
+
+                case NOGROUPS:
+                default:
+                    $has_groups = false;
+                    break;
+            }
+
+            if ($has_groups==false) {
+                unset($this->filterfields['group']);
+            }
+        }
     }
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -955,11 +1004,16 @@ class reader_report_table extends table_sql {
      * @return xxx
      */
     public function img_bookrating($rating)  {
+        global  $CFG;
         static $img = null;
         $rating = intval($rating);
         if ($rating >= 1 && $rating <= 3) {
             if ($img===null) {
-                $src = $this->output->pix_url('t/approve');
+                if (file_exists($CFG->dirroot.'/pix/t/approve.png')) {
+                    $src = $this->output->pix_url('t/approve'); // Moodle >= 2.4
+                } else {
+                    $src = $this->output->pix_url('t/clear'); // Moodle >= 2.0
+                }
                 $img = html_writer::empty_tag('img', array('src' => $src, 'alt' => get_string('bookrating', 'reader')));
             }
             return str_repeat($img, $rating);

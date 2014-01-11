@@ -155,7 +155,6 @@ class reader_report_filter_group extends reader_report_filter_select {
             }
         }
 
-        // no userids found
         return array($filter, $params);
     }
 }
