@@ -468,9 +468,9 @@ $string['updates'] = 'Updates';
 $string['updatesavailable'] = '{$a} update(s) available';
 $string['upgradeoldquizzesinfo'] = 'The upgrade has been paused, so that you can decide whether or not you wish to keep old versions of the Reader module quizzes on this Moodle site.
 
-If you select "Yes", no quizzes will be deleted. Choose this option if you wish to keep all statistics about answers to individual questions on old quizzes.
+If you select "Yes", all the old Reader quizzes will be kept. Choose this option if you wish to keep all statistics about answers to individual questions on old Reader quizzes.
 
-If you select "No", any old version of Reader module quizzes will be deleted leaving only the most recent visible version of each quiz. Choose this option if you are not concerned about statistics regarding answers to individual questions on old Reader quizzes and you wish to tidy up the Reader quizzes course page.
+If you select "No", old duplicate versions of Reader quizzes will be deleted leaving only the most recent visible version of each quiz. Choose this option if you are not concerned about statistics regarding answers to individual questions on old Reader quizzes and you wish to tidy up the Reader quizzes course page.
 
 Note that even if you choose "No", the word counts in Reader activities will not be affected by this operation.
 

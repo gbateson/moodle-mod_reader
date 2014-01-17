@@ -44,8 +44,7 @@ defined('MOODLE_INTERNAL') || die;
  * @todo Finish documenting this function
  */
 function xmldb_reader_check_stale_files() {
-    global $CFG, $FULLME, $OUTPUT;
-    //require_once($CFG->dirroot.'/mod/reader/lib.php');
+    global $FULLME, $OUTPUT;
 
     $dirpath = dirname(dirname(__FILE__));
     $filenames = array(
@@ -129,6 +128,7 @@ function xmldb_reader_fix_duplicate_books($course, $keepoldquizzes) {
     require_once($CFG->dirroot.'/course/lib.php');
 
     $rebuild_course_cache = false;
+    $interactive = xmldb_reader_interactive();
 
     // extract all duplicate (i.e. same publisher and name) books
     $publisher_level_name = $DB->sql_concat('publisher', "'_'", 'level', "'_'", 'name');
@@ -186,32 +186,40 @@ function xmldb_reader_fix_duplicate_books($course, $keepoldquizzes) {
                         continue;
                     }
 
-                    if ($publisher != $book->publisher) {
-                        if ($publisher=='') {
-                            // start publisher list
-                            xmldb_reader_box_start('The following duplicate books were fixed');
-                        } else {
-                            echo '</ul></li>'; // finish book list
+                    if ($interactive) {
+                        if ($publisher != $book->publisher) {
+                            if ($publisher=='') {
+                                // start publisher list
+                                xmldb_reader_box_start('The following duplicate books were fixed');
+                            } else {
+                                echo '</ul></li>'; // finish book list
+                            }
+                            // start book list for this publisher
+                            echo "<li><b>$book->publisher</b> ".xmldb_reader_showhide_img();
+                            echo '<ul>';
+                            $publisher = $book->publisher;
                         }
-                        // start book list for this publisher
-                        echo "<li><b>$book->publisher</b> ".xmldb_reader_showhide_img();
-                        echo '<ul>';
-                        $publisher = $book->publisher;
+                        echo "<li><b>$book->name</b> (bookid=$book->id) ".xmldb_reader_showhide_img()."<ul>";
                     }
-                    echo "<li><b>$book->name</b> (bookid=$book->id) ".xmldb_reader_showhide_img()."<ul>";
 
                     if ($mainquizid && $book->quizid && $mainquizid != $book->quizid) {
-                        echo "<li>fix references to duplicate quiz (quizid $book->quizid =&gt; $mainquizid)</li>";
+                        if ($interactive) {
+                            echo "<li>fix references to duplicate quiz (quizid $book->quizid =&gt; $mainquizid)</li>";
+                        }
                         xmldb_reader_fix_quiz_ids($mainquizid, $book->quizid);
                         if ($cm = $DB->get_record('course_modules', array('module' => $quizmoduleid, 'instance' => $book->quizid))) {
                             if ($keepoldquizzes) {
                                 if ($cm->visible==1) {
-                                    echo '<li>Hide duplicate quiz '."(course module id=$cm->id, quiz id=$cm->instance)".'</li>';
+                                    if ($interactive) {
+                                        echo '<li>Hide duplicate quiz '."(course module id=$cm->id, quiz id=$cm->instance)".'</li>';
+                                    }
                                     set_coursemodule_visible($cm->id, 0);
                                     $rebuild_course_cache = true;
                                 }
                             } else {
-                                echo '<li><span style="color: red;">DELETED</span> '."Duplicate quiz (course module id=$cm->id, quiz id=$book->quizid)".'</li>';
+                                if ($interactive) {
+                                    echo '<li><span style="color: red;">DELETED</span> '."Duplicate quiz (course module id=$cm->id, quiz id=$book->quizid)".'</li>';
+                                }
                                 xmldb_reader_remove_coursemodule($cm->id);
                                 $rebuild_course_cache = true;
                             }
@@ -221,15 +229,21 @@ function xmldb_reader_fix_duplicate_books($course, $keepoldquizzes) {
 
                     if ($mainbookid && $mainbookid != $book->id) {
                         // adjust all references to the duplicate book
-                        echo "<li>remove references to duplicate book</li>";
+                        if ($interactive) {
+                            echo "<li>remove references to duplicate book</li>";
+                        }
                         $DB->set_field('reader_book_instances', 'bookid', $mainbookid, array('bookid' => $book->id));
 
                         // now we can delete this book (because it is a duplicate)
-                        echo "<li>remove duplicate book</li>";
+                        if ($interactive) {
+                            echo "<li>remove duplicate book</li>";
+                        }
                         $DB->delete_records('reader_books', array('id' => $book->id));
                     }
 
-                    echo '</ul></li>';
+                    if ($interactive) {
+                        echo '</ul></li>';
+                    }
                 }
             }
         }
@@ -254,6 +268,7 @@ function xmldb_reader_fix_duplicate_quizzes($course, $keepoldquizzes) {
     require_once($CFG->dirroot.'/course/lib.php');
 
     $rebuild_course_cache = false;
+    $interactive = xmldb_reader_interactive();
 
     $section_quizname = $DB->sql_concat('cm.section', "'_'", 'q.name');
     $select = "$section_quizname AS section_quizname, ".
@@ -270,7 +285,9 @@ function xmldb_reader_fix_duplicate_quizzes($course, $keepoldquizzes) {
     if ($duplicates = $DB->get_records_sql("SELECT $select FROM $from WHERE $where GROUP BY $groupby", $params)) {
         xmldb_reader_box_start('The following duplicate quizzes were fixed');
         foreach ($duplicates as $duplicate) {
-            echo '<li>Merging duplicate quizzes: '.$duplicate->quizname.'<ul>';
+            if ($interactive) {
+                echo '<li>Merging duplicate quizzes: '.$duplicate->quizname.'<ul>';
+            }
 
             $maincm = null;
 
@@ -287,17 +304,23 @@ function xmldb_reader_fix_duplicate_quizzes($course, $keepoldquizzes) {
                         $maincm = $cm; // the main quiz activity
                     } else {
                         // transfer all quiz data to mainquizid
-                        echo "<li>transferring quiz data (quiz id $cm->instance =&gt; $maincm->instance)</li>";
+                        if ($interactive) {
+                            echo "<li>transferring quiz data (quiz id $cm->instance =&gt; $maincm->instance)</li>";
+                        }
                         xmldb_reader_fix_quiz_ids($maincm->instance, $cm->instance);
                         // hide or delete the duplicate quiz
                         if ($keepoldquizzes) {
                             if ($cm->visible==1) {
-                                echo '<li>Hide duplicate quiz '."(course module id=$cm->id, quiz id=$cm->instance)".'</li>';
+                                if ($interactive) {
+                                    echo '<li>Hide duplicate quiz '."(course module id=$cm->id, quiz id=$cm->instance)".'</li>';
+                                }
                                 set_coursemodule_visible($cm->id, 0);
                                 $rebuild_course_cache = true;
                             }
                         } else {
-                            echo '<li><span style="color: red;">DELETED</span> '."Duplicate quiz (course module id=$cm->id, quiz id=$cm->instance)".'</li>';
+                            if ($interactive) {
+                                echo '<li><span style="color: red;">DELETED</span> '."Duplicate quiz (course module id=$cm->id, quiz id=$cm->instance)".'</li>';
+                            }
                             xmldb_reader_remove_coursemodule($cm->id);
                             $rebuild_course_cache = true;
                         }
@@ -305,11 +328,15 @@ function xmldb_reader_fix_duplicate_quizzes($course, $keepoldquizzes) {
                 }
             }
             if ($maincm && $maincm->visible==0) {
-                echo '<li>Make quiz visible '."(course module id=$maincm->id, quiz id=$maincm->instance)".'</li>';
+                if ($interactive) {
+                    echo '<li>Make quiz visible '."(course module id=$maincm->id, quiz id=$maincm->instance)".'</li>';
+                }
                 set_coursemodule_visible($maincm->id, 1);
                 $rebuild_course_cache = true;
             }
-            echo '</ul></li>';
+            if ($interactive) {
+                echo '</ul></li>';
+            }
         }
         xmldb_reader_box_end();
     }
@@ -647,6 +674,7 @@ function xmldb_reader_fix_wrong_sectionnames() {
     global $DB, $OUTPUT;
 
     $quizmoduleid = 0;
+    $interactive = xmldb_reader_interactive();
 
     $courseids = xmldb_reader_quiz_courseids();
     foreach ($courseids as $courseid) {
@@ -710,12 +738,16 @@ function xmldb_reader_fix_wrong_sectionnames() {
                     // good - we only found the expected sectionname
                 } else {
                     // oops - at least one unexpected quiz found
-                    if ($started_box==false) {
-                        $started_box = true;
-                        xmldb_reader_box_start('The following course sections were adjusted');
+                    if ($interactive) {
+                        if ($started_box==false) {
+                            $started_box = true;
+                            xmldb_reader_box_start('The following course sections were adjusted');
+                        }
                     }
                     if ($count==1) {
-                        echo html_writer::tag('li', "Reset section name: $section->name => $sectionname");
+                        if ($interactive) {
+                            echo html_writer::tag('li', "Reset section name: $section->name => $sectionname");
+                        }
                         $DB->set_field('course_sections', 'name', $sectionname, array('id' => $sectionid));
                         $rebuild_course_cache = true;
                     } else {
@@ -726,10 +758,12 @@ function xmldb_reader_fix_wrong_sectionnames() {
                             $sectionnames[$sectionname] .= html_writer::alist($books);
                         }
                         $sectionnames = array_values($sectionnames);
-                        echo html_writer::start_tag('li');
-                        echo 'Quizzes for books by multiple publishers / levels found in section: '.$section->name;
-                        echo html_writer::alist($sectionnames);
-                        echo html_writer::end_tag('li');
+                        if ($interactive) {
+                            echo html_writer::start_tag('li');
+                            echo 'Quizzes for books by multiple publishers / levels found in section: '.$section->name;
+                            echo html_writer::alist($sectionnames);
+                            echo html_writer::end_tag('li');
+                        }
                     }
                 }
             }
@@ -757,6 +791,8 @@ function xmldb_reader_fix_wrong_sectionnames() {
  */
 function xmldb_reader_fix_wrong_quizids() {
     global $DB, $OUTPUT, $SESSION;
+
+    $interactive = xmldb_reader_interactive();
 
     // SQL to detect unexpected section name for a book
     $sectionname = $DB->sql_concat('rb.publisher', "' - '", 'rb.level');
@@ -836,7 +872,7 @@ function xmldb_reader_fix_wrong_quizids() {
             $quizidparamname = 'bookquizid'.$book->id;
             $quizid = optional_param($quizidparamname, null, PARAM_INT);
 
-            if (empty($quiz) && $quizid===null) {
+            if (empty($quiz) && $quizid===null && $interactive) {
                 // offer form to select quizid
                 $where = $DB->sql_like('q.name', '?').' AND cm.id IS NOT NULL AND cs.id IS NOT NULL AND m.id IS NOT NULL';
                 $params = array('quiz', "$book->name%");
@@ -918,7 +954,7 @@ function xmldb_reader_fix_wrong_quizids() {
                 }
             }
 
-            if (count($msg)) {
+            if (count($msg) && $interactive) {
                 if ($started_box==false) {
                     $started_box = true;
                     xmldb_reader_box_start('The quiz id for the following books was fixed');
@@ -1010,6 +1046,8 @@ function xmldb_reader_fix_uniqueid(&$dbman, &$contexts, &$quizzes, &$attempt, &$
         }
     }
 
+    $interactive = xmldb_reader_interactive();
+
     // fetch quiz record, if necessary
     if (empty($quizzes[$attempt->quizid])) {
         if (! $quizzes[$attempt->quizid] = $DB->get_record('quiz', array('id' => $attempt->quizid))) {
@@ -1077,12 +1115,13 @@ function xmldb_reader_fix_uniqueid(&$dbman, &$contexts, &$quizzes, &$attempt, &$
     $DB->set_field('reader_attempts', 'uniqueid', $attempt->uniqueid, array('id' => $attempt->id));
 
     // tell the user what just happened
-    if ($started_box==false) {
-        $started_box = true;
-        echo xmldb_reader_box_start('The following reader attempts had their uniqueids fixed');
+    if ($interactive) {
+        if ($started_box==false) {
+            $started_box = true;
+            echo xmldb_reader_box_start('The following reader attempts had their uniqueids fixed');
+        }
+        echo html_writer::tag('li', $quizzes[$attempt->quizid]->name.": OLD: $olduniqueid => NEW: $newuniqueid");
     }
-
-    echo html_writer::tag('li', $quizzes[$attempt->quizid]->name.": OLD: $olduniqueid => NEW: $newuniqueid");
 }
 
 /**
@@ -1094,6 +1133,7 @@ function xmldb_reader_fix_nonunique_quizids() {
     global $DB, $OUTPUT;
 
     $missingquizids = array();
+    $interactive = xmldb_reader_interactive();
 
     // extract books with non-unique quizid
     $select = 'rb.*, q.name AS quizname, q.course AS quizcourseid';
@@ -1102,7 +1142,9 @@ function xmldb_reader_fix_nonunique_quizids() {
     $orderby = 'rb.quizid';
 
     if ($books = $DB->get_records_sql("SELECT $select FROM $from WHERE $where", null, 'quizid')) {
-        echo xmldb_reader_box_start('The following books have a non-unique quizid');
+        if ($interactive) {
+            echo xmldb_reader_box_start('The following books have a non-unique quizid');
+        }
 
         $quizid = 0;
         foreach ($books as $book) {
@@ -1134,13 +1176,19 @@ function xmldb_reader_fix_nonunique_quizids() {
                 if ($cm->instance==$book->quizid) {
                     // this is the expected quiz for this book
                 } else if ($bookid = $DB->get_field('reader_books', 'id', array('quizid' => $cm->instance))) {
-                    echo "<li>CANNOT fix quizid for &quot;$book->name&quot; (book id=$book->id): quiz id=$book->quizid =&gt; $cm->instance</li>";
+                    if ($interactive) {
+                        echo "<li>CANNOT fix quizid for &quot;$book->name&quot; (book id=$book->id): quiz id=$book->quizid =&gt; $cm->instance</li>";
+                    }
                 } else {
-                    echo "<li>Fixing quizid in &quot;$book->name&quot; (book id=$book->id): quiz id=$book->quizid =&gt; $cm->instance</li>";
+                    if ($interactive) {
+                        echo "<li>Fixing quizid in &quot;$book->name&quot; (book id=$book->id): quiz id=$book->quizid =&gt; $cm->instance</li>";
+                    }
                     $DB->set_field('reader_books', 'quizid', $cm->instance, array('id' => $book->id));
                 }
             } else {
-                echo '<li><span style="color:red;">ERROR</span> '."Missing quiz for &quot;$book->name&quot; (book id=$book->id): quiz id=$book->quizid</li>";
+                if ($interactive) {
+                    echo '<li><span style="color:red;">ERROR</span> '."Missing quiz for &quot;$book->name&quot; (book id=$book->id): quiz id=$book->quizid</li>";
+                }
                 $missingquizids[$book->id] = $book->quizid;
             }
         }
@@ -1152,7 +1200,7 @@ function xmldb_reader_fix_nonunique_quizids() {
 
         // if this is not an interactive upgrade (i.e. a CLI upgrade)
         // then assume enable $fixmissingquizzes and continue
-        if (xmldb_reader_interactive()==false) {
+        if ($interactive==false) {
             $fixmissingquizzes = 1;
         }
 
@@ -1385,11 +1433,15 @@ function reader_install_missingquizzes($books) {
         reader_xmldb_init_qtypes();
 
         // create and restore_questions for this quiz
-        echo $OUTPUT->box_start('generalbox', 'notice');
-        echo html_writer::tag('h3', "$sectionname: $name");
+        if ($interactive) {
+            echo $OUTPUT->box_start('generalbox', 'notice');
+            echo html_writer::tag('h3', "$sectionname: $name");
+        }
         restore_create_questions($restore, $tempfile);
         reader_xmldb_restore_questions($restore, $xml, $cm->instance);
-        echo $OUTPUT->box_end();
+        if ($interactive) {
+            echo $OUTPUT->box_end();
+        }
 
         reader_remove_directory($tempdir);
     }
@@ -1902,6 +1954,7 @@ function xmldb_reader_fix_duplicates() {
 
     $keepoldquizzes = get_config('reader', 'keepoldquizzes');
     $courseids = xmldb_reader_quiz_courseids();
+    $interactive = xmldb_reader_interactive();
 
     foreach ($courseids as $courseid) {
         if ($course = $DB->get_record('course', array('id' => $courseid))) {
@@ -1913,7 +1966,9 @@ function xmldb_reader_fix_duplicates() {
                 $rebuild_course_cache = true;
             }
             if ($rebuild_course_cache) {
-                echo html_writer::tag('div', "Re-building course cache: $course->shortname ... ", array('class' => 'notifysuccess'));
+                if ($interactive) {
+                    echo html_writer::tag('div', "Re-building course cache: $course->shortname ... ", array('class' => 'notifysuccess'));
+                }
                 rebuild_course_cache($course->id, true); // $clearonly must be set to true
             }
         }
@@ -1966,6 +2021,8 @@ function xmldb_reader_get_question_categories() {
 function xmldb_reader_fix_question_categories() {
     global $DB, $OUTPUT;
 
+    $interactive = xmldb_reader_interactive();
+
     // first we tidy up the reader_question_instances table
     $select  = 'question, COUNT(*)';
     $from    = '{reader_question_instances}';
@@ -1979,12 +2036,14 @@ function xmldb_reader_fix_question_categories() {
                 $instanceid = array_shift($instanceids); // keep this one :-)
                 list($select, $params) = $DB->get_in_or_equal($instanceids);
                 $DB->delete_records_select('reader_question_instances', 'id '.$select, $params);
-                if ($started_box==false) {
-                    $started_box = true;
-                    echo xmldb_reader_box_start('The following reader question instances were fixed');
+                if ($interactive) {
+                    if ($started_box==false) {
+                        $started_box = true;
+                        echo xmldb_reader_box_start('The following reader question instances were fixed');
+                    }
+                    $msg = '<span style="color: red;">DELETE</span> '.count($instanceids).' duplicate question instance(s) (id IN '.implode(', ', $instanceids).')';
+                    echo html_writer::tag('li', $msg);
                 }
-                $msg = '<span style="color: red;">DELETE</span> '.count($instanceids).' duplicate question instance(s) (id IN '.implode(', ', $instanceids).')';
-                echo html_writer::tag('li', $msg);
             }
         }
         if ($started_box==true) {
@@ -2000,15 +2059,18 @@ function xmldb_reader_fix_question_categories() {
     $where  = 'q1.parent > 0 AND q2.id IS NULL';
     if ($questions = $DB->get_records_sql("SELECT $select FROM $from WHERE $where")) {
 
-        echo xmldb_reader_box_start('The following reader questions were fixed');
-
-        $msg = '<span style="color: brown;">RESET</span> parent ids on '.count($questions).' questions (id  IN '.implode(', ', array_keys($questions)).')';
-        echo html_writer::tag('li', $msg);
+        if ($interactive) {
+            echo xmldb_reader_box_start('The following reader questions were fixed');
+            $msg = '<span style="color: brown;">RESET</span> parent ids on '.count($questions).' questions (id  IN '.implode(', ', array_keys($questions)).')';
+            echo html_writer::tag('li', $msg);
+        }
 
         list($select, $params) = $DB->get_in_or_equal(array_keys($questions));
         $DB->set_field_select('question', 'parent', 0, 'id '.$select, $params);
 
-        xmldb_reader_box_end();
+        if ($interactive) {
+            xmldb_reader_box_end();
+        }
     }
 
     // cache contextlevel for each context used in these categories
@@ -2144,7 +2206,7 @@ function xmldb_reader_fix_question_categories() {
                 $DB->delete_records('question_categories', array('id' => $category->id));
             }
 
-            if ($msg) {
+            if ($msg && $interactive) {
                 if ($started_box==false) {
                     $started_box = true;
                     xmldb_reader_box_start('The following reader question categories were fixed');
@@ -2167,6 +2229,8 @@ function xmldb_reader_fix_question_categories() {
 function xmldb_reader_fix_duplicate_attempts() {
     global $CFG, $DB, $OUTPUT;
 
+    $interactive = xmldb_reader_interactive();
+
     if ($i_max = $DB->count_records_sql("SELECT COUNT(*) FROM {reader_attempts}")) {
         $select = 'ra.*, rb.publisher, rb.level, rb.name AS bookname, rb.sametitle, u.firstname, u.lastname';
         $from   = '{reader_attempts} ra LEFT JOIN {reader_books} rb ON ra.quizid = rb.quizid LEFT JOIN {user} u ON ra.userid = u.id';
@@ -2180,7 +2244,9 @@ function xmldb_reader_fix_duplicate_attempts() {
 
     if ($rs) {
         $i = 0; // record counter
-        $bar = new progress_bar('readerfixordering', 500, true);
+        if ($interactive) {
+            $bar = new progress_bar('readerfixordering', 500, true);
+        }
         $strupdating = 'Fixing duplicate Reader attempts'; // get_string('fixattempts', 'reader');
         $strdeleted = get_string('deleted');
 
@@ -2204,15 +2270,17 @@ function xmldb_reader_fix_duplicate_attempts() {
                 $DB->delete_records('reader_attempts', array('id' => $attempt->id));
                 $countdeleted++;
 
-                if ($started_box==false) {
-                    $started_box = true;
-                    xmldb_reader_box_start('The following duplicate attempts were deleted');
+                if ($interactive) {
+                    if ($started_box==false) {
+                        $started_box = true;
+                        xmldb_reader_box_start('The following duplicate attempts were deleted');
+                    }
+                    $msg = "Deleted attempt ($attempt->percentgrade% ".($attempt->passed=='true' ? 'PASS' : 'FAIL').") ".
+                           "by $attempt->firstname $attempt->lastname ".
+                           "at $attempt->bookname ".
+                           "($attempt->publisher - $attempt->level)";
+                    echo html_writer::tag('li', $msg);
                 }
-                $msg = "Deleted attempt ($attempt->percentgrade% ".($attempt->passed=='true' ? 'PASS' : 'FAIL').") ".
-                       "by $attempt->firstname $attempt->lastname ".
-                       "at $attempt->bookname ".
-                       "($attempt->publisher - $attempt->level)";
-                echo html_writer::tag('li', $msg);
 
                 // make sure "uniqueid" is in fact unique in the "reader_deleted_attempts" table
                 // if it isn't, there will be "non-unique key" errors from the database server
@@ -2228,7 +2296,9 @@ function xmldb_reader_fix_duplicate_attempts() {
             $sametitle = $attempt->sametitle;
 
             // update progress bar
-            $bar->update($i, $i_max, $strupdating.": ($i/$i_max) $strdeleted: $countdeleted");
+            if ($interactive) {
+                $bar->update($i, $i_max, $strupdating.": ($i/$i_max) $strdeleted: $countdeleted");
+            }
         }
         $rs->close();
 
@@ -2280,26 +2350,30 @@ function xmldb_reader_fix_duplicate_questions(&$dbman) {
                 // get duplicate records
                 if ($records = $DB->get_records($questiontable, array($questionfield => $duplicate->$questionfield), 'id,'.$questionfield)) {
 
-                    if ($started_box==false) {
-                        $started_box = true;
-                        xmldb_reader_box_start('The following duplicate question options were deleted');
-                    }
-
-                    if ($table=='' || $table != $questiontable) {
-                        if ($table) {
-                            echo html_writer::end_tag('ul');
-                            echo html_writer::end_tag('li');
+                    if ($interactive) {
+                        if ($started_box==false) {
+                            $started_box = true;
+                            xmldb_reader_box_start('The following duplicate question options were deleted');
                         }
-                        echo html_writer::start_tag('li')."TABLE: $questiontable";
-                        echo html_writer::start_tag('ul');
-                        $table = $questiontable;
+
+                        if ($table=='' || $table != $questiontable) {
+                            if ($table) {
+                                echo html_writer::end_tag('ul');
+                                echo html_writer::end_tag('li');
+                            }
+                            echo html_writer::start_tag('li')."TABLE: $questiontable";
+                            echo html_writer::start_tag('ul');
+                            $table = $questiontable;
+                        }
                     }
 
                     $ids = array_keys($records);
                     $id = array_shift($ids); // keep the first one
 
                     $DB->delete_records_list($questiontable, 'id', $ids);
-                    echo html_writer::tag('li', "question id=$id: ".count($ids)." duplicate(s) removed");
+                    if ($interactive) {
+                        echo html_writer::tag('li', "question id=$id: ".count($ids)." duplicate(s) removed");
+                    }
                 }
 
                 // remove duplicate answers from "question_answer" table
@@ -2378,6 +2452,8 @@ function xmldb_reader_fix_duplicate_questions(&$dbman) {
 function xmldb_reader_fix_multichoice_questions() {
     global $DB;
 
+    $interactive = xmldb_reader_interactive();
+
     // get categories for question used in Reader module quizzes
     if ($categories = xmldb_reader_get_question_categories()) {
         $started_box = false;
@@ -2403,17 +2479,19 @@ function xmldb_reader_fix_multichoice_questions() {
                 $quiz    = $DB->get_record('quiz',            array('id' => $cm->instance));
                 foreach ($questions as $question) {
 
-                    if ($started_box==false) {
-                        $started_box = true;
-                        xmldb_reader_box_start('The following multichoice question gaps had no correct answer and were removed');
-                    }
-                    if ($started_category==false) {
-                        $started_category = true;
-                        echo '<li>';
-                        echo '<b>Section:</b> '.strip_tags($section->name).'<br />';
-                        echo '<b>Quiz:</b> '.strip_tags($quiz->name).'<br />';
-                        echo '<b>Category:</b> '.strip_tags($category->name);
-                        echo '<ul>';
+                    if ($interactive) {
+                        if ($started_box==false) {
+                            $started_box = true;
+                            xmldb_reader_box_start('The following multichoice question gaps had no correct answer and were removed');
+                        }
+                        if ($started_category==false) {
+                            $started_category = true;
+                            echo '<li>';
+                            echo '<b>Section:</b> '.strip_tags($section->name).'<br />';
+                            echo '<b>Quiz:</b> '.strip_tags($quiz->name).'<br />';
+                            echo '<b>Category:</b> '.strip_tags($category->name);
+                            echo '<ul>';
+                        }
                     }
 
                     $ids = array($question->id, $question->badid);
@@ -2435,11 +2513,13 @@ function xmldb_reader_fix_multichoice_questions() {
                     $DB->delete_records_list('reader_question_instances', 'question', $ids);
 
                     // print these question ids
-                    if (count($ids) > 1) {
-                        echo '<li>Delete whole question</li>';
+                    if ($interactive) {
+                        if (count($ids) > 1) {
+                            echo '<li>Delete whole question</li>';
+                        }
+                        echo '<li><b>'.strip_tags($question->questiontext).'</b> ('.$question->id.')<ul>';
+                        echo '<li>'.implode('</li><li>', $ids).'</li></ul></li>';
                     }
-                    echo '<li><b>'.strip_tags($question->questiontext).'</b> ('.$question->id.')<ul>';
-                    echo '<li>'.implode('</li><li>', $ids).'</li></ul></li>';
                 }
                 unset($context, $cm, $section, $quiz, $ids, $sequence);
             }
@@ -2574,7 +2654,9 @@ function xmldb_reader_fix_multichoice_questions() {
                                 $multianswer_option->sequence = implode(',', $answerquestionids);
                                 $DB->update_record('question_multianswer', $multianswer_option);
                                 $parentquestionid = $parentquestion->id;
-                                echo "<li>Add question (id = $question->id) as answer for multianswer parent question (id = $parentquestion->id)</li>";
+                                if ($interactive) {
+                                    echo "<li>Add question (id = $question->id) as answer for multianswer parent question (id = $parentquestion->id)</li>";
+                                }
 
                                 // todo: make sure answers for this question are present
                                 break;
@@ -2586,13 +2668,16 @@ function xmldb_reader_fix_multichoice_questions() {
             if ($parentquestionid) {
                 $parentquestion = $DB->get_record('question', array('id' => $parentquestionid));
                 $DB->set_field('question', 'parent', $parentquestionid, array('id' => $question->id));
-                echo "<li>Set parent for question (id=$question->id): 0 =&gt; $parentquestionid $parentquestion->name</li>";
+                $msg = "<li>Set parent for question (id=$question->id): 0 =&gt; $parentquestionid $parentquestion->name</li>";
             } else {
-                echo '<li><span style="color: red">OOPS</span> Could not locate parent for question: '.$question->id.'</li>';
+                $msg = '<li><span style="color: red">OOPS</span> Could not locate parent for question: '.$question->id.'</li>';
             }
 
-            // update progress bar
-            $bar->update($i, $i_max, $strupdating.": ($i/$i_max)");
+            // display $msg and update progress bar
+            if ($interactive) {
+                echo $msg;
+                $bar->update($i, $i_max, $strupdating.": ($i/$i_max)");
+            }
         }
 
         if ($started_box==true) {
@@ -2644,6 +2729,8 @@ function xmldb_reader_fix_book_times() {
  */
 function xmldb_reader_fix_extrapoints() {
     global $DB;
+
+    $interactive = xmldb_reader_interactive();
 
     // cache the timemodified
     $time = time();
@@ -2739,7 +2826,9 @@ function xmldb_reader_fix_extrapoints() {
     }
 
     if ($rebuild_course_cache) {
-        echo html_writer::tag('div', "Re-building course cache: $course->shortname ... ", array('class' => 'notifysuccess'));
+        if ($interactive) {
+            echo html_writer::tag('div', "Re-building course cache: $course->shortname ... ", array('class' => 'notifysuccess'));
+        }
         rebuild_course_cache($course->id, true); // $clearonly must be set to true
     }
 }

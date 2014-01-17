@@ -99,7 +99,7 @@ function xmldb_reader_upgrade($oldversion) {
     }
 
     $newversion = 2013033105;
-    if ($result && $oldversion < $newversion) {
+    if ($result && $oldversion < $newversion && false) {
 
         ////////////////////////////////////////////////////////
         // fix the "quizid" field in the "reader_attempts" table
@@ -435,7 +435,6 @@ function xmldb_reader_upgrade($oldversion) {
                 $keepoldquizzes = 0; // disable on sites not using the Reader module
             }
         }
-        $keepoldquizzes = null;
 
         // if this is not an interactive upgrade (i.e. a CLI upgrade) and
         // $keepoldquizzes is not set, then assume it is disabled and continue
