@@ -2796,9 +2796,15 @@ function xmldb_reader_merge_tables(&$dbman, $oldname, $newname) {
  * @todo Finish documenting this function
  */
 function xmldb_reader_interactive() {
-    if (defined('STDIN') && defined('CLI_SCRIPT') && isset($GLOBALS['interactive'])) {
-        // $interactive variable is set in "admin/cli/upgrade.php"
-        return $GLOBALS['interactive'];
+    if (defined('STDIN') && defined('CLI_SCRIPT')) {
+        // we could check $GLOBALS['interactive']
+        // which is set in "admin/cli/upgrade.php"
+        // but that assumes "non-interactive=false"
+        // whereas we want to assume "non-interactive"
+        //$options = array('non-interactive' => true);
+        //list($options, $more) = cli_get_params($options);
+        //return empty($options['non-interactive']);
+        return false; // disable interactivity on CLI
     } else {
         return true; // assume browser-initiated update
     }

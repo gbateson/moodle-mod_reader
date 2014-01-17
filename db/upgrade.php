@@ -164,7 +164,19 @@ function xmldb_reader_upgrade($oldversion) {
     $newversion = 2013033107;
     if ($result && $oldversion < $newversion) {
         // fix incorrectly set version of "readerview" block (it is one digit too long !)
-        $DB->set_field('block', 'version', 2012011910, array('name'=>'readerview', 'version'=>'20120119101'));
+        $badversion = '20120119101';
+        $goodversion = '2012011910';
+        if ($dbman->field_exists('block', 'version')) {
+            // Moodle <= 2.5
+            $select = 'name = ? AND version = ?';
+            $params = array('readerview', $badversion);
+            $DB->set_field_select('block', 'version', $goodversion, $select, $params);
+        } else if ($dbman->table_exists('config_plugins')) {
+            // Moodle >= 2.6
+            $select = 'plugin = ? AND name = ? AND value = ?';
+            $params = array('block_readerview', 'version', $badversion);
+            $DB->set_field_select('config_plugins', 'value', $goodversion, $select, $params);
+        }
         upgrade_mod_savepoint(true, "$newversion", 'reader');
     }
 
@@ -423,6 +435,7 @@ function xmldb_reader_upgrade($oldversion) {
                 $keepoldquizzes = 0; // disable on sites not using the Reader module
             }
         }
+        $keepoldquizzes = null;
 
         // if this is not an interactive upgrade (i.e. a CLI upgrade) and
         // $keepoldquizzes is not set, then assume it is disabled and continue

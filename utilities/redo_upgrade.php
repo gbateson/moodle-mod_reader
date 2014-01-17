@@ -29,7 +29,12 @@
 require_once(dirname(dirname(dirname(dirname(__FILE__)))).'/config.php');
 
 require_login(SITEID);
-require_capability('moodle/site:config', get_context_instance(CONTEXT_SYSTEM));
+if (class_exists('context_system')) {
+    $context = context_system::instance();
+} else {
+    $context = get_context_instance(CONTEXT_SYSTEM);
+}
+require_capability('moodle/site:config', $context);
 
 // $SCRIPT is set by initialise_fullme() in 'lib/setuplib.php'
 // it is the path below $CFG->wwwroot of this script
@@ -59,13 +64,26 @@ if ($version = optional_param('version', 0, PARAM_INT)) {
     }
 
     // reset the Reader module version
-    $DB->set_field('modules', 'version', $version - 1, array('name' => 'reader'));
+    $dbman = $DB->get_manager();
+    if ($dbman->field_exists('modules', 'version')) {
+        // Moodle <= 2.5
+        $params = array('name' => 'reader');
+        $DB->set_field('modules', 'version', $version - 1, $params);
+    } else if ($dbman->table_exists('config_plugins')) {
+        // Moodle >= 2.6
+        $params = array('plugin' => 'mod_reader', 'name' => 'version');
+        $DB->set_field('config_plugins', 'value', $version - 1, $params);
+        // force Moodle to refetch versions
+        if (isset($CFG->allversionshash)) {
+            unset_config('allversionshash');
+        }
+    }
 
     // report
     echo html_writer::tag('p', "Reader module version set to $version - $text");
 
     // link to upgrade page
-    $href = new moodle_url('/admin/index.php', array('confirmplugincheck' => 1));
+    $href = new moodle_url('/admin/index.php', array('confirmplugincheck' => 1, 'cache'=>0));
     echo html_writer::tag('p', html_writer::tag('a', 'Click here to continue', array('href' => $href)));
 
 } else { // no $version given, so offer a form to select $version
