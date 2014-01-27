@@ -32,6 +32,7 @@ $string['andnextmore'] = ' {$a} more ';
 $string['assignpointsbookshavenoquizzes'] = 'Award points for books that have no quizzes';
 $string['atlevel'] = ' at Level';
 $string['atlevelbeforebeingpromoted'] = ' at level {$a} before being promoted.';
+$string['attemptedbooks'] = 'Only books that have been attempted on this site';
 $string['attempts'] = 'Attempts';
 $string['attemptscoremanagement'] = 'Attempt and score management';
 $string['attemptsofday'] = 'Quiz for days';
