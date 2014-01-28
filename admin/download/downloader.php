@@ -2933,41 +2933,39 @@ class reader_downloader {
         static $mins = array();
 
         $length = strlen($str);
-        if (isset($mins[$length])) {
-            return $mins[$length];
-        }
+        if (! array_key_exists($length, $mins)) {
+            // set minimum required $levenshtein difference
+            // we can then ignore any strings that differ
+            // by greater than $min levenshtein
+            // $length => $min levenshtein
+            //     3   =>   2 (  3 = 3 * 2 / 2) = intval(sqrt( 3 * 2)) = intval(2.449)
+            //     6   =>   3 (  6 = 4 * 3 / 2) = intval(sqrt( 6 * 2)) = intval(3.464)
+            //    10   =>   4 ( 10 = 5 * 4 / 2) = intval(sqrt(10 * 2)) = intval(4.472)
+            //    15   =>   5 ( 15 = 6 * 5 / 2) = intval(sqrt(15 * 2)) = intval(5.577)
+            //    21   =>   6 ( 21 = 7 * 6 / 2) = intval(sqrt(21 * 2)) = intval(6.480)
+            //    28   =>   7 ( 28 = 8 * 7 / 2) = intval(sqrt(28 * 2)) = intval(7.483)
+            $min = 2;
+            while ((($min + 1) * $min / 2) < $length) {
+                $min ++;
+            }
 
-        // set minimum required $levenshtein difference
-        // we can then ignore any strings that differ
-        // by greater than $min levenshtein
-        // $length => $min levenshtein
-        //     3   =>   2 (  3 = 3 * 2 / 2)
-        //     6   =>   3 (  6 = 4 * 3 / 2)
-        //    10   =>   4 ( 10 = 5 * 4 / 2)
-        //    15   =>   5 ( 15 = 6 * 5 / 2)
-        //    21   =>   6 ( 21 = 7 * 6 / 2)
-        //    28   =>   7 ( 28 = 8 * 7 / 2)
-        $min = 2;
-        while ((($min + 1) * $min / 2) < $length) {
-            $min ++;
+            // cache and return the $min value
+            $mins[$length] = $min;
         }
-
-        // cache and return the $min value
-        $mins[$length] = $min;
         return $mins[$length];
     }
 
     public function add_question_answer(&$restoreids, $bestanswerids, $xmlanswer, $answer) {
         global $DB;
         $this->bar->start_answer($xmlanswer->id);
-        if (isset($bestanswerids[$xmlanswer->id])) {
+        if (empty($bestanswerids[$xmlanswer->id])) {
+            if (! $answer->id = $DB->insert_record('question_answers', $answer)) {
+                throw new moodle_exception(get_string('cannotinsertrecord', 'error', 'question_answers'));
+            }
+        } else {
             $answer->id = $bestanswerids[$xmlanswer->id];
             if (! $DB->update_record('question_answers', $answer)) {
                 throw new moodle_exception(get_string('cannotupdaterecord', 'error', 'question_answers (id='.$answer->id.')'));
-            }
-        } else {
-            if (! $answer->id = $DB->insert_record('question_answers', $answer)) {
-                throw new moodle_exception(get_string('cannotinsertrecord', 'error', 'question_answers'));
             }
         }
         $restoreids->set_ids('question_answers', $xmlanswer->id, $answer->id);
