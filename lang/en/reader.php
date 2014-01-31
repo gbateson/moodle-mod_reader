@@ -500,6 +500,7 @@ $string['uploaddatanoquizzes'] = 'Download data for books that have no quizzes';
 $string['uploadquiztoreader'] = 'Download quizzes from the Reader Quiz Database';
 $string['use_this_course'] = 'Use this course';
 $string['usecourse'] = 'Quiz location';
+$string['usedefaultquizid'] = 'Always use default quiz';
 $string['userexport'] = 'Export user data';
 $string['userimport'] = 'Import user data';
 $string['userlevel'] = 'User level';

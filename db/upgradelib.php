@@ -459,9 +459,8 @@ function xmldb_reader_quiz_courseids() {
 
     // $select = 'SELECT DISTINCT usecourse FROM {reader} WHERE usecourse IS NOT NULL AND usecourse > ?';
     $select = 'SELECT DISTINCT q.course FROM {reader_books} rb LEFT JOIN {quiz} q ON rb.quizid = q.id WHERE q.id IS NOT NULL';
-    $select = "id IN ($select) AND visible = ?";
-    $params = array($courseid, 0);
-    if ($courses = $DB->get_records_select('course', $select, $params, 'id', 'id,visible')) {
+    $select = "id IN ($select)"; // AND visible = ?
+    if ($courses = $DB->get_records_select('course', $select, null, 'id', 'id,visible')) {
         $courseids = array_merge($courseids, array_keys($courses));
         $courseids = array_unique($courseids);
         sort($courseids);
@@ -868,64 +867,75 @@ function xmldb_reader_fix_wrong_quizids() {
                 $quiz = reset($quiz); // most recent, visible quiz in expected section
             }
 
-            // check if the user has told us which quiz to use for this book
+            // has user told us to use default quizid for each book found?
+            $usedefaultquizid = optional_param('usedefaultquizid', 0, PARAM_INT);
+
+            // has user told us which quiz to use for this book?
             $quizidparamname = 'bookquizid'.$book->id;
             $quizid = optional_param($quizidparamname, null, PARAM_INT);
 
-            if (empty($quiz) && $quizid===null && $interactive) {
+            if (empty($quiz) && $quizid===null) {
                 // offer form to select quizid
                 $where = $DB->sql_like('q.name', '?').' AND cm.id IS NOT NULL AND cs.id IS NOT NULL AND m.id IS NOT NULL';
                 $params = array('quiz', "$book->name%");
                 if ($quizzes = $DB->get_records_sql("SELECT $select FROM $from WHERE $where ORDER BY $orderby", $params)) {
                     // build select list (sectionname -> quiznames)
 
-                    // params for "select" button urls
-                    $params = array(
-                        'confirmupgrade' => optional_param('confirmupgrade', 0, PARAM_INT),
-                        'confirmrelease' => optional_param('confirmrelease', 0, PARAM_INT),
-                        'confirmplugincheck' => optional_param('confirmplugincheck', 0, PARAM_INT),
-                    );
+                    if ($interactive && ! $usedefaultquizid) {
+                        // params for "select" button urls
+                        $params = array(
+                            'confirmupgrade' => optional_param('confirmupgrade', 0, PARAM_INT),
+                            'confirmrelease' => optional_param('confirmrelease', 0, PARAM_INT),
+                            'confirmplugincheck' => optional_param('confirmplugincheck', 0, PARAM_INT),
+                        );
 
-                    $table = new html_table();
-                    $table->head = array(get_string('sectionname', 'reader'),
-                                         get_string('quizname', 'reader'),
-                                         get_string('select'));
-                    $table->align = array('left', 'left', 'center');
+                        $table = new html_table();
+                        $table->head = array(get_string('sectionname', 'reader'),
+                                             get_string('quizname', 'reader'),
+                                             get_string('select'));
+                        $table->align = array('left', 'left', 'center');
 
-                    // add candidate quizzes to the table
-                    foreach ($quizzes as $quiz) {
+                        // add candidate quizzes to the table
+                        foreach ($quizzes as $quiz) {
 
-                        // create button url with this quiz id
-                        $params[$quizidparamname] = $quiz->id;
+                            // create button url with this quiz id
+                            $params[$quizidparamname] = $quiz->id;
+                            $url = new moodle_url('/admin/index.php', $params);
+                            $button = $OUTPUT->single_button($url, get_string('selectthisquiz', 'reader'), 'get');
+                            $table->data[] = new html_table_row(array($quiz->sectionname, $quiz->name, $button));
+                        }
+                        unset($params[$quizidparamname]);
+
+                        // create button to always use default quiz
+                        $params['usedefaultquizid'] = 1;
                         $url = new moodle_url('/admin/index.php', $params);
+                        $button = $OUTPUT->single_button($url, get_string('usedefaultquizid', 'reader'), 'get');
+                        $table->data[] = new html_table_row(array('', '', $button));
 
-                        $table->data[] = new html_table_row(array(
-                            $quiz->sectionname,
-                            $quiz->name,
-                            $OUTPUT->single_button($url, get_string('selectthisquiz', 'reader'), 'get')
-                        ));
+                        $message = get_string('fixwrongquizidinfo', 'reader');
+                        $message = format_text($message, FORMAT_MARKDOWN);
+                        $message .= html_writer::table($table);
+
+                        // close the HTML box, if necessary
+                        if ($started_box==true) {
+                            $started_box==false;
+                            xmldb_reader_box_end();
+                        }
+
+                        // params for "fixwrongquizid" message (book name and id)
+                        $params = (object)array('name' => "$sectionname: $book->name", 'id' => $book->id);
+
+                        $output = '';
+                        $output .= $OUTPUT->heading(get_string('fixwrongquizid', 'reader', $params));
+                        $output .= $OUTPUT->box($message, 'generalbox', 'notice');
+                        $output .= $OUTPUT->footer();
+
+                        echo $output;
+                        die;
                     }
 
-                    $message = get_string('fixwrongquizidinfo', 'reader');
-                    $message = format_text($message, FORMAT_MARKDOWN);
-                    $message .= html_writer::table($table);
-
-                    // close the HTML box, if necessary
-                    if ($started_box==true) {
-                        $started_box==false;
-                        xmldb_reader_box_end();
-                    }
-
-                    // params for "fixwrongquizid" message (book name and id)
-                    $params = (object)array('name' => "$sectionname: $book->name", 'id' => $book->id);
-
-                    $output = '';
-                    $output .= $OUTPUT->heading(get_string('fixwrongquizid', 'reader', $params));
-                    $output .= $OUTPUT->box($message, 'generalbox', 'notice');
-                    $output .= $OUTPUT->footer();
-
-                    echo $output;
-                    die;
+                    // get id of first quiz
+                    $quizid = key($quizzes);
                 }
             }
 

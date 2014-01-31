@@ -47,7 +47,7 @@ echo $OUTPUT->box_start();
 
 // get path to this directory
 $dirname = dirname($SCRIPT);
-$dirpath = $CFG->dirroot.'/'.$dirname;
+$dirpath = $CFG->dirroot.$dirname;
 
 echo html_writer::start_tag('ul')."\n";
 
@@ -63,7 +63,7 @@ foreach ($items as $item) {
 }
 sort($files);
 foreach ($files as $file) {
-    $href = $CFG->wwwroot.'/'.$dirname.'/'.$file;
+    $href = $CFG->wwwroot.$dirname.'/'.$file;
     echo html_writer::tag('li', html_writer::tag('a', $file, array('href' => $href)))."\n";
 }
 
