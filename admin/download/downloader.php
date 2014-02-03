@@ -2248,6 +2248,7 @@ class reader_downloader {
                 return false;
                 break;
 
+            case 'shortanswer':
             case 'truefalse':
                 foreach ($question->answers as $a => $answer) {
                     if (isset($answer->fraction) && intval($answer->fraction)) {
@@ -2258,9 +2259,8 @@ class reader_downloader {
                 break;
 
             default:
-                echo $question->qtype;
+                echo 'Oops, unknown question type: '.$question->qtype;
                 print_object($question);
-                die;
                 return true;
         }
     }
