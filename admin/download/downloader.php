@@ -2080,44 +2080,15 @@ class reader_downloader {
                 $categories[$categoryid]->context->level = 'module';
             }
 
-            // prune random questions
+            // prune faulty questions and answers
             if (isset($category->questions)) {
+
                 $has_nonrandom = $this->has_nonrandom_questions($category);
                 foreach ($category->questions as $questionid => $question) {
-                    if ($question->qtype=='multianswer' && empty($question->multianswers)) {
+                    if (! $this->question_has_correct_answer($mainids, $categories, $categoryid, $questionid, $has_nonrandom)) {
                         $skipids[] = $questionid;
-                        continue; // shouldn't happen !!
-                    }
-                    if ($question->qtype=='multichoice' && empty($question->multichoice)) {
-                        $skipids[] = $questionid;
-                        continue; // shouldn't happen !!
-                    }
-                    if ($question->qtype=='multichoice') { // remove blank and missing answers
-                        $answers = array();
-                        foreach ($question->answers as $a => $answer) {
-                            if (isset($answer->answer_text) && strlen($answer->answer_text)) {
-                                $answers[] = $answer->id; // keep this answer
-                            } else {
-                                unset($question->answers[$a]); // skip this answer
-                            }
-                        }
-                        $answers = implode(',', $answers);
-                        $question->multichoice->answers = $answers;
-                        $category->questions[$questionid] = $question;
-                    }
-                    if (isset($mainids[$question->id]) && $question->qtype=='random') {
-                        if ($has_nonrandom) {
-                            // for random questions, we keep the whole category
-                            $mainids[$questionid] = array_keys($category->questions);
-                        } else {
-                            // this question is a "random" question in a
-                            // category that contains ONLY "random" questions
-                            // Therefore, there is no point in keeping this question
-                            unset($mainids[$questionid]);
-                        }
-                    } else if (isset($mainids[$question->parent])) {
-                        // otherwise we add this question to the list of child questions for this parent
-                        $mainids[$question->parent][] = $questionid;
+                        echo 'Oops, faulty question found';
+                        print_object($question);
                     }
                 }
             }
@@ -2155,6 +2126,143 @@ class reader_downloader {
         }
 
         return $categories;
+    }
+
+    /**
+     * question_has_correct_answer
+     *
+     * @param xxx $mainids (passed by reference)
+     * @param xxx $categories (passed by reference)
+     * @param integer $categoryid
+     * @param integer $questionid
+     * @return boolean TRUE if this question as a correct answer, or FALSE otherwise
+     * @todo Finish documenting this function
+     */
+    public function question_has_correct_answer(&$mainids, &$categories, $categoryid, $questionid, $has_nonrandom) {
+
+        $question = $categories[$categoryid]->questions[$questionid];
+        switch ($question->qtype) {
+
+            case 'description':
+                return true;
+                break;
+
+            case 'match':
+                if (empty($question->matchs)) {
+                    return false; // shoudn't happen !!
+                }
+                foreach ($question->matchs as $m => $match) {
+                    if (isset($match->questiontext) && strlen($match->questiontext) && isset($match->answertext) && strlen($match->answertext)) {
+                        // do nothing
+                    } else {
+                        unset($question->matchs[$m]);
+                    }
+                }
+                $categories[$categoryid]->questions[$questionid] = $question;
+                if (count($question->matchs)) {
+                    return true;
+                }
+                return false;
+                break;
+
+            case 'multianswer':
+                foreach ($question->multianswers as $a => $answer) {
+                    $count_correct = 0;
+                    $sequence = explode(',', $answer->sequence);
+                    foreach ($sequence as $q) {
+                        foreach (array_keys($categories) as $c) {
+                            if (empty($categories[$c]->questions)) {
+                                continue;
+                            }
+                            if (empty($categories[$c]->questions[$q])) {
+                                continue;
+                            }
+                            if ($this->question_has_correct_answer($module, $categories, $c, $q, $has_nonrandom)) {
+                                $count_correct ++;
+                                break;
+                            }
+                        }
+                    }
+                    if ($count_correct && $count_correct==count($sequence)) {
+                        return true; // all gaps have a correct answer
+                    }
+                    // oops, one or more gaps has no correct answer
+                    // maybe we should remove this question ?
+                }
+                return false;
+                break;
+
+            case 'multichoice':
+                if (empty($question->multichoice)) {
+                    return false; // shoudn't happen !!
+                }
+                // remove blank and missing answers
+                $answerids = array();
+                foreach ($question->answers as $a => $answer) {
+                    if (isset($answer->answer_text) && strlen($answer->answer_text)) {
+                        $answerids[] = $answer->id; // keep this answer
+                        if (isset($answer->fraction) && intval($answer->fraction)) {
+                            $has_correct = true;
+                        }
+                    } else {
+                        unset($question->answers[$a]); // skip this answer
+                    }
+                }
+                if ($answerids = implode(',', $answerids)) {
+                    $question->multichoice->answers = $answerids;
+                    $categories[$categoryid]->questions[$questionid] = $question;
+                    return true;
+                }
+                return false;
+                break;
+
+            case 'ordering':
+                if (isset($question->answers) && count($question->answers)) {
+                    return true;
+                }
+                return false;
+                break;
+
+            case 'random':
+                if (isset($mainids[$question->id]) && $has_nonrandom) {
+                    // for random questions, we keep the whole category
+                    $mainids[$questionid] = array_keys($categories[$categoryid]->questions);
+                    return true;
+                }
+                if (isset($mainids[$question->id]) && ! $has_nonrandom) {
+                    // this question is a "random" question in a
+                    // category that contains ONLY "random" questions
+                    // Therefore, there is no point in keeping this question
+                    unset($mainids[$questionid]);
+                    return false;
+                }
+                if (isset($mainids[$question->parent])) {
+                    // add this question to the list of child questions for this parent
+                    $mainids[$question->parent][] = $questionid;
+                    return true;
+                }
+                if ($question->id==$question->parent) {
+                    return true;
+                }
+                // random question with no parent - shoudn't happen !
+                return false;
+                break;
+
+            case 'truefalse':
+                foreach ($question->answers as $a => $answer) {
+                    if (isset($answer->fraction) && intval($answer->fraction)) {
+                        return true;
+                    }
+                }
+                return false;
+                break;
+
+            default:
+                echo $question->qtype;
+                print_object($question);
+                die;
+                return true;
+        }
     }
 
     /**
