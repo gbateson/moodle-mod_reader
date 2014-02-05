@@ -2087,8 +2087,10 @@ class reader_downloader {
                 foreach ($category->questions as $questionid => $question) {
                     if (! $this->question_has_correct_answer($mainids, $categories, $categoryid, $questionid, $has_nonrandom)) {
                         $skipids[] = $questionid;
-                        echo 'Oops, faulty question found';
-                        print_object($question);
+                        if (debugging('', DEBUG_DEVELOPER)) {
+                            echo 'Oops, faulty question found';
+                            print_object($question);
+                        }
                     }
                 }
             }
@@ -2131,10 +2133,11 @@ class reader_downloader {
     /**
      * question_has_correct_answer
      *
-     * @param xxx $mainids (passed by reference)
-     * @param xxx $categories (passed by reference)
+     * @param array   $mainids    (passed by reference)
+     * @param array   $categories (passed by reference)
      * @param integer $categoryid
      * @param integer $questionid
+     * @param boolean $has_norandom
      * @return boolean TRUE if this question as a correct answer, or FALSE otherwise
      * @todo Finish documenting this function
      */
@@ -2166,6 +2169,9 @@ class reader_downloader {
                 break;
 
             case 'multianswer':
+                if (empty($question->multianswers)) {
+                    return false; // shouldn't happen !!
+                }
                 foreach ($question->multianswers as $a => $answer) {
                     $count_correct = 0;
                     $sequence = explode(',', $answer->sequence);
@@ -2193,7 +2199,7 @@ class reader_downloader {
                 break;
 
             case 'multichoice':
-                if (empty($question->multichoice)) {
+                if (empty($question->multichoice) || empty($question->answers)) {
                     return false; // shoudn't happen !!
                 }
                 // remove blank and missing answers
@@ -2259,8 +2265,10 @@ class reader_downloader {
                 break;
 
             default:
-                echo 'Oops, unknown question type: '.$question->qtype;
-                print_object($question);
+                if (debugging('', DEBUG_DEVELOPER)) {
+                    echo 'Oops, unknown question type: '.$question->qtype;
+                    print_object($question);
+                }
                 return true;
         }
     }
