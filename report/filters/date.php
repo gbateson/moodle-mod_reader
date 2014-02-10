@@ -66,7 +66,7 @@ class reader_report_filter_date extends user_filter_date {
 
         $filter = '';
         $params = array();
-        $counter = reader_report_filtering_uniqueid('ex_date_'.$type);
+        $counter = reader_report_filtering::uniqueid('ex_date_'.$type);
 
         $after = (empty($data['after']) ? 0 : (int)$data['after']);
         $before = (empty($data['before']) ? 0 : (int)$data['before']);

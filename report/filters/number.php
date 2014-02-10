@@ -117,7 +117,7 @@ class reader_report_filter_number extends user_filter_select {
     function get_sql($data, $type)  {
         $filter = '';
         $params = array();
-        $counter = reader_report_filtering_uniqueid('ex_num_'.$type);
+        $counter = reader_report_filtering::uniqueid('ex_num_'.$type);
 
         if ($this->_type==$type) {
             $name = 'ex_num_'.$type.'_'.$counter;

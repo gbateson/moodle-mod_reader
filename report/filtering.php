@@ -96,61 +96,10 @@ class reader_report_filtering extends user_filtering {
     }
 
     /**
-     * Returns sql where statement based on active user filters
+     * Returns sql statement based on active filters
      * @param string $extra sql
-     * @param array named params (recommended prefix ex)
-     * @return array ($wherefilter, $havingfilter, $params)
-     */
-    function get_sql_filter($extra='', array $params=null) {
-        list($wherefilter, $whereparams) = $this->get_sql_where($extra, $params);
-        list($havingfilter, $havingparams) = $this->get_sql_having($extra, $params);
-
-        // remove empty " AND " conditions at start, middle and end of filter
-        $search = array('/^(?: AND )+/', '/(<= AND )(?: AND )+/', '/(?: AND )+$/');
-
-        $wherefilter = preg_replace($search, '', $wherefilter);
-        $havingfilter = preg_replace($search, '', $havingfilter);
-
-        if ($whereparams || $havingparams) {
-            if ($params===null) {
-                $params = array();
-            }
-            if ($whereparams) {
-                $params += $whereparams;
-            }
-            if ($havingparams) {
-                $params += $havingparams;
-            }
-        }
-
-        return array($wherefilter, $havingfilter, $params);
-    }
-
-    /**
-     * Returns sql where statement based on active user filters
-     * @param string $extra sql
-     * @param array named params (recommended prefix ex)
-     * @return array sql string and $params
-     */
-    function get_sql_where($extra='', array $params=null) {
-        return $this->get_sql($extra, $params, 'where');
-    }
-
-    /**
-     * Returns sql where statement based on active filters
-     * @param string $extra sql
-     * @param array named params (recommended prefix ex)
-     * @return array sql string and $params
-     */
-    function get_sql_having($extra='', array $params=null) {
-        return $this->get_sql($extra, $params, 'having');
-    }
-
-    /**
-     * Returns sql having statement based on active filters
-     * @param string $extra sql
-     * @param array named params (recommended prefix ex)
-     * @param string $type (optional, default='')
+     * @param array named params (optional, default = null) recommended prefix "ex"
+     * @param string $type of sql (optional, default = "filter") "filter", "where" or "having"
      * @return array sql string and $params
      */
     function get_sql($extra='', array $params=null, $type='filter') {
@@ -188,20 +137,71 @@ class reader_report_filtering extends user_filtering {
         $sqls = implode(' AND ', $sqls);
         return array($sqls, $params);
     }
-}
 
-/*
- * reader_report_filtering_uniqueid
- *
- * @param string $type
- * @return string
- */
-function reader_report_filtering_uniqueid($type) {
-    static $types = array();
-    if (isset($types[$type])) {
-        $types[$type] ++;
-    } else {
-        $types[$type] = 0;
+    /**
+     * Returns sql WHERE and HAVING statements based on active user filters
+     * @param string $extra sql
+     * @param array named params (optional, default = null) recommended prefix "ex"
+     * @return array ($wherefilter, $havingfilter, $params)
+     */
+    function get_sql_filter($extra='', array $params=null) {
+        list($wherefilter, $whereparams) = $this->get_sql_where($extra, $params);
+        list($havingfilter, $havingparams) = $this->get_sql_having($extra, $params);
+
+        // remove empty " AND " conditions at start, middle and end of filter
+        $search = array('/^(?: AND )+/', '/(<= AND )(?: AND )+/', '/(?: AND )+$/');
+
+        $wherefilter = preg_replace($search, '', $wherefilter);
+        $havingfilter = preg_replace($search, '', $havingfilter);
+
+        if ($whereparams || $havingparams) {
+            if ($params===null) {
+                $params = array();
+            }
+            if ($whereparams) {
+                $params += $whereparams;
+            }
+            if ($havingparams) {
+                $params += $havingparams;
+            }
+        }
+
+        return array($wherefilter, $havingfilter, $params);
     }
-    return $types[$type];
+
+    /**
+     * Returns sql WHERE statement based on active user filters
+     * @param string $extra sql
+     * @param array named params (optional, default = null) recommended prefix "ex"
+     * @return array ($sql, $params)
+     */
+    function get_sql_where($extra='', array $params=null) {
+        return $this->get_sql($extra, $params, 'where');
+    }
+
+    /**
+     * Returns sql HAVING statement based on active filters
+     * @param string $extra sql
+     * @param array named params (recommended prefix ex)
+     * @return array ($sql, $params)
+     */
+    function get_sql_having($extra='', array $params=null) {
+        return $this->get_sql($extra, $params, 'having');
+    }
+
+    /*
+     * uniqueid
+     *
+     * @param string $type
+     * @return string $uniqueid
+     */
+    static function uniqueid($type) {
+        static $types = array();
+        if (isset($types[$type])) {
+            $types[$type] ++;
+        } else {
+            $types[$type] = 0;
+        }
+        return $types[$type];
+    }
 }
