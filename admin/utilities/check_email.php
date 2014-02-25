@@ -16,7 +16,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * mod/reader/utilities/check_email.php
+ * mod/reader/admin/utilities/check_email.php
  *
  * @package    mod
  * @subpackage reader
@@ -26,7 +26,7 @@
  */
 
 /** Include required files */
-require_once(dirname(dirname(dirname(dirname(__FILE__)))).'/config.php');
+require_once('../../../../../config.php');
 require_once($CFG->dirroot.'/mod/reader/lib.php');
 
 require_login(SITEID);

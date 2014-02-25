@@ -29,13 +29,13 @@ defined('MOODLE_INTERNAL') || die();
 require_once($CFG->dirroot.'/user/filters/text.php');
 
 /**
- * reader_report_filter_text
+ * reader_admin_reports_filter_text
  *
  * @copyright 2013 Gordon Bateson
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @since     Moodle 2.0
  */
-class reader_report_filter_text extends user_filter_text {
+class reader_admin_reports_filter_text extends user_filter_text {
 
     var $_type = '';
 

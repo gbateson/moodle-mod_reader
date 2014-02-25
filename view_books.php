@@ -58,8 +58,8 @@ if ($mode = optional_param('mode', '', PARAM_ALPHA)) {
     $mode = mod_reader::validate_mode($mode);
 
     // create the appropriate renderer class for this report $mode
-    require_once($CFG->dirroot.'/mod/reader/report/'.$mode.'/renderer.php');
-    $output = $PAGE->get_renderer('mod_reader', 'report_'.$mode);
+    require_once($CFG->dirroot.'/mod/reader/admin/reports/'.$mode.'/renderer.php');
+    $output = $PAGE->get_renderer('mod_reader', 'admin_reports_'.$mode);
     $output->init($reader);
 
     // send $output to browser

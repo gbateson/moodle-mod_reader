@@ -26,16 +26,16 @@
 defined('MOODLE_INTERNAL') || die();
 
 // get parent class
-require_once($CFG->dirroot.'/mod/reader/report/filters/number.php');
+require_once($CFG->dirroot.'/mod/reader/admin/reports/filters/number.php');
 
 /**
- * reader_report_filter_duration
+ * reader_admin_reports_filter_duration
  *
  * @copyright 2013 Gordon Bateson
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @since     Moodle 2.0
  */
-class reader_report_filter_duration extends reader_report_filter_number {
+class reader_admin_reports_filter_duration extends reader_admin_reports_filter_number {
 
     /**
      * setupForm

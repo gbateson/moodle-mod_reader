@@ -2329,6 +2329,7 @@ function xmldb_reader_fix_duplicate_questions(&$dbman) {
 
     $table = '';
     $started_box = false;
+    $interactive = xmldb_reader_interactive();
 
     $questiontables = array('match', 'multianswer', 'multichoice', 'ordering', 'multianswer', 'shortanswer', 'truefalse');
     foreach ($questiontables as $questiontable) {

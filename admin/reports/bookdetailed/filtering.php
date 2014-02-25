@@ -26,16 +26,16 @@
 defined('MOODLE_INTERNAL') || die();
 
 // get parent class
-require_once($CFG->dirroot.'/mod/reader/report/filtering.php');
+require_once($CFG->dirroot.'/mod/reader/admin/reports/filtering.php');
 
 /**
- * reader_report_bookdetailed_filtering
+ * reader_admin_reports_bookdetailed_filtering
  *
  * @copyright 2013 Gordon Bateson
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @since     Moodle 2.0
  */
-class reader_report_bookdetailed_filtering extends reader_report_filtering {
+class reader_admin_reports_bookdetailed_filtering extends reader_admin_reports_filtering {
 
     /**
      * get_field
@@ -49,30 +49,30 @@ class reader_report_bookdetailed_filtering extends reader_report_filtering {
         $default = $this->get_default_value($fieldname);
         switch ($fieldname) {
             case 'group':
-                return new reader_report_filter_group($fieldname, $advanced, $default, 'where');
+                return new reader_admin_reports_filter_group($fieldname, $advanced, $default, 'where');
 
             case 'publisher':
             case 'level':
                 $label = get_string($fieldname, 'reader');
-                return new reader_report_filter_text($fieldname, $label, $advanced, $fieldname, $default, 'where');
+                return new reader_admin_reports_filter_text($fieldname, $label, $advanced, $fieldname, $default, 'where');
 
              case 'name':
                 $label = get_string('booktitle', 'reader');
-                return new reader_report_filter_text($fieldname, $label, $advanced, $fieldname, $default, 'where');
+                return new reader_admin_reports_filter_text($fieldname, $label, $advanced, $fieldname, $default, 'where');
 
             case 'difficulty':
                 $label = get_string('bookdifficulty', 'reader');
-                return new reader_report_filter_number($fieldname, $label, $advanced, $fieldname, $default, 'where');
+                return new reader_admin_reports_filter_number($fieldname, $label, $advanced, $fieldname, $default, 'where');
 
             case 'bookrating':
                 $label = get_string($fieldname, 'reader');
-                return new reader_report_filter_number($fieldname, $label, $advanced, $fieldname, $default, 'where');
+                return new reader_admin_reports_filter_number($fieldname, $label, $advanced, $fieldname, $default, 'where');
 
             case 'passed':
                 $label = get_string($fieldname, 'reader');
                 $options = array('true'  => get_string('passedshort', 'reader').' - '.get_string('passed', 'reader'),
                                  'false' => get_string('failedshort', 'reader').' - '.get_string('failed', 'reader'));
-                return new reader_report_filter_simpleselect($fieldname, $label, $advanced, $fieldname, $options, $default, 'where');
+                return new reader_admin_reports_filter_simpleselect($fieldname, $label, $advanced, $fieldname, $options, $default, 'where');
 
             default:
                 // other fields (e.g. from user record)

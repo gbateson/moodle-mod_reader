@@ -27,7 +27,8 @@
 
 /** Include required files */
 require_once('../../config.php');
-require_once($CFG->dirroot.'/mod/reader/lib.php');
+require_once($CFG->dirroot.'/mod/reader/locallib.php');
+require_once($CFG->dirroot.'/mod/reader/renderer.php');
 
 //print_object($_POST);
 //print_object($_GET);
@@ -41,7 +42,7 @@ require_once($CFG->dirroot.'/question/editlib.php');
 $id                     = optional_param('id', 0, PARAM_INT);
 $a                      = optional_param('a', NULL, PARAM_CLEAN);
 $act                    = optional_param('act', NULL, PARAM_CLEAN);
-$quizzesid               = optional_param('quizzesid', NULL, PARAM_CLEAN);
+$quizzesid              = optional_param('quizzesid', NULL, PARAM_CLEAN);
 $publisher              = optional_param('publisher', NULL, PARAM_CLEAN);
 $publisherex            = optional_param('publisherex', NULL, PARAM_CLEAN);
 $difficulty             = optional_param('difficulty', NULL, PARAM_CLEAN);
@@ -202,28 +203,19 @@ if (! $perpage) {
 }
 
 if ($id) {
-    if (! $cm = get_coursemodule_from_id('reader', $id)) {
-        throw new reader_exception('Course Module ID was incorrect');
-    }
-    if (! $course = $DB->get_record('course', array('id'=>$cm->course))) {
-        throw new reader_exception('Course is misconfigured');
-    }
-    if (! $reader = $DB->get_record('reader', array('id'=> $cm->instance))) {
-        throw new reader_exception('Course module is incorrect');
-    }
+    $cm = get_coursemodule_from_id('reader', $id, 0, false, MUST_EXIST);
+    $course = $DB->get_record('course', array('id' => $cm->course), '*', MUST_EXIST);
+    $reader = $DB->get_record('reader', array('id' => $cm->instance), '*', MUST_EXIST);
+    $r = $reader->id;
 } else {
-    if (! $reader = $DB->get_record('reader', array('id'=> $a))) {
-        throw new reader_exception('Course module is incorrect');
-    }
-    if (! $course = $DB->get_record('course', array('id'=> $reader->course))) {
-        throw new reader_exception('Course is misconfigured');
-    }
-    if (! $cm = get_coursemodule_from_instance('reader', $reader->id, $course->id)) {
-        throw new reader_exception('Course Module ID was incorrect');
-    }
+    $reader = $DB->get_record('reader', array('id' => $r), '*', MUST_EXIST);
+    $cm = get_coursemodule_from_instance('reader', $reader->id, 0, false, MUST_EXIST);
+    $course = $DB->get_record('course', array('id' => $cm->course), '*', MUST_EXIST);
+    $id = $cm->id;
 }
 
-require_login($course->id);
+require_login($course->id, true, $cm);
+$reader = mod_reader::create($reader, $cm, $course);
 
 add_to_log($course->id, 'reader', 'admin area', 'admin.php?id='.$id, $cm->instance);
 
@@ -973,8 +965,6 @@ if ($act == 'adjustscores' && !empty($adjustscoresupall) && !empty($adjustscores
 
 /// Print the page header
 
-$navigation = build_navigation('', $cm);
-
 if ($excel) {
     $workbook = new MoodleExcelWorkbook('-');
     $worksheet = $workbook->add_worksheet('report');
@@ -1013,9 +1003,11 @@ $title = $course->shortname . ': ' . format_string($reader->name);
 $PAGE->set_title($title);
 $PAGE->set_heading($course->fullname);
 
+$output = $PAGE->get_renderer('mod_reader');
+$output->init($reader);
+
 if (! $excel) {
-    //print_header_simple(format_string($reader->name), "", $navigation, "", "", true, update_module_button($cm->id, $course->id, get_string('modulename', 'reader')), navmenu($course, $cm));
-    echo $OUTPUT->header();
+    echo $output->header();
 
     echo '<script type="text/javascript" src="js/ajax.js"></script>'."\n";
     echo '<script type="application/x-javascript" src="js/jquery-1.4.2.min.js"></script>'."\n";
@@ -1025,14 +1017,15 @@ $alreadyansweredbooksid = array();
 
 if (has_capability('mod/reader:viewreports', $contextmodule)) {
     if (! $excel) {
-        require_once('tabs.php');
+        echo $output->tabs();
+        //require_once('tabs.php');
     }
 } else {
     die;
 }
 
 if (! $excel) {
-    echo $OUTPUT->box_start('generalbox');
+    echo $output->box_start('generalbox');
 }
 
 if (isset($message_forteacher)) {
@@ -1104,11 +1097,11 @@ if (! $excel) {
 
     if ($readercfg->update == 1) {
         if (time() - $readercfg->last_update > $readercfg->update_interval) {
-          echo $OUTPUT->box_start('generalbox');
+          echo $output->box_start('generalbox');
           $days = round((time() - $readercfg->last_update) / (24 * 3600));
           print_string('needtocheckupdates', 'reader', $days);
           echo ' <a href="admin/download.php?id='.$id.'">YES</a> / <a href="admin.php?a=admin&id='.$id.'">NO</a></center>';
-          echo $OUTPUT->box_end();
+          echo $output->box_end();
         }
     }
 }
@@ -1150,7 +1143,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
 
             if ($quizzesarray) {
 
-                echo $OUTPUT->box_start('generalbox');
+                echo $output->box_start('generalbox');
 
                 echo '<h2>'.get_string('selectquizzes', 'reader').'</h2><br />';
 
@@ -1233,7 +1226,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
                 echo '<tr align="center"><td colspan="4" height="60px"><input type="submit" name="submit" value="Add" /></td></tr>';
                 echo '</table>';
                 echo '</form>';
-                echo $OUTPUT->box_end();
+                echo $output->box_end();
 
             } else {
                 notice(get_string('noquizzesfound', 'reader'));
@@ -1357,7 +1350,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
         echo '<input type="hidden" name="deleteallattempts" value="1" />';
         echo '<input type="submit" value="Delete" />';
         echo '</form>';
-        echo $OUTPUT->single_button(new moodle_url('admin.php',$options), get_string('cancel'), 'post', $options);
+        echo $output->single_button(new moodle_url('admin.php',$options), get_string('cancel'), 'post', $options);
         echo '</center>';
     }
 
@@ -1414,7 +1407,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
         $groupnames[$coursestudent->username] = array();
         if (reader_check_search_text($searchtext, $coursestudent)) {
 
-            $picture = $OUTPUT->user_picture($coursestudent,array($course->id, true, 0, true));
+            $picture = $output->user_picture($coursestudent,array($course->id, true, 0, true));
             if ($excel) {
                 if ($usergroups = groups_get_all_groups($course->id, $coursestudent->id)){
                     foreach ($usergroups as $group){
@@ -1501,7 +1494,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
     }
 
     echo '<table style="width:100%"><tr><td align="right">';
-    echo $OUTPUT->single_button(new moodle_url('admin.php',$options), get_string('downloadexcel', 'reader'), 'post', $options);
+    echo $output->single_button(new moodle_url('admin.php',$options), get_string('downloadexcel', 'reader'), 'post', $options);
     echo '</td></tr></table>';
 
     reader_print_search_form();
@@ -1516,7 +1509,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
     list($totalcount, $table->data, $startrec, $finishrec, $options['page']) = reader_get_pages($table->data, $page, $perpage);
     //print_paging_bar($totalcount, $page, $perpage, "admin.php?a=admin&id={$id}&act={$act}&sort={$sort}&orderby={$orderby}&gid={$gid}&amp;");
     $pagingbar = new paging_bar($totalcount, $page, $perpage, "admin.php?a=admin&id={$id}&act={$act}&sort={$sort}&orderby={$orderby}&gid={$gid}&amp;");
-    echo $OUTPUT->render($pagingbar);
+    echo $output->render($pagingbar);
 
     if (isset($table) && count($table->data)) {
         echo html_writer::table($table);
@@ -1524,7 +1517,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
 
     //print_paging_bar($totalcount, $page, $perpage, "admin.php?a=admin&id={$id}&act={$act}&sort={$sort}&orderby={$orderby}&gid={$gid}&amp;");
     $pagingbar = new paging_bar($totalcount, $page, $perpage, "admin.php?a=admin&id={$id}&act={$act}&sort={$sort}&orderby={$orderby}&gid={$gid}&amp;");
-    echo $OUTPUT->render($pagingbar);
+    echo $output->render($pagingbar);
 
 } else if ($act == 'fullreports' && has_capability('mod/reader:viewreports', $contextmodule)) {
     $table = new html_table();
@@ -1617,7 +1610,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
     foreach ($coursestudents as $coursestudent) {
         $groupnames[$coursestudent->username] = array();
 
-        $picture = $OUTPUT->user_picture($coursestudent, array($course->id, true, 0, true));
+        $picture = $output->user_picture($coursestudent, array($course->id, true, 0, true));
         $totable['first'] = true;
 
         if ($excel) {
@@ -1777,7 +1770,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
     }
 
     echo '<table style="width:100%"><tr><td align="right">';
-    echo $OUTPUT->single_button(new moodle_url('admin.php',$options), get_string('downloadexcel', 'reader'), 'post', $options);
+    echo $output->single_button(new moodle_url('admin.php',$options), get_string('downloadexcel', 'reader'), 'post', $options);
     echo '</td></tr></table>';
 
     reader_print_search_form();
@@ -1802,14 +1795,14 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
     list($totalcount, $table->data, $startrec, $finishrec, $options['page']) = reader_get_pages($table->data, $page, $perpage);
     //print_paging_bar($totalcount, $page, $perpage, "admin.php?a=admin&id={$id}&act={$act}&sort={$sort}&orderby={$orderby}&gid={$gid}&ct={$ct}&amp;");
     $pagingbar = new paging_bar($totalcount, $page, $perpage, "admin.php?a=admin&id={$id}&act={$act}&sort={$sort}&orderby={$orderby}&gid={$gid}&ct={$ct}&amp;");
-    echo $OUTPUT->render($pagingbar);
+    echo $output->render($pagingbar);
 
     if (isset($table) && count($table->data)) {
         echo html_writer::table($table);
     }
 
     $pagingbar = new paging_bar($totalcount, $page, $perpage, "admin.php?a=admin&id={$id}&act={$act}&sort={$sort}&orderby={$orderby}&gid={$gid}&ct={$ct}&amp;");
-    echo $OUTPUT->render($pagingbar);
+    echo $output->render($pagingbar);
 
 } else if ($act == 'summarybookreports' && has_capability('mod/reader:viewreports', $contextmodule)) {
     if ($sort == 'username') {
@@ -1872,7 +1865,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
 
                 $timesoftaken = $i;
                 $params = array('b' => $book->id, 'id' => $id, 'q'=> $book->quizid, 'b' => $book->id);
-                $bookreportlink = html_writer::tag('a', $book->name, array('href' => new moodle_url('/mod/reader/report.php', $params)));
+                $bookreportlink = html_writer::tag('a', $book->name, array('href' => new moodle_url('/mod/reader/admin/reports.php', $params)));
                 $table->data[] = new html_table_row(array(
                     $bookreportlink,
                     $book->publisher,
@@ -1910,7 +1903,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
     }
 
     echo '<table style="width:100%"><tr><td align="right">';
-    echo $OUTPUT->single_button(new moodle_url('admin.php',$options), get_string('downloadexcel', 'reader'), 'post', $options);
+    echo $output->single_button(new moodle_url('admin.php',$options), get_string('downloadexcel', 'reader'), 'post', $options);
     echo '</td></tr></table>';
 
     reader_print_search_form();
@@ -1918,14 +1911,14 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
     reader_select_perpage($id, $act, $sort, $orderby, $gid);
     list($totalcount, $table->data, $startrec, $finishrec, $options['page']) = reader_get_pages($table->data, $page, $perpage);
     $pagingbar = new paging_bar($totalcount, $page, $perpage, "admin.php?a=admin&id={$id}&act={$act}&sort={$sort}&orderby={$orderby}&gid={$gid}&amp;");
-    echo $OUTPUT->render($pagingbar);
+    echo $output->render($pagingbar);
 
     if (isset($table) && count($table->data)) {
         echo html_writer::table($table);
     }
 
     $pagingbar = new paging_bar($totalcount, $page, $perpage, "admin.php?a=admin&id={$id}&act={$act}&sort={$sort}&orderby={$orderby}&gid={$gid}&amp;");
-    echo $OUTPUT->render($pagingbar);
+    echo $output->render($pagingbar);
 
 } else if ($act == 'fullbookreports' && has_capability('mod/reader:viewreports', $contextmodule)) {
     if ($sort == 'username') {
@@ -1996,7 +1989,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
             }
 
             $params = array('id' => $id, 'q' => $book->quizid, 'b' => $book->id);
-            $report = new moodle_url('/mod/reader/report.php', $params);
+            $report = new moodle_url('/mod/reader/admin/reports.php', $params);
 
             foreach ($readerattempts as $readerattempt) {
                 $table->data[] = new html_table_row(array(
@@ -2029,7 +2022,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
     }
 
     echo '<table style="width:100%"><tr><td align="right">';
-    echo $OUTPUT->single_button(new moodle_url('admin.php',$options), get_string('downloadexcel', 'reader'), 'post', $options);
+    echo $output->single_button(new moodle_url('admin.php',$options), get_string('downloadexcel', 'reader'), 'post', $options);
     echo '</td></tr></table>';
 
     reader_print_search_form();
@@ -2043,14 +2036,14 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
     reader_select_perpage($id, $act, $sort, $orderby, $gid);
     list($totalcount, $table->data, $startrec, $finishrec, $options['page']) = reader_get_pages($table->data, $page, $perpage);
     $pagingbar = new paging_bar($totalcount, $page, $perpage, "admin.php?a=admin&id={$id}&act={$act}&sort={$sort}&orderby={$orderby}&gid={$gid}&amp;");
-    echo $OUTPUT->render($pagingbar);
+    echo $output->render($pagingbar);
 
     if (isset($table) && count($table->data)) {
         echo html_writer::table($table);
     }
 
     $pagingbar = new paging_bar($totalcount, $page, $perpage, "admin.php?a=admin&id={$id}&act={$act}&sort={$sort}&orderby={$orderby}&gid={$gid}&amp;");
-    echo $OUTPUT->render($pagingbar);
+    echo $output->render($pagingbar);
 
 } else if ($act == 'viewattempts' && has_capability('mod/reader:manageattempts', $contextmodule)) {
 
@@ -2200,7 +2193,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
         }
 
         echo '<table style="width:100%"><tr><td align="right">';
-        echo $OUTPUT->single_button(new moodle_url('admin.php',$options), get_string('downloadexcel', 'reader'), 'post', $options);
+        echo $output->single_button(new moodle_url('admin.php',$options), get_string('downloadexcel', 'reader'), 'post', $options);
         echo '</td></tr></table>';
     }
     reader_print_search_form();
@@ -2214,14 +2207,14 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
     reader_select_perpage($id, $act, $sort, $orderby, $gid);
     list($totalcount, $table->data, $startrec, $finishrec, $options['page']) = reader_get_pages($table->data, $page, $perpage);
     $pagingbar = new paging_bar($totalcount, $page, $perpage, "admin.php?a=admin&id={$id}&act={$act}&sort={$sort}&orderby={$orderby}&gid={$gid}&amp;");
-    echo $OUTPUT->render($pagingbar);
+    echo $output->render($pagingbar);
 
     if (isset($table) && count($table->data)) {
         echo html_writer::table($table);
     }
 
     $pagingbar = new paging_bar($totalcount, $page, $perpage, "admin.php?a=admin&id={$id}&act={$act}&sort={$sort}&orderby={$orderby}&gid={$gid}&amp;");
-    echo $OUTPUT->render($pagingbar);
+    echo $output->render($pagingbar);
 
     if (has_capability('mod/reader:managequizzes', $contextmodule)) {
       echo '<form action="?a=admin&id='.$id.'&act='.$act.'&sort='.$sort.'&orderby='.$orderby.'&gid='.$gid.'" method="post"><div> ';
@@ -2262,7 +2255,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
     foreach ($coursestudents as $coursestudent) {
         if (reader_check_search_text($searchtext, $coursestudent)) {
             $readerlevel = $DB->get_record('reader_levels', array('userid' => $coursestudent->id, 'readerid' => $reader->id));
-            $picture = $OUTPUT->user_picture($coursestudent,array($course->id, true, 0, true));
+            $picture = $output->user_picture($coursestudent,array($course->id, true, 0, true));
 
             if (empty($readerlevel)) {
                 $readerlevel = (object)array(
@@ -2403,14 +2396,14 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
     reader_select_perpage($id, $act, $sort, $orderby, $gid);
     list($totalcount, $table->data, $startrec, $finishrec, $options['page']) = reader_get_pages($table->data, $page, $perpage);
     $pagingbar = new paging_bar($totalcount, $page, $perpage, "admin.php?a=admin&id={$id}&act={$act}&sort={$sort}&orderby={$orderby}&gid={$gid}&amp;");
-    echo $OUTPUT->render($pagingbar);
+    echo $output->render($pagingbar);
 
     if (isset($table) && count($table->data)) {
         echo html_writer::table($table);
     }
 
     $pagingbar = new paging_bar($totalcount, $page, $perpage, "admin.php?a=admin&id={$id}&act={$act}&sort={$sort}&orderby={$orderby}&gid={$gid}&amp;");
-    echo $OUTPUT->render($pagingbar);
+    echo $output->render($pagingbar);
 
 } else if ($act == 'changereaderlevel' && has_capability('mod/reader:managebooks', $contextmodule)) {
     //$reader->bookinstances = 1;
@@ -2623,13 +2616,13 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
 
     list($totalcount, $table->data, $startrec, $finishrec, $options['page']) = reader_get_pages($table->data, $page, $perpage);
     $pagingbar = new paging_bar($totalcount, $page, $perpage, "admin.php?a=admin&id={$id}&act={$act}&sort={$sort}&orderby={$orderby}&gid={$gid}&publisher={$publisher}&amp;");
-    echo $OUTPUT->render($pagingbar);
+    echo $output->render($pagingbar);
     if (isset($table) && count($table->data)) {
         echo html_writer::table($table);
     }
 
     $pagingbar = new paging_bar($totalcount, $page, $perpage, "admin.php?a=admin&id={$id}&act={$act}&sort={$sort}&orderby={$orderby}&gid={$gid}&publisher={$publisher}&amp;");
-    echo $OUTPUT->render($pagingbar);
+    echo $output->render($pagingbar);
 
 } else if ($act == 'sendmessage' && has_capability('mod/reader:manageusers', $contextmodule)) {
 
@@ -2819,7 +2812,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
         $table->width = '100%';
 
         foreach ($coursestudents as $coursestudent) {
-            $picture = $OUTPUT->user_picture($coursestudent,array($course->id, true, 0, true));
+            $picture = $output->user_picture($coursestudent,array($course->id, true, 0, true));
             $table->data[] = new html_table_row(array(
                 $picture,
                 reader_username_link($coursestudent, $course->id, $excel),
@@ -3238,7 +3231,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
     }
 
     echo '<table style="width:100%"><tr><td align="right">';
-    echo $OUTPUT->single_button(new moodle_url('admin.php', $options), get_string('downloadexcel', 'reader'), 'post', $options);
+    echo $output->single_button(new moodle_url('admin.php', $options), get_string('downloadexcel', 'reader'), 'post', $options);
     echo '</td></tr></table>';
 
     echo '<table style="width:100%"><tr><td align="right">';
@@ -3256,14 +3249,14 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
     reader_select_perpage($id, $act, $sort, $orderby, $gid);
     list($totalcount, $table->data, $startrec, $finishrec, $options['page']) = reader_get_pages($table->data, $page, $perpage);
     $pagingbar = new paging_bar($totalcount, $page, $perpage, "admin.php?a=admin&id={$id}&act={$act}&sort={$sort}&orderby={$orderby}&gid={$gid}&fromtime={$fromtime}&amp;");
-    echo $OUTPUT->render($pagingbar);
+    echo $output->render($pagingbar);
 
     if (isset($table) && count($table->data)) {
         echo html_writer::table($table);
     }
 
     $pagingbar = new paging_bar($totalcount, $page, $perpage, "admin.php?a=admin&id={$id}&act={$act}&sort={$sort}&orderby={$orderby}&gid={$gid}&fromtime={$fromtime}&amp;");
-    echo $OUTPUT->render($pagingbar);
+    echo $output->render($pagingbar);
 
 } else if ($act == 'setgoal' && has_capability('mod/reader:manageusers', $contextmodule)) {
 
@@ -3579,7 +3572,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
         $user2   = $DB->get_record('user', array('id' => $cheatedlog->userid2));
         $quiz    = $DB->get_record('reader_books', array('quizid' => $cheatedlog->quizid));
 
-        $picture = $OUTPUT->user_picture($byuser,array($course->id, true, 0, true));
+        $picture = $output->user_picture($byuser,array($course->id, true, 0, true));
         $table->data[] = new html_table_row(array(
             $picture,
             reader_fullname_link($byuser, $course->id, $excel),
@@ -3611,20 +3604,20 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
     }
 
     echo '<table style="width:100%"><tr><td align="right">';
-    echo $OUTPUT->single_button(new moodle_url('admin.php',$options), get_string('downloadexcel', 'reader'), 'post', $options);
+    echo $output->single_button(new moodle_url('admin.php',$options), get_string('downloadexcel', 'reader'), 'post', $options);
     echo '</td></tr></table>';
 
     reader_select_perpage($id, $act, $sort, $orderby, $gid);
     list($totalcount, $table->data, $startrec, $finishrec, $options['page']) = reader_get_pages($table->data, $page, $perpage);
     $pagingbar = new paging_bar($totalcount, $page, $perpage, "admin.php?a=admin&id={$id}&act={$act}&sort={$sort}&orderby={$orderby}&gid={$gid}&amp;");
-    echo $OUTPUT->render($pagingbar);
+    echo $output->render($pagingbar);
 
     if (isset($table) && count($table->data)) {
         echo html_writer::table($table);
     }
 
     $pagingbar = new paging_bar($totalcount, $page, $perpage, "admin.php?a=admin&id={$id}&act={$act}&sort={$sort}&orderby={$orderby}&gid={$gid}&amp;");
-    echo $OUTPUT->render($pagingbar);
+    echo $output->render($pagingbar);
 
 } else if ($act == 'exportstudentrecords' && has_capability('mod/reader:manageusers', $contextmodule)) {
 
@@ -3937,7 +3930,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
     foreach ($coursestudents as $coursestudent) {
         $groupnames[$coursestudent->username] = array();
         if (reader_check_search_text($searchtext, $coursestudent)) {
-            $picture = $OUTPUT->user_picture($coursestudent,array($course->id, true, 0, true));
+            $picture = $output->user_picture($coursestudent,array($course->id, true, 0, true));
 
             if ($excel) {
                 if ($usergroups = groups_get_all_groups($course->id, $coursestudent->id)){
@@ -4036,7 +4029,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
     reader_select_perpage($id, $act, $sort, $orderby, $gid);
     list($totalcount, $table->data, $startrec, $finishrec, $options['page']) = reader_get_pages($table->data, $page, $perpage);
     $pagingbar = new paging_bar($totalcount, $page, $perpage, "admin.php?a=admin&id={$id}&act={$act}&book={$book}&sort={$sort}&orderby={$orderby}&gid={$gid}&amp;");
-    echo $OUTPUT->render($pagingbar);
+    echo $output->render($pagingbar);
 
 
 } else if ($act == 'adjustscores' && has_capability('mod/reader:addinstance', $contextmodule)) {
@@ -4078,7 +4071,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
             $table->data[] = new html_table_row(array(
                 html_writer::empty_tag('input', array('type'=>'checkbox', 'name'=>'adjustscoresupbooks[]', 'value'=>$readerattempt->id)),
                 fullname($userdata),
-                html_writer::link(new moodle_url('/mod/reader/report.php', array('id'=>$id, 'q'=>$bookdata->quizid, 'mode'=>'analysis', 'b'=>$bookdata->id)), $bookdata->name),
+                html_writer::link(new moodle_url('/mod/reader/admin/reports.php', array('id'=>$id, 'q'=>$bookdata->quizid, 'mode'=>'analysis', 'b'=>$bookdata->id)), $bookdata->name),
                 $bookdata->publisher,
                 $bookdata->level,
                 reader_get_reader_difficulty($reader, $bookdata->id),
@@ -4212,8 +4205,8 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
 
 }
 
-echo $OUTPUT->box_end();
-echo $OUTPUT->footer();
+echo $output->box_end();
+echo $output->footer();
 
 
 // ============================
@@ -4398,7 +4391,7 @@ function reader_ajax_textbox_title($has_capability, $book, $type, $id, $act) {
  * @todo Finish documenting this function
  */
 function reader_setbookinstances($cmid, $reader) {
-    global $CFG, $DB, $OUTPUT;
+    global $CFG, $DB, $output;
 
     if ($reader->bookinstances == 0) {
         echo '<div>'.get_string('coursespecificquizselection', 'reader').'</div>';
@@ -4455,7 +4448,7 @@ function reader_setbookinstances($cmid, $reader) {
         }
     }
 
-    echo $OUTPUT->box_start('generalbox');
+    echo $output->box_start('generalbox');
     require_once('js/hide.js');
 
     echo '<script type="text/javascript">'."\n";
@@ -4540,7 +4533,7 @@ function reader_setbookinstances($cmid, $reader) {
     echo '//]]>'."\n";
     echo '</script>'."\n";
 
-    echo $OUTPUT->box_end();
+    echo $output->box_end();
 }
 
 /**

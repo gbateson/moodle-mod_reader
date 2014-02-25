@@ -26,16 +26,16 @@
 defined('MOODLE_INTERNAL') || die();
 
 // get parent class
-require_once($CFG->dirroot.'/mod/reader/report/filtering.php');
+require_once($CFG->dirroot.'/mod/reader/admin/reports/filtering.php');
 
 /**
- * reader_report_booksummary_filtering
+ * reader_admin_reports_booksummary_filtering
  *
  * @copyright 2013 Gordon Bateson
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @since     Moodle 2.0
  */
-class reader_report_booksummary_filtering extends reader_report_filtering {
+class reader_admin_reports_booksummary_filtering extends reader_admin_reports_filtering {
 
     /**
      * get_field
@@ -49,20 +49,20 @@ class reader_report_booksummary_filtering extends reader_report_filtering {
         $default = $this->get_default_value($fieldname);
         switch ($fieldname) {
             case 'group':
-                return new reader_report_filter_group($fieldname, $advanced, $default, 'where');
+                return new reader_admin_reports_filter_group($fieldname, $advanced, $default, 'where');
 
             case 'publisher':
             case 'level':
                 $label = get_string($fieldname, 'reader');
-                return new reader_report_filter_text($fieldname, $label, $advanced, $fieldname, $default, 'where');
+                return new reader_admin_reports_filter_text($fieldname, $label, $advanced, $fieldname, $default, 'where');
 
             case 'name':
                 $label = get_string('booktitle', 'reader');
-                return new reader_report_filter_text($fieldname, $label, $advanced, $fieldname, $default, 'where');
+                return new reader_admin_reports_filter_text($fieldname, $label, $advanced, $fieldname, $default, 'where');
 
             case 'difficulty':
                 $label = get_string('bookdifficulty', 'reader');
-                return new reader_report_filter_number($fieldname, $label, $advanced, $fieldname, $default, 'where');
+                return new reader_admin_reports_filter_number($fieldname, $label, $advanced, $fieldname, $default, 'where');
 
             case 'countpassed':
             case 'countfailed':
@@ -70,11 +70,11 @@ class reader_report_booksummary_filtering extends reader_report_filtering {
             case 'averagerating':
             case 'countrating':
                 $label = get_string($fieldname, 'reader');
-                return new reader_report_filter_number($fieldname, $label, $advanced, $fieldname, $default, 'having');
+                return new reader_admin_reports_filter_number($fieldname, $label, $advanced, $fieldname, $default, 'having');
 
             case 'averageduration':
                 $label = get_string($fieldname, 'reader');
-                return new reader_report_filter_duration($fieldname, $label, $advanced, $fieldname, $default, 'having');
+                return new reader_admin_reports_filter_duration($fieldname, $label, $advanced, $fieldname, $default, 'having');
 
             default:
                 // other fields (e.g. from user record)

@@ -3891,8 +3891,8 @@ function reader_cheatsheet_init($action) {
 
     // if there is a "cheatsheet" script, make it available (for developer site admins only)
     if ($action=='takequiz' && has_capability('moodle/site:config', reader_get_context(CONTEXT_SYSTEM))) {
-        if (file_exists($CFG->dirroot.'/mod/reader/utilities/print_cheatsheet.php')) {
-            $cheatsheeturl = $CFG->wwwroot.'/mod/reader/utilities/print_cheatsheet.php';
+        if (file_exists($CFG->dirroot.'/mod/reader/admin/utilities/print_cheatsheet.php')) {
+            $cheatsheeturl = $CFG->wwwroot.'/mod/reader/admin/utilities/print_cheatsheet.php';
             $strcheatsheet = get_string('cheatsheet', 'reader');
         }
     }
@@ -4003,7 +4003,7 @@ function reader_get_new_uniqueid($contextid, $quizid, $defaultbehavior='deferred
         return $DB->insert_record($tablename, $record);
     }
 
-    // Moodle == 2.0
+    // Moodle 2.0
     if ($record=='question_attempts') {
         $question_attempt = (object)array('modulename' => $modulename);
         return $DB->insert_record($tablename, $record);
@@ -4045,7 +4045,7 @@ function reader_extend_navigation(navigation_node $readernode, stdclass $course,
         //$modes = array('usersummary', 'userdetailed', 'groupsummary', 'booksummary', 'bookdetailed');
         $modes = mod_reader::get_report_modes();
         foreach ($modes as $mode) {
-            $url = new moodle_url('/mod/reader/report.php', array('id' => $cm->id, 'mode' => $mode));
+            $url = new moodle_url('/mod/reader/admin/reports.php', array('id' => $cm->id, 'mode' => $mode));
             $label = get_string('report'.$mode, 'reader');
             $node->add($label, $url, $type, null, null, $icon);
         }

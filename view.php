@@ -28,6 +28,7 @@
 /** Include required files */
 require_once('../../config.php');
 require_once($CFG->dirroot.'/mod/reader/lib.php');
+require_once($CFG->dirroot.'/mod/reader/locallib.php');
 require_once($CFG->dirroot.'/course/moodleform_mod.php');
 require_once($CFG->dirroot.'/question/editlib.php');
 
@@ -51,7 +52,7 @@ if ($id) {
     $id = $cm->id;
 }
 
-require_login($course->id);
+require_login($course->id, true, $cm);
 
 add_to_log($course->id, 'reader', 'view personal page', "view.php?id=$id", "$cm->instance");
 
@@ -83,7 +84,12 @@ $title = $course->shortname . ': ' . format_string($reader->name);
 $PAGE->set_title($title);
 $PAGE->set_heading($course->fullname);
 
-echo $OUTPUT->header();
+// create full object to represent this reader actvity
+$reader = mod_reader::create($reader, $cm, $course);
+$output = $PAGE->get_renderer('mod_reader');
+$output->init($reader);
+
+echo $output->header();
 
 // preferred time and date format for this page
 $timeformat = 'h:i A';  // 1:45 PM
@@ -100,9 +106,9 @@ if (! empty($reader->timeopen) && $reader->timeopen > $timenow) {
 }
 if ($msg) {
     $url = new moodle_url('/course/view.php', array('id' => $course->id));
-    $msg .= html_writer::tag('p', $OUTPUT->continue_button($url));
-    echo $OUTPUT->box($msg, 'generalbox', 'notice');
-    echo $OUTPUT->footer();
+    $msg .= html_writer::tag('p', $output->continue_button($url));
+    echo $output->box($msg, 'generalbox', 'notice');
+    echo $output->footer();
     exit;
 }
 
@@ -111,7 +117,8 @@ echo '<script type="text/javascript" src="js/ajax.js"></script>';
 $alreadyansweredbooksid = array();
 
 if (has_capability('mod/reader:viewreports', $contextmodule)) {
-    require_once ('tabs.php');
+    //require_once ('tabs.php');
+    echo $output->tabs();
 } else {
 /// Check subnet access
     if ($reader->subnet && !address_in_subnet(getremoteaddr(), $reader->subnet)) {
@@ -126,7 +133,7 @@ if ($reader->levelcheck==0) {
     $promotiondate = $leveldata['promotiondate'];
 }
 
-echo $OUTPUT->box_start('generalbox');
+echo $output->box_start('generalbox');
 
 $table = new html_table();
 
@@ -307,7 +314,7 @@ foreach ($studentattempts as $studentattempt) {
 
 if ($bookcoversinprevterm) {
     // display book covers from previous term
-    echo $OUTPUT->heading(get_string('booksreadinpreviousterms', 'reader'), 2);
+    echo $output->heading(get_string('booksreadinpreviousterms', 'reader'), 2);
     echo html_writer::tag('p', $bookcoversinprevterm);
 
     // detect incorrect quizzes from previous term
@@ -319,7 +326,7 @@ if ($bookcoversinprevterm) {
         $url = new moodle_url('/mod/reader/showincorrectquizzes.php', array('id' => $id, 'uid' => $USER->id));
         $action = new popup_action('click', $url, 'bookcoversinprevterm', array('height' => 440, 'width' => 700));
         $text = get_string('incorrectbooksreadinpreviousterms', 'reader');
-        echo html_writer::tag('p', $OUTPUT->action_link($url, $text, $action, array('title' => $text)));
+        echo html_writer::tag('p', $output->action_link($url, $text, $action, array('title' => $text)));
     }
 }
 
@@ -329,7 +336,7 @@ if ($bookcoversinprevterm && $bookcoversinthisterm) {
 
 if ($bookcoversinthisterm) {
     // display book covers from this term
-    echo $OUTPUT->heading(get_string('booksreadthisterm', 'reader'), 2);
+    echo $output->heading(get_string('booksreadthisterm', 'reader'), 2);
     echo html_writer::tag('p', $bookcoversinthisterm);
 }
 
@@ -555,7 +562,7 @@ if ($showform && has_capability('mod/reader:viewbooks', $contextmodule)) {
     echo reader_available_books($id, $reader, $USER->id, 'takequiz');
 
     $url = new moodle_url('/course/view.php', array('id' => $course->id));
-    $btn = $OUTPUT->single_button($url, get_string('returntocoursepage', 'reader'), 'get');
+    $btn = $output->single_button($url, get_string('returntocoursepage', 'reader'), 'get');
     echo html_writer::tag('div', $btn, array('style' => 'clear: both; padding: 12px;'));
 
 } else if (! $DB->get_record('reader_attempts', array('reader' => $cm->instance, 'userid' => $USER->id, 'timefinish' => 0))) {
@@ -576,9 +583,9 @@ if (isset($_SESSION['SESSION']->reader_changetostudentview) && $_SESSION['SESSIO
 
 echo html_writer::tag('div', '', array('style'=>'clear:both;'));
 
-echo $OUTPUT->box_end();
+echo $output->box_end();
 print ('<center><img src="img/credit.jpg" height="40px"></center>');
-echo $OUTPUT->footer();
+echo $output->footer();
 
 /**
  * reader_level_blockgraph

@@ -29,13 +29,13 @@ defined('MOODLE_INTERNAL') || die();
 require_once($CFG->dirroot.'/lib//tablelib.php');
 
 /**
- * reader_report_table
+ * reader_admin_reports_table
  *
  * @copyright 2013 Gordon Bateson
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @since     Moodle 2.0
  */
-class reader_report_table extends table_sql {
+class reader_admin_reports_table extends table_sql {
 
     /** @var is_sortable (from flexible table) */
     public $is_sortable = true;
@@ -52,7 +52,7 @@ class reader_report_table extends table_sql {
     /** @var string field in the attempt records that refers to the user id */
     public $useridfield = 'userid';
 
-    /** @var mod_reader_report_renderer for the current page */
+    /** @var mod_reader_admin_reports_renderer for the current page */
     protected $output;
 
     /** @var name of lang pack string that holds format for "timemodified" column */
@@ -1164,7 +1164,7 @@ class reader_report_table extends table_sql {
     function display_filters() {
         if (count($this->filterfields) && $this->output->reader->can_viewreports()) {
 
-            $classname = 'reader_report_'.$this->output->mode.'_filtering';
+            $classname = 'reader_admin_reports_'.$this->output->mode.'_filtering';
             $filter = new $classname($this->filterfields, $this->baseurl);
 
             // create sql filters

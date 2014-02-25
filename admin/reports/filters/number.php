@@ -29,13 +29,13 @@ defined('MOODLE_INTERNAL') || die();
 require_once($CFG->dirroot.'/user/filters/select.php');
 
 /**
- * reader_report_filter_number
+ * reader_admin_reports_filter_number
  *
  * @copyright 2013 Gordon Bateson
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @since     Moodle 2.0
  */
-class reader_report_filter_number extends user_filter_select {
+class reader_admin_reports_filter_number extends user_filter_select {
 
     var $_type = '';
 
@@ -117,7 +117,7 @@ class reader_report_filter_number extends user_filter_select {
     function get_sql($data, $type)  {
         $filter = '';
         $params = array();
-        $counter = reader_report_filtering::uniqueid('ex_num_'.$type);
+        $counter = reader_admin_reports_filtering::uniqueid('ex_num_'.$type);
 
         if ($this->_type==$type) {
             $name = 'ex_num_'.$type.'_'.$counter;

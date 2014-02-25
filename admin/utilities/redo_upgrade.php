@@ -16,7 +16,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * mod/reader/utilities/redo_upgrade.php
+ * mod/reader/admin/utilities/redo_upgrade.php
  *
  * @package    mod
  * @subpackage reader
@@ -26,7 +26,7 @@
  */
 
 /** Include required files */
-require_once(dirname(dirname(dirname(dirname(__FILE__)))).'/config.php');
+require_once('../../../../../config.php');
 
 require_login(SITEID);
 if (class_exists('context_system')) {

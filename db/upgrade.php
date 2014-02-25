@@ -579,12 +579,6 @@ function xmldb_reader_upgrade($oldversion) {
         upgrade_mod_savepoint(true, "$newversion", 'reader');
     }
 
-    $newversion = 2013080100;
-    if ($result && $oldversion < $newversion) {
-        update_capabilities('mod/reader');
-        upgrade_mod_savepoint(true, "$newversion", 'reader');
-    }
-
     $newversion = 2013101500;
     if ($result && $oldversion < $newversion) {
         xmldb_reader_fix_extrapoints();
@@ -612,6 +606,12 @@ function xmldb_reader_upgrade($oldversion) {
     $newversion = 2013121209;
     if ($result && $oldversion < $newversion) {
         xmldb_reader_check_stale_files();
+        upgrade_mod_savepoint(true, "$newversion", 'reader');
+    }
+
+    $newversion = 2014021732;
+    if ($result && $oldversion < $newversion) {
+        update_capabilities('mod/reader');
         upgrade_mod_savepoint(true, "$newversion", 'reader');
     }
 

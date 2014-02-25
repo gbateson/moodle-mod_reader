@@ -16,7 +16,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * mod/reader/utilities/index.php
+ * mod/reader/admin/utilities/index.php
  *
  * @package    mod
  * @subpackage reader
@@ -26,48 +26,6 @@
  */
 
 /** Include required files */
-require_once(dirname(dirname(dirname(dirname(__FILE__)))).'/config.php');
-require_once($CFG->dirroot.'/mod/reader/lib.php');
+require_once('../../../../config.php');
 
-require_login(SITEID);
-require_capability('moodle/site:config', reader_get_context(CONTEXT_SYSTEM));
-
-// $SCRIPT is set by initialise_fullme() in 'lib/setuplib.php'
-// it is the path below $CFG->wwwroot of this script
-$PAGE->set_url($CFG->wwwroot.$SCRIPT);
-
-// set title
-$title = 'Reader Utilities index';
-$PAGE->set_title($title);
-$PAGE->set_heading($title);
-$PAGE->set_pagelayout('admin');
-
-echo $OUTPUT->header();
-echo $OUTPUT->box_start();
-
-// get path to this directory
-$dirname = dirname($SCRIPT);
-$dirpath = $CFG->dirroot.$dirname;
-
-echo html_writer::start_tag('ul')."\n";
-
-$files = array();
-$items = new DirectoryIterator($dirpath);
-foreach ($items as $item) {
-    if ($item->isDot() || substr($item, 0, 1)=='.' || $item=='index.php') {
-        continue;
-    }
-    if ($item->isFile()) {
-        $files[] = "$item"; // convert $item to string
-    }
-}
-sort($files);
-foreach ($files as $file) {
-    $href = $CFG->wwwroot.$dirname.'/'.$file;
-    echo html_writer::tag('li', html_writer::tag('a', $file, array('href' => $href)))."\n";
-}
-
-echo html_writer::end_tag('ul')."\n";
-
-echo $OUTPUT->box_end();
-echo $OUTPUT->footer();
+redirect($CFG->wwwroot);

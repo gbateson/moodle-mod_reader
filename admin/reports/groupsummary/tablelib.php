@@ -26,16 +26,16 @@
 defined('MOODLE_INTERNAL') || die();
 
 // get parent class
-require_once($CFG->dirroot.'/mod/reader/report/tablelib.php');
+require_once($CFG->dirroot.'/mod/reader/admin/reports/tablelib.php');
 
 /**
- * reader_report_groupsummary_table
+ * reader_admin_reports_groupsummary_table
  *
  * @copyright 2013 Gordon Bateson
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @since     Moodle 2.0
  */
-class reader_report_groupsummary_table extends reader_report_table {
+class reader_admin_reports_groupsummary_table extends reader_admin_reports_table {
 
     /** @var columns used in this table */
     protected $tablecolumns = array(

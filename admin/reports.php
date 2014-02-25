@@ -16,7 +16,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * mod/reader/report.php
+ * mod/reader/admin/reports.php
  *
  * @package    mod
  * @subpackage reader
@@ -26,7 +26,7 @@
  */
 
 /** Include required files */
-require_once('../../config.php');
+require_once('../../../config.php');
 require_once($CFG->dirroot.'/mod/reader/locallib.php');
 
 $id   = optional_param('id',    0, PARAM_INT);   // course module id
@@ -50,19 +50,19 @@ if ($id) {
 }
 
 require_course_login($course, true, $cm);
-$PAGE->set_url('/mod/reader/report.php', array('id' => $id, 'mode' => $mode));
+$PAGE->set_url('/mod/reader/admin/reports.php', array('id' => $id, 'mode' => $mode));
 
 $title = format_string($reader->name).': '.get_string('reports').': '.get_string('report'.$mode, 'reader');
 $PAGE->set_title($title);
 $PAGE->set_heading($title);
 
 // load the appropriate renderer, table and filter class for this report $mode
-require_once($CFG->dirroot.'/mod/reader/report/'.$mode.'/renderer.php');
-require_once($CFG->dirroot.'/mod/reader/report/'.$mode.'/tablelib.php');
-require_once($CFG->dirroot.'/mod/reader/report/'.$mode.'/filtering.php');
+require_once($CFG->dirroot.'/mod/reader/admin/reports/'.$mode.'/renderer.php');
+require_once($CFG->dirroot.'/mod/reader/admin/reports/'.$mode.'/tablelib.php');
+require_once($CFG->dirroot.'/mod/reader/admin/reports/'.$mode.'/filtering.php');
 
 // create the renderer for this report
-$output = $PAGE->get_renderer('mod_reader', 'report_'.$mode);
+$output = $PAGE->get_renderer('mod_reader', 'admin_reports_'.$mode);
 
 ////////////////////////////////////////////////////////////////////////////////
 // Output starts here                                                         //

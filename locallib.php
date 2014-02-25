@@ -304,7 +304,7 @@ class mod_reader {
         if ($userid) {
             $params['userid'] = $userid;
         }
-        return new moodle_url('/mod/reader/report.php', $params);
+        return new moodle_url('/mod/reader/admin/reports.php', $params);
     }
 
     /**
@@ -451,6 +451,15 @@ class mod_reader {
     }
 
     /*
+     * can_manageutilities
+     *
+     * @return boolean
+     **/
+    public function can_manageutilities() {
+        return $this->can('manageutilities');
+    }
+
+    /*
      * can_viewbooks
      *
      * @return boolean
@@ -481,7 +490,7 @@ class mod_reader {
             $modes = array('usersummary', 'userdetailed', 'groupsummary', 'booksummary', 'bookdetailed');
 
             // all report plugins (exclude "filters" directory)
-            $plugins = get_list_of_plugins('mod/reader/report', 'filters');
+            $plugins = get_list_of_plugins('mod/reader/admin/reports', 'filters');
 
             // remove missing standard reports
             $modes = array_intersect($modes, $plugins);

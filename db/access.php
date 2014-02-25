@@ -57,6 +57,15 @@ $capabilities = array(
         )
     ),
 
+    'mod/reader:manageutilities' => array(
+        'captype'      => 'write',
+        'contextlevel' => CONTEXT_SYSTEM,
+        'riskbitmask'  => RISK_DATALOSS,
+        'archetypes'   => array(
+            'manager'        => CAP_ALLOW
+        )
+    ),
+
     'mod/reader:managequizzes' => array(
         'captype'      => 'write',
         'riskbitmask'  => RISK_DATALOSS,

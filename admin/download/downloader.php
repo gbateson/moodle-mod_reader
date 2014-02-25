@@ -166,17 +166,15 @@ class reader_downloader {
     /**
      * __construct
      *
-     * @param xxx $course
-     * @param xxx $cm
      * @param xxx $reader
      * @param xxx $output renderer
      * @todo Finish documenting this function
      */
-    public function __construct($course, $cm, $reader, $output) {
+    public function __construct($reader, $output) {
         global $DB;
 
-        $this->course = $course;
-        $this->cm     = $cm;
+        $this->course = $reader->course;
+        $this->cm     = $reader->cm;
         $this->reader = $reader;
         $this->output = $output;
 
@@ -860,7 +858,7 @@ class reader_downloader {
         $this->bar = reader_download_progress_bar::create($itemids, 'readerdownload');
 
         // show memory on main Reader module developer site
-        $show_memory = (file_exists($CFG->dirroot.'/mod/reader/utilities/print_cheatsheet.php'));
+        $show_memory = (file_exists($CFG->dirroot.'/mod/reader/admin/utilities/print_cheatsheet.php'));
 
         $output = '';
         $time = time();

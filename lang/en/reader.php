@@ -14,13 +14,14 @@ $string['reader:managebooks'] = 'Manage books';
 $string['reader:managequizzes'] = 'Manage quizzes';
 $string['reader:manageremotesites'] = 'Manage remote sites';
 $string['reader:manageusers'] = 'Manage users';
+$string['reader:manageutilities'] = 'Manage utilities';
 $string['reader:viewbooks'] = 'View books';
 $string['reader:viewreports'] = 'View reports';
 
 // more strings
 $string['addquiztoreader'] = 'Add course quizzes to reader quizzes';
 $string['adjustscores'] = 'Adjust scores';
-$string['adminarea'] = 'Admin area 2.x';
+$string['adminarea'] = 'Admin area';
 $string['all'] = 'All';
 $string['allbooks'] = 'All books available to the Reader module';
 $string['alldone'] = 'All done';
@@ -63,6 +64,7 @@ $string['bookdifficulty'] = 'Book difficulty';
 $string['bookeditdetails'] = 'Edit book details';
 $string['booklevelmanagement'] = 'Book & Level Management';
 $string['booknotadded'] = 'Book NOT added: {$a}';
+$string['booknotfound'] = 'Book not found {$a}';
 $string['booknotupdated'] = 'Book NOT updated: {$a}';
 $string['bookquiznumber'] = 'Book quiz number';
 $string['bookrating'] = 'Book rating';
@@ -175,6 +177,8 @@ $string['extrapoints5'] = '5 Points';
 $string['extrawords'] = '{$a} words';
 $string['failed'] = 'Failed';
 $string['failedshort'] = 'F';
+$string['filename'] = 'File name';
+$string['fileuploaded'] = 'File was uploaded';
 $string['fix_bookcovers'] = 'Detect and fix missing book covers';
 $string['fixmissingquizzes'] = 'Fix missing quizzes';
 $string['fixmissingquizzesinfo'] = 'The upgrade has been paused, so that you can decide whether or not you wish to download and install Reader module quizzes that are missing on this Moodle site.
@@ -229,10 +233,10 @@ $string['mode'] = 'Mode';
 $string['mode_help'] = 'This page can be in the following two modes:
 
 **Normal**
-: In normal mode, only books whose data has not already been downloaded, or books whose data has been updated, will be available. Books for whom the most recent data has already been downloaded will not be available.
+: In normal mode, only books whose data has not already been downloaded, or books whose data has been updated, will be available. Books for which the most recent data has already been downloaded will not be available.
 
 **Repair**
-: In repair mode, all books are available for download. If any data has been previously downloaded, it will be overwritten by the newly downloaded data. Use this mode if you want to repair faulty quizzes or incorrect data. Note that even if quizzes are overloaded, data about students attempts at those quizzes will be retained.';
+: In repair mode, all books are available for download. If any data has been previously downloaded, it will be overwritten by the newly downloaded data. Use this mode if you want to repair faulty quizzes or incorrect data. Note that even if quizzes are overwritten, data about students attempts at those quizzes will be retained.';
 $string['mybooks'] = 'Only books already installed on this site';
 $string['needdeletethisattemptstoo'] = 'Need delete this Attempts too';
 $string['needtocheckupdates'] = 'This site has not checked for quiz updates in ({$a} days). Check now?';
@@ -396,6 +400,7 @@ $string['showattempts'] = 'Show attempts matching these conditions';
 $string['showlevel'] = 'Show Level';
 $string['sincedate'] = '(since {$a})';
 $string['sincepromotion'] = '(since promotion on {$a})';
+$string['skipline'] = 'Skip line: {$a}';
 $string['skipquizdownload'] = 'Quiz "{$a->quizname}" already exists in section {$a->sectionnum}, "{$a->sectionname}", of "{$a->coursename}", and has been skipped';
 $string['startlevel'] = 'Start level';
 $string['strftimefinish'] = '%Y %b %d (%a) %H:%M';
@@ -503,6 +508,7 @@ $string['usecourse'] = 'Quiz location';
 $string['usedefaultquizid'] = 'Always use default quiz';
 $string['userexport'] = 'Export user data';
 $string['userimport'] = 'Import user data';
+$string['usernamenotfound'] = 'Username not found: {$a}';
 $string['userlevel'] = 'User level';
 $string['usersendmessage'] = 'Send message to users';
 $string['usersetgoals'] = 'Set user goals';
@@ -533,3 +539,22 @@ $string['youmusttakequizzes'] = ' You can take {$a} more quizzes ';
 $string['yourcurrentlevel'] = 'Your current level';
 $string['yourteacherhasstopped'] = ' Your teacher has stopped automatic promotion for you.';
 $string['youwerepromoted'] = 'You were promoted to RL-{$a->level} on {$a->date} at {$a->time}';
+
+$string['skipped'] = 'Skipped';
+$string['quizzes'] = 'Quizzes';
+$string['books'] = 'Books';
+$string['reports'] = 'Reports';
+$string['users'] = 'Users';
+$string['utilities'] = 'Utilities';
+
+$string['add'] = 'Add';
+$string['delete'] = 'Delete';
+$string['update'] = 'Update';
+$string['showhide'] = 'Show/Hide';
+$string['delay'] = 'Delay';
+$string['arrange'] = 'Arrange';
+
+$string['import'] = 'Import';
+$string['export'] = 'Export';
+$string['setgoals'] = 'Set goals';
+$string['setlevels'] = 'Set levels';

@@ -16,7 +16,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * mod/reader/utilities/index.php
+ * mod/reader/admin/utilities/index.php
  *
  * @package    mod
  * @subpackage reader
@@ -28,6 +28,7 @@
 /** Include required files */
 require_once('../../../config.php');
 require_once($CFG->dirroot.'/mod/reader/locallib.php');
+require_once($CFG->dirroot.'/mod/reader/admin/renderer.php');
 
 $id   = optional_param('id',   0, PARAM_INT); // course module id
 $r    = optional_param('r',    0, PARAM_INT); // reader id
@@ -45,6 +46,7 @@ if ($id) {
 }
 
 require_login($course, true, $cm);
+$reader = mod_reader::create($reader, $cm, $course);
 
 add_to_log($course->id, 'reader', 'Download Quizzes', "admin/download.php?id=$id", "$cm->instance");
 
@@ -56,48 +58,16 @@ $title = $course->shortname.': '.format_string($reader->name).': '.get_string('a
 $PAGE->set_title($title);
 $PAGE->set_heading($title);
 
-$reader = mod_reader::create($reader, $cm, $course);
+$output = $PAGE->get_renderer('mod_reader', 'admin');
+$output->init($reader);
 
-echo $OUTPUT->header();
-echo $OUTPUT->box_start();
+echo $output->header();
+echo $output->tabs();
+echo $output->box_start('generalbox', 'notice');
 
-$links = array();
+$link = new moodle_url('/mod/reader/admin/index.php', array('id' => $id));
+$link = html_writer::link($link, get_string('continue'));
+echo $link;
 
-if ($reader->can_manageremotesites()) {
-    $url = new moodle_url('/mod/reader/admin/download.php', array('id' => $cm->id));
-    $links[] = html_writer::link($url, get_string('reader:manageremotesites', 'reader'));
-}
-
-if ($reader->can_managequizzes()) {
-    $url = new moodle_url('/mod/reader/admin/index.php', array('id' => $cm->id));
-    $links[] = html_writer::link($url, get_string('reader:managequizzes', 'reader'));
-}
-
-if ($reader->can_managebooks()) {
-    $url = new moodle_url('/mod/reader/admin/index.php', array('id' => $cm->id));
-    $links[] = html_writer::link($url, get_string('reader:managebooks', 'reader'));
-}
-
-if ($reader->can_manageusers()) {
-    $url = new moodle_url('/mod/reader/admin/index.php', array('id' => $cm->id));
-    $links[] = html_writer::link($url, get_string('reader:manageusers', 'reader'));
-}
-
-if ($reader->can_manageattempts()) {
-    $url = new moodle_url('/mod/reader/admin/index.php', array('id' => $cm->id));
-    $links[] = html_writer::link($url, get_string('reader:manageattempts', 'reader'));
-}
-
-if ($reader->can_viewreports()) {
-    $url = new moodle_url('/mod/reader/report.php', array('id' => $cm->id));
-    $links[] = html_writer::link($url, get_string('reader:viewreports', 'reader'));
-}
-
-if (count($links)) {
-    echo html_writer::alist($links);
-} else {
-    echo redirect($reader->view_url());
-}
-
-echo $OUTPUT->box_end();
-echo $OUTPUT->footer();
+echo $output->box_end();
+echo $output->footer();

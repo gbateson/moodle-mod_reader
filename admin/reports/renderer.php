@@ -27,18 +27,30 @@
 defined('MOODLE_INTERNAL') || die;
 
 /** Include required files */
-require_once($CFG->dirroot.'/mod/reader/renderer.php');
-require_once($CFG->dirroot.'/mod/reader/report/tablelib.php');
-require_once($CFG->dirroot.'/mod/reader/report/filtering.php');
+require_once($CFG->dirroot.'/mod/reader/admin/renderer.php');
+require_once($CFG->dirroot.'/mod/reader/admin/reports/tablelib.php');
+require_once($CFG->dirroot.'/mod/reader/admin/reports/filtering.php');
 
 /**
- * mod_reader_report_renderer
+ * mod_reader_admin_reports_renderer
  *
  * @copyright 2013 Gordon Bateson
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @since     Moodle 2.0
  */
-class mod_reader_report_renderer extends mod_reader_renderer {
+class mod_reader_admin_reports_renderer extends mod_reader_admin_renderer {
+
+    /**#@+
+     * tab ids
+     *
+     * @var integer
+     */
+    const TAB_REPORTS_USERSUMMARY  = 21;
+    const TAB_REPORTS_USERDETAILED = 22;
+    const TAB_REPORTS_GROUPSUMMARY = 23;
+    const TAB_REPORTS_BOOKSUMMARY  = 24;
+    const TAB_REPORTS_BOOKDETAILED = 25;
+    /**#@-*/
 
     protected $pageparams = array();
 
@@ -51,12 +63,41 @@ class mod_reader_report_renderer extends mod_reader_renderer {
     public $mode = '';
 
     /**
-     * init
+     * get_my_tab
      *
-     * @param xxx $reader
+     * @return integer tab id
      */
-    public function init($reader)   {
-        $this->reader = $reader;
+    public function get_my_tab() {
+        return self::TAB_REPORTS;
+    }
+
+    /**
+     * get_default_tab
+     *
+     * @return integer tab id
+     */
+    public function get_default_tab() {
+        return self::TAB_REPORTS_USERSUMMARY;
+    }
+
+    /**
+     * get_tabs
+     *
+     * @return string HTML output to display navigation tabs
+     */
+    public function get_tabs() {
+        $tabs = array();
+        $cmid = $this->reader->cm->id;
+        if ($this->reader->can_viewreports()) {
+            $modes = mod_reader::get_report_modes();
+            foreach ($modes as $mode) {
+                $tab = constant('self::TAB_REPORTS_'.strtoupper($mode));
+                $params = array('id' => $cmid, 'tab' => $tab, 'mode' => $mode);
+                $url = new moodle_url('/mod/reader/admin/reports.php', $params);
+                $tabs[] = new tabobject($tab, $url, get_string('report'.$mode, 'reader'));
+            }
+        }
+        return $this->attach_tabs_subtree(parent::get_tabs(), parent::TAB_REPORTS, $tabs);
     }
 
     /**
@@ -70,6 +111,7 @@ class mod_reader_report_renderer extends mod_reader_renderer {
         $this->init($reader);
         if ($download=='') {
             echo $this->header();
+            echo $this->tabs();
         }
         echo $this->reportcontent($action, $download);
         if ($download=='') {
@@ -108,7 +150,7 @@ class mod_reader_report_renderer extends mod_reader_renderer {
         $baseurl = $this->baseurl();
 
         // create report table
-        $tableclass = 'reader_report_'.$this->mode.'_table';
+        $tableclass = 'reader_admin_reports_'.$this->mode.'_table';
         $uniqueid = $this->page->pagetype.'-'.$this->mode;
         $table = new $tableclass($uniqueid, $this);
 

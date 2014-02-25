@@ -27,6 +27,7 @@
 
 /** Include required files */
 require_once('../../../config.php');
+require_once($CFG->dirroot.'/mod/reader/locallib.php');
 require_once($CFG->dirroot.'/mod/reader/admin/download/lib.php');
 require_once($CFG->dirroot.'/mod/reader/admin/download/renderer.php');
 
@@ -52,6 +53,7 @@ if ($id) {
 }
 
 require_login($course, true, $cm);
+$reader = mod_reader::create($reader, $cm, $course);
 
 add_to_log($course->id, 'reader', 'Download Quizzes', "admin/download.php?id=$id", "$cm->instance");
 
@@ -63,6 +65,7 @@ $PAGE->set_title($title);
 $PAGE->set_heading($course->fullname);
 
 $output = $PAGE->get_renderer('mod_reader', 'admin_download');
+$output->init($reader);
 
 switch ($type) {
     case reader_downloader::BOOKS_WITH_QUIZZES: $str = 'uploadquiztoreader'; break;
@@ -70,6 +73,7 @@ switch ($type) {
 }
 
 echo $output->header();
+echo $output->tabs();
 echo $output->heading(get_string($str, 'reader'));
 
 // create an object to represent main download site (moodlereader.net)
@@ -78,7 +82,7 @@ $remotesite = new reader_remotesite_moodlereadernet(get_config('reader', 'server
                                                     get_config('reader', 'serverpassword'));
 
 // create an object to handle the downloading of data from remote sites
-$downloader = new reader_downloader($course, $cm, $reader, $output);
+$downloader = new reader_downloader($reader, $output);
 
 // register the known remote sites with the downloader
 $downloader->add_remotesite($remotesite);

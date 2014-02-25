@@ -27,6 +27,7 @@
 
 /** Include required files */
 require_once('../../../config.php');
+require_once($CFG->dirroot.'/mod/reader/locallib.php');
 require_once($CFG->dirroot.'/mod/reader/admin/users/renderer.php');
 
 $id     = optional_param('id',     0,  PARAM_INT); // course module id
@@ -46,6 +47,7 @@ if ($id) {
 }
 
 require_login($course, true, $cm);
+$reader = mod_reader::create($reader, $cm, $course);
 
 add_to_log($course->id, 'reader', 'Admin users', "admin/users.php?id=$id&action=$action", "$cm->instance");
 
@@ -56,15 +58,26 @@ $title = $course->shortname . ': ' . format_string($reader->name);
 $PAGE->set_title($title);
 $PAGE->set_heading($course->fullname);
 
+
 $output = $PAGE->get_renderer('mod_reader', 'admin_users');
+$output->init($reader);
 
 echo $output->header();
-echo $output->heading(get_string('user'.$action, 'reader'));
-
+echo $output->tabs();
 echo $output->box_start('generalbox', 'notice');
+
+switch ($action) {
+    case 'export':      echo $output->action_export($cm->id); break;
+    case 'import':      echo $output->action_import($cm->id); break;
+    case 'setgoals':    //echo $output->action_setgoals($cm->id); break;
+    case 'setlevels':   //echo $output->action_setlevels($cm->id); break;
+    case 'sendmessage': //echo $output->action_sendmessage($cm->id); break;
+    default:            echo $output->list_actions_users($cm->id);
+}
+
 $link = new moodle_url('/mod/reader/admin/index.php', array('id' => $id));
 $link = html_writer::link($link, get_string('continue'));
-echo html_writer::tag('p', 'This functionality is not implemented yet. '.$link);
-echo $output->box_end();
+echo $link;
 
+echo $output->box_end();
 echo $output->footer();

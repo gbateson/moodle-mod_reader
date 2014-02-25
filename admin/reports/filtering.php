@@ -29,23 +29,23 @@ defined('MOODLE_INTERNAL') || die();
 require_once($CFG->dirroot.'/user/filters/lib.php');
 
 // get child classes
-require_once($CFG->dirroot.'/mod/reader/report/filters/date.php');
-require_once($CFG->dirroot.'/mod/reader/report/filters/select.php');
-require_once($CFG->dirroot.'/mod/reader/report/filters/simpleselect.php');
-require_once($CFG->dirroot.'/mod/reader/report/filters/text.php');
+require_once($CFG->dirroot.'/mod/reader/admin/reports/filters/date.php');
+require_once($CFG->dirroot.'/mod/reader/admin/reports/filters/select.php');
+require_once($CFG->dirroot.'/mod/reader/admin/reports/filters/simpleselect.php');
+require_once($CFG->dirroot.'/mod/reader/admin/reports/filters/text.php');
 
-require_once($CFG->dirroot.'/mod/reader/report/filters/duration.php');
-require_once($CFG->dirroot.'/mod/reader/report/filters/group.php');
-require_once($CFG->dirroot.'/mod/reader/report/filters/number.php');
+require_once($CFG->dirroot.'/mod/reader/admin/reports/filters/duration.php');
+require_once($CFG->dirroot.'/mod/reader/admin/reports/filters/group.php');
+require_once($CFG->dirroot.'/mod/reader/admin/reports/filters/number.php');
 
 /**
- * reader_report_filtering
+ * reader_admin_reports_filtering
  *
  * @copyright 2013 Gordon Bateson
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @since     Moodle 2.0
  */
-class reader_report_filtering extends user_filtering {
+class reader_admin_reports_filtering extends user_filtering {
 
     /**
      * get_field
@@ -63,14 +63,14 @@ class reader_report_filtering extends user_filtering {
 
             case 'realname':
                 $label = get_string('fullname');
-                return new reader_report_filter_text($fieldname, $label, $advanced, $DB->sql_fullname(), $default, 'where');
+                return new reader_admin_reports_filter_text($fieldname, $label, $advanced, $DB->sql_fullname(), $default, 'where');
                 break;
 
             case 'lastname':
             case 'firstname':
             case 'username':
                 $label = get_string($fieldname);
-                return new reader_report_filter_text($fieldname, $label, $advanced, $fieldname, $default, 'where');
+                return new reader_admin_reports_filter_text($fieldname, $label, $advanced, $fieldname, $default, 'where');
                 break;
 
             default:

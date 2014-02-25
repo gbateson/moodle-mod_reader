@@ -41,4 +41,62 @@ require_once($CFG->dirroot.'/mod/reader/admin/renderer.php');
  * @subpackage reader
  */
 class mod_reader_admin_books_renderer extends mod_reader_admin_renderer {
+
+    /**#@+
+     * tab ids
+     *
+     * @var integer
+     */
+    const TAB_BOOKS_DOWNLOAD_WITH    = 31;
+    const TAB_BOOKS_DOWNLOAD_WITHOUT = 32;
+    const TAB_BOOKS_EDIT             = 33;
+    /**#@-*/
+
+    /**
+     * get_my_tab
+     *
+     * @return integer tab id
+     */
+    public function get_my_tab() {
+        return self::TAB_BOOKS;
+    }
+
+    /**
+     * get_default_tab
+     *
+     * @return integer tab id
+     */
+    public function get_default_tab() {
+        return self::TAB_BOOKS_DOWNLOAD_WITH;
+    }
+
+    /**
+     * get_tabs
+     *
+     * @return string HTML output to display navigation tabs
+     */
+    public function get_tabs() {
+        $tabs = array();
+        $cmid = $this->reader->cm->id;
+        if ($this->reader->can_managebooks()) {
+
+            $tab = self::TAB_BOOKS_DOWNLOAD_WITH;
+            $type = reader_downloader::BOOKS_WITH_QUIZZES;
+            $params = array('id' => $cmid, 'tab' => $tab, 'type' => $type);
+            $url = new moodle_url('/mod/reader/admin/download.php', $params);
+            $tabs[] = new tabobject($tab, $url, get_string('downloadbookswithquizzes', 'reader'));
+
+            $tab = self::TAB_BOOKS_DOWNLOAD_WITHOUT;
+            $type = reader_downloader::BOOKS_WITHOUT_QUIZZES;
+            $params = array('id' => $cmid, 'tab' => $tab, 'type' => $type);
+            $url = new moodle_url('/mod/reader/admin/download.php', $params);
+            $tabs[] = new tabobject($tab, $url, get_string('downloadbookswithoutquizzes', 'reader'));
+
+            $tab = self::TAB_BOOKS_EDIT;
+            $params = array('id' => $cmid, 'tab' => $tab, 'action' => 'editdetails');
+            $url = new moodle_url('/mod/reader/admin/books.php', $params);
+            $tabs[] = new tabobject($tab, $url, get_string('edit'));
+        }
+        return $this->attach_tabs_subtree(parent::get_tabs(), parent::TAB_BOOKS, $tabs);
+    }
 }

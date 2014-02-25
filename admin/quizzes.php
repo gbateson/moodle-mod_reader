@@ -27,6 +27,7 @@
 
 /** Include required files */
 require_once('../../../config.php');
+require_once($CFG->dirroot.'/mod/reader/locallib.php');
 require_once($CFG->dirroot.'/mod/reader/admin/quizzes/renderer.php');
 
 $id     = optional_param('id',     0,  PARAM_INT); // course module id
@@ -46,6 +47,7 @@ if ($id) {
 }
 
 require_login($course, true, $cm);
+$reader = mod_reader::create($reader, $cm, $course);
 
 add_to_log($course->id, 'reader', 'Admin users', "admin/quizzes.php?id=$id&action=$action", "$cm->instance");
 
@@ -57,14 +59,15 @@ $PAGE->set_title($title);
 $PAGE->set_heading($course->fullname);
 
 $output = $PAGE->get_renderer('mod_reader', 'admin_quizzes');
+$output->init($reader);
 
 echo $output->header();
-echo $output->heading(get_string('quizzes'.$action, 'reader'));
-
+echo $output->tabs();
 echo $output->box_start('generalbox', 'notice');
+
 $link = new moodle_url('/mod/reader/admin/index.php', array('id' => $id));
 $link = html_writer::link($link, get_string('continue'));
-echo html_writer::tag('p', 'This functionality is not implemented yet. '.$link);
-echo $output->box_end();
+echo $link;
 
+echo $output->box_end();
 echo $output->footer();

@@ -29,13 +29,13 @@ defined('MOODLE_INTERNAL') || die();
 require_once($CFG->dirroot.'/user/filters/select.php');
 
 /**
- * reader_report_filter_group
+ * reader_admin_reports_filter_group
  *
  * @copyright 2013 Gordon Bateson
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @since     Moodle 2.0
  */
-class reader_report_filter_group extends reader_report_filter_select {
+class reader_admin_reports_filter_group extends reader_admin_reports_filter_select {
 
     /**
      * Constructor

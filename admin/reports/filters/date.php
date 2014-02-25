@@ -29,13 +29,13 @@ defined('MOODLE_INTERNAL') || die();
 require_once($CFG->dirroot.'/user/filters/date.php');
 
 /**
- * reader_report_filter_date
+ * reader_admin_reports_filter_date
  *
  * @copyright 2013 Gordon Bateson
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @since     Moodle 2.0
  */
-class reader_report_filter_date extends user_filter_date {
+class reader_admin_reports_filter_date extends user_filter_date {
 
     var $_type = '';
 
@@ -66,7 +66,7 @@ class reader_report_filter_date extends user_filter_date {
 
         $filter = '';
         $params = array();
-        $counter = reader_report_filtering::uniqueid('ex_date_'.$type);
+        $counter = reader_admin_reports_filtering::uniqueid('ex_date_'.$type);
 
         $after = (empty($data['after']) ? 0 : (int)$data['after']);
         $before = (empty($data['before']) ? 0 : (int)$data['before']);

@@ -16,7 +16,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * mod/reader/utilities/fix_slashesinnames.php
+ * mod/reader/admin/utilities/fix_slashesinnames.php
  *
  * @package    mod
  * @subpackage reader
@@ -26,7 +26,7 @@
  */
 
 /** Include required files */
-require_once(dirname(dirname(dirname(dirname(__FILE__)))).'/config.php');
+require_once('../../../../../config.php');
 require_once($CFG->dirroot.'/mod/reader/lib.php');
 
 require_login(SITEID);
@@ -130,7 +130,7 @@ if ($startedlist) {
 } else {
     echo "<p>no slashes found in book titles</p>\n";
 }
-echo html_writer::tag('p', html_writer::tag('a', 'Click here to continue', array('href' => $CFG->wwwroot.'/mod/reader/utilities/index.php')));
+echo html_writer::tag('p', html_writer::tag('a', 'Click here to continue', array('href' => $CFG->wwwroot.'/mod/reader/admin/utilities/index.php')));
 
 echo $OUTPUT->box_end();
 echo $OUTPUT->footer();

@@ -16,7 +16,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * mod/reader/report/groupsummary/renderer.php
+ * mod/reader/admin/reports/groupsummary/renderer.php
  *
  * @package    mod
  * @subpackage reader
@@ -29,10 +29,10 @@
 defined('MOODLE_INTERNAL') || die;
 
 /** Include required files */
-require_once($CFG->dirroot.'/mod/reader/report/renderer.php');
+require_once($CFG->dirroot.'/mod/reader/admin/reports/renderer.php');
 
 /**
- * mod_reader_report_groupsummary_renderer
+ * mod_reader_admin_reports_groupsummary_renderer
  *
  * @copyright  2013 Gordon Bateson (gordon.bateson@gmail.com)
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -40,6 +40,6 @@ require_once($CFG->dirroot.'/mod/reader/report/renderer.php');
  * @package    mod
  * @subpackage reader
  */
-class mod_reader_report_groupsummary_renderer extends mod_reader_report_renderer {
+class mod_reader_admin_reports_groupsummary_renderer extends mod_reader_admin_reports_renderer {
     public $mode = 'groupsummary';
 }

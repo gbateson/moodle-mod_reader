@@ -41,4 +41,51 @@ require_once($CFG->dirroot.'/mod/reader/renderer.php');
  * @subpackage reader
  */
 class mod_reader_admin_renderer extends mod_reader_renderer {
+
+    public $actions = array();
+
+    /**
+     * heading_action
+     *
+     * @param string  $action
+     * @param string  $type of action: "quizzes", "books", "users", "attempts"
+     * @return string formatted heading for this $action and $type
+     */
+    public function heading_action($action, $type) {
+        if ($action) {
+            $heading = $type.$action;
+        } else {
+            $heading = 'reader:manage'.$type;
+        }
+        return $this->heading(get_string($heading, 'reader'));
+    }
+
+    /**
+     * list_actions
+     *
+     * @param integer course_modules $id of current Reader activity
+     * @param string  $type of action: "quizes", "books", "users", "attempts"
+     * @return string formatted list of links to user actions
+     */
+    public function list_actions($cmid, $type) {
+        $links = array();
+        foreach ($this->actions as $action) {
+            $params = array('id' => $cmid, 'action' => $action);
+            $href = new moodle_url("/mod/reader/admin/$type.php", $params);
+            $text = get_string($type.$action, 'reader');
+            $links[] = html_writer::link($href, $text);
+        }
+        return html_writer::alist($links);
+    }
+
+    /**
+     * continue_button
+     *
+     * @param integer course_modules $id of current Reader activity
+     * @return formatted link to return to admin index
+     */
+    public function continue_button($id) {
+        $url = new moodle_url('/mod/reader/admin/index.php', array('id' => $id));
+        return parent::continue_button($url);
+    }
 }
