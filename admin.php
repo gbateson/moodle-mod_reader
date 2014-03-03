@@ -1082,28 +1082,30 @@ if (! $excel) {
     $menu = new reader_menu($menu);
     echo $menu->out($contextmodule);
 
-    echo '<br /><hr />';
+    // the "Edit" button has been moved to the nagivation tags
+    //echo '<br /><hr />';
 
-    echo html_writer::start_tag('form', array('method'   => 'get',
-                                              'onsubmit' => "this.target='_top'; return true;",
-                                              'action'   => $CFG->wwwroot.'/course/mod.php'));
-    echo html_writer::start_tag('div');
-    echo html_writer::empty_tag('input', array('type' => 'hidden', 'name' => 'update', 'value' => $cm->id));
-    echo html_writer::empty_tag('input', array('type' => 'hidden', 'name' => 'return', 'value' => 'true'));
-    echo html_writer::empty_tag('input', array('type' => 'hidden', 'name' => 'sesskey', 'value' => sesskey()));
-    echo html_writer::empty_tag('input', array('type' => 'submit', 'value' => 'Change the main Reader settings'));
-    echo html_writer::end_tag('div');
-    echo html_writer::end_tag('form');
+    //echo html_writer::start_tag('form', array('method'   => 'get',
+    //                                          'onsubmit' => "this.target='_top'; return true;",
+    //                                          'action'   => $CFG->wwwroot.'/course/mod.php'));
+    //echo html_writer::start_tag('div');
+    //echo html_writer::empty_tag('input', array('type' => 'hidden', 'name' => 'update', 'value' => $cm->id));
+    //echo html_writer::empty_tag('input', array('type' => 'hidden', 'name' => 'return', 'value' => 'true'));
+    //echo html_writer::empty_tag('input', array('type' => 'hidden', 'name' => 'sesskey', 'value' => sesskey()));
+    //echo html_writer::empty_tag('input', array('type' => 'submit', 'value' => 'Change the main Reader settings'));
+    //echo html_writer::end_tag('div');
+    //echo html_writer::end_tag('form');
 
-    if ($readercfg->update == 1) {
-        if (time() - $readercfg->last_update > $readercfg->update_interval) {
-          echo $output->box_start('generalbox');
-          $days = round((time() - $readercfg->last_update) / (24 * 3600));
-          print_string('needtocheckupdates', 'reader', $days);
-          echo ' <a href="admin/download.php?id='.$id.'">YES</a> / <a href="admin.php?a=admin&id='.$id.'">NO</a></center>';
-          echo $output->box_end();
-        }
-    }
+    // disable update check on this page, because this check is done on downloads page
+    //if ($readercfg->update == 1) {
+    //    if (time() - $readercfg->last_update > $readercfg->update_interval) {
+    //      echo $output->box_start('generalbox');
+    //      $days = round((time() - $readercfg->last_update) / (24 * 3600));
+    //      print_string('needtocheckupdates', 'reader', $days);
+    //      echo ' <a href="admin/download.php?id='.$id.'">YES</a> / <a href="admin.php?a=admin&id='.$id.'">NO</a></center>';
+    //      echo $output->box_end();
+    //    }
+    //}
 }
 
 $options = array(
@@ -4251,13 +4253,13 @@ class reader_menu {
                 if ($itemtext = $item->out($context)) {
                     if ($started_sections==false) {
                         $started_sections = true;
-                        $out .= '<ul>';
+                        $out .= '<ul class="readermenusections">';
                     }
                     if ($started_items==false) {
                         $started_items = true;
-                        $out .= '<li><b>'.get_string($sectionname, 'reader').'</b><ul>';
+                        $out .= '<li class="readermenusection"><b>'.get_string($sectionname, 'reader').'</b><ul class="readermenuitems">';
                     }
-                    $out .= '<li>'.$itemtext.'</li>';
+                    $out .= '<li class="readermenuitem">'.$itemtext.'</li>';
                 }
             }
             if ($started_items) {
@@ -4266,6 +4268,8 @@ class reader_menu {
         }
         if ($started_sections) {
             $out .= '</ul>';
+            $out = '<div class="readermenu">'.$out.'</div>';
+            $out .= '<div style="clear:both;"></div>';
         }
         return $out;
     }

@@ -45,12 +45,13 @@ class mod_reader_renderer extends plugin_renderer_base {
      * @var integer
      */
     const TAB_VIEW      = 1;
-    const TAB_REPORTS   = 2;
-    const TAB_BOOKS     = 3;
-    const TAB_QUIZZES   = 4;
-    const TAB_USERS     = 5;
-    const TAB_UTILITIES = 6;
-    const TAB_ADMINAREA = 7;
+    const TAB_SETTINGS  = 2;
+    const TAB_REPORTS   = 3;
+    const TAB_BOOKS     = 4;
+    const TAB_QUIZZES   = 5;
+    const TAB_USERS     = 6;
+    const TAB_UTILITIES = 7;
+    const TAB_ADMINAREA = 8;
     /**#@-*/
 
     /** object to represent associated reader activity */
@@ -773,6 +774,11 @@ class mod_reader_renderer extends plugin_renderer_base {
             $tab = self::TAB_VIEW;
             $url = new moodle_url('/mod/reader/view.php', array('id' => $cmid, 'tab' => $tab));
             $tabs[$tab] = new tabobject($tab, $url, get_string('view'));
+        }
+        if ($this->reader->can_addinstance()) {
+            $tab = self::TAB_SETTINGS;
+            $url = new moodle_url('/course/mod.php', array('update' => $cmid, 'return' => 1, 'sesskey' => sesskey()));
+            $tabs[$tab] = new tabobject($tab, $url, get_string('settings'));
         }
         if ($this->reader->can_viewreports()) {
             $tab = self::TAB_REPORTS;
