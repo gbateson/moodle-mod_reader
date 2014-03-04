@@ -318,15 +318,27 @@ if ($bookcoversinprevterm) {
     echo html_writer::tag('p', $bookcoversinprevterm);
 
     // detect incorrect quizzes from previous term
-    // and display a link to them if any are found
-    $select = 'userid= ? AND timefinish <= ? AND passed <> ?';
+    $select = 'ra.id AS attemptid, ra.quizid AS quizid, ra.timefinish, rb.name AS bookname';
+    $from   = '{reader_attempts} ra LEFT JOIN {reader_books} rb ON ra.quizid=rb.quizid';
+    $where  = 'ra.userid= ? AND ra.timefinish <= ? AND ra.passed <> ?';
     $params = array($USER->id, $reader->ignoredate, 'true');
-    if ($DB->record_exists_select('reader_attempts', $select, $params)) {
-
-        $url = new moodle_url('/mod/reader/showincorrectquizzes.php', array('id' => $id, 'uid' => $USER->id));
-        $action = new popup_action('click', $url, 'bookcoversinprevterm', array('height' => 440, 'width' => 700));
+    if ($attempts = $DB->get_records_sql("SELECT $select FROM $from WHERE $where ORDER BY timefinish", $params)) {
         $text = get_string('incorrectbooksreadinpreviousterms', 'reader');
-        echo html_writer::tag('p', $output->action_link($url, $text, $action, array('title' => $text)));
+        $onclick = "var obj = document.getElementById('readerfailedbooklist');".
+                   "if (obj) {".
+                       "if (obj.style.display=='none') {".
+                           "obj.style.display = '';".
+                       "} else {".
+                           "obj.style.display = 'none';".
+                       "}".
+                   "}";
+        echo html_writer::tag('p', html_writer::tag('a', $text, array('onclick' => $onclick)));
+        echo html_writer::start_tag('ul', array('id' => 'readerfailedbooklist', 'style' => 'display: none;'));
+        foreach ($attempts as $attempt) {
+            $timefinish =  userdate($attempt->timefinish, get_string('strftimedate'));
+            echo html_writer::tag('li',$timefinish.': '.$attempt->bookname);
+        }
+        echo html_writer::end_tag('ul');
     }
 }
 

@@ -33,7 +33,7 @@
 #page-mod-reader-admin div.readermenu {}
 #page-mod-reader-admin div.readermenu ul.readermenusections { list-style-type: none; }
 #page-mod-reader-admin div.readermenu li.readermenusection { float: left; margin: auto 6px; padding: 4px;
-                                                             width: 18%; min-width: 180px; max-width: 300px;
+                                                             min-height: 260px; width: 18%; min-width: 180px; max-width: 300px;
                                                              background-color: #efefef; border: solid 1px #ddddff; }
 #page-mod-reader-admin div.readermenu ul.readermenuitems { margin: 4px 4px; padding: auto 2px; }
 #page-mod-reader-admin div.readermenu li.readermenuitem { margin: 4px 12px; padding: auto 2px; }
