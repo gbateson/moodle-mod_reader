@@ -27,6 +27,7 @@
 
 /** reader view **/
 #page-mod-reader-view .readersearchform tr.advanced { display: none; }
+#page-mod-reader-view div.tabtree { margin-bottom: 0px; }
 
 /** reader admin menu **/
 #page-mod-reader-admin div.tabtree { margin-bottom: 0px; }
@@ -94,23 +95,24 @@
 #page-mod-reader-admin-download form input.downloadbutton:hover { background-color: #cc3333; color: #eeeeee; }
 
 /** reader report **/
-#page-mod-reader-report table.flexible th { white-space: normal; }
-#page-mod-reader-report table.flexible th span.nowrap { white-space: nowrap; }
-#page-mod-reader-report table.flexible td span.passed { color: #00CC00; }
-#page-mod-reader-report table.flexible td span.failed { color: #CC0000; }
-#page-mod-reader-report table.flexible td span.cheated { color: #0000CC; }
-#page-mod-reader-report table.flexible tr.emptyrow { display: none; }
+#page-mod-reader-admin-reports div.tabtree { margin-bottom: 2.5em; }
+#page-mod-reader-admin-reports table.flexible th { white-space: normal; }
+#page-mod-reader-admin-reports table.flexible th span.nowrap { white-space: nowrap; }
+#page-mod-reader-admin-reports table.flexible td span.passed { color: #00CC00; }
+#page-mod-reader-admin-reports table.flexible td span.failed { color: #CC0000; }
+#page-mod-reader-admin-reports table.flexible td span.cheated { color: #0000CC; }
+#page-mod-reader-admin-reports table.flexible tr.emptyrow { display: none; }
 
-#page-mod-reader-report div.readerreportaction div.actionsettings { margin-left: 20px; }
+#page-mod-reader-admin-reports div.readerreportaction div.actionsettings { margin-left: 20px; }
 
-#page-mod-reader-report .mform fieldset div.readerreportaction div#publishers { margin-top: 6px; }
+#page-mod-reader-admin-reports .mform fieldset div.readerreportaction div#publishers { margin-top: 6px; }
 
-#page-mod-reader-report div.readerreportaction div#publishers select,
-#page-mod-reader-report div.readerreportaction div#levels     select,
-#page-mod-reader-report div.readerreportaction div#bookids    select { float: left; margin: 0px 9px 6px 3px; }
-#page-mod-reader-report div.readerreportaction div#bookid,
-#page-mod-reader-report div.readerreportsubmit { clear: both; }
+#page-mod-reader-admin-reports div.readerreportaction div#publishers select,
+#page-mod-reader-admin-reports div.readerreportaction div#levels     select,
+#page-mod-reader-admin-reports div.readerreportaction div#bookids    select { float: left; margin: 0px 9px 6px 3px; }
+#page-mod-reader-admin-reports div.readerreportaction div#bookid,
+#page-mod-reader-admin-reports div.readerreportsubmit { clear: both; }
 
-#page-mod-reader-report div.readerreportaction div.selecteditemhdr { float: left; margin: 0px 3px 6px 0px; font-weight: bold; }
-#page-mod-reader-report div.readerreportaction div.selecteditemhdr:after { content: ":" }
-#page-mod-reader-report div.readerreportaction div.selecteditemtxt { float: left; margin: 0px 12px 6px 3px; }
+#page-mod-reader-admin-reports div.readerreportaction div.selecteditemhdr { float: left; margin: 0px 3px 6px 0px; font-weight: bold; }
+#page-mod-reader-admin-reports div.readerreportaction div.selecteditemhdr:after { content: ":" }
+#page-mod-reader-admin-reports div.readerreportaction div.selecteditemtxt { float: left; margin: 0px 12px 6px 3px; }

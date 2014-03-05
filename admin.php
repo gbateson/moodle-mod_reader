@@ -141,18 +141,7 @@ $bookquiznumber         = optional_param('bookquiznumber', 0, PARAM_INT);
 
 $readercfg = get_config('reader');
 
-if (isset($_SESSION['SESSION']->reader_changetostudentview) && $_SESSION['SESSION']->reader_changetostudentview > 0) {
-    if ($USER =  $DB->get_record('user', array('id'=>$_SESSION['SESSION']->reader_changetostudentview))) {
-        unset($_SESSION['SESSION']->reader_changetostudentview);
-        $_SESSION['SESSION']->reader_teacherview = 'teacherview';
-    }
-}
-if ((isset($_SESSION['SESSION']->reader_page) && $_SESSION['SESSION']->reader_page == 'view') || (isset($_SESSION['SESSION']->reader_lasttime) && $_SESSION['SESSION']->reader_lasttime < (time() - 300))) {
-    unset($_SESSION['SESSION']->reader_page);
-    unset($_SESSION['SESSION']->reader_lasttime);
-    unset($_SESSION['SESSION']->reader_lastuser);
-    unset($_SESSION['SESSION']->reader_lastuserfrom);
-}
+reader_change_to_teacherview();
 
 if (($ct || $ct == 0) && $ct != "") {
     $_SESSION['SESSION']->reader_values_ct = $ct;
@@ -505,8 +494,6 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $length && $tole
     add_to_log($course->id, 'reader', substr("AA-Mass changes length ({$length} to {$tolength})", 0, 39), 'admin.php?id='.$id, $cm->instance);
 }
 
-
-
 if (has_capability('mod/reader:addinstance', $contextmodule) && $act == 'changereaderlevel' && ($difficulty || $difficulty == 0) && empty($length)) {
   if ($reader->bookinstances == 0) {
     $params = array('id' => $bookid);
@@ -527,8 +514,6 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $act == 'changer
   }
 }
 
-
-
 if (has_capability('mod/reader:addinstance', $contextmodule) && $act == 'changereaderlevel' && $length) {
   if ($reader->bookinstances == 0) {
     if ($DB->get_record('reader_books', array('id' => $bookid))) {
@@ -548,17 +533,12 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $act == 'changer
   }
 }
 
-
-
-if (has_capability('mod/reader:manageattempts', $contextmodule) && $viewasstudent > 1) {
-    $_SESSION['SESSION']->reader_changetostudentview = $USER->id;
-    $_SESSION['SESSION']->reader_changetostudentviewlink = "gid={$gid}&searchtext={$searchtext}&page={$page}&sort={$sort}&orderby={$orderby}";
-    $USER = $DB->get_record('user', array('id' => $viewasstudent));
-    unset($_SESSION['SESSION']->reader_teacherview);
-    header("Location: view.php?a=quizzes&id=".$id);
+if (has_capability('mod/reader:manageattempts', $contextmodule) && $viewasstudent) {
+    $link = "gid={$gid}&searchtext={$searchtext}&page={$page}&sort={$sort}&orderby={$orderby}";
+    $location = "view.php?a=quizzes&id=".$id;
+    reader_change_to_studentview($viewasstudent, $link, $location);
+    // script will finish here
 }
-
-
 
 if (has_capability('mod/reader:addinstance', $contextmodule) && $act == 'studentslevels' && $setgoal) {
     if ($data = $DB->get_record('reader_levels', array('userid' => $userid, 'readerid' => $reader->id))) {
@@ -582,8 +562,6 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $act == 'student
     }
 }
 
-
-
 if (has_capability('mod/reader:addinstance', $contextmodule) && isset($nopromote) && $userid) {
     if ($DB->get_record('reader_levels', array('userid' => $userid, 'readerid' => $reader->id))) {
         $DB->set_field('reader_levels',  'nopromote',  $nopromote, array('userid' => $userid,  'readerid' => $reader->id));
@@ -595,8 +573,6 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && isset($nopromote
         die;
     }
 }
-
-
 
 if (has_capability('mod/reader:addinstance', $contextmodule) && isset($promotionstop) && $userid) {
     if ($DB->get_record('reader_levels', array('userid' => $userid, 'readerid' => $reader->id))) {
@@ -610,8 +586,6 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && isset($promotion
         die;
     }
 }
-
-
 
 if (has_capability('mod/reader:addinstance', $contextmodule) && $setip) {
     if ($DB->get_record('reader_strict_users_list', array('userid' => $userid, 'readerid' => $reader->id))) {
@@ -630,8 +604,6 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $setip) {
         die;
     }
 }
-
-
 
 if (has_capability('mod/reader:addinstance', $contextmodule) && $changeallstartlevel >= 0) {
     foreach ($coursestudents as $coursestudent) {
@@ -669,8 +641,6 @@ if (has_capability('mod/reader:addinstance', $contextmodule) &&  $changeallcurre
     }
 }
 
-
-
 if (has_capability('mod/reader:addinstance', $contextmodule) && $changeallpromo) {
     foreach ($coursestudents as $coursestudent) {
         if ($DB->get_record('reader_levels', array('userid' => $coursestudent->id, 'readerid' => $reader->id))) {
@@ -689,8 +659,6 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $changeallstoppr
         add_to_log($course->id, 'reader', substr("AA-Student NoPromote Changed ({$coursestudent->id} set to {$changeallstoppromo})",0,39), 'admin.php?id='.$id, $cm->instance);
     }
 }
-
-
 
 if (has_capability('mod/reader:addinstance', $contextmodule) && $changeallcurrentgoal) {
     foreach ($coursestudents as $coursestudent) {
@@ -759,8 +727,6 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $act == 'awardex
     $USER->id = $useridold;
 }
 
-
-
 if (has_capability('mod/reader:addinstance', $contextmodule) && $cheated) {
     list($cheated1, $cheated2) = explode('_', $cheated);
     $DB->set_field('reader_attempts',  'passed',  'cheated', array('id' => $cheated1));
@@ -794,8 +760,6 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $cheated) {
     }
 }
 
-
-
 if (has_capability('mod/reader:addinstance', $contextmodule) && $uncheated) {
     list($cheated1, $cheated2) = explode('_', $uncheated);
     $DB->set_field('reader_attempts',  'passed',  'true', array('id' => $cheated1));
@@ -826,8 +790,6 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $uncheated) {
         email_to_user($user2,get_admin(),'Points restored notice',$reader->not_cheated_message);
     }
 }
-
-
 
 if (has_capability('mod/reader:addinstance', $contextmodule) && $act == 'setgoal') {
     if ($wordsorpoints) {

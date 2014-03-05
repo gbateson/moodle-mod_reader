@@ -558,3 +558,4 @@ $string['import'] = 'Import';
 $string['export'] = 'Export';
 $string['setgoals'] = 'Set goals';
 $string['setlevels'] = 'Set levels';
+$string['studentview'] = 'Student view';

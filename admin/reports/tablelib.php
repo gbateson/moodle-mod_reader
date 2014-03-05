@@ -195,6 +195,11 @@ class reader_admin_reports_table extends table_sql {
             $this->no_sorting('selected');
         }
 
+        // disable sorting on "studentview" field
+        if ($this->has_column('studentview')) {
+            $this->no_sorting('studentview');
+        }
+
         // basically all columns are centered
         $this->column_style_all('text-align', 'center');
 
@@ -250,9 +255,18 @@ class reader_admin_reports_table extends table_sql {
     public function get_tablecolumns() {
         $tablecolumns = $this->tablecolumns;
 
+        // certain columns are not needed in certain situations
+        $columns = array();
+
         if (empty($this->actions) || $this->download || ! $this->output->reader->can_manageattempts()) {
-            // remove the select column from downloads and from student's view
-            $i = array_search('selected', $tablecolumns);
+            $columns[] = 'selected';
+        }
+        if ($this->download || ! $this->output->reader->can_manageattempts()) {
+            $columns[] = 'studentview';
+        }
+
+        foreach ($columns as $column) {
+            $i = array_search($column, $tablecolumns);
             if (is_numeric($i)) {
                 array_splice($tablecolumns, $i, 1);
             }
@@ -733,6 +747,15 @@ class reader_admin_reports_table extends table_sql {
     }
 
     /**
+     * header_studentview
+     *
+     * @return xxx
+     */
+    public function header_studentview()  {
+        return '';
+    }
+
+    /**
      * show_hide_link
      *
      * override default function so that certain columns are always visible
@@ -742,7 +765,7 @@ class reader_admin_reports_table extends table_sql {
      * @return string HTML fragment.
      */
     protected function show_hide_link($column, $index) {
-        if ($column=='selected') {
+        if ($column=='selected' || $column=='studentview') {
             return '';
         } else {
             return parent::show_hide_link($column, $index);
@@ -901,6 +924,19 @@ class reader_admin_reports_table extends table_sql {
             }
         }
         return html_writer::checkbox('selected['.$key.'][]', $row->$key, $checked);
+    }
+
+    /**
+     * col_studentview
+     *
+     * @param xxx $row
+     * @return xxx
+     */
+    public function col_studentview($row)  {
+        $params = array('id' => $this->output->reader->cm->id, 'viewasstudent' => $row->userid);
+        $url = new moodle_url('/mod/reader/admin.php', $params);
+        $img = $this->output->pix_icon('t/preview', get_string('studentview', 'reader'));
+        return html_writer::link($url, $img);
     }
 
     /**

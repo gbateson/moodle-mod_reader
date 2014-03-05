@@ -4257,3 +4257,60 @@ function reader_navigation_add_node(navigation_node $node, $type, $key, $text, $
         $node->children->add(new navigation_node(array('type'=>$type, 'key'=>$key, 'text'=>$text, 'action'=>$action, 'icon'=>$icon)));
     }
 }
+
+/**
+ * reader_change_to_teacherview
+ *
+ * @todo Finish documenting this function
+ */
+function reader_change_to_teacherview() {
+    global $DB, $USER;
+    $unset = false;
+    if (isset($_SESSION['SESSION']->reader_page)) {
+        $unset = ($_SESSION['SESSION']->reader_page == 'view');
+    }
+    if (isset($_SESSION['SESSION']->reader_lasttime)) {
+        $unset = ($_SESSION['SESSION']->reader_lasttime < (time() - 300));
+    }
+    if ($unset) {
+        // in admin.php, remove settings coming from view.php
+        unset($_SESSION['SESSION']->reader_page);
+        unset($_SESSION['SESSION']->reader_lasttime);
+        unset($_SESSION['SESSION']->reader_lastuser);
+        unset($_SESSION['SESSION']->reader_lastuserfrom);
+    }
+    if (isset($_SESSION['SESSION']->reader_changetostudentview)) {
+        // in view.php, prepare settings going to admin.php
+        if ($userid = $_SESSION['SESSION']->reader_changetostudentview) {
+            $_SESSION['SESSION']->reader_lastuser = $USER->id;
+            $_SESSION['SESSION']->reader_page     = 'view';
+            $_SESSION['SESSION']->reader_lasttime = time();
+            $_SESSION['SESSION']->reader_lastuserfrom = $userid;
+            if ($USER = $DB->get_record('user', array('id' => $userid))) {
+                $_SESSION['SESSION']->reader_teacherview = 'teacherview';
+                unset($_SESSION['SESSION']->reader_changetostudentview);
+                unset($_SESSION['SESSION']->reader_changetostudentviewlink);
+            }
+        }
+    }
+}
+
+/**
+ * reader_change_to_studentview
+ *
+ * @param object  $context
+ * @param integer $userid
+ * @param string  $link
+ * @param string  $location
+ * @todo Finish documenting this function
+ */
+function reader_change_to_studentview($userid, $link, $location) {
+    global $DB, $USER;
+    // in admin.php, prepare settings going to view.php
+    $_SESSION['SESSION']->reader_changetostudentview = $USER->id;
+    $_SESSION['SESSION']->reader_changetostudentviewlink = $link;
+    $_SESSION['USER'] = $DB->get_record('user', array('id' => $userid));
+    unset($_SESSION['SESSION']->reader_teacherview);
+    header("Location: $location");
+    // script will terminate here
+}

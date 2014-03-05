@@ -39,7 +39,7 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
 
     /** @var columns used in this table */
     protected $tablecolumns = array(
-        'selected', 'username', 'fullname', 'startlevel', 'currentlevel', 'nopromote',
+        'selected', 'studentview', 'username', 'fullname', 'startlevel', 'currentlevel', 'nopromote',
         'countpassed', 'countfailed', 'averageduration', 'averagegrade', 'wordsthisterm', 'wordsallterms'
     );
 

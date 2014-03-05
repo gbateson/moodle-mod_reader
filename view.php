@@ -95,36 +95,35 @@ echo $output->header();
 $timeformat = 'h:i A';  // 1:45 PM
 $dateformat = 'jS M Y'; // 2nd Jun 2013
 
-//Check time [open/close]
+//Check access restrictions (permissions, IP, time open/close)
 $timenow = time();
-if (! empty($reader->timeopen) && $reader->timeopen > $timenow) {
+if (has_capability('mod/reader:viewreports', $contextmodule)) {
+    echo $output->tabs();
+    $msg = ''; // teacher can always view this page
+} else if (! has_capability('mod/reader:viewbooks', $contextmodule)) {
+    $msg = get_string('nopermissions', 'error', get_string('reader:viewreports', 'reader'));
+} else if ($reader->subnet && ! address_in_subnet(getremoteaddr(), $reader->subnet)) {
+    $msg = get_string('subneterror', 'quiz');
+} else if (! empty($reader->timeopen) && $reader->timeopen > $timenow) {
     $msg = get_string('notopenyet', 'reader', userdate($reader->timeopen));
 } else if (! empty($reader->timeclose) && $reader->timeclose < $timenow) {
     $msg = get_string('alreadyclosed', 'reader', userdate($reader->timeclose));
 } else {
-    $msg = '';
+    $msg = ''; // reader is open and not closed, and user can view books
 }
 if ($msg) {
     $url = new moodle_url('/course/view.php', array('id' => $course->id));
     $msg .= html_writer::tag('p', $output->continue_button($url));
     echo $output->box($msg, 'generalbox', 'notice');
     echo $output->footer();
+    reader_change_to_teacherview();
     exit;
 }
 
-echo '<script type="text/javascript" src="js/ajax.js"></script>';
+$url = new moodle_url('/mod/reader/js/ajax.js');
+echo html_writer::tag('script', '', array('type' => 'text/javascript', 'src' => $url));
 
 $alreadyansweredbooksid = array();
-
-if (has_capability('mod/reader:viewreports', $contextmodule)) {
-    //require_once ('tabs.php');
-    echo $output->tabs();
-} else {
-/// Check subnet access
-    if ($reader->subnet && !address_in_subnet(getremoteaddr(), $reader->subnet)) {
-        throw new reader_exception(get_string('subneterror', 'quiz'), 'view.php?id='.$id);
-    }
-}
 
 $leveldata = reader_get_level_data($reader);
 if ($reader->levelcheck==0) {
@@ -581,23 +580,13 @@ if ($showform && has_capability('mod/reader:viewbooks', $contextmodule)) {
     print_string('pleasewait', 'reader');
 }
 
-if (isset($_SESSION['SESSION']->reader_changetostudentview) && $_SESSION['SESSION']->reader_changetostudentview > 0) {
-    $_SESSION['SESSION']->reader_lastuser = $USER->id;
-    $_SESSION['SESSION']->reader_page     = 'view';
-    $_SESSION['SESSION']->reader_lasttime = time();
-    $_SESSION['SESSION']->reader_lastuserfrom = $_SESSION['SESSION']->reader_changetostudentview;
-
-    if ($USER = $DB->get_record('user', array('id' => $_SESSION['SESSION']->reader_changetostudentview))) {
-        unset($_SESSION['SESSION']->reader_changetostudentview);
-        $_SESSION['SESSION']->reader_teacherview = 'teacherview';
-    }
-}
-
 echo html_writer::tag('div', '', array('style'=>'clear:both;'));
 
 echo $output->box_end();
 print ('<center><img src="img/credit.jpg" height="40px"></center>');
 echo $output->footer();
+
+reader_change_to_teacherview();
 
 /**
  * reader_level_blockgraph

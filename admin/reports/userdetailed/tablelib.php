@@ -39,12 +39,12 @@ class reader_admin_reports_userdetailed_table extends reader_admin_reports_table
 
     /** @var columns used in this table */
     protected $tablecolumns = array(
-        'username', 'fullname', 'currentlevel', // , 'picture'
-        'selected', 'difficulty', 'name', 'timefinish', 'percentgrade', 'passed', 'words', 'totalwords',
+        'studentview', 'username', 'fullname', 'currentlevel', 'selected',
+        'difficulty', 'name', 'timefinish', 'percentgrade', 'passed', 'words', 'totalwords',
     );
 
     /** @var suppressed columns in this table */
-    protected $suppresscolumns = array('username', 'fullname', 'currentlevel');
+    protected $suppresscolumns = array('studentview', 'username', 'fullname', 'currentlevel');
 
     /** @var columns in this table that are not sortable */
     protected $nosortcolumns = array('totalwords');
