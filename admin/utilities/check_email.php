@@ -29,6 +29,9 @@
 require_once('../../../../../config.php');
 require_once($CFG->dirroot.'/mod/reader/lib.php');
 
+$id  = optional_param('id',  0, PARAM_INT);
+$tab = optional_param('tab', 0, PARAM_INT);
+
 require_login(SITEID);
 require_capability('moodle/site:config', reader_get_context(CONTEXT_SYSTEM));
 
@@ -36,7 +39,7 @@ require_capability('moodle/site:config', reader_get_context(CONTEXT_SYSTEM));
 // it is the path below $CFG->wwwroot of this script
 $PAGE->set_url($CFG->wwwroot.$SCRIPT);
 
-$title = get_string('fixslashesinnames', 'reader');
+$title = get_string('check_email', 'reader');
 $PAGE->set_title($title);
 $PAGE->set_heading($title);
 $PAGE->set_pagelayout('admin');
@@ -44,12 +47,27 @@ $PAGE->set_pagelayout('admin');
 echo $OUTPUT->header();
 echo $OUTPUT->box_start();
 
-$user1 = $DB->get_record('user', array('id' => 4));
-email_to_user($user1, get_admin(), 'Cheated notice', $readercfg->cheated_message);
-echo '<p>'.get_string('passwordsenttext', 'moodle', $user1).'</p>';
+$admin = get_admin(); // the main admin user
+if (! $user = $DB->get_record('user', array('username' => 'gueststudent'))) {
+    $user = $admin;
+}
 
-mail($user1->email, 'My Subject', "Line 1\nLine 2\nLine 3");
-echo '<p>'.get_string('passwordsenttext', 'moodle', $user1).'</p>';
+$subject = get_string('check_email', 'reader');
+$message = get_string('welcometocourse', 'moodle', get_string('modulename', 'reader'));
+
+email_to_user($user, $admin, $subject, $message);
+echo '<p>'.get_string('sentemailmoodle', 'reader', $user).'</p>';
+
+mail($user->email, $subject, $message);
+echo '<p>'.get_string('sentemailphp', 'reader', $user).'</p>';
+
+echo html_writer::tag('p', 'All done');
+if ($id) {
+    $href = new moodle_url('/mod/reader/admin/utilities.php', array('id' => $id, 'tab' => $tab));
+} else {
+    $href = new moodle_url($CFG->wwwroot.'/');
+}
+echo html_writer::tag('p', html_writer::tag('a', 'Click here to continue', array('href' => $href)));
 
 echo $OUTPUT->box_end();
 echo $OUTPUT->footer();

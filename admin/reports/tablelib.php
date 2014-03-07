@@ -1027,9 +1027,16 @@ class reader_admin_reports_table extends table_sql {
      */
     public function col_passed($row)  {
         if (isset($row->passed) && $row->passed=='true') {
-            return html_writer::tag('span', get_string('passedshort', 'reader'), array('class' => 'passed'));
+            $text = get_string('passedshort', 'reader');
+            $class = 'passed';
         } else {
-            return html_writer::tag('span', get_string('failedshort', 'reader'), array('class' => 'failed'));
+            $text = get_string('failedshort', 'reader');
+            $class = 'failed';
+        }
+        if ($this->download) { // $this->is_downloading()
+            return $text;
+        } else {
+            return html_writer::tag('span', $text, array('class' => $class));
         }
     }
 

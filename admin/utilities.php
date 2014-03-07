@@ -32,6 +32,7 @@ require_once($CFG->dirroot.'/mod/reader/admin/utilities/renderer.php');
 
 $id     = optional_param('id',     0,  PARAM_INT); // course module id
 $r      = optional_param('r',      0,  PARAM_INT); // reader id
+$tab    = optional_param('tab',    0,  PARAM_INT); // tab index
 
 if ($id) {
     $cm = get_coursemodule_from_id('reader', $id, 0, false, MUST_EXIST);
@@ -62,13 +63,16 @@ $output->init($reader);
 
 echo $output->header();
 echo $output->tabs();
-echo $output->box_start('generalbox', 'notice');
+echo $output->box_start('generalbox');
+
+// get string manager
+$strman = get_string_manager();
 
 // get path to this directory
 $dirname = dirname($SCRIPT).'/utilities';
 $dirpath = $CFG->dirroot.$dirname;
 
-echo html_writer::start_tag('ul');
+echo html_writer::start_tag('ol', array('class' => 'readerutilities'));
 
 $files = array();
 $items = new DirectoryIterator($dirpath);
@@ -85,11 +89,36 @@ foreach ($items as $item) {
 }
 sort($files);
 foreach ($files as $file) {
-    $href = $CFG->wwwroot.$dirname.'/'.$file;
-    echo html_writer::tag('li', html_writer::tag('a', $file, array('href' => $href)))."\n";
+
+    $href = new moodle_url($dirname.'/'.$file, array('id' => $id, 'tab' => $tab));
+    $text = substr($file, 0, strrpos($file, '.'));
+    $desc = '';
+    if ($strman->string_exists($text.'desc', 'reader')) {
+        $desc = get_string($text.'desc', 'reader');
+        $desc = format_text($desc, FORMAT_MARKDOWN);
+    }
+    if ($strman->string_exists($text, 'reader')) {
+        $text = get_string($text, 'reader');
+    }
+    $text = html_writer::tag('a', $text, array('href' => $href));
+
+    echo html_writer::start_tag('li', array('class' => 'readerutility'));
+    if ($text) {
+        $params = array('class' => 'readerutilitytext');
+        echo html_writer::tag('span', $text);
+    }
+    if ($text && $desc) {
+        echo html_writer::empty_tag('br');
+    }
+    if ($desc) {
+        $params = array('class' => 'readerutilitydesc');
+        echo html_writer::tag('span', $desc, $params);
+    }
+    echo html_writer::end_tag('li');
 }
 
-echo html_writer::end_tag('ul');
+echo html_writer::end_tag('ol');
+echo html_writer::tag('div', '', array('style' => 'clear: both;'));
 
 echo $output->box_end();
 echo $output->footer();

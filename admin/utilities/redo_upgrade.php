@@ -28,6 +28,9 @@
 /** Include required files */
 require_once('../../../../../config.php');
 
+$id  = optional_param('id',  0, PARAM_INT);
+$tab = optional_param('tab', 0, PARAM_INT);
+
 require_login(SITEID);
 if (class_exists('context_system')) {
     $context = context_system::instance();

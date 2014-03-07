@@ -29,6 +29,9 @@
 require_once('../../../../../config.php');
 require_once($CFG->dirroot.'/mod/reader/lib.php');
 
+$id  = optional_param('id',  0, PARAM_INT);
+$tab = optional_param('tab', 0, PARAM_INT);
+
 require_login(SITEID);
 if (class_exists('context_system')) {
     $context = context_system::instance();
@@ -130,7 +133,12 @@ if ($startedlist) {
 } else {
     echo "<p>no slashes found in book titles</p>\n";
 }
-echo html_writer::tag('p', html_writer::tag('a', 'Click here to continue', array('href' => $CFG->wwwroot.'/mod/reader/admin/utilities/index.php')));
+if ($id) {
+    $href = new moodle_url('/mod/reader/admin/utilities.php', array('id' => $id, 'tab' => $tab));
+} else {
+    $href = new moodle_url($CFG->wwwroot.'/');
+}
+echo html_writer::tag('p', html_writer::tag('a', 'Click here to continue', array('href' => $href)));
 
 echo $OUTPUT->box_end();
 echo $OUTPUT->footer();

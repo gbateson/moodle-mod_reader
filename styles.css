@@ -35,7 +35,11 @@
 #page-mod-reader-admin div.readermenu ul.readermenusections { list-style-type: none; }
 #page-mod-reader-admin div.readermenu li.readermenusection { float: left; margin: auto 6px; padding: 4px;
                                                              min-height: 260px; width: 18%; min-width: 180px; max-width: 300px;
-                                                             background-color: #efefef; border: solid 1px #ddddff; }
+                                                             background-color: #efefef; border: solid 1px #ddddff;
+                                                             -webkit-border-radius: 8px; /* Safari and Chrome */
+                                                             -moz-border-radius: 8px;   /* Firefox */
+                                                             -o-border-radius: 8px;    /* Opera */
+                                                             border-radius: 8px;      /* CSS3 */}
 #page-mod-reader-admin div.readermenu ul.readermenuitems { margin: 4px 4px; padding: auto 2px; }
 #page-mod-reader-admin div.readermenu li.readermenuitem { margin: 4px 12px; padding: auto 2px; }
 
@@ -94,7 +98,7 @@
 }
 #page-mod-reader-admin-download form input.downloadbutton:hover { background-color: #cc3333; color: #eeeeee; }
 
-/** reader report **/
+/** reader admin reports **/
 #page-mod-reader-admin-reports div.tabtree { margin-bottom: 2.5em; }
 #page-mod-reader-admin-reports table.flexible th { white-space: normal; }
 #page-mod-reader-admin-reports table.flexible th span.nowrap { white-space: nowrap; }
@@ -116,3 +120,15 @@
 #page-mod-reader-admin-reports div.readerreportaction div.selecteditemhdr { float: left; margin: 0px 3px 6px 0px; font-weight: bold; }
 #page-mod-reader-admin-reports div.readerreportaction div.selecteditemhdr:after { content: ":" }
 #page-mod-reader-admin-reports div.readerreportaction div.selecteditemtxt { float: left; margin: 0px 12px 6px 3px; }
+
+/** reader admin utilities **/
+#page-mod-reader-admin-utilities div.tabtree { margin-bottom: 0px; }
+#page-mod-reader-admin-utilities div.generalbox { }
+#page-mod-reader-admin-utilities ol.readerutilities { min-width: 200px; max-width: 1200px; }
+#page-mod-reader-admin-utilities li.readerutility { float: left; margin: 12px 18px; padding: 4px;
+                                                    min-height: 100px; width: 18%; min-width: 180px; max-width: 300px;
+                                                    background-color: #efefef; border: solid 1px #ddddff;
+                                                    -webkit-border-radius: 8px; /* Safari and Chrome */
+                                                    -moz-border-radius: 8px;   /* Firefox */
+                                                    -o-border-radius: 8px;    /* Opera */
+                                                    border-radius: 8px;      /* CSS3 */}
