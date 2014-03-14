@@ -256,17 +256,17 @@ class reader_admin_reports_table extends table_sql {
         $tablecolumns = $this->tablecolumns;
 
         // certain columns are not needed in certain situations
-        $columns = array();
+        $removecolumns = array();
 
         if (empty($this->actions) || $this->download || ! $this->output->reader->can_manageattempts()) {
-            $columns[] = 'selected';
+            $removecolumns[] = 'selected';
         }
         if ($this->download || ! $this->output->reader->can_manageattempts()) {
-            $columns[] = 'studentview';
+            $removecolumns[] = 'studentview';
         }
 
-        foreach ($columns as $column) {
-            $i = array_search($column, $tablecolumns);
+        foreach ($removecolumns as $removecolumn) {
+            $i = array_search($removecolumn, $tablecolumns);
             if (is_numeric($i)) {
                 array_splice($tablecolumns, $i, 1);
             }
@@ -816,7 +816,7 @@ class reader_admin_reports_table extends table_sql {
     public function header_totalwords($type='')  {
         $totalwords = get_string('totalwords', 'reader');
         if ($type) {
-            if ($this->download) { // $this->is_downloading()
+            if ($this->download) {
                 $totalwords .= " ($type)";
             } else {
                 $totalwords .= ' '.html_writer::tag('span', "($type)", array('class' => 'nowrap'));
@@ -901,7 +901,7 @@ class reader_admin_reports_table extends table_sql {
      * @return xxx
      */
     public function empty_cell()  {
-        if ($this->download) { // $this->is_downloading()
+        if ($this->download) {
             return '';
         } else {
             return '&nbsp;';
@@ -1033,7 +1033,7 @@ class reader_admin_reports_table extends table_sql {
             $text = get_string('failedshort', 'reader');
             $class = 'failed';
         }
-        if ($this->download) { // $this->is_downloading()
+        if ($this->download) {
             return $text;
         } else {
             return html_writer::tag('span', $text, array('class' => $class));

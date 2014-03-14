@@ -51,7 +51,7 @@
 #page-mod-reader-admin-download ul.remotesites,
 #page-mod-reader-admin-download ul.publishers,
 #page-mod-reader-admin-download ul.levels,
-#page-mod-reader-admin-download ul.items { list-style-type: none; margin: 6px 0px; padding: 6px; max-width: 600px; }
+#page-mod-reader-admin-download ul.items { list-style-type: none; margin: 6px 0px; padding: 6px; max-width: 600px; text-align: left; }
 
 #page-mod-reader-admin-download ul.remotesites li,
 #page-mod-reader-admin-download ul.publishers li,

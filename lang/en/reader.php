@@ -462,6 +462,7 @@ $string['sort_strings'] = 'Sort strings';
 $string['sort_stringsdesc'] = 'Sort the strings used by the Reader module.';
 $string['startlevel'] = 'Start level';
 $string['strftimefinish'] = '%Y %b %d (%a) %H:%M';
+$string['strftimefinishshort'] = '%Y/%m/%d %H:%M';
 $string['studentmanagement'] = 'Student Management';
 $string['studentslevels'] = 'Change Students Levels, Promotion Policy and Goals';
 $string['studentuserid'] = 'Student user ID';

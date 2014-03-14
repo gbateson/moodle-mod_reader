@@ -176,10 +176,14 @@ class reader_admin_reports_userdetailed_table extends reader_admin_reports_table
      */
     public function col_timefinish($row)  {
         if (empty($row->timefinish)) {
-            return '';
-        } else {
-            return userdate($row->timefinish, get_string('strftimefinish', 'reader'));
+            return $this->empty_cell();
         }
+        if ($this->download) {
+            $fmt = get_string('strftimefinishshort', 'reader');
+        } else {
+            $fmt = get_string('strftimefinish', 'reader');
+        }
+        return userdate($row->timefinish, $fmt);
     }
 
    /**
@@ -189,11 +193,10 @@ class reader_admin_reports_userdetailed_table extends reader_admin_reports_table
      * @return xxx
      */
     public function col_percentgrade($row)  {
-        if (isset($row->percentgrade)) {
-            return round($row->percentgrade).'%';
-        } else {
+        if (! isset($row->percentgrade)) {
             return $this->empty_cell();
         }
+        return round($row->percentgrade).'%';
     }
 
     /**
@@ -207,7 +210,7 @@ class reader_admin_reports_userdetailed_table extends reader_admin_reports_table
         static $totalwords = 0;
 
         if (empty($row->userid)) {
-            return ''; // shouldn't happen !!
+            return $this->empty_cell(); // shouldn't happen !!
         }
 
         if ($userid && $userid==$row->userid) {

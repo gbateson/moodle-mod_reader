@@ -144,8 +144,9 @@ class mod_reader {
      * textlib
      *
      * a wrapper method to offer consistent API for textlib class
-     * in Moodle 2.0 and 2.1, $textlib is first initiated, then called.
-     * in Moodle >= 2.2, we use only static methods of the "textlib" class.
+     * in Moodle 2.0 - 2.1, $textlib is first initiated, then called
+     * in Moodle 2.2 - 2.5, we use only static methods of the "textlib" class
+     * in Moodle >= 2.6, we use only static methods of the "core_text" class
      *
      * @param string $method
      * @param mixed any extra params that are required by the textlib $method
@@ -153,10 +154,15 @@ class mod_reader {
      * @todo Finish documenting this function
      */
     public static function textlib() {
-        if (method_exists('textlib', 'textlib')) {
+        if (class_exists('core_text')) {
+            // Moodle >= 2.6
+            $textlib = 'core_text';
+        } else if (method_exists('textlib', 'textlib')) {
+            // Moodle 2.0 - 2.1
             $textlib = textlib_get_instance();
         } else {
-            $textlib = 'textlib'; // Moodle >= 2.2
+            // Moodle 2.3 - 2.5
+            $textlib = 'textlib';
         }
         $args = func_get_args();
         $method = array_shift($args);
