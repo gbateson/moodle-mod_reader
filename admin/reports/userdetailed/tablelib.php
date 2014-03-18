@@ -52,6 +52,9 @@ class reader_admin_reports_userdetailed_table extends reader_admin_reports_table
     /** @var text columns in this table */
     protected $textcolumns = array('username', 'fullname', 'name');
 
+    /** @var number columns in this table */
+    protected $numbercolumns = array('currentlevel', 'difficulty', 'words', 'totalwords');
+
     /** @var columns that are not to be center aligned */
     protected $leftaligncolumns = array('username', 'fullname', 'name');
 

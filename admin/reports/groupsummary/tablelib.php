@@ -61,6 +61,9 @@ class reader_admin_reports_groupsummary_table extends reader_admin_reports_table
     /** @var text columns in this table */
     protected $textcolumns = array('groupname');
 
+    /** @var number columns in this table */
+    protected $numbercolumns = array('countactive', 'countinactive', 'averagetaken', 'averagepassed', 'averagefailed', 'averagewordsthisterm', 'averagewordsallterms');
+
     /** @var columns that are not to be center aligned */
     protected $leftaligncolumns = array('groupname');
 

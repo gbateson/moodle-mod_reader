@@ -73,8 +73,11 @@ class reader_admin_reports_table extends table_sql {
     /** @var columns in this table that are not sortable */
     protected $nosortcolumns = array();
 
-    /** @var sortable columns in this table */
+    /** @var sortable columns to be formatted as text */
     protected $textcolumns = array();
+
+    /** @var columns to be formatted as a number */
+    protected $numbercolumns = array();
 
     /** @var columns that are not to be center aligned */
     protected $leftaligncolumns = array();
@@ -979,8 +982,6 @@ class reader_admin_reports_table extends table_sql {
      * @return xxx
      */
     public function col_averageduration($row)  {
-        static $str = null;
-
         if (empty($row->averageduration)) {
             return $this->empty_cell();
         }
@@ -1095,8 +1096,7 @@ class reader_admin_reports_table extends table_sql {
         if (! property_exists($row, $column)) {
             return "$column not found";
         }
-
-        if (is_numeric($row->$column)) {
+        if (in_array($column, $this->numbercolumns) && is_numeric($row->$column)) {
             return number_format($row->$column);
         } else {
             return $this->format_text($row->$column);

@@ -52,6 +52,9 @@ class reader_admin_reports_booksummary_table extends reader_admin_reports_table 
     /** @var text columns in this table */
     protected $textcolumns = array('publisher', 'level', 'name');
 
+    /** @var number columns in this table */
+    protected $numbercolumns = array('difficulty', 'countpassed', 'countfailed', 'countrating');
+
     /** @var columns that are not to be center aligned */
     protected $leftaligncolumns = array('publisher', 'level', 'name');
 
