@@ -335,18 +335,35 @@ class reader_remotesite {
     public function download_xml($url, $post=null, $headers=null) {
         global $OUTPUT;
 
+        // convert $url to unescaped URL string
+        $url = $url->out(false);
+
         // get "full response" from CURL so that we can handle errors
         $response = download_file_content($url, $headers, $post, true);
 
+        // check for $error
         if (empty($response->results)) {
-            if ($response->error) {
-                $output = '';
-                $output .= html_writer::tag('h3', get_string('cannotdownloadata', 'reader'));
-                $output .= html_writer::tag('p', "URL: $url");
-                $output .= html_writer::tag('p', get_string('curlerror', 'reader', $response->error));
-                $output = $OUTPUT->notification($output);
-                echo $OUTPUT->box($output, 'generalbox', 'notice');
+            if (empty($response->error)) {
+                $error = ' '; // a single space to trigger error report
+            } else {
+                $error = get_string('curlerror', 'reader', $response->error);
             }
+        } else {
+            if ($error = $this->check_curl_results($response->results)) {
+                $error = get_string('servererror', 'reader', $error);
+            }
+        }
+
+        // report $error (and quit), if necessary
+        if ($error) {
+            $output = '';
+            $output .= html_writer::tag('h3', get_string('cannotdownloadata', 'reader'));
+            if ($error = trim($error)) {
+                $output .= html_writer::tag('p', $error);
+            }
+            $output .= html_writer::tag('p', "URL: $url");
+            $output = $OUTPUT->notification($output);
+            echo $OUTPUT->box($output, 'generalbox', 'notice');
             return false;
         }
 
@@ -359,6 +376,17 @@ class reader_remotesite {
 
         // return "xmlized" results
         return xmlize($response->results);
+    }
+
+    /**
+     * check_curl_results
+     *
+     * @param string $results downloaded via CURL
+     * @return string
+     * @todo Finish documenting this function
+     */
+    public function check_curl_results($results) {
+        return '';
     }
 
     /**

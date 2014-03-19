@@ -45,6 +45,21 @@ class reader_remotesite_moodlereadernet extends reader_remotesite {
     const DEFAULT_FILESFOLDER = '/files';
 
     /**
+     * check_curl_results
+     *
+     * @param string $results downloaded via CURL
+     * @return string
+     * @todo Finish documenting this function
+     */
+    public function check_curl_results($results) {
+        $search = '/^\s*<\?xml[^>]*>\s*<myxml[^>]*>\s*<error[^>]*>(.*?)<\/error>\s*<\/myxml>\s*$/is';
+        if (preg_match($search, $results, $matches)) {
+            return $matches[1];
+        }
+        return ''; // i.e. no error
+    }
+
+    /**
      * get_publishers_url
      *
      * @param xxx $type
