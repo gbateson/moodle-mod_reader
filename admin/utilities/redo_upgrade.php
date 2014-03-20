@@ -44,9 +44,10 @@ require_capability('moodle/site:config', $context);
 $PAGE->set_url($CFG->wwwroot.$SCRIPT);
 
 // set title
-$title = 'Redo Reader upgrade';
+$title = get_string('redo_upgrade', 'reader');
 $PAGE->set_title($title);
 $PAGE->set_heading($title);
+$PAGE->set_pagelayout('admin');
 
 echo $OUTPUT->header();
 echo $OUTPUT->box_start();

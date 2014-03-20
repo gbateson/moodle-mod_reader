@@ -99,7 +99,7 @@ function xmldb_reader_upgrade($oldversion) {
     }
 
     $newversion = 2013033105;
-    if ($result && $oldversion < $newversion && false) {
+    if ($result && $oldversion < $newversion) {
 
         ////////////////////////////////////////////////////////
         // fix the "quizid" field in the "reader_attempts" table

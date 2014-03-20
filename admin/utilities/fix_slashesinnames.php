@@ -44,7 +44,7 @@ require_capability('moodle/site:config', $context);
 // it is the path below $CFG->wwwroot of this script
 $PAGE->set_url($CFG->wwwroot.$SCRIPT);
 
-$title = get_string('fixslashesinnames', 'reader');
+$title = get_string('fix_slashesinnames', 'reader');
 $PAGE->set_title($title);
 $PAGE->set_heading($title);
 $PAGE->set_pagelayout('admin');

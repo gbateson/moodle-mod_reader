@@ -435,6 +435,7 @@ $string['sendmessagesaboutcheating'] = 'Send messages about cheating?';
 $string['sentemailmoodle'] = 'An email has been sent via Moodle to: {$a->email}';
 $string['sentemailphp'] = 'An email has been sent via PHP mail to: {$a->email}';
 $string['separategroups'] = 'Separate groups';
+$string['servererror'] = 'Message from server: {$a}';
 $string['serverlink'] = 'Link to Reader server (with quizzes)';
 $string['serverlogin'] = 'Reader server login';
 $string['serverpassword'] = 'Reader server password';
@@ -601,5 +602,3 @@ $string['youmusttakequizzes'] = ' You can take {$a} more quizzes ';
 $string['yourcurrentlevel'] = 'Your current level';
 $string['yourteacherhasstopped'] = ' Your teacher has stopped automatic promotion for you.';
 $string['youwerepromoted'] = 'You were promoted to RL-{$a->level} on {$a->date} at {$a->time}';
-
-$string['servererror'] = 'Message from server: {$a}';
