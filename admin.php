@@ -867,6 +867,8 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $book && is_arra
                     'uniqueid'     => reader_get_new_uniqueid($contextmodule->id, $quizid),
                     'reader'       => $reader->id,
                     'userid'       => $value,
+                    'bookid'       => $book,
+                    'quizid'       => $quizid,
                     'attempt'      => 1,
                     'sumgrades'    => 1,
                     'passed'       => 'true',
@@ -876,7 +878,6 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $book && is_arra
                     'timemodified' => time(),
                     'layout'       => '0,',
                     'preview'      => 1,
-                    'quizid'       => $book->quizid,
                     'bookrating'   => 1,
                     'ip'           => $_SERVER['REMOTE_ADDR'],
                 );
@@ -1383,15 +1384,10 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
             // count words in attempts
             $totalwords = array('thisterm' => 0,
                                 'allterms' => 0);
-            if ($readerattempts = $DB->get_records('reader_attempts', array('userid' => $coursestudent->id))) {
+            if ($readerattempts = $DB->get_records('reader_attempts', array('userid' => $coursestudent->id, 'deleted' => 0))) {
                 foreach ($readerattempts as $readerattempt) {
                     if (strtolower($readerattempt->passed) == 'true') {
-                        if ($readerattempt->preview == 0) {
-                            $tablename = 'reader_books';
-                        } else {
-                            $tablename = 'reader_noquiz';
-                        }
-                        if ($books = $DB->get_records($tablename, array('quizid' => $readerattempt->quizid))) {
+                        if ($books = $DB->get_records('reader_books', array('id' => $readerattempt->bookid))) {
                             if ($book = array_shift($books)) {
                                 $totalwords['allterms'] += $book->words;
                                 if ($readerattempt->reader==$reader->id && $reader->ignoredate < $readerattempt->timefinish) {
@@ -2050,7 +2046,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
                   'u.username,u.firstname,u.lastname';
         $from   = '{reader_attempts} ra '.
                   'LEFT JOIN {user} u ON ra.userid = u.id '.
-                  'LEFT JOIN {reader_books} rb ON ra.quizid = rb.quizid';
+                  'LEFT JOIN {reader_books} rb ON ra.bookid = rb.id';
         $where  = '';
         $params = null;
 
@@ -3797,6 +3793,8 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
                 'uniqueid'      => reader_get_new_uniqueid($contextmodule->id, $books[$image]->quizid),
                 'reader'        => $reader->id,
                 'userid'        => $users[$username]->id,
+                'bookid'        => $books[$image]->id,
+                'quizid'        => $books[$image]->quizid,
                 'attempt'       => $values['attempt'],
                 'sumgrades'     => $values['sumgrades'],
                 'percentgrade'  => $values['percentgrade'],
@@ -3807,7 +3805,6 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
                 'timemodified'  => $values['timefinish'],
                 'layout'        => 0, // $values['layout']
                 'preview'       => 0,
-                'quizid'        => $books[$image]->quizid,
                 'bookrating'    => $values['bookrating'],
                 'ip'            => $values['ip'],
             );

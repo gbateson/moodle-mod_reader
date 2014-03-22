@@ -627,21 +627,6 @@ class reader_downloader {
     }
 
     /**
-     * get_book_table
-     *
-     * @param xxx $type
-     * @return xxx
-     * @todo Finish documenting this function
-     */
-    public function get_book_table($type) {
-        switch ($type) {
-            case self::BOOKS_WITH_QUIZZES: return 'reader_books';
-            case self::BOOKS_WITHOUT_QUIZZES: return 'reader_noquiz';
-        }
-        return ''; // shouldn't happen !!
-    }
-
-    /**
      * get_downloaded_items
      *
      * @uses $DB
@@ -658,8 +643,12 @@ class reader_downloader {
         // cache $isrepairmode flag
         $isrepairmode = ($mode==reader_downloader::REPAIR_MODE);
 
-        $booktable = $this->get_book_table($type);
-        if ($records = $DB->get_records($booktable, null, 'publisher,level,name')) {
+        if ($type==self::BOOKS_WITH_QUIZZES) {
+            $select = 'quizid > ?';
+        } else {
+            $select = 'quizid = ?';
+        }
+        if ($records = $DB->get_records_select('reader_books', $select, array(0), 'publisher,level,name')) {
 
             foreach ($records as $record) {
 
@@ -912,18 +901,20 @@ class reader_downloader {
                 $titletext .= " (memory=$memory_usage peak=$memory_peak_usage)";
             }
 
-
             // show this book in the progress bar
             $title = ($i + 1).' / '.$i_max.' '.$titlehtml;
             $this->bar->start_item($itemid, $title);
 
             // set $params to select $book
-            $params = array('publisher' => $publisher,
-                            'level'     => $level,
-                            'name'      => $name);
+            $select = 'publisher = ? AND level = ? AND name = ?';
+            if ($type==self::BOOKS_WITH_QUIZZES) {
+                $select .= ' AND quizid > ?';
+            } else {
+                $select .= ' AND quizid = ?';
+            }
+            $params = array($publisher, $level, $name, 0);
 
-            $booktable = $this->get_book_table($type);
-            if ($book = $DB->get_record($booktable, $params)) {
+            if ($book = $DB->get_record_select('reader_books', $select, $params)) {
                 // do nothing
             } else {
                 // set up default values for a new $book
@@ -960,7 +951,7 @@ class reader_downloader {
             // update or add the $book
             $error = 0;
             if (isset($book->id)) {
-                if ($DB->update_record($booktable, $book)) {
+                if ($DB->update_record('reader_books', $book)) {
                     $msg = get_string('bookupdated', 'reader', $titletext);
                 } else {
                     $msg = get_string('booknotupdated', 'reader', $titletext);
@@ -968,7 +959,7 @@ class reader_downloader {
                 }
             } else {
                 $book->quizid = 0;
-                if ($book->id = $DB->insert_record($booktable, $book)) {
+                if ($book->id = $DB->insert_record('reader_books', $book)) {
                     $msg = get_string('bookadded', 'reader', $titletext);
                 } else {
                     $msg = get_string('booknotadded', 'reader', $titletext);
@@ -1045,18 +1036,13 @@ class reader_downloader {
                         $msg .= get_string('quizhasnoquestions', 'reader');
                         $this->remove_coursemodule($quiz->id, 'quiz');
 
-                        // remove $book from "reader_books" table
-                        $DB->delete_records('reader_books', array('id' => $book->id));
-
-                        // add $book to "reader_noquiz" table
-                        $params = array('publisher' => $book->publisher,
-                                        'level'     => $book->level,
-                                        'name'      => $book->name);
-                        if ($book->id = $DB->get_field('reader_noquiz', 'id', $params)) {
-                            $DB->update_record('reader_noquiz', $book);
+                        // mark $book in "reader_books" table as having no quiz
+                        $book->quizid = 0;
+                        if ($book->id = $DB->get_field('reader_books', 'id', $params)) {
+                            $DB->update_record('reader_books', $book);
                         } else {
                             unset($book->id);
-                            $book->id = $DB->insert_record('reader_noquiz', $book);
+                            $book->id = $DB->insert_record('reader_books', $book);
                         }
                         $msg .= html_writer::empty_tag('br').'Book moved to "books without quizzes" list';
 

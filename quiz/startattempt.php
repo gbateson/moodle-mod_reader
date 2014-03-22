@@ -170,9 +170,9 @@ $event = (object)array(
     'attemptid' => $attempt->id,
     'timestart' => $attempt->timestart,
     'userid'    => $attempt->userid,
-    'readerid'  => $id,
-    'cmid'      => $book,
-    'courseid'  => $readerobj->get_courseid(),
+    'readerid'  => $reader->id,
+    'cmid'      => $cm->id,
+    'courseid'  => $course->id,
 );
 events_trigger('reader_attempt_started', $event);
 

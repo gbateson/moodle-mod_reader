@@ -382,44 +382,68 @@ class reader_admin_reports_table extends table_sql {
 
         // we ignore attempts before the "ignoredate"
         $ignoredate = $this->output->reader->ignoredate;
-
         $notfinished   = 'ra.timefinish IS NULL OR ra.timefinish = 0';
-        $countattempts = "SUM(CASE WHEN ($notfinished) THEN 0 ELSE 1 END)";
-        $sumgrade      = "SUM(CASE WHEN ($notfinished) THEN 0 ELSE (ra.percentgrade) END)";
-        $sumduration   = "SUM(CASE WHEN ($notfinished) THEN 0 ELSE (ra.timefinish - ra.timestart) END)";
+
+        $sum = "SUM(CASE WHEN (ra.reader <> :reader1 OR $notfinished) THEN 0 ELSE (ra.percentgrade) END)";
+        $count = "SUM(CASE WHEN (ra.reader <> :reader2 OR $notfinished) THEN 0 ELSE 1 END)";
+        $averagegrade  = "ROUND($sum / $count)";
+
+        $sum = "SUM(CASE WHEN (ra.reader <> :reader3 OR $notfinished) THEN 0 ELSE (ra.timefinish - ra.timestart) END)";
+        $count = "SUM(CASE WHEN (ra.reader <> :reader4 OR $notfinished) THEN 0 ELSE 1 END)";
+        $averageduration = "ROUND($sum / $count)";
+
+        $countpassed = "SUM(CASE WHEN (ra.reader = :reader5 AND ra.passed = :passed1 AND ra.timefinish > :time1) THEN 1 ELSE 0 END)";
+        $countfailed = "SUM(CASE WHEN (ra.reader = :reader6 AND ra.passed <> :passed2 AND ra.timefinish > :time2) THEN 1 ELSE 0 END)";
 
         $select = "ra.$groupbyfield,".
-                  "ROUND($sumgrade / $countattempts) AS averagegrade,".
-                  "ROUND($sumduration / $countattempts) AS averageduration,".
-                  "SUM(CASE WHEN (ra.passed = :passed1 AND ra.timefinish > :time1) THEN 1 ELSE 0 END) AS countpassed,".
-                  "SUM(CASE WHEN (ra.passed <> :passed2 AND ra.timefinish > :time2) THEN 1 ELSE 0 END) AS countfailed";
+                  "$averagegrade AS averagegrade,".
+                  "$averageduration AS averageduration,".
+                  "$countpassed AS countpassed,".
+                  "$countfailed AS countfailed";
 
         $from   = "{reader_attempts} ra ".
-                  "LEFT JOIN {reader_books} rb ON ra.quizid = rb.quizid";
+                  "LEFT JOIN {reader_books} rb ON ra.bookid = rb.id";
 
-        $params = array('passed1' => 'true', 'time1' => $ignoredate,  // countpassed (this term)
+        $params = array('reader1' => $this->output->reader->id,
+                        'reader2' => $this->output->reader->id,
+                        'reader3' => $this->output->reader->id,
+                        'reader4' => $this->output->reader->id,
+                        'reader5' => $this->output->reader->id,
+                        'reader6' => $this->output->reader->id,
+                        'passed1' => 'true', 'time1' => $ignoredate,  // countpassed (this term)
                         'passed2' => 'true', 'time2' => $ignoredate); // countfailed (this term)
 
         switch ($groupbyfield) {
             case 'userid':
-                $select .= ",SUM(CASE WHEN (ra.passed = :passed3 AND ra.timefinish > :time3) THEN rb.words ELSE 0 END) AS wordsthisterm".
-                           ",SUM(CASE WHEN (ra.passed = :passed4 AND ra.timefinish > :time4) THEN rb.words ELSE 0 END) AS wordsallterms";
-                $params += array('passed3' => 'true', 'time3' => $ignoredate, // wordsthisterm
+                $wordsthisterm = "SUM(CASE WHEN (ra.reader = :reader7 AND ra.passed = :passed3 AND ra.timefinish > :time3) THEN rb.words ELSE 0 END)";
+                $wordsallterms = "SUM(CASE WHEN (ra.passed = :passed4 AND ra.timefinish > :time4) THEN rb.words ELSE 0 END)";
+
+                $select .= ",$wordsthisterm AS wordsthisterm".
+                           ",$wordsallterms AS wordsallterms";
+
+                $params += array('reader7' => $this->output->reader->id,
+                                 'passed3' => 'true', 'time3' => $ignoredate, // wordsthisterm
                                  'passed4' => 'true', 'time4' => 0);          // wordsallterms
                 break;
 
-            case 'quizid':
+            case 'bookid':
                 $notrated    = "$notfinished OR ra.bookrating IS NULL";
-                $countrating = "SUM(CASE WHEN ($notrated) THEN 0 ELSE 1 END)";
-                $sumrating   = "SUM(CASE WHEN ($notrated) THEN 0 ELSE ra.bookrating END)";
+
+                $countrating = "SUM(CASE WHEN (ra.reader <> :reader7 OR $notrated) THEN 0 ELSE 1 END)";
+
+                $sum = "SUM(CASE WHEN (ra.reader <> :reader8 OR $notrated) THEN 0 ELSE ra.bookrating END)";
+                $count = "SUM(CASE WHEN (ra.reader <> :reader9 OR $notrated) THEN 0 ELSE 1 END)";
+                $averagerating = "ROUND($sum / $count)";
+
                 $select     .= ",$countrating AS countrating".
-                               ",ROUND($sumrating / $countrating) AS averagerating";
+                               ",$averagerating AS averagerating";
+                $params += array('reader7' => $this->output->reader->id,
+                                 'reader8' => $this->output->reader->id,
+                                 'reader9' => $this->output->reader->id);
                 break;
         }
 
-        $where  = "ra.reader = :reader AND ra.userid $usersql";
-
-        $params['reader'] = $this->output->reader->id;
+        $where  = "ra.userid $usersql";
         $params += $userparams;
 
         return array("SELECT $select FROM $from WHERE $where GROUP BY ra.$groupbyfield", $params);

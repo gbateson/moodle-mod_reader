@@ -271,6 +271,7 @@ $string['massrename'] = 'Mass changes';
 $string['max'] = 'Less than or equal to';
 $string['maxtimebetweenquizzes'] = 'Max time between quizzes';
 $string['menu'] = 'Menu';
+$string['mergingtables'] = 'Merging tables: {$a->old} into {$a->new}';
 $string['messagefromyourteacher'] = 'Message from your teacher';
 $string['min'] = 'Greater than or equal to';
 $string['mode'] = 'Mode';

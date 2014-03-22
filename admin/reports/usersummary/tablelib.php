@@ -61,9 +61,9 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
     /** @var default sort columns */
     protected $defaultsortcolumns = array('username' => SORT_ASC, 'lastname' => SORT_ASC, 'firstname' => SORT_ASC);
 
-    /** @var filter fields */
+    /** @var filter fields ($fieldname => $advanced) */
     protected $filterfields = array(
-        'group'            =>0, 'realname'      => 0,
+        'group'           => 0, 'realname'      => 0,
         'lastname'        => 1, 'firstname'     => 1, 'username'  => 1,
         'startlevel'      => 1, 'currentlevel'  => 1, 'nopromote' => 1,
         'countpassed'     => 1, 'countfailed'   => 1,
@@ -440,7 +440,7 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
             return; // no book id specified
         }
 
-        if (! $book = $DB->get_record('reader_noquiz', array('id' => $bookid))) {
+        if (! $book = $DB->get_record('reader_books', array('id' => $bookid))) {
             return false; // invalid book id
         }
 
@@ -451,7 +451,6 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
     /**
      * execute_action_awardpoints
      *
-     * @param string $booktable "reader_books" OR "reader_noquiz"
      * @param string $book
      * @param array  $userids
      * @return xxx
@@ -497,6 +496,8 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
                 'uniqueid'     => reader_get_new_uniqueid($contextid, $book->quizid),
                 'reader'       => $this->output->reader->id,
                 'userid'       => $userid,
+                'bookid'       => $book->id,
+                'quizid'       => $book->quizid,
                 'attempt'      => $attemptnumber,
                 'sumgrades'    => 100.0,
                 'percentgrade' => 100.0,
@@ -508,7 +509,6 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
                 'timemodified' => $time,
                 'layout'       => '0',
                 'preview'      => 0,
-                'quizid'       => $book->quizid,
                 'bookrating'   => 0,
                 'ip'           => getremoteaddr(),
             );

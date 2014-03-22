@@ -68,12 +68,12 @@ class mod_reader_renderer extends plugin_renderer_base {
         global $USER;
 
         if ($noquiz) {
-            return array('{reader_noquiz}', 'hidden = ?', array(0)); // $from, $where, $params
+            return array('{reader_books}', 'quizid = ? AND hidden = ?', array(0, 0)); // $from, $where, $params
         }
 
         // a teacher / admin can always access all the books
         if ($this->reader->can_managebooks()) {
-            return array('{reader_books}', 'hidden = ?', array(0)); // $from, $where, $params
+            return array('{reader_books}', 'quizid > ? AND hidden = ?', array(0, 0)); // $from, $where, $params
         }
 
         $userid = $USER->id;
@@ -89,17 +89,17 @@ class mod_reader_renderer extends plugin_renderer_base {
 
         // "id" values of books whose quizzes this user has already attempted
         $recordids  = 'SELECT rb.id '.
-                      'FROM {reader_attempts} ra LEFT JOIN {reader_books} rb ON ra.quizid = rb.quizid '.
-                      'WHERE ra.userid = ? AND rb.id IS NOT NULL';
+                      'FROM {reader_attempts} ra LEFT JOIN {reader_books} rb ON ra.bookid = rb.id '.
+                      'WHERE ra.userid = ? AND ra.deleted = ? AND rb.id IS NOT NULL';
 
         // "sametitle" values for books whose quizzes this user has already attempted
         $sametitles = 'SELECT DISTINCT rb.sametitle '.
-                      'FROM {reader_attempts} ra LEFT JOIN {reader_books} rb ON ra.quizid = rb.quizid '.
-                      'WHERE ra.userid = ? AND rb.id IS NOT NULL AND rb.sametitle <> ?';
+                      'FROM {reader_attempts} ra LEFT JOIN {reader_books} rb ON ra.bookid = rb.id '.
+                      'WHERE ra.userid = ? AND ra.deleted = ? AND rb.id IS NOT NULL AND rb.sametitle <> ?';
 
         $from       = '{reader_books}';
         $where      = "id NOT IN ($recordids) AND (sametitle = ? OR sametitle NOT IN ($sametitles)) AND hidden = ?";
-        $sqlparams = array($userid, '', $userid, '', 0);
+        $sqlparams = array($userid, 0, '', $userid, 0, '', 0);
 
         $levels = array();
         if (isset($_SESSION['SESSION']->reader_teacherview) && $_SESSION['SESSION']->reader_teacherview == 'teacherview') {
@@ -176,6 +176,24 @@ class mod_reader_renderer extends plugin_renderer_base {
     }
 
     /**
+     * available_items_url
+     *
+     * @param xxx $url
+     * @param xxx $params
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function available_items_url($url, $params) {
+        $url = new moodle_url($url, $params);
+        $url = "$url"; // convert to string
+        if (substr($url, -1)=='=') {
+            // Moodle <= 2.4
+            $url = substr($url, 0 ,-1);
+        }
+        return "'$url='+escape(this.options[this.selectedIndex].value)";
+    }
+
+    /**
      * available_publishers
      *
      * @param xxx $action
@@ -218,8 +236,7 @@ class mod_reader_renderer extends plugin_renderer_base {
                             'mode'      => $this->mode,
                             'id'        => $this->reader->cm->id,
                             'publisher' => ''); // will be added by javascript
-            $url = new moodle_url('/mod/reader/view_books.php', $params);
-            $url = "'$url'+escape(this.options[this.selectedIndex].value)";
+            $url = $this->available_items_url('/mod/reader/view_books.php', $params);
 
             $params = array('id' => 'id_publisher',
                             'name' => 'publisher',
@@ -291,8 +308,7 @@ class mod_reader_renderer extends plugin_renderer_base {
                             'id'        => $this->reader->cm->id,
                             'publisher' => $publisher,
                             'level'     => ''); // will be added by javascript
-            $url = new moodle_url('/mod/reader/view_books.php', $params);
-            $url = "'$url'+escape(this.options[this.selectedIndex].value)";
+            $url = $this->available_items_url('/mod/reader/view_books.php', $params);
 
             $params = array('id' => 'id_level',
                             'name' => 'level',
@@ -366,8 +382,7 @@ class mod_reader_renderer extends plugin_renderer_base {
                             'publisher' => $publisher,
                             'level'     => $level,
                             'bookid'    => ''); // will be added by javascript
-            $url = new moodle_url('/mod/reader/view_books.php', $params);
-            $url = "'$url'+escape(this.options[this.selectedIndex].value)";
+            $url = $this->available_items_url('/mod/reader/view_books.php', $params);
 
             $params = array('id' => 'id_bookid',
                             'name' => 'bookid',
@@ -406,6 +421,8 @@ class mod_reader_renderer extends plugin_renderer_base {
         array_push($sqlparams, (is_int($book) ? $book : $book->id));
 
         if ($record = $DB->get_record_sql("SELECT $select FROM $from WHERE $where", $sqlparams)) {
+            $params = array('type' => 'hidden', 'name' => 'bookid', 'value' => $record->id);
+            $output .= html_writer::empty_tag('input', $params);
             $output .= "$record->name (".number_format($record->words)." words)";
         }
 
@@ -420,11 +437,7 @@ class mod_reader_renderer extends plugin_renderer_base {
      * @todo Finish documenting this function
      */
     public function get_booktable($action='') {
-        if ($action=='awardbookpoints') {
-            return 'reader_noquiz';
-        } else {
-            return 'reader_books';
-        }
+        return 'reader_books';
     }
 
     /**
@@ -556,7 +569,7 @@ class mod_reader_renderer extends plugin_renderer_base {
         }
 
         $select = 'ra.*, rb.difficulty, rb.id AS bookid';
-        $from   = '{reader_attempts} ra INNER JOIN {reader_books} rb ON rb.quizid = ra.quizid';
+        $from   = '{reader_attempts} ra INNER JOIN {reader_books} rb ON ra.bookid = rb.id';
         $where  = 'ra.userid= ? AND ra.reader= ? AND ra.timefinish > ?';
         $params = array($USER->id, $this->id, $this->ignoredate);
 

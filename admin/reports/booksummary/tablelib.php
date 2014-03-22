@@ -61,7 +61,7 @@ class reader_admin_reports_booksummary_table extends reader_admin_reports_table 
     /** @var default sort columns */
     protected $defaultsortcolumns = array('publisher' => SORT_ASC, 'level' => SORT_ASC, 'name' => SORT_ASC);
 
-    /** @var filter fields */
+    /** @var filter fields ($fieldname => $advanced) */
     protected $filterfields = array(
         'group'           => 0, 'publisher'    => 0, 'level'         => 1, 'name'  => 0,
         'difficulty'      => 1, 'countpassed'  => 1, 'countfailed'   => 1,
@@ -83,7 +83,7 @@ class reader_admin_reports_booksummary_table extends reader_admin_reports_table 
     function select_sql($userid=0, $attemptid=0) {
 
         // get attempts at this Reader activity
-        list($attemptsql, $attemptparams) = $this->select_sql_attempts('quizid');
+        list($attemptsql, $attemptparams) = $this->select_sql_attempts('bookid');
 
         // get users who can access this Reader activity
         list($usersql, $userparams) = $this->select_sql_users();
@@ -93,8 +93,8 @@ class reader_admin_reports_booksummary_table extends reader_admin_reports_table 
                   'raa.averageduration, raa.averagegrade, '.
                   'raa.countrating, raa.averagerating';
         $from   = '{reader_books} rb '.
-                  "LEFT JOIN ($attemptsql) raa ON raa.quizid = rb.quizid";
-        $where  = 'raa.quizid IS NOT NULL';
+                  "LEFT JOIN ($attemptsql) raa ON raa.bookid = rb.id";
+        $where  = 'raa.bookid IS NOT NULL';
 
         $params = $attemptparams + array('readerid' => $this->output->reader->id) + $userparams;
 

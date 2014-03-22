@@ -70,7 +70,7 @@ class reader_admin_reports_groupsummary_table extends reader_admin_reports_table
     /** @var default sort columns */
     protected $defaultsortcolumns = array('groupname' => SORT_ASC);
 
-    /** @var filter fields */
+    /** @var filter fields ($fieldname => $advanced) */
     protected $filterfields = array(
         'groupname'     => 0,
         'countactive'   => 1, 'countinactive'   => 1,

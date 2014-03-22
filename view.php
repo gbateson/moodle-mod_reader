@@ -172,9 +172,9 @@ $bookcoversinprevterm = '';
 
 if ($reader->bookcovers == 1) {
     $select = 'ra.*, rb.name AS bookname, rb.image AS bookimage';
-    $from   = '{reader_attempts} ra LEFT JOIN {reader_books} rb ON ra.quizid = rb.quizid';
-    $where  = 'ra.userid= ? and ra.timefinish <= ?';
-    $params = array($USER->id, $reader->ignoredate);
+    $from   = '{reader_attempts} ra LEFT JOIN {reader_books} rb ON ra.bookid = rb.id';
+    $where  = 'ra.userid = ? AND ra.deleted = ? AND ra.timefinish <= ?';
+    $params = array($USER->id, 0, $reader->ignoredate);
     if ($attempts = $DB->get_records_sql("SELECT $select FROM $from WHERE $where ORDER BY ra.timefinish", $params)) {
         foreach ($attempts as $attempt) {
             if (empty($attempt->bookimage)) {
@@ -284,32 +284,17 @@ if (count($attempts)) {
     }
 }
 
-$select = 'ra.id AS raid, ra.timefinish, ra.userid, ra.attempt, ra.percentgrade, ra.id, ra.quizid, ra.sumgrades, ra.passed, '.
-          'rb.name, rb.publisher, rb.level, rb.length, rb.image, rb.difficulty, rb.words, rb.id AS rbid';
-$from   = '{reader_attempts} ra LEFT JOIN {reader_books} rb ON rb.quizid = ra.quizid';
-$where  = 'ra.preview != ? and ra.userid = ?';
-$params = array(1, $USER->id);
-if (! $studentattempts_p = $DB->get_records_sql("SELECT $select FROM $from WHERE $where", $params)) {
-    $studentattempts_p = array();
-}
-
-$select = 'ra.id AS raid, ra.timefinish, ra.userid, ra.attempt, ra.percentgrade, ra.id, ra.quizid, ra.sumgrades, ra.passed, '.
-          'rb.name, rb.publisher, rb.level, rb.length, rb.image, rb.difficulty, rb.words, rb.id as rbid';
-$from   = '{reader_attempts} ra LEFT JOIN {reader_noquiz} rb ON rb.quizid = ra.quizid';
-$where  = 'ra.preview = ? and ra.userid = ?';
-$params = array(1, $USER->id);
-if (! $studentattempts_n = $DB->get_records_sql("SELECT $select FROM $from WHERE $where", $params)) {
-    $studentattempts_n = array();
-}
-
-$studentattempts = array_merge($studentattempts_p, $studentattempts_n);
-
-foreach ($studentattempts as $studentattempt) {
-    if (strtolower($studentattempt->passed) == 'true'){
+$select = 'ra.id, ra.userid, ra.bookid, ra.quizid, ra.preview, ra.deleted, ra.passed, rb.words';
+$from   = '{reader_attempts} ra LEFT JOIN {reader_books} rb ON ra.bookid = rb.id';
+$where  = 'ra.userid = ? AND ra.preview = ? AND ra.deleted = ? AND ra.passed = ?';
+$params = array($USER->id, 0, 0, 'true');
+if ($studentattempts = $DB->get_records_sql("SELECT $select FROM $from WHERE $where", $params)) {
+    foreach ($studentattempts as $studentattempt) {
         $totalwordsall += $studentattempt->words;
         $totalwordscountall++;
     }
 }
+unset($studentattempts);
 
 if ($bookcoversinprevterm) {
     // display book covers from previous term
@@ -318,9 +303,9 @@ if ($bookcoversinprevterm) {
 
     // detect incorrect quizzes from previous term
     $select = 'ra.id AS attemptid, ra.quizid AS quizid, ra.timefinish, rb.name AS bookname';
-    $from   = '{reader_attempts} ra LEFT JOIN {reader_books} rb ON ra.quizid=rb.quizid';
-    $where  = 'ra.userid= ? AND ra.timefinish <= ? AND ra.passed <> ?';
-    $params = array($USER->id, $reader->ignoredate, 'true');
+    $from   = '{reader_attempts} ra LEFT JOIN {reader_books} rb ON ra.bookid = rb.id';
+    $where  = 'ra.userid = ? AND ra.preview = ? AND ra.deleted = ? AND ra.passed <> ? AND ra.timefinish <= ?';
+    $params = array(0, 0, $USER->id, 'true', $reader->ignoredate);
     if ($attempts = $DB->get_records_sql("SELECT $select FROM $from WHERE $where ORDER BY timefinish", $params)) {
         $text = get_string('incorrectbooksreadinpreviousterms', 'reader');
         $onclick = "var obj = document.getElementById('readerfailedbooklist');".

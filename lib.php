@@ -378,7 +378,7 @@ function reader_get_level_data($reader, $userid=0) {
     }
 
     $select = 'ra.*, rb.difficulty, rb.id AS bookid';
-    $from   = '{reader_attempts} ra INNER JOIN {reader_books} rb ON rb.quizid = ra.quizid';
+    $from   = '{reader_attempts} ra INNER JOIN {reader_books} rb ON ra.bookid = rb.id';
     $where  = 'ra.userid= ? AND ra.reader= ? AND ra.timefinish > ?';
     $params = array($USER->id, $reader->id, $reader->ignoredate);
 
@@ -532,6 +532,7 @@ function reader_create_attempt($reader, $attemptnumber, $book, $adduniqueid=fals
         $attempt = (object)array(
             'reader'  => $reader->id,
             'userid'  => $USER->id,
+            'bookid'  => $book->id,
             'quizid'  => $book->quizid,
             'preview' => 0,
             'layout'  => reader_repaginate($reader->questions, $reader->questionsperpage)
@@ -1182,11 +1183,11 @@ function reader_get_student_attempts($userid, $reader, $allreaders = false, $boo
         $reader->ignoredate = 0;
     }
 
-    $select = 'ra.id,ra.timefinish,ra.userid,ra.attempt,ra.percentgrade,ra.quizid,ra.sumgrades,ra.passed,ra.checkbox,ra.preview,'.
-              'rp.name,rp.publisher,rp.level,rp.length,rp.image,rp.difficulty,rp.words,rp.sametitle,rp.id as rpid';
-    $from   = '{reader_attempts} ra LEFT JOIN {reader_books} rp ON rp.quizid = ra.quizid';
-    $where  = 'ra.preview != 1 AND ra.userid= :userid AND ra.timefinish > :readerignoredate';
-    $params = array('userid'=>$userid, 'readerignoredate'=>$reader->ignoredate);
+    $select = 'ra.id, ra.timefinish, ra.userid, ra.bookid, ra.quizid, ra.attempt, ra.percentgrade, ra.sumgrades, ra.passed, ra.checkbox, ra.preview, '.
+              'rb.name, rb.publisher, rb.level, rb.length, rb.image, rb.difficulty, rb.words, rb.sametitle';
+    $from   = '{reader_attempts} ra LEFT JOIN {reader_books} rb ON ra.bookid = rb.id';
+    $where  = 'ra.preview <> :preview AND ra.deleted = :deleted AND ra.userid = :userid AND ra.timefinish > :ignoredate';
+    $params = array('preview' => 1, 'deleted' => 0, 'userid'=>$userid, 'ignoredate'=>$reader->ignoredate);
     if (! $allreaders) {
         $where .= ' AND ra.reader = :readerid';
         $params['readerid'] = $reader->id;
@@ -1195,11 +1196,11 @@ function reader_get_student_attempts($userid, $reader, $allreaders = false, $boo
         $attempts_p = array();
     }
 
-    $select = 'ra.id,ra.timefinish,ra.userid,ra.attempt,ra.percentgrade,ra.quizid,ra.sumgrades,ra.passed,ra.checkbox,ra.preview,'.
-              'rp.name,rp.publisher,rp.level,rp.length,rp.image,rp.difficulty,rp.words,rp.sametitle,rp.id as rpid';
-    $from   = '{reader_attempts} ra LEFT JOIN {reader_noquiz} rp ON rp.quizid = ra.quizid';
-    $where  = 'ra.preview = 1 AND ra.userid= :userid AND ra.timefinish > :readerignoredate';
-    $params = array('userid'=>$userid, 'readerignoredate'=>$reader->ignoredate);
+    $select = 'ra.id, ra.timefinish, ra.userid, ra.bookid, ra.quizid, ra.attempt, ra.percentgrade, ra.sumgrades, ra.passed, ra.checkbox, ra.preview, '.
+              'rb.name, rb.publisher, rb.level, rb.length, rb.image, rb.difficulty, rb.words, rb.sametitle';
+    $from   = '{reader_attempts} ra LEFT JOIN {reader_books} rb ON ra.bookid = rb.id';
+    $where  = 'ra.preview = :preview AND ra.deleted = :deleted AND ra.userid = :userid AND ra.timefinish > :ignoredate';
+    $params = array('preview' => 1, 'deleted' => 0, 'userid'=>$userid, 'ignoredate'=>$reader->ignoredate);
     if (! $allreaders) {
         $where .= ' AND ra.reader = :readerid';
         $params['readerid'] = $reader->id;
@@ -1233,7 +1234,7 @@ function reader_get_student_attempts($userid, $reader, $allreaders = false, $boo
         if ($attempt->passed == 'true' || $attempt->passed == 'TRUE') {
             $statustext = 'Passed';
             $status = 'correct';
-            $totals['points'] = reader_get_reader_length($reader, $attempt->rpid);
+            $totals['points'] = reader_get_reader_length($reader, $attempt->bookid);
             $totals['correct']++;
         } else {
             if($attempt->passed=='cheated') {
@@ -1257,7 +1258,7 @@ function reader_get_student_attempts($userid, $reader, $allreaders = false, $boo
             }
             //$totals['bookpercent']  = round(($attempt->sumgrades/$totalgrade) * 100, 2).'%';
             $totals['bookpercent']  = $attempt->percentgrade.'%';
-            $totals['bookmaxgrade'] = $totalgrade * reader_get_reader_length($reader, $attempt->rpid);
+            $totals['bookmaxgrade'] = $totalgrade * reader_get_reader_length($reader, $attempt->bookid);
             $bookpercentmaxgrade[$attempt->quizid] = array($totals['bookpercent'], $totals['bookmaxgrade']);
         }
 
@@ -1281,10 +1282,10 @@ function reader_get_student_attempts($userid, $reader, $allreaders = false, $boo
                                           'booktitle'     => $attempt->name,
                                           'image'         => $attempt->image,
                                           'words'         => $attempt->words,
-                                          'booklength'    => reader_get_reader_length($reader, $attempt->rpid),
+                                          'booklength'    => reader_get_reader_length($reader, $attempt->bookid),
                                           'publisher'     => $attempt->publisher,
                                           'booklevel'     => $attempt->level,
-                                          'bookdiff'      => reader_get_reader_difficulty($reader, $attempt->rpid),
+                                          'bookdiff'      => reader_get_reader_difficulty($reader, $attempt->bookid),
                                           'percentgrade'  => $attempt->percentgrade,
                                           'passed'        => $attempt->passed,
                                           'checkbox'      => $attempt->checkbox,
@@ -2977,12 +2978,12 @@ function reader_can_attemptreader($cmid, $userid) {
 function reader_available_sql($cmid, $reader, $userid, $noquiz=false) {
 
     if ($noquiz) {
-        return array('{reader_noquiz}', 'hidden = ?', array(0)); // $from, $where, $params
+        return array('{reader_books}', 'quizid = ? AND hidden = ?', array(0, 0)); // $from, $where, $params
     }
 
     // a teacher / admin can always access all the books
     if (reader_can_addinstance($cmid, $userid)) {
-        return array('{reader_books}', 'hidden = ?', array(0)); // $from, $where, $params
+        return array('{reader_books}', 'quizid > ? AND hidden = ?', array(0, 0)); // $from, $where, $params
     }
 
     // we want to get a list of all books available to this user
@@ -2996,17 +2997,17 @@ function reader_available_sql($cmid, $reader, $userid, $noquiz=false) {
 
     // "id" values of books whose quizzes this user has already attempted
     $recordids  = 'SELECT rb.id '.
-                  'FROM {reader_attempts} ra LEFT JOIN {reader_books} rb ON ra.quizid = rb.quizid '.
-                  'WHERE ra.userid = ? AND rb.id IS NOT NULL';
+                  'FROM {reader_attempts} ra LEFT JOIN {reader_books} rb ON ra.bookid = rb.id '.
+                  'WHERE ra.userid = ? AND rb.id IS NOT NULL AND rb.quizid > ?';
 
     // "sametitle" values for books whose quizzes this user has already attempted
     $sametitles = 'SELECT DISTINCT rb.sametitle '.
-                  'FROM {reader_attempts} ra LEFT JOIN {reader_books} rb ON ra.quizid = rb.quizid '.
+                  'FROM {reader_attempts} ra LEFT JOIN {reader_books} rb ON ra.bookid = rb.id '.
                   'WHERE ra.userid = ? AND rb.id IS NOT NULL AND rb.sametitle <> ?';
 
     $from       = '{reader_books}';
     $where      = "id NOT IN ($recordids) AND (sametitle = ? OR sametitle NOT IN ($sametitles)) AND hidden = ?";
-    $sqlparams = array($userid, '', $userid, '', 0);
+    $sqlparams = array($userid, 0, '', $userid, '', 0);
 
     $levels = array();
     if (isset($_SESSION['SESSION']->reader_teacherview) && $_SESSION['SESSION']->reader_teacherview == 'teacherview') {
@@ -3382,12 +3383,11 @@ function reader_available_books($cmid, $reader, $userid, $action='') {
     }
 
     if ($book===null) {
+        $params = array('id' => $bookid);
         if ($noquiz) {
-            $booktable = 'reader_noquiz';
-        } else {
-            $booktable = 'reader_books';
+            $params['quizid'] = 0;
         }
-        $book = $DB->get_record($booktable, array('id' => $bookid));
+        $book = $DB->get_record('reader_books', $params);
     }
 
     if ($action=='takequiz' && reader_can_attemptreader($cmid, $userid)) {

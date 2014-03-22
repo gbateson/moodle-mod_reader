@@ -61,7 +61,7 @@ class reader_admin_reports_bookdetailed_table extends reader_admin_reports_table
     /** @var default sort columns */
     protected $defaultsortcolumns = array('publisher' => SORT_ASC, 'level' => SORT_ASC, 'name' => SORT_ASC, 'username' => SORT_ASC);
 
-    /** @var filter fields */
+    /** @var filter fields ($fieldname => $advanced) */
     protected $filterfields = array(
         'group'    => 0, 'publisher'  => 0, 'level'    => 1, 'name' => 0, 'difficulty' => 1,
         'username' => 1, 'firstname'  => 1, 'lastname' => 1,
@@ -90,7 +90,7 @@ class reader_admin_reports_bookdetailed_table extends reader_admin_reports_table
                   'rb.publisher, rb.level, rb.name, rb.difficulty';
         $from   = '{reader_attempts} ra '.
                   'LEFT JOIN {user} u ON ra.userid = u.id '.
-                  'LEFT JOIN {reader_books} rb ON ra.quizid = rb.quizid';
+                  'LEFT JOIN {reader_books} rb ON ra.bookid = rb.id';
         $where  = "ra.reader = :reader AND ra.timefinish > :time AND u.id $usersql";
 
         $sortby = 'rb.name, rb.publisher, u.username';

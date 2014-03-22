@@ -174,6 +174,8 @@ if ($lines = $mform->get_file_content('import')) {
             'uniqueid'      => reader_get_new_uniqueid($contextmodule->id, $books[$image]->quizid),
             'reader'        => $reader->id,
             'userid'        => $users[$username]->id,
+            'bookid'        => $books[$image]->id,
+            'quizid'        => $books[$image]->quizid,
             'attempt'       => $values['attempt'],
             'sumgrades'     => $values['sumgrades'],
             'percentgrade'  => $values['percentgrade'],
@@ -184,7 +186,6 @@ if ($lines = $mform->get_file_content('import')) {
             'timemodified'  => $values['timefinish'],
             'layout'        => 0, // $values['layout']
             'preview'       => 0,
-            'quizid'        => $books[$image]->quizid,
             'bookrating'    => $values['bookrating'],
             'ip'            => $values['ip'],
         );

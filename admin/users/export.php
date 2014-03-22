@@ -55,7 +55,7 @@ if ($data = $mform->get_submitted_data()) {
     $select = 'ra.*, u.username, rb.image, rl.currentlevel';
     $from   = '{reader_attempts} ra '.
               'JOIN {user} u ON ra.userid = u.id '.
-              'JOIN {reader_books} rb ON ra.quizid = rb.quizid '.
+              'JOIN {reader_books} rb ON ra.bookid = rb.id '.
               'JOIN {reader_levels} rl ON ra.userid = rl.userid';
     $where  = 'reader = ?';
     $order  = 'ra.userid, ra.quizid, ra.timefinish, ra.uniqueid DESC';

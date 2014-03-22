@@ -100,58 +100,7 @@ function xmldb_reader_upgrade($oldversion) {
 
     $newversion = 2013033105;
     if ($result && $oldversion < $newversion) {
-
-        ////////////////////////////////////////////////////////
-        // fix the "quizid" field in the "reader_attempts" table
-        ////////////////////////////////////////////////////////
-        // it currently contains an id from "reader_books"
-        // so we create a new "bookid" field, copy "quizid",
-        // then set correct "quizid", and remove "bookid"
-
-        $table = new xmldb_table('reader_attempts');
-        $field = new xmldb_field('bookid', XMLDB_TYPE_INTEGER, '11');
-        $index = new xmldb_index('bookid_key', XMLDB_INDEX_NOTUNIQUE, array('bookid'));
-
-        // add "bookid" field and index
-        if (! $dbman->field_exists($table, $field)) {
-            $dbman->add_field($table, $field);
-        }
-        if (! $dbman->index_exists($table, $index)) {
-            $dbman->add_index($table, $index);
-        }
-
-        // copy "bookid" to "quizid"
-        $DB->execute('UPDATE {reader_attempts} SET bookid = quizid');
-        $DB->execute('UPDATE {reader_attempts} SET quizid = 0');
-
-        // transfer correct "quizid" from "reader_books" table
-        // Note: syntax for UPDATE with JOIN depends on DB type
-        switch ($DB->get_dbfamily()) {
-            case 'mysql':
-                $DB->execute('UPDATE {reader_attempts} ra JOIN {reader_books} rb ON ra.bookid = rb.id SET ra.quizid = rb.quizid');
-                break;
-            case 'mssql': // not tested
-                $DB->execute('UPDATE ra SET quizid = rb.quizid FROM {reader_attempts} ra JOIN {reader_books} rb ON ra.bookid = rb.id');
-                break;
-            case 'oracle': // not tested
-                $select = 'SELECT rb.quizid FROM {reader_books} rb WHERE ra.bookid = rb.id';
-                $DB->execute('UPDATE {reader_attempts} ra SET ra.quizid = ('.$select.') AND EXISTS ('.$select.')');
-                break;
-            case 'postgres': // not tested
-                $DB->execute('UPDATE {reader_attempts} ra SET quizid = rb.quizid FROM {reader_books} rb WHERE ra.bookid = rb.id');
-                break;
-            default:
-                $DB->execute('UPDATE {reader_attempts} ra SET ra.quizid = (SELECT rb.quizid FROM {reader_books} rb WHERE ra.bookid = rb.id)');
-        }
-
-        // drop "bookid" index and field
-        if ($dbman->index_exists($table, $index)) {
-            $dbman->drop_index($table, $index);
-        }
-        if ($dbman->field_exists($table, $field)) {
-            $dbman->drop_field($table, $field);
-        }
-
+        xmldb_reader_add_attempts_bookid($dbman, true);
         upgrade_mod_savepoint(true, "$newversion", 'reader');
     }
 
@@ -615,11 +564,32 @@ function xmldb_reader_upgrade($oldversion) {
         upgrade_mod_savepoint(true, "$newversion", 'reader');
     }
 
-    //$newversion = 2013xxxx00;
-    //if ($result && $oldversion < $newversion) {
-    //    xmldb_reader_merge_tables($dbman, 'reader_noquiz', 'reader_books');
-    //    xmldb_reader_merge_tables($dbman, 'reader_deleted_attempts', 'reader_attempts');
-    //}
+    $newversion = 2014032045;
+    if ($result && $oldversion < $newversion) {
+
+        // remove reader_backup_ids table
+        $table = new xmldb_table('reader_backup_ids');
+        if ($dbman->table_exists($table)) {
+            $dbman->drop_table($table);
+        }
+
+        // add bookid field to "reader_attempts"
+        // and "reader_deleted_attempts" tables
+        xmldb_reader_add_attempts_bookid($dbman);
+
+        // add "deleted" field to "reader_attempts" table
+        $table = new xmldb_table('reader_attempts');
+        $field = new xmldb_field('deleted', XMLDB_TYPE_INTEGER, '1', null, null, null, '0', 'attempt');
+        if (! $dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // merge "reader_noquiz" into "reader_books" tables
+        xmldb_reader_merge_tables($dbman, 'reader_noquiz', 'reader_books', array('quizid' => 0));
+
+        // merge "reader_deleted_attempts" and "reader_attempts" tables
+        xmldb_reader_merge_tables($dbman, 'reader_deleted_attempts', 'reader_attempts', array('deleted' => 1));
+    }
 
     return $result;
 }

@@ -61,7 +61,7 @@ class reader_admin_reports_userdetailed_table extends reader_admin_reports_table
     /** @var default sort columns */
     protected $defaultsortcolumns = array('username' => SORT_ASC, 'lastname' => SORT_ASC, 'firstname' => SORT_ASC, 'name' => SORT_ASC); // timefinish => SORT_DESC
 
-    /** @var filter fields */
+    /** @var filter fields ($fieldname => $advanced) */
     protected $filterfields = array(
         'group'      => 0, 'username'     => 1, 'realname'     => 0,
         'lastname'   => 1, 'firstname'    => 1, 'currentlevel' => 1,
@@ -94,7 +94,7 @@ class reader_admin_reports_userdetailed_table extends reader_admin_reports_table
         $from   = '{reader_attempts} ra '.
                   'LEFT JOIN {user} u ON ra.userid = u.id '.
                   'LEFT JOIN {reader_levels} rl ON u.id = rl.userid '.
-                  'LEFT JOIN {reader_books} rb ON ra.quizid = rb.quizid';
+                  'LEFT JOIN {reader_books} rb ON ra.bookid = rb.id';
         $where  = "ra.reader = :reader AND rl.readerid = :readerid AND ra.timefinish > :time AND u.id $usersql";
 
         $params = array('reader'   => $this->output->reader->id,

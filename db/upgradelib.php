@@ -39,6 +39,105 @@ defined('MOODLE_INTERNAL') || die;
 /**
  * xmldb_reader_check_stale_files
  *
+ * @uses $DB
+ * @param $dbman
+ * @param $fixquizid
+ * @todo Finish documenting this function
+ */
+function xmldb_reader_add_attempts_bookid($dbman, $fixquizid=false) {
+    global $DB;
+
+    //////////////////////////////////////////////////
+    // fix the "quizid" field in the "reader_attempts"
+    // and the "reader_deleted_attempts" tables
+    //////////////////////////////////////////////////
+    // it currently contains an id from "reader_books"
+    // so we create a new "bookid" field, copy "quizid",
+    // then set correct "quizid", and remove "bookid"
+
+    // define reader attempts table
+    $tablenames = array('reader_attempts', 'reader_deleted_attempts');
+    foreach ($tablenames as $tablename) {
+        $table = new xmldb_table($tablename);
+
+        if (! $dbman->table_exists($table)) {
+            continue; // shouldn't happen !!
+        }
+
+        // add/update quizid/bookid field and index
+        $fixbookid = false;
+        $fieldnames = array('quizid', 'bookid');
+        foreach ($fieldnames as $fieldname) {
+
+            $field = new xmldb_field($fieldname, XMLDB_TYPE_INTEGER, '10', null, null, null, '0', 'userid');
+            $index = new xmldb_index($fieldname.'_key', XMLDB_INDEX_NOTUNIQUE, array($fieldname));
+
+            if ($dbman->index_exists($table, $index)) {
+                $dbman->drop_index($table, $index);
+            }
+
+            if ($dbman->field_exists($table, $field)) {
+                $dbman->change_field_type($table, $field);
+            } else {
+                $dbman->add_field($table, $field);
+                if ($fieldname=='bookid') {
+                    $fixbookid = true;
+                }
+            }
+
+            if (! $dbman->index_exists($table, $index)) {
+                $dbman->add_index($table, $index);
+            }
+        }
+
+        // synchronize "quizid" and "bookid"
+        if ($fixquizid || $fixbookid) {
+
+            // specify $join and $set fields
+            if ($fixquizid) {
+                // copy "quizid" to "bookid", then unset "quizid"
+                $DB->execute('UPDATE {'.$tablename.'} SET bookid = quizid');
+                $DB->execute('UPDATE {'.$tablename.'} SET quizid = 0');
+                // transfer correct "quizid" from "reader_books" table
+                $join = 'ra.bookid = rb.id';
+                $set1 = 'quizid';
+                if ($tablename=='reader_deleted_attempts') {
+                    $set2 = '0';
+                } else {
+                    $set2 = 'rb.quizid';
+                }
+            } else {
+                // transfer "bookid" from "reader_books" table
+                $join = 'ra.quizid = rb.quizid';
+                $set1 = 'bookid';
+                $set2 = 'rb.id';
+            }
+
+            // Note: syntax for UPDATE with JOIN depends on DB type
+            switch ($DB->get_dbfamily()) {
+                case 'mysql':
+                    $DB->execute('UPDATE {'.$tablename.'} ra JOIN {reader_books} rb ON '.$join.' SET ra.'.$set1.' = '.$set2);
+                    break;
+                case 'mssql': // not tested
+                    $DB->execute('UPDATE ra SET '.$set1.' = '.$set2.' FROM {'.$tablename.'} ra JOIN {reader_books} rb ON '.$join);
+                    break;
+                case 'oracle': // not tested
+                    $select = 'SELECT '.$set2.' FROM {reader_books} rb WHERE '.$join;
+                    $DB->execute('UPDATE {'.$tablename.'} ra SET ra.'.$set1.' = ('.$select.') AND EXISTS ('.$select.')');
+                    break;
+                case 'postgres': // not tested
+                    $DB->execute('UPDATE {'.$tablename.'} ra SET '.$set1.' = '.$set2.' FROM {reader_books} rb WHERE '.$join);
+                    break;
+                default:
+                    $DB->execute('UPDATE {'.$tablename.'} ra SET ra.'.$set1.' = (SELECT '.$set2.' FROM {reader_books} rb WHERE '.$join.')');
+            }
+        }
+    }
+}
+
+/**
+ * xmldb_reader_check_stale_files
+ *
  * @uses $FULLME
  * @uses $OUTPUT
  * @todo Finish documenting this function
@@ -1986,7 +2085,7 @@ function xmldb_reader_fix_duplicates() {
 }
 
 /**
- * xmldb_reader_fix_question_categories
+ * xmldb_reader_get_question_categories
  *
  * @todo Finish documenting thi function
  */
@@ -2850,9 +2949,12 @@ function xmldb_reader_fix_extrapoints() {
  * @param object $dbman (passed by reference)
  * @param string $oldname
  * @param string $newname
+ * @param array  $fields array($name => $value)
  * @todo Finish documenting this function
  */
-function xmldb_reader_merge_tables(&$dbman, $oldname, $newname) {
+function xmldb_reader_merge_tables(&$dbman, $oldname, $newname, $fields) {
+    global $DB;
+
     $oldtable = new xmldb_table($oldname);
     $newtable = new xmldb_table($newname);
     if ($dbman->table_exists($oldtable) && $dbman->table_exists($newtable)) {
@@ -2866,13 +2968,16 @@ function xmldb_reader_merge_tables(&$dbman, $oldname, $newname) {
         if ($rs) {
             $i = 0; // record counter
             $bar = new progress_bar('readermergetable'.$oldname, 500, true);
-            //$a = (object)array('new' => $newname, 'old' => $oldname);
-            //$strupdating = get_string('mergingtables', 'reader', $a);
-            $strupdating = "Merging tables: $oldname - $newname";
+            $a = (object)array('new' => $newname, 'old' => $oldname);
+            $strupdating = get_string('mergingtables', 'reader', $a);
 
             // loop through answer records
             foreach ($rs as $record) {
                 $i++; // increment record count
+
+                foreach ($fields as $name => $value) {
+                    $record->$name = $value;
+                }
 
                 unset($record->id);
                 if (! $record->id = $DB->insert_record($newname, $record)) {
