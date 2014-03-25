@@ -16,7 +16,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * mod/reader/admin/download/lib.php
+ * mod/reader/admin/books/download/lib.php
  *
  * @package    mod
  * @subpackage reader
@@ -30,10 +30,10 @@ defined('MOODLE_INTERNAL') || die;
 
 /** Include required files */
 require_once($CFG->dirroot.'/mod/reader/lib.php');
-require_once($CFG->dirroot.'/mod/reader/admin/download/downloader.php');
-require_once($CFG->dirroot.'/mod/reader/admin/download/progress.php');
-require_once($CFG->dirroot.'/mod/reader/admin/download/remotesite.php');
-require_once($CFG->dirroot.'/mod/reader/admin/download/remotesite/moodlereadernet.php');
+require_once($CFG->dirroot.'/mod/reader/admin/books/download/downloader.php');
+require_once($CFG->dirroot.'/mod/reader/admin/books/download/progress.php');
+require_once($CFG->dirroot.'/mod/reader/admin/books/download/remotesite.php');
+require_once($CFG->dirroot.'/mod/reader/admin/books/download/remotesite/moodlereadernet.php');
 
 /**
  * reader_download_item

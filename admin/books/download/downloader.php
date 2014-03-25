@@ -16,7 +16,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * mod/reader/admin/download/downloader.php
+ * mod/reader/admin/books/download/downloader.php
  *
  * @package    mod
  * @subpackage reader
@@ -49,7 +49,7 @@ class reader_downloader {
     /**#@-*/
 
     /**#@+
-    * values for download $mode
+    * values for $downloadmode
     *
     * @const integer
     */
@@ -170,17 +170,17 @@ class reader_downloader {
      * @param xxx $output renderer
      * @todo Finish documenting this function
      */
-    public function __construct($reader, $output) {
+    public function __construct($output) {
         global $DB;
 
-        $this->course = $reader->course;
-        $this->cm     = $reader->cm;
-        $this->reader = $reader;
+        $this->course = $output->reader->course;
+        $this->cm     = $output->reader->cm;
+        $this->reader = $output->reader;
         $this->output = $output;
 
         // set default course and category
-        if ($reader->usecourse) {
-            $this->defaultcourseid = $reader->usecourse;
+        if ($this->reader->usecourse) {
+            $this->defaultcourseid = $this->reader->usecourse;
         } else {
             $this->defaultcourseid = get_config('reader', 'usecourse');
         }
@@ -631,17 +631,17 @@ class reader_downloader {
      *
      * @uses $DB
      * @param xxx $type
-     * @param xxx $mode
+     * @param xxx $downloadmode
      * @param xxx $r (optional, default=0)
      * @todo Finish documenting this function
      */
-    public function get_downloaded_items($type, $mode, $r=0) {
+    public function get_downloaded_items($type, $downloadmode, $r=0) {
         global $CFG, $DB;
 
         $this->downloaded[$r] = new reader_items();
 
         // cache $isrepairmode flag
-        $isrepairmode = ($mode==reader_downloader::REPAIR_MODE);
+        $isrepairmode = ($downloadmode==reader_downloader::REPAIR_MODE);
 
         if ($type==self::BOOKS_WITH_QUIZZES) {
             $select = 'quizid > ?';

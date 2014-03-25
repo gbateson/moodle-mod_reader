@@ -16,7 +16,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * mod/reader/admin/download/progress.php
+ * mod/reader/admin/books/download/progress.php
  *
  * @package    mod
  * @subpackage reader

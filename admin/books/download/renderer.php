@@ -16,7 +16,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * mod/reader/admin/download/renderer.php
+ * mod/reader/admin/books/download/renderer.php
  *
  * @package    mod
  * @subpackage reader
@@ -29,10 +29,11 @@
 defined('MOODLE_INTERNAL') || die;
 
 /** Include required files */
-require_once($CFG->dirroot.'/mod/reader/admin/renderer.php');
+require_once($CFG->dirroot.'/mod/reader/admin/books/renderer.php');
+require_once($CFG->dirroot.'/mod/reader/admin/books/download/downloader.php');
 
 /**
- * mod_reader_admin_download_renderer
+ * mod_reader_admin_books_download_renderer
  *
  * @copyright  2013 Gordon Bateson (gordon.bateson@gmail.com)
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -40,7 +41,116 @@ require_once($CFG->dirroot.'/mod/reader/admin/renderer.php');
  * @package    mod
  * @subpackage reader
  */
-class mod_reader_admin_download_renderer extends mod_reader_admin_renderer {
+class mod_reader_admin_books_download_renderer extends mod_reader_admin_books_renderer {
+
+    /**
+     * get_standard_types
+     *
+     * @return string HTML output to display navigation tabs
+     */
+    static public function get_standard_types() {
+        return array(reader_downloader::BOOKS_WITH_QUIZZES,
+                     reader_downloader::BOOKS_WITHOUT_QUIZZES);
+    }
+
+    /**
+     * mode_download
+     *
+     * @return string HTML output to display navigation tabs
+     */
+    public function mode_download() {
+        global $CFG;
+        require_once($CFG->dirroot.'/mod/reader/admin/books/download/lib.php');
+
+        $selectedpublishers = reader_optional_param_array('publishers', array(), PARAM_CLEAN);
+        $selectedlevels     = reader_optional_param_array('levels',     array(), PARAM_CLEAN);
+        $selecteditemids    = reader_optional_param_array('itemids',    array(), PARAM_CLEAN);
+
+        $downloadmode       = reader_downloader::NORMAL_MODE; // default download mode
+        $downloadmode       = reader_optional_param_array('downloadmode', $downloadmode, PARAM_INT);
+
+        $tab = $this->get_tab();
+        $mode = mod_reader::get_mode('admin/books');
+        $type = mod_reader::get_type('admin/books/download');
+
+        switch ($type) {
+            case reader_downloader::BOOKS_WITH_QUIZZES: $str = 'uploadquiztoreader'; break;
+            case reader_downloader::BOOKS_WITHOUT_QUIZZES: $str = 'uploaddatanoquizzes'; break;
+        }
+        echo $this->heading(get_string($str, 'reader'));
+
+        // create an object to represent main download site (moodlereader.net)
+        $remotesite = new reader_remotesite_moodlereadernet(get_config('reader', 'serverlink'),
+                                                            get_config('reader', 'serverlogin'),
+                                                            get_config('reader', 'serverpassword'));
+
+        // create an object to handle the downloading of data from remote sites
+        $downloader = new reader_downloader($this);
+
+        // register the known remote sites with the downloader
+        $downloader->add_remotesite($remotesite);
+
+        // get a list of items that have already been downloaded
+        // from the remote site and are stored in the Moodle DB
+        $downloader->get_downloaded_items($type, $downloadmode);
+
+        // download the list(s) of available items from each remote site
+        $downloader->add_available_items($type, $selecteditemids);
+
+        // if any itemids have been selected for download, check that
+        // they are valid, and expand selected publishers and levels
+        $downloader->check_selected_itemids($selectedpublishers,
+                                            $selectedlevels,
+                                            $selecteditemids);
+
+        // download selected any itemids from the remote site(s)
+        // and add them to this Moodle site
+        $downloader->add_selected_itemids($type, $selecteditemids);
+
+        // if any downloadable items were found on the remote sites,
+        // show them in a selectable, hierarchical menu
+        $output = '';
+        if ($count = $downloader->has_available_items()) {
+            $newcount = $downloader->has_new_items();
+            $updatecount = $downloader->has_updated_items();
+
+            $output .= $this->form_start($tab, $mode, $type);
+
+            //$output .= $this->formheader(get_string('pagesettings', 'reader'));
+            $output .= $this->downloadmode_menu($downloadmode); // "normal" or "repair"
+            $output .= $this->downloadtype_menu($type); // "with" or "without" quizzes
+            $output .= $this->search_box();
+            $output .= $this->showhide_menu($count, $updatecount);
+            $output .= $this->select_menu($newcount, $updatecount);
+
+            //$output .= $this->formheader(get_string('availableitems', 'reader'));
+            $output .= $this->available_lists($downloader);
+
+            if ($type==reader_downloader::BOOKS_WITH_QUIZZES) {
+                //$output .= $this->formheader(get_string('downloadsettings', 'reader'));
+                $output .= $this->category_list($downloader);
+                $output .= $this->course_list($downloader);
+                $output .= $this->section_list($downloader);
+            }
+
+            $output .= $this->form_end();
+
+        } else if (get_config('reader', 'serverlink') && get_config('reader', 'serverlogin')) {
+
+            // no items to download - probably internet connection has been lost
+            $output .= $this->heading(get_string('nodownloaditems', 'reader'), '3');
+
+        } else {
+
+            // no items to download - probably because remote settings have not been set up
+            $link = new moodle_url('/admin/settings.php', array('section' => 'modsettingreader'));
+            $link = html_writer::link($link, get_string('settings'));
+            $output .= html_writer::tag('p', get_string('remotesitenotaccessible', 'reader'));
+            $output .= html_writer::tag('p', get_string('definelogindetails', 'reader', $link));
+        }
+
+        return $output;
+    }
 
     /**
      * form_js_start
@@ -296,7 +406,7 @@ class mod_reader_admin_download_renderer extends mod_reader_admin_renderer {
             $js .= "    items['targetsectionnum']   = RDR_get_value('menutargetsectionnum',   true);\n";
             $js .= "    items['targetsectiontext']  = RDR_get_value('texttargetsectiontext',  false);\n";
 
-            $js .= "    var url = RDR_get_wwwroot() + '/mod/reader/admin/download.js.php';\n";
+            $js .= "    var url = RDR_get_wwwroot() + '/mod/reader/admin/books/download.js.php';\n";
             $js .= "    var amp = '?';\n";
             $js .= "    for (var i in items) {\n";
             $js .= "        if (items[i]) {\n";
@@ -304,7 +414,7 @@ class mod_reader_admin_download_renderer extends mod_reader_admin_renderer {
             $js .= "            amp = '&';\n";
             $js .= "        }\n";
             $js .= "    }\n";
-            $js .= "    RDR_request(url);\n"; // if (confirm(url)) 
+            $js .= "    RDR_request(url);\n"; // if (confirm(url))
             $js .= "}\n";
 
             $js .= "//]]>\n";
@@ -776,10 +886,17 @@ class mod_reader_admin_download_renderer extends mod_reader_admin_renderer {
      * @return xxx
      * @todo Finish documenting this function
      */
-    public function form_start() {
+    public function form_start($tab, $mode, $type) {
+        $url = $this->page->url;
+        $params = $url->params();
+        $params['tab'] = $tab;
+        $params['mode'] = $mode;
+        $params['type'] = $type;
+        $url->params($params);
+
         $output = '';
         $output .= $this->form_js_start();
-        $output .= html_writer::start_tag('form', array('action' => $this->page->url, 'method' => 'post'));
+        $output .= html_writer::start_tag('form', array('action' => $url, 'method' => 'post'));
         $output .= html_writer::start_tag('div');
         return $output;
     }
@@ -803,35 +920,37 @@ class mod_reader_admin_download_renderer extends mod_reader_admin_renderer {
     }
 
     /**
-     * mode_menu
+     * downloadmode_menu
      *
-     * @param string $mode "normal" or "repair"
+     * @param string $downloadmode "normal" or "repair"
      * @return xxx
      * @todo Finish documenting this function
      */
-    public function mode_menu($mode) {
-        $label = get_string('mode', 'reader');
+    public function downloadmode_menu($downloadmode) {
+        $name = 'downloadmode';
+        $label = get_string($name, 'reader');
         $onchange = 'RDR_set_location_from_select(this)';
-        $modes = array(reader_downloader::NORMAL_MODE => get_string('normalmode', 'reader'),
-                       reader_downloader::REPAIR_MODE => get_string('repairmode', 'reader'));
-        $modes = html_writer::select($modes, 'mode', $mode, null, array('onchange' => $onchange));
-        return $this->formitem('mode', $label, $modes, 'mode');
+        $downloadmodes = array(reader_downloader::NORMAL_MODE => get_string('normalmode', 'reader'),
+                               reader_downloader::REPAIR_MODE => get_string('repairmode', 'reader'));
+        $downloadmodes = html_writer::select($downloadmodes, $name, $downloadmode, null, array('onchange' => $onchange));
+        return $this->formitem($name, $label, $downloadmodes, $name);
     }
 
     /**
-     * type_menu
+     * dowloadtype_menu
      *
      * @param integer $type reader_downloader::BOOKS_xxx_QUIZZES
      * @return xxx
      * @todo Finish documenting this function
      */
-    public function type_menu($type) {
-        $label = get_string('type', 'reader');
+    public function downloadtype_menu($type) {
+        $name = 'type';
+        $label = get_string($name, 'reader');
         $onchange = 'RDR_set_location_from_select(this)';
         $types = array(reader_downloader::BOOKS_WITH_QUIZZES => get_string('bookswithquizzes', 'reader'),
                        reader_downloader::BOOKS_WITHOUT_QUIZZES => get_string('bookswithoutquizzes', 'reader'));
         $types = html_writer::select($types, 'type', $type, null, array('onchange' => $onchange));
-        return $this->formitem('type', $label, $types, 'type');
+        return $this->formitem($name, $label, $types, $name);
     }
 
     /**
@@ -1293,7 +1412,7 @@ class mod_reader_admin_download_renderer extends mod_reader_admin_renderer {
                     if ($keep) {
                         if ($category->parent) {
                             $categories[$id]->name = $categories[$category->parent]->name.' / '.$categories[$id]->name;
-                            $category->name = $categories[$id]->name; 
+                            $category->name = $categories[$id]->name;
                         }
                         $categoryids[$id] = $category->name;
                     }
