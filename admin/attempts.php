@@ -31,6 +31,7 @@ require_once($CFG->dirroot.'/mod/reader/admin/attempts/renderer.php');
 
 $id     = optional_param('id',     0,  PARAM_INT); // course module id
 $r      = optional_param('r',      0,  PARAM_INT); // reader id
+$mode   = optional_param('mode',   '', PARAM_ALPHA);
 $action = optional_param('action', '', PARAM_ALPHA);
 
 if ($id) {

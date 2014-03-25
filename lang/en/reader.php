@@ -167,6 +167,14 @@ $string['downloadbookswithoutquizzes'] = 'Download books without quizzes';
 $string['downloadbookswithquizzes'] = 'Download books with quizzes';
 $string['downloadedbooks'] = 'Data for the following books was downloaded:';
 $string['downloadexcel'] = 'Download Excel';
+$string['downloadmode'] = 'Mode';
+$string['downloadmode_help'] = 'This page can be in the following two modes:
+
+**Normal**
+: In normal mode, only books whose data has not already been downloaded, or books whose data has been updated, will be available. Books for which the most recent data has already been downloaded will not be available.
+
+**Repair**
+: In repair mode, all books are available for download. If any data has been previously downloaded, it will be overwritten by the newly downloaded data. Use this mode if you want to repair faulty quizzes or incorrect data. Note that even if quizzes are overwritten, data about students attempts at those quizzes will be retained.';
 $string['downloads'] = 'Downloads';
 $string['downloadsettings'] = 'Download settings';
 $string['duration'] = 'Duration';
@@ -274,14 +282,6 @@ $string['menu'] = 'Menu';
 $string['mergingtables'] = 'Merging tables: {$a->old} into {$a->new}';
 $string['messagefromyourteacher'] = 'Message from your teacher';
 $string['min'] = 'Greater than or equal to';
-$string['mode'] = 'Mode';
-$string['mode_help'] = 'This page can be in the following two modes:
-
-**Normal**
-: In normal mode, only books whose data has not already been downloaded, or books whose data has been updated, will be available. Books for which the most recent data has already been downloaded will not be available.
-
-**Repair**
-: In repair mode, all books are available for download. If any data has been previously downloaded, it will be overwritten by the newly downloaded data. Use this mode if you want to repair faulty quizzes or incorrect data. Note that even if quizzes are overwritten, data about students attempts at those quizzes will be retained.';
 $string['mybooks'] = 'Only books already installed on this site';
 $string['needdeletethisattemptstoo'] = 'Need delete this Attempts too';
 $string['needtocheckupdates'] = 'This site has not checked for quiz updates in ({$a} days). Check now?';

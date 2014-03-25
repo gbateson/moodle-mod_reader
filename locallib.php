@@ -70,22 +70,37 @@ class mod_reader {
      * @param stdclass $context  The context of the reader instance
      * @param stdclass $attempt  attempt data from the {reader_attempts} table
      */
-    private function __construct(stdclass $dbrecord, stdclass $cm, stdclass $course, stdclass $context=null, stdclass $attempt=null) {
-        foreach ($dbrecord as $field => $value) {
-            $this->$field = $value;
+    private function __construct($dbrecord=null, $cm=null, $course=null, $context=null, $attempt=null) {
+        global $COURSE;
+
+        if ($dbrecord) {
+            foreach ($dbrecord as $field => $value) {
+                $this->$field = $value;
+            }
         }
-        $this->cm = $cm;
-        $this->course = $course;
+
+        if ($cm) {
+            $this->cm = $cm;
+        }
+
+        if ($course) {
+            $this->course = $course;
+        } else {
+            $this->course = $COURSE;
+        }
+
         if ($context) {
             $this->context = $context;
+        } else if ($cm) {
+            $this->context = self::context(CONTEXT_MODULE, $cm->id);
         } else {
-            $this->context = self::context(CONTEXT_MODULE, $this->cm->id);
+            $this->context = self::context(CONTEXT_COURSE, $this->course->id);
         }
-        if (is_null($attempt)) {
-            // do nothing
-        } else {
+
+        if ($attempt) {
             $this->attempt = $attempt;
         }
+
         $this->time = time();
     }
 
@@ -101,7 +116,7 @@ class mod_reader {
      * @param stdclass $course a row from the course table
      * @return reader the new reader object
      */
-    static public function create(stdclass $dbrecord, stdclass $cm, stdclass $course, stdclass $context=null, stdclass $attempt=null) {
+    static public function create($dbrecord, $cm, $course, $context=null, $attempt=null) {
         return new mod_reader($dbrecord, $cm, $course, $context, $attempt);
     }
 
@@ -484,19 +499,41 @@ class mod_reader {
     }
 
     /**
-     * get_report_modes
+     * get_standard_modes
      *
-     * @return array of report modes
-     * @todo check for custom reports in "/mod/reader/report"
+     * define the names and order of the standard tab-modes for this renderer
+     *
+     * @return array of standard modes
      */
-    static public function get_report_modes() {
-        static $modes = null;
-        if ($modes===null) {
-            // the order of the standard Reader reports
-            $modes = array('usersummary', 'userdetailed', 'groupsummary', 'booksummary', 'bookdetailed');
+    static function get_standard_modes() {
+        return array();
+    }
 
-            // all report plugins (exclude "filters" directory)
-            $plugins = get_list_of_plugins('mod/reader/admin/reports', 'filters');
+    /**
+     * get_modes
+     *
+     * @param string $directory path to dir below "mod/reader"
+     * @param string $exclude   (optional, default='') modes to exclude
+     * @return array of report modes
+     */
+    static public function get_modes($directory, $exclude='') {
+        global $CFG;
+        static $cache = array();
+
+        if (! array_key_exists($directory, $cache)) {
+            $modes = array(); // default modes
+            $classfile = $CFG->dirroot.'/mod/reader/'.$directory.'/renderer.php';
+            $classname = 'mod_reader_'.str_replace('/', '_', $directory).'_renderer';
+            if (file_exists($classfile)) {
+                require_once($classfile);
+                if (method_exists($classname, 'get_standard_modes')) {
+                    $modes = call_user_func(array($classname, 'get_standard_modes'));
+                    // we use call_user_func() to prevent syntax error in PHP 5.2.x
+                }
+            }
+
+            // all report plugins
+            $plugins = get_list_of_plugins('mod/reader/'.$directory, $exclude);
 
             // remove missing standard reports
             $modes = array_intersect($modes, $plugins);
@@ -504,24 +541,81 @@ class mod_reader {
             // append custom reports, if any
             $plugins = array_diff($plugins, $modes);
             $modes = array_merge($modes, $plugins);
+
+            // cache $modes for this $directory
+            $cache[$directory] = $modes;
         }
-        return $modes;
+
+        return $cache[$directory];
     }
 
     /**
-     * validate_mode
+     * get_mode
      *
-     * @param string $mode
+     * @param string $directory path to dir below "mod/reader"
+     * @param string $exclude   (optional, default='') modes to exclude
+     * @param string $default   (optional, default='') default mode
      * @return string a valid report mode
-     * @todo check for custom reports in "/mod/reader/report"
      */
-    static public function validate_mode($mode) {
-        $modes = self::get_report_modes();
-        if ($mode && in_array($mode, $modes)) {
-            return $mode;
-        } else {
-            return reset($modes); // default mode
+    static public function get_mode($directory, $exclude='', $default='') {
+        $modes = self::get_modes($directory, $exclude);
+        if ($mode = optional_param('mode', '', PARAM_ALPHA)) {
+            if (in_array($mode, $modes)) {
+                return $mode;
+            }
         }
+        if (count($modes)) {
+            return reset($modes);
+        }
+        return $default;
+    }
+
+    /**
+     * get_types
+     *
+     * @param string $directory path to dir below "mod/reader"
+     * @param string $exclude   (optional, default='') types to exclude
+     * @return string a valid report type
+     */
+    static public function get_types($directory, $exclude='') {
+        global $CFG;
+        static $cache = array();
+
+        if (! array_key_exists($directory, $cache)) {
+            $types = array(); // default $types
+            $classfile = $CFG->dirroot.'/mod/reader/'.$directory.'/renderer.php';
+            $classname = 'mod_reader_'.str_replace('/', '_', $directory).'_renderer';
+            if (file_exists($classfile)) {
+                require_once($classfile);
+                if (method_exists($classname, 'get_standard_types')) {
+                    $types = call_user_func(array($classname, 'get_standard_types'));
+                    // we use call_user_func() to prevent syntax error in PHP 5.2.x
+                }
+            }
+            $cache[$directory] = $types;
+        }
+
+        return $cache[$directory];
+    }
+
+    /**
+     * get_type
+     *
+     * @param string $directory path to dir below "mod/reader"
+     * @param string $exclude   (optional, default='') types to exclude
+     * @param string $default   (optional, default=0) default type
+     * @return string a valid report type
+     */
+    static public function get_type($directory, $exclude='', $default=0) {
+        $types = self::get_types($directory, $exclude);
+        $type = optional_param('type', null, PARAM_INT);
+        if (is_numeric($type) && in_array($type, $types)) {
+            return $type;
+        }
+        if (count($types)) {
+            return reset($types);
+        }
+        return $default;
     }
 
     /**

@@ -32,8 +32,6 @@ require_once($CFG->dirroot.'/mod/reader/admin/users/renderer.php');
 
 $id     = optional_param('id',     0,  PARAM_INT); // course module id
 $r      = optional_param('r',      0,  PARAM_INT); // reader id
-$mode   = optional_param('mode',   '', PARAM_ALPHA);
-$action = optional_param('action', '', PARAM_ALPHA);
 
 if ($id) {
     $cm = get_coursemodule_from_id('reader', $id, 0, false, MUST_EXIST);
@@ -50,17 +48,18 @@ if ($id) {
 require_login($course, true, $cm);
 $reader = mod_reader::create($reader, $cm, $course);
 
-add_to_log($course->id, 'reader', 'Admin users', "admin/users.php?id=$id&action=$action", "$cm->instance");
+add_to_log($course->id, 'reader', 'Admin users', "admin/users.php?id=$id", "$cm->instance");
 
 // Initialize $PAGE, compute blocks
-$PAGE->set_url('/mod/reader/admin/users.php', array('id' => $cm->id, 'action' => $action));
+$PAGE->set_url('/mod/reader/admin/users.php', array('id' => $cm->id));
 
 $title = $course->shortname . ': ' . format_string($reader->name);
 $PAGE->set_title($title);
 $PAGE->set_heading($course->fullname);
 
-
-$output = $PAGE->get_renderer('mod_reader', 'admin_users');
+$mode = mod_reader::get_mode('admin/users');
+require_once($CFG->dirroot."/mod/reader/admin/users/$mode/renderer.php");
+$output = $PAGE->get_renderer('mod_reader', "admin_users_$mode");
 $output->init($reader);
 
 echo $output->header();
@@ -68,16 +67,12 @@ echo $output->tabs();
 echo $output->box_start('generalbox', 'notice');
 
 switch ($mode) {
-    case 'export':      echo $output->action_export($cm->id); break;
-    case 'import':      echo $output->action_import($cm->id); break;
-    case 'setgoals':    //echo $output->action_setgoals($cm->id); break;
-    case 'setlevels':   //echo $output->action_setlevels($cm->id); break;
-    case 'sendmessage': //echo $output->action_sendmessage($cm->id); break;
+    case 'setgoals':    echo $output->mode_setgoals();    break;
+    case 'setlevels':   echo $output->mode_setlevels();   break;
+    case 'sendmessage': echo $output->mode_sendmessage(); break;
+    case 'import':      echo $output->mode_import();      break;
+    case 'export':      echo $output->mode_export();      break;
 }
-
-$link = new moodle_url('/mod/reader/admin/index.php', array('id' => $id));
-$link = html_writer::link($link, get_string('continue'));
-echo $link;
 
 echo $output->box_end();
 echo $output->footer();

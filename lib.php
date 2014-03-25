@@ -1168,7 +1168,6 @@ function reader_question_preview_button($quiz, $question) {
  * @uses $CFG
  * @uses $COURSE
  * @uses $DB
- * @uses $bookpercentmaxgrade
  * @param xxx $userid
  * @param xxx $reader
  * @param xxx $allreaders (optional, default=false)
@@ -1177,40 +1176,28 @@ function reader_question_preview_button($quiz, $question) {
  * @todo Finish documenting this function
  */
 function reader_get_student_attempts($userid, $reader, $allreaders = false, $booklist = false) {
-    global $CFG, $COURSE, $DB, $bookpercentmaxgrade;
+    global $DB;
 
     if ($booklist) {
-        $reader->ignoredate = 0;
+        $ignoredate = 0;
+    } else {
+        $ignoredate = $reader->ignoredate;
     }
 
-    $select = 'ra.id, ra.timefinish, ra.userid, ra.bookid, ra.quizid, ra.attempt, ra.percentgrade, ra.sumgrades, ra.passed, ra.checkbox, ra.preview, '.
+    $select = 'ra.id, ra.uniqueid, ra.reader, ra.userid, ra.bookid, ra.quizid, ra.attempt, ra.deleted, '.
+              'ra.sumgrades, ra.percentgrade, ra.passed, ra.checkbox, ra.timefinish, ra.preview, ra.bookrating, '.
               'rb.name, rb.publisher, rb.level, rb.length, rb.image, rb.difficulty, rb.words, rb.sametitle';
     $from   = '{reader_attempts} ra LEFT JOIN {reader_books} rb ON ra.bookid = rb.id';
-    $where  = 'ra.preview <> :preview AND ra.deleted = :deleted AND ra.userid = :userid AND ra.timefinish > :ignoredate';
-    $params = array('preview' => 1, 'deleted' => 0, 'userid'=>$userid, 'ignoredate'=>$reader->ignoredate);
+    $where  = 'ra.userid = :userid AND ra.deleted = :deleted AND ra.timefinish > :ignoredate AND ra.preview = :preview';
+    $order  = 'ra.timefinish';
+    $params = array('userid'=>$userid, 'deleted' => 0, 'ignoredate'=>$ignoredate, 'preview' => 0);
     if (! $allreaders) {
         $where .= ' AND ra.reader = :readerid';
         $params['readerid'] = $reader->id;
     }
-    if (! $attempts_p = $DB->get_records_sql("SELECT $select FROM $from WHERE $where ORDER BY ra.timefinish", $params)) {
-        $attempts_p = array();
+    if (! $attempts = $DB->get_records_sql("SELECT $select FROM $from WHERE $where ORDER BY $order", $params)) {
+        $attempts = array();
     }
-
-    $select = 'ra.id, ra.timefinish, ra.userid, ra.bookid, ra.quizid, ra.attempt, ra.percentgrade, ra.sumgrades, ra.passed, ra.checkbox, ra.preview, '.
-              'rb.name, rb.publisher, rb.level, rb.length, rb.image, rb.difficulty, rb.words, rb.sametitle';
-    $from   = '{reader_attempts} ra LEFT JOIN {reader_books} rb ON ra.bookid = rb.id';
-    $where  = 'ra.preview = :preview AND ra.deleted = :deleted AND ra.userid = :userid AND ra.timefinish > :ignoredate';
-    $params = array('preview' => 1, 'deleted' => 0, 'userid'=>$userid, 'ignoredate'=>$reader->ignoredate);
-    if (! $allreaders) {
-        $where .= ' AND ra.reader = :readerid';
-        $params['readerid'] = $reader->id;
-    }
-    if (! $attempts_n = $DB->get_records_sql("SELECT $select FROM $from WHERE $where ORDER BY ra.timefinish", $params)) {
-        $attempts_n = array();
-    }
-
-    $attempts = array_merge($attempts_p, $attempts_n);
-    $attempts = array_filter($attempts); // remove blanks
 
     $level = $DB->get_record('reader_levels', array('userid' => $userid, 'readerid' => $reader->id));
     if (empty($level)) {
@@ -1248,8 +1235,8 @@ function reader_get_student_attempts($userid, $reader, $allreaders = false, $boo
         }
         $totals['totalpoints'] += round($totals['points'], 2);
 
-        if (isset($bookpercentmaxgrade[$attempt->quizid])) {
-            list($totals['bookpercent'], $totals['bookmaxgrade']) = $bookpercentmaxgrade[$attempt->quizid];
+        if (isset($bookpercentmaxgrade[$attempt->bookid])) {
+            list($totals['bookpercent'], $totals['bookmaxgrade']) = $bookpercentmaxgrade[$attempt->bookid];
         } else {
             $totalgrade = 0;
             $answersgrade = $DB->get_records ('reader_question_instances', array('quiz' => $attempt->quizid)); // Count Grades (TotalGrade)
@@ -1259,7 +1246,7 @@ function reader_get_student_attempts($userid, $reader, $allreaders = false, $boo
             //$totals['bookpercent']  = round(($attempt->sumgrades/$totalgrade) * 100, 2).'%';
             $totals['bookpercent']  = $attempt->percentgrade.'%';
             $totals['bookmaxgrade'] = $totalgrade * reader_get_reader_length($reader, $attempt->bookid);
-            $bookpercentmaxgrade[$attempt->quizid] = array($totals['bookpercent'], $totals['bookmaxgrade']);
+            $bookpercentmaxgrade[$attempt->bookid] = array($totals['bookpercent'], $totals['bookmaxgrade']);
         }
 
         if ($attempt->preview == 1) {
@@ -1267,16 +1254,17 @@ function reader_get_student_attempts($userid, $reader, $allreaders = false, $boo
         }
 
         // get best attemptid for this quiz
-        if (empty($bestattemptids[$attempt->quizid])) {
+        if (empty($bestattemptids[$attempt->bookid])) {
             $bestattemptid = 0;
         } else {
-            $bestattemptid = $bestattemptids[$attempt->quizid];
+            $bestattemptid = $bestattemptids[$attempt->bookid];
         }
         if ($bestattemptid==0 || $returndata[$bestattemptid]['percentgrade'] < $attempt->percentgrade) {
-            $bestattemptids[$attempt->quizid] = $attempt->id;
+            $bestattemptids[$attempt->bookid] = $attempt->id;
         }
 
         $returndata[$attempt->id] = array('id'            => $attempt->id,
+                                          'bookid'        => $attempt->bookid,
                                           'quizid'        => $attempt->quizid,
                                           'timefinish'    => $attempt->timefinish,
                                           'booktitle'     => $attempt->name,
@@ -4049,7 +4037,7 @@ function reader_extend_navigation(navigation_node $readernode, stdclass $course,
         $node = $readernode->add($label, null, $type, null, null, $icon);
 
         //$modes = array('usersummary', 'userdetailed', 'groupsummary', 'booksummary', 'bookdetailed');
-        $modes = mod_reader::get_report_modes();
+        $modes = mod_reader::get_modes('admin/reports', 'filters');
         foreach ($modes as $mode) {
             $url = new moodle_url('/mod/reader/admin/reports.php', array('id' => $cm->id, 'mode' => $mode));
             $label = get_string('report'.$mode, 'reader');
@@ -4096,38 +4084,50 @@ function reader_extend_settings_navigation(settings_navigation $settingsnav, nav
 
     // create book nodes
     if (reader_can_managebooks($PAGE->cm->id, $USER->id)) {
-        require_once($CFG->dirroot.'/mod/reader/admin/download/downloader.php');
+        require_once($CFG->dirroot.'/mod/reader/admin/books/renderer.php');
+        require_once($CFG->dirroot.'/mod/reader/admin/books/download/downloader.php');
 
         //////////////////////////
         // Books sub-menu
         //////////////////////////
 
         $type = navigation_node::TYPE_SETTING;
-        $icon = new pix_icon('t/download', '');
 
+        // books node
         $key    = 'readerbooks';
         $text   = get_string('books', 'reader');
         $node   = new navigation_node(array('type'=>$type, 'key'=>$key, 'text'=>$text));
 
-        $params = array('id' => $PAGE->cm->id, 'type' => reader_downloader::BOOKS_WITH_QUIZZES);
-        $url    = new moodle_url('/mod/reader/admin/download.php', $params);
-        $key    = 'downloadbookswithquizzes';
-        $text   = get_string($key, 'reader');
-        reader_navigation_add_node($node, $type, $key, $text, $url, $icon);
-
-        $params = array('id' => $PAGE->cm->id, 'type' => reader_downloader::BOOKS_WITHOUT_QUIZZES);
-        $url    = new moodle_url('/mod/reader/admin/download.php', $params);
-        $key    = 'downloadbookswithoutquizzes';
-        $text   = get_string($key, 'reader');
-        reader_navigation_add_node($node, $type, $key, $text, $url, $icon);
-
-        $type = navigation_node::TYPE_SETTING;
-        $icon = new pix_icon('t/edit', '');
-
-        $params = array('id' => $PAGE->cm->id, 'action' => 'editdetails');
+        // edit node
+        $params = array('id' => $PAGE->cm->id,
+                        'tab' => mod_reader_admin_books_renderer::TAB_BOOKS_EDIT,
+                        'mode' => 'edit');
         $url = new moodle_url('/mod/reader/admin/books.php', $params);
         $key = 'editbookdetails';
-        $text   = get_string($key, 'reader');
+        $text = get_string($key, 'reader');
+        $icon = new pix_icon('t/edit', '');
+        reader_navigation_add_node($node, $type, $key, $text, $url, $icon);
+
+        // download (with quizzes) node
+        $params = array('id' => $PAGE->cm->id,
+                        'tab' => mod_reader_admin_books_renderer::TAB_BOOKS_DOWNLOAD_WITH,
+                        'mode' => 'download',
+                        'type' => reader_downloader::BOOKS_WITH_QUIZZES);
+        $url = new moodle_url('/mod/reader/admin/books/download.php', $params);
+        $key = 'downloadbookswithquizzes';
+        $text = get_string($key, 'reader');
+        $icon = new pix_icon('t/download', '');
+        reader_navigation_add_node($node, $type, $key, $text, $url, $icon);
+
+        // download (without quizzes) node
+        $params = array('id' => $PAGE->cm->id,
+                        'tab' => mod_reader_admin_books_renderer::TAB_BOOKS_DOWNLOAD_WITHOUT,
+                        'mode' => 'download',
+                        'type' => reader_downloader::BOOKS_WITHOUT_QUIZZES);
+        $url = new moodle_url('/mod/reader/admin/books/download.php', $params);
+        $key = 'downloadbookswithoutquizzes';
+        $text = get_string($key, 'reader');
+        $icon = new pix_icon('t/download', '');
         reader_navigation_add_node($node, $type, $key, $text, $url, $icon);
 
         $nodes[] = $node;

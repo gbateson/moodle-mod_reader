@@ -55,9 +55,9 @@ if ($mode = optional_param('mode', '', PARAM_ALPHA)) {
     // load mod_reader class
     require_once($CFG->dirroot.'/mod/reader/locallib.php');
     $reader = mod_reader::create($reader, $cm, $course);
-    $mode = mod_reader::validate_mode($mode);
 
     // create the appropriate renderer class for this report $mode
+    $mode = mod_reader::get_mode('admin/reports');
     require_once($CFG->dirroot.'/mod/reader/admin/reports/'.$mode.'/renderer.php');
     $output = $PAGE->get_renderer('mod_reader', 'admin_reports_'.$mode);
     $output->init($reader);

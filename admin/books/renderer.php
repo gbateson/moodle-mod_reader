@@ -47,9 +47,9 @@ class mod_reader_admin_books_renderer extends mod_reader_admin_renderer {
      *
      * @var integer
      */
-    const TAB_BOOKS_DOWNLOAD_WITH    = 31;
-    const TAB_BOOKS_DOWNLOAD_WITHOUT = 32;
-    const TAB_BOOKS_EDIT             = 33;
+    const TAB_BOOKS_EDIT             = 31;
+    const TAB_BOOKS_DOWNLOAD_WITH    = 32;
+    const TAB_BOOKS_DOWNLOAD_WITHOUT = 33;
     /**#@-*/
 
     /**
@@ -67,7 +67,7 @@ class mod_reader_admin_books_renderer extends mod_reader_admin_renderer {
      * @return integer tab id
      */
     public function get_default_tab() {
-        return self::TAB_BOOKS_DOWNLOAD_WITH;
+        return self::TAB_BOOKS_EDIT;
     }
 
     /**
@@ -80,23 +80,32 @@ class mod_reader_admin_books_renderer extends mod_reader_admin_renderer {
         $cmid = $this->reader->cm->id;
         if ($this->reader->can_managebooks()) {
 
+            $tab = self::TAB_BOOKS_EDIT;
+            $params = array('id' => $cmid, 'tab' => $tab, 'mode' => 'edit');
+            $url = new moodle_url('/mod/reader/admin/books.php', $params);
+            $tabs[] = new tabobject($tab, $url, get_string('edit'));
+
             $tab = self::TAB_BOOKS_DOWNLOAD_WITH;
             $type = reader_downloader::BOOKS_WITH_QUIZZES;
-            $params = array('id' => $cmid, 'tab' => $tab, 'type' => $type);
-            $url = new moodle_url('/mod/reader/admin/download.php', $params);
+            $params = array('id' => $cmid, 'tab' => $tab, 'mode' => 'download', 'type' => $type);
+            $url = new moodle_url('/mod/reader/admin/books.php', $params);
             $tabs[] = new tabobject($tab, $url, get_string('downloadbookswithquizzes', 'reader'));
 
             $tab = self::TAB_BOOKS_DOWNLOAD_WITHOUT;
             $type = reader_downloader::BOOKS_WITHOUT_QUIZZES;
-            $params = array('id' => $cmid, 'tab' => $tab, 'type' => $type);
-            $url = new moodle_url('/mod/reader/admin/download.php', $params);
-            $tabs[] = new tabobject($tab, $url, get_string('downloadbookswithoutquizzes', 'reader'));
-
-            $tab = self::TAB_BOOKS_EDIT;
-            $params = array('id' => $cmid, 'tab' => $tab, 'action' => 'editdetails');
+            $params = array('id' => $cmid, 'tab' => $tab, 'mode' => 'download', 'type' => $type);
             $url = new moodle_url('/mod/reader/admin/books.php', $params);
-            $tabs[] = new tabobject($tab, $url, get_string('edit'));
+            $tabs[] = new tabobject($tab, $url, get_string('downloadbookswithoutquizzes', 'reader'));
         }
         return $this->attach_tabs_subtree(parent::get_tabs(), parent::TAB_BOOKS, $tabs);
+    }
+
+    /**
+     * get_standard_modes
+     *
+     * @return string HTML output to display navigation tabs
+     */
+    static public function get_standard_modes() {
+        return array('edit', 'download');
     }
 }

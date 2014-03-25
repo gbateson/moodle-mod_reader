@@ -46,45 +46,45 @@
 #page-mod-reader-admin div.readermenu a:hover { background-color: #eeeeee; }
 
 /** reader download **/
-#page-mod-reader-admin-download div.generalbox { margin-top: 15px; margin-bottom: 15px; }
+#page-mod-reader-admin-books div.generalbox { margin-top: 15px; margin-bottom: 15px; }
 
-#page-mod-reader-admin-download ul.remotesites,
-#page-mod-reader-admin-download ul.publishers,
-#page-mod-reader-admin-download ul.levels,
-#page-mod-reader-admin-download ul.items { list-style-type: none; margin: 6px 0px; padding: 6px; max-width: 600px; text-align: left; }
+#page-mod-reader-admin-books ul.remotesites,
+#page-mod-reader-admin-books ul.publishers,
+#page-mod-reader-admin-books ul.levels,
+#page-mod-reader-admin-books ul.items { list-style-type: none; margin: 6px 0px; padding: 6px; max-width: 600px; text-align: left; }
 
-#page-mod-reader-admin-download ul.remotesites li,
-#page-mod-reader-admin-download ul.publishers li,
-#page-mod-reader-admin-download ul.levels li,
-#page-mod-reader-admin-download ul.items li { list-style-type: none; margin-left: 6px; padding-left: 6px; }
+#page-mod-reader-admin-books ul.remotesites li,
+#page-mod-reader-admin-books ul.publishers li,
+#page-mod-reader-admin-books ul.levels li,
+#page-mod-reader-admin-books ul.items li { list-style-type: none; margin-left: 6px; padding-left: 6px; }
 
 /** for Moodle 2.0 **
-#page-mod-reader-admin-download ul li span.downloadeditems,
-#page-mod-reader-admin-download ul li input[type=checkbox],
-#page-mod-reader-admin-download ul li span.downloadeditems,
-#page-mod-reader-admin-download ul li input[type=radio] { margin-right: 7px; }
+#page-mod-reader-admin-books ul li span.downloadeditems,
+#page-mod-reader-admin-books ul li input[type=checkbox],
+#page-mod-reader-admin-books ul li span.downloadeditems,
+#page-mod-reader-admin-books ul li input[type=radio] { margin-right: 7px; }
 */
 
-#page-mod-reader-admin-download span.publishername { font-weight: bold; }
-#page-mod-reader-admin-download span.itemcount { font-style: italic; font-size: 0.9em; }
-#page-mod-reader-admin-download span.levelname { font-weight: bold; }
+#page-mod-reader-admin-books span.publishername { font-weight: bold; }
+#page-mod-reader-admin-books span.itemcount { font-style: italic; font-size: 0.9em; }
+#page-mod-reader-admin-books span.levelname { font-weight: bold; }
 
-#page-mod-reader-admin-download ul.remotesites { background-color: #eeeeff; border: 2px solid #ddddff; }
-#page-mod-reader-admin-download ul.publishers { background-color: #eeffee; border: 2px solid #ddffdd; }
-#page-mod-reader-admin-download ul.levels { background-color: #ffeeee; border: 2px solid #ffdddd; }
-#page-mod-reader-admin-download ul.items { background-color: #eeeeee; border: 2px solid #dddddd; }
+#page-mod-reader-admin-books ul.remotesites { background-color: #eeeeff; border: 2px solid #ddddff; }
+#page-mod-reader-admin-books ul.publishers { background-color: #eeffee; border: 2px solid #ddffdd; }
+#page-mod-reader-admin-books ul.levels { background-color: #ffeeee; border: 2px solid #ffdddd; }
+#page-mod-reader-admin-books ul.items { background-color: #eeeeee; border: 2px solid #dddddd; }
 
-#page-mod-reader-admin-download li.downloaditem { margin-top: 6px; margin-bottom: 6px; }
+#page-mod-reader-admin-books li.downloaditem { margin-top: 6px; margin-bottom: 6px; }
 
-#page-mod-reader-admin-download span.itemname span.matchedtext { font-weight: bold; font-size: 1.2em; text-decoration: underline; background-color: #ffffcc; }
+#page-mod-reader-admin-books span.itemname span.matchedtext { font-weight: bold; font-size: 1.2em; text-decoration: underline; background-color: #ffffcc; }
 
-#page-mod-reader-admin-download h3.formheader { margin: 6px; }
-#page-mod-reader-admin-download div.formitem div.label { text-align: right; width: 15%; min-width: 4.5em; }
-#page-mod-reader-admin-download div.formitem div.label,
-#page-mod-reader-admin-download div.formitem div.element,
-#page-mod-reader-admin-download div.formitem div.button { float: left; margin: 4px 8px; }
-#page-mod-reader-admin-download div.formitem div.element select { margin: 0px; }
-#page-mod-reader-admin-download form input.downloadbutton {
+#page-mod-reader-admin-books h3.formheader { margin: 6px; }
+#page-mod-reader-admin-books div.formitem div.label { text-align: right; width: 15%; min-width: 4.5em; }
+#page-mod-reader-admin-books div.formitem div.label,
+#page-mod-reader-admin-books div.formitem div.element,
+#page-mod-reader-admin-books div.formitem div.button { float: left; margin: 4px 8px; }
+#page-mod-reader-admin-books div.formitem div.element select { margin: 0px; }
+#page-mod-reader-admin-books form input.downloadbutton {
     background : #dddddd;
     color      : #000000;
     font-size  : 250%;
@@ -96,7 +96,7 @@
     /* Firefox */ -moz-border-top-left-radius: 12px; -moz-border-top-right-radius: 12px; -moz-border-bottom-left-radius: 12px; -moz-border-bottom-right-radius: 12px;
     /* Webkit  */ -webkit-border-top-left-radius: 12px; -webkit-border-top-right-radius: 12px; -webkit-border-bottom-left-radius: 12px; -webkit-border-bottom-right-radius: 12px;
 }
-#page-mod-reader-admin-download form input.downloadbutton:hover { background-color: #cc3333; color: #eeeeee; }
+#page-mod-reader-admin-books form input.downloadbutton:hover { background-color: #cc3333; color: #eeeeee; }
 
 /** reader admin reports **/
 #page-mod-reader-admin-reports div.tabtree { margin-bottom: 2.5em; }

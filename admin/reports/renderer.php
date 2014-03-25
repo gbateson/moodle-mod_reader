@@ -89,7 +89,7 @@ class mod_reader_admin_reports_renderer extends mod_reader_admin_renderer {
         $tabs = array();
         $cmid = $this->reader->cm->id;
         if ($this->reader->can_viewreports()) {
-            $modes = mod_reader::get_report_modes();
+            $modes = mod_reader::get_modes('admin/reports');
             foreach ($modes as $mode) {
                 $tab = constant('self::TAB_REPORTS_'.strtoupper($mode));
                 $params = array('id' => $cmid, 'tab' => $tab, 'mode' => $mode);
@@ -98,6 +98,15 @@ class mod_reader_admin_reports_renderer extends mod_reader_admin_renderer {
             }
         }
         return $this->attach_tabs_subtree(parent::get_tabs(), parent::TAB_REPORTS, $tabs);
+    }
+
+    /**
+     * define the names and order of the standard tab-modes for this renderer
+     *
+     * @return array of standard modes
+     */
+    static function get_standard_modes() {
+        return array('usersummary', 'userdetailed', 'groupsummary', 'booksummary', 'bookdetailed');
     }
 
     /**

@@ -31,8 +31,7 @@ require_once($CFG->dirroot.'/mod/reader/locallib.php');
 
 $id   = optional_param('id',    0, PARAM_INT);   // course module id
 $r    = optional_param('r',     0, PARAM_INT);   // reader id
-$mode = optional_param('mode', '', PARAM_ALPHA); // report mode
-$mode = mod_reader::validate_mode($mode);
+$mode = mod_reader::get_mode('admin/reports', 'filters');
 
 $action = optional_param('action', '', PARAM_ALPHA);
 $download = optional_param('download', '', PARAM_ALPHA);

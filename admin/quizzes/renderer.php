@@ -55,8 +55,6 @@ class mod_reader_admin_quizzes_renderer extends mod_reader_admin_renderer {
     const TAB_QUIZZES_ARRANGE  = 36;
     /**#@-*/
 
-    public $modes = array('add', 'delete', 'update', 'showhide', 'delay', 'arrange');
-
     /**
      * get_my_tab
      *
@@ -85,7 +83,7 @@ class mod_reader_admin_quizzes_renderer extends mod_reader_admin_renderer {
         $cmid = $this->reader->cm->id;
         if ($this->reader->can_managequizzes()) {
 
-            foreach ($this->modes as $mode) {
+            foreach (self::get_standard_modes() as $mode) {
                 $tab = constant('self::TAB_QUIZZES_'.strtoupper($mode));
                 $params = array('id' => $cmid, 'tab' => $tab, 'mode' => $mode);
                 $url = new moodle_url('/mod/reader/admin/quizzes.php', $params);
@@ -93,5 +91,68 @@ class mod_reader_admin_quizzes_renderer extends mod_reader_admin_renderer {
             }
         }
         return $this->attach_tabs_subtree(parent::get_tabs(), parent::TAB_QUIZZES, $tabs);
+    }
+
+    /**
+     * get_standard_modes
+     *
+     * @return string HTML output to display navigation tabs
+     */
+    static public function get_standard_modes() {
+        return array('add', 'delete', 'update', 'showhide', 'delay', 'arrange');
+    }
+
+    /**
+     * mode_add
+     *
+     * @return string HTML output
+     */
+    public function mode_add() {
+        echo 'mode_add()';
+    }
+
+    /**
+     * mode_delete
+     *
+     * @return string HTML output
+     */
+    public function mode_delete() {
+        echo 'mode_delete()';
+    }
+
+    /**
+     * mode_update
+     *
+     * @return string HTML output
+     */
+    public function mode_update() {
+        echo 'mode_update()';
+    }
+
+    /**
+     * mode_delay
+     *
+     * @return string HTML output
+     */
+    public function mode_delay() {
+        echo 'mode_delay()';
+    }
+
+    /**
+     * mode_showhide
+     *
+     * @return string HTML output
+     */
+    public function mode_showhide() {
+        echo 'mode_showhide()';
+    }
+
+    /**
+     * mode_arrange
+     *
+     * @return string HTML output
+     */
+    public function mode_arrange() {
+        echo 'mode_arrange()';
     }
 }

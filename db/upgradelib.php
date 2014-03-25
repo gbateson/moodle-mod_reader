@@ -156,7 +156,7 @@ function xmldb_reader_check_stale_files() {
         'processattempt.php', 'startattempt.php', 'summary.php',
         // moved to "utilities" folder
         'checkemail.php', 'fixslashesinnames.php',
-        // replaced by "admin/download"
+        // replaced by "admin/books/download"
         'dlquizzes_form.php', 'dlquizzes_process.php',
         'dlquizzes.php', 'dlquizzesnoq.php',
         'updatecheck.php', 'lib',

@@ -32,7 +32,6 @@ require_once($CFG->dirroot.'/mod/reader/admin/quizzes/renderer.php');
 
 $id     = optional_param('id',     0,  PARAM_INT); // course module id
 $r      = optional_param('r',      0,  PARAM_INT); // reader id
-$action = optional_param('action', '', PARAM_ALPHA);
 
 if ($id) {
     $cm = get_coursemodule_from_id('reader', $id, 0, false, MUST_EXIST);
@@ -49,25 +48,32 @@ if ($id) {
 require_login($course, true, $cm);
 $reader = mod_reader::create($reader, $cm, $course);
 
-add_to_log($course->id, 'reader', 'Admin users', "admin/quizzes.php?id=$id&action=$action", "$cm->instance");
+add_to_log($course->id, 'reader', 'Admin users', "admin/quizzes.php?id=$id", "$cm->instance");
 
 // Initialize $PAGE, compute blocks
-$PAGE->set_url('/mod/reader/admin/quizzes.php', array('id' => $cm->id, 'action' => $action));
+$PAGE->set_url('/mod/reader/admin/quizzes.php', array('id' => $cm->id));
 
 $title = $course->shortname . ': ' . format_string($reader->name);
 $PAGE->set_title($title);
 $PAGE->set_heading($course->fullname);
 
-$output = $PAGE->get_renderer('mod_reader', 'admin_quizzes');
+$mode = mod_reader::get_mode('admin/quizzes');
+require_once($CFG->dirroot."/mod/reader/admin/quizzes/$mode/renderer.php");
+$output = $PAGE->get_renderer('mod_reader', "admin_quizzes_$mode");
 $output->init($reader);
 
 echo $output->header();
 echo $output->tabs();
 echo $output->box_start('generalbox', 'notice');
 
-$link = new moodle_url('/mod/reader/admin/index.php', array('id' => $id));
-$link = html_writer::link($link, get_string('continue'));
-echo $link;
+switch ($mode) {
+    case 'add':      echo $output->mode_add();      break;
+    case 'delete':   echo $output->mode_delete();   break;
+    case 'update':   echo $output->mode_update();   break;
+    case 'showhide': echo $output->mode_showhide(); break;
+    case 'delay':    echo $output->mode_delay();    break;
+    case 'arrange':  echo $output->mode_arrange();  break;
+}
 
 echo $output->box_end();
 echo $output->footer();

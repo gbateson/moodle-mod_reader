@@ -54,8 +54,11 @@ class mod_reader_admin_users_renderer extends mod_reader_admin_renderer {
     const TAB_USERS_EXPORT      = 55;
     /**#@-*/
 
+    /** array of allow modes for this page (mode is second row of tabs) */
     public $modes = array('setgoals', 'setlevels', 'sendmessage', 'import', 'export');
-    public $actions = array('setgoals', 'setlevels', 'sendmessage', 'import', 'export');
+
+    /** array of allow actions */
+    //public $actions = array('setgoals', 'setlevels', 'sendmessage', 'import', 'export');
 
     /**
      * get_my_tab
@@ -113,37 +116,5 @@ class mod_reader_admin_users_renderer extends mod_reader_admin_renderer {
      */
     public function list_actions_users($cmid) {
         return $this->list_actions($cmid, 'users');
-    }
-
-    /**
-     * action_export
-     *
-     * @param integer $readerid of current Reader activity
-     * @return string formatted html output
-     */
-    public function action_export($cmid) {
-        global $CFG;
-        require_once($CFG->dirroot.'/mod/reader/admin/users/export_form.php');
-
-        $params = array('id' => $cmid, 'action' => 'export');
-        $url = new moodle_url('/mod/reader/admin/users/export.php', $params);
-        $mform = new mod_reader_admin_users_export_form($url);
-        $mform->display();
-    }
-
-    /**
-     * action_import
-     *
-     * @param integer $cmid of current Reader activity
-     * @return string formatted html output
-     */
-    public function action_import($cmid) {
-        global $CFG;
-        require_once($CFG->dirroot.'/mod/reader/admin/users/import_form.php');
-
-        $params = array('id' => $cmid, 'action' => 'import');
-        $url = new moodle_url('/mod/reader/admin/users/import.php', $params);
-        $mform = new mod_reader_admin_users_import_form($url);
-        $mform->display();
     }
 }
