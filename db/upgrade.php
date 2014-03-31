@@ -573,8 +573,8 @@ function xmldb_reader_upgrade($oldversion) {
             $dbman->drop_table($table);
         }
 
-        // add bookid field to "reader_attempts"
-        // and "reader_deleted_attempts" tables
+        // add "bookid" field to "reader_attempts" table
+        // add "bookid" field to "reader_deleted_attempts" table
         xmldb_reader_add_attempts_bookid($dbman);
 
         // add "deleted" field to "reader_attempts" table
@@ -590,6 +590,50 @@ function xmldb_reader_upgrade($oldversion) {
         // merge "reader_deleted_attempts" and "reader_attempts" tables
         xmldb_reader_merge_tables($dbman, 'reader_deleted_attempts', 'reader_attempts', array('deleted' => 1));
     }
+
+    $newversion = 2014032646;
+    if ($result && $oldversion < $newversion) {
+
+        // rename table "reader_forcedtimedelay" and "reader_goal"
+        // rename "changedate" field and add index on "readerid"
+        $tablenames = array('reader_forcedtimedelay'=>'reader_delays', 'reader_goal'=>'reader_goals');
+        foreach ($tablenames as $oldtablename => $newtablename) {
+
+            $oldtable = new xmldb_table($oldtablename);
+            $newtable = new xmldb_table($newtablename);
+            if ($dbman->table_exists($oldtable)) {
+                if ($dbman->table_exists($newtable)) {
+                    $dbman->drop_table($oldtable);
+                } else {
+                    $dbman->rename_table($oldtable, $newtablename);
+                }
+            }
+            unset($oldtable, $newtable);
+
+            $table = new xmldb_table($newtablename);
+
+            // rename "changedate" field to "timemodified"
+            $field = new xmldb_field('changedate', XMLDB_TYPE_INTEGER, '11', XMLDB_UNSIGNED);
+            $newfieldname = 'timemodified';
+            if ($dbman->field_exists($table, $field)) {
+                $dbman->change_field_type($table, $field);
+                $dbman->rename_field($table, $field, $newfieldname);
+            }
+
+            // add non-unique index "readerid_key"
+            $index = new xmldb_index('readerid_key', XMLDB_INDEX_NOTUNIQUE, array('readerid'));
+            if (! $dbman->index_exists($table, $index)) {
+                $dbman->add_index($table, $index);
+            }
+        }
+    }
+
+    $newversion = 2014033048;
+    if ($result && $oldversion < $newversion) {
+        xmldb_reader_check_stale_files();
+        upgrade_mod_savepoint(true, "$newversion", 'reader');
+    }
+
 
     return $result;
 }

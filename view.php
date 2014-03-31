@@ -457,7 +457,7 @@ if ($reader->attemptsofday > 0) { // && $_SESSION['SESSION']->reader_teacherview
     //$lastttempt = $DB->get_record_sql('SELECT * FROM {reader_attempts} WHERE reader= ? and userid= ?  ORDER by timefinish DESC',array($reader->id, $USER->id));
     //$lastttempt = $DB->get_record_sql('SELECT * FROM {reader_attempts} ra, {reader} r WHERE ra.userid= ?  and r.id=ra.reader and r.course= ?  ORDER by ra.timefinish DESC', array($USER->id, $course->id));
     $cleartime = $lastattemptdate + ($reader->attemptsofday * 24 * 60 * 60);
-    $cleartime = reader_forcedtimedelay_check($cleartime, $reader, $leveldata['currentlevel'], $lastattemptdate);
+    $cleartime = reader_delays_check($cleartime, $reader, $leveldata['currentlevel'], $lastattemptdate);
     $time = time();
     if ($time > $cleartime) {
         $showform = true;

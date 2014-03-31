@@ -43,11 +43,11 @@ require_once($CFG->dirroot.'/mod/reader/admin/users/renderer.php');
 class mod_reader_admin_users_export_renderer extends mod_reader_admin_users_renderer {
 
     /**
-     * mode_export
+     * render_page
      *
      * @return string formatted html output
      */
-    public function mode_export() {
+    public function render_page() {
         global $CFG, $DB;
         require_once($CFG->dirroot.'/mod/reader/admin/users/export/form.php');
 
@@ -92,6 +92,9 @@ class mod_reader_admin_users_export_renderer extends mod_reader_admin_users_rend
                     $userid = $attempt->userid;
                     $quizid = $attempt->quizid;
                     $timefinish = $attempt->timefinish;
+
+                    // remove trailing zeroes and periods from percent grade
+                    $attempt->percentgrade = preg_replace('/(\.0)?0$/', '', $attempt->percentgrade);
 
                     echo $attempt->username.','.
                          $attempt->uniqueid.','.

@@ -107,6 +107,9 @@
 #page-mod-reader-admin-reports table.flexible td span.cheated { color: #0000CC; }
 #page-mod-reader-admin-reports table.flexible tr.emptyrow { display: none; }
 
+/* hide the javascript static just after this (hidden) submit button in the display options */
+#page-mod-reader-admin-reports div#fitem_id_submitoptions + div { display: none; }
+
 #page-mod-reader-admin-reports div.readerreportaction div.actionsettings { margin-left: 20px; }
 
 #page-mod-reader-admin-reports .mform fieldset div.readerreportaction div#publishers { margin-top: 6px; }

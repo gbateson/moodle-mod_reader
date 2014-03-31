@@ -2136,7 +2136,7 @@ class reader_downloader {
 
             case 'match':
                 if (empty($question->matchs)) {
-                    return false; // shoudn't happen !!
+                    return false; // shouldn't happen !!
                 }
                 foreach ($question->matchs as $m => $match) {
                     if (isset($match->questiontext) && strlen($match->questiontext) && isset($match->answertext) && strlen($match->answertext)) {
@@ -2184,7 +2184,7 @@ class reader_downloader {
 
             case 'multichoice':
                 if (empty($question->multichoice) || empty($question->answers)) {
-                    return false; // shoudn't happen !!
+                    return false; // shouldn't happen !!
                 }
                 // remove blank and missing answers
                 $answerids = array();
@@ -2234,7 +2234,7 @@ class reader_downloader {
                 if ($question->id==$question->parent) {
                     return true;
                 }
-                // random question with no parent - shoudn't happen !
+                // random question with no parent - shouldn't happen !
                 return false;
                 break;
 

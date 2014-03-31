@@ -49,7 +49,9 @@ if ($id) {
 }
 
 require_course_login($course, true, $cm);
-$PAGE->set_url('/mod/reader/admin/reports.php', array('id' => $id, 'mode' => $mode));
+
+$reader = mod_reader::create($reader, $cm, $course);
+$PAGE->set_url($reader->reports_url());
 
 $title = format_string($reader->name).': '.get_string('reports').': '.get_string('report'.$mode, 'reader');
 $PAGE->set_title($title);
@@ -67,7 +69,6 @@ $output = $PAGE->get_renderer('mod_reader', 'admin_reports_'.$mode);
 // Output starts here                                                         //
 ////////////////////////////////////////////////////////////////////////////////
 
-$reader = mod_reader::create($reader, $cm, $course);
 if ($reader->can_viewreports()) {
     echo $output->render_report($reader, $action, $download);
 }

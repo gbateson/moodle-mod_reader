@@ -153,7 +153,7 @@ class mod_reader_admin_reports_renderer extends mod_reader_admin_renderer {
      * @param string $download
      */
     public function reportcontent($action, $download)  {
-        global $DB, $FULLME, $USER;
+        global $DB, $USER;
 
         // set baseurl for this page (used for filters and table)
         $baseurl = $this->baseurl();

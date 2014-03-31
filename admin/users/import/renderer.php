@@ -43,11 +43,11 @@ require_once($CFG->dirroot.'/mod/reader/admin/users/renderer.php');
 class mod_reader_admin_users_import_renderer extends mod_reader_admin_users_renderer {
 
     /**
-     * mode_import
+     * render_page
      *
      * @return string formatted html output
      */
-    public function mode_import() {
+    public function render_page() {
         global $CFG, $DB;
         require_once($CFG->dirroot.'/mod/reader/admin/users/import/form.php');
 

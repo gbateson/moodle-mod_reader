@@ -1772,7 +1772,7 @@ function reader_promotion_stop_box($userid, $data, $field, $rand) {
 }
 
 /**
- * reader_goal_box
+ * reader_goals_box
  *
  * @uses $CFG
  * @uses $COURSE
@@ -1792,7 +1792,7 @@ function reader_promotion_stop_box($userid, $data, $field, $rand) {
  * @return xxx
  * @todo Finish documenting this function
  */
-function reader_goal_box($userid, $dataoflevel, $field, $rand, $reader) {
+function reader_goals_box($userid, $dataoflevel, $field, $rand, $reader) {
     global $CFG, $COURSE, $DB, $_SESSION, $id, $act, $gid, $sort, $orderby, $page;
 
     $goal = 0;
@@ -1802,7 +1802,7 @@ function reader_goal_box($userid, $dataoflevel, $field, $rand, $reader) {
     }
 
     if (empty($goal)) {
-        $data = $DB->get_records('reader_goal', array('readerid' => $reader->id));
+        $data = $DB->get_records('reader_goals', array('readerid' => $reader->id));
         foreach ($data as $data_) {
             if (! empty($data_->groupid)) {
                 if (! groups_is_member($data_->groupid, $userid)) {
@@ -2234,7 +2234,7 @@ function reader_get_goal_progress($progress, $reader) {
     }
 
     if (! $goal) {
-        if ($records = $DB->get_records('reader_goal', array('readerid' => $reader->id))) {
+        if ($records = $DB->get_records('reader_goals', array('readerid' => $reader->id))) {
             foreach ($records as $record) {
                 if ($record->groupid && ! groups_is_member($record->groupid, $USER->id)) {
                     continue; // wrong group
@@ -2581,7 +2581,7 @@ function reader_nicetime2($seconds) {
 }
 
 /**
- * reader_forcedtimedelay_check
+ * reader_delays_check
  *
  * @uses $DB
  * @uses $USER
@@ -2593,35 +2593,35 @@ function reader_nicetime2($seconds) {
  * @return xxx
  * @todo Finish documenting this function
  */
-function reader_forcedtimedelay_check($cleartime, $reader, $studentlevel, $lasttime) {
-    global $DB, $USER, $course;
+function reader_delays_check($cleartime, $reader, $studentlevel, $lasttime) {
+    global $DB, $USER;
 
-    $data = false;
+    // sanity check on $reader->id
+    if (empty($reader->id)) {
+        return $cleartime;
+    }
 
-    if (isset($reader->id)) {
-        if ($usergroups = groups_get_all_groups($course->id, $USER->id)){
-            foreach ($usergroups as $group) {
-                if (isset($group->id)) {
-                    $params = array('readerid' => $reader->id, 'level' => $studentlevel, 'groupid' => $group->id);
-                    $data = $DB->get_record('reader_forcedtimedelay', $params);
-                }
-            }
-        }
-        if (empty($data)) {
-            $params = array('readerid' => $reader->id, 'level' => $studentlevel, 'groupid' => 0);
-            $data = $DB->get_record('reader_forcedtimedelay', $params);
-        }
-        if (empty($data)) {
-            $params = array('readerid' => $reader->id, 'level' => 99, 'groupid' => 0);
-            $data = $DB->get_record('reader_forcedtimedelay', $params);
+    // delays for specific groups
+    if ($groups = groups_get_all_groups($course->id, $USER->id)){
+        list($where, $params) = $DB->get_in_or_equal(array_keys($groups));
+        $where  = "readerid = ? AND level = ? AND groupid $where";
+        array_unshift($params, $reader->id, $studentlevel);
+        $sql = "SELECT MAX(delay) FROM {reader_delays} WHERE $where";
+        if ($delay = $DB->get_field_sql($sql, $params)) {
+            return ($lasttime + $delay);
         }
     }
 
-    if (empty($data->delay)) {
-        return $cleartime; // no delay $data found in database
+    // delays for specific level, or any level
+    $select = 'readerid = ? AND level IN (?, ?) AND groupid = ?';
+    $params = array($reader->id, $studentlevel, 99, 0);
+    if ($delay = $DB->get_records_select('reader_delays', $select, $params, 'level')) {
+        $delay = reset($delay); // first record
+        return ($lasttime + $delay->delay);
     }
 
-    return $data->delay + $lasttime;
+    // no delays found
+    return $cleartime;
 }
 
 /**
@@ -4003,7 +4003,7 @@ function reader_get_new_uniqueid($contextid, $quizid, $defaultbehavior='deferred
         return $DB->insert_record($tablename, $record);
     }
 
-    return 0; // shoudn't happen !!
+    return 0; // shouldn't happen !!
 }
 
 ////////////////////////////////////////////////////////////////////////////////

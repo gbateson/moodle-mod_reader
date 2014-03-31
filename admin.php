@@ -102,7 +102,7 @@ $uncheated              = optional_param('uncheated', NULL, PARAM_CLEAN);
 $findcheated            = optional_param('findcheated', NULL, PARAM_CLEAN);
 $separategroups         = optional_param('separategroups', NULL, PARAM_CLEAN);
 $levelall               = optional_param('levelall', NULL, PARAM_CLEAN);
-$levelc                 = optional_param('levelc', NULL, PARAM_CLEAN);
+$levelc                 = reader_optional_param_array('levelc', NULL, PARAM_CLEAN);
 $wordsorpoints          = optional_param('wordsorpoints', NULL, PARAM_CLEAN);
 $setgoal                = optional_param('setgoal', NULL, PARAM_CLEAN);
 $wordscount             = optional_param('wordscount', NULL, PARAM_CLEAN);
@@ -269,7 +269,7 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $quizzesid) {
     }
 
     foreach ($quizzesid as $quizzesid_) {
-        $newquiz = new object;
+        $newquiz = new stdClass();
         if (! $publisher) {
             $newquiz->publisher = $publisherex;
         } else {
@@ -344,7 +344,7 @@ if (has_capability('mod/reader:manageattempts', $contextmodule) && $act == 'view
 }
 
 if (has_capability('mod/reader:addinstance', $contextmodule) && $text && $activehours) {
-    $message = new object;
+    $message = new stdClass();
 
     foreach ($groupid as $groupkey => $groupvalue) {
         $message->users .= $groupvalue.',';
@@ -438,7 +438,7 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && ($changelevel ||
         $DB->set_field('reader_levels',  $slevel,  $changelevel, array('userid' => $userid,  'readerid' => $reader->id));
         $DB->set_field('reader_levels', 'time', time(), array('userid' => $userid, 'readerid' => $reader->id));
     } else {
-        $data = new object;
+        $data = new stdClass();
         $data->userid = $userid;
         $data->startlevel = $changelevel;
         $data->currentlevel = $changelevel;
@@ -544,7 +544,7 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $act == 'student
     if ($data = $DB->get_record('reader_levels', array('userid' => $userid, 'readerid' => $reader->id))) {
         $DB->set_field('reader_levels',  'goal',  $setgoal, array('id' => $data->id));
     } else {
-        $data = new object;
+        $data = new stdClass();
         $data->userid = $userid;
         $data->startlevel = 0;
         $data->currentlevel = 0;
@@ -557,7 +557,7 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $act == 'student
     add_to_log($course->id, 'reader', "AA-Change Student Goal ({$setgoal})", 'admin.php?id='.$id, $cm->instance);
     if ($ajax == 'true') {
         $data = $DB->get_record('reader_levels', array('id' => $data->id));
-        echo reader_goal_box($userid, $data, 'goal', 3, $reader);
+        echo reader_goals_box($userid, $data, 'goal', 3, $reader);
         die;
     }
 }
@@ -591,7 +591,7 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $setip) {
     if ($DB->get_record('reader_strict_users_list', array('userid' => $userid, 'readerid' => $reader->id))) {
         $DB->set_field('reader_strict_users_list',  'needtocheckip',  $needip, array('userid' => $userid,  'readerid' => $reader->id));
     } else {
-        $data = new object;
+        $data = new stdClass();
         $data->userid = $userid;
         $data->readerid = $reader->id;
         $data->needtocheckip = $needip;
@@ -610,7 +610,7 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $changeallstartl
         if ($DB->get_record('reader_levels', array('userid' => $coursestudent->id, 'readerid' => $reader->id))) {
             $DB->set_field('reader_levels',  'startlevel',  $changeallstartlevel, array('userid' => $coursestudent->id,  'readerid' => $reader->id));
         } else {
-            $data = new object;
+            $data = new stdClass();
             $data->startlevel = $changeallstartlevel;
             $data->currentlevel = $changeallstartlevel;
             $data->userid = $coursestudent->id;
@@ -628,7 +628,7 @@ if (has_capability('mod/reader:addinstance', $contextmodule) &&  $changeallcurre
         if ($DB->get_record('reader_levels', array('userid' => $coursestudent->id, 'readerid' => $reader->id))) {
             $DB->set_field('reader_levels',  'currentlevel',  $changeallcurrentlevel, array('userid' => $coursestudent->id,  'readerid' => $reader->id));
         } else {
-            $data = new object;
+            $data = new stdClass();
             $data->startlevel = $changeallcurrentlevel;
             $data->currentlevel = $changeallcurrentlevel;
             $data->userid = $coursestudent->id;
@@ -665,7 +665,7 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $changeallcurren
         if ($data = $DB->get_record('reader_levels', array('userid' => $coursestudent->id, 'readerid' => $reader->id))) {
             $DB->set_field('reader_levels',  'goal',  $changeallcurrentgoal, array('id' => $data->id));
         } else {
-            $data = new object;
+            $data = new stdClass();
             $data->userid = $coursestudent->id;
             $data->startlevel = 0;
             $data->currentlevel = 0;
@@ -736,7 +736,7 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $cheated) {
     $userid1 = $DB->get_record('reader_attempts', array('id' => $cheated1));
     $userid2 = $DB->get_record('reader_attempts', array('id' => $cheated2));
 
-    $data = new object;
+    $data = new stdClass();
     $data->byuserid  = $USER->id;
     $data->userid1   = $userid1->userid;
     $data->userid2   = $userid2->userid;
@@ -769,7 +769,7 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $uncheated) {
     $userid1 = $DB->get_record('reader_attempts', array('id' => $cheated1));
     $userid2 = $DB->get_record('reader_attempts', array('id' => $cheated2));
 
-    $data = new object;
+    $data = new stdClass();
     $data->byuserid  = $USER->id;
     $data->userid1   = $userid1->userid;
     $data->userid2   = $userid2->userid;
@@ -807,21 +807,21 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $act == 'setgoal
                 $data->readerid    = $reader->id;
                 $data->level       = $key;
                 $data->goal        = $value;
-                $data->changedate  = time();
-                $dataid = $DB->insert_record('reader_goal', $data);
+                $data->timemodified  = time();
+                $dataid = $DB->insert_record('reader_goals', $data);
             }
         }
         add_to_log($course->id, 'reader', "AA-wordsorpoints goal=$value", 'admin.php?id='.$id, $cm->instance);
     } else {
-        $DB->delete_records('reader_goal', array('readerid' => $reader->id));
+        $DB->delete_records('reader_goals', array('readerid' => $reader->id));
         if ($separategroups) {
-            $data              = new object;
+            $data              = new stdClass();
             $data->groupid     = $separategroups;
             $data->readerid    = $reader->id;
             $data->level       = 0;
             $data->goal        = $levelall;
-            $data->changedate  = time();
-            $DB->insert_record('reader_goal', $data);
+            $data->timemodified  = time();
+            $DB->insert_record('reader_goals', $data);
         } else {
             $DB->set_field('reader', 'goal', $levelall);
         }
@@ -833,7 +833,7 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $act == 'setbook
     $DB->delete_records('reader_book_instances', array('readerid' => $reader->id));
     foreach ($quiz as $quiz_) {
         $oldbookdata = $DB->get_record('reader_books', array('id' => $quiz_));
-        $data           = new object;
+        $data           = new stdClass();
         $data->readerid = $reader->id;
         $data->bookid   = $quiz_;
         $data->difficulty   = $oldbookdata->difficulty;
@@ -844,16 +844,16 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $act == 'setbook
 }
 
 if (has_capability('mod/reader:addinstance', $contextmodule) && $act == 'forcedtimedelay' && is_array($levelc)) {
-    $DB->delete_records('reader_forcedtimedelay', array('readerid' => $reader->id, 'groupid' => $separategroups));
+    $DB->delete_records('reader_delays', array('readerid' => $reader->id, 'groupid' => $separategroups));
     foreach ($levelc as $key => $value) {
       if ($value != 0) {
-        $data             = new object;
+        $data             = new stdClass();
         $data->readerid   = $reader->id;
-        $data->groupid    = $separategroups;
+        $data->groupid    = (empty($separategroups) ? 0 : $separategroups);
         $data->level      = $key;
         $data->delay      = $value;
-        $data->changedate = time();
-        $DB->insert_record('reader_forcedtimedelay', $data);
+        $data->timemodified = time();
+        $DB->insert_record('reader_delays', $data);
       }
     }
 }
@@ -917,7 +917,7 @@ if ($act == 'adjustscores' && !empty($adjustscoresupall) && !empty($adjustscores
         $data = $DB->get_record('reader_attempts', array('id' => $ida->id));
         $newpoint = $data->percentgrade + $adjustscorespby;
         $passed = (($newpoint >= $reader->percentforreading) ? 'true' : 'false');
-        $attempt = new object;
+        $attempt = new stdClass();
         $attempt->passed  = $passed;
         $attempt->percentgrade = $newpoint;
         $attempt->id      = $ida->id;
@@ -1010,9 +1010,9 @@ if (! $excel) {
             //new reader_menu_item('uploadquiztoreader', 'managequizzes', 'dlquizzes.php', array('id'=>$id)),
             //new reader_menu_item('uploaddatanoquizzes', 'managequizzes', 'dlquizzesnoq.php', array('id'=>$id)),
             //new reader_menu_item('updatequizzes', 'managequizzes', 'updatecheck.php', array('id'=>$id, 'checker'=>1)),
-            new reader_menu_item('updatequizzes', 'managequizzes', 'admin/books/download.php', array('id'=>$id, 'type' => 1)), // 1=with quizzes
-            new reader_menu_item('uploadquiztoreader', 'managequizzes', 'admin/books/download.php', array('id'=>$id, 'type' => 1)), // 1=with quizzes
-            new reader_menu_item('uploaddatanoquizzes', 'managequizzes', 'admin/books/download.php', array('id'=>$id, 'type' => 0)), // 0=without quizzes
+            new reader_menu_item('updatequizzes', 'managequizzes', 'admin/books.php', array('id'=>$id, 'tab' => 32, 'mode' => 'download', 'type' => 1)),
+            new reader_menu_item('uploadquiztoreader', 'managequizzes', 'admin/books.php', array('id'=>$id, 'tab' => 32, 'mode' => 'download', 'type' => 1)),
+            new reader_menu_item('uploaddatanoquizzes', 'managequizzes', 'admin/books.php', array('id'=>$id, 'tab' => 32, 'mode' => 'download', 'type' => 0)),
             new reader_menu_item('editquiztoreader', 'managequizzes', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'editquiz')),
             new reader_menu_item('setbookinstances', 'managequizzes', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'setbookinstances')),
             new reader_menu_item('forcedtimedelay', 'managequizzes', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'forcedtimedelay')),
@@ -1065,7 +1065,7 @@ if (! $excel) {
     //      echo $output->box_start('generalbox');
     //      $days = round((time() - $readercfg->last_update) / (24 * 3600));
     //      print_string('needtocheckupdates', 'reader', $days);
-    //      echo ' <a href="admin/books/download.php?id='.$id.'">YES</a> / <a href="admin.php?a=admin&id='.$id.'">NO</a></center>';
+    //      echo ' <a href="admin/books.php?id='.$id.'">YES</a> / <a href="admin.php?a=admin&id='.$id.'">NO</a></center>';
     //      echo $output->box_end();
     //    }
     //}
@@ -2245,7 +2245,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
                 reader_selectlevel_form($coursestudent->id, $readerlevel, 'currentlevel'),
                 reader_yes_no_box($coursestudent->id, $readerlevel, 'nopromote', 1),
                 reader_promotion_stop_box($coursestudent->id, $readerlevel, 'promotionstop', 2),
-                reader_goal_box($coursestudent->id, $readerlevel, 'goal', 3, $reader)
+                reader_goals_box($coursestudent->id, $readerlevel, 'goal', 3, $reader)
             );
             if ($reader->individualstrictip == 1) {
                 $cells[] = reader_selectip_form($coursestudent->id, $reader);
@@ -3259,7 +3259,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
                 $mform->addElement('text', 'levelc['.$i.']', $i, array('size'=>'10'));
             }
 
-            if ($data = $DB->get_records('reader_goal', array('readerid' => $reader->id))) {
+            if ($data = $DB->get_records('reader_goals', array('readerid' => $reader->id))) {
                 foreach ($data as $data_) {
                     if (empty($data_->level)){
                         $mform->setDefault('levelall', $data_->goal);
@@ -3293,7 +3293,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
 } else if ($act == 'forcedtimedelay' && has_capability('mod/reader:manageusers', $contextmodule)) {
 
     /**
-     * reader_forcedtimedelay_form
+     * reader_delays_form
      *
      * @copyright  2013 Gordon Bateson (gordon.bateson@gmail.com)
      * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -3301,7 +3301,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
      * @package    mod
      * @subpackage reader
      */
-    class reader_forcedtimedelay_form extends moodleform {
+    class reader_delays_form extends moodleform {
 
         /**
          * definition
@@ -3316,7 +3316,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
         function definition() {
             global $COURSE, $CFG, $DB, $course, $reader;
 
-            if ($default = $DB->get_record('reader_forcedtimedelay', array('readerid' => $reader->id,  'level' => 99))) {
+            if ($default = $DB->get_record('reader_delays', array('readerid' => $reader->id,  'level' => 99))) {
               if ($default->delay) {
                 $defdelaytime = round($default->delay / 3600);
               }
@@ -3341,7 +3341,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
             }
 
             /* SET default */
-            $data = $DB->get_records("reader_forcedtimedelay", array('readerid' => $reader->id));
+            $data = $DB->get_records("reader_delays", array('readerid' => $reader->id));
             foreach ($data as $data_) {
                 if ($data_->level == 99) {
                     $mform->setDefault('levelall', $data_->delay);
@@ -3353,7 +3353,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
             $this->add_action_buttons(false, $submitlabel="Save");
         }
     }
-    $mform = new reader_forcedtimedelay_form('admin.php?a='.$a.'&id='.$id.'&act='.$act);
+    $mform = new reader_delays_form('admin.php?a='.$a.'&id='.$id.'&act='.$act);
     $mform->display();
 
 } else if ($act == 'bookratingslevel' && has_capability('mod/reader:viewreports', $contextmodule)) {

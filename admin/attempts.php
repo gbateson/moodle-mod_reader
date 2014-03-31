@@ -29,10 +29,8 @@
 require_once('../../../config.php');
 require_once($CFG->dirroot.'/mod/reader/admin/attempts/renderer.php');
 
-$id     = optional_param('id',     0,  PARAM_INT); // course module id
-$r      = optional_param('r',      0,  PARAM_INT); // reader id
-$mode   = optional_param('mode',   '', PARAM_ALPHA);
-$action = optional_param('action', '', PARAM_ALPHA);
+$id = optional_param('id', 0, PARAM_INT); // course module id
+$r  = optional_param('r',  0, PARAM_INT); // reader id
 
 if ($id) {
     $cm = get_coursemodule_from_id('reader', $id, 0, false, MUST_EXIST);
@@ -47,17 +45,21 @@ if ($id) {
 }
 
 require_login($course, true, $cm);
+$reader = mod_reader::create($reader, $cm, $course);
 
-add_to_log($course->id, 'reader', 'Admin users', "admin/attempts.php?id=$id&action=$action", "$cm->instance");
+add_to_log($course->id, 'reader', 'Admin users', "admin/attempts.php?id=$id", "$cm->instance");
 
 // Initialize $PAGE, compute blocks
-$PAGE->set_url('/mod/reader/admin/attempts.php', array('id' => $cm->id, 'action' => $action));
+$PAGE->set_url('/mod/reader/admin/attempts.php', array('id' => $cm->id);
 
 $title = $course->shortname . ': ' . format_string($reader->name);
 $PAGE->set_title($title);
 $PAGE->set_heading($course->fullname);
 
-$output = $PAGE->get_renderer('mod_reader', 'admin_attempts');
+$mode = mod_reader::get_mode('admin/attempts');
+require_once($CFG->dirroot."/mod/reader/admin/attempts/$mode/renderer.php");
+$output = $PAGE->get_renderer('mod_reader', "admin_attempts_$mode");
+$output->init($reader);
 
 echo $output->header();
 echo $output->heading(get_string($action, 'reader'));

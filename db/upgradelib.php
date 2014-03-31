@@ -37,7 +37,7 @@
 defined('MOODLE_INTERNAL') || die;
 
 /**
- * xmldb_reader_check_stale_files
+ * xmldb_reader_add_attempts_bookid
  *
  * @uses $DB
  * @param $dbman
@@ -160,6 +160,10 @@ function xmldb_reader_check_stale_files() {
         'dlquizzes_form.php', 'dlquizzes_process.php',
         'dlquizzes.php', 'dlquizzesnoq.php',
         'updatecheck.php', 'lib',
+        // replaced by "admin/books/download/renderer.php"
+        'admin/books/download.php',
+        // replaced by "admin/books/download/ajax.js.php"
+        'admin/books/download.js.php',
     );
 
     $stalefilenames = array();

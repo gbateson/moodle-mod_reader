@@ -65,8 +65,8 @@ class mod_reader_admin_users_export_form extends moodleform {
 
         $title = $course->shortname; //.' '.$reader->name;
         $title = strip_tags(format_string($title, true));
-        $filename = clean_filename($title).'_attempts.txt';
-        $filename = preg_replace($search, '_', $filename);
+        $filename = clean_filename($title).'_attempts';
+        $filename = preg_replace($search, '_', $filename).'.txt';
 
         $this->_form->addElement('text', 'filename', get_string('filename', 'reader'), array('size' => 40));
         $this->_form->setDefault('filename', $filename);

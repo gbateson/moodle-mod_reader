@@ -39,7 +39,7 @@ class reader_admin_reports_booksummary_table extends reader_admin_reports_table 
 
     /** @var columns used in this table */
     protected $tablecolumns = array(
-        'selected', 'publisher', 'level', 'name', 'difficulty',
+        'publisher', 'level', 'selected', 'name', 'difficulty',
         'countpassed', 'countfailed', 'averageduration', 'averagegrade', 'averagerating', 'countrating'
     );
 
@@ -67,6 +67,13 @@ class reader_admin_reports_booksummary_table extends reader_admin_reports_table 
         'difficulty'      => 1, 'countpassed'  => 1, 'countfailed'   => 1,
         'averageduration' => 1, 'averagegrade' => 1, 'averagerating' => 1, 'countrating'  => 1,
     );
+
+    /** @var option fields */
+    protected $optionfields = array('rowsperpage' => self::DEFAULT_ROWSPERPAGE,
+                                    'showhidden'  => self::DEFAULT_SHOWHIDDEN);
+
+    /** @var actions */
+    protected $actions = array('showhidebooks');
 
     ////////////////////////////////////////////////////////////////////////////////
     // functions to extract data from $DB                                         //
@@ -167,5 +174,31 @@ class reader_admin_reports_booksummary_table extends reader_admin_reports_table 
      */
     public function col_averagerating($row)  {
         return $this->img_bookrating($row->averagerating);
+    }
+
+    /**
+     * display_action_settings_showhidebooks
+     *
+     * @param string $action
+     * @return xxx
+     */
+    public function display_action_settings_showhidebooks($action) {
+        $value = optional_param($action, 0, PARAM_INT);
+        $settings = '';
+        $settings .= get_string('newsetting', 'reader').': ';
+        $options = array('0' => get_string('show'), '1' => get_string('hide'));
+        $settings .= html_writer::select($options, $action, $value, '', array());
+        return $this->display_action_settings($action, $settings);
+    }
+
+    /**
+     * execute_action_showhidebooks
+     *
+     * @param string $action
+     * @return xxx
+     */
+    public function execute_action_showhidebooks($action) {
+        $value = optional_param($action, 0, PARAM_INT);
+        return $this->execute_action_update('bookid', 'reader_books', 'hidden', $value);
     }
 }

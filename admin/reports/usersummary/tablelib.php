@@ -71,6 +71,9 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
         'wordsthisterm'   => 1, 'wordsallterms' => 1
     );
 
+    /** @var option fields */
+    protected $optionfields = array('rowsperpage' => self::DEFAULT_ROWSPERPAGE);
+
     /** @var actions */
     protected $actions = array('setcurrentlevel', 'setreadinggoal', 'awardextrapoints', 'awardbookpoints');
 
@@ -89,8 +92,16 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
         $params = array('readerid' => $this->output->reader->id, 'zero' => 0);
 
         // add "goal" column if required
-        if ($this->output->reader->goal || $DB->record_exists_select('reader_goal', $select, $params) || $DB->record_exists_select('reader_levels', $select, $params)) {
-            $tablecolumns[] = 'goal';
+        if ($this->output->reader->goal && ($DB->record_exists_select('reader_goals', $select, $params) || $DB->record_exists_select('reader_levels', $select, $params))) {
+            if ($last = array_pop($tablecolumns)) {
+                if ($last=='wordsallterms') {
+                    $tablecolumns[] = 'goal';
+                    $tablecolumns[] = $last;
+                } else {
+                    $tablecolumns[] = $last;
+                    $tablecolumns[] = 'goal';
+                }
+            }
         }
 
         return $tablecolumns;
@@ -250,9 +261,9 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
                         $goals[$groupid] = array();
                     }
                     if (! array_key_exists($level, $goals[$groupid])) {
-                        if ($groupgoal = $DB->get_field('reader_goal', 'goal', array('readerid' => $readerid, 'groupid' => $groupid, 'level' => $level))) {
+                        if ($groupgoal = $DB->get_field('reader_goals', 'goal', array('readerid' => $readerid, 'groupid' => $groupid, 'level' => $level))) {
                             $goals[$groupid][$level] = $groupgoal; // level specific goal
-                        } else if ($groupgoal = $DB->get_field('reader_goal', 'goal', array('readerid' => $readerid, 'groupid' => $groupid, 'level' => 0))) {
+                        } else if ($groupgoal = $DB->get_field('reader_goals', 'goal', array('readerid' => $readerid, 'groupid' => $groupid, 'level' => 0))) {
                             $goals[$groupid][$level] = $groupgoal; // any level
                         } else {
                             $goals[$groupid][$level] = 0;
@@ -275,17 +286,17 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
     }
 
     ////////////////////////////////////////////////////////////////////////////////
-    // functions to format and display action settings                            //
+    // functions to format, display and handle action settings                    //
     ////////////////////////////////////////////////////////////////////////////////
 
     /**
-     * action_settings_setcurrentlevel
+     * display_action_settings_setcurrentlevel
      *
      * @param string $action
      * @return xxx
      */
     public function display_action_settings_setcurrentlevel($action) {
-        $value = optional_param($action, '', PARAM_INT);
+        $value = optional_param($action, 0, PARAM_INT);
         $settings = '';
         $settings .= get_string('newreadinglevel', 'reader').': ';
         $settings .= html_writer::select(range(0, 15), $action, $value, '', array());
@@ -293,13 +304,13 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
     }
 
     /**
-     * action_settings_setreadinggoal
+     * display_action_settings_setreadinggoal
      *
      * @param string $action
      * @return xxx
      */
     public function display_action_settings_setreadinggoal($action) {
-        $value = optional_param($action, '', PARAM_INT);
+        $value = optional_param($action, 0, PARAM_INT);
 
         $options = array_merge(range(1000, 20000, 1000), range(25000, 100000, 5000));
         $options = array_combine($options, $options);
@@ -312,13 +323,13 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
     }
 
     /**
-     * action_settings_awardextrapoints
+     * display_action_settings_awardextrapoints
      *
      * @param string $action
      * @return xxx
      */
     public function display_action_settings_awardextrapoints($action) {
-        $value = optional_param($action, '', PARAM_INT);
+        $value = optional_param($action, 0, PARAM_INT);
         $settings = '';
         $settings .= get_string('numberofextrapoints', 'reader').': ';
         $options = $this->output->available_extrapoints();
@@ -327,7 +338,7 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
     }
 
     /**
-     * action_settings_awardbookpoints
+     * display_action_settings_awardbookpoints
      *
      * @param string $action
      * @return xxx

@@ -43,11 +43,11 @@ require_once($CFG->dirroot.'/mod/reader/admin/books/renderer.php');
 class mod_reader_admin_books_edit_renderer extends mod_reader_admin_books_renderer {
 
     /**
-     * mode_edit
+     * render_page
      *
      * @return string HTML output to display navigation tabs
      */
-    public function mode_edit() {
+    public function render_page() {
         echo 'mode_edit()';
     }
 }

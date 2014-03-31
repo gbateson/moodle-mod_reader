@@ -39,8 +39,8 @@ class reader_admin_reports_userdetailed_table extends reader_admin_reports_table
 
     /** @var columns used in this table */
     protected $tablecolumns = array(
-        'studentview', 'username', 'fullname', 'currentlevel', 'selected',
-        'difficulty', 'name', 'timefinish', 'percentgrade', 'passed', 'words', 'totalwords',
+        'studentview', 'username', 'fullname', 'currentlevel', 'difficulty', 'name',
+        'selected', 'timefinish', 'percentgrade', 'passed', 'words', 'totalwords',
     );
 
     /** @var suppressed columns in this table */
@@ -70,6 +70,14 @@ class reader_admin_reports_userdetailed_table extends reader_admin_reports_table
         'words'      => 1, //'totalwords'   => 1
     );
 
+    /** @var option fields */
+    protected $optionfields = array('rowsperpage' => self::DEFAULT_ROWSPERPAGE,
+                                    'showhidden'  => self::DEFAULT_SHOWHIDDEN,
+                                    'showdeleted' => self::DEFAULT_SHOWDELETED);
+
+    /** @var actions */
+    protected $actions = array('deleteattempts', 'restoreattempts', 'passfailattempts');
+
     ////////////////////////////////////////////////////////////////////////////////
     // functions to extract data from $DB                                         //
     ////////////////////////////////////////////////////////////////////////////////
@@ -93,12 +101,11 @@ class reader_admin_reports_userdetailed_table extends reader_admin_reports_table
                   'rl.currentlevel, rb.difficulty, rb.name';
         $from   = '{reader_attempts} ra '.
                   'LEFT JOIN {user} u ON ra.userid = u.id '.
-                  'LEFT JOIN {reader_levels} rl ON u.id = rl.userid '.
+                  'LEFT JOIN {reader_levels} rl ON ra.reader = rl.readerid AND u.id = rl.userid '.
                   'LEFT JOIN {reader_books} rb ON ra.bookid = rb.id';
-        $where  = "ra.reader = :reader AND rl.readerid = :readerid AND ra.timefinish > :time AND u.id $usersql";
+        $where  = "ra.reader = :reader AND ra.timefinish > :time AND u.id $usersql";
 
         $params = array('reader'   => $this->output->reader->id,
-                        'readerid' => $this->output->reader->id,
                         'time'     => $this->output->reader->ignoredate,
                         'passed'   => 'true') + $userparams;
 

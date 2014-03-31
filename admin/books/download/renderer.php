@@ -58,7 +58,7 @@ class mod_reader_admin_books_download_renderer extends mod_reader_admin_books_re
      *
      * @return string HTML output to display navigation tabs
      */
-    public function mode_download() {
+    public function render_page() {
         global $CFG;
         require_once($CFG->dirroot.'/mod/reader/admin/books/download/lib.php');
 
@@ -406,7 +406,7 @@ class mod_reader_admin_books_download_renderer extends mod_reader_admin_books_re
             $js .= "    items['targetsectionnum']   = RDR_get_value('menutargetsectionnum',   true);\n";
             $js .= "    items['targetsectiontext']  = RDR_get_value('texttargetsectiontext',  false);\n";
 
-            $js .= "    var url = RDR_get_wwwroot() + '/mod/reader/admin/books/download.js.php';\n";
+            $js .= "    var url = RDR_get_wwwroot() + '/mod/reader/admin/books/download/js.php';\n";
             $js .= "    var amp = '?';\n";
             $js .= "    for (var i in items) {\n";
             $js .= "        if (items[i]) {\n";

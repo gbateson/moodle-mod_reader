@@ -79,6 +79,9 @@ class reader_admin_reports_groupsummary_table extends reader_admin_reports_table
         'averagepercentgrade' => 1, 'averagewordsthisterm' => 1, 'averagewordsallterms' => 1
     );
 
+    /** @var option fields */
+    //protected $optionfields = array('rowsperpage');
+
     ////////////////////////////////////////////////////////////////////////////////
     // functions to extract data from $DB                                         //
     ////////////////////////////////////////////////////////////////////////////////

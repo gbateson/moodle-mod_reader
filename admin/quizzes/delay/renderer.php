@@ -16,7 +16,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * mod/reader/admin/quizzes/renderer.php
+ * mod/reader/admin/quizzes/delay/renderer.php
  *
  * @package    mod
  * @subpackage reader
@@ -43,11 +43,11 @@ require_once($CFG->dirroot.'/mod/reader/admin/quizzes/renderer.php');
 class mod_reader_admin_quizzes_delay_renderer extends mod_reader_admin_quizzes_renderer {
 
     /**
-     * mode_delay
+     * render_page
      *
      * @return string HTML output to display navigation tabs
      */
-    public function mode_delay() {
+    public function render_page() {
         echo 'mode_delay()';
     }
 }

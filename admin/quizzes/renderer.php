@@ -48,11 +48,10 @@ class mod_reader_admin_quizzes_renderer extends mod_reader_admin_renderer {
      * @var integer
      */
     const TAB_QUIZZES_ADD      = 31;
-    const TAB_QUIZZES_DELETE   = 32;
-    const TAB_QUIZZES_UPDATE   = 33;
+    const TAB_QUIZZES_EDIT     = 32;
+    const TAB_QUIZZES_DELETE   = 33;
     const TAB_QUIZZES_SHOWHIDE = 34;
     const TAB_QUIZZES_DELAY    = 35;
-    const TAB_QUIZZES_ARRANGE  = 36;
     /**#@-*/
 
     /**
@@ -99,60 +98,6 @@ class mod_reader_admin_quizzes_renderer extends mod_reader_admin_renderer {
      * @return string HTML output to display navigation tabs
      */
     static public function get_standard_modes() {
-        return array('add', 'delete', 'update', 'showhide', 'delay', 'arrange');
-    }
-
-    /**
-     * mode_add
-     *
-     * @return string HTML output
-     */
-    public function mode_add() {
-        echo 'mode_add()';
-    }
-
-    /**
-     * mode_delete
-     *
-     * @return string HTML output
-     */
-    public function mode_delete() {
-        echo 'mode_delete()';
-    }
-
-    /**
-     * mode_update
-     *
-     * @return string HTML output
-     */
-    public function mode_update() {
-        echo 'mode_update()';
-    }
-
-    /**
-     * mode_delay
-     *
-     * @return string HTML output
-     */
-    public function mode_delay() {
-        echo 'mode_delay()';
-    }
-
-    /**
-     * mode_showhide
-     *
-     * @return string HTML output
-     */
-    public function mode_showhide() {
-        echo 'mode_showhide()';
-    }
-
-    /**
-     * mode_arrange
-     *
-     * @return string HTML output
-     */
-    public function mode_arrange() {
-        echo 'mode_arrange()';
+        return array('add', 'edit', 'delete', 'showhide', 'delay');
     }
 }

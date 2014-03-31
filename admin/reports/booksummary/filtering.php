@@ -82,3 +82,13 @@ class reader_admin_reports_booksummary_filtering extends reader_admin_reports_fi
         }
     }
 }
+
+/**
+ * reader_admin_reports_booksummary_options
+ *
+ * @copyright 2013 Gordon Bateson
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @since     Moodle 2.0
+ */
+class reader_admin_reports_booksummary_options extends reader_admin_reports_options {
+}

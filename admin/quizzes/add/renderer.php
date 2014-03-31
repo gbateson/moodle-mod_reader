@@ -16,7 +16,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * mod/reader/admin/quizzes/renderer.php
+ * mod/reader/admin/quizzes/add/renderer.php
  *
  * @package    mod
  * @subpackage reader
@@ -43,11 +43,26 @@ require_once($CFG->dirroot.'/mod/reader/admin/quizzes/renderer.php');
 class mod_reader_admin_quizzes_add_renderer extends mod_reader_admin_quizzes_renderer {
 
     /**
-     * mode_add
+     * render_page
      *
      * @return string HTML output to display navigation tabs
      */
-    public function mode_add() {
-        echo 'mode_add()';
+    public function render_page() {
+        global $CFG, $DB;
+        require_once($CFG->dirroot.'/mod/reader/admin/quizzes/add/form.php');
+
+        $url = $this->page->url;
+        $params = $url->params();
+        $params['id'] = $this->reader->cm->id;
+        $params['tab'] = $this->get_tab();
+        $params['mode'] = mod_reader::get_mode('admin/quizzes');
+        $url->params($params);
+
+        $mform = new mod_reader_admin_quizzes_add_form($url->out(false));
+
+        if ($data = $mform->get_submitted_data()) {
+        } else {
+            $mform->display();
+        }
     }
 }

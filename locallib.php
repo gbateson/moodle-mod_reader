@@ -302,64 +302,90 @@ class mod_reader {
     ////////////////////////////////////////////////////////////////////////////////
 
     /**
-     * @return moodle_url of this reader's view page
+     * @return moodle_url of this reader page
      */
-    public function view_url($cm=null) {
-        if (is_null($cm)) {
-            $cm = $this->cm;
+    public function url($url, $params=null, $cm=null) {
+
+        if ($params===null) {
+            $params = array();
         }
-        return new moodle_url('/mod/'.$cm->modname.'/view.php', array('id' => $cm->id));
+
+        if (isset($params['id'])) {
+            // do nothing
+        } else if ($id = optional_param('id', 0, PARAM_INT)) {
+            $params['id'] = $id;
+        } else if (isset($cm)) {
+            $params['id'] = $cm->id;
+        } else if (isset($this->cm)) {
+            $params['id'] = $this->cm->id;
+        }
+
+        if (isset($params['tab'])) {
+            // do nothing
+        } else if ($tab = optional_param('tab', 0, PARAM_INT)) {
+            $params['tab'] = $tab;
+        }
+
+        if (isset($params['mode'])) {
+            // do nothing
+        } else if ($mode = optional_param('mode', 0, PARAM_ALPHA)) {
+            $params['mode'] = $mode;
+        }
+
+        return new moodle_url($url, $params);
     }
 
     /**
      * @return moodle_url of this reader's view page
      */
-    public function report_url($mode='', $cm=null, $userid=0) {
-        if (is_null($cm)) {
-            $cm = $this->cm;
+    public function view_url($cm=null) {
+        if ($cm===null) {
+            $url = '/mod/reader/view.php';
+        } else {
+            $url = '/mod/'.$cm->modname.'/view.php';
         }
-        $params = array('id' => $cm->id);
-        if ($mode) {
-            $params['mode'] = $mode;
-        }
-        if ($userid) {
-            $params['userid'] = $userid;
-        }
-        return new moodle_url('/mod/reader/admin/reports.php', $params);
+        return $this->url($url, $params, $cm);
+    }
+
+    /**
+     * @return moodle_url of this reader's view page
+     */
+    public function reports_url($params=null, $cm=null) {
+        return $this->url('/mod/reader/admin/reports.php', $params, $cm);
     }
 
     /**
      * @return moodle_url of this reader's attempt page
      */
     public function attempt_url($framename='', $cm=null) {
-        if (is_null($cm)) {
-            $cm = $this->cm;
-        }
-        $params = array('id' => $cm->id);
+        $params = array();
         if ($framename) {
             $params['framename'] = $framename;
         }
-        return new moodle_url('/mod/reader/attempt.php', $params);
+        return $this->url('/mod/reader/attempt.php', $params, $cm);
     }
 
     /**
      * @return moodle_url of this course's reader index page
      */
     public function index_url($course=null) {
-        if (is_null($course)) {
-            $course = $this->course;
+        if (isset($course)) {
+            $params = array('id' => $course->id);
+        } else {
+            $params = array('id' => $this->course->id);
         }
-        return new moodle_url('/mod/reader/index.php', array('id' => $course->id));
+        return new moodle_url('/mod/reader/index.php', $params);
     }
 
     /**
      * @return moodle_url of this reader's course page
      */
     public function course_url($course=null) {
-        if (is_null($course)) {
-            $course = $this->course;
+        if (isset($course)) {
+            $params = array('id' => $course->id);
+        } else {
+            $params = array('id' => $this->course->id);
         }
-        $params = array('id' => $course->id);
         $sectionnum = 0;
         if (isset($course->coursedisplay) && defined('COURSE_DISPLAY_MULTIPAGE')) {
             // Moodle >= 2.3
@@ -388,10 +414,12 @@ class mod_reader {
      * @return moodle_url of this reader's course grade page
      */
     public function grades_url($course=null) {
-        if (is_null($course)) {
-            $course = $this->course;
+        if (isset($course)) {
+            $params = array('id' => $course->id);
+        } else {
+            $params = array('id' => $this->course->id);
         }
-        return new moodle_url('/grade/index.php', array('id' => $course->id));
+        return new moodle_url('/grade/index.php', $params);
     }
 
     ////////////////////////////////////////////////////////////////////////////////

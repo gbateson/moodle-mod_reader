@@ -26,6 +26,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 // get parent classes (table_sql and flexible_table)
+require_once($CFG->dirroot.'/lib/formslib.php');
 require_once($CFG->dirroot.'/lib//tablelib.php');
 
 /**
@@ -36,6 +37,10 @@ require_once($CFG->dirroot.'/lib//tablelib.php');
  * @since     Moodle 2.0
  */
 class reader_admin_reports_table extends table_sql {
+
+    const DEFAULT_ROWSPERPAGE = 4;
+    const DEFAULT_SHOWDELETED = 0;
+    const DEFAULT_SHOWHIDDEN  = 0;
 
     /** @var is_sortable (from flexible table) */
     public $is_sortable = true;
@@ -85,8 +90,14 @@ class reader_admin_reports_table extends table_sql {
     /** @var default sort columns array($column => SORT_ASC or SORT_DESC) */
     protected $defaultsortcolumns = array();
 
+    /** @var filter: user_filtering object */
+    protected $filter = null;
+
     /** @var filter fields */
     protected $filterfields = array();
+
+    /** @var option fields */
+    protected $optionfields = array();
 
     /** @var actions */
     protected $actions = array();
@@ -224,7 +235,7 @@ class reader_admin_reports_table extends table_sql {
         }
 
 
-        // make the page is downloadable
+        // make the page downloadable
         $this->is_downloadable(true);
 
         // add download buttons at bottom of page
@@ -473,7 +484,7 @@ class reader_admin_reports_table extends table_sql {
 
         // get filter $sql and $params
         if ($this->filter) {
-            list($filterwhere, $filterhaving, $filterparams) = $this->filter;
+            list($filterwhere, $filterhaving, $filterparams) = $this->filter->get_sql_filter();
             if ($filterwhere) {
                 $where .= ($where=='' ? '' : ' AND ').$filterwhere;
             }
@@ -557,21 +568,21 @@ class reader_admin_reports_table extends table_sql {
             return false;
         }
 
-        // check user can delete attempts
+        // check user can manage attempts
         if (! $this->output->reader->can_manageattempts()) {
             return false;
         }
 
         // start form
-        $url = $this->output->reader->report_url($this->output->mode);
+        $url = $this->output->reader->reports_url();
 
         $params = array('id'=>'attemptsform', 'method'=>'post', 'action'=>$url->out_omit_querystring(), 'class'=>'mform');
         echo html_writer::start_tag('form', $params);
 
         // create hidden fields
+        $hidden_fields = html_writer::input_hidden_params($url);
         $params = array('type'=>'hidden', 'name'=>'sesskey', 'value'=>sesskey());
-        $hidden_fields = html_writer::input_hidden_params($url).
-                         html_writer::empty_tag('input', $params)."\n";
+        $hidden_fields .= html_writer::empty_tag('input', $params)."\n";
 
         // put hidden fields in a containiner (for strict XHTML compatability)
         $params = array('style'=>'display: none;');
@@ -588,7 +599,7 @@ class reader_admin_reports_table extends table_sql {
             return false;
         }
 
-        // check user can delete attempts
+        // check user can manage attempts
         if (! $this->output->reader->can_manageattempts()) {
             return false;
         }
@@ -1099,9 +1110,16 @@ class reader_admin_reports_table extends table_sql {
     public function col_wordsthisterm($row) {
         $wordsthisterm = number_format($row->wordsthisterm);
         switch (true) {
-            case isset($row->userid): $report_url = $this->output->reader->report_url('userdetailed', null, $row->userid); break;
-            case isset($row->bookid): $report_url = $this->output->reader->report_url('bookdetailed', null, $row->bookid); break;
-            default:                  $report_url = '';
+            case isset($row->userid):
+                $params = array('mode' => 'userdetailed', 'userid' => $row->userid);
+                $report_url = $this->output->reader->reports_url($params);
+                break;
+            case isset($row->bookid):
+                $params = array('mode' => 'bookdetailed', 'bookid' => $row->bookid);
+                $report_url = $this->output->reader->reports_url($params);
+                break;
+            default:
+                $report_url = '';
         }
         if ($report_url) {
         //    $wordsthisterm = html_writer::link($report_url, $wordsthisterm);
@@ -1232,15 +1250,147 @@ class reader_admin_reports_table extends table_sql {
         if (count($this->filterfields) && $this->output->reader->can_viewreports()) {
 
             $classname = 'reader_admin_reports_'.$this->output->mode.'_filtering';
-            $filter = new $classname($this->filterfields, $this->baseurl);
+            $this->filter = new $classname($this->filterfields, $this->baseurl, null, $this->optionfields);
 
-            // create sql filters
-            $this->filter = $filter->get_sql_filter();
+            // set number of rows per page
+            if ($rowsperpage = $this->filter->get_optionvalue('rowsperpage')) {
+                $this->pagesize = $rowsperpage;
+            }
 
             if ($this->download=='') {
-                $filter->display_add();
-                $filter->display_active();
+                $this->filter->display_add();
+                $this->filter->display_active();
+                $this->filter->display_options();
             }
         }
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////
+    // functions to format, display and handle action settings                    //
+    ////////////////////////////////////////////////////////////////////////////////
+
+    /**
+     * display_action_settings_deleteattempts
+     *
+     * @param string $action
+     * @return xxx
+     */
+    public function display_action_settings_deleteattempts($action) {
+        if ($this->filter && $this->filter->get_optionvalue('showdeleted')==0) {
+            $this->display_action_settings($action);
+        }
+    }
+
+    /**
+     * display_action_settings_restoreattempts
+     *
+     * @param string $action
+     * @return xxx
+     */
+    public function display_action_settings_restoreattempts($action) {
+        if ($this->filter && $this->filter->get_optionvalue('showdeleted')==1) {
+            $this->display_action_settings($action);
+        }
+    }
+
+    /**
+     * display_action_settings_passfailattempts
+     *
+     * @param string $action
+     * @return xxx
+     */
+    public function display_action_settings_passfailattempts($action) {
+        $value = optional_param($action, 0, PARAM_INT);
+        $settings = '';
+        $settings .= get_string('newsetting', 'reader').': ';
+        $options = array('true'    => get_string('passedshort', 'reader').' - '.get_string('passed', 'reader'),
+                         'false'   => get_string('failedshort', 'reader').' - '.get_string('failed', 'reader'),
+                         'cheated' => get_string('cheatedshort', 'reader').' - '.get_string('cheated', 'reader'));
+        $settings .= html_writer::select($options, $action, $value, '', array());
+        return $this->display_action_settings($action, $settings);
+    }
+
+    /**
+     * execute_action_deleteattempts
+     *
+     * @param string $action
+     * @return xxx
+     */
+    public function execute_action_deleteattempts($action) {
+        return $this->execute_action_updateattempts('deleted', 1);
+    }
+
+    /**
+     * execute_action_restoreattempts
+     *
+     * @param string $action
+     * @return xxx
+     */
+    public function execute_action_restoreattempts($action) {
+        return $this->execute_action_updateattempts('deleted', 0);
+    }
+
+    /**
+     * execute_action_passfailattempts
+     *
+     * @param string $action
+     * @return xxx
+     */
+    public function execute_action_passfailattempts($action) {
+        $value = optional_param($action, '', PARAM_ALPHA);
+        return $this->execute_action_updateattempts('passed', $value);
+    }
+
+    /**
+     * execute_action_updateattempts
+     *
+     * @param string $table
+     * @param string $field
+     * @param mixed  $value
+     * @return xxx
+     */
+    public function execute_action_updateattempts($field, $value) {
+        $table = 'reader_attempts';
+        $select = 'reader = ?';
+        $params = array($this->output->reader->id);
+        return $this->execute_action_update('id', $table, $field, $value, $select, $params);
+    }
+
+    /**
+     * execute_action_update
+     *
+     * @param string $idfield
+     * @param string $table
+     * @param string $field
+     * @param mixed  $value
+     * @param string $moreselect (optional, default='')
+     * @param array  $moreparams (optional, default=null)
+     * @return xxx
+     */
+    public function execute_action_update($idfield, $table, $field, $value, $moreselect='', $moreparams=null) {
+        global $DB;
+
+        // get selected record ids
+        $ids = $this->get_selected($idfield);
+        if (empty($ids)) {
+            return; // no ids selected
+        }
+
+        // set $field $value for selected ids
+        list($select, $params) = $DB->get_in_or_equal($ids);
+
+        // add additional sql, if necessary
+        if ($moreselect) {
+            $select .= " AND $moreselect";
+            if ($moreparams) {
+                $params = array_merge($params, $moreparams);
+                // for named keys use: $params += $moreparams
+            }
+        }
+
+        $DB->set_field_select($table, $field, $value, "id $select", $params);
+
+        // send "Changes saved" message to browser
+        echo $this->output->notification(get_string('changessaved'), 'notifysuccess');
     }
 }

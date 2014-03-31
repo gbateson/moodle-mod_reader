@@ -30,8 +30,8 @@ require_once('../../../config.php');
 require_once($CFG->dirroot.'/mod/reader/locallib.php');
 require_once($CFG->dirroot.'/mod/reader/admin/quizzes/renderer.php');
 
-$id     = optional_param('id',     0,  PARAM_INT); // course module id
-$r      = optional_param('r',      0,  PARAM_INT); // reader id
+$id = optional_param('id', 0, PARAM_INT); // course module id
+$r  = optional_param('r',  0, PARAM_INT); // reader id
 
 if ($id) {
     $cm = get_coursemodule_from_id('reader', $id, 0, false, MUST_EXIST);
@@ -66,14 +66,7 @@ echo $output->header();
 echo $output->tabs();
 echo $output->box_start('generalbox', 'notice');
 
-switch ($mode) {
-    case 'add':      echo $output->mode_add();      break;
-    case 'delete':   echo $output->mode_delete();   break;
-    case 'update':   echo $output->mode_update();   break;
-    case 'showhide': echo $output->mode_showhide(); break;
-    case 'delay':    echo $output->mode_delay();    break;
-    case 'arrange':  echo $output->mode_arrange();  break;
-}
+echo $output->render_page();
 
 echo $output->box_end();
 echo $output->footer();

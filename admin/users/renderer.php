@@ -54,12 +54,6 @@ class mod_reader_admin_users_renderer extends mod_reader_admin_renderer {
     const TAB_USERS_EXPORT      = 55;
     /**#@-*/
 
-    /** array of allow modes for this page (mode is second row of tabs) */
-    public $modes = array('setgoals', 'setlevels', 'sendmessage', 'import', 'export');
-
-    /** array of allow actions */
-    //public $actions = array('setgoals', 'setlevels', 'sendmessage', 'import', 'export');
-
     /**
      * get_my_tab
      *
@@ -88,7 +82,7 @@ class mod_reader_admin_users_renderer extends mod_reader_admin_renderer {
         $cmid = $this->reader->cm->id;
         if ($this->reader->can_manageusers()) {
 
-            foreach ($this->modes as $mode) {
+            foreach (self::get_standard_modes() as $mode) {
                 $tab = constant('self::TAB_USERS_'.strtoupper($mode));
                 $params = array('id' => $cmid, 'tab' => $tab, 'mode' => $mode);
                 $url = new moodle_url('/mod/reader/admin/users.php', $params);
@@ -99,22 +93,11 @@ class mod_reader_admin_users_renderer extends mod_reader_admin_renderer {
     }
 
     /**
-     * heading_action_users
+     * get_standard_modes
      *
-     * @param string  $action
-     * @return string formatted heading for this $action
+     * @return string HTML output to display navigation tabs
      */
-    public function heading_action_users($action) {
-        return $this->heading_action($action, 'users');
-    }
-
-    /**
-     * list_actions_users
-     *
-     * @param integer $cmid of current Reader activity
-     * @return string formatted list of links to user actions
-     */
-    public function list_actions_users($cmid) {
-        return $this->list_actions($cmid, 'users');
+    static public function get_standard_modes() {
+        return array('setgoals', 'setlevels', 'sendmessage', 'import', 'export');
     }
 }

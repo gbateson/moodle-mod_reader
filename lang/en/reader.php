@@ -157,7 +157,7 @@ $string['defaultquestioncategoryinfo'] = '{$a->category} questions for {$a->quiz
 $string['definelogindetails'] = 'Please define login details: {$a}';
 $string['delay'] = 'Delay';
 $string['delete'] = 'Delete';
-$string['deleteattempts'] = 'Delete attempts';
+$string['deleteattempts'] = 'Delete seleted attempts';
 $string['deletecategories'] = 'Delete categories';
 $string['deletecourses'] = 'Delete courses';
 $string['detectcheating'] = 'Detect cheating';
@@ -178,6 +178,7 @@ $string['downloadmode_help'] = 'This page can be in the following two modes:
 $string['downloads'] = 'Downloads';
 $string['downloadsettings'] = 'Download settings';
 $string['duration'] = 'Duration';
+$string['edit'] = 'Edit';
 $string['editbookdetails'] = 'Edit details';
 $string['editingteacherrole'] = 'Use Editing Teacher role';
 $string['editquiztoreader'] = 'Delete quizzes';
@@ -529,7 +530,6 @@ $string['type_help'] = 'Select the type of books you want to be displayed in the
 **Books without quizzes**
 : The page will show a list of books for which data such as difficulty and word counts exist, but for which no quiz has yet been created.
 ';
-$string['update'] = 'Update';
 $string['updatedon'] = 'Updated on {$a}';
 $string['updatequizzes'] = 'Update quizzes';
 $string['updates'] = 'Updates';
@@ -603,3 +603,10 @@ $string['youmusttakequizzes'] = ' You can take {$a} more quizzes ';
 $string['yourcurrentlevel'] = 'Your current level';
 $string['yourteacherhasstopped'] = ' Your teacher has stopped automatic promotion for you.';
 $string['youwerepromoted'] = 'You were promoted to RL-{$a->level} on {$a->date} at {$a->time}';
+$string['restoreattempts'] = 'Restore selected attempts';
+$string['passfailattempts'] = 'Update the pass/fail setting for selected attempts';
+$string['showhidebooks'] = 'Update the show/hide setting for selected books';
+$string['newsetting'] = 'New value for this setting';
+$string['rowsperpage'] = 'Rows per page';
+$string['showhidden'] = 'Show hidden books';
+$string['showdeleted'] = 'Show deleted attempts';

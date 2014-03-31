@@ -43,11 +43,11 @@ require_once($CFG->dirroot.'/mod/reader/admin/quizzes/renderer.php');
 class mod_reader_admin_quizzes_showhide_renderer extends mod_reader_admin_quizzes_renderer {
 
     /**
-     * mode_showhide
+     * render_page
      *
      * @return string HTML output to display navigation tabs
      */
-    public function mode_showhide() {
+    public function render_page() {
         echo 'mode_showhide()';
     }
 }

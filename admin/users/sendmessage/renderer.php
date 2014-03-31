@@ -43,11 +43,11 @@ require_once($CFG->dirroot.'/mod/reader/admin/users/renderer.php');
 class mod_reader_admin_users_sendmessage_renderer extends mod_reader_admin_users_renderer {
 
     /**
-     * mode_sendmessage
+     * render_page
      *
      * @return string HTML output to display navigation tabs
      */
-    public function mode_sendmessage() {
+    public function render_page() {
         echo 'mode_sendmessage()';
     }
 }
