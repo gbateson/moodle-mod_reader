@@ -4099,32 +4099,32 @@ function reader_extend_settings_navigation(settings_navigation $settingsnav, nav
         $node   = new navigation_node(array('type'=>$type, 'key'=>$key, 'text'=>$text));
 
         // edit node
-        $params = array('id' => $PAGE->cm->id,
-                        'tab' => mod_reader_admin_books_renderer::TAB_BOOKS_EDIT,
-                        'mode' => 'edit');
+        $tab = mod_reader_admin_books_renderer::TAB_BOOKS_EDIT;
+        $mode = 'edit';
+        $params = array('id' => $PAGE->cm->id, 'tab' => $tab, 'mode' => $mode);
         $url = new moodle_url('/mod/reader/admin/books.php', $params);
         $key = 'editbookdetails';
-        $text = get_string($key, 'reader');
+        $text = get_string($mode, 'reader');
         $icon = new pix_icon('t/edit', '');
         reader_navigation_add_node($node, $type, $key, $text, $url, $icon);
 
         // download (with quizzes) node
-        $params = array('id' => $PAGE->cm->id,
-                        'tab' => mod_reader_admin_books_renderer::TAB_BOOKS_DOWNLOAD_WITH,
-                        'mode' => 'download',
-                        'type' => reader_downloader::BOOKS_WITH_QUIZZES);
-        $url = new moodle_url('/mod/reader/admin/books/download.php', $params);
+        $tab = mod_reader_admin_books_renderer::TAB_BOOKS_DOWNLOAD_WITH;
+        $mode = 'download';
+        $type = reader_downloader::BOOKS_WITH_QUIZZES;
+        $params = array('id' => $PAGE->cm->id, 'tab' => $tab, 'mode' => $mode, 'type' => $type);
+        $url = new moodle_url('/mod/reader/admin/books.php', $params);
         $key = 'downloadbookswithquizzes';
         $text = get_string($key, 'reader');
         $icon = new pix_icon('t/download', '');
         reader_navigation_add_node($node, $type, $key, $text, $url, $icon);
 
         // download (without quizzes) node
-        $params = array('id' => $PAGE->cm->id,
-                        'tab' => mod_reader_admin_books_renderer::TAB_BOOKS_DOWNLOAD_WITHOUT,
-                        'mode' => 'download',
-                        'type' => reader_downloader::BOOKS_WITHOUT_QUIZZES);
-        $url = new moodle_url('/mod/reader/admin/books/download.php', $params);
+        $tab = mod_reader_admin_books_renderer::TAB_BOOKS_DOWNLOAD_WITHOUT;
+        $mode = 'download';
+        $type = reader_downloader::BOOKS_WITHOUT_QUIZZES;
+        $params = array('id' => $PAGE->cm->id, 'tab' => $tab, 'mode' => $mode, 'type' => $type);
+        $url = new moodle_url('/mod/reader/admin/books.php', $params);
         $key = 'downloadbookswithoutquizzes';
         $text = get_string($key, 'reader');
         $icon = new pix_icon('t/download', '');
@@ -4135,6 +4135,7 @@ function reader_extend_settings_navigation(settings_navigation $settingsnav, nav
 
     // create quiz nodes
     if (reader_can_managequizzes($PAGE->cm->id, $USER->id)) {
+        require_once($CFG->dirroot.'/mod/reader/admin/quizzes/renderer.php');
 
         //////////////////////////
         // Quizzes sub-menu
@@ -4147,12 +4148,12 @@ function reader_extend_settings_navigation(settings_navigation $settingsnav, nav
         $text   = get_string('modulenameplural', 'quiz');
         $node   = new navigation_node(array('type'=>$type, 'key'=>$key, 'text'=>$text));
 
-        $actions = array('add', 'update', 'delete', 'showhide', 'setdelay', 'arrange');
-        foreach ($actions as $action) {
-            $params = array('id' => $PAGE->cm->id, 'action' => $action);
+        foreach (mod_reader_admin_quizzes_renderer::get_standard_modes() as $mode) {
+            $tab = constant('mod_reader_admin_quizzes_renderer::TAB_QUIZZES_'.strtoupper($mode));
+            $params = array('id' => $PAGE->cm->id, 'tab' => $tab, 'mode' => $mode);
             $url = new moodle_url('/mod/reader/admin/quizzes.php', $params);
-            $key = 'quizzes'.$action;
-            $text   = get_string($key, 'reader');
+            $key = 'quizzes'.$mode;
+            $text = get_string($mode, 'reader');
             reader_navigation_add_node($node, $type, $key, $text, $url, $icon);
         }
 
@@ -4161,6 +4162,7 @@ function reader_extend_settings_navigation(settings_navigation $settingsnav, nav
 
     // create user nodes
     if (reader_can_manageusers($PAGE->cm->id, $USER->id)) {
+        require_once($CFG->dirroot.'/mod/reader/admin/users/renderer.php');
 
         //////////////////////////
         // Users sub-menu
@@ -4173,12 +4175,12 @@ function reader_extend_settings_navigation(settings_navigation $settingsnav, nav
         $text   = get_string('users');
         $node   = new navigation_node(array('type'=>$type, 'key'=>$key, 'text'=>$text));
 
-        $actions = array('setgoals', 'setlevels', 'sendmessage', 'import', 'export');
-        foreach ($actions as $action) {
-            $params = array('id' => $PAGE->cm->id, 'action' => $action);
+        foreach (mod_reader_admin_users_renderer::get_standard_modes() as $mode) {
+            $tab = constant('mod_reader_admin_users_renderer::TAB_USERS_'.strtoupper($mode));
+            $params = array('id' => $PAGE->cm->id, 'tab' => $tab, 'mode' => $mode);
             $url = new moodle_url('/mod/reader/admin/users.php', $params);
-            $key = 'users'.$action;
-            $text   = get_string($key, 'reader');
+            $key = 'users'.$mode;
+            $text = get_string($mode, 'reader');
             reader_navigation_add_node($node, $type, $key, $text, $url, $icon);
         }
 
