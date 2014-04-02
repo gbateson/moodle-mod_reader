@@ -39,7 +39,7 @@ class reader_admin_reports_groupsummary_table extends reader_admin_reports_table
 
     /** @var columns used in this table */
     protected $tablecolumns = array(
-        'groupname',
+        'groupname', 'selected',
         'countactive', // number of students who have taken quizzes
         'countinactive', // number of students who hove NOT taken quizzes
         'percentactive', // percent of students who have taken quizzes
@@ -80,7 +80,10 @@ class reader_admin_reports_groupsummary_table extends reader_admin_reports_table
     );
 
     /** @var option fields */
-    //protected $optionfields = array('rowsperpage');
+    protected $optionfields = array('rowsperpage' => self::DEFAULT_ROWSPERPAGE);
+
+    /** @var actions */
+    protected $actions = array('sendmessage');
 
     ////////////////////////////////////////////////////////////////////////////////
     // functions to extract data from $DB                                         //
@@ -386,6 +389,99 @@ class reader_admin_reports_groupsummary_table extends reader_admin_reports_table
             return '';
         } else {
             return number_format(round($row->wordsallterms / $row->countusers));
+        }
+    }
+
+    /**
+     * display_action_settings_sendmessage
+     *
+     * @param string $action
+     * @return xxx
+     */
+    public function display_action_settings_sendmessage($action) {
+        global $CFG;
+        require_once($CFG->dirroot.'/lib/form/editor.php');
+
+        $settings = '';
+
+        // time (as number of hours) for which message should be displayed
+        $name = $action.'time';
+        $settings .= get_string($name, 'reader').': ';
+        $options = array('168' => '1 Week',
+                         '240' => '10 Days',
+                         '336' => '2 Weeks',
+                         '504' => '3 Weeks');
+        $value = optional_param($name, 0, PARAM_INT);
+        $settings .= html_writer::select($options, $name, $value, '');
+
+        // message text
+        //  - generate id
+        //  - disable file uploads
+        $name = $action.'text';
+        $editor = new MoodleQuickForm_editor($name, get_string($name, 'reader'));
+        $editor->updateAttributes(array('id' => 'id_'.$name));
+        $editor->setMaxfiles(0);
+        $settings .= $editor->toHtml();
+
+        return $this->display_action_settings($action, $settings);
+    }
+
+    /**
+     * execute_action_sendmessage
+     *
+     * @param string $action
+     * @return xxx
+     */
+    public function execute_action_sendmessage($action) {
+        global $DB, $PAGE, $USER;
+
+        $time = $action.'time';
+        $text = $action.'text';
+
+        if (! $data = data_submitted()) {
+            return; // no form data !!
+        }
+        if (empty($data->$text)) {
+            return; // no message data
+        }
+
+        $ids = $this->get_selected('groupid');
+        if (empty($ids)) {
+            return; // no ids selected
+        }
+
+        // extract message time
+        if ($time = clean_param($data->$time, PARAM_INT)) {
+            $time = time() + ($time * 60 * 60);
+        } else {
+            $time = 0; // i.e. display indefinitely
+        }
+
+        // extract message text
+        $text   = $data->$text;
+        $format = clean_param($text['format'], PARAM_INT);
+        $text   = clean_param($text['text'],   PARAM_CLEANHTML);
+
+        // extract users in these groups
+        list($select, $params) = $DB->get_in_or_equal($ids);
+        if ($users = $DB->get_records_select('groups_members', "groupid $select", $params, 'userid')) {
+            $ids = array();
+            foreach ($users as $user) {
+                $ids[$user->userid] = true;
+            }
+            $message = (object)array(
+                'readerid'     =>  $this->output->reader->id,
+                'teacherid'    =>  $USER->id,
+                'userids'      =>  implode(',', array_keys($ids)),
+                'message'      =>  $text,
+                'timelimit'    =>  $time,
+                'timemodified' =>  time()
+            );
+            if (isset($message->id)) {
+                $DB->update_record('reader_messages', $message);
+            } else {
+                $message->id = $DB->insert_record('reader_messages', $message);
+            }
         }
     }
 }

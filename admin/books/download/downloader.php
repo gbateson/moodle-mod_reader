@@ -1038,7 +1038,7 @@ class reader_downloader {
 
                         // mark $book in "reader_books" table as having no quiz
                         $book->quizid = 0;
-                        if ($book->id = $DB->get_field('reader_books', 'id', $params)) {
+                        if ($book->id) {
                             $DB->update_record('reader_books', $book);
                         } else {
                             unset($book->id);
@@ -1909,7 +1909,7 @@ class reader_downloader {
     }
 
     /**
-     * create_question_instances
+     * create_question_module
      *
      * @param xxx $module (passed by reference)
      * @param xxx $quiz

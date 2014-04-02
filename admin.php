@@ -60,7 +60,7 @@ $del                    = optional_param('del', NULL, PARAM_CLEAN);
 $attemptid              = optional_param('attemptid', NULL, PARAM_CLEAN);
 $restoreattemptid       = optional_param('restoreattemptid', NULL, PARAM_CLEAN);
 $upassword              = optional_param('upassword', NULL, PARAM_CLEAN);
-$groupid                = optional_param('groupid', 0, PARAM_INT);
+$groupid                = reader_optional_param_array('groupid', 0, PARAM_INT);
 $activehours            = optional_param('activehours', NULL, PARAM_CLEAN);
 $text                   = optional_param('text', NULL, PARAM_CLEAN);
 $bookid                 = reader_optional_param_array('bookid', NULL, PARAM_CLEAN);
@@ -343,19 +343,17 @@ if (has_capability('mod/reader:manageattempts', $contextmodule) && $act == 'view
     }
 }
 
-if (has_capability('mod/reader:addinstance', $contextmodule) && $text && $activehours) {
+if (has_capability('mod/reader:addinstance', $contextmodule) && $text) {
     $message = new stdClass();
-
-    foreach ($groupid as $groupkey => $groupvalue) {
-        $message->users .= $groupvalue.',';
-    }
-
-    $message->users = substr($message->users,0,-1);
-
-    $message->instance = $cm->instance;
+    $message->readerid = $cm->instance;
     $message->teacherid = $USER->id;
-    $message->text = $text;
-    $message->timebefore = time() + ($activehours * 60 * 60);
+    $message->groupids = implode(',', $groupid);
+    $message->message = $text;
+    if ($activehours) {
+        $message->timefinish = time() + ($activehours * 60 * 60);
+    } else {
+        $message->timefinish = 0; // i.e. display indefinitely
+    }
     $message->timemodified = time();
 
     if ($editmessage) {
@@ -2617,16 +2615,25 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
                 $grouparray[$group->id] = $group->name;
             }
 
-            $timearray = array('168' => '1 Week', '240' => '10 Days', '336' => '2 Weeks', '504' => '3 Weeks', '1000000' => 'Indefinite');
+            $timearray = array('168' => '1 Week',
+                               '240' => '10 Days',
+                               '336' => '2 Weeks',
+                               '504' => '3 Weeks',
+                               '0'   => 'Indefinite');
 
-            $mform->addElement('select', 'groupid', 'Group', $grouparray, 'size="5" multiple');
-            $mform->addElement('select', 'activehours', 'Active Time (Hours)', $timearray);
-            $mform->addElement('textarea', 'text', 'Text', 'wrap="virtual" rows="10" cols="70"');
+            $mform->addElement('select',   'groupid',     'Group', $grouparray, 'size="5" multiple');
+            $mform->addElement('select',   'activehours', 'Active Time (Hours)', $timearray);
+            $mform->addElement('textarea', 'text',        'Text', 'wrap="virtual" rows="10" cols="70"');
+
+            $mform->setType('groupid',     PARAM_INT);
+            $mform->setType('activehours', PARAM_INT);
+            $mform->setType('text',        PARAM_RAW);
 
             if ($editmessage) {
                 if ($message = $DB->get_record('reader_messages', array('id' => $editmessage))) {
-                    $mform->setDefault('text', $message->text);
+                    $mform->setDefault('text', $message->message);
                     $mform->addElement('hidden', 'editmessage', $editmessage);
+                    $mform->setType('editmessage', PARAM_INT);
                 }
             }
 
@@ -2638,37 +2645,42 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
 
     echo 'Current Messages:';
 
-    $textmessages = $DB->get_records_sql('SELECT * FROM {reader_messages} where teacherid = ? and instance = ? ORDER BY timemodified DESC', array($USER->id, $cm->instance));
+    $textmessages = $DB->get_records_sql('SELECT * FROM {reader_messages} where teacherid = ? and readerid = ? ORDER BY timemodified DESC', array($USER->id, $cm->instance));
 
     foreach ($textmessages as $textmessage) {
-        $before = $textmessage->timebefore - time();
 
-        $forgroupsarray = explode(',', $textmessage->users);
-
-        $forgroup = "";
-        $bgcolor  = '';
-
-        foreach ($forgroupsarray as $forgroupsarray_) {
-            if ($forgroupsarray_ == 0) {
-                $forgroup .= 'All, ';
-            } else {
-                $forgroup .= groups_get_group_name($forgroupsarray_).', ';
+        $groupnames = array();
+        $groupids = explode(',', $textmessage->groupids);
+        $groupids = array_filter($groupids);
+        foreach ($groupids as $groupid) {
+            if ($groupname = groups_get_group_name($groupid)) {
+                $groupnames[] = $groupname;
             }
         }
-
-        $forgroup = substr($forgroup, 0, -2);
+        if (empty($groupnames)) {
+            $groupnames = 'All';
+        } else {
+            $groupnames = implode(',', $groupnames);
+        }
 
         if ($textmessage->timemodified > (time() - ( 48 * 60 * 60))) {
             $bgcolor = 'bgcolor="#CCFFCC"';
+        } else {
+            $bgcolor = '';
         }
 
         echo '<table width="100%"><tr><td align="right"><table cellspacing="0" cellpadding="0" class="forumpost blogpost blog" '.$bgcolor.' width="90%">';
         echo '<tr><td align="left"><div style="margin-left: 10px;margin-right: 10px;">'."\n";
-        echo format_text($textmessage->text);
+        echo format_text($textmessage->message);
         echo '<div style="text-align:right"><small>';
-        echo round($before/(60 * 60 * 24), 2).' Days; ';
+        if ($textmessage->timefinish) {
+            $time = $textmessage->timefinish - time();
+            echo round($time / (60 * 60 * 24), 2).' Days; ';
+        } else {
+            echo 'Indefinitely; ';
+        }
         echo 'Added: '.date("$dateformat $timeformat", $textmessage->timemodified).'; '; // was 'd M Y H:i'
-        echo 'Group: '. $forgroup.'; ';
+        echo 'Group: '. $groupnames.'; ';
         echo '<a href="admin.php?a=admin&id='.$id.'&act=sendmessage&editmessage='.$textmessage->id.'">Edit</a> / <a href="admin.php?a=admin&id='.$id.'&act=sendmessage&deletemessage='.$textmessage->id.'">Delete</a>';
         echo '</small></div>';
         echo '</div></td></tr></table></td></tr></table>'."\n\n";

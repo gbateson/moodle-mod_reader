@@ -361,7 +361,9 @@ class reader_remotesite {
             if ($error = trim($error)) {
                 $output .= html_writer::tag('p', $error);
             }
-            $output .= html_writer::tag('p', "URL: $url");
+            if ($this->debugdeveloper()) {
+                $output .= html_writer::tag('p', "URL: $url");
+            }
             $output = $OUTPUT->notification($output);
             echo $OUTPUT->box($output, 'generalbox', 'notice');
             return false;
@@ -1028,5 +1030,22 @@ class reader_remotesite {
         }
 
         return $stdclass;
+    }
+
+    /*
+     * debugdeveloper
+     *
+     * @uses $CFG
+     * @return boolean TRUE if site is in developer debugging mode; FALSE otherwise
+     */
+    public function debugdeveloper() {
+        global $CFG;
+        if (isset($CFG->debugdeveloper)) {
+            // Moodle >= 2.6
+            return $CFG->debugdeveloper;
+        } else {
+            // Moodle <= 2.5
+            return (($CFG->debug & DEBUG_DEVELOPER)===DEBUG_DEVELOPER);
+        }
     }
 }

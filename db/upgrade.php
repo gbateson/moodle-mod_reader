@@ -634,6 +634,40 @@ function xmldb_reader_upgrade($oldversion) {
         upgrade_mod_savepoint(true, "$newversion", 'reader');
     }
 
+    $newversion = 2014040250;
+    if ($result && $oldversion < $newversion) {
+        // rename fields in "reader_messages" table
+        $table = new xmldb_table('reader_messages');
+        $fields = array(
+            // $newfieldname => $field (old name)
+            'readerid'   => new xmldb_field('instance',   XMLDB_TYPE_INTEGER, '11',   null, XMLDB_NOTNULL),
+            'message'    => new xmldb_field('text',       XMLDB_TYPE_TEXT,    'long', null, XMLDB_NOTNULL),
+            'groupids'   => new xmldb_field('users',      XMLDB_TYPE_CHAR,    '255',  null, XMLDB_NOTNULL),
+            'timefinish' => new xmldb_field('timebefore', XMLDB_TYPE_INTEGER, '11',   null, XMLDB_NOTNULL)
+        );
+        foreach ($fields as $newfieldname => $field) {
+            if ($dbman->field_exists($table, $field)) {
+                $dbman->change_field_type($table, $field);
+                $dbman->rename_field($table, $field, $newfieldname);
+            }
+        }
+
+        // add non-unique indexes on "readerid" and "timefinish" fields
+        $indexes = array(
+            new xmldb_index('readerid_key', XMLDB_INDEX_NOTUNIQUE, array('readerid')),
+            new xmldb_index('timefinish_key', XMLDB_INDEX_NOTUNIQUE, array('timefinish')),
+        );
+        foreach ($indexes as $index) {
+            if (! $dbman->index_exists($table, $index)) {
+                $dbman->add_index($table, $index);
+            }
+        }
+
+        // set "finishtime" to zero for indefinitely displayed messages
+        $select = 'timefinish > ?';
+        $params array(time() + (1000 * 60 * 60));
+        $DB->set_field_select('reader_messages', 'timefinish', 0, $select, $params);
+    }
 
     return $result;
 }

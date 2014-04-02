@@ -253,15 +253,10 @@ function reader_print_recent_activity($course, $isteacher, $timestart) {
 function reader_cron() {
     global $CFG, $DB;
 
-    $textmessages = $DB->get_records('reader_messages');
-
-    foreach ($textmessages as $textmessage) {
-        $before = $textmessage->timebefore - time();
-
-        if ($before <= 0) {
-            $DB->delete_records('reader_messages', array('id' => $textmessage->id));
-        }
-    }
+    // delete expired messages
+    $select = 'timefinish > ? && timefinish < ?';
+    $params = array(0, time());
+    $DB->delete_records_select('reader_messages', $select, $params);
 
     //Check questions list
 

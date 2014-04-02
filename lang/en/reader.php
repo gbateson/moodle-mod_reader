@@ -610,3 +610,5 @@ $string['rowsperpage'] = 'Rows per page';
 $string['showhidden'] = 'Show hidden books';
 $string['showdeleted'] = 'Show deleted attempts';
 $string['update'] = 'Update';
+$string['sendmessagetime'] = 'Display until';
+$string['sendmessagetext'] = 'Message text';

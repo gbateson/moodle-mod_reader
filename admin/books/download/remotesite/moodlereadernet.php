@@ -181,7 +181,7 @@ class reader_remotesite_moodlereadernet extends reader_remotesite {
      * @todo Finish documenting this function
      */
     public function get_questions_params($itemid) {
-        return array('getid' => $itemid, 'pass' => '');
+        return array('getid' => $itemid); // , 'pass' => ''
     }
 
     /**

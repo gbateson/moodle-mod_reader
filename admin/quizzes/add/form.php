@@ -58,8 +58,6 @@ class mod_reader_admin_quizzes_add_form extends moodleform {
      * @todo Finish documenting this function
      */
     function definition() {
-        global $course, $reader;
-
         $this->_form->addElement('text', 'publisher', get_string('publisher', 'reader'), array('size' => 40));
         $this->_form->setType('publisher', PARAM_TEXT);
 

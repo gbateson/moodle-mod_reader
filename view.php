@@ -472,30 +472,39 @@ if ($reader->attemptsofday > 0) { // && $_SESSION['SESSION']->reader_teacherview
     $showform = true;
 }
 
-if ($messages = $DB->get_records_sql('SELECT * FROM {reader_messages} WHERE instance = ?', array($cm->instance))) {
+$select = 'readerid = ? AND timefinish = ? OR timefinish > ?';
+$params = array($cm->instance, 0, time());
+if ($messages = $DB->get_records_select('reader_messages', $select, $params)) {
 
-    $usergroupsarray = array(0);
-    $studentgroups = groups_get_user_groups($course->id, $USER->id);
-    foreach ($studentgroups as $studentgroup) {
-        foreach ($studentgroup as $studentgroup_) {
-            $usergroupsarray[] = $studentgroup_;
+    $mygroupids = array();
+    $groupings = groups_get_user_groups($course->id, $USER->id);
+    foreach ($groupings as $groupingid => $groupids) {
+        foreach ($groupids as $groupid) {
+            $mygroupids[] = $groupid;
         }
     }
 
     $started_list = false;
     foreach ($messages as $message) {
-        $forgroupsarray = explode (',', $message->users);
-        $showmessage = false;
-        $bgcolor  = '';
+        $groupids = explode (',', $message->groupids);
+        $groupids = array_filter($groupids);
 
-        foreach ($forgroupsarray as $forgroupsarray_) {
-            if (in_array($forgroupsarray_, $usergroupsarray)) {
-                $showmessage = true;
+        if (empty($groupids)) {
+            $showmessage = true;
+        } else {
+            $showmessage = false;
+            foreach ($groupids as $groupid) {
+                if (in_array($groupid, $mygroupids)) {
+                    $showmessage = true;
+                }
             }
         }
 
+
         if ($message->timemodified > (time() - ( 48 * 60 * 60))) {
             $bgcolor = 'bgcolor="#CCFFCC"';
+        } else {
+            $bgcolor  = '';
         }
 
         if ($showmessage) {
@@ -505,7 +514,7 @@ if ($messages = $DB->get_records_sql('SELECT * FROM {reader_messages} WHERE inst
             }
             echo '<table width="100%"><tr><td align="right"><table cellspacing="0" cellpadding="0" class="forumpost blogpost blog" '.$bgcolor.' width="90%">';
             echo '<tr><td align="left"><div style="margin-left: 10px;margin-right: 10px;">'."\n";
-            echo format_text($message->text);
+            echo format_text($message->message);
             echo '<div style="text-align:right"><small>';
             $teacherdata = $DB->get_record('user', array('id' => $message->teacherid));
             echo "<a href=\"{$CFG->wwwroot}/user/view.php?id={$message->teacherid}&amp;course={$course->id}\">".fullname($teacherdata, true)."</a>";

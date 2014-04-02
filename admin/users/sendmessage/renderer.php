@@ -48,6 +48,21 @@ class mod_reader_admin_users_sendmessage_renderer extends mod_reader_admin_users
      * @return string HTML output to display navigation tabs
      */
     public function render_page() {
-        echo 'mode_sendmessage()';
+        global $CFG, $DB;
+        require_once($CFG->dirroot.'/mod/reader/admin/users/sendmessage/form.php');
+
+        $url = $this->page->url;
+        $params = $url->params();
+        $params['id'] = $this->reader->cm->id;
+        $params['tab'] = $this->get_tab();
+        $params['mode'] = mod_reader::get_mode('admin/users');
+        $url->params($params);
+
+        $mform = new mod_reader_admin_users_sendmessage_form($url->out(false));
+
+        if ($data = $mform->get_submitted_data()) {
+        } else {
+            $mform->display();
+        }
     }
 }
