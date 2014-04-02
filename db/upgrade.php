@@ -665,7 +665,7 @@ function xmldb_reader_upgrade($oldversion) {
 
         // set "finishtime" to zero for indefinitely displayed messages
         $select = 'timefinish > ?';
-        $params array(time() + (1000 * 60 * 60));
+        $params = array(time() + (1000 * 60 * 60));
         $DB->set_field_select('reader_messages', 'timefinish', 0, $select, $params);
     }
 
