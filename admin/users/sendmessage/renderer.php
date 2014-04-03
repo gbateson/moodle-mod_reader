@@ -48,9 +48,20 @@ class mod_reader_admin_users_sendmessage_renderer extends mod_reader_admin_users
      * @return string HTML output to display navigation tabs
      */
     public function render_page() {
-        global $CFG, $DB;
+        global $CFG, $DB, $PAGE, $USER;
         require_once($CFG->dirroot.'/mod/reader/admin/users/sendmessage/form.php');
 
+        $action = optional_param('action', '', PARAM_ALPHA);
+        $messageid = optional_param('messageid', 0,  PARAM_INT);
+
+        // delete messages, if required
+        // (do this before initializing the form)
+        if ($messageid && $action=='deletemessage') {
+            $params = array('id' => $messageid, 'readerid' => $PAGE->cm->instance);
+            $DB->delete_records('reader_messages', $params);
+        }
+
+        // set the url for the form
         $url = $this->page->url;
         $params = $url->params();
         $params['id'] = $this->reader->cm->id;
@@ -58,11 +69,37 @@ class mod_reader_admin_users_sendmessage_renderer extends mod_reader_admin_users
         $params['mode'] = mod_reader::get_mode('admin/users');
         $url->params($params);
 
+        // initialize the form
         $mform = new mod_reader_admin_users_sendmessage_form($url->out(false));
 
-        if ($data = $mform->get_submitted_data()) {
-        } else {
-            $mform->display();
+        if ($mform->is_cancelled()) {
+            $mform->clear_all_values();
+        } else if ($mform->is_submitted() && $mform->is_validated()) {
+            if ($data = $mform->get_submitted_data()) {
+                $message = (object)array(
+                    'id'           => $data->messageid,
+                    'readerid'     => $PAGE->cm->instance,
+                    'teacherid'    => $USER->id,
+                    'groupids'     => implode(',', $data->groupids),
+                    'message'      => $data->message['text'],
+                    'timefinish'   => $data->timefinish,
+                    'timemodified' => time(),
+                );
+                if ($message->id) {
+                    $DB->update_record('reader_messages', $message);
+                } else {
+                    $message->id = $DB->insert_record('reader_messages', $message);
+                }
+            }
         }
+
+        if ($messageid && $action=='editmessage') {
+            $params = array('id' => $messageid, 'readerid' => $PAGE->cm->instance);
+            if ($message = $DB->get_record('reader_messages', $params)) {
+                $mform->set_data($message);
+            }
+        }
+
+        $mform->display();
     }
 }

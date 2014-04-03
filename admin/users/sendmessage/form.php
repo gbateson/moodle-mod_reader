@@ -58,15 +58,203 @@ class mod_reader_admin_users_sendmessage_form extends moodleform {
      * @todo Finish documenting this function
      */
     function definition() {
-        $this->_form->addElement('text', 'group', get_string('group'), array('size' => 40));
-        $this->_form->setType('group', PARAM_TEXT);
 
-        $this->_form->addElement('text', 'timefinish', get_string('sendmessagetime', 'reader'), array('size' => 40));
-        $this->_form->setType('timefinish', PARAM_INT);
+        // shortcut to our form
+        $mform = $this->_form;
 
-        $this->_form->addElement('text', 'message', get_string('sendmessagetext', 'reader'), array('size' => 40));
-        $this->_form->setType('message', PARAM_INT);
+        // groupids
+        $groups = $this->format_groups();
+        if (empty($groups)) {
+            $mform->addElement('hidden', 'groupids', 0);
+        } else {
+            $params = array('size' => max(5, count($groups)), 'multiple' => 'multiple');
+            $mform->addElement('select', 'groupids', get_string('group'), $groups, $params);
+            $mform->setDefault('groupids', 0);
+        }
+        $mform->setType('groupids', PARAM_INT);
 
-        $this->add_action_buttons(false, get_string('sendmessage', 'reader'));
+        // timefinish
+        $mform->addElement('date_time_selector', 'timefinish', get_string('sendmessagetime', 'reader'), array('optional' => true));
+        $mform->setDefault('timefinish', 0);
+        $mform->setType('timefinish', PARAM_INT);
+
+        // messageid
+        $mform->addElement('hidden', 'messageid', 0);
+        $mform->setType('messageid', PARAM_INT);
+
+        // message
+        $mform->addElement('editor', 'message', get_string('sendmessagetext', 'reader'), array('size' => 40));
+        $mform->setDefault('message', '');
+        $mform->setType('message', PARAM_RAW);
+
+        // previous messages
+        if ($messages = $this->format_messages($groups)) {
+            $messages = html_writer::tag('ol', $messages, array('class' => 'messages'));
+            $mform->addElement('static', 'messages', 'Messages', $messages);
+        }
+
+        // buttons
+        $this->add_action_buttons();
+    }
+
+    /**
+     * format_groups
+     */
+    function format_groups() {
+        global $PAGE;
+        if ($groups = groups_get_all_groups($PAGE->course->id, 0, 0, 'id,name')) {
+            foreach ($groups as $groupid => $group) {
+                $groups[$groupid] = $group->name;
+            }
+            asort($groups);
+            $groups = array(0 => get_string('all')) + $groups;
+        } else {
+            $groups = array();
+        }
+        return $groups;
+    }
+
+    /**
+     * format_messages
+     */
+    function format_messages($groups) {
+        global $DB, $OUTPUT, $PAGE, $USER;
+        $items = '';
+        $mform = $this->_form;
+
+        if ($cancel = optional_param('cancel', '', PARAM_ALPHA)) {
+            $messageid = 0;
+        } else {
+            $messageid = optional_param('messageid', 0, PARAM_INT);
+        }
+
+        $params = array('readerid' => $PAGE->cm->instance);
+        if ($messages = $DB->get_records('reader_messages', $params, 'timefinish')) {
+            foreach ($messages as $message) {
+                if ($message->id==$messageid) {
+                    continue; // skip current message
+                }
+                $item = '';
+                if ($message->teacherid) {
+                    if ($message->teacherid==$USER->id) {
+                        $teachername = fullname($USER);
+                    } else if ($teachername = $DB->get_record('user', array('id' => $message->teacherid))) {
+                        $teachername = fullname($teachername);
+                    } else {
+                        $teachername = '';
+                    }
+                    if ($teachername) {
+                        $teachername = html_writer::tag('b', get_string('from')).': '.$teachername;
+                        $item .= html_writer::tag('li', $teachername, array('class' => 'teacher'));
+                    }
+                }
+                if ($groupnames = $message->groupids) {
+                    $groupnames = explode(',', $groupnames);
+                    foreach ($groupnames as $g => $gid) {
+                        if (array_key_exists($gid, $groups)) {
+                            $groupnames[$g] = $groups[$gid];
+                        } else {
+                            $groupnames[$g] = ''; // shouldn't happen !!
+                        }
+                    }
+                    $groupnames = array_filter($groupnames);
+                    if ($groupnames = implode(', ', $groupnames)) {
+                        $groupnames = html_writer::tag('b', get_string('group')).': '.$groupnames;
+                        $item .= html_writer::tag('li', $groupnames, array('class' => 'groups'));
+                    }
+                }
+                if ($timefinish = $message->timefinish) {
+                    $timefinish = html_writer::tag('b', get_string('sendmessagetime', 'reader')).': '.userdate($timefinish);
+                    $item .= html_writer::tag('li', $timefinish, array('class' => 'timefinish'));
+                }
+                if ($text = $message->message) {
+                    $text = html_writer::tag('b', get_string('sendmessagetext', 'reader')).': '.strip_tags($text);
+                    $item .= html_writer::tag('li', $text, array('class' => 'message'));
+                }
+                if ($item) {
+                    $icons = array();
+                    $href = new moodle_url($mform->_attributes['action']);
+
+                    // edit url
+                    $params = $href->params();
+                    $params['action'] = 'editmessage';
+                    $params['messageid'] = $message->id;
+                    $href->params($params);
+
+                    // edit icon
+                    $icon = $OUTPUT->pix_icon('t/edit', get_string('edit'));
+                    $icons[] = html_writer::link($href, $icon, array('class' => 'editicon'));
+
+                    // delete url
+                    $params = $href->params();
+                    $params['action'] = 'deletemessage';
+                    $params['messageid'] = $message->id;
+                    $href->params($params);
+
+                    // delete icon
+                    $icon = $OUTPUT->pix_icon('t/delete', get_string('delete'));
+                    $icons[] = html_writer::link($href, $icon, array('class' => 'deleteicon'));
+
+                    // icons
+                    if ($icons = implode(' ', $icons)) {
+                        $item .= html_writer::tag('li', $icons, array('class' => 'icons'));
+                    }
+
+                    $item = html_writer::tag('ul', $item, array('class' => 'details'));
+                    $items .= html_writer::tag('li', $item, array('class' => 'message'));
+                }
+            }
+        }
+        return $items;
+    }
+
+    /**
+     * set_data
+     *
+     * @param stdClass $default_values a record from the "reader_messages" table
+     */
+    function set_data($data) {
+        $mform = $this->_form;
+
+        $mform->setDefault('messageid',  $data->id);
+        $mform->setDefault('groupids',   $data->groupids);
+        $mform->setDefault('timefinish', $data->timefinish);
+
+        // there is no "setDefault" for editors
+        // so we set default message text manually
+        $element = $mform->getElement('message');
+        $value = $element->getValue();
+        if (is_array($value) && empty($value['text'])) {
+            $value['text'] = $data->message;
+            $element->setValue($value);
+        }
+    }
+
+    /**
+     * clear_all_values
+     */
+    function clear_all_values() {
+        $mform = $this->_form;
+        foreach ($mform->_elements as $element) {
+            switch ($type = $element->getType()) {
+                case 'select':
+                    $element->setValue(null);
+                    break;
+                case 'date_time_selector':
+                    $element->setValue(null);
+                    break;
+                case 'hidden':
+                    $element->setValue('');
+                    break;
+                case 'editor':
+                    $value = array('text' => null, 'format' => null, 'itemid' => null);
+                    $element->setValue($value);
+                    break;
+                case 'group':
+                case 'static':
+                    // do nothing
+                    break;
+            }
+        }
     }
 }
