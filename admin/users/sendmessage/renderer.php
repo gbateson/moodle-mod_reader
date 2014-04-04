@@ -51,14 +51,64 @@ class mod_reader_admin_users_sendmessage_renderer extends mod_reader_admin_users
         global $CFG, $DB, $PAGE, $USER;
         require_once($CFG->dirroot.'/mod/reader/admin/users/sendmessage/form.php');
 
-        $action = optional_param('action', '', PARAM_ALPHA);
-        $messageid = optional_param('messageid', 0,  PARAM_INT);
+        if ($cancel = optional_param('cancel', '', PARAM_ALPHA)) {
+            $data = null;
+            $action = '';
+            $messageid = 0;
+        } else {
+            $data = data_submitted();
+            $action = optional_param('action', '', PARAM_ALPHA);
+            $messageid = optional_param('messageid', 0,  PARAM_INT);
+        }
 
         // delete messages, if required
-        // (do this before initializing the form)
         if ($messageid && $action=='deletemessage') {
             $params = array('id' => $messageid, 'readerid' => $PAGE->cm->instance);
             $DB->delete_records('reader_messages', $params);
+        }
+
+        // add new message, if required
+        if ($data) {
+
+            // clean "groupids"
+            if (empty($data->groupids)) {
+                $data->groupids = '';
+            } else {
+                $data->groupids = array_filter($data->groupids, 'intval');
+                $data->groupids = implode(',', $data->groupids);
+            }
+
+            // clean "timefinish"
+            if (empty($data->timefinish) || empty($data->timefinish['enabled'])) {
+                $data->timefinish = 0;
+            } else {
+                $data->timefinish = array_filter($data->timefinish, 'intval');
+                $data->timefinish = mktime($data->timefinish['hour'],
+                                           $data->timefinish['minute'],
+                                           0, // seconds
+                                           $data->timefinish['month'],
+                                           $data->timefinish['day'],
+                                           $data->timefinish['year']);
+            }
+
+            // prepare "reader_message" record
+            $message = (object)array(
+                'id'            => $messageid,
+                'readerid'      => $PAGE->cm->instance,
+                'teacherid'     => $USER->id,
+                'groupids'      => $data->groupids,
+                'messagetext'   => $data->message['text'],
+                'messageformat' => $data->message['format'],
+                'timefinish'    => $data->timefinish,
+                'timemodified'  => time(),
+            );
+
+            // add/update "reader_message" record
+            if ($message->id) {
+                $DB->update_record('reader_messages', $message);
+            } else {
+                $message->id = $DB->insert_record('reader_messages', $message);
+            }
         }
 
         // set the url for the form
@@ -72,34 +122,17 @@ class mod_reader_admin_users_sendmessage_renderer extends mod_reader_admin_users
         // initialize the form
         $mform = new mod_reader_admin_users_sendmessage_form($url->out(false));
 
-        if ($mform->is_cancelled()) {
-            $mform->clear_all_values();
-        } else if ($mform->is_submitted() && $mform->is_validated()) {
-            if ($data = $mform->get_submitted_data()) {
-                $message = (object)array(
-                    'id'           => $data->messageid,
-                    'readerid'     => $PAGE->cm->instance,
-                    'teacherid'    => $USER->id,
-                    'groupids'     => implode(',', $data->groupids),
-                    'message'      => $data->message['text'],
-                    'timefinish'   => $data->timefinish,
-                    'timemodified' => time(),
-                );
-                if ($message->id) {
-                    $DB->update_record('reader_messages', $message);
-                } else {
-                    $message->id = $DB->insert_record('reader_messages', $message);
-                }
-            }
-        }
-
+        // populate the form, if necessary
         if ($messageid && $action=='editmessage') {
             $params = array('id' => $messageid, 'readerid' => $PAGE->cm->instance);
             if ($message = $DB->get_record('reader_messages', $params)) {
                 $mform->set_data($message);
             }
+        } else {
+            $mform->clear_all_values();
         }
 
         $mform->display();
     }
 }
+

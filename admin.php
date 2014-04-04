@@ -60,9 +60,10 @@ $del                    = optional_param('del', NULL, PARAM_CLEAN);
 $attemptid              = optional_param('attemptid', NULL, PARAM_CLEAN);
 $restoreattemptid       = optional_param('restoreattemptid', NULL, PARAM_CLEAN);
 $upassword              = optional_param('upassword', NULL, PARAM_CLEAN);
-$groupid                = reader_optional_param_array('groupid', 0, PARAM_INT);
+$groupids               = reader_optional_param_array('groupids', 0, PARAM_INT);
 $activehours            = optional_param('activehours', NULL, PARAM_CLEAN);
-$text                   = optional_param('text', NULL, PARAM_CLEAN);
+$messagetext            = optional_param('messagetext', NULL, PARAM_CLEAN);
+$messageformat          = optional_param('messageformat', 0, PARAM_INT);
 $bookid                 = reader_optional_param_array('bookid', NULL, PARAM_CLEAN);
 $deletebook             = optional_param('deletebook', 0, PARAM_INT);
 $deleteallattempts      = optional_param('deleteallattempts', 0, PARAM_INT);
@@ -343,12 +344,13 @@ if (has_capability('mod/reader:manageattempts', $contextmodule) && $act == 'view
     }
 }
 
-if (has_capability('mod/reader:addinstance', $contextmodule) && $text) {
+if (has_capability('mod/reader:addinstance', $contextmodule) && $messagetext) {
     $message = new stdClass();
     $message->readerid = $cm->instance;
     $message->teacherid = $USER->id;
-    $message->groupids = implode(',', $groupid);
-    $message->message = $text;
+    $message->groupids = implode(',', $groupids);
+    $message->messagetext = $messagetext;
+    $message->messageformat = $messageformat;
     if ($activehours) {
         $message->timefinish = time() + ($activehours * 60 * 60);
     } else {
@@ -2608,82 +2610,114 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
 
             $mform    = &$this->_form;
 
-            $groups = groups_get_all_groups($course->id);
-            $grouparray = array('0' => 'All Course students');
+            $groups = self::get_all_groups($course->id);
+            $hours = array('0'   => 'Indefinite',
+                           '168' => '1 Week',
+                           '240' => '10 Days',
+                           '336' => '2 Weeks',
+                           '504' => '3 Weeks');
 
-            foreach ($groups as $group) {
-                $grouparray[$group->id] = $group->name;
-            }
+            $mform->addElement('select',   'groupids',    'Group', $groups, 'size="5" multiple');
+            $mform->addElement('select',   'activehours', 'Active Time (Hours)', $hours);
+            $mform->addElement('textarea', 'messagetext', 'Text', 'wrap="virtual" rows="10" cols="70"');
+            $mform->addElement('hidden',   'messageformat', FORMAT_MOODLE);
+            $mform->addElement('hidden',   'editmessage',  0);
 
-            $timearray = array('168' => '1 Week',
-                               '240' => '10 Days',
-                               '336' => '2 Weeks',
-                               '504' => '3 Weeks',
-                               '0'   => 'Indefinite');
-
-            $mform->addElement('select',   'groupid',     'Group', $grouparray, 'size="5" multiple');
-            $mform->addElement('select',   'activehours', 'Active Time (Hours)', $timearray);
-            $mform->addElement('textarea', 'text',        'Text', 'wrap="virtual" rows="10" cols="70"');
-
-            $mform->setType('groupid',     PARAM_INT);
-            $mform->setType('activehours', PARAM_INT);
-            $mform->setType('text',        PARAM_RAW);
+            $mform->setType('groupids',      PARAM_INT);
+            $mform->setType('activehours',   PARAM_INT);
+            $mform->setType('messagetext',   PARAM_RAW);
+            $mform->setType('messageformat', PARAM_INT);
+            $mform->setType('editmessage',   PARAM_INT);
 
             if ($editmessage) {
                 if ($message = $DB->get_record('reader_messages', array('id' => $editmessage))) {
-                    $mform->setDefault('text', $message->message);
-                    $mform->addElement('hidden', 'editmessage', $editmessage);
-                    $mform->setType('editmessage', PARAM_INT);
+                    if ($activehours = $message->timefinish) {
+                        $activehours = round(($activehours - time()) / (60 * 60));
+                        foreach (array_reverse(array_keys($hours)) as $hour) {
+                            $hour = intval($hour);
+                            if ($activehours >= $hour) {
+                                $activehours = $hour;
+                                break;
+                            }
+                        }
+                    }
+                    $mform->setDefault('groupids',      $message->groupids);
+                    $mform->setDefault('activehours',   $activehours);
+                    $mform->setDefault('messagetext',   $message->messagetext);
+                    $mform->setDefault('messageformat', $message->messageformat);
+                    $mform->setDefault('editmessage',   $editmessage);
                 }
             }
 
             $this->add_action_buttons(false, $submitlabel='Send');
         }
+
+        /**
+         * get_all_groups
+         */
+        static function get_all_groups($courseid) {
+            if ($groups = groups_get_all_groups($courseid, 0, 0, 'id,name')) {
+                foreach ($groups as $groupid => $group) {
+                    $groups[$groupid] = $group->name;
+                }
+                asort($groups);
+            } else {
+                $groups = array();
+            }
+            $groups = array(0 => get_string('all')) + $groups;
+            return $groups;
+        }
+
     }
     $mform = new mod_reader_message_form("admin.php?a=admin&id={$id}&act=sendmessage");
     $mform->display();
 
-    echo 'Current Messages:';
+    $params = array('readerid' => $cm->instance, 'teacherid' => $USER->id);
+    if ($messages = $DB->get_records('reader_messages', $params, 'timemodified DESC')) {
 
-    $textmessages = $DB->get_records_sql('SELECT * FROM {reader_messages} where teacherid = ? and readerid = ? ORDER BY timemodified DESC', array($USER->id, $cm->instance));
+        $groups = mod_reader_message_form::get_all_groups($course->id);
 
-    foreach ($textmessages as $textmessage) {
+        echo 'Current Messages:';
+        foreach ($messages as $message) {
 
-        $groupnames = array();
-        $groupids = explode(',', $textmessage->groupids);
-        $groupids = array_filter($groupids);
-        foreach ($groupids as $groupid) {
-            if ($groupname = groups_get_group_name($groupid)) {
-                $groupnames[] = $groupname;
+            if ($groupnames = $message->groupids) {
+                $groupnames = explode(',', $groupnames);
+                foreach ($groupnames as $g => $gid) {
+                    if (array_key_exists($gid, $groups)) {
+                        $groupnames[$g] = $groups[$gid];
+                    } else {
+                        $groupnames[$g] = ''; // shouldn't happen !!
+                    }
+                }
+                $groupnames = array_filter($groupnames);
+                $groupnames = implode(', ', $groupnames);
             }
-        }
-        if (empty($groupnames)) {
-            $groupnames = 'All';
-        } else {
-            $groupnames = implode(',', $groupnames);
-        }
+            if (empty($groupnames)) {
+                $groupnames = get_string('all');
+            }
 
-        if ($textmessage->timemodified > (time() - ( 48 * 60 * 60))) {
-            $bgcolor = 'bgcolor="#CCFFCC"';
-        } else {
-            $bgcolor = '';
-        }
+            if ($message->timemodified > (time() - ( 48 * 60 * 60))) {
+                $bgcolor = 'bgcolor="#CCFFCC"';
+            } else {
+                $bgcolor = '';
+            }
 
-        echo '<table width="100%"><tr><td align="right"><table cellspacing="0" cellpadding="0" class="forumpost blogpost blog" '.$bgcolor.' width="90%">';
-        echo '<tr><td align="left"><div style="margin-left: 10px;margin-right: 10px;">'."\n";
-        echo format_text($textmessage->message);
-        echo '<div style="text-align:right"><small>';
-        if ($textmessage->timefinish) {
-            $time = $textmessage->timefinish - time();
-            echo round($time / (60 * 60 * 24), 2).' Days; ';
-        } else {
-            echo 'Indefinitely; ';
+            echo '<table width="100%"><tr><td align="right"><table cellspacing="0" cellpadding="0" class="forumpost blogpost blog" '.$bgcolor.' width="90%">';
+            echo '<tr><td align="left"><div style="margin-left: 10px;margin-right: 10px;">'."\n";
+            echo format_text($message->messagetext, $message->messageformat);
+            echo '<div style="text-align:right"><small>';
+            if ($message->timefinish) {
+                $time = $message->timefinish - time();
+                echo round($time / (60 * 60 * 24), 2).' Days; ';
+            } else {
+                echo 'Indefinitely; ';
+            }
+            echo 'Added: '.date("$dateformat $timeformat", $message->timemodified).'; '; // was 'd M Y H:i'
+            echo 'Group: '. $groupnames.'; ';
+            echo '<a href="admin.php?a=admin&id='.$id.'&act=sendmessage&editmessage='.$message->id.'">Edit</a> / <a href="admin.php?a=admin&id='.$id.'&act=sendmessage&deletemessage='.$message->id.'">Delete</a>';
+            echo '</small></div>';
+            echo '</div></td></tr></table></td></tr></table>'."\n\n";
         }
-        echo 'Added: '.date("$dateformat $timeformat", $textmessage->timemodified).'; '; // was 'd M Y H:i'
-        echo 'Group: '. $groupnames.'; ';
-        echo '<a href="admin.php?a=admin&id='.$id.'&act=sendmessage&editmessage='.$textmessage->id.'">Edit</a> / <a href="admin.php?a=admin&id='.$id.'&act=sendmessage&deletemessage='.$textmessage->id.'">Delete</a>';
-        echo '</small></div>';
-        echo '</div></td></tr></table></td></tr></table>'."\n\n";
     }
 
 } else if ($act == 'makepix_t' && has_capability('mod/reader:managequizzes', $contextmodule)) {
@@ -3267,8 +3301,11 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
                 $mform->addElement('select', 'separategroups', get_string('separategroups', 'reader'), $groups);
             }
             $mform->addElement('text', 'levelall', get_string('all', 'reader'), array('size'=>'10'));
+            $mform->setType('levelall', PARAM_INT);
             for($i=1; $i<=10; $i++) {
-                $mform->addElement('text', 'levelc['.$i.']', $i, array('size'=>'10'));
+                $name = 'levelc['.$i.']';
+                $mform->addElement('text', $name, $i, array('size'=>'10'));
+                $mform->setType($name, PARAM_INT);
             }
 
             if ($data = $DB->get_records('reader_goals', array('readerid' => $reader->id))) {
@@ -4090,92 +4127,88 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
         echo html_writer::tag('p', $adjustscorestext);
     }
 
-    $output  = '';
-    $output .= html_writer::start_tag('table', array('style'=>'width:100%'));
-    $output .= html_writer::start_tag('tr');
-    $output .= html_writer::start_tag('td', array('align'=>'right'));
+    echo html_writer::start_tag('table', array('style'=>'width:100%'));
+    echo html_writer::start_tag('tr');
+    echo html_writer::start_tag('td', array('align'=>'right'));
 
-    $output .= html_writer::start_tag('form', array('action'=>$alink, 'method'=>'post', 'id'=>'mform1'));
-    $output .= html_writer::start_tag('center');
-    $output .= html_writer::start_tag('table', array('width'=>'600px'));
+    echo html_writer::start_tag('form', array('action'=>$alink, 'method'=>'post', 'id'=>'mform1'));
+    echo html_writer::start_tag('center');
+    echo html_writer::start_tag('table', array('width'=>'600px'));
 
-    $output .= html_writer::start_tag('tr');
-    $output .= html_writer::tag('td', get_string('publisherseries', 'reader'), array('width'=>'200px'));
-    $output .= html_writer::tag('td', '', array('width'=>'10px'));
-    $output .= html_writer::tag('td', '', array('width'=>'200px'));
-    $output .= html_writer::end_tag('tr');
+    echo html_writer::start_tag('tr');
+    echo html_writer::tag('td', get_string('publisherseries', 'reader'), array('width'=>'200px'));
+    echo html_writer::tag('td', '', array('width'=>'10px'));
+    echo html_writer::tag('td', '', array('width'=>'200px'));
+    echo html_writer::end_tag('tr');
 
-    $output .= html_writer::start_tag('tr');
-    $output .= html_writer::tag('td', $select, array('valign'=>'top'));
-    $output .= html_writer::tag('td', html_writer::tag('div', '', array('id'=>'bookleveldiv')), array('valign'=>'top'));
-    $output .= html_writer::tag('td', html_writer::tag('div', '', array('id'=>'bookiddiv')), array('valign'=>'top'));
-    $output .= html_writer::end_tag('tr');
+    echo html_writer::start_tag('tr');
+    echo html_writer::tag('td', $select, array('valign'=>'top'));
+    echo html_writer::tag('td', html_writer::tag('div', '', array('id'=>'bookleveldiv')), array('valign'=>'top'));
+    echo html_writer::tag('td', html_writer::tag('div', '', array('id'=>'bookiddiv')), array('valign'=>'top'));
+    echo html_writer::end_tag('tr');
 
-    $output .= html_writer::start_tag('tr');
-    $output .= html_writer::tag('td', '', array('colspan'=>3, 'align'=>'center'));
-    $output .= html_writer::end_tag('tr');
+    echo html_writer::start_tag('tr');
+    echo html_writer::tag('td', '', array('colspan'=>3, 'align'=>'center'));
+    echo html_writer::end_tag('tr');
 
-    $output .= html_writer::start_tag('tr');
-    $output .= html_writer::tag('td', html_writer::empty_tag('input', array('type'=>'submit', 'value'=>'Select quiz')), array('colspan'=>3, 'align'=>'center'));
-    $output .= html_writer::end_tag('tr');
+    echo html_writer::start_tag('tr');
+    echo html_writer::tag('td', html_writer::empty_tag('input', array('type'=>'submit', 'value'=>'Select quiz')), array('colspan'=>3, 'align'=>'center'));
+    echo html_writer::end_tag('tr');
 
-    $output .= html_writer::end_tag('table');
-    $output .= html_writer::end_tag('form');
-    $output .= html_writer::end_tag('center');
+    echo html_writer::end_tag('table');
+    echo html_writer::end_tag('form');
+    echo html_writer::end_tag('center');
 
-    $output .= html_writer::end_tag('td');
-    $output .= html_writer::end_tag('tr');
-    $output .= html_writer::end_tag('table');
+    echo html_writer::end_tag('td');
+    echo html_writer::end_tag('tr');
+    echo html_writer::end_tag('table');
 
     $alink  = new moodle_url('/mod/reader/admin.php', array('id'=>$id, 'act'=>$act, 'book'=>$book, 'a'=>'admin'));
 
-    $output .= html_writer::start_tag('form', array('action'=>$alink, 'method'=>'post'));
-    $output .= html_writer::start_tag('div', array('style'=>'20px 0;'));
+    echo html_writer::start_tag('form', array('action'=>$alink, 'method'=>'post'));
+    echo html_writer::start_tag('div', array('style'=>'20px 0;'));
 
-    $output .= html_writer::start_tag('table');
-    $output .= html_writer::start_tag('tr');
-    $output .= html_writer::tag('td', 'Update selected adding', array('width'=>'180px;'));
-    $output .= html_writer::start_tag('td', array('width'=>'60px;'));
-    $output .= html_writer::empty_tag('input', array('type'=>'text', 'name'=>'adjustscoresaddpoints', 'value'=>'', 'style'=>'width:60px;'));
-    $output .= html_writer::end_tag('td');
-    $output .= html_writer::tag('td', 'points', array('width'=>'70px;'));
-    $output .= html_writer::start_tag('td');
-    $output .= html_writer::empty_tag('input', array('type'=>'submit', 'value'=>get_string('add')));
-    $output .= html_writer::end_tag('td');
-    $output .= html_writer::end_tag('tr');
-    $output .= html_writer::end_tag('table');
+    echo html_writer::start_tag('table');
+    echo html_writer::start_tag('tr');
+    echo html_writer::tag('td', 'Update selected adding', array('width'=>'180px;'));
+    echo html_writer::start_tag('td', array('width'=>'60px;'));
+    echo html_writer::empty_tag('input', array('type'=>'text', 'name'=>'adjustscoresaddpoints', 'value'=>'', 'style'=>'width:60px;'));
+    echo html_writer::end_tag('td');
+    echo html_writer::tag('td', 'points', array('width'=>'70px;'));
+    echo html_writer::start_tag('td');
+    echo html_writer::empty_tag('input', array('type'=>'submit', 'value'=>get_string('add')));
+    echo html_writer::end_tag('td');
+    echo html_writer::end_tag('tr');
+    echo html_writer::end_tag('table');
 
-    $output .= html_writer::start_tag('table');
-    $output .= html_writer::start_tag('tr');
-    $output .= html_writer::tag('td', 'Update all > ', array('width'=>'100px;'));
-    $output .= html_writer::start_tag('td', array('width'=>'60px;'));
-    $output .= html_writer::empty_tag('input', array('type'=>'text', 'name'=>'adjustscoresupall', 'value'=>'', 'style'=>'width:50px;'));
-    $output .= html_writer::end_tag('td');
-    $output .= html_writer::tag('td', 'points and < ', array('width'=>'90px;'));
-    $output .= html_writer::start_tag('td', array('width'=>'60px;'));
-    $output .= html_writer::empty_tag('input', array('type'=>'text', 'name'=>'adjustscorespand', 'value'=>'', 'style'=>'width:50px;'));
-    $output .= html_writer::end_tag('td');
-    $output .= html_writer::tag('td', 'points by ', array('width'=>'90px;'));
-    $output .= html_writer::start_tag('td', array('width'=>'60px;'));
-    $output .= html_writer::empty_tag('input', array('type'=>'text', 'name'=>'adjustscorespby', 'value'=>'', 'style'=>'width:50px;'));
-    $output .= html_writer::end_tag('td');
-    $output .= html_writer::tag('td', 'points', array('width'=>'70px;'));
-    $output .= html_writer::start_tag('td');
-    $output .= html_writer::empty_tag('input', array('type'=>'submit', 'value'=>get_string('add')));
-    $output .= html_writer::end_tag('td');
-    $output .= html_writer::end_tag('tr');
-    $output .= html_writer::end_tag('table');
+    echo html_writer::start_tag('table');
+    echo html_writer::start_tag('tr');
+    echo html_writer::tag('td', 'Update all > ', array('width'=>'100px;'));
+    echo html_writer::start_tag('td', array('width'=>'60px;'));
+    echo html_writer::empty_tag('input', array('type'=>'text', 'name'=>'adjustscoresupall', 'value'=>'', 'style'=>'width:50px;'));
+    echo html_writer::end_tag('td');
+    echo html_writer::tag('td', 'points and < ', array('width'=>'90px;'));
+    echo html_writer::start_tag('td', array('width'=>'60px;'));
+    echo html_writer::empty_tag('input', array('type'=>'text', 'name'=>'adjustscorespand', 'value'=>'', 'style'=>'width:50px;'));
+    echo html_writer::end_tag('td');
+    echo html_writer::tag('td', 'points by ', array('width'=>'90px;'));
+    echo html_writer::start_tag('td', array('width'=>'60px;'));
+    echo html_writer::empty_tag('input', array('type'=>'text', 'name'=>'adjustscorespby', 'value'=>'', 'style'=>'width:50px;'));
+    echo html_writer::end_tag('td');
+    echo html_writer::tag('td', 'points', array('width'=>'70px;'));
+    echo html_writer::start_tag('td');
+    echo html_writer::empty_tag('input', array('type'=>'submit', 'value'=>get_string('add')));
+    echo html_writer::end_tag('td');
+    echo html_writer::end_tag('tr');
+    echo html_writer::end_tag('table');
 
-    $output .= html_writer::end_tag('div');
+    echo html_writer::end_tag('div');
 
     if (count($table->data)) {
-        $output .= html_writer::table($table);
+        echo html_writer::table($table);
     }
 
-    $output .= html_writer::end_tag('form');
-
-    echo $output;
-
+    echo html_writer::end_tag('form');
 }
 
 echo $output->box_end();

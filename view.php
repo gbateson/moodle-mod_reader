@@ -490,7 +490,7 @@ if ($messages = $DB->get_records_select('reader_messages', $select, $params)) {
         $groupids = array_filter($groupids);
 
         if (empty($groupids)) {
-            $showmessage = true;
+            $showmessage = true; // all groups
         } else {
             $showmessage = false;
             foreach ($groupids as $groupid) {
@@ -514,7 +514,7 @@ if ($messages = $DB->get_records_select('reader_messages', $select, $params)) {
             }
             echo '<table width="100%"><tr><td align="right"><table cellspacing="0" cellpadding="0" class="forumpost blogpost blog" '.$bgcolor.' width="90%">';
             echo '<tr><td align="left"><div style="margin-left: 10px;margin-right: 10px;">'."\n";
-            echo format_text($message->message);
+            echo format_text($message->messagetext, $message->messageformat);
             echo '<div style="text-align:right"><small>';
             $teacherdata = $DB->get_record('user', array('id' => $message->teacherid));
             echo "<a href=\"{$CFG->wwwroot}/user/view.php?id={$message->teacherid}&amp;course={$course->id}\">".fullname($teacherdata, true)."</a>";

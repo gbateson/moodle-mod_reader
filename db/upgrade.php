@@ -667,6 +667,31 @@ function xmldb_reader_upgrade($oldversion) {
         $select = 'timefinish > ?';
         $params = array(time() + (1000 * 60 * 60));
         $DB->set_field_select('reader_messages', 'timefinish', 0, $select, $params);
+
+        upgrade_mod_savepoint(true, "$newversion", 'reader');
+    }
+
+    $newversion = 2014040452;
+    if ($result && $oldversion < $newversion) {
+
+        // adjust fields in "reader_messages" table
+        $table = new xmldb_table('reader_messages');
+
+        // rename "message" field to "messageformat"
+        $field = new xmldb_field('message', XMLDB_TYPE_TEXT, 'long', null, XMLDB_NOTNULL);
+        if ($dbman->field_exists($table, $field)) {
+            $dbman->change_field_type($table, $field);
+            $dbman->rename_field($table, $field, 'messagetext');
+        }
+
+        // add "messageformat" field
+        $field = new xmldb_field('messageformat', XMLDB_TYPE_INTEGER, '4', null, null, null, '1', 'message');
+        if (! $dbman->field_exists($table, $field)) {
+            xmldb_reader_fix_previous_field($dbman, $table, $field);
+            $dbman->add_field($table, $field);
+        }
+
+        upgrade_mod_savepoint(true, "$newversion", 'reader');
     }
 
     return $result;

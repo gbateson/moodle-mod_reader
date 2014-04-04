@@ -83,7 +83,7 @@ class reader_admin_reports_groupsummary_table extends reader_admin_reports_table
     protected $optionfields = array('rowsperpage' => self::DEFAULT_ROWSPERPAGE);
 
     /** @var actions */
-    protected $actions = array('sendmessage');
+    protected $actions = array('setreadinggoal', 'sendmessage');
 
     ////////////////////////////////////////////////////////////////////////////////
     // functions to extract data from $DB                                         //
@@ -393,6 +393,40 @@ class reader_admin_reports_groupsummary_table extends reader_admin_reports_table
     }
 
     /**
+     * display_action_settings_setreadinggoal
+     *
+     * @param string $action
+     * @return xxx
+     */
+    public function display_action_settings_setreadinggoal($action) {
+        $settings = '';
+
+        // all levels
+        $name = $action.'[0]';
+        $value = optional_param($name, '', PARAM_INT);
+        $params = array('type' => 'input', 'id' => "id_$name", 'name' => $name, 'size' => 6, 'value' => $value);
+        $settings .= get_string('alllevels', 'reader').': '.html_writer::empty_tag('input', $params);
+
+        // separate levels
+        $settings .= html_writer::tag('div', get_string('separatelevels', 'reader').':', array('class' => 'separate clearfix'));
+        for ($col=0; $col<=1; $col++) {
+            $settings .= html_writer::start_tag('ul', array('class' => 'levels', 'class' => 'levels'));
+            for ($row=0; $row<=4; $row++) {
+                $i = ($col * 5) + $row + 1;
+                $name = $action."[$i]";
+                $value = optional_param($name, '', PARAM_INT);
+                $params = array('type' => 'input', 'id' => "id_$name", 'name' => $name, 'size' => 6, 'value' => $value);
+                $level = get_string('leveli', 'reader', $i).': '.html_writer::empty_tag('input', $params);
+                $settings .= html_writer::tag('li', $level, array('class' => 'level'));
+            }
+            $settings .= html_writer::end_tag('ul');
+        }
+        $settings .= html_writer::tag('div', '', array('class' => 'clearfix'));
+
+        return $this->display_action_settings($action, $settings);
+    }
+
+    /**
      * display_action_settings_sendmessage
      *
      * @param string $action
@@ -427,6 +461,81 @@ class reader_admin_reports_groupsummary_table extends reader_admin_reports_table
     }
 
     /**
+     * execute_action_setreadinggoal
+     *
+     * @param string $action
+     * @return xxx
+     */
+    public function execute_action_setreadinggoal($action) {
+        global $DB;
+
+        $readinggoal = optional_param_array($action, null, PARAM_INT);
+
+        if ($readinggoal===null) {
+            return; // no reading goal specified
+        }
+
+        $groupids = $this->get_selected('groupid');
+        if (empty($groupids)) {
+            return; // no ids selected
+        }
+
+        $params = array('readerid' => $this->output->reader->id);
+        if ($goalids = $DB->get_records('reader_goals', $params, null, 'id,readerid')) {
+            $goalids = array_keys($goalids);
+        } else {
+            $goalids = array();
+        }
+
+        foreach ($groupids as $groupid) {
+            for ($level=0; $level<=10; $level++) {
+
+                // get goal from form (it should be there)
+                if (array_key_exists($level, $readinggoal)) {
+                    $goal = $readinggoal[$level];
+                } else {
+                    $goal = 0; // shoudn't happen !!
+                }
+
+                // skip "All levels", if it is not used
+                if ($level==0 && $goal==0) {
+                    continue;
+                }
+
+                // convert $goal to a DB record
+                $goal = (object)array(
+                    'readerid' => $this->output->reader->id,
+                    'groupid'  => $groupid,
+                    'level'    => $level,
+                    'goal'     => $goal
+                );
+
+                // insert new $goal record
+                // reuse previous goal ids if possible
+                if (empty($goalids)) {
+                    $goal->id = $DB->insert_record('reader_goals', $goal);
+                } else {
+                    $goal->id = array_shift($goalids);
+                    $DB->update_record('reader_goals', $goal);
+                }
+
+                // stop here if we re not using separate levels
+                if ($level==0) {
+                    break;
+                }
+            }
+            // remove any used records from "reader_goals"
+            if (count($goalids)) {
+                list($select, $params) = $DB->get_in_or_equal($goalids);
+                $DB->delete_records_select('reader_goals', $select, $params);
+            }
+        }
+
+        // send "Changes saved" message to browser
+        echo $this->output->notification(get_string('changessaved'), 'notifysuccess');
+    }
+
+    /**
      * execute_action_sendmessage
      *
      * @param string $action
@@ -445,8 +554,8 @@ class reader_admin_reports_groupsummary_table extends reader_admin_reports_table
             return; // no message data
         }
 
-        $ids = $this->get_selected('groupid');
-        if (empty($ids)) {
+        $groupids = $this->get_selected('groupid');
+        if (empty($groupids)) {
             return; // no ids selected
         }
 
@@ -460,22 +569,22 @@ class reader_admin_reports_groupsummary_table extends reader_admin_reports_table
         // extract message text
         $text   = $data->$text;
         $format = clean_param($text['format'], PARAM_INT);
-        $text   = clean_param($text['text'],   PARAM_CLEANHTML);
+        $text   = clean_param($text['text'],   PARAM_RAW);
 
-        // extract users in these groups
-        list($select, $params) = $DB->get_in_or_equal($ids);
-        if ($users = $DB->get_records_select('groups_members', "groupid $select", $params, 'userid')) {
-            $ids = array();
-            foreach ($users as $user) {
-                $ids[$user->userid] = true;
-            }
+        // verify groupids
+        list($select, $params) = $DB->get_in_or_equal($groupids);
+        $select = "id $select AND courseid = ?";
+        $params[] = $this->output->reader->course->id;
+
+        if ($groups = $DB->get_records_select('groups', $select, $params, 'id', 'id,courseid')) {
             $message = (object)array(
-                'readerid'     =>  $this->output->reader->id,
-                'teacherid'    =>  $USER->id,
-                'userids'      =>  implode(',', array_keys($ids)),
-                'message'      =>  $text,
-                'timelimit'    =>  $time,
-                'timemodified' =>  time()
+                'readerid'      =>  $this->output->reader->id,
+                'teacherid'     =>  $USER->id,
+                'groupids'       =>  implode(',', array_keys($groups)),
+                'messagetext'   =>  $text,
+                'messageformat' =>  $format,
+                'timefinish'    =>  $time,
+                'timemodified'  =>  time()
             );
             if (isset($message->id)) {
                 $DB->update_record('reader_messages', $message);

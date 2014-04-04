@@ -87,10 +87,11 @@ class mod_reader_admin_users_sendmessage_form extends moodleform {
         $mform->setDefault('message', '');
         $mform->setType('message', PARAM_RAW);
 
-        // previous messages
+        // active messages
         if ($messages = $this->format_messages($groups)) {
-            $messages = html_writer::tag('ol', $messages, array('class' => 'messages'));
-            $mform->addElement('static', 'messages', 'Messages', $messages);
+            $messages = html_writer::tag('h3', get_string('activemessages', 'reader')).
+                        html_writer::tag('ol', $messages, array('class' => 'messages'));
+            $mform->addElement('static', 'messages', '', $messages);
         }
 
         // buttons
@@ -119,21 +120,26 @@ class mod_reader_admin_users_sendmessage_form extends moodleform {
      */
     function format_messages($groups) {
         global $DB, $OUTPUT, $PAGE, $USER;
+
+        // set date format
+        // strftimerecent: 4 Apr, 20:30
+        // strftimerecentfull: Fri, 4 Apr 2014, 08:30 pm
+        $dateformat = get_string('strftimerecentfull');
+        $time = time(); // current date and time
+
         $items = '';
         $mform = $this->_form;
 
-        if ($cancel = optional_param('cancel', '', PARAM_ALPHA)) {
-            $messageid = 0;
-        } else {
+        if ($action = optional_param('action', '', PARAM_ALPHA)) {
             $messageid = optional_param('messageid', 0, PARAM_INT);
+        } else {
+            $messageid = 0;
         }
 
-        $params = array('readerid' => $PAGE->cm->instance);
-        if ($messages = $DB->get_records('reader_messages', $params, 'timefinish')) {
+        $select = 'id <> ? AND readerid = ? AND timefinish > ?';
+        $params = array($messageid, $PAGE->cm->instance, $time);
+        if ($messages = $DB->get_records_select('reader_messages', $select, $params, 'timefinish')) {
             foreach ($messages as $message) {
-                if ($message->id==$messageid) {
-                    continue; // skip current message
-                }
                 $item = '';
                 if ($message->teacherid) {
                     if ($message->teacherid==$USER->id) {
@@ -163,13 +169,23 @@ class mod_reader_admin_users_sendmessage_form extends moodleform {
                         $item .= html_writer::tag('li', $groupnames, array('class' => 'groups'));
                     }
                 }
+                if ($timemodified = $message->timemodified) {
+                    $timemodified = userdate($timemodified, $dateformat);
+                    $timemodified = html_writer::tag('b', get_string('updated', 'tag')).': '.$timemodified;
+                    $item .= html_writer::tag('li', $timemodified, array('class' => 'timemodified'));
+                }
                 if ($timefinish = $message->timefinish) {
-                    $timefinish = html_writer::tag('b', get_string('sendmessagetime', 'reader')).': '.userdate($timefinish);
+                    if ($days = round(($timefinish - $time) / (60 * 60 * 24), 0)) {
+                        $days = ' ('.$days.' days remaining)';
+                    }
+                    $timefinish = userdate($timefinish, $dateformat).$days;
+                    $timefinish = html_writer::tag('b', get_string('sendmessagetime', 'reader')).': '.$timefinish;
                     $item .= html_writer::tag('li', $timefinish, array('class' => 'timefinish'));
                 }
-                if ($text = $message->message) {
-                    $text = html_writer::tag('b', get_string('sendmessagetext', 'reader')).': '.strip_tags($text);
-                    $item .= html_writer::tag('li', $text, array('class' => 'message'));
+                if ($text = $message->messagetext) {
+                    $text = strip_tags(format_text($text, $message->messageformat));
+                    //$text = html_writer::tag('b', get_string('sendmessagetext', 'reader')).': '.$text;
+                    $item .= html_writer::tag('li', $text, array('class' => 'messagetext'));
                 }
                 if ($item) {
                     $icons = array();
@@ -225,7 +241,8 @@ class mod_reader_admin_users_sendmessage_form extends moodleform {
         $element = $mform->getElement('message');
         $value = $element->getValue();
         if (is_array($value) && empty($value['text'])) {
-            $value['text'] = $data->message;
+            $value['text'] = $data->messagetext;
+            $value['format'] = $data->messageformat;
             $element->setValue($value);
         }
     }

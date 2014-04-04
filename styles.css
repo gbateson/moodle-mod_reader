@@ -124,6 +124,24 @@
 #page-mod-reader-admin-reports div.readerreportaction div.selecteditemhdr:after { content: ":" }
 #page-mod-reader-admin-reports div.readerreportaction div.selecteditemtxt { float: left; margin: 0px 12px 6px 3px; }
 
+#page-mod-reader-admin-reports div.readerreportaction ul.levels { margin-top: 0px; margin-bottom: 0px; float: left; }
+
+/** reader admin users **/
+#page-mod-reader-admin-users li.message { background-color: #CCFFCC;
+                                          margin-top: px; margin-bottom: 6px;
+                                         -webkit-border-radius: 8px; /* Safari and Chrome */
+                                         -moz-border-radius: 8px;   /* Firefox */
+                                         -o-border-radius: 8px;    /* Opera */
+                                         border-radius: 8px;      /* CSS3 */}
+#page-mod-reader-admin-users ul.details { list-style-type: none; margin: 0px; padding: 12px; }
+#page-mod-reader-admin-users li.messagetext { background-color: #EEFFEE;
+                                         margin-top: 6px; margin-bottom: 6px; padding: 8px;
+                                         -webkit-border-radius: 6px; /* Safari and Chrome */
+                                         -moz-border-radius: 6px;   /* Firefox */
+                                         -o-border-radius: 6px;    /* Opera */
+                                         border-radius: 6px;      /* CSS3 */}
+}
+
 /** reader admin utilities **/
 #page-mod-reader-admin-utilities div.tabtree { margin-bottom: 0px; }
 #page-mod-reader-admin-utilities div.generalbox { }

@@ -38,7 +38,7 @@ require_once($CFG->dirroot.'/lib//tablelib.php');
  */
 class reader_admin_reports_table extends table_sql {
 
-    const DEFAULT_ROWSPERPAGE = 4;
+    const DEFAULT_ROWSPERPAGE = 30;
     const DEFAULT_SHOWDELETED = 0;
     const DEFAULT_SHOWHIDDEN  = 0;
 
