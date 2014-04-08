@@ -26,7 +26,7 @@
  */
 
 /** Include required files */
-require_once('../../../../../config.php');
+require_once('../../../../config.php');
 require_once($CFG->dirroot.'/mod/reader/lib.php');
 
 $id  = optional_param('id',  0, PARAM_INT);

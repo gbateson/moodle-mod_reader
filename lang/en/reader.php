@@ -210,6 +210,11 @@ $string['fix_coursesectionsdesc'] = 'Tidy up the main page of courses containing
 * merge multiple sections for the same publisher
 * remove empty sections
 * reset number of course sections';
+$string['fix_installxml'] = 'Fix db/install.xml';
+$string['fix_installxmldesc'] = 'Make XML tags in db/install.xml compatible with Moodle <= 2.5
+
+* add NEXT and PREVIOUS attributes to TABLE, FIELD, KEY and INDEX tags
+* add SEQUENCE attributes to FIELD tags with TYPE="int"';
 $string['fix_missingquizzes'] = 'Fix missing quizzes';
 $string['fix_missingquizzesdesc'] = 'Unify duplicate Reader books and quizzes.
 
