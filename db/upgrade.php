@@ -694,12 +694,12 @@ function xmldb_reader_upgrade($oldversion) {
         upgrade_mod_savepoint(true, "$newversion", 'reader');
     }
 
-    $newversion = 2014041054;
+    $newversion = 2014041455;
     if ($oldversion < $newversion) {
 
         // increase length of ip field to handle ipv6 addresses
         $table = new xmldb_table('reader_attempts');
-        $field = new xmldb_field('ip', XMLDB_TYPE_CHAR, '40');
+        $field = new xmldb_field('ip', XMLDB_TYPE_CHAR, '45');
 
         if ($dbman->field_exists($table, $field)) {
             $dbman->change_field_type($table, $field);
