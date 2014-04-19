@@ -104,6 +104,12 @@ class reader_admin_reports_bookdetailed_table extends reader_admin_reports_table
 
         $params = array('reader' => $this->output->reader->id, 'time' => $this->output->reader->ignoredate);
 
+        if ($this->output->reader->bookinstances) {
+            $from  .= ' LEFT JOIN {reader_book_instances} rbi ON rb.id = rbi.bookid';
+            $where .= ' AND rbi.id IS NOT NULL AND rbi.readerid = :rbireader';
+            $params['rbireader'] = $this->output->reader->id;
+        }
+
         return $this->add_filter_params($select, $from, $where, '', '', '', $params + $userparams);
     }
 

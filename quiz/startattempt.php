@@ -46,11 +46,11 @@ require_course_login($course, true, $cm);
 list($from, $where, $sqlparams) = reader_available_sql($cm->id, $reader, $USER->id);
 
 // add book id to SQL search conditions
-$where = "id = ? AND $where";
+$where = "rb.id = ? AND $where";
 array_unshift($sqlparams, $book);
 
 // check the user can access the requested book
-if (! $DB->record_exists_sql("SELECT * FROM $from WHERE $where", $sqlparams)) {
+if (! $DB->record_exists_sql("SELECT rb.* FROM $from WHERE $where", $sqlparams)) {
     echo get_string('quiznotavailable', 'reader');
     die;
 }

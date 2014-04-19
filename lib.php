@@ -2961,12 +2961,12 @@ function reader_can_attemptreader($cmid, $userid) {
 function reader_available_sql($cmid, $reader, $userid, $noquiz=false) {
 
     if ($noquiz) {
-        return array('{reader_books}', 'quizid = ? AND hidden = ?', array(0, 0)); // $from, $where, $params
+        return array('{reader_books} rb', 'rb.quizid = ? AND rb.hidden = ?', array(0, 0)); // $from, $where, $params
     }
 
     // a teacher / admin can always access all the books
     if (reader_can_addinstance($cmid, $userid)) {
-        return array('{reader_books}', 'quizid > ? AND hidden = ?', array(0, 0)); // $from, $where, $params
+        return array('{reader_books} rb', 'rb.quizid > ? AND rb.hidden = ?', array(0, 0)); // $from, $where, $params
     }
 
     // we want to get a list of all books available to this user
@@ -2988,9 +2988,16 @@ function reader_available_sql($cmid, $reader, $userid, $noquiz=false) {
                   'FROM {reader_attempts} ra LEFT JOIN {reader_books} rb ON ra.bookid = rb.id '.
                   'WHERE ra.userid = ? AND rb.id IS NOT NULL AND rb.sametitle <> ?';
 
-    $from       = '{reader_books}';
-    $where      = "id NOT IN ($recordids) AND (sametitle = ? OR sametitle NOT IN ($sametitles)) AND hidden = ?";
+    $from   = '{reader_books} rb';
+    $where  = "rb.id NOT IN ($recordids) AND (rb.sametitle = ? OR rb.sametitle NOT IN ($sametitles)) AND hidden = ?";
     $sqlparams = array($userid, 0, '', $userid, '', 0);
+
+    if ($reader->bookinstances) {
+        $from  .= ' JOIN {reader_book_instances} rbi ON rbi.bookid = rb.id';
+        $where .= ' AND rbi.readerid = ?';
+        $sqlparams[] = $reader->id;
+    }
+
 
     $levels = array();
     if (isset($_SESSION['SESSION']->reader_teacherview) && $_SESSION['SESSION']->reader_teacherview == 'teacherview') {
@@ -3017,10 +3024,9 @@ function reader_available_sql($cmid, $reader, $userid, $noquiz=false) {
     if ($levels = implode(',', $levels)) {
         if ($reader->bookinstances) {
             // we are maintaining a list of book difficulties for each course, so we must check "reader_books_instances"
-            $from  .= ' rb LEFT JOIN {reader_book_instances} rbi ON rbi.bookid = rb.id AND rbi.readerid = '.$reader->id;
-            $where .= " AND ((rbi.id IS NULL AND rb.difficulty IN ($levels)) OR (rbi.id IS NOT NULL AND rbi.difficulty IN ($levels)))";
+            $where .= " AND rbi.difficulty IN ($levels)";
         } else {
-            $where .= " AND difficulty IN ($levels)";
+            $where .= " AND rb.difficulty IN ($levels)";
         }
     }
 
@@ -3089,10 +3095,10 @@ function reader_available_genres($from, $where, $sqlparams) {
     $genres = array();
 
     // skip NULL and empty genre fields
-    $where = "genre IS NOT NULL AND genre <> ? AND $where";
+    $where = "rb.genre IS NOT NULL AND rb.genre <> ? AND $where";
     array_unshift($sqlparams, '');
 
-    if ($records = $DB->get_records_sql("SELECT DISTINCT genre FROM $from WHERE $where", $sqlparams)) {
+    if ($records = $DB->get_records_sql("SELECT DISTINCT rb.genre FROM $from WHERE $where", $sqlparams)) {
 
         $genres = array_keys($records);
         $genres = array_filter($genres); // remove blanks
@@ -3189,7 +3195,7 @@ function reader_available_levels($publisher, $cmid, $action, $from, $where, $sql
     $where .= ' AND publisher = ?';
     array_push($sqlparams, $publisher);
 
-    $select = "level, COUNT(*) AS countbooks, ROUND(SUM(difficulty) / COUNT(*)) AS average_difficulty";
+    $select = "level, COUNT(*) AS countbooks, ROUND(SUM(rb.difficulty) / COUNT(*)) AS average_difficulty";
     if ($records = $DB->get_records_sql("SELECT $select FROM $from WHERE $where GROUP BY level ORDER BY average_difficulty", $sqlparams)) {
         $count = count($records);
     } else {
@@ -3254,10 +3260,10 @@ function reader_available_bookids($publisher, $level, $cmid, $action, $from, $wh
     global $DB;
     $output = '';
 
-    $where .= " AND publisher = ? AND level = ?";
+    $where .= " AND rb.publisher = ? AND rb.level = ?";
     array_push($sqlparams, $publisher, $level);
 
-    $select = '*';
+    $select = 'rb.*';
     if ($records = $DB->get_records_sql("SELECT $select FROM $from WHERE $where ORDER BY name", $sqlparams)) {
         $count = count($records);
     } else {
@@ -3333,7 +3339,7 @@ function reader_available_books($cmid, $reader, $userid, $action='') {
         }
 
         // otherwise, there is just one publisher, so continue and show the levels
-        $level = $record->publisher;
+        $publisher = $record->publisher;
     }
 
     if ($level===null) {
@@ -3610,7 +3616,12 @@ function reader_search_books($cmid, $reader, $userid, $showform=false, $action='
         list($cheatsheeturl, $strcheatsheet) = reader_cheatsheet_init($action);
 
         // search for available books that match  the search criteria
-        $select = 'id, publisher, level, name, genre, difficulty';
+        $select = 'rb.id, rb.publisher, rb.level, rb.name, rb.genre';
+        if ($reader->bookinstances) {
+            $select = ', rbi.difficulty';
+        } else {
+            $select = ', rb.difficulty';
+        }
         if ($books = $DB->get_records_sql("SELECT $select FROM $from WHERE $where", $sqlparams)) {
 
             $table = new html_table();

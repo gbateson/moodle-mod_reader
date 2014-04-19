@@ -415,6 +415,7 @@ class reader_admin_reports_table extends table_sql {
         $from   = "{reader_attempts} ra ".
                   "LEFT JOIN {reader_books} rb ON ra.bookid = rb.id";
 
+        $where  = '';
         $params = array('reader1' => $this->output->reader->id,
                         'reader2' => $this->output->reader->id,
                         'reader3' => $this->output->reader->id,
@@ -456,6 +457,12 @@ class reader_admin_reports_table extends table_sql {
 
         $where  = "ra.userid $usersql";
         $params += $userparams;
+
+        if ($this->output->reader->bookinstances) {
+            $from  .= ' LEFT JOIN {reader_book_instances} rbi ON rb.id = rbi.bookid';
+            $where .= ' AND rbi.id IS NOT NULL AND rbi.readerid = :rbireader';
+            $params['rbireader'] = $this->output->reader->id;
+        }
 
         return array("SELECT $select FROM $from WHERE $where GROUP BY ra.$groupbyfield", $params);
     }
