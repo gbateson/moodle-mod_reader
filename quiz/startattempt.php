@@ -174,7 +174,11 @@ $event = (object)array(
     'cmid'      => $cm->id,
     'courseid'  => $course->id,
 );
-events_trigger('reader_attempt_started', $event);
+if (function_exists('events_trigger_legacy')) {
+    events_trigger_legacy('reader_attempt_started', $event);
+} else {
+    events_trigger('reader_attempt_started', $event);
+}
 
 //$transaction->allow_commit();
 

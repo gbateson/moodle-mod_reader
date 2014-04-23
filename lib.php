@@ -513,6 +513,9 @@ function reader_create_attempt($reader, $attemptnumber, $book, $adduniqueid=fals
         return false; // invalid $bookid or $book->quizid
     }
 
+    $dbman = $DB->get_manager();
+    $use_quiz_slots = $dbman->table_exists('quiz_slots');
+
     $params = array('reader' => $reader->id, 'userid' => $USER->id, 'attempt' => ($attemptnumber - 1));
     if ($attemptnumber > 1 && $reader->attemptonlast && ($attempt = $DB->get_record('reader_attempts', $params))) {
         // do nothing - we will build on previous attempt
@@ -520,7 +523,18 @@ function reader_create_attempt($reader, $attemptnumber, $book, $adduniqueid=fals
         // we are not building on last attempt so create a new attempt
 
         // save the list of question ids (for use in quiz/attemptlib.php)
-        if (! $reader->questions = $DB->get_field('quiz', 'questions', array('id' => $book->quizid))) {
+        if ($use_quiz_slots) {
+            // Moodle >= 2.7
+            if ($reader->questions = $DB->get_records_menu('quiz_slots', array('quizid' => $book->quizid), 'page,slot', 'id,questionid')) {
+                $reader->questions = array_values($reader->questions);
+                $reader->questions = array_filter($reader->questions);
+                $reader->questions = implode(',', $reader->questions);
+            }
+        } else {
+            // Moodle <= 2.6
+            $reader->questions = $DB->get_field('quiz', 'questions', array('id' => $book->quizid));
+        }
+        if ($reader->questions===false) {
             $reader->questions = ''; // shouldn't happen !!
         }
 
@@ -573,8 +587,15 @@ function reader_create_attempt($reader, $attemptnumber, $book, $adduniqueid=fals
         if (empty($book->quizid)) {
             $grade = $DB->get_field('question', 'defaultgrade', array('id' => $questionid));
         } else {
-            $params = array('quiz' => $book->quizid, 'question' => $questionid);
-            $grade = $DB->get_field('quiz_question_instances', 'grade', $params);
+            if ($use_quiz_slots) {
+                // Moodle >= 2.7
+                $params = array('quizid' => $book->quizid, 'questionid' => $questionid);
+                $grade = $DB->get_field('quiz_slots', 'maxmark', $params);
+            } else {
+                // Moodle <= 2.6
+                $params = array('quiz' => $book->quizid, 'question' => $questionid);
+                $grade = $DB->get_field('quiz_question_instances', 'grade', $params);
+            }
         }
         $instance = (object)array(
             'quiz'     => $book->quizid,
@@ -3618,9 +3639,9 @@ function reader_search_books($cmid, $reader, $userid, $showform=false, $action='
         // search for available books that match  the search criteria
         $select = 'rb.id, rb.publisher, rb.level, rb.name, rb.genre';
         if ($reader->bookinstances) {
-            $select = ', rbi.difficulty';
+            $select .= ', rbi.difficulty';
         } else {
-            $select = ', rb.difficulty';
+            $select .= ', rb.difficulty';
         }
         if ($books = $DB->get_records_sql("SELECT $select FROM $from WHERE $where", $sqlparams)) {
 

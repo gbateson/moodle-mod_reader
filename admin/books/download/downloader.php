@@ -163,6 +163,12 @@ class reader_downloader {
     /** download progress bar */
     public $bar = null;
 
+    /** if TRUE use "quiz_slots" table, otherwise use "quiz_question_instances" table */
+    private $quiz_slots = null;
+
+    /** if TRUE "quiz.questions" field exists, otherwise it doesn't */
+    private $quiz_questions = null;
+
     /**
      * __construct
      *
@@ -237,6 +243,15 @@ class reader_downloader {
         foreach (get_object_vars($params) as $name => $value) {
             $this->$name = $value;
         }
+
+        // we need the DB manager to check whether certain tables and fields exist
+        $dbman = $DB->get_manager();
+
+        // detect "quiz_slots" table  (Moodle >= 2.7)
+        $this->quiz_slots = $dbman->table_exists('quiz_slots');
+
+        // detect "quiz.questions" field (Moodle <= 2.6)
+        $this->quiz_questions = $dbman->field_exists('quiz', 'questions');
     }
 
     /**
@@ -1010,7 +1025,12 @@ class reader_downloader {
             // add quiz if necessary
             if ($error==0 && $type==reader_downloader::BOOKS_WITH_QUIZZES) {
                 if ($quiz = $this->add_quiz($item, $book, $r)) {
-                    if ($DB->record_exists('quiz_question_instances', array('quiz' => $quiz->id))) {
+                    if ($this->quiz_slots) {
+                        $questions_exist = $DB->record_exists('quiz_slots', array('quizid' => $quiz->id));
+                    } else {
+                        $questions_exist = $DB->record_exists('quiz_question_instances', array('quiz' => $quiz->id));
+                    }
+                    if ($questions_exist) {
                         $link = new moodle_url('/mod/quiz/view.php', array('q' => $quiz->id));
                         $link = html_writer::link($link, $strquiz, array('onclick' => 'this.target="_blank"'));
 
@@ -1782,7 +1802,11 @@ class reader_downloader {
             'name'       => $newquiz->name,
             'userid'     => $USER->id
         );
-        events_trigger('mod_updated', $event);
+        if (function_exists('events_trigger_legacy')) {
+            events_trigger_legacy('mod_updated', $event);
+        } else {
+            events_trigger('mod_updated', $event);
+        }
 
         // rebuild_course_cache (needed for Moodle 2.0)
         rebuild_course_cache($courseid, true);
@@ -3077,9 +3101,8 @@ class reader_downloader {
      *
      * @uses $DB
      * @param xxx $restoreids (passed by reference)
-     * @param xxx $category
+     * @param xxx $instance
      * @param xxx $quiz
-     * @param xxx $cm
      * @return xxx
      * @todo Finish documenting this function
      */
@@ -3090,25 +3113,47 @@ class reader_downloader {
             return false; // question was not added for some reason
         }
 
-        // set up quiz/reader instance record
-        $instance = (object)array(
-            'quiz'     => $quiz->id,
-            'question' => $questionid,
-            'grade'    => $instance->grade,
-        );
-
-        // define search $params for old (=existing) instance record
-        $params = array('quiz' => $instance->quiz, 'question' => $instance->question);
-
-        // add quiz question instance record, if necessary
-        if (! $DB->record_exists('quiz_question_instances', $params)) {
-            if (! $DB->insert_record('quiz_question_instances', $instance)) {
-                throw new moodle_exception(get_string('cannotinsertrecord', 'error', 'quiz_question_instances'));
+        // add quiz question instance/slot record, if necessary
+        if ($this->quiz_slots) {
+            // Moodle >= 2.7
+            $params = array('quizid' => $quiz->id, 'questionid' => $questionid);
+            if (! $DB->record_exists('quiz_slots', $params)) {
+                $page = $DB->get_field('quiz_slots', 'MAX(page)', array('quizid' => $quiz->id));
+                $slot = $DB->get_field('quiz_slots', 'MAX(slot)', array('quizid' => $quiz->id));
+                $slot = (object)array(
+                    'quizid'     => $quiz->id,
+                    'questionid' => $questionid,
+                    'maxmark'    => $instance->grade,
+                    'page'       => ($page ? $page : 1),
+                    'slot'       => ($slot ? $slot : 0) + 1
+                );
+                if (! $DB->insert_record('quiz_slots', $slot)) {
+                    throw new moodle_exception(get_string('cannotinsertrecord', 'error', 'quiz_slots'));
+                }
+            }
+        } else {
+            // Moodle <= 2.6
+            $params = array('quiz' => $quiz->id, 'question' => $questionid);
+            if (! $DB->record_exists('quiz_question_instances', $params)) {
+                $instance = (object)array(
+                    'quiz'     => $quiz->id,
+                    'question' => $questionid,
+                    'grade'    => $instance->grade,
+                );
+                if (! $DB->insert_record('quiz_question_instances', $instance)) {
+                    throw new moodle_exception(get_string('cannotinsertrecord', 'error', 'quiz_question_instances'));
+                }
             }
         }
 
         // add reader question instance record, if necessary
+        $params = array('quiz' => $quiz->id, 'question' => $questionid);
         if (! $DB->record_exists('reader_question_instances', $params)) {
+            $instance = (object)array(
+                'quiz'     => $quiz->id,
+                'question' => $questionid,
+                'grade'    => $instance->grade,
+            );
             if (! $id = $DB->insert_record('reader_question_instances', $instance)) {
                 throw new moodle_exception(get_string('cannotinsertrecord', 'error', 'reader_question_instances'));
             }
@@ -3128,18 +3173,20 @@ class reader_downloader {
         global $DB;
 
         // $quiz->questions
-        if (isset($module->questions)) {
-            $questions = explode(',', $module->questions);
-            foreach (array_keys($questions) as $q) {
-                $questions[$q] = $restoreids->get_newid('question', $questions[$q]);
+        if ($this->quiz_questions) {
+            if (isset($module->questions)) {
+                $questions = explode(',', $module->questions);
+                foreach (array_keys($questions) as $q) {
+                    $questions[$q] = $restoreids->get_newid('question', $questions[$q]);
+                }
+            } else {
+                $questions = array(); // shouldn't happen !!
             }
-        } else {
-            $questions = array(); // shouldn't happen !!
-        }
 
-        $questions = array_filter($questions); // remove blanks
-        $questions = implode(',', $questions); // convert to string
-        $DB->set_field('quiz', 'questions', $questions, array('id' => $quiz->id));
+            $questions = array_filter($questions); // remove blanks
+            $questions = implode(',', $questions); // convert to string
+            $DB->set_field('quiz', 'questions', $questions, array('id' => $quiz->id));
+        }
 
         // $quiz->sumgrades
         $sumgrades = 0;

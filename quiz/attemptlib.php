@@ -99,12 +99,25 @@ class reader {
      * @param bool $getcontext intended for testing - stops the constructor getting the context.
      */
     public function __construct($reader, $cm, $course, $book, $quiz, $getcontext = true) {
+        global $DB;
+
         $this->reader = $reader;
         $this->cm = $cm;
 
         $this->course = $course;
         if ($getcontext && !empty($cm->id)) {
             $this->context = reader_get_context(CONTEXT_MODULE, $cm->id);
+        }
+
+        $dbman = $DB->get_manager();
+        if ($dbman->table_exists('quiz_slots')) { // Moodle >= 2.7
+            if ($quiz->questions = $DB->get_records_menu('quiz_slots', array('quizid' => $quiz->id), 'page,slot', 'id,questionid')) {
+                $quiz->questions = array_values($quiz->questions);
+                $quiz->questions = array_filter($quiz->questions);
+                $quiz->questions = implode(',', $quiz->questions);
+            } else {
+                $quiz->questions = '';
+            }
         }
 
         $this->book = $book;
