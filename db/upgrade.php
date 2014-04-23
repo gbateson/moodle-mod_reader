@@ -516,9 +516,11 @@ function xmldb_reader_upgrade($oldversion) {
         $table = new xmldb_table('reader_noquiz');
         $field = new xmldb_field('time', XMLDB_TYPE_INTEGER, '11', null, null, null, null, 'maxtime');
 
-        if (! $dbman->field_exists($table, $field)) {
-            xmldb_reader_fix_previous_field($dbman, $table, $field);
-            $dbman->add_field($table, $field);
+        if ($dbman->table_exists($table)) {
+            if (! $dbman->field_exists($table, $field)) {
+                xmldb_reader_fix_previous_field($dbman, $table, $field);
+                $dbman->add_field($table, $field);
+            }
         }
 
         // set "time" field to time of most recent update

@@ -458,6 +458,8 @@ function xmldb_reader_fix_duplicate_quizzes($course, $keepoldquizzes) {
 function xmldb_reader_fix_quiz_ids($newid, $oldid) {
     global $DB;
 
+    $dbman = $DB->get_manager();
+
     // sanity check on $oldid
     if ($oldid===null || $oldid===false || $oldid===0 || $oldid==='' || $oldid==='0') {
         return false;
@@ -475,10 +477,12 @@ function xmldb_reader_fix_quiz_ids($newid, $oldid) {
     );
 
     foreach ($fields as $tablename => $fieldname) {
-        if ($newid==0) {
-            $DB->delete_records($tablename, array($fieldname => $oldid));
-        } else {
-            $DB->set_field($tablename, $fieldname, $newid, array($fieldname => $oldid));
+        if ($dbman->table_exists($tablename)) {
+            if ($newid==0) {
+                $DB->delete_records($tablename, array($fieldname => $oldid));
+            } else {
+                $DB->set_field($tablename, $fieldname, $newid, array($fieldname => $oldid));
+            }
         }
     }
 }
@@ -934,12 +938,13 @@ function xmldb_reader_fix_wrong_quizids() {
               'LEFT JOIN {course_sections} cs ON cs.id = cm.section '.
               'LEFT JOIN {modules} m ON m.id = cm.module';
     $where  = 'm.name = ? '.
+              'AND rb.publisher <> ? '.
               'AND q.id  IS NOT NULL '.
               'AND cm.id IS NOT NULL '.
               'AND m.id  IS NOT NULL '.
               'AND cs.id IS NOT NULL '.
               'AND ('.$wrongquizname.' OR '.$wrongsectionname.')';
-    $params = array('quiz', '', '--');
+    $params = array('quiz', 'Extra Points', '', '--');
     $orderby = 'rb.publisher,rb.level,rb.name';
 
     // Note - you could store bookquizids as a config setting:
@@ -1965,8 +1970,8 @@ function reader_xmldb_restore_questions($restore, $xml, $quizid) {
         $quizfield     = 'quizid';
         $questionfield = 'questionid';
         $gradefield    = 'maxmark';
-        $page = DB->get_field('quiz_slots', 'page', array($quizfield, $quizid));
-        $sort = DB->get_field('quiz_slots', 'sort', array($quizfield, $quizid));
+        $page = $DB->get_field('quiz_slots', 'page', array($quizfield, $quizid));
+        $sort = $DB->get_field('quiz_slots', 'sort', array($quizfield, $quizid));
         $page = ($page ? $page : 1);
         $sort = ($sort ? $sort : 0) + 1;
     } else {
@@ -2859,23 +2864,27 @@ function xmldb_reader_fix_multichoice_questions() {
 function xmldb_reader_fix_book_times() {
     global $CFG, $DB;
 
+    $dbman = $DB->get_manager();
+
     $tablenames = array('reader_books', 'reader_noquiz');
     foreach ($tablenames as $tablename) {
 
-        if ($books = $DB->get_records($tablename, array('time' => 0))) {
+        if ($dbman->table_exists($tablename)) {
+            if ($books = $DB->get_records($tablename, array('time' => 0))) {
 
-            // define image file(s) to search for
-            $imagefiles = array($book->image);
-            if (substr($book->image, 0, 1)=='-') {
-                // this image doesn't have the expected publisher code prefix
-                // so we add an alternative "tidy" image file name
-                $imagefiles[] = substr($book->image, 1);
-            }
+                // define image file(s) to search for
+                $imagefiles = array($book->image);
+                if (substr($book->image, 0, 1)=='-') {
+                    // this image doesn't have the expected publisher code prefix
+                    // so we add an alternative "tidy" image file name
+                    $imagefiles[] = substr($book->image, 1);
+                }
 
-            foreach ($imagefiles as $imagefile) {
-                $imagefile = $CFG->dataroot.'/reader/images/'.$imagefile;
-                if (file_exists($imagefile)) {
-                    $DB->set_field($tablename, 'time', filemtime($imagefile), array('id' => $book->id));
+                foreach ($imagefiles as $imagefile) {
+                    $imagefile = $CFG->dataroot.'/reader/images/'.$imagefile;
+                    if (file_exists($imagefile)) {
+                        $DB->set_field($tablename, 'time', filemtime($imagefile), array('id' => $book->id));
+                    }
                 }
             }
         }
