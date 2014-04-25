@@ -87,14 +87,29 @@ die;
 
 function reader_export_db_header() {
     global $CFG, $DB;
-    $version = $DB->get_server_info();
-    $version = $version['version'];
+
+    $mysqlversion = $DB->get_server_info();
+    $mysqlversion = $mysqlversion['version'];
+
+    $moodlerelease = $CFG->release;
+
+    if (array_key_exists('version', $DB->get_columns('modules'))) {
+        // Moodle <= 2.6
+        $readerrelease = $DB->get_field('modules', 'version', array('name' => 'reader'));
+    } else {
+        // Moodle >= 2.7
+        $readerrelease = $DB->get_field('config_plugins', 'value', array('plugin' => 'mod_reader', 'name' => 'version'));
+    }
+    $readerrelease = preg_replace('/^([0-9]{4})([0-9]{2})([0-9]{2})([0-9]{2})$/', '$1.$2.$3 ($4)', $readerrelease);
+
     $output = '';
     $output .= "-- Dump of Moodle Reader tables\n";
     $output .= "--\n";
     $output .= "-- Host: $CFG->dbhost	Database: $CFG->dbname\n";
+    $output .= "-- Moodle: $moodlerelease\n";
+    $output .= "-- Reader: $readerrelease\n";
     $output .= "-- ------------------------------------------------------\n";
-    $output .= "-- Server version	$version\n";
+    $output .= "-- Server version	$mysqlversion\n";
     $output .= "\n";
     $output .= "/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;\n";
     $output .= "/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;\n";
@@ -151,6 +166,9 @@ function reader_export_table_columns($columns) {
             case 'N':
                 $output .= (empty($column->max_length) ? ' double' : " $column->type($column->max_length,2)"); break;
                 break;
+            case 'R':
+            case 'I':
+                $column->max_length = min($column->max_length, 10);
             default:
                 $output .= " $column->type($column->max_length)";
         }
