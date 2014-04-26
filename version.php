@@ -28,16 +28,25 @@
 // prevent direct access to this script
 defined('MOODLE_INTERNAL') || die();
 
-$module->cron      = 3600;
-$module->component = 'mod_reader';
-$module->maturity  = MATURITY_BETA; // ALPHA=50, BETA=100, RC=150, STABLE=200
-$module->requires  = 2010112400; // Moodle 2.0
-$module->release   = '2014-04-25 (61)';
-$module->version   = 2014042561;
+// employ a little abstraction to satisfy the validation on Moodle.org plugins repository
+if (isset($plugin)) {
+    // Moodle >= 2.5
+    $object = 'plugin';
+} else {
+    // Moodle <= 2.4
+    $object = 'module';
+}
+
+$$object->cron      = 3600;
+$$object->component = 'mod_reader';
+$$object->maturity  = MATURITY_BETA; // ALPHA=50, BETA=100, RC=150, STABLE=200
+$$object->release   = '2014-04-26 (62)';
+$$object->requires  = 2010112400; // Moodle 2.0
+$$object->version   = 2014042662;
 
 if (defined('ANY_VERSION')) {
     // Moodle >= 2.2
-    $module->dependencies = array('qtype_ordering' => ANY_VERSION);
+    $$object->dependencies = array('qtype_ordering' => ANY_VERSION);
 } else if (isset($CFG) && ! file_exists($CFG->dirroot.'/question/type/ordering')) {
     // Moodle <= 2.1
     // installing new site: upgrade_plugins() in "lib/upgradelib.php"
