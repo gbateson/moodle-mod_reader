@@ -56,14 +56,13 @@ if (isset($plugin) && is_object($plugin)) {
     $plugin->dependencies = $dep;
 } else {
     // Moodle <= 2.4
-    $object = 'module';
-    $$object->cron      = $cro;
-    $$object->component = $com;
-    $$object->maturity  = $mat
-    $$object->requires  = $req
-    $$object->release   = $rel;
-    $$object->version   = $ver;
-    $$object->dependencies = $dep;
+    $module->cron      = $cro;
+    $module->component = $com;
+    $module->maturity  = $mat
+    $module->requires  = $req
+    $module->release   = $rel;
+    $module->version   = $ver;
+    $module->dependencies = $dep;
 }
 
 unset($cro, $com, $mat, $ver, $req, $rel, $dep);
