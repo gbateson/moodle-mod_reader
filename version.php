@@ -45,24 +45,10 @@ $req = 2010112400; // Moodle 2.0;
 $rel = '2014-04-26 (62)';
 $dep = array('qtype_ordering' => (defined('ANY_VERSION') ? ANY_VERSION : 'any'));
 
-if (isset($plugin) && is_object($plugin)) {
-    // Moodle >= 2.5
-    $plugin->cron      = $cro;
-    $plugin->component = $com;
-    $plugin->maturity  = $mat;
-    $plugin->requires  = $req;
-    $plugin->release   = $rel;
-    $plugin->version   = $ver;
-    $plugin->dependencies = $dep;
-} else {
-    // Moodle <= 2.4
-    $module->cron      = $cro;
-    $module->component = $com;
-    $module->maturity  = $mat;
-    $module->requires  = $req;
-    $module->release   = $rel;
-    $module->version   = $ver;
-    $module->dependencies = $dep;
-}
-
-unset($cro, $com, $mat, $ver, $req, $rel, $dep);
+$plugin->cron      = $cro;
+$plugin->component = $com;
+$plugin->maturity  = $mat;
+$plugin->requires  = $req;
+$plugin->release   = $rel;
+$plugin->version   = $ver;
+$plugin->dependencies = $dep;
