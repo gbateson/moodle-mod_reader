@@ -37,24 +37,33 @@ if (! defined('ANY_VERSION')) {
     }
 }
 
-if (isset($plugin)) {
+$cro = 3600;
+$com = 'mod_reader';
+$mat = MATURITY_BETA; // ALPHA=50, BETA=100, RC=150, STABLE=200
+$ver = 2014042662
+$req = 2010112400; // Moodle 2.0;
+$rel = '2014-04-26 (62)';
+$dep = array('qtype_ordering' => (defined('ANY_VERSION') ? ANY_VERSION : 'any'));
+
+if (isset($plugin) && is_object($plugin)) {
     // Moodle >= 2.5
-    $object = '';
+    $plugin->cron      = $cro;
+    $plugin->component = $com;
+    $plugin->maturity  = $mat;
+    $plugin->requires  = $req
+    $plugin->release   = $rel;
+    $plugin->version   = $ver;
+    $plugin->dependencies = $dep;
 } else {
     // Moodle <= 2.4
     $object = 'module';
-    $plugin = new stdClass();
+    $$object->cron      = $cro;
+    $$object->component = $com;
+    $$object->maturity  = $mat
+    $$object->requires  = $req
+    $$object->release   = $rel;
+    $$object->version   = $ver;
+    $$object->dependencies = $dep;
 }
 
-$plugin->cron      = 3600;
-$plugin->component = 'mod_reader';
-$plugin->maturity  = MATURITY_BETA; // ALPHA=50, BETA=100, RC=150, STABLE=200
-$plugin->release   = '2014-04-26 (62)';
-$plugin->requires  = 2010112400; // Moodle 2.0
-$plugin->version   = 2014042662;
-$plugin->dependencies = array('qtype_ordering' => (defined('ANY_VERSION') ? ANY_VERSION : 'any'));
-
-if ($object) {
-    $$object = $plugin;
-}
-unset($object);
+unset($cro, $com, $mat, $ver, $req, $rel, $dep);

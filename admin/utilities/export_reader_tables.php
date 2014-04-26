@@ -156,7 +156,11 @@ function reader_export_table_header($table) {
 function reader_export_table_columns($columns) {
     global $DB;
     $output = '';
-    $collation = $DB->get_dbcollation();
+    if (method_exists($DB, 'get_dbcollation')) {
+        $collation = $DB->get_dbcollation();
+    } else {
+        $collation = 'utf8_general_ci';
+    }
     foreach ($columns as $column) {
         $output .= "  `$column->name`";
         switch ($column->meta_type) {
@@ -228,7 +232,11 @@ function reader_export_table_footer($table) {
     global $CFG, $DB;
     $output = '';
     $engine = $DB->get_dbengine();
-    $collation = $DB->get_dbcollation();
+    if (method_exists($DB, 'get_dbcollation')) {
+        $collation = $DB->get_dbcollation();
+    } else {
+        $collation = 'utf8_general_ci';
+    }
     $comment = reader_export_table_comment($table);
     if ($maxid = $DB->get_field($table, 'MAX(id)', array())) {
         $maxid ++;
