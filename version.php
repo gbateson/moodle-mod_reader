@@ -60,7 +60,7 @@ $plugin->dependencies = array('qtype_ordering' => (defined('ANY_VERSION') ? ANY_
 
 // setup $module for Moodle <= 2.4
 if (isset($saveplugin)) {
-    $$module = clone($plugin);
+    $module = clone($plugin);
     if ($saveplugin) {
         $plugin = $saveplugin;
     } else {
