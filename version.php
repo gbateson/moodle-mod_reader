@@ -37,18 +37,10 @@ if (! defined('ANY_VERSION')) {
     }
 }
 
-$cro = 3600;
-$com = 'mod_reader';
-$mat = MATURITY_BETA; // ALPHA=50, BETA=100, RC=150, STABLE=200
-$ver = 2014042662;
-$req = 2010112400; // Moodle 2.0;
-$rel = '2014-04-26 (62)';
-$dep = array('qtype_ordering' => (defined('ANY_VERSION') ? ANY_VERSION : 'any'));
-
-$plugin->cron      = $cro;
-$plugin->component = $com;
-$plugin->maturity  = $mat;
-$plugin->requires  = $req;
-$plugin->release   = $rel;
-$plugin->version   = $ver;
-$plugin->dependencies = $dep;
+$plugin->cron      = 3600;
+$plugin->component = 'mod_reader';
+$plugin->maturity  = MATURITY_BETA;
+$plugin->requires  = 2010112400; // Moodle 2.0;
+$plugin->release   = '2014-04-26 (62)';
+$plugin->version   = 2014042662;
+$plugin->dependencies = array('qtype_ordering' => (defined('ANY_VERSION') ? ANY_VERSION : 'any'));
