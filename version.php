@@ -40,7 +40,7 @@ if (! defined('ANY_VERSION')) {
 $cro = 3600;
 $com = 'mod_reader';
 $mat = MATURITY_BETA; // ALPHA=50, BETA=100, RC=150, STABLE=200
-$ver = 2014042662
+$ver = 2014042662;
 $req = 2010112400; // Moodle 2.0;
 $rel = '2014-04-26 (62)';
 $dep = array('qtype_ordering' => (defined('ANY_VERSION') ? ANY_VERSION : 'any'));
