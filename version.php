@@ -50,7 +50,7 @@ if (isset($plugin) && is_object($plugin)) {
     $plugin->cron      = $cro;
     $plugin->component = $com;
     $plugin->maturity  = $mat;
-    $plugin->requires  = $req
+    $plugin->requires  = $req;
     $plugin->release   = $rel;
     $plugin->version   = $ver;
     $plugin->dependencies = $dep;
@@ -58,8 +58,8 @@ if (isset($plugin) && is_object($plugin)) {
     // Moodle <= 2.4
     $module->cron      = $cro;
     $module->component = $com;
-    $module->maturity  = $mat
-    $module->requires  = $req
+    $module->maturity  = $mat;
+    $module->requires  = $req;
     $module->release   = $rel;
     $module->version   = $ver;
     $module->dependencies = $dep;
