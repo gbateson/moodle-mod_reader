@@ -261,6 +261,20 @@ class reader_admin_reports_table extends table_sql {
         }
     }
 
+    /**
+     * get_download_menu
+     *
+     * this function overrides standard get_download_menu()
+     * so that Excel download is disabled if xmlwriter class is missing
+     */
+    function get_download_menu() {
+        $exportclasses = parent::get_download_menu();
+        if (! class_exists('XMLWriter')) {
+            unset($exportclasses['excel']);
+        }
+        return $exportclasses;
+    }
+
     /*
      * get_tablecolumns
      *
