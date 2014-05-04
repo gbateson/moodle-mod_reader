@@ -2748,10 +2748,10 @@ function xmldb_reader_fix_multichoice_questions() {
                 $parentquestionid = $multianswer_option->question;
             } else {
                 // get potential parent records
+                $parentquestionid = 0;
                 $select = 'parent = ? AND qtype = ? AND name = ? AND timecreated = ?';
                 $params = array(0, 'multianswer', $question->name, $question->timecreated);
                 if ($parentquestions = $DB->get_records_select('question', $select, $params, 'timecreated, id')) {
-                    $parentquestionid = 0;
                     foreach ($parentquestions as $parentquestion) {
                         switch (true) {
                             case ($parentquestionid==0):
@@ -2869,23 +2869,29 @@ function xmldb_reader_fix_book_times() {
     $tablenames = array('reader_books', 'reader_noquiz');
     foreach ($tablenames as $tablename) {
 
-        if ($dbman->table_exists($tablename)) {
-            if ($books = $DB->get_records($tablename, array('time' => 0))) {
+        if (! $dbman->table_exists($tablename)) {
+            continue;
+        }
+        if (! $books = $DB->get_records($tablename, array('time' => 0))) {
+            continue;
+        }
 
-                // define image file(s) to search for
-                $imagefiles = array($book->image);
-                if (substr($book->image, 0, 1)=='-') {
-                    // this image doesn't have the expected publisher code prefix
-                    // so we add an alternative "tidy" image file name
-                    $imagefiles[] = substr($book->image, 1);
-                }
+        // define image file(s) to search for
+        $imagefiles = array();
+        foreach ($books as $book) {
+            $imagefiles[] = $book->image;
+            if (substr($book->image, 0, 1)=='-') {
+                // this image doesn't have the expected publisher code prefix
+                // so we add an alternative "tidy" image file name
+                $imagefiles[] = substr($book->image, 1);
+            }
+        }
 
-                foreach ($imagefiles as $imagefile) {
-                    $imagefile = $CFG->dataroot.'/reader/images/'.$imagefile;
-                    if (file_exists($imagefile)) {
-                        $DB->set_field($tablename, 'time', filemtime($imagefile), array('id' => $book->id));
-                    }
-                }
+        // set times, if possible
+        foreach ($imagefiles as $imagefile) {
+            $imagefile = $CFG->dataroot.'/reader/images/'.$imagefile;
+            if (file_exists($imagefile)) {
+                $DB->set_field($tablename, 'time', filemtime($imagefile), array('id' => $book->id));
             }
         }
     }
