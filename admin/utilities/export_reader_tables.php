@@ -95,12 +95,12 @@ function reader_export_db_header() {
 
     if (array_key_exists('version', $DB->get_columns('modules'))) {
         // Moodle <= 2.6
-        $readerrelease = $DB->get_field('modules', 'version', array('name' => 'reader'));
+        $readerversion = $DB->get_field('modules', 'version', array('name' => 'reader'));
     } else {
         // Moodle >= 2.7
-        $readerrelease = $DB->get_field('config_plugins', 'value', array('plugin' => 'mod_reader', 'name' => 'version'));
+            $readerversion = $DB->get_field('config_plugins', 'value', array('plugin' => 'mod_reader', 'name' => 'version'));
     }
-    $readerrelease = preg_replace('/^([0-9]{4})([0-9]{2})([0-9]{2})([0-9]{2})$/', '$1.$2.$3 ($4)', $readerrelease);
+    $readerrelease = preg_replace('/^([0-9]{4})([0-9]{2})([0-9]{2})([0-9]{2})$/', '$1.$2.$3 ($4)', $readerversion);
 
     $output = '';
     $output .= "-- Dump of Moodle Reader tables\n";
@@ -121,6 +121,36 @@ function reader_export_db_header() {
     $output .= "/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;\n";
     $output .= "/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;\n";
     $output .= "/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;\n";
+    $output .= "\n";
+    $output .= "--\n";
+    $output .= "-- set Reader module version\n";
+    $output .= "--\n";
+    $output .= "SET @dbname = DATABASE();\n";
+    $output .= "\n";
+    $output .= "SELECT COUNT(*)\n";
+    $output .= "  INTO @modules\n";
+    $output .= "  FROM information_schema.columns \n";
+    $output .= " WHERE table_schema = @dbname\n";
+    $output .= "   AND table_name = 'mdl_modules'\n";
+    $output .= "   AND column_name = 'version';\n";
+    $output .= "\n";
+    $output .= "SET @table = (CASE @modules WHEN 1 THEN 'mdl_modules' ELSE 'mdl_config_plugins' END);\n";
+    $output .= "SET @field = (CASE @modules WHEN 1 THEN 'version' ELSE 'value' END);\n";
+    $output .= "SET @where = (CASE @modules WHEN 1 THEN \"name = 'reader'\" ELSE \"plugin = 'mod_reader' AND name = 'version'\" END);\n";
+    $output .= "SET @value = \"'$readerversion'\";\n";
+    $output .= "SET @sql = CONCAT('UPDATE ', @table,' SET ', @field, ' = ', @value, ' WHERE ', @where);\n";
+    $output .= "\n";
+    $output .= "PREPARE set_reader_version FROM @sql;\n";
+    $output .= "EXECUTE set_reader_version;\n";
+    $output .= "DEALLOCATE PREPARE set_reader_version;\n";
+    $output .= "\n";
+    $output .= "SET @dbname  = NULL;\n";
+    $output .= "SET @field   = NULL;\n";
+    $output .= "SET @sql     = NULL;\n";
+    $output .= "SET @table   = NULL;\n";
+    $output .= "SET @modules = NULL;\n";
+    $output .= "SET @value   = NULL;\n";
+    $output .= "SET @where   = NULL;\n";
     $output .= "\n";
     return $output;
 }
