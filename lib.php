@@ -2618,7 +2618,7 @@ function reader_delays_check($cleartime, $reader, $studentlevel, $lasttime) {
     }
 
     // delays for specific groups
-    if ($groups = groups_get_all_groups($course->id, $USER->id)){
+    if ($groups = groups_get_all_groups($reader->course->id, $USER->id)){
         list($where, $params) = $DB->get_in_or_equal(array_keys($groups));
         $where  = "readerid = ? AND level = ? AND groupid $where";
         array_unshift($params, $reader->id, $studentlevel);

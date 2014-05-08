@@ -54,8 +54,8 @@ $plugin->cron      = 3600;
 $plugin->component = 'mod_reader';
 $plugin->maturity  = MATURITY_BETA; // ALPHA=50, BETA=100, RC=150, STABLE=200
 $plugin->requires  = 2010112400;    // Moodle 2.0
-$plugin->release   = '2014-05-08 (67)';
-$plugin->version   = 2014050867;
+$plugin->release   = '2014-05-08 (68)';
+$plugin->version   = 2014050868;
 $plugin->dependencies = array('qtype_ordering' => (defined('ANY_VERSION') ? ANY_VERSION : 'any'));
 
 // setup $module for Moodle <= 2.4
