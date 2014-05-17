@@ -3050,13 +3050,11 @@ function xmldb_reader_merge_tables(&$dbman, $oldname, $newname, $fields, $unique
 
                 if ($unique=='' || empty($record->$unique) || ! $DB->record_exists($newname, array($unique => $record->$unique))) {
                     unset($record->id);
-                    if (! $record->id = $DB->insert_record($newname, $record)) {
-                        throw new moodle_exception(get_string('cannotinsertrecord', 'error', $newname));
-                    }
+                    $record->id = $DB->insert_record($newname, $record);
                 }
 
                 // we can delete the old record now
-                $DB->delete_record($oldname, array('id' => $id));
+                $DB->delete_records($oldname, array('id' => $id));
 
                 // update progress bar
                 $bar->update($i, $i_max, $strupdating.": ($i/$i_max)");
