@@ -3015,9 +3015,10 @@ function xmldb_reader_fix_extrapoints() {
  * @param string $oldname
  * @param string $newname
  * @param array  $fields array($name => $value)
+ * @param string $unique field name (optional)
  * @todo Finish documenting this function
  */
-function xmldb_reader_merge_tables(&$dbman, $oldname, $newname, $fields) {
+function xmldb_reader_merge_tables(&$dbman, $oldname, $newname, $fields, $unique='') {
     global $DB;
 
     $oldtable = new xmldb_table($oldname);
@@ -3044,10 +3045,18 @@ function xmldb_reader_merge_tables(&$dbman, $oldname, $newname, $fields) {
                     $record->$name = $value;
                 }
 
-                unset($record->id);
-                if (! $record->id = $DB->insert_record($newname, $record)) {
-                    throw new moodle_exception(get_string('cannotinsertrecord', 'error', $newname));
+                // save the old id
+                $id = $record->id;
+
+                if ($unique=='' || empty($record->$unique) || ! $DB->record_exists($newname, array($unique => $record->$unique))) {
+                    unset($record->id);
+                    if (! $record->id = $DB->insert_record($newname, $record)) {
+                        throw new moodle_exception(get_string('cannotinsertrecord', 'error', $newname));
+                    }
                 }
+
+                // we can delete the old record now
+                $DB->delete_record($oldname, array('id' => $id));
 
                 // update progress bar
                 $bar->update($i, $i_max, $strupdating.": ($i/$i_max)");

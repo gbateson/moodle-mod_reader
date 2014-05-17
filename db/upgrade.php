@@ -590,7 +590,7 @@ function xmldb_reader_upgrade($oldversion) {
         xmldb_reader_merge_tables($dbman, 'reader_noquiz', 'reader_books', array('quizid' => 0));
 
         // merge "reader_deleted_attempts" and "reader_attempts" tables
-        xmldb_reader_merge_tables($dbman, 'reader_deleted_attempts', 'reader_attempts', array('deleted' => 1));
+        xmldb_reader_merge_tables($dbman, 'reader_deleted_attempts', 'reader_attempts', array('deleted' => 1), 'uniqueid');
     }
 
     $newversion = 2014032646;
