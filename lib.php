@@ -1820,6 +1820,7 @@ function reader_goals_box($userid, $dataoflevel, $field, $rand, $reader) {
     if (empty($goal)) {
         $data = $DB->get_records('reader_goals', array('readerid' => $reader->id));
         foreach ($data as $data_) {
+            $noneed = false;
             if (! empty($data_->groupid)) {
                 if (! groups_is_member($data_->groupid, $userid)) {
                     $noneed = true;
@@ -3002,16 +3003,16 @@ function reader_available_sql($cmid, $reader, $userid, $noquiz=false) {
     // "id" values of books whose quizzes this user has already attempted
     $recordids  = 'SELECT rb.id '.
                   'FROM {reader_attempts} ra LEFT JOIN {reader_books} rb ON ra.bookid = rb.id '.
-                  'WHERE ra.userid = ? AND rb.id IS NOT NULL AND rb.quizid > ?';
+                  'WHERE ra.userid = ? AND ra.deleted <> ? AND rb.id IS NOT NULL AND rb.quizid > ?';
 
     // "sametitle" values for books whose quizzes this user has already attempted
     $sametitles = 'SELECT DISTINCT rb.sametitle '.
                   'FROM {reader_attempts} ra LEFT JOIN {reader_books} rb ON ra.bookid = rb.id '.
-                  'WHERE ra.userid = ? AND rb.id IS NOT NULL AND rb.sametitle <> ?';
+                  'WHERE ra.userid = ? AND ra.deleted <> ? AND rb.id IS NOT NULL AND rb.sametitle <> ?';
 
     $from   = '{reader_books} rb';
     $where  = "rb.id NOT IN ($recordids) AND (rb.sametitle = ? OR rb.sametitle NOT IN ($sametitles)) AND hidden = ?";
-    $sqlparams = array($userid, 0, '', $userid, '', 0);
+    $sqlparams = array($userid, 1, 0, '', $userid, 1, '', 0);
 
     if ($reader->bookinstances) {
         $from  .= ' JOIN {reader_book_instances} rbi ON rbi.bookid = rb.id';
