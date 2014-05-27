@@ -278,7 +278,7 @@ function reader_cron() {
             if (! in_array($answersgrade_->question, $doublecheck)) {
                 $doublecheck[] = $answersgrade_->question;
             } else {
-                add_to_log(1, 'reader', 'Cron', '', "Double entries found!! reader_question_instances; quiz: {$publishersquizze->quizid}; question: {$answersgrade_->question}");
+                reader_add_to_log(1, 'reader', 'Cron', '', "Double entries found!! reader_question_instances; quiz: {$publishersquizze->quizid}; question: {$answersgrade_->question}");
             }
         }
     }
@@ -373,9 +373,9 @@ function reader_get_level_data($reader, $userid=0) {
     }
 
     $select = 'ra.*, rb.difficulty, rb.id AS bookid';
-    $from   = '{reader_attempts} ra INNER JOIN {reader_books} rb ON ra.bookid = rb.id';
-    $where  = 'ra.userid= ? AND ra.reader= ? AND ra.timefinish > ?';
-    $params = array($USER->id, $reader->id, $reader->ignoredate);
+    $from   = '{reader_attempts} ra JOIN {reader_books} rb ON ra.bookid = rb.id';
+    $where  = 'ra.userid = ? AND ra.reader = ? AND ra.deleted = ? AND ra.timefinish > ?';
+    $params = array($USER->id, $reader->id, 0, $reader->ignoredate);
 
     if ($attempts = $DB->get_records_sql("SELECT $select FROM $from WHERE $where ORDER BY ra.timemodified", $params)) {
         foreach ($attempts as $attempt) {
@@ -2819,6 +2819,18 @@ function reader_optional_param_array($name, $default, $type, $recursive=true) {
 
     // not an array (or Moodle <= 2.1)
     return clean_param($param, $type);
+}
+
+/**
+ * reader_add_to_log
+ */
+function reader_add_to_log($courseid, $module, $action, $url='', $info='', $cm=0, $user=0) {
+    if (function_exists('get_log_manager')) {
+        $manager = get_log_manager();
+        $manager->legacy_add_to_log($courseid, $module, $action, $url, $info, $cm, $user);
+    } else if (function_exists('add_to_log')) {
+        add_to_log($courseid, $module, $action, $url, $info, $cm, $user);
+    }
 }
 
 /**

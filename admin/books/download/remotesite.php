@@ -843,6 +843,23 @@ class reader_remotesite {
     }
 
     /*
+     * get_xml_values_numerical
+     *
+     * @param xxx $xml (passed by reference)
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function get_xml_values_numerical(&$xml) {
+        $numerical = array();
+        foreach (array_keys($xml) as $i) {
+            $defaults = array('answer' => 0, 'tolerance' => 0);
+            $values = $this->get_xml_values($xml["$i"]['#'], $defaults);
+            $numerical[$values->answer] = $values;
+        }
+        return $numerical;
+    }
+
+    /*
      * get_xml_values_answers
      *
      * @param xxx $xml (passed by reference)

@@ -49,7 +49,7 @@ if ($id) {
 require_login($course, true, $cm);
 $reader = mod_reader::create($reader, $cm, $course);
 
-add_to_log($course->id, 'reader', 'Admin users', "admin/utilities.php?id=$id", "$cm->instance");
+reader_add_to_log($course->id, 'reader', 'Admin users', "admin/utilities.php?id=$id", "$cm->instance");
 
 // Initialize $PAGE, compute blocks
 $PAGE->set_url('/mod/reader/admin/utilities.php', array('id' => $cm->id));

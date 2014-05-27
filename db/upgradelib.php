@@ -541,7 +541,7 @@ function xmldb_reader_remove_coursemodule($cmid_or_instanceid, $modname='') {
         }
     }
 
-    add_to_log($cm->course, 'course', 'delete mod', "view.php?id=$cm->course", "$cm->modname $cm->instance", $cm->id);
+    reader_add_to_log($cm->course, 'course', 'delete mod', "view.php?id=$cm->course", "$cm->modname $cm->instance", $cm->id);
 
     $rebuild_course_cache = true;
     return $rebuild_course_cache;

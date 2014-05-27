@@ -48,7 +48,7 @@ if ($id) {
 
 require_course_login($course, true, $cm);
 
-add_to_log($course->id, 'reader', 'Ajax get list of books', "view.php?id=$id", "$cm->instance");
+reader_add_to_log($course->id, 'reader', 'Ajax get list of books', "view.php?id=$id", "$cm->instance");
 
 if ($mode = optional_param('mode', '', PARAM_ALPHA)) {
 

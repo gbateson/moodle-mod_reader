@@ -1230,13 +1230,13 @@ class reader_attempt {
             $passedlog = "Failed";
         }
 
-        //add_to_log($this->readerobj->course->id, 'reader', 'finish attempt: '.$this->readerobj->book->name, "view.php?id={$this->readerobj->reader->id}", $this->attempt->percentgrade."%/".$this->attempt->passed);
+        //reader_add_to_log($this->readerobj->course->id, 'reader', 'finish attempt: '.$this->readerobj->book->name, "view.php?id={$this->readerobj->reader->id}", $this->attempt->percentgrade."%/".$this->attempt->passed);
 
         $logaction = 'view attempt: '.substr($this->readerobj->book->name, 0, 26); // 40 char limit
         $loginfo   = "readerID {$this->readerobj->reader->id}; ".
                      "reader quiz {$this->readerobj->book->id}; ".
                      "{$this->attempt->percentgrade}/{$passedlog}";
-        add_to_log($this->readerobj->course->id, 'reader', $logaction, "view.php?id={$this->attempt->id}", $loginfo);
+        reader_add_to_log($this->readerobj->course->id, 'reader', $logaction, "view.php?id={$this->attempt->id}", $loginfo);
 
         $DB->update_record('reader_attempts', $this->attempt);
     }

@@ -421,7 +421,7 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
 
         $extrapoints = optional_param($action, null, PARAM_INT);
         if ($extrapoints===null || $extrapoints < 0 || $extrapoints > 5) {
-            return false; // no extra points specified
+            return false; // no (valid) extra points specified
         }
 
         // set $params to select the dummy $book for these extra points
@@ -430,6 +430,8 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
         $params = array('publisher' => $publisher, 'length' => $length);
 
         if (! $book = $DB->get_records('reader_books', $params)) {
+            $msg = get_string('downloadextrapoints', 'reader');
+            echo $this->output->notification($msg, 'notifyproblem');
             return false; // shouldn't happen !!
         }
         $book = reset($book);
@@ -532,7 +534,7 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
             }
 
             // log this action
-            add_to_log($this->output->reader->course->id, 'reader', "AWP (userid: $userid; set: $book->words)", 'admin.php?id='.$cmid, $cmid);
+            reader_add_to_log($this->output->reader->course->id, 'reader', "AWP (userid: $userid; set: $book->words)", 'admin.php?id='.$cmid, $cmid);
         }
 
         // send "Changes saved" message to browser

@@ -260,7 +260,7 @@ class reader_remotesite_moodlereadernet extends reader_remotesite {
                     $time = $this->get_remote_filetime($publisher, $level, $itemname, $time);
                 }
 
-                if ($publisher=='Extra_Points' || $publisher=='testing' || $publisher=='_testing_only') {
+                if ($publisher=='testing' || $publisher=='_testing_only') {
                     continue; // ignore these publisher categories
                 }
 

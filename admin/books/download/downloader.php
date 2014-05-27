@@ -1867,7 +1867,7 @@ class reader_downloader {
             }
         }
 
-        add_to_log($cm->course, 'course', 'delete mod', "view.php?id=$cm->course", "$cm->modname $cm->instance", $cm->id);
+        reader_add_to_log($cm->course, 'course', 'delete mod', "view.php?id=$cm->course", "$cm->modname $cm->instance", $cm->id);
 
         // Note: course cache was rebuilt in "delete_mod_from_section()" or "course_delete_module()"
     }
@@ -1894,6 +1894,15 @@ class reader_downloader {
         list($module, $categories) = $remotesite->get_questions($itemid);
 
         if (isset($module->question_instances)) {
+            $sumgrades = 0;
+            foreach ($module->question_instances as $instance) {
+                $sumgrades += $instance->grade;
+            }
+            if ($sumgrades==0 && $quiz->grade > 0) {
+                if ($instance = reset($module->question_instances)) {
+                    $module->question_instances[$instance->id]->grade = 1;
+                }
+            }
             $this->bar->add_quiz($categories, $module->question_instances);
         }
 
@@ -2262,6 +2271,28 @@ class reader_downloader {
                 return false;
                 break;
 
+            case 'numerical':
+                if (empty($question->numerical) || empty($question->answers)) {
+                    return false; // shouldn't happen !!
+                }
+                // remove blank and missing answers
+                $has_correct = false;
+                foreach ($question->answers as $a => $answer) {
+                    if (isset($answer->answer_text) && strlen($answer->answer_text)) {
+                        if (isset($answer->fraction) && intval($answer->fraction)) {
+                            $has_correct = true;
+                        }
+                    } else {
+                        unset($question->answers[$a]); // skip this answer
+                    }
+                }
+                if ($has_correct) {
+                    $categories[$categoryid]->questions[$questionid] = $question;
+                    return true;
+                }
+                return false;
+                break;
+
             case 'shortanswer':
             case 'truefalse':
                 foreach ($question->answers as $a => $answer) {
@@ -2480,6 +2511,7 @@ class reader_downloader {
             case 'match'       : $this->add_question_match($restoreids, $question);       break;
             case 'multianswer' : $this->add_question_multianswer($restoreids, $question); break;
             case 'multichoice' : $this->add_question_multichoice($restoreids, $question); break;
+            case 'numerical'   : $this->add_question_numerical($restoreids, $question);   break;
             case 'ordering'    : $this->add_question_ordering($restoreids, $question);    break;
             case 'random'      : $this->add_question_random($restoreids, $question);      break;
             case 'truefalse'   : $this->add_question_truefalse($restoreids, $question);   break;
@@ -2638,6 +2670,70 @@ class reader_downloader {
     }
 
     /**
+     * add_question_numerical
+     *
+     * @uses $DB
+     * @param xxx $restoreids (passed by reference)
+     * @param xxx $question
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function add_question_numerical(&$restoreids, $question) {
+        global $DB;
+
+        $bestanswerids = $this->get_best_match_answers($question);
+
+        if (isset($question->answers)) {
+            foreach ($question->answers as $xmlanswer) {
+                $answer = (object)array(
+                    'question' => $question->id,
+                    'fraction' => $xmlanswer->fraction,
+                    'answer'   => $xmlanswer->answer_text,
+                    'feedback' => '',
+                    'answerformat'   => FORMAT_MOODLE, // =0
+                    'feedbackformat' => FORMAT_MOODLE, // =0
+                );
+                $this->add_question_answer($restoreids, $bestanswerids, $xmlanswer, $answer);
+
+                // add "tolerance" value for this answer
+                // stored in the "question_numerical" table
+                if ($answer->id = $restoreids->get_newid('question_answers', $xmlanswer->id)) {
+                    if (empty($question->numerical[$xmlanswer->id])) {
+                        $tolerance = 0;
+                    } else {
+                        $tolerance = $question->numerical[$xmlanswer->id]->tolerance;
+                    }
+                    $table = 'question_numerical';
+                    $params = array('question' => $question->id, 'answer' => $answer->id);
+                    if ($numerical = $DB->get_record($table, $params)) {
+                        $numerical->tolerance = $tolerance;
+                        $DB->update_record($table, $numerical);
+                    } else {
+                        $numerical = (object)array(
+                            'question'  => $question->id,
+                            'answer'    => $answer->id,
+                            'tolerance' => $tolerance,
+                        );
+                        $DB->insert_record($table, $numerical);
+                    }
+                }
+            }
+        }
+
+        // create $options for this numerical question
+        // none of these options existed in Moodle 1.x
+        $options = (object)array(
+            'showunits'       => 3,
+            'unitsleft'       => 0,
+            'unitgradingtype' => 0,
+            'unitpenalty'     => 0.1,
+        );
+
+        // add/update $options for this numerical question
+        $this->add_question_options('numerical', $options, $question);
+    }
+
+    /**
      * add_question_ordering
      *
      * @uses $DB
@@ -2712,42 +2808,6 @@ class reader_downloader {
     }
 
     /**
-     * add_question_truefalse
-     *
-     * @uses $DB
-     * @param xxx $restoreids (passed by reference)
-     * @param xxx $question
-     * @return xxx
-     * @todo Finish documenting this function
-     */
-    public function add_question_truefalse(&$restoreids, $question) {
-        global $DB;
-
-        $bestanswerids = $this->get_best_match_answers($question);
-
-        foreach ($question->answers as $xmlanswer) {
-            $answer = (object)array(
-                'question' => $question->id,
-                'fraction' => $xmlanswer->fraction,
-                'answer'   => $xmlanswer->answer_text,
-                'answerformat' => FORMAT_MOODLE, // =0
-                'feedback' => '',
-                'feedbackformat' => FORMAT_MOODLE, // =0
-            );
-            $this->add_question_answer($restoreids, $bestanswerids, $xmlanswer, $answer);
-        }
-
-        // create $options for this truefalse question
-        $options = (object)array(
-            'trueanswer' => $question->truefalse->trueanswer,
-            'falseanswer' => $question->truefalse->falseanswer,
-        );
-
-        // add/update $options for this truefalse question
-        $this->add_question_options('truefalse', $options, $question);
-    }
-
-    /**
      * add_question_shortanswer
      *
      * @uses $DB
@@ -2784,6 +2844,42 @@ class reader_downloader {
     }
 
     /**
+     * add_question_truefalse
+     *
+     * @uses $DB
+     * @param xxx $restoreids (passed by reference)
+     * @param xxx $question
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function add_question_truefalse(&$restoreids, $question) {
+        global $DB;
+
+        $bestanswerids = $this->get_best_match_answers($question);
+
+        foreach ($question->answers as $xmlanswer) {
+            $answer = (object)array(
+                'question' => $question->id,
+                'fraction' => $xmlanswer->fraction,
+                'answer'   => $xmlanswer->answer_text,
+                'answerformat' => FORMAT_MOODLE, // =0
+                'feedback' => '',
+                'feedbackformat' => FORMAT_MOODLE, // =0
+            );
+            $this->add_question_answer($restoreids, $bestanswerids, $xmlanswer, $answer);
+        }
+
+        // create $options for this truefalse question
+        $options = (object)array(
+            'trueanswer' => $question->truefalse->trueanswer,
+            'falseanswer' => $question->truefalse->falseanswer,
+        );
+
+        // add/update $options for this truefalse question
+        $this->add_question_options('truefalse', $options, $question);
+    }
+
+    /**
      * add_question_options
      *
      * @uses $DB
@@ -2798,19 +2894,16 @@ class reader_downloader {
 
         list($table, $field) = $this->get_question_options_table($type);
 
-        if ($table=='' || $field=='') {
-            throw new moodle_exception(get_string('cannotinsertrecord', 'error', "question_$type options"));
-        }
-
-        $options->$field = $question->id;
-
-        if ($options->id = $DB->get_field($table, 'id', array($field => $question->id))) {
-            if (! $DB->update_record($table, $options)) {
-                throw new moodle_exception(get_string('cannotupdaterecord', 'error', $table.' (id='.$options->id.')'));
-            }
-        } else {
-            if (! $options->id = $DB->insert_record($table, $options)) {
-                throw new moodle_exception(get_string('cannotinsertrecord', 'error', $table));
+        if ($table && $field) {
+            $options->$field = $question->id;
+            if ($options->id = $DB->get_field($table, 'id', array($field => $question->id))) {
+                if (! $DB->update_record($table, $options)) {
+                    throw new moodle_exception(get_string('cannotupdaterecord', 'error', $table.' (id='.$options->id.')'));
+                }
+            } else {
+                if (! $options->id = $DB->insert_record($table, $options)) {
+                    throw new moodle_exception(get_string('cannotinsertrecord', 'error', $table));
+                }
             }
         }
 
@@ -2842,6 +2935,16 @@ class reader_downloader {
                     $table = 'qtype_'.$type.'_options';
                 }
                 $field = 'questionid';
+                break;
+
+            // Moodle >= 2.0 numeric questions
+            case $dbman->table_exists('question_'.$type.'_options'):
+                if ($sub) {
+                    $table = 'question_'.$type.'_subquestions';
+                } else {
+                    $table = 'question_'.$type.'_options';
+                }
+                $field = 'question';
                 break;
 
             // Moodle <= 2.4

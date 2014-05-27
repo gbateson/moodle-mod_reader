@@ -71,7 +71,7 @@ $logaction = 'view attempt: '.substr($attemptobj->readerobj->book->name, 0, 26);
 $loginfo   = "readerID {$attemptobj->readerobj->reader->id}; ".
              "reader quiz {$attemptobj->readerobj->book->id}; ".
              "page: {$pagetext}";
-add_to_log($attemptobj->readerobj->course->id, 'reader', $logaction, "view.php?id=$id", $loginfo);
+reader_add_to_log($attemptobj->readerobj->course->id, 'reader', $logaction, "view.php?id=$id", $loginfo);
 
 // Get the list of questions needed by this page.
 $slots = $attemptobj->get_slots($page);
