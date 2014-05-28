@@ -57,7 +57,7 @@ $capabilities = array(
         )
     ),
 
-    'mod/reader:manageutilities' => array(
+    'mod/reader:managetools' => array(
         'captype'      => 'write',
         'contextlevel' => CONTEXT_SYSTEM,
         'riskbitmask'  => RISK_DATALOSS,

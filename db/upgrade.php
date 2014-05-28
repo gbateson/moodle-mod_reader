@@ -560,12 +560,6 @@ function xmldb_reader_upgrade($oldversion) {
         upgrade_mod_savepoint(true, "$newversion", 'reader');
     }
 
-    $newversion = 2014021732;
-    if ($result && $oldversion < $newversion) {
-        update_capabilities('mod/reader');
-        upgrade_mod_savepoint(true, "$newversion", 'reader');
-    }
-
     $newversion = 2014032045;
     if ($result && $oldversion < $newversion) {
 
@@ -707,6 +701,12 @@ function xmldb_reader_upgrade($oldversion) {
             $dbman->change_field_type($table, $field);
         }
 
+        upgrade_mod_savepoint(true, "$newversion", 'reader');
+    }
+
+    $newversion = 2014052876;
+    if ($result && $oldversion < $newversion) {
+        update_capabilities('mod/reader');
         upgrade_mod_savepoint(true, "$newversion", 'reader');
     }
 

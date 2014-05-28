@@ -424,7 +424,7 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
         }
         $length = floatval($extrapoints==0 ? '0.5' : "$extrapoints.0");
 
-        if ($book = $this->get_extrapoints_books($length)) {
+        if (! $book = $this->get_extrapoints_book($length)) {
             $params = array('id' => $this->output->reader->cm->id,
                             'tab' => mod_reader_admin_books_renderer::TAB_BOOKS_DOWNLOAD_WITH, // 32
                             'type' => reader_downloader::BOOKS_WITH_QUIZZES, // 1
@@ -441,12 +441,12 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
     }
 
     /**
-     * get_extrapoints_books
+     * get_extrapoints_book
      *
      * @param decimal $length
      * @return xxx
      */
-    public function get_extrapoints_books($length) {
+    public function get_extrapoints_book($length) {
         global $DB;
 
         // try localized version of "Extra points"
@@ -454,6 +454,7 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
                         'level'     => '99',
                         'length'    => sprintf('%01.1f', $length)); // 0.5, 1.0, 2.0, ...
         if ($book = $DB->get_records('reader_books', $params)) {
+
             return reset($book);
         }
 

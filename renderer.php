@@ -50,7 +50,7 @@ class mod_reader_renderer extends plugin_renderer_base {
     const TAB_BOOKS     = 4;
     const TAB_QUIZZES   = 5;
     const TAB_USERS     = 6;
-    const TAB_UTILITIES = 7;
+    const TAB_TOOLS = 7;
     const TAB_ADMINAREA = 8;
     /**#@-*/
 
@@ -822,12 +822,12 @@ class mod_reader_renderer extends plugin_renderer_base {
                 $url = new moodle_url('/mod/reader/admin/users.php', array('id' => $cmid, 'tab' => $tab));
                 $tabs[$tab] = new tabobject($tab, $url, get_string('users', 'reader'));
             }
-            if ($this->reader->can_manageutilities()) {
-                $tab = self::TAB_UTILITIES;
-                $url = new moodle_url('/mod/reader/admin/utilities.php', array('id' => $cmid, 'tab' => $tab));
-                $tabs[$tab] = new tabobject($tab, $url, get_string('utilities', 'reader'));
+            if ($this->reader->can_managetools()) {
+                $tab = self::TAB_TOOLS;
+                $url = new moodle_url('/mod/reader/admin/tools.php', array('id' => $cmid, 'tab' => $tab));
+                $tabs[$tab] = new tabobject($tab, $url, get_string('tools', 'reader'));
             }
-            if ($this->reader->can_manageutilities()) {
+            if ($this->reader->can_managetools()) {
                 $tab = self::TAB_ADMINAREA;
                 $url = new moodle_url('/mod/reader/admin.php', array('id' => $cmid, 'tab' => $tab, 'a' => 'admin'));
                 $tabs[$tab] = new tabobject($tab, $url, get_string('adminarea', 'reader'));

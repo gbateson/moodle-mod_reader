@@ -862,7 +862,7 @@ class reader_downloader {
         $this->bar = reader_download_progress_bar::create($itemids, 'readerdownload');
 
         // show memory on main Reader module developer site
-        $show_memory = (file_exists($CFG->dirroot.'/mod/reader/admin/utilities/print_cheatsheet.php'));
+        $show_memory = (file_exists($CFG->dirroot.'/mod/reader/admin/tools/print_cheatsheet.php'));
 
         $output = '';
         $time = time();

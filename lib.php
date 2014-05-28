@@ -3925,8 +3925,8 @@ function reader_cheatsheet_init($action) {
 
     // if there is a "cheatsheet" script, make it available (for developer site admins only)
     if ($action=='takequiz' && has_capability('moodle/site:config', reader_get_context(CONTEXT_SYSTEM))) {
-        if (file_exists($CFG->dirroot.'/mod/reader/admin/utilities/print_cheatsheet.php')) {
-            $cheatsheeturl = $CFG->wwwroot.'/mod/reader/admin/utilities/print_cheatsheet.php';
+        if (file_exists($CFG->dirroot.'/mod/reader/admin/tools/print_cheatsheet.php')) {
+            $cheatsheeturl = $CFG->wwwroot.'/mod/reader/admin/tools/print_cheatsheet.php';
             $strcheatsheet = get_string('cheatsheet', 'reader');
         }
     }

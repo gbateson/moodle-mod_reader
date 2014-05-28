@@ -500,12 +500,12 @@ class mod_reader {
     }
 
     /*
-     * can_manageutilities
+     * can_managetools
      *
      * @return boolean
      **/
-    public function can_manageutilities() {
-        return $this->can('manageutilities');
+    public function can_managetools() {
+        return $this->can('managetools');
     }
 
     /*

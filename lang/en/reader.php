@@ -14,7 +14,7 @@ $string['reader:managebooks'] = 'Manage books';
 $string['reader:managequizzes'] = 'Manage quizzes';
 $string['reader:manageremotesites'] = 'Manage remote sites';
 $string['reader:manageusers'] = 'Manage users';
-$string['reader:manageutilities'] = 'Manage utilities';
+$string['reader:managetools'] = 'Manage tools';
 $string['reader:viewbooks'] = 'View books';
 $string['reader:viewreports'] = 'View reports';
 
@@ -85,8 +85,8 @@ $string['eventusersexported_desc'] = 'The user with id "{$a->userid}" has users_
 $string['eventusersexported'] = 'eventusers exported';
 $string['eventusersimported_desc'] = 'The user with id "{$a->userid}" has users_imported for the reader with the course module id "{$a->contextinstanceid}"';
 $string['eventusersimported'] = 'eventusers imported';
-$string['eventutilityrun_desc'] = 'The user with id "{$a->userid}" has utility_run for the reader with the course module id "{$a->contextinstanceid}"';
-$string['eventutilityrun'] = 'eventutility run';
+$string['eventtoolrun_desc'] = 'The user with id "{$a->userid}" has tool_run for the reader with the course module id "{$a->contextinstanceid}"';
+$string['eventtoolrun'] = 'eventtool run';
 
 // more strings
 $string['add'] = 'Add';
@@ -333,7 +333,7 @@ $string['image'] = 'Image';
 $string['imageadded'] = 'Image added: {$a}';
 $string['import'] = 'Import';
 $string['import_reader_tables'] = 'Import reader tables';
-$string['import_reader_tablesdesc'] = 'Recreate an entire Moodle site from just the Reader database tables. This utility will create courses, users, groups, Reader activies and quizzes.';
+$string['import_reader_tablesdesc'] = 'Recreate an entire Moodle site from just the Reader database tables. This tool will create courses, users, groups, Reader activies and quizzes.';
 $string['importreadertables'] = 'Import Reader tables';
 $string['importstudentrecord'] = 'Import student record';
 $string['in1000sofwords'] = 'In 1000s of words';
@@ -658,7 +658,7 @@ $string['usersimport'] = 'Import data';
 $string['userssendmessage'] = 'Send message';
 $string['userssetgoals'] = 'Set goals';
 $string['userssetlevels'] = 'Set levels';
-$string['utilities'] = 'Utilities';
+$string['tools'] = 'Tools';
 $string['viewattempts'] = 'View and Delete Attempts';
 $string['viewlogsuspiciousactivity'] = 'View log of suspicious activity';
 $string['whichbooks'] = 'Choose the books and click "Go"';

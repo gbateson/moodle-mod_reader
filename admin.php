@@ -994,6 +994,11 @@ if (! $excel) {
             new reader_menu_item('summaryreportbyclassgroup', 'viewreports', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'reportbyclass')),
             new reader_menu_item('summaryreportbybooktitle', 'viewreports', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'summarybookreports')),
             new reader_menu_item('fullreportbybooktitle', 'viewreports', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'fullbookreports')),
+            //new reader_menu_item('reportquiztoreader', 'viewreports', 'admin/reports.php', array('id' => $id, 'tab' => 21, 'mode' => 'usersummary')),
+            //new reader_menu_item('fullreportquiztoreader', 'viewreports','admin/reports.php', array('id' => $id, 'tab' => 22, 'mode' => 'userdetailed')),
+            //new reader_menu_item('summaryreportbyclassgroup', 'viewreports', 'admin/reports.php', array('id' => $id, 'tab' => 23, 'mode' => 'groupsummary')),
+            //new reader_menu_item('summaryreportbybooktitle', 'viewreports', 'admin/reports.php', array('id' => $id, 'tab' => 24, 'mode' => 'booksummary')),
+            //new reader_menu_item('fullreportbybooktitle', 'viewreports', 'admin/reports.php', array('id' => $id, 'tab' => 25, 'mode' => 'bookdetailed')),
         ),
         'quizmanagement' => array(
             new reader_menu_item('addquiztoreader', 'managequizzes', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'addquiz')),
