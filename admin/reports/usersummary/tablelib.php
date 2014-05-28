@@ -417,27 +417,55 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
      * @return xxx
      */
     public function execute_action_awardextrapoints($action) {
-        global $DB;
 
         $extrapoints = optional_param($action, null, PARAM_INT);
         if ($extrapoints===null || $extrapoints < 0 || $extrapoints > 5) {
             return false; // no (valid) extra points specified
         }
+        $length = floatval($extrapoints==0 ? '0.5' : "$extrapoints.0");
 
-        // set $params to select the dummy $book for these extra points
-        $publisher = get_string('extrapoints', 'reader');
-        $length = ($extrapoints==0 ? '0.5' : "$extrapoints.0");
-        $params = array('publisher' => $publisher, 'length' => $length);
-
-        if (! $book = $DB->get_records('reader_books', $params)) {
+        if ($book = $this->get_extrapoints_books($length)) {
+            $params = array('id' => $this->output->reader->cm->id,
+                            'tab' => mod_reader_admin_books_renderer::TAB_BOOKS_DOWNLOAD_WITH, // 32
+                            'type' => reader_downloader::BOOKS_WITH_QUIZZES, // 1
+                            'mode' => 'download');
+            $url = new moodle_url('/mod/reader/admin/books.php', $params);
             $msg = get_string('downloadextrapoints', 'reader');
+            $msg = html_writer::link($url, $msg);
             echo $this->output->notification($msg, 'notifyproblem');
             return false; // shouldn't happen !!
         }
-        $book = reset($book);
 
         // award extrapoints to selected userids
         $this->execute_action_awardpoints($book);
+    }
+
+    /**
+     * get_extrapoints_books
+     *
+     * @param decimal $length
+     * @return xxx
+     */
+    public function get_extrapoints_books($length) {
+        global $DB;
+
+        // try localized version of "Extra points"
+        $params = array('publisher' => get_string('extrapoints', 'reader'),
+                        'level'     => '99',
+                        'length'    => sprintf('%01.1f', $length)); // 0.5, 1.0, 2.0, ...
+        if ($book = $DB->get_records('reader_books', $params)) {
+            return reset($book);
+        }
+
+        // try downloaded version of "Extra_points"
+        $params = array('publisher' => 'Extra_points',
+                        'level'     => '99',
+                        'length'    => sprintf('%01.2f', $length)); // 0.50, 1.00, 2.00, ...
+        if ($book = $DB->get_records('reader_books', $params)) {
+            return reset($book);
+        }
+
+        return false;
     }
 
     /**

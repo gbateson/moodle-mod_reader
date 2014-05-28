@@ -46,7 +46,8 @@ class mod_reader_admin_reports_usersummary_renderer extends mod_reader_admin_rep
     public function available_extrapoints() {
         global $DB;
         $options = array();
-        if ($books = $DB->get_records('reader_books', array('publisher' => get_string('extrapoints', 'reader')), 'length')) {
+        $params = array('publisher' => get_string('extrapoints', 'reader'), 'level' => 99);
+        if ($books = $DB->get_records('reader_books', $params, 'length')) {
             foreach ($books as $book) {
                 $i = intval($book->length);
                 $options[$i] = $book->name.' / '.get_string('extrawords', 'reader', number_format($book->words));
