@@ -51,7 +51,7 @@ function xmldb_reader_add_attempts_bookid($dbman, $fixquizid=false) {
     // fix the "quizid" field in the "reader_attempts"
     // and the "reader_deleted_attempts" tables
     //////////////////////////////////////////////////
-    // it currently contains an id from "reader_books"
+    // it currently contains an "id" from "reader_books"
     // so we create a new "bookid" field, copy "quizid",
     // then set correct "quizid", and remove "bookid"
 
@@ -65,7 +65,6 @@ function xmldb_reader_add_attempts_bookid($dbman, $fixquizid=false) {
         }
 
         // add/update quizid/bookid field and index
-        $fixbookid = false;
         $fieldnames = array('quizid', 'bookid');
         foreach ($fieldnames as $fieldname) {
 
@@ -80,9 +79,6 @@ function xmldb_reader_add_attempts_bookid($dbman, $fixquizid=false) {
                 $dbman->change_field_type($table, $field);
             } else {
                 $dbman->add_field($table, $field);
-                if ($fieldname=='bookid') {
-                    $fixbookid = true;
-                }
             }
 
             if (! $dbman->index_exists($table, $index)) {
@@ -91,46 +87,44 @@ function xmldb_reader_add_attempts_bookid($dbman, $fixquizid=false) {
         }
 
         // synchronize "quizid" and "bookid"
-        if ($fixquizid || $fixbookid) {
 
-            // specify $join and $set fields
-            if ($fixquizid) {
-                // copy "quizid" to "bookid", then unset "quizid"
-                $DB->execute('UPDATE {'.$tablename.'} SET bookid = quizid');
-                $DB->execute('UPDATE {'.$tablename.'} SET quizid = 0');
-                // transfer correct "quizid" from "reader_books" table
-                $join = 'ra.bookid = rb.id';
-                $set1 = 'quizid';
-                if ($tablename=='reader_deleted_attempts') {
-                    $set2 = '0';
-                } else {
-                    $set2 = 'rb.quizid';
-                }
+        // specify $join and $set fields
+        if ($fixquizid) {
+            // copy "quizid" to "bookid", then unset "quizid"
+            $DB->execute('UPDATE {'.$tablename.'} SET bookid = quizid');
+            $DB->execute('UPDATE {'.$tablename.'} SET quizid = 0');
+            // transfer correct "quizid" from "reader_books" table
+            $join = 'ra.bookid = rb.id';
+            $set1 = 'quizid';
+            if ($tablename=='reader_deleted_attempts') {
+                $set2 = '0';
             } else {
-                // transfer "bookid" from "reader_books" table
-                $join = 'ra.quizid = rb.quizid';
-                $set1 = 'bookid';
-                $set2 = 'rb.id';
+                $set2 = 'rb.quizid';
             }
+        } else {
+            // transfer "bookid" from "reader_books" table
+            $join = 'ra.quizid = rb.quizid';
+            $set1 = 'bookid';
+            $set2 = 'rb.id';
+        }
 
-            // Note: syntax for UPDATE with JOIN depends on DB type
-            switch ($DB->get_dbfamily()) {
-                case 'mysql':
-                    $DB->execute('UPDATE {'.$tablename.'} ra JOIN {reader_books} rb ON '.$join.' SET ra.'.$set1.' = '.$set2);
-                    break;
-                case 'mssql': // not tested
-                    $DB->execute('UPDATE ra SET '.$set1.' = '.$set2.' FROM {'.$tablename.'} ra JOIN {reader_books} rb ON '.$join);
-                    break;
-                case 'oracle': // not tested
-                    $select = 'SELECT '.$set2.' FROM {reader_books} rb WHERE '.$join;
-                    $DB->execute('UPDATE {'.$tablename.'} ra SET ra.'.$set1.' = ('.$select.') AND EXISTS ('.$select.')');
-                    break;
-                case 'postgres': // not tested
-                    $DB->execute('UPDATE {'.$tablename.'} ra SET '.$set1.' = '.$set2.' FROM {reader_books} rb WHERE '.$join);
-                    break;
-                default:
-                    $DB->execute('UPDATE {'.$tablename.'} ra SET ra.'.$set1.' = (SELECT '.$set2.' FROM {reader_books} rb WHERE '.$join.')');
-            }
+        // Note: syntax for UPDATE with JOIN depends on DB type
+        switch ($DB->get_dbfamily()) {
+            case 'mysql':
+                $DB->execute('UPDATE {'.$tablename.'} ra JOIN {reader_books} rb ON '.$join.' SET ra.'.$set1.' = '.$set2);
+                break;
+            case 'mssql': // not tested
+                $DB->execute('UPDATE ra SET '.$set1.' = '.$set2.' FROM {'.$tablename.'} ra JOIN {reader_books} rb ON '.$join);
+                break;
+            case 'oracle': // not tested
+                $select = 'SELECT '.$set2.' FROM {reader_books} rb WHERE '.$join;
+                $DB->execute('UPDATE {'.$tablename.'} ra SET ra.'.$set1.' = ('.$select.') AND EXISTS ('.$select.')');
+                break;
+            case 'postgres': // not tested
+                $DB->execute('UPDATE {'.$tablename.'} ra SET '.$set1.' = '.$set2.' FROM {reader_books} rb WHERE '.$join);
+                break;
+            default:
+                $DB->execute('UPDATE {'.$tablename.'} ra SET ra.'.$set1.' = (SELECT '.$set2.' FROM {reader_books} rb WHERE '.$join.')');
         }
     }
 }
