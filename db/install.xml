@@ -6,7 +6,7 @@
   <TABLES>
     <TABLE NAME="reader" COMMENT="settings for ndividual Reader activities" NEXT="reader_attempts">
       <FIELDS>
-        <FIELD NAME="id" TYPE="int" SEQUENCE="true" LENGTH="10" NOTNULL="false" NEXT="course"/>
+        <FIELD NAME="id" TYPE="int" NOTNULL="true" SEQUENCE="true" LENGTH="10" NEXT="course"/>
         <FIELD NAME="course" TYPE="int" SEQUENCE="false" LENGTH="10" NOTNULL="false" DEFAULT="0" NEXT="name" PREVIOUS="id"/>
         <FIELD NAME="name" TYPE="char" LENGTH="255" NOTNULL="false" NEXT="intro" PREVIOUS="course"/>
         <FIELD NAME="intro" TYPE="text" NOTNULL="false" NEXT="introformat" PREVIOUS="name"/>
@@ -67,7 +67,7 @@
     </TABLE>
     <TABLE NAME="reader_attempts" COMMENT="details of attempts at Reader quizzes" NEXT="reader_book_instances" PREVIOUS="reader">
       <FIELDS>
-        <FIELD NAME="id" TYPE="int" SEQUENCE="true" LENGTH="10" NOTNULL="false" NEXT="uniqueid"/>
+        <FIELD NAME="id" TYPE="int" NOTNULL="true" SEQUENCE="true" LENGTH="10" NEXT="uniqueid"/>
         <FIELD NAME="uniqueid" TYPE="int" SEQUENCE="false" LENGTH="10" NOTNULL="false" DEFAULT="0" NEXT="reader" PREVIOUS="id"/>
         <FIELD NAME="reader" TYPE="int" SEQUENCE="false" LENGTH="10" NOTNULL="false" DEFAULT="0" NEXT="userid" PREVIOUS="uniqueid"/>
         <FIELD NAME="userid" TYPE="int" SEQUENCE="false" LENGTH="10" NOTNULL="false" DEFAULT="0" NEXT="bookid" PREVIOUS="reader"/>
@@ -103,7 +103,7 @@
     </TABLE>
     <TABLE NAME="reader_book_instances" COMMENT="local settings for individual books" NEXT="reader_books" PREVIOUS="reader_attempts">
       <FIELDS>
-        <FIELD NAME="id" TYPE="int" SEQUENCE="true" LENGTH="11" NOTNULL="false" NEXT="readerid"/>
+        <FIELD NAME="id" TYPE="int" NOTNULL="true" SEQUENCE="true" LENGTH="11" NEXT="readerid"/>
         <FIELD NAME="readerid" TYPE="int" SEQUENCE="false" LENGTH="11" NOTNULL="false" NEXT="bookid" PREVIOUS="id"/>
         <FIELD NAME="bookid" TYPE="int" SEQUENCE="false" LENGTH="11" NOTNULL="false" NEXT="difficulty" PREVIOUS="readerid"/>
         <FIELD NAME="difficulty" TYPE="int" SEQUENCE="false" LENGTH="11" NOTNULL="false" NEXT="length" PREVIOUS="bookid"/>
@@ -118,7 +118,7 @@
     </TABLE>
     <TABLE NAME="reader_books" COMMENT="details about individual books" NEXT="reader_delays" PREVIOUS="reader_book_instances">
       <FIELDS>
-        <FIELD NAME="id" TYPE="int" SEQUENCE="true" LENGTH="11" NOTNULL="false" NEXT="publisher"/>
+        <FIELD NAME="id" TYPE="int" NOTNULL="true" SEQUENCE="true" LENGTH="11" NEXT="publisher"/>
         <FIELD NAME="publisher" TYPE="char" LENGTH="255" NOTNULL="false" NEXT="series" PREVIOUS="id"/>
         <FIELD NAME="series" TYPE="char" LENGTH="255" NOTNULL="false" NEXT="level" PREVIOUS="publisher"/>
         <FIELD NAME="level" TYPE="char" LENGTH="255" NOTNULL="false" NEXT="difficulty" PREVIOUS="series"/>
@@ -153,7 +153,7 @@
     </TABLE>
     <TABLE NAME="reader_delays" COMMENT="the required delay interval between quizzes" NEXT="reader_goals" PREVIOUS="reader_books">
       <FIELDS>
-        <FIELD NAME="id" TYPE="int" SEQUENCE="true" LENGTH="11" NOTNULL="false" NEXT="readerid"/>
+        <FIELD NAME="id" TYPE="int" NOTNULL="true" SEQUENCE="true" LENGTH="11" NEXT="readerid"/>
         <FIELD NAME="readerid" TYPE="int" SEQUENCE="false" LENGTH="11" NOTNULL="false" NEXT="groupid" PREVIOUS="id"/>
         <FIELD NAME="groupid" TYPE="int" SEQUENCE="false" LENGTH="11" NOTNULL="false" NEXT="level" PREVIOUS="readerid"/>
         <FIELD NAME="level" TYPE="int" SEQUENCE="false" LENGTH="11" NOTNULL="false" NEXT="delay" PREVIOUS="groupid"/>
@@ -170,7 +170,7 @@
     </TABLE>
     <TABLE NAME="reader_goals" COMMENT="reading goals for each Reader activity" NEXT="reader_grades" PREVIOUS="reader_delays">
       <FIELDS>
-        <FIELD NAME="id" TYPE="int" SEQUENCE="true" LENGTH="11" NOTNULL="false" NEXT="readerid"/>
+        <FIELD NAME="id" TYPE="int" NOTNULL="true" SEQUENCE="true" LENGTH="11" NEXT="readerid"/>
         <FIELD NAME="readerid" TYPE="int" SEQUENCE="false" LENGTH="11" NOTNULL="false" NEXT="groupid" PREVIOUS="id"/>
         <FIELD NAME="groupid" TYPE="int" SEQUENCE="false" LENGTH="11" NOTNULL="false" NEXT="level" PREVIOUS="readerid"/>
         <FIELD NAME="level" TYPE="int" SEQUENCE="false" LENGTH="11" NOTNULL="false" NEXT="goal" PREVIOUS="groupid"/>
@@ -187,7 +187,7 @@
     </TABLE>
     <TABLE NAME="reader_grades" COMMENT="grades for Reader activities" NEXT="reader_levels" PREVIOUS="reader_goals">
       <FIELDS>
-        <FIELD NAME="id" TYPE="int" SEQUENCE="true" LENGTH="10" NOTNULL="false" NEXT="reader"/>
+        <FIELD NAME="id" TYPE="int" NOTNULL="true" SEQUENCE="true" LENGTH="10" NEXT="reader"/>
         <FIELD NAME="reader" TYPE="int" SEQUENCE="false" LENGTH="10" NOTNULL="false" DEFAULT="0" NEXT="userid" PREVIOUS="id"/>
         <FIELD NAME="userid" TYPE="int" SEQUENCE="false" LENGTH="10" NOTNULL="false" DEFAULT="0" NEXT="grade" PREVIOUS="reader"/>
         <FIELD NAME="grade" TYPE="float" NOTNULL="false" DEFAULT="0" NEXT="timemodified" PREVIOUS="userid"/>
@@ -203,7 +203,7 @@
     </TABLE>
     <TABLE NAME="reader_levels" COMMENT="user reading levels for each Reader activity" NEXT="reader_messages" PREVIOUS="reader_grades">
       <FIELDS>
-        <FIELD NAME="id" TYPE="int" SEQUENCE="true" LENGTH="11" NOTNULL="false" NEXT="userid"/>
+        <FIELD NAME="id" TYPE="int" NOTNULL="true" SEQUENCE="true" LENGTH="11" NEXT="userid"/>
         <FIELD NAME="userid" TYPE="int" SEQUENCE="false" LENGTH="11" NOTNULL="false" NEXT="startlevel" PREVIOUS="id"/>
         <FIELD NAME="startlevel" TYPE="int" SEQUENCE="false" LENGTH="11" NOTNULL="false" DEFAULT="0" NEXT="currentlevel" PREVIOUS="userid"/>
         <FIELD NAME="currentlevel" TYPE="int" SEQUENCE="false" LENGTH="11" NOTNULL="false" DEFAULT="0" NEXT="readerid" PREVIOUS="startlevel"/>
@@ -243,7 +243,7 @@
     </TABLE>
     <TABLE NAME="reader_question_instances" COMMENT="question instances used in Reader module activities" NEXT="reader_check_question_id" PREVIOUS="reader_messages">
       <FIELDS>
-        <FIELD NAME="id" TYPE="int" SEQUENCE="true" LENGTH="11" NOTNULL="false" NEXT="quiz"/>
+        <FIELD NAME="id" TYPE="int" NOTNULL="true" SEQUENCE="true" LENGTH="11" NEXT="quiz"/>
         <FIELD NAME="quiz" TYPE="int" SEQUENCE="false" LENGTH="11" NOTNULL="false" NEXT="question" PREVIOUS="id"/>
         <FIELD NAME="question" TYPE="int" SEQUENCE="false" LENGTH="11" NOTNULL="false" NEXT="grade" PREVIOUS="quiz"/>
         <FIELD NAME="grade" TYPE="int" SEQUENCE="false" LENGTH="11" NOTNULL="false" PREVIOUS="question"/>
@@ -258,7 +258,7 @@
     </TABLE>
     <TABLE NAME="reader_check_question_id" COMMENT="reader_check_question_id table" NEXT="reader_cheated_log" PREVIOUS="reader_question_instances">
       <FIELDS>
-        <FIELD NAME="id" TYPE="int" SEQUENCE="true" LENGTH="11" NOTNULL="false" NEXT="userid"/>
+        <FIELD NAME="id" TYPE="int" NOTNULL="true" SEQUENCE="true" LENGTH="11" NEXT="userid"/>
         <FIELD NAME="userid" TYPE="int" SEQUENCE="false" LENGTH="11" NOTNULL="false" NEXT="questionid" PREVIOUS="id"/>
         <FIELD NAME="questionid" TYPE="int" SEQUENCE="false" LENGTH="11" NOTNULL="false" NEXT="attempt" PREVIOUS="userid"/>
         <FIELD NAME="attempt" TYPE="int" SEQUENCE="false" LENGTH="11" NOTNULL="false" NEXT="time" PREVIOUS="questionid"/>
@@ -276,7 +276,7 @@
     </TABLE>
     <TABLE NAME="reader_cheated_log" COMMENT="reader_cheated_log table" NEXT="reader_conflicts" PREVIOUS="reader_check_question_id">
       <FIELDS>
-        <FIELD NAME="id" TYPE="int" SEQUENCE="true" LENGTH="11" NOTNULL="false" NEXT="byuserid"/>
+        <FIELD NAME="id" TYPE="int" NOTNULL="true" SEQUENCE="true" LENGTH="11" NEXT="byuserid"/>
         <FIELD NAME="byuserid" TYPE="int" SEQUENCE="false" LENGTH="11" NOTNULL="false" NEXT="userid1" PREVIOUS="id"/>
         <FIELD NAME="userid1" TYPE="int" SEQUENCE="false" LENGTH="11" NOTNULL="false" NEXT="userid2" PREVIOUS="byuserid"/>
         <FIELD NAME="userid2" TYPE="int" SEQUENCE="false" LENGTH="11" NOTNULL="false" NEXT="attempt1" PREVIOUS="userid1"/>
@@ -297,7 +297,7 @@
     </TABLE>
     <TABLE NAME="reader_conflicts" COMMENT="reader_conflicts table" NEXT="reader_strict_users_list" PREVIOUS="reader_cheated_log">
       <FIELDS>
-        <FIELD NAME="id" TYPE="int" SEQUENCE="true" LENGTH="11" NOTNULL="false" NEXT="quizid"/>
+        <FIELD NAME="id" TYPE="int" NOTNULL="true" SEQUENCE="true" LENGTH="11" NEXT="quizid"/>
         <FIELD NAME="quizid" TYPE="int" SEQUENCE="false" LENGTH="11" NOTNULL="false" NEXT="userid_1" PREVIOUS="id"/>
         <FIELD NAME="userid_1" TYPE="int" SEQUENCE="false" LENGTH="11" NOTNULL="false" NEXT="userid_2" PREVIOUS="quizid"/>
         <FIELD NAME="userid_2" TYPE="int" SEQUENCE="false" LENGTH="11" NOTNULL="false" PREVIOUS="userid_1"/>
@@ -311,7 +311,7 @@
     </TABLE>
     <TABLE NAME="reader_strict_users_list" COMMENT="reader_strict_users_list table" PREVIOUS="reader_conflicts">
       <FIELDS>
-        <FIELD NAME="id" TYPE="int" SEQUENCE="true" LENGTH="11" NOTNULL="false" NEXT="readerid"/>
+        <FIELD NAME="id" TYPE="int" NOTNULL="true" SEQUENCE="true" LENGTH="11" NEXT="readerid"/>
         <FIELD NAME="readerid" TYPE="int" SEQUENCE="false" LENGTH="11" NOTNULL="false" NEXT="userid" PREVIOUS="id"/>
         <FIELD NAME="userid" TYPE="int" SEQUENCE="false" LENGTH="11" NOTNULL="false" NEXT="needtocheckip" PREVIOUS="readerid"/>
         <FIELD NAME="needtocheckip" TYPE="int" SEQUENCE="false" LENGTH="11" NOTNULL="false" PREVIOUS="userid"/>

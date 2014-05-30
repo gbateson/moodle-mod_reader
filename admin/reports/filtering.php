@@ -300,7 +300,7 @@ class reader_admin_reports_options extends moodleform {
     public function definition() {
         $mform = $this->_form;
 
-        $label = get_string('displayoptions', 'question');
+        $label = get_string('displayoptions', 'reader');
         $mform->addElement('header', 'displayoptions', $label);
 
         // add element for each $fields

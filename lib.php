@@ -3229,7 +3229,7 @@ function reader_available_levels($publisher, $cmid, $action, $from, $where, $sql
     $where .= ' AND publisher = ?';
     array_push($sqlparams, $publisher);
 
-    $select = "level, COUNT(*) AS countbooks, ROUND(SUM(rb.difficulty) / COUNT(*)) AS average_difficulty";
+    $select = "level, COUNT(*) AS countbooks, ROUND(SUM(rb.difficulty) / COUNT(*), 0) AS average_difficulty";
     if ($records = $DB->get_records_sql("SELECT $select FROM $from WHERE $where GROUP BY level ORDER BY average_difficulty", $sqlparams)) {
         $count = count($records);
     } else {

@@ -411,11 +411,11 @@ class reader_admin_reports_table extends table_sql {
 
         $sum = "SUM(CASE WHEN (ra.reader <> :reader1 OR $notfinished) THEN 0 ELSE (ra.percentgrade) END)";
         $count = "SUM(CASE WHEN (ra.reader <> :reader2 OR $notfinished) THEN 0 ELSE 1 END)";
-        $averagegrade  = "ROUND($sum / $count)";
+        $averagegrade  = "ROUND($sum / $count, 0)";
 
         $sum = "SUM(CASE WHEN (ra.reader <> :reader3 OR $notfinished) THEN 0 ELSE (ra.timefinish - ra.timestart) END)";
         $count = "SUM(CASE WHEN (ra.reader <> :reader4 OR $notfinished) THEN 0 ELSE 1 END)";
-        $averageduration = "ROUND($sum / $count)";
+        $averageduration = "ROUND($sum / $count, 0)";
 
         $countpassed = "SUM(CASE WHEN (ra.reader = :reader5 AND ra.passed = :passed1 AND ra.timefinish > :time1) THEN 1 ELSE 0 END)";
         $countfailed = "SUM(CASE WHEN (ra.reader = :reader6 AND ra.passed <> :passed2 AND ra.timefinish > :time2) THEN 1 ELSE 0 END)";
@@ -459,7 +459,7 @@ class reader_admin_reports_table extends table_sql {
 
                 $sum = "SUM(CASE WHEN (ra.reader <> :reader8 OR $notrated) THEN 0 ELSE ra.bookrating END)";
                 $count = "SUM(CASE WHEN (ra.reader <> :reader9 OR $notrated) THEN 0 ELSE 1 END)";
-                $averagerating = "ROUND($sum / $count)";
+                $averagerating = "ROUND($sum / $count, 0)";
 
                 $select     .= ",$countrating AS countrating".
                                ",$averagerating AS averagerating";

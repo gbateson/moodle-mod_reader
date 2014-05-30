@@ -233,6 +233,7 @@ $string['deletecourses'] = 'Delete courses';
 $string['detectcheating'] = 'Detect cheating';
 $string['difficulty'] = 'Difficulty';
 $string['difficultyshort'] = 'RL';
+$string['displayoptions'] = 'Dispay options';
 $string['downloadbookswithoutquizzes'] = 'Download books without quizzes';
 $string['downloadbookswithquizzes'] = 'Download books with quizzes';
 $string['downloadedbooks'] = 'Data for the following books was downloaded:';

@@ -286,7 +286,7 @@ class mod_reader_renderer extends plugin_renderer_base {
         $where .= ' AND publisher = ?';
         array_push($sqlparams, $publisher);
 
-        $select = "level, COUNT(*) AS countbooks, ROUND(SUM(difficulty) / COUNT(*)) AS average_difficulty";
+        $select = "level, COUNT(*) AS countbooks, ROUND(SUM(difficulty) / COUNT(*), 0) AS average_difficulty";
         if ($records = $DB->get_records_sql("SELECT $select FROM $from WHERE $where GROUP BY level ORDER BY average_difficulty", $sqlparams)) {
             $count = count($records);
         } else {

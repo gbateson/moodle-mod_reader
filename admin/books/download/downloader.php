@@ -1584,12 +1584,17 @@ class reader_downloader {
         $sectiontype = $this->get_quiz_sectiontype();
         $sectionname = '';
 
+        // some DBs (e.g. MSSQL) cannot compare TEXT fields
+        // so we must CAST them to something else (e.g. CHAR)
+        $summary = $DB->sql_compare_text('summary');
+        $sequence = $DB->sql_compare_text('sequence');
+
         $cache = false;
         switch ($sectiontype) {
 
             case self::SECTIONTYPE_DEFAULT:
                 $sectionname = $this->create_sectionname($book);
-                $select = 'course = ? AND (name = ? OR summary = ?)';
+                $select = 'course = ? AND (name = ? OR '.$summary.' = ?)';
                 $params = array($courseid, $sectionname, $sectionname);
                 if ($coursesections = $DB->get_records_select('course_sections', $select, $params, 'section', '*', 0, 1)) {
                     $coursesection = reset($coursesections);
@@ -1629,8 +1634,8 @@ class reader_downloader {
         if ($sectionnum==0) {
             $select = 'course = ? AND section > ?'.
                       ' AND (name IS NULL OR name = ?)'.
-                      ' AND (summary IS NULL OR summary = ?)'.
-                      ' AND (sequence IS NULL OR sequence = ?)';
+                      ' AND (summary IS NULL OR '.$summary.' = ?)'.
+                      ' AND (sequence IS NULL OR '.$sequence.' = ?)';
             $params = array($courseid, 0, '', '', '');
 
             if ($coursesections = $DB->get_records_select('course_sections', $select, $params, 'section', '*', 0, 1)) {

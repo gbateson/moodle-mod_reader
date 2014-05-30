@@ -101,30 +101,32 @@ function xmldb_reader_add_attempts_bookid($dbman, $fixquizid=false) {
             } else {
                 $set2 = 'rb.quizid';
             }
+            $where = 'ra.bookid > 0';
         } else {
             // transfer "bookid" from "reader_books" table
             $join = 'ra.quizid = rb.quizid';
             $set1 = 'bookid';
             $set2 = 'rb.id';
+            $where = 'ra.quizid > 0';
         }
 
         // Note: syntax for UPDATE with JOIN depends on DB type
         switch ($DB->get_dbfamily()) {
             case 'mysql':
-                $DB->execute('UPDATE {'.$tablename.'} ra JOIN {reader_books} rb ON '.$join.' SET ra.'.$set1.' = '.$set2);
+                $DB->execute('UPDATE {'.$tablename.'} ra JOIN {reader_books} rb ON '.$join.' SET ra.'.$set1.' = '.$set2.' WHERE '.$where);
                 break;
             case 'mssql': // not tested
-                $DB->execute('UPDATE ra SET '.$set1.' = '.$set2.' FROM {'.$tablename.'} ra JOIN {reader_books} rb ON '.$join);
+                $DB->execute('UPDATE ra SET '.$set1.' = '.$set2.' FROM {'.$tablename.'} ra JOIN {reader_books} rb ON '.$join.' WHERE '.$where);
                 break;
             case 'oracle': // not tested
-                $select = 'SELECT '.$set2.' FROM {reader_books} rb WHERE '.$join;
+                $select = 'SELECT '.$set2.' FROM {reader_books} rb WHERE '.$join.' AND '.$where;
                 $DB->execute('UPDATE {'.$tablename.'} ra SET ra.'.$set1.' = ('.$select.') AND EXISTS ('.$select.')');
                 break;
             case 'postgres': // not tested
-                $DB->execute('UPDATE {'.$tablename.'} ra SET '.$set1.' = '.$set2.' FROM {reader_books} rb WHERE '.$join);
+                $DB->execute('UPDATE {'.$tablename.'} ra SET '.$set1.' = '.$set2.' FROM {reader_books} rb WHERE '.$join.' AND '.$where);
                 break;
             default:
-                $DB->execute('UPDATE {'.$tablename.'} ra SET ra.'.$set1.' = (SELECT '.$set2.' FROM {reader_books} rb WHERE '.$join.')');
+                $DB->execute('UPDATE {'.$tablename.'} ra SET ra.'.$set1.' = (SELECT '.$set2.' FROM {reader_books} rb WHERE '.$join.') WHERE '.$where);
         }
     }
 }
@@ -1781,7 +1783,10 @@ function reader_xmldb_get_sectionnum(&$targetcourse, $sectionname) {
     global $CFG, $DB;
     require_once($CFG->dirroot.'/mod/reader/lib.php');
 
-    $select = 'course = ? AND (name = ? OR summary = ?)';
+    $summary = $DB->sql_compare_text('summary');
+    $sequence = $DB->sql_compare_text('sequence');
+
+    $select = 'course = ? AND (name = ? OR '.$summary.' = ?)';
     $params = array($targetcourse->id, $sectionname, $sectionname);
     if ($coursesections = $DB->get_records_select('course_sections', $select, $params, 'section', '*', 0, 1)) {
         $coursesection = reset($coursesections); // first section with the target name
@@ -1794,8 +1799,8 @@ function reader_xmldb_get_sectionnum(&$targetcourse, $sectionname) {
     if ($sectionnum==0) {
         $select = 'course = ? AND section > ?'.
                   ' AND (name IS NULL OR name = ?)'.
-                  ' AND (summary IS NULL OR summary = ?)'.
-                  ' AND (sequence IS NULL OR sequence = ?)';
+                  ' AND (summary IS NULL OR '.$summary.' = ?)'.
+                  ' AND (sequence IS NULL OR '.$sequence.' = ?)';
         $params = array($targetcourse->id, 0, '', '', '');
 
         if ($coursesections = $DB->get_records_select('course_sections', $select, $params, 'section', '*', 0, 1)) {
@@ -2720,11 +2725,14 @@ function xmldb_reader_fix_multichoice_questions() {
             // apply for more script execution time (3 mins)
             upgrade_set_timeout();
 
+            // CAST sequence to CHAR so it can be compared
+            $sequence = $DB->sql_compare_text('sequence');
+
             if ($DB->sql_regex_supported()) {
-                $select = 'sequence '.$DB->sql_regex().' ?';
+                $select = $sequence.' '.$DB->sql_regex().' ?';
                 $params = array('(^|,)'.$question->id.'(,|$)');
             } else {
-                $select = array('sequence = ?',
+                $select = array($sequence.' = ?',
                                 $DB->sql_like('sequence', '?', false, false),  // start
                                 $DB->sql_like('sequence', '?', false, false),  // middle
                                 $DB->sql_like('sequence', '?', false, false)); // end
