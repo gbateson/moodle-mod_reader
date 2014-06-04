@@ -469,8 +469,18 @@ class reader_admin_reports_table extends table_sql {
                 break;
         }
 
-        $where  = "ra.userid $usersql";
+        $where  .= "ra.userid $usersql";
         $params += $userparams;
+
+        if (! array_key_exists('showdeleted', $this->optionfields)) {
+            $where .= ' AND ra.deleted = :ra_deleted';
+            $params['ra_deleted'] = 0;
+        }
+
+        if (! array_key_exists('showhidden', $this->optionfields)) {
+            $where .= ' AND rb.hidden = :rb_hidden';
+            $params['rb_hidden'] = 0;
+        }
 
         if ($this->output->reader->bookinstances) {
             $from  .= ' LEFT JOIN {reader_book_instances} rbi ON rb.id = rbi.bookid';

@@ -421,9 +421,10 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $ajax == 'true' 
 }
 
 if (has_capability('mod/reader:addinstance', $contextmodule) && ($changelevel || $changelevel == 0) && $slevel) {
-    if ($DB->get_record('reader_levels', array('userid' => $userid, 'readerid' => $reader->id))) {
-        $DB->set_field('reader_levels',  $slevel,  $changelevel, array('userid' => $userid,  'readerid' => $reader->id));
-        $DB->set_field('reader_levels', 'time', time(), array('userid' => $userid, 'readerid' => $reader->id));
+    $params = array('userid' => $userid, 'readerid' => $reader->id);
+    if ($DB->get_record('reader_levels', $params)) {
+        $DB->set_field('reader_levels', 'time', time(), $params);
+        $DB->set_field('reader_levels',  $slevel,  $changelevel, $params);
     } else {
         $data = new stdClass();
         $data->userid = $userid;

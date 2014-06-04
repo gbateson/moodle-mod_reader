@@ -373,7 +373,10 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
 
         // update selected userids to the new currentlevel
         list($select, $params) = $DB->get_in_or_equal($userids);
-        $DB->set_field_select('reader_levels', 'currentlevel', $currentlevel, "userid $select", $params);
+        $select = "userid $select AND readerid = ?";
+        $params[] = $this->output->reader->id;
+        $DB->set_field_select('reader_levels', 'time', time(), $select, $params);
+        $DB->set_field_select('reader_levels', 'currentlevel', $currentlevel, $select, $params);
 
         // send "Changes saved" message to browser
         echo $this->output->notification(get_string('changessaved'), 'notifysuccess');
@@ -404,7 +407,10 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
 
         // update selected userids to the new readinggoal
         list($select, $params) = $DB->get_in_or_equal($userids);
-        $DB->set_field_select('reader_levels', 'goal', $readinggoal, "userid $select", $params);
+        $select = "userid $select AND readerid = ?";
+        $params[] = $this->output->reader->id;
+        $DB->set_field_select('reader_levels', 'time', time(), $select, $params);
+        $DB->set_field_select('reader_levels', 'goal', $readinggoal, $select, $params);
 
         // send "Changes saved" message to browser
         echo $this->output->notification(get_string('changessaved'), 'notifysuccess');
