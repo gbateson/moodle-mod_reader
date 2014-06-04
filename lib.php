@@ -2989,18 +2989,18 @@ function reader_can_attemptreader($cmid, $userid) {
  * @param xxx $reader
  * @param xxx $userid
  * @param xxx $noquiz
- * @return xxx
+ * @return array($from, $where, $params)
  * @todo Finish documenting this function
  */
 function reader_available_sql($cmid, $reader, $userid, $noquiz=false) {
 
     if ($noquiz) {
-        return array('{reader_books} rb', 'rb.quizid = ? AND rb.hidden = ?', array(0, 0)); // $from, $where, $params
+        return array('{reader_books} rb', 'rb.quizid = ? AND rb.hidden = ? AND rb.level <> ?', array(0, 0, 99));
     }
 
     // a teacher / admin can always access all the books
     if (reader_can_addinstance($cmid, $userid)) {
-        return array('{reader_books} rb', 'rb.quizid > ? AND rb.hidden = ?', array(0, 0)); // $from, $where, $params
+        return array('{reader_books} rb', 'rb.quizid > ? AND rb.hidden = ? AND rb.level <> ?', array(0, 0, 99));
     }
 
     // we want to get a list of all books available to this user
@@ -3023,8 +3023,8 @@ function reader_available_sql($cmid, $reader, $userid, $noquiz=false) {
                   'WHERE ra.userid = ? AND ra.deleted <> ? AND rb.id IS NOT NULL AND rb.sametitle <> ?';
 
     $from   = '{reader_books} rb';
-    $where  = "rb.id NOT IN ($recordids) AND (rb.sametitle = ? OR rb.sametitle NOT IN ($sametitles)) AND hidden = ?";
-    $sqlparams = array($userid, 1, 0, '', $userid, 1, '', 0);
+    $where  = "rb.id NOT IN ($recordids) AND (rb.sametitle = ? OR rb.sametitle NOT IN ($sametitles)) AND hidden = ? AND level <> ?";
+    $sqlparams = array($userid, 1, 0, '', $userid, 1, '', 0, 99);
 
     if ($reader->bookinstances) {
         $from  .= ' JOIN {reader_book_instances} rbi ON rbi.bookid = rb.id';
