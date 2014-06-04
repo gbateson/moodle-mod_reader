@@ -170,7 +170,7 @@ function reader_get_correct_answer(&$question, &$questions) {
             break;
 
         default:
-            $correct = 'XXX'.$question->qtype.' id='.$question->id;
+            $correct = 'unknown qtype: '.$question->qtype.' id='.$question->id;
     }
 
     return $correct;
