@@ -474,12 +474,12 @@ class reader_admin_reports_table extends table_sql {
 
         if (! array_key_exists('showdeleted', $this->optionfields)) {
             $where .= ' AND ra.deleted = :ra_deleted';
-            $params['ra_deleted'] = 0;
+            $params['ra_deleted'] = self::DEFAULT_SHOWDELETED;
         }
 
         if (! array_key_exists('showhidden', $this->optionfields)) {
             $where .= ' AND rb.hidden = :rb_hidden';
-            $params['rb_hidden'] = 0;
+            $params['rb_hidden'] = self::DEFAULT_SHOWHIDDEN;
         }
 
         if ($this->output->reader->bookinstances) {

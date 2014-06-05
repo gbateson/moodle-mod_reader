@@ -1696,7 +1696,7 @@ function reader_check_search_text_quiz($searchtext, $book) {
 }
 
 /**
- * reader_selectlevel_form
+ * reader_level_menu
  *
  * @uses $CFG
  * @uses $COURSE
@@ -1709,37 +1709,38 @@ function reader_check_search_text_quiz($searchtext, $book) {
  * @uses $sort
  * @param xxx $userid
  * @param xxx $readerlevel
- * @param xxx $leveltype
+ * @param xxx $slevel
  * @return xxx
  * @todo Finish documenting this function
  */
-function reader_selectlevel_form($userid, $readerlevel, $leveltype) {
+function reader_level_menu($userid, $readerlevel, $slevel) {
     global $id, $act, $gid, $sort, $orderby, $page;
 
     if (empty($readerlevel)) {
         $readerlevel = new stdClass();
     }
-    if (! isset($readerlevel->$leveltype)) {
-        $readerlevel->$leveltype = 0;
+    if (! isset($readerlevel->$slevel)) {
+        $readerlevel->$slevel = 0;
     }
 
-    $patch = $userid.'-'.$leveltype;
+    $values = range(0, 14);
+    $name = 'level_'.$userid.'_'.$slevel;
 
     $output = '';
-    $output .= html_writer::start_tag('div', array('id' => 'changelevels'.$patch));
-    $output .= '<select id="choose_levels'.$patch.'" name="levels'.$patch.'" onchange="request(\'admin.php?ajax=true&\' + this.options[this.selectedIndex].value,\'changelevels'.$patch.'\'); return false;">';
+    $output .= html_writer::start_tag('div', array('id' => 'id_'.$name));
 
-    $levels = range(0, 14);
-    foreach ($levels as $level) {
-        $params = array('a' => 'admin', 'id' => $id, 'act' => $act,
-                        'changelevel' => $level, 'userid' => $userid,
-                        'slevel' => $leveltype);
+    $onchange = "request('admin.php?ajax=true&' + this.options[this.selectedIndex].value, 'id_$name'); return false;";
+    $output .= html_writer::start_tag('select', array('id' => 'id_select_'.$name, 'name' => 'select_'.$name, 'onchange' => $onchange));
+
+    foreach ($values as $value) {
+        $params = array('a' => 'admin', 'id' => $id, 'act' => $act, 'changelevel' => $value, 'userid' => $userid, 'slevel' => $slevel);
         $params = array('value' => new moodle_url('/mod/reader/admin.php', $params));
-        if ($level == $readerlevel->$leveltype) {
+        if ($value == $readerlevel->$slevel) {
             $params['selected'] = 'selected';
         }
-        $output .= html_writer::tag('option', $level, $params);
+        $output .= html_writer::tag('option', $value, $params);
     }
+
     $output .= html_writer::end_tag('select');
     $output .= html_writer::end_tag('div');
 
@@ -1747,7 +1748,7 @@ function reader_selectlevel_form($userid, $readerlevel, $leveltype) {
 }
 
 /**
- * reader_promotion_stop_box
+ * reader_promotionstop_menu
  *
  * @uses $CFG
  * @uses $COURSE
@@ -1765,30 +1766,42 @@ function reader_selectlevel_form($userid, $readerlevel, $leveltype) {
  * @return xxx
  * @todo Finish documenting this function
  */
-function reader_promotion_stop_box($userid, $data, $field, $rand) {
+function reader_promotionstop_menu($userid, $data, $field, $rand) {
     global $CFG, $COURSE, $_SESSION, $id, $act, $gid, $sort, $orderby, $page;
 
-    $levels = array(0,1,2,3,4,5,6,7,8,9,10,12,99);
-    $patch = "_stoppr_".$rand."_".$userid;
-
-    $string = '<div id="changepromote'.$patch.'">';
-    $string .= '<select id="choose_promote'.$patch.'" name="promote'.$patch.'" onchange="request(\'admin.php?ajax=true&\' + this.options[this.selectedIndex].value,\'changepromote'.$patch.'\'); return false;">';
-
-    foreach ($levels as $levels_) {
-        $string .= '<option value="a=admin&id='.$id.'&act='.$act.'&'.$field.'='.$levels_.'&userid='.$userid.'" ';
-        if ($levels_ == $data->$field) {
-            $string .= ' selected="selected" ';
-        }
-        $string .= '>'.$levels_.'</option>';
+    if (empty($data)) {
+        $data = new stdClass();
+    }
+    if (empty($data->$field)) {
+        $data->$field = 0; // default
     }
 
-    $string .= '</select></div>';
+    $values = array(0,1,2,3,4,5,6,7,8,9,10,12,99);
+    $name = '_stoppr_'.$rand.'_'.$userid;
 
-    return $string;
+    $output = '';
+    $output .= html_writer::start_tag('div', array('id' => 'id_'.$name));
+
+    $onchange = "request('admin.php?ajax=true&' + this.options[this.selectedIndex].value, 'id_$name'); return false;";
+    $output .= html_writer::start_tag('select', array('id' => 'id_select_'.$name, 'name' => 'select_'.$name, 'onchange' => $onchange));
+
+    foreach ($values as $value) {
+        $params = array('a' => 'admin', 'id' => $id, 'act' => $act, $field => $value, 'userid' => $userid);
+        $params = array('value' => new moodle_url('/mod/reader/admin.php', $params));
+        if ($value == $data->$field) {
+            $params['selected'] = 'selected';
+        }
+        $output .= html_writer::tag('option', $value, $params);
+    }
+
+    $output .= html_writer::end_tag('select');
+    $output .= html_writer::end_tag('div');
+
+    return $output;
 }
 
 /**
- * reader_goals_box
+ * reader_goals_menu
  *
  * @uses $CFG
  * @uses $COURSE
@@ -1801,20 +1814,20 @@ function reader_promotion_stop_box($userid, $data, $field, $rand) {
  * @uses $page
  * @uses $sort
  * @param xxx $userid
- * @param xxx $dataoflevel
+ * @param xxx $studentlevel
  * @param xxx $field
  * @param xxx $rand
  * @param xxx $reader
  * @return xxx
  * @todo Finish documenting this function
  */
-function reader_goals_box($userid, $dataoflevel, $field, $rand, $reader) {
+function reader_goals_menu($userid, $studentlevel, $field, $rand, $reader) {
     global $CFG, $COURSE, $DB, $_SESSION, $id, $act, $gid, $sort, $orderby, $page;
 
     $goal = 0;
 
-    if (! empty($dataoflevel->goal)) {
-        $goal = $dataoflevel->goal;
+    if (! empty($studentlevel->goal)) {
+        $goal = $studentlevel->goal;
     }
 
     if (empty($goal)) {
@@ -1827,7 +1840,7 @@ function reader_goals_box($userid, $dataoflevel, $field, $rand, $reader) {
                 }
             }
             if (! empty($data_->level)) {
-                if ($dataoflevel->currentlevel != $data_->level) {
+                if ($studentlevel->currentlevel != $data_->level) {
                     $noneed = true;
                 }
             }
@@ -1840,50 +1853,60 @@ function reader_goals_box($userid, $dataoflevel, $field, $rand, $reader) {
         $goal = $reader->goal;
     }
 
-    if (empty($reader->wordsorpoints) || $reader->wordsorpoints == "words") {
-        $levels = array(0,5000,6000,7000,8000,9000,10000,12500,15000,20000,25000,30000,35000,40000,45000,50000,60000,70000,80000,90000,100000,125000,150000,175000,200000,250000,300000,350000,400000,450000,500000);
-        if (! in_array($goal, $levels) && !empty($goal)) {
-            $i_max = count($levels) - 1;
+    if (isset($studentlevel->$field) && $studentlevel->$field) {
+        $selectedvalue = $studentlevel->$field;
+    } else {
+        $selectedvalue = $goal;
+    }
+
+    if (empty($reader->wordsorpoints) || $reader->wordsorpoints == 'words') {
+        $values = array(
+            0,5000,6000,7000,8000,9000,
+            10000,12500,15000,20000,25000,30000,35000,40000,45000,50000,60000,70000,80000,90000,
+            100000,125000,150000,175000,200000,250000,300000,350000,400000,450000,500000
+        );
+        if (! empty($goal) && ! in_array($goal, $values)) {
+            $temp = array();
+            $i_max = count($values) - 1;
             for ($i=0; $i<=$i_max; $i++) {
-                if ($i < $i_max && $goal < $levels[$i+1] && $goal > $levels[$i]) {
-                    $levels2[] = $goal;
-                    $levels2[] = $levels[$i];
+                if ($i < $i_max && $goal < $values[$i+1] && $goal > $values[$i]) {
+                    $temp[] = $goal;
+                    $temp[] = $values[$i];
                 } else {
-                    $levels2[] = $levels[$i];
+                    $temp[] = $values[$i];
                 }
             }
-            $levels = $levels2;
+            $values = $temp;
         }
     } else {
-        $levels = array(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15);
+        $values = array(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15);
     }
 
-    $patch = "_goal_".$rand."_".$userid;
+    $name = 'goal_'.$rand.'_'.$userid;
 
-    $string = '<div id="changepromote'.$patch.'">';
-    $string .= '<select id="choose_promote'.$patch.'" name="promote'.$patch.'" onchange="request(\'admin.php?ajax=true&\' + this.options[this.selectedIndex].value,\'changepromote'.$patch.'\'); return false;">';
+    $output = '';
+    $output .= html_writer::start_tag('div', array('id' => 'id_'.$name));
 
-    foreach ($levels as $levels_) {
-        $string .= '<option value="a=admin&id='.$id.'&act='.$act.'&set'.$field.'='.$levels_.'&userid='.$userid.'" ';
-        if (! empty($dataoflevel->$field)) {
-			if ($levels_ == $dataoflevel->$field) {
-				$string .= ' selected="selected" ';
-			}
-        } else {
-			if ($levels_ == $goal) {
-				$string .= ' selected="selected" ';
-			}
+    $onchange = "request('admin.php?ajax=true&' + this.options[this.selectedIndex].value, 'id_$name'); return false;";
+    $output .= html_writer::start_tag('select', array('id' => 'id_select_'.$name, 'name' => 'select_'.$name, 'onchange' => $onchange));
+
+    foreach ($values as $value) {
+        $params = array('a' => 'admin', 'id' => $id, 'act' => $act, 'set'.$field => $value, 'userid' => $userid);
+        $params = array('value' => new moodle_url('/mod/reader/admin.php', $params));
+        if ($value==$selectedvalue) {
+            $params['selected'] = "selected";
         }
-        $string .= '>'.$levels_.'</option>';
+        $output .= html_writer::tag('option', $value, $params);
     }
 
-    $string .= '</select></div>';
+    $output .= html_writer::end_tag('select');
+    $output .= html_writer::end_tag('div');
 
-    return $string;
+    return $output;
 }
 
 /**
- * reader_yes_no_box
+ * reader_promo_menu
  *
  * @uses $CFG
  * @uses $COURSE
@@ -1901,32 +1924,35 @@ function reader_goals_box($userid, $dataoflevel, $field, $rand, $reader) {
  * @return xxx
  * @todo Finish documenting this function
  */
-function reader_yes_no_box($userid, $data, $field, $rand) {
+function reader_promo_menu($userid, $data, $field, $rand) {
     global $CFG, $COURSE, $_SESSION, $id, $act, $gid, $sort, $orderby, $page;
 
-    $levels[0] = "Promo";
-    $levels[1] = "NoPromo";
+    $values = array('0' => 'Promo', '1' => 'NoPromo');
+    $name = 'promo_'.$rand.'_'.$userid;
 
-    $patch = "_yesno_".$rand."_".$userid;
+    $output = '';
+    $output .= html_writer::start_tag('div', array('id' => 'id_'.$name));
 
-    $string = '<div id="promoteyesno'.$patch.'">';
-    $string .= '<select id="choose_yesnopromote'.$patch.'" name="yesnopromote'.$patch.'" onchange="request(\'admin.php?ajax=true&\' + this.options[this.selectedIndex].value,\'promoteyesno'.$patch.'\'); return false;">';
+    $onchange = "request('admin.php?ajax=true&' + this.options[this.selectedIndex].value, 'id_$name'); return false;";
+    $output .= html_writer::start_tag('select', array('id' => 'id_select_'.$name, 'name' => 'select_'.$name, 'onchange' => $onchange));
 
-    foreach ($levels as $key => $levels_) {
-        $string .= '<option value="admin.php?a=admin&id='.$id.'&act='.$act.'&'.$field.'='.$key.'&userid='.$userid.'" ';
+    foreach ($values as $key => $value) {
+        $params = array('a' => 'admin', 'id' => $id, 'act' => $act, $field => $key, 'userid' => $userid);
+        $params = array('value' => new moodle_url('/mod/reader/admin.php', $params));
         if ($key == $data->$field) {
-            $string .= ' selected="selected" ';
+            $params['selected'] = "selected";
         }
-        $string .= '>'.$levels_.'</option>';
+        $output .= html_writer::tag('option', $value, $params);
     }
 
-    $string .= '</select></div>';
+    $output .= html_writer::end_tag('select');
+    $output .= html_writer::end_tag('div');
 
-    return $string;
+    return $output;
 }
 
 /**
- * reader_selectip_form
+ * reader_ip_menu
  *
  * @uses $CFG
  * @uses $COURSE
@@ -1943,33 +1969,42 @@ function reader_yes_no_box($userid, $data, $field, $rand) {
  * @return xxx
  * @todo Finish documenting this function
  */
-function reader_selectip_form($userid, $reader) {
+function reader_ip_menu($userid, $reader) {
     global $CFG, $COURSE, $DB, $_SESSION, $id, $act, $gid, $sort, $orderby, $page;
 
-    $levels = array(0=>'No',1=>'Yes');
-
-    $data = $DB->get_record('reader_strict_users_list', array('readerid' => $reader->id, 'userid' => $userid));
-
-    $patch = $userid."_ip_".$reader->id;
-
-    $string = '<div id="selectip'.$patch.'">';
-    $string .= '<select id="choose_ips'.$patch.'" name="ips'.$patch.'" onchange="request(\'admin.php?ajax=true&\' + this.options[this.selectedIndex].value,\'selectip'.$patch.'\'); return false;">';
-
-    foreach ($levels as $key => $value) {
-        $string .= '<option value="admin.php?a=admin&id='.$id.'&act='.$act.'&setip=1&userid='.$userid.'&needip='.$key.'" ';
-        if ($key == $data->needtocheckip) {
-            $string .= ' selected="selected" ';
-        }
-        $string .= '>'.$value.'</option>';
+    $params = array('readerid' => $reader->id, 'userid' => $userid);
+    if ($data = $DB->get_record('reader_strict_users_list', $params)) {
+        $selectedvalue = $data->needtocheckip;
+    } else {
+        $selectedvalue = 0;
     }
 
-    $string .= '</select></div>';
+    $values = array(0 => 'No', 1 => 'Yes');
+    $name = 'selectip_'.$userid.'_'.$reader->id;
 
-    return $string;
+    $output = '';
+    $output .= html_writer::start_tag('div', array('id' => 'id_'.$name));
+
+    $onchange = "request('admin.php?ajax=true&' + this.options[this.selectedIndex].value, 'id_$name'); return false;";
+    $output .= html_writer::start_tag('select', array('id' => 'id_select_'.$name, 'name' => 'select_'.$name, 'onchange' => $onchange));
+
+    foreach ($values as $key => $value) {
+        $params = array('a' => 'admin', 'id' => $id, 'act' => $act, 'setip' => 1, 'userid' => $userid, 'needip' => $key);
+        $params = array('value' => new moodle_url('/mod/reader/admin.php', $params));
+        if ($key == $selectedvalue) {
+            $params['selected'] = "selected";
+        }
+        $output .= html_writer::tag('option', $value, $params);
+    }
+
+    $output .= html_writer::end_tag('select');
+    $output .= html_writer::end_tag('div');
+
+    return $output;
 }
 
 /**
- * reader_select_difficulty_form
+ * reader_difficulty_menu
  *
  * @uses $CFG
  * @uses $COURSE
@@ -1987,32 +2022,35 @@ function reader_selectip_form($userid, $reader) {
  * @return xxx
  * @todo Finish documenting this function
  */
-function reader_select_difficulty_form($difficulty, $bookid, $reader) {
+function reader_difficulty_menu($difficulty, $bookid, $reader) {
     global $CFG, $COURSE, $DB, $_SESSION, $id, $act, $gid, $sort, $orderby, $page;
 
-    $levels = array(0,1,2,3,4,5,6,7,8,9,10,12,13,14);
+    $values = array(0,1,2,3,4,5,6,7,8,9,10,12,13,14);
+    $name = 'difficulty_'.$bookid.'_'.$difficulty;
 
-    $patch = $bookid."_".$difficulty;
+    $output = '';
+    $output .= html_writer::start_tag('div', array('id' => 'id_'.$name));
 
-    $string = '<div id="difficulty_'.$patch.'">';
+    $onchange = "request('admin.php?ajax=true&' + this.options[this.selectedIndex].value, 'id_$name'); return false;";
+    $output .= html_writer::start_tag('select', array('id' => 'id_select_'.$name, 'name' => 'select_'.$name, 'onchange' => $onchange));
 
-    $string .= '<select id="choose_difficulty_'.$patch.'" name="difficulty_'.$patch.'" onchange="request(\'admin.php?ajax=true&\' + this.options[this.selectedIndex].value,\'difficulty_'.$patch.'\'); return false;">';
-
-    foreach ($levels as $levels_) {
-        $string .= '<option value="admin.php?a=admin&id='.$id.'&act='.$act.'&difficulty='.$levels_.'&bookid='.$bookid.'&slevel='.$difficulty.'" ';
-        if ($levels_ == $difficulty) {
-            $string .= ' selected="selected" ';
+    foreach ($values as $value) {
+        $params = array('a' => 'admin', 'id' => $id, 'act' => $act, 'difficulty' => $value, 'bookid' => $bookid, 'slevel' => $difficulty);
+        $params = array('value' => new moodle_url('/mod/reader/admin.php', $params));
+        if ($value == $difficulty) {
+            $params['selected'] = "selected";
         }
-        $string .= '>'.$levels_.'</option>';
+        $output .= html_writer::tag('option', $value, $params);
     }
 
-    $string .= '</select></div>';
+    $output .= html_writer::end_tag('select');
+    $output .= html_writer::end_tag('div');
 
-    return $string;
+    return $output;
 }
 
 /**
- * reader_select_length_form
+ * reader_length_menu
  *
  * @uses $CFG
  * @uses $COURSE
@@ -2029,29 +2067,35 @@ function reader_select_difficulty_form($difficulty, $bookid, $reader) {
  * @return xxx
  * @todo Finish documenting this function
  */
-function reader_select_length_form($length, $bookid, $reader) {
+function reader_length_menu($length, $bookid, $reader) {
     global $CFG, $COURSE, $_SESSION, $id, $act, $gid, $sort, $orderby, $page;
 
-    //$levels = array(0.50,0.60,0.70,0.80,0.90,1.00,1.10,1.20,1.30,1.40,1.50,1.60,1.70,1.80,1.90,2.00);
-    $levels = array(0.50,0.60,0.70,0.80,0.90,1.00,1.10,1.20,1.30,1.40,1.50,1.60,1.70,1.80,1.90,2.00,3.00,4.00,5.00,6.00,7.00,8.00,9.00,10.00,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100,110,120,130,140,150,160,170,175,180,190,200,225,250,275,300,350,400);
+    $values = array(
+        0.50,0.60,0.70,0.80,0.90,1.00,1.10,1.20,1.30,1.40,1.50,1.60,1.70,1.80,1.90,2.00,3.00,4.00,5.00,6.00,7.00,8.00,9.00,10.00,
+        15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100,110,120,130,140,150,160,170,175,180,190,200,225,250,275,300,350,400
+    );
 
-    $patch = $bookid."_".$length;
+    $name = 'length_'.$bookid.'_'.$length;
 
-    $string = '<div id="length_'.$patch.'">';
+    $output = '';
+    $output .= html_writer::start_tag('div', array('id' => 'id_'.$name));
 
-    $string .= '<select id="choose_length_'.$patch.'" name="length_'.$patch.'" onchange="request(\'admin.php?ajax=true&\' + this.options[this.selectedIndex].value,\'length_'.$patch.'\'); return false;">';
+    $onchange = "request('admin.php?ajax=true&' + this.options[this.selectedIndex].value, 'id_$name'); return false;";
+    $output .= html_writer::start_tag('select', array('id' => 'id_select_'.$name, 'name' => 'select_'.$name, 'onchange' => $onchange));
 
-    foreach ($levels as $levels_) {
-        $string .= '<option value="admin.php?a=admin&id='.$id.'&act='.$act.'&length='.$levels_.'&bookid='.$bookid.'&slevel='.$length.'" ';
-        if ($levels_ == $length) {
-            $string .= ' selected="selected" ';
+    foreach ($values as $value) {
+        $params = array('a' => 'admin', 'id' => $id, 'act' => $act, 'length' => $value, 'bookid' => $bookid, 'slevel' => $length);
+        $params = array('value' => new moodle_url('/mod/reader/admin.php', $params));
+        if ($value == $length) {
+            $params['selected'] = "selected";
         }
-        $string .= '>'.$levels_.'</option>';
+        $output .= html_writer::tag('option', $value, $params);
     }
 
-    $string .= '</select></div>';
+    $output .= html_writer::end_tag('select');
+    $output .= html_writer::end_tag('div');
 
-    return $string;
+    return $output;
 }
 
 /**

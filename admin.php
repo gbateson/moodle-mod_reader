@@ -40,6 +40,7 @@ require_once($CFG->dirroot.'/lib/tablelib.php');
 require_once($CFG->dirroot.'/question/editlib.php');
 
 $id                     = optional_param('id', 0, PARAM_INT);
+$r                      = optional_param('r',  0, PARAM_INT);
 $a                      = optional_param('a', NULL, PARAM_CLEAN);
 $act                    = optional_param('act', NULL, PARAM_CLEAN);
 $quizzesid              = optional_param('quizzesid', NULL, PARAM_CLEAN);
@@ -422,24 +423,26 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $ajax == 'true' 
 
 if (has_capability('mod/reader:addinstance', $contextmodule) && ($changelevel || $changelevel == 0) && $slevel) {
     $params = array('userid' => $userid, 'readerid' => $reader->id);
-    if ($DB->get_record('reader_levels', $params)) {
-        $DB->set_field('reader_levels', 'time', time(), $params);
-        $DB->set_field('reader_levels',  $slevel,  $changelevel, $params);
+    if ($studentlevel = $DB->get_record('reader_levels', $params)) {
+        $studentlevel->time = time();
+        $studentlevel->$slevel = $changelevel;
+        $DB->update_record('reader_levels', $studentlevel);
     } else {
-        $data = new stdClass();
-        $data->userid = $userid;
-        $data->startlevel = $changelevel;
-        $data->currentlevel = $changelevel;
-        $data->readerid = $reader->id;
-        $data->time = time();
-
-        $DB->insert_record('reader_levels', $data);
+        $studentlevel = (object)array(
+            'userid'        => $userid,
+            'startlevel'    => $changelevel,
+            'currentlevel'  => $changelevel,
+            'readerid'      => $reader->id,
+            'nopromote'     => 0,
+            'promotionstop' => 99,
+            'goal'          => null,
+            'time'          => time()
+        );
+        $studentlevel->id = $DB->insert_record('reader_levels', $studentlevel);
     }
     reader_add_to_log($course->id, 'reader', substr("AA-Student Level Changed ({$userid} {$slevel} to {$changelevel})", 0, 39), 'admin.php?id='.$id, $cm->instance);
     if ($ajax == 'true') {
-        $studentlevel = $DB->get_record('reader_levels', array('userid' => $userid,  'readerid' => $reader->id));
-        echo reader_selectlevel_form($userid, $studentlevel, $slevel);
-        //echo "set {$changelevel}";
+        echo reader_level_menu($userid, $studentlevel, $slevel);
         die;
     }
 }
@@ -497,7 +500,7 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $act == 'changer
   }
   if ($ajax == 'true') {
       $book = $DB->get_record('reader_books', array('id' => $bookid));
-      echo reader_select_difficulty_form(reader_get_reader_difficulty($reader, $bookid), $book->id, $reader);
+      echo reader_difficulty_menu(reader_get_reader_difficulty($reader, $bookid), $book->id, $reader);
       die;
   }
 }
@@ -516,7 +519,7 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $act == 'changer
   }
   if ($ajax == 'true') {
       $book = $DB->get_record('reader_books', array('id' => $bookid));
-      echo reader_select_length_form(reader_get_reader_length($reader, $bookid), $book->id, $reader);
+      echo reader_length_menu(reader_get_reader_length($reader, $bookid), $book->id, $reader);
       die;
   }
 }
@@ -529,83 +532,118 @@ if (has_capability('mod/reader:manageattempts', $contextmodule) && $viewasstuden
 }
 
 if (has_capability('mod/reader:addinstance', $contextmodule) && $act == 'studentslevels' && $setgoal) {
-    if ($data = $DB->get_record('reader_levels', array('userid' => $userid, 'readerid' => $reader->id))) {
-        $DB->set_field('reader_levels',  'goal',  $setgoal, array('id' => $data->id));
+    $params = array('userid' => $userid, 'readerid' => $reader->id);
+    if ($studentlevel = $DB->get_record('reader_levels', $params)) {
+        $studentlevel->goal = $setgoal;
+        $DB->update_record('reader_levels',  $studentlevel);
     } else {
-        $data = new stdClass();
-        $data->userid = $userid;
-        $data->startlevel = 0;
-        $data->currentlevel = 0;
-        $data->readerid = $reader->id;
-        $data->goal = $setgoal;
-        $data->time = time();
-
-        $DB->insert_record('reader_levels', $data);
+        $studentlevel = (object)array(
+            'userid'        => $userid,
+            'startlevel'    => 0,
+            'currentlevel'  => 0,
+            'readerid'      => $reader->id,
+            'nopromote'     => 0,
+            'promotionstop' => 99,
+            'goal'          => $setgoal,
+            'time'          => time()
+        );
+        $studentlevel->id = $DB->insert_record('reader_levels', $studentlevel);
     }
     reader_add_to_log($course->id, 'reader', "AA-Change Student Goal ({$setgoal})", 'admin.php?id='.$id, $cm->instance);
     if ($ajax == 'true') {
-        $data = $DB->get_record('reader_levels', array('id' => $data->id));
-        echo reader_goals_box($userid, $data, 'goal', 3, $reader);
+        echo reader_goals_menu($userid, $studentlevel, 'goal', 3, $reader);
         die;
     }
 }
 
 if (has_capability('mod/reader:addinstance', $contextmodule) && isset($nopromote) && $userid) {
-    if ($DB->get_record('reader_levels', array('userid' => $userid, 'readerid' => $reader->id))) {
-        $DB->set_field('reader_levels',  'nopromote',  $nopromote, array('userid' => $userid,  'readerid' => $reader->id));
+    $params = array('userid' => $userid, 'readerid' => $reader->id);
+    if ($studentlevel = $DB->get_record('reader_levels', $params)) {
+        $studentlevel->nopromote = $nopromote;
+        $DB->update_record('reader_levels',  $studentlevel);
+    } else {
+        $studentlevel = (object)array(
+            'userid'        => $userid,
+            'startlevel'    => 0,
+            'currentlevel'  => 0,
+            'readerid'      => $reader->id,
+            'nopromote'     => $nopromote,
+            'promotionstop' => 99,
+            'goal'          => null,
+            'time'          => time()
+        );
+        $studentlevel->id = $DB->insert_record('reader_levels', $studentlevel);
     }
     reader_add_to_log($course->id, 'reader', substr("AA-Student NoPromote Changed ({$userid} set to {$nopromote})",0,39), 'admin.php?id='.$id, $cm->instance);
     if ($ajax == 'true') {
-        $studentlevel = $DB->get_record('reader_levels', array('userid' => $userid,  'readerid' => $reader->id));
-        echo reader_yes_no_box($userid, $studentlevel, 'nopromote', 1);
+        echo reader_promo_menu($userid, $studentlevel, 'nopromote', 1);
         die;
     }
 }
 
 if (has_capability('mod/reader:addinstance', $contextmodule) && isset($promotionstop) && $userid) {
-    if ($DB->get_record('reader_levels', array('userid' => $userid, 'readerid' => $reader->id))) {
-        $DB->set_field('reader_levels',  'promotionstop',  $promotionstop, array('userid' => $userid,  'readerid' => $reader->id));
+    $params = array('userid' => $userid, 'readerid' => $reader->id);
+    if ($studentlevel = $DB->get_record('reader_levels', $params)) {
+        $studentlevel->promotionstop = $promotionstop;
+        $DB->update_record('reader_levels', $studentlevel);
+    } else {
+        $studentlevel = (object)array(
+            'userid'        => $userid,
+            'startlevel'    => 0,
+            'currentlevel'  => 0,
+            'readerid'      => $reader->id,
+            'nopromote'     => 0,
+            'promotionstop' => $promotionstop,
+            'goal'          => null,
+            'time'          => time()
+        );
+        $studentlevel->id = $DB->insert_record('reader_levels', $level);
     }
     reader_add_to_log($course->id, 'reader', substr("AA-Student Promotion Stop Changed ({$userid} set to {$promotionstop})",0,39), 'admin.php?id='.$id, $cm->instance);
     if ($ajax == 'true') {
-        //echo "set {$promotionstop}";
-        $studentlevel = $DB->get_record('reader_levels', array('userid' => $userid,  'readerid' => $reader->id));
-        echo reader_promotion_stop_box($userid, $studentlevel, 'promotionstop', 2);
+        echo reader_promotionstop_menu($userid, $studentlevel, 'promotionstop', 2);
         die;
     }
 }
 
 if (has_capability('mod/reader:addinstance', $contextmodule) && $setip) {
-    if ($DB->get_record('reader_strict_users_list', array('userid' => $userid, 'readerid' => $reader->id))) {
-        $DB->set_field('reader_strict_users_list',  'needtocheckip',  $needip, array('userid' => $userid,  'readerid' => $reader->id));
+    $params = array('userid' => $userid, 'readerid' => $reader->id);
+    if ($users_list = $DB->get_record('reader_strict_users_list', $params)) {
+        $users_list->needtocheckip = $needip;
+        $DB->update_record('reader_strict_users_list', $users_list);
     } else {
-        $data = new stdClass();
-        $data->userid = $userid;
-        $data->readerid = $reader->id;
-        $data->needtocheckip = $needip;
-
-        $DB->insert_record('reader_strict_users_list', $data);
+        $users_list = (object)array(
+            'userid' => $userid,
+            'readerid' => $reader->id,
+            'needtocheckip' => $needip
+        );
+        $users_list->id = $DB->insert_record('reader_strict_users_list', $users_list);
     }
     reader_add_to_log($course->id, 'reader', substr("AA-Student check ip Changed ({$userid} {$needip})",0,39), 'admin.php?id='.$id, $cm->instance);
     if ($ajax == 'true') {
-        echo reader_selectip_form($userid, $reader);
+        echo reader_ip_menu($userid, $reader);
         die;
     }
 }
 
 if (has_capability('mod/reader:addinstance', $contextmodule) && $changeallstartlevel >= 0) {
     foreach ($coursestudents as $coursestudent) {
-        if ($DB->get_record('reader_levels', array('userid' => $coursestudent->id, 'readerid' => $reader->id))) {
-            $DB->set_field('reader_levels',  'startlevel',  $changeallstartlevel, array('userid' => $coursestudent->id,  'readerid' => $reader->id));
+        $params = array('userid' => $coursestudent->id, 'readerid' => $reader->id);
+        if ($studentlevel = $DB->get_record('reader_levels', $params)) {
+            $studentlevel->startlevel = $changeallstartlevel;
+            $DB->update_record('reader_levels', $studentlevel);
         } else {
-            $data = new stdClass();
-            $data->startlevel = $changeallstartlevel;
-            $data->currentlevel = $changeallstartlevel;
-            $data->userid = $coursestudent->id;
-            $data->readerid = $reader->id;
-            $data->time = time();
-
-            $DB->insert_record('reader_levels', $data);
+            $studentlevel = (object)array(
+                'userid'        => $coursestudent->id,
+                'startlevel'    => $changeallstartlevel,
+                'currentlevel'  => $changeallstartlevel,
+                'readerid'      => $reader->id,
+                'nopromote'     => 0,
+                'promotionstop' => 99,
+                'goal'          => null,
+                'time'          => time()
+            );
+            $studentlevel->id = $DB->insert_record('reader_levels', $studentlevel);
         }
         reader_add_to_log($course->id, 'reader', substr("AA-changeallstartlevel userid: {$coursestudent->id}, startlevel={$changeallstartlevel}",0,39), 'admin.php?id='.$id, $cm->instance);
     }
@@ -613,27 +651,50 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $changeallstartl
 
 if (has_capability('mod/reader:addinstance', $contextmodule) &&  $changeallcurrentlevel >= 0) {
     foreach ($coursestudents as $coursestudent) {
-        if ($DB->get_record('reader_levels', array('userid' => $coursestudent->id, 'readerid' => $reader->id))) {
-            $DB->set_field('reader_levels',  'currentlevel',  $changeallcurrentlevel, array('userid' => $coursestudent->id,  'readerid' => $reader->id));
+        $params = array('userid' => $coursestudent->id, 'readerid' => $reader->id);
+        if ($studentlevel = $DB->get_record('reader_levels', $params)) {
+            $studentlevel->currentlevel = $changeallcurrentlevel;
+            $DB->update_record('reader_levels', $studentlevel);
         } else {
-            $data = new stdClass();
-            $data->startlevel = $changeallcurrentlevel;
-            $data->currentlevel = $changeallcurrentlevel;
-            $data->userid = $coursestudent->id;
-            $data->readerid = $reader->id;
-            $data->time = time();
-
-            $DB->insert_record('reader_levels', $data);
+            $studentlevel = (object)array(
+                'userid'        => $coursestudent->id,
+                'startlevel'    => $changeallcurrentlevel,
+                'currentlevel'  => $changeallcurrentlevel,
+                'readerid'      => $reader->id,
+                'nopromote'     => 0,
+                'promotionstop' => 99,
+                'goal'          => null,
+                'time'          => time()
+            );
+            $studentlevel->id = $DB->insert_record('reader_levels', $studentlevel);
         }
         reader_add_to_log($course->id, 'reader', substr("AA-changeallcurrentlevel userid: {$coursestudent->id}, currentlevel={$changeallcurrentlevel}",0,39), 'admin.php?id='.$id, $cm->instance);
     }
 }
 
 if (has_capability('mod/reader:addinstance', $contextmodule) && $changeallpromo) {
+    if (strtolower($changeallpromo) == 'promo') {
+        $nopromote = 0;
+    } else {
+        $nopromote = 1;
+    }
     foreach ($coursestudents as $coursestudent) {
-        if ($DB->get_record('reader_levels', array('userid' => $coursestudent->id, 'readerid' => $reader->id))) {
-            if (strtolower($changeallpromo) == 'promo') {$nopromote = 0;} else {$nopromote = 1;}
-            $DB->set_field('reader_levels',  'nopromote',  $nopromote, array('userid' => $coursestudent->id,  'readerid' => $reader->id));
+        $params = array('userid' => $coursestudent->id, 'readerid' => $reader->id);
+        if ($studentlevel = $DB->get_record('reader_levels', $params)) {
+            $studentlevel->nopromote = $nopromote;
+            $DB->update_record('reader_levels', $studentlevel);
+        } else {
+            $studentlevel = (object)array(
+                'userid'        => $coursestudent->id,
+                'startlevel'    => 0,
+                'currentlevel'  => 0,
+                'readerid'      => $reader->id,
+                'nopromote'     => $nopromote,
+                'promotionstop' => 99,
+                'goal'          => null,
+                'time'          => time()
+            );
+            $studentlevel->id = $DB->insert_record('reader_levels', $studentlevel);
         }
         reader_add_to_log($course->id, 'reader', substr("AA-Student Promotion Stop Changed ({$coursestudent->id} set to {$promotionstop})",0,39), 'admin.php?id='.$id, $cm->instance);
     }
@@ -641,8 +702,22 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $changeallpromo)
 
 if (has_capability('mod/reader:addinstance', $contextmodule) && $changeallstoppromo >= 0 && $gid) {
     foreach ($coursestudents as $coursestudent) {
-        if ($DB->get_record('reader_levels', array('userid' => $coursestudent->id, 'readerid' => $reader->id))) {
-            $DB->set_field('reader_levels',  'promotionstop',  $changeallstoppromo, array('userid' => $coursestudent->id,  'readerid' => $reader->id));
+        $params = array('userid' => $coursestudent->id, 'readerid' => $reader->id);
+        if ($studentlevel = $DB->get_record('reader_levels', $params)) {
+            $studentlevel->promotionstop = $changeallstoppromo;
+            $DB->update_record('reader_levels', $studentlevel);
+        } else {
+            $studentlevel = (object)array(
+                'userid'        => $coursestudent->id,
+                'startlevel'    => 0,
+                'currentlevel'  => 0,
+                'readerid'      => $reader->id,
+                'nopromote'     => 0,
+                'promotionstop' => $changeallstoppromo,
+                'goal'          => null,
+                'time'          => time()
+            );
+            $studentlevel->id = $DB->insert_record('reader_levels', $studentlevel);
         }
         reader_add_to_log($course->id, 'reader', substr("AA-Student NoPromote Changed ({$coursestudent->id} set to {$changeallstoppromo})",0,39), 'admin.php?id='.$id, $cm->instance);
     }
@@ -650,18 +725,22 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $changeallstoppr
 
 if (has_capability('mod/reader:addinstance', $contextmodule) && $changeallcurrentgoal) {
     foreach ($coursestudents as $coursestudent) {
-        if ($data = $DB->get_record('reader_levels', array('userid' => $coursestudent->id, 'readerid' => $reader->id))) {
-            $DB->set_field('reader_levels',  'goal',  $changeallcurrentgoal, array('id' => $data->id));
+        $params = array('userid' => $coursestudent->id, 'readerid' => $reader->id);
+        if ($studentlevel = $DB->get_record('reader_levels', $params)) {
+            $studentlevel->goal = $changeallcurrentgoal;
+            $DB->update_record('reader_levels',  $studentlevel);
         } else {
-            $data = new stdClass();
-            $data->userid = $coursestudent->id;
-            $data->startlevel = 0;
-            $data->currentlevel = 0;
-            $data->readerid = $reader->id;
-            $data->goal = $changeallcurrentgoal;
-            $data->time = time();
-
-            $DB->insert_record('reader_levels', $data);
+            $studentlevel = (object)array(
+                'userid'        => $coursestudent->id,
+                'startlevel'    => 0,
+                'currentlevel'  => 0,
+                'readerid'      => $reader->id,
+                'nopromote'     => 0,
+                'promotionstop' => 99,
+                'goal'          => changeallcurrentgoal,
+                'time'          => time()
+            );
+            $studentlevel->id = $DB->insert_record('reader_levels', $studentlevel);
         }
         reader_add_to_log($course->id, 'reader', substr("AA-goal userid: {$coursestudent->id}, goal={$changeallcurrentgoal}",0,39), 'admin.php?id='.$id, $cm->instance);
     }
@@ -2220,23 +2299,26 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
 
     foreach ($coursestudents as $coursestudent) {
         if (reader_check_search_text($searchtext, $coursestudent)) {
-            $readerlevel = $DB->get_record('reader_levels', array('userid' => $coursestudent->id, 'readerid' => $reader->id));
-            $picture = $output->user_picture($coursestudent,array($course->id, true, 0, true));
 
-            if (empty($readerlevel)) {
-                $readerlevel = (object)array(
+            $params = array('userid' => $coursestudent->id, 'readerid' => $reader->id);
+            if ($studentlevel = $DB->get_record('reader_levels', $params)) {
+                // do nothing
+            } else {
+                $studentlevel = (object)array(
                     'id'            => 0,
                     'userid'        => $coursestudent->id,
                     'readerid'      => $reader->id,
                     'startlevel'    => 0,
                     'currentlevel'  => 0,
                     'nopromote'     => 0,
-                    'promotionstop' => 0,
+                    'promotionstop' => 99,
                     'goal'          => null,
                     'time'          => time()
                 );
+                $studentlevel->id = $DB->insert_record('reader_levels', $studentlevel);
             }
 
+            $picture = $output->user_picture($coursestudent, array($course->id, true, 0, true));
             if (has_capability('mod/reader:manageattempts', $contextmodule)) {
                 $linkfullname = reader_fullname_link_viewasstudent($coursestudent, $id, $excel);
             } else {
@@ -2247,14 +2329,14 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
                 $picture,
                 reader_username_link($coursestudent, $course->id, $excel),
                 $linkfullname,
-                reader_selectlevel_form($coursestudent->id, $readerlevel, 'startlevel'),
-                reader_selectlevel_form($coursestudent->id, $readerlevel, 'currentlevel'),
-                reader_yes_no_box($coursestudent->id, $readerlevel, 'nopromote', 1),
-                reader_promotion_stop_box($coursestudent->id, $readerlevel, 'promotionstop', 2),
-                reader_goals_box($coursestudent->id, $readerlevel, 'goal', 3, $reader)
+                reader_level_menu($coursestudent->id, $studentlevel, 'startlevel'),
+                reader_level_menu($coursestudent->id, $studentlevel, 'currentlevel'),
+                reader_promo_menu($coursestudent->id, $studentlevel, 'nopromote', 1),
+                reader_promotionstop_menu($coursestudent->id, $studentlevel, 'promotionstop', 2),
+                reader_goals_menu($coursestudent->id, $studentlevel, 'goal', 3, $reader)
             );
             if ($reader->individualstrictip == 1) {
-                $cells[] = reader_selectip_form($coursestudent->id, $reader);
+                $cells[] = reader_ip_menu($coursestudent->id, $reader);
             }
             $table->data[] = new html_table_row($cells);
         }
@@ -2413,8 +2495,8 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
             $leveltitle     = reader_ajax_textbox_title($has_capability, $book, 'level', $id, $act);
             $publishertitle = reader_ajax_textbox_title($has_capability, $book, 'publisher', $id, $act);
 
-            $difficultyform = trim(reader_select_difficulty_form(reader_get_reader_difficulty($reader, $book->id), $book->id, $reader));
-            $lengthform = trim(reader_select_length_form(reader_get_reader_difficulty($reader, $book->id), $book->id, $reader));
+            $difficultyform = trim(reader_difficulty_menu(reader_get_reader_difficulty($reader, $book->id), $book->id, $reader));
+            $lengthform = trim(reader_length_menu(reader_get_reader_difficulty($reader, $book->id), $book->id, $reader));
 
             if ($reader->bookinstances == 1) {
                 $table->data[] = new html_table_row(array($book->name, $publishertitle, $leveltitle, $difficultyform, $lengthform));
