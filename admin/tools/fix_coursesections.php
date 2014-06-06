@@ -281,6 +281,9 @@ function reader_fixcoursesections($courseid) {
             $cmids = array_filter($cmids); // remove blanks
             $names = array();
             foreach ($cmids as $cmid)  {
+                if (empty($modinfo->cms[$cmid])) {
+                    continue; // shouldn't happen !!
+                }
                 if (empty($modinfo->cms[$cmid]->name)) {
                     $name = ''; // shouldn't happen !!
                 } else {
