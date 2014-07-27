@@ -31,262 +31,246 @@ defined('MOODLE_INTERNAL') || die;
 /** Include required files */
 require_once($CFG->dirroot.'/mod/reader/lib.php');
 
-$readercfg = get_config('reader');
-$defaults = array(
-    'attemptsofday'       => 0,
-    'bookcovers'          => 0,
-    'cheated_message'     => '',
-    'checkbox'            => 0,
-    'editingteacherrole'  => 0,
-    'levelcheck'          => 0,
-    'not_cheated_message' => '',
-    'percentforreading'   => 0,
-    'pointreport'         => 0,
-    'questionmark'        => 0,
-    'quiznextlevel'       => 0,
-    'quizonnextlevel'     => 0,
-    'quizpreviouslevel'   => 0,
-    'quiztimeout'         => 0,
-    'reportwordspoints'   => 0,
-    'sendmessagesaboutcheating' => 0,
-    'update'              => 0,
-    'usecourse'           => 0,
-    'wordsprogressbar'    => 0,
-);
-foreach ($defaults as $name => $value) {
-    if (! isset($readercfg->$name)) {
-        $readercfg->$name = $value;
-    }
-}
-
-// create new setting page ($text = title)
-$text = get_string('modulename', 'reader');
-$readersettings = new admin_settingpage('modsettingreader', $text, 'moodle/site:config');
+$plugin = 'mod_reader';
+$config = reader_get_config_defaults();
 
 // Introductory explanation that all the settings are defaults for the add quiz form.
-$readersettings->add(new admin_setting_heading('configintro', '', get_string('configintro', 'reader')));
+$name = 'configintro';
+$setting = new admin_setting_heading($name, '', get_string($name, $plugin));
+$settings->add($setting);
 
-// quiztimeout
-$name = 'reader/quiztimeout';
-$text = get_string('quiztimeout', 'reader');
-$help = get_string('configquiztimeout', 'reader');
-$default = array('value' => $readercfg->quiztimeout, 'fix' => false);
-$readersettings->add(new admin_setting_configtext_with_advanced($name, $text, $help, $default, PARAM_INT));
+// quiztimelimit
+$name = 'quiztimelimit';
+$text = get_string($name, $plugin);
+$help = get_string('config'.$name, $plugin);
+if (class_exists('admin_setting_configduration')) {
+    // Moodle >= 2.4
+    $default = array('v' => $config->quiztimelimit, 'u' => 1, 'adv' => false);
+    $setting = new admin_setting_configduration("$plugin/$name", $text, $help, $default, 60);
+    $setting->set_advanced_flag_options(admin_setting_flag::ENABLED, !empty($default['adv']));
+} else {
+    // Moodle <= 2.3
+    $default = array('value' => $config->quiztimelimit, 'adv' => false);
+    $setting = new admin_setting_configtext_with_advanced("$plugin/$name", $text, $help, $default, PARAM_INT);
+}
+$settings->add($setting);
 
 // editingteacherrole
-$name = 'reader/editingteacherrole';
-$text = get_string('editingteacherrole', 'reader');
-$help = get_string('configeditingteacherrole', 'reader');
-$default = array('value' => $readercfg->editingteacherrole, 'fix' => false);
+$name = 'editingteacherrole';
+$text = get_string($name, $plugin);
+$help = get_string('config'.$name, $plugin);
+$default = array('value' => $config->editingteacherrole, 'adv' => false);
 $options = array(
     0 => get_string('allownot'),
     1 => get_string('allow')
 );
-$readersettings->add(new admin_setting_configselect_with_advanced($name, $text, $help, $default, $options));
+$setting = new admin_setting_configselect_with_advanced("$plugin/$name", $text, $help, $default, $options);
+$settings->add($setting);
 
 // pointreport
-$name = 'reader/pointreport';
-$text = get_string('pointreport', 'reader');
-$help = get_string('configpointreport', 'reader');
-$default = array('value' => $readercfg->pointreport, 'fix' => false);
+$name = 'pointreport';
+$text = get_string($name, $plugin);
+$help = get_string('config'.$name, $plugin);
+$default = array('value' => $config->pointreport, 'adv' => false);
 $options = array(
     0 => get_string('no'),
     1 => get_string('yes')
 );
-$readersettings->add(new admin_setting_configselect_with_advanced($name, $text, $help, $default, $options));
+$setting = new admin_setting_configselect_with_advanced("$plugin/$name", $text, $help, $default, $options);
+$settings->add($setting);
 
 // levelcheck
-$name = 'reader/levelcheck';
-$text = get_string('levelcheck', 'reader');
-$help = get_string('configlevelcheck', 'reader');
-$default = array('value' => $readercfg->levelcheck, 'fix' => false);
+$name = 'levelcheck';
+$text = get_string($name, $plugin);
+$help = get_string('config'.$name, $plugin);
+$default = array('value' => $config->levelcheck, 'adv' => false);
 $options = array(
     0 => get_string('no'),
     1 => get_string('yes')
 );
-$readersettings->add(new admin_setting_configselect_with_advanced($name, $text, $help, $default, $options));
+$setting = new admin_setting_configselect_with_advanced("$plugin/$name", $text, $help, $default, $options);
+$settings->add($setting);
 
 // checkbox
-$name = 'reader/checkbox';
-$text = get_string('checkbox', 'reader');
-$help = get_string('configcheckbox', 'reader');
-$default = array('value' => $readercfg->checkbox, 'fix' => false);
+$name = 'checkbox';
+$text = get_string($name, $plugin);
+$help = get_string('config'.$name, $plugin);
+$default = array('value' => $config->checkbox, 'adv' => false);
 $options = array(
     0 => get_string('no'),
     1 => get_string('yes')
 );
-$readersettings->add(new admin_setting_configselect_with_advanced($name, $text, $help, $default, $options));
+$setting = new admin_setting_configselect_with_advanced("$plugin/$name", $text, $help, $default, $options);
+$settings->add($setting);
 
 // percentforreading
-$name = 'reader/percentforreading';
-$text = get_string('percentforreading', 'reader');
-$help = get_string('configpercentforreading', 'reader');
-$default = array('value' => $readercfg->percentforreading, 'fix' => false);
-$readersettings->add(new admin_setting_configtext_with_advanced($name, $text, $help, $default, PARAM_INT));
+$name = 'percentforreading';
+$text = get_string($name, $plugin);
+$help = get_string('config'.$name, $plugin);
+$default = array('value' => $config->percentforreading, 'adv' => false);
+$setting = new admin_setting_configtext_with_advanced("$plugin/$name", $text, $help, $default, PARAM_INT);
+$settings->add($setting);
 
 // questionmark
-$name = 'reader/questionmark';
-$text = get_string('questionmark', 'reader');
-$help = get_string('configquestionmark', 'reader');
-$default = array('value' => $readercfg->questionmark, 'fix' => false);
+$name = 'questionmark';
+$text = get_string($name, $plugin);
+$help = get_string('config'.$name, $plugin);
+$default = array('value' => $config->questionmark, 'adv' => false);
 $options = array(
     0 => get_string('no'),
     1 => get_string('yes')
 );
-$readersettings->add(new admin_setting_configselect_with_advanced($name, $text, $help, $default, $options));
+$setting = new admin_setting_configselect_with_advanced("$plugin/$name", $text, $help, $default, $options);
+$settings->add($setting);
 
 // bookcovers
-$name = 'reader/bookcovers';
-$text = get_string('bookcovers', 'reader');
-$help = get_string('configbookcovers', 'reader');
-$default = array('value' => $readercfg->bookcovers, 'fix' => false);
+$name = 'bookcovers';
+$text = get_string($name, $plugin);
+$help = get_string('config'.$name, $plugin);
+$default = array('value' => $config->bookcovers, 'adv' => false);
 $options = array(
     0 => get_string('no'),
     1 => get_string('yes')
 );
-$readersettings->add(new admin_setting_configselect_with_advanced($name, $text, $help, $default, $options));
+$setting = new admin_setting_configselect_with_advanced("$plugin/$name", $text, $help, $default, $options);
+$settings->add($setting);
 
 // reportwordspoints
-$name = 'reader/reportwordspoints';
-$text = get_string('reportwordspoints', 'reader');
-$help = get_string('configreportwordspoints', 'reader');
-$default = array('value' => $readercfg->reportwordspoints, 'fix' => false);
+$name = 'reportwordspoints';
+$text = get_string($name, $plugin);
+$help = get_string('config'.$name, $plugin);
+$default = array('value' => $config->reportwordspoints, 'adv' => false);
 $options = array(
     0 => 'Show Word Count only',
     1 => 'Show Points only',
     2 => 'Show both Points and Word Count'
 );
-$readersettings->add(new admin_setting_configselect_with_advanced($name, $text, $help, $default, $options));
+$setting = new admin_setting_configselect_with_advanced("$plugin/$name", $text, $help, $default, $options);
+$settings->add($setting);
 
 // wordsprogressbar
-$name = 'reader/wordsprogressbar';
-$text = get_string('wordsprogressbar', 'reader');
-$help = get_string('configwordsprogressbar', 'reader');
-$default = array('value' => $readercfg->wordsprogressbar, 'fix' => false);
+$name = 'wordsprogressbar';
+$text = get_string($name, $plugin);
+$help = get_string('config'.$name, $plugin);
+$default = array('value' => $config->wordsprogressbar, 'adv' => false);
 $options = array(
     0 => get_string('hide'),
     1 => get_string('show')
 );
-$readersettings->add(new admin_setting_configselect_with_advanced($name, $text, $help, $default, $options));
-
-// attemptsofday
-$name = 'reader/attemptsofday';
-$text = get_string('attemptsofday', 'reader');
-$help = get_string('configattemptsofday', 'reader');
-$default = array('value' => $readercfg->attemptsofday, 'fix' => false);
-$options = array(
-    0 => 'Off',
-    1 => '1',
-    2 => '2',
-    3 => '3'
-);
-$readersettings->add(new admin_setting_configselect_with_advanced($name, $text, $help, $default, $options));
+$setting = new admin_setting_configselect_with_advanced("$plugin/$name", $text, $help, $default, $options);
+$settings->add($setting);
 
 // quiznextlevel
-$name = 'reader/quiznextlevel';
-$text = get_string('quiznextlevel', 'reader');
-$help = get_string('configquiznextlevel', 'reader');
-$default = array('value' => $readercfg->quiznextlevel, 'fix' => false);
-$readersettings->add(new admin_setting_configtext_with_advanced($name, $text, $help, $default, PARAM_INT));
+$name = 'quiznextlevel';
+$text = get_string($name, $plugin);
+$help = get_string('config'.$name, $plugin);
+$default = array('value' => $config->quiznextlevel, 'adv' => false);
+$setting = new admin_setting_configtext_with_advanced("$plugin/$name", $text, $help, $default, PARAM_INT);
+$settings->add($setting);
 
 // quizpreviouslevel
-$name = 'reader/quizpreviouslevel';
-$text = get_string('quizpreviouslevel', 'reader');
-$help = get_string('configquizpreviouslevel', 'reader');
-$default = array('value' => $readercfg->quizpreviouslevel, 'fix' => false);
-$readersettings->add(new admin_setting_configtext_with_advanced($name, $text, $help, $default, PARAM_INT));
+$name = 'quizpreviouslevel';
+$text = get_string($name, $plugin);
+$help = get_string('config'.$name, $plugin);
+$default = array('value' => $config->quizpreviouslevel, 'adv' => false);
+$setting = new admin_setting_configtext_with_advanced("$plugin/$name", $text, $help, $default, PARAM_INT);
+$settings->add($setting);
 
 // quizonnextlevel
-$name = 'reader/quizonnextlevel';
-$text = get_string('quizonnextlevel', 'reader');
-$help = get_string('configquizonnextlevel', 'reader');
-$default = array('value' => $readercfg->quizonnextlevel, 'fix' => false);
-$readersettings->add(new admin_setting_configtext_with_advanced($name, $text, $help, $default, PARAM_INT));
+$name = 'quizonnextlevel';
+$text = get_string($name, $plugin);
+$help = get_string('config'.$name, $plugin);
+$default = array('value' => $config->quizonnextlevel, 'adv' => false);
+$setting = new admin_setting_configtext_with_advanced("$plugin/$name", $text, $help, $default, PARAM_INT);
+$settings->add($setting);
 
 // usecourse
-$name = 'reader/usecourse';
-$text = get_string('usecourse', 'reader');
-$help = get_string('configusecourse', 'reader');
-$default = array('value' => $readercfg->usecourse, 'fix' => false);
+$name = 'usecourse';
+$text = get_string($name, $plugin);
+$help = get_string('config'.$name, $plugin);
+$default = array('value' => $config->usecourse, 'adv' => false);
 $options = array(0 => 'Current course');
 foreach (get_courses() as $course) {
     $options[$course->id] = $course->fullname;
 }
-$readersettings->add(new admin_setting_configselect_with_advanced($name, $text, $help, $default, $options));
+$setting = new admin_setting_configselect_with_advanced("$plugin/$name", $text, $help, $default, $options);
+$settings->add($setting);
 
 // update
-$name = 'reader/update';
-$text = get_string('update', 'reader');
-$help = get_string('configupdate', 'reader');
-$default = array('value' => $readercfg->update, 'fix' => false);
+$name = 'update';
+$text = get_string($name, $plugin);
+$help = get_string('config'.$name, $plugin);
+$default = array('value' => $config->update, 'adv' => false);
 $options = array(
     0 => get_string('no'),
     1 => get_string('yes')
 );
-$readersettings->add(new admin_setting_configselect_with_advanced($name, $text, $help, $default, $options));
+$setting = new admin_setting_configselect_with_advanced("$plugin/$name", $text, $help, $default, $options);
+$settings->add($setting);
 
 // sendmessagesaboutcheating
-$name = 'reader/sendmessagesaboutcheating';
-$text = get_string('sendmessagesaboutcheating', 'reader');
-$help = get_string('configsendmessagesaboutcheating', 'reader');
-$default = array('value' => $readercfg->sendmessagesaboutcheating, 'fix' => false);
+$name = 'sendmessagesaboutcheating';
+$text = get_string($name, $plugin);
+$help = get_string('config'.$name, $plugin);
+$default = array('value' => $config->sendmessagesaboutcheating, 'adv' => false);
 $options = array(
     0 => get_string('no'),
     1 => get_string('yes')
 );
-$readersettings->add(new admin_setting_configselect_with_advanced($name, $text, $help, $default, $options));
+$setting = new admin_setting_configselect_with_advanced("$plugin/$name", $text, $help, $default, $options);
+$settings->add($setting);
 
 // cheated_message
-$name = 'reader/cheated_message';
-$text = get_string('cheated_message', 'reader');
-$help = get_string('configcheated_message', 'reader');
-$default = $readercfg->cheated_message;
-$readersettings->add(new admin_setting_configtextarea($name, $text, $help, $default));
+$name = 'cheated_message';
+$text = get_string($name, $plugin);
+$help = get_string('config'.$name, $plugin);
+$default = $config->cheated_message;
+$setting = new admin_setting_configtextarea("$plugin/$name", $text, $help, $default);
+$settings->add($setting);
 
 // not_cheated_message
-$name = 'reader/not_cheated_message';
-$text = get_string('not_cheated_message', 'reader');
-$help = get_string('confignot_cheated_message', 'reader');
-$default = $readercfg->not_cheated_message;
-$readersettings->add(new admin_setting_configtextarea($name, $text, $help, $default));
+$name = 'not_cheated_message';
+$text = get_string($name, $plugin);
+$help = get_string('config'.$name, $plugin);
+$default = $config->not_cheated_message;
+$setting = new admin_setting_configtextarea("$plugin/$name", $text, $help, $default);
+$settings->add($setting);
 
 // serverlink
-$name = 'reader/serverlink';
-$text = get_string('serverlink', 'reader');
-$help = get_string('configserverlink', 'reader');
-$default = array('value' => 'http://moodlereader.net/quizbank', 'fix' => false);
-$readersettings->add(new admin_setting_configtext_with_advanced($name, $text, $help, $default, PARAM_TEXT));
+$name = 'serverlink';
+$text = get_string($name, $plugin);
+$help = get_string('config'.$name, $plugin);
+$default = array('value' => 'http://moodlereader.net/quizbank', 'adv' => false);
+$setting = new admin_setting_configtext_with_advanced("$plugin/$name", $text, $help, $default, PARAM_TEXT);
+$settings->add($setting);
 
 // serverlogin
-$name = 'reader/serverlogin';
-$text = get_string('serverlogin', 'reader');
-$help = get_string('configserverlogin', 'reader');
-$default = array('value' => '', 'fix' => false);
-$readersettings->add(new admin_setting_configtext_with_advanced($name, $text, $help, $default, PARAM_TEXT));
+$name = 'serverlogin';
+$text = get_string($name, $plugin);
+$help = get_string('config'.$name, $plugin);
+$default = array('value' => '', 'adv' => false);
+$setting = new admin_setting_configtext_with_advanced("$plugin/$name", $text, $help, $default, PARAM_TEXT);
+$settings->add($setting);
 
 // serverpassword
-$name = 'reader/serverpassword';
-$text = get_string('serverpassword', 'reader');
-$help = get_string('configserverpassword', 'reader');
-$default = array('value' => '', 'fix' => false);
-$readersettings->add(new admin_setting_configtext_with_advanced($name, $text, $help, $default, PARAM_TEXT));
+$name = 'serverpassword';
+$text = get_string($name, $plugin);
+$help = get_string('config'.$name, $plugin);
+$default = array('value' => '', 'adv' => false);
+$setting = new admin_setting_configtext_with_advanced("$plugin/$name", $text, $help, $default, PARAM_TEXT);
+$settings->add($setting);
 
 // keepoldquizzes
-$name = 'reader/keepoldquizzes';
-$text = get_string('keepoldquizzes', 'reader');
-$help = get_string('configkeepoldquizzes', 'reader');
-$default = array('value' => 0, 'fix' => false);
+$name = 'keepoldquizzes';
+$text = get_string($name, $plugin);
+$help = get_string('config'.$name, $plugin);
+$default = array('value' => 0, 'adv' => false);
 $options = array(
     0 => get_string('no'),
     1 => get_string('yes')
 );
-$readersettings->add(new admin_setting_configselect_with_advanced($name, $text, $help, $default, $options));
+$setting = new admin_setting_configselect_with_advanced("$plugin/$name", $text, $help, $default, $options);
+$settings->add($setting);
 
-// add these settings
-$ADMIN->add('modsettings', $readersettings);
-
-// reclaim some memory
-unset($value, $name, $text, $help, $default, $defaults, $paramtype, $options, $readersettings, $readercfg);
-
-// remove standard settings
-$settings = null;
+// reclaim some memory = but don't touch $settings
+unset($config, $name, $value, $text, $help, $default, $defaults, $options, $plugin, $setting);

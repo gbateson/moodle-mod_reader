@@ -28,6 +28,14 @@
 /** Prevent direct access to this script */
 defined('MOODLE_INTERNAL') || die;
 
+/**
+ * reader_get_correct_answer
+ *
+ * @param xxx $question (passed by reference)
+ * @param xxx $questions (passed by reference)
+ * @return xxx
+ * @todo Finish documenting this function
+ */
 function reader_get_correct_answer(&$question, &$questions) {
     global $DB;
 
@@ -103,7 +111,6 @@ function reader_get_correct_answer(&$question, &$questions) {
 
         case 'ordering':
             $correct = array();
-            list($table, $field) = reader_get_question_options_table($question->qtype);
             if ($answers = $DB->get_records_select('question_answers', 'question = ?', array($question->id), 'fraction')) {
                 foreach ($answers as $answer) {
                     $correct[] = $answer->answer;
@@ -120,9 +127,9 @@ function reader_get_correct_answer(&$question, &$questions) {
             break;
 
         case 'truefalse':
-            list($table, $field) = reader_get_question_options_table($question->qtype);
-            if ($records = $DB->get_records_sql('SELECT trueanswer FROM {'.$table.'} WHERE '.$field.' = ?', array($question->id))) {
-                $correct = $DB->get_field_select('question_answers', 'answer', 'id = ?', array(key($records)));
+            if ($correct = $DB->get_records('question_answers', array('question' => $question->id), 'fraction DESC')) {
+                $correct = reset($correct);
+                $correct = $correct->answer;
             } else {
                 $correct = ''; // shouldn't happen !!
             }
@@ -131,7 +138,6 @@ function reader_get_correct_answer(&$question, &$questions) {
 
         case 'shortanswer':
             $correct = array();
-            list($table, $field) = reader_get_question_options_table($question->qtype);
             if ($answers = $DB->get_records_select('question_answers', 'question = ?', array($question->id), 'fraction')) {
                 foreach ($answers as $answer) {
                     if (empty($answer->fraction)) {
@@ -149,7 +155,6 @@ function reader_get_correct_answer(&$question, &$questions) {
 
         case 'numerical':
             $correct = array();
-            list($table, $field) = reader_get_question_options_table($question->qtype);
             if ($answers = $DB->get_records_select('question_answers', 'question = ?', array($question->id), 'fraction')) {
                 foreach ($answers as $answer) {
                     if (empty($answer->fraction)) {
@@ -176,6 +181,14 @@ function reader_get_correct_answer(&$question, &$questions) {
     return $correct;
 }
 
+/**
+ * reader_get_question_options_table
+ *
+ * @param xxx $type
+ * @param xxx $sub (optional, default=false)
+ * @return xxx
+ * @todo Finish documenting this function
+ */
 function reader_get_question_options_table($type, $sub=false) {
     global $DB;
 
@@ -212,6 +225,15 @@ function reader_get_question_options_table($type, $sub=false) {
     return array($table, $field);
 }
 
+/**
+ * reader_ordering_answer_prefix
+ *
+ * @param xxx $correct
+ * @param xxx $thisindex
+ * @param xxx $thisanswer
+ * @return xxx
+ * @todo Finish documenting this function
+ */
 function reader_ordering_answer_prefix($correct, $thisindex, $thisanswer) {
     $strlen = 0;
     foreach ($correct as $a => $answer) {
@@ -236,14 +258,20 @@ function reader_ordering_answer_prefix($correct, $thisindex, $thisanswer) {
     }
 }
 
+/**
+ * reader_quiz_courseids
+ *
+ * @return xxx
+ * @todo Finish documenting this function
+ */
 function reader_quiz_courseids() {
     global $DB;
 
     $courseids = array();
 
-    if ($courseid = get_config('reader', 'reader_usecourse')) { // old config name
+    if ($courseid = get_config('mod_reader', 'reader_usecourse')) { // old config name
         $courseids[] = $courseid;
-    } else if ($courseid = get_config('reader', 'usecourse')) { // new config name
+    } else if ($courseid = get_config('mod_reader', 'usecourse')) { // new config name
         $courseids[] = $courseid;
     }
 
@@ -257,4 +285,31 @@ function reader_quiz_courseids() {
     }
 
     return $courseids;
+}
+
+/**
+ * reader_curlfile
+ *
+ * @param xxx $url
+ * @return xxx
+ * @todo Finish documenting this function
+ *       use "download_file_content()" instead of curl
+ *       mod/reader/admin/books/download/remotesite.php
+ */
+function reader_curlfile($url) {
+
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+
+    //curl_setopt($ch, CURLOPT_REFERER, trackback_url(false));
+
+    $result = curl_exec($ch);
+    curl_close($ch);
+
+    if (empty($result)) {
+        return false;
+    } else {
+        return explode('\n', $result);
+    }
 }

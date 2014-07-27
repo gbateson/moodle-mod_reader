@@ -62,9 +62,9 @@ class reader_admin_reports_filter_number extends user_filter_select {
      */
     function get_operators() {
         return array(0 => get_string('isanyvalue','filters'),
-                     1 => get_string('islessthan', 'reader'),
+                     1 => get_string('islessthan', 'mod_reader'),
                      2 => get_string('isequalto','filters'),
-                     3 => get_string('isgreaterthan', 'reader'));
+                     3 => get_string('isgreaterthan', 'mod_reader'));
     }
 
     /**

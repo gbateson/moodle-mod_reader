@@ -42,6 +42,8 @@ require_once($CFG->dirroot.'/mod/reader/lib.php');
  * @subpackage reader
  */
 class mod_reader_mod_form extends moodleform_mod {
+    /** @var array options to be used with date_time_selector fields in this activity */
+    public static $datefieldoptions = array('optional' => true, 'step' => 1);
 
     /**
      * definition
@@ -49,173 +51,163 @@ class mod_reader_mod_form extends moodleform_mod {
      * @uses $CFG
      * @uses $COURSE
      * @uses $DB
-     * @uses $PAGE
-     * @uses $form
      * @todo Finish documenting this function
      */
     function definition() {
 
-        global $COURSE, $CFG, $DB, $PAGE, $form;
+        global $COURSE, $CFG, $DB;
 
-        $readercfg = get_config('reader');
+        $plugin = 'mod_reader';
+        $config = get_config($plugin);
 
-        $mform    = &$this->_form;
+        $mform = $this->_form;
 
-//-------------------------------------------------------------------------------
-    /// Adding the "general" fieldset, where all the common settings are showed
+        //-----------------------------------------------------------------------------
         $mform->addElement('header', 'general', get_string('general', 'form'));
-    /// Adding the standard "name" field
-        $mform->addElement('text', 'name', get_string('name'), array('size'=>'64'));
-        $mform->setType('name', PARAM_TEXT);
-        $mform->addRule('name', null, 'required', null, 'client');
-    /// Adding the optional "intro" and "introformat" pair of fields
+        //-----------------------------------------------------------------------------
+        $name = 'name';
+        $mform->addElement('text', $name, get_string($name), array('size'=>'64'));
+        $mform->setType($name, (empty($CFG->formatstringstriptags) ? PARAM_CLEANHTML : PARAM_TEXT));
+        $mform->addRule($name, null, 'required', null, 'client');
+
         $this->add_intro_editor(false, get_string('summary'));
 
-//-------------------------------------------------------------------------------
-
+        //-----------------------------------------------------------------------------
         $mform->addElement('header', 'timinghdr', get_string('timing', 'form'));
-        $mform->addElement('date_time_selector', 'timeopen', get_string('quizopen', 'quiz'), array('optional'=>true));
-        //$mform->setHelpButton('timeopen', array('timeopen', get_string('quizopen', 'quiz'), 'quiz'));
-
-        $mform->addElement('date_time_selector', 'timeclose', get_string('quizclose', 'quiz'), array('optional'=>true));
-        //$mform->setHelpButton('timeclose', array('timeopen', get_string('quizclose', 'quiz'), 'quiz'));
-
-        $timelimitgrp=array();
-        $timelimitgrp[] = &$mform->createElement('text', 'timelimit');
-        $timelimitgrp[] = &$mform->createElement('checkbox', 'timelimitenable', '', get_string('enable'));
-        $mform->addGroup($timelimitgrp, 'timelimitgrp', get_string('timelimitmin', 'quiz'), array(' '), false);
-        $mform->setType('timelimit', PARAM_TEXT);
-        $timelimitgrprules = array();
-        $timelimitgrprules['timelimit'][] = array(null, 'numeric', null, 'client');
-        $mform->addGroupRule('timelimitgrp', $timelimitgrprules);
-        $mform->disabledIf('timelimitgrp', 'timelimitenable');
-        if (isset($readercfg->fix_timelimit)) {
-            $mform->setAdvanced('timelimitgrp', $readercfg->fix_timelimit);
+        //-----------------------------------------------------------------------------
+        // Time limit.
+        $name = 'timelimit';
+        $mform->addElement('duration', $name, get_string($name, 'quiz'), array('optional' => true));
+        $mform->addHelpButton($name, $name, 'quiz');
+        if (isset($config->timelimit)) {
+            $mform->setDefault($name, $config->timelimit);
         }
-        //$mform->setHelpButton('timelimitgrp', array("timelimit", get_string('quiztimer',"quiz"), "quiz"));
-        if (isset($readercfg->timelimit)) {
-            $mform->setDefault('timelimit', $readercfg->timelimit);
-        }
-//-------------------------------------------------------------------------------
-
-//-------------------------------------------------------------------------------
-        $mform->addElement('header', 'general', get_string('setings', 'reader'));
-        $mform->addElement('select', 'pointreport', get_string('s_fullpointreport', 'reader'), array('0'=>'No', '1'=>'Yes'));
-        $mform->addElement('select', 'bookinstances', get_string('s_bookinstances', 'reader'), array('0'=>'No', '1'=>'Yes'));
-        $mform->addElement('select', 'levelcheck', get_string('s_levelrestrictionfeature', 'reader'), array('0'=>'No', '1'=>'Yes'));
-        $mform->addElement('select', 'reportwordspoints', get_string('s_reportwordspoints', 'reader'), array('0'=>'Show Word Count only', '1'=>'Show Points only', '2'=>'Show both Points and Word Count'));
-        $mform->addElement('select', 'wordsprogressbar', get_string('s_wordsprogressbar', 'reader'), array('0'=>'Hide', '1'=>'Show'));
-        $percentcorrectforbookform=array();
-        $percentcorrectforbookform[] = &$mform->createElement('text', 'percentforreading', get_string('s_percentcorrectforbook', 'reader'), array('size'=>'10'));
-        $percentcorrectforbookform[] = &$mform->createElement('static', 'description', '', '%');
-        $mform->addGroup($percentcorrectforbookform, 'percentcorrectforbookformgroup', get_string('s_percentcorrectforbook', 'reader'), ' ', false);
-        $mform->addElement('select', 'questionmark', get_string('s_questionmark', 'reader'), array('0'=>'No', '1'=>'yes'));
-        $mform->addElement('select', 'bookcovers', get_string('s_bookcovers', 'reader'), array('0'=>'No', '1'=>'yes'));
-        $mform->addElement('select', 'checkbox', get_string('s_checkbox', 'reader'), array('0'=>'No', '1'=>'yes'));
-        $mform->addElement('select', 'attemptsofday', get_string('s_quizfordays', 'reader'), array('0'=>'Off', '1'=>'1', '2'=>'2', '3'=>'3'));
-        $mform->addElement('text', 'goal', get_string('s_totalpointsgoal', 'reader'), array('size'=>'10'));
-        $mform->addElement('text', 'nextlevel', get_string('s_nextlevel', 'reader'), array('size'=>'10'));
-        $mform->addElement('text', 'quizpreviouslevel', get_string('s_selectquizzes', 'reader'), array('size'=>'10'));
-        $mform->addElement('text', 'quiznextlevel', get_string('s_quiznextlevel', 'reader'), array('size'=>'10'));
-        $mform->addElement('text', 'promotionstop', get_string('s_nopromotion', 'reader'), array('size'=>'10'));
-        //$mform->setHelpButton('promotionstop', array('promotionstop', get_string('s_nopromotion', 'reader'), 'reader'));
-        $ignorform=array();
-        $ignorform[] = &$mform->createElement('date_selector', 'ignoredate', '', array('startyear'=>2002, 'stopyear'=>date("Y", time()), 'applydst'=>true));
-        $ignorform[] = &$mform->createElement('static', 'description', '', get_string('s_ignor_2', 'reader'));
-        $mform->addGroup($ignorform, 'ignor', get_string('s_ignor_1', 'reader'), ' ', false);
-
-        $courses = get_courses();
-        foreach ($courses as $courses_) {
-            if ($courses_->id != 1) {
-                $cousesarray[$courses_->id] = $courses_->fullname;
-            }
+        if (isset($config->adv_timelimit)) {
+            $mform->setAdvanced($name, $config->adv_timelimit);
         }
 
-        $mform->addElement('select', 'usecourse', get_string('s_selectcourse', 'reader'), $cousesarray);
+        //-----------------------------------------------------------------------------
+        $mform->addElement('header', 'general', get_string('settings', $plugin));
+        //-----------------------------------------------------------------------------
+        $name = 'pointreport';
+        $label = get_string('full'.$name, $plugin);
+        $mform->addElement('selectyesno', $name, $label);
 
-//-------------------------------------------------------------------------------
+        $mform->addElement('select', 'bookinstances', get_string('bookinstances', $plugin), array('0'=>'No', '1'=>'Yes'));
+        $mform->addElement('select', 'levelcheck', get_string('levelrestrictionfeature', $plugin), array('0'=>'No', '1'=>'Yes'));
+        $mform->addElement('select', 'reportwordspoints', get_string('reportwordspoints', $plugin), array('0'=>'Show Word Count only', '1'=>'Show Points only', '2'=>'Show both Points and Word Count'));
+        $mform->addElement('select', 'wordsprogressbar', get_string('wordsprogressbar', $plugin), array('0'=>'Hide', '1'=>'Show'));
+        $elements=array(
+            $mform->createElement('text', 'percentforreading', get_string('percentcorrectforbook', $plugin), array('size'=>'10')),
+            $mform->createElement('static', 'description', '', '%')
+        );
+        $mform->addGroup($elements, 'elementsgroup', get_string('percentcorrectforbook', $plugin), ' ', false);
+        $mform->addElement('select', 'questionmark', get_string('questionmark', $plugin), array('0'=>'No', '1'=>'yes'));
+        $mform->addElement('select', 'bookcovers', get_string('bookcovers', $plugin), array('0'=>'No', '1'=>'yes'));
+        $mform->addElement('select', 'checkbox', get_string('checkbox', $plugin), array('0'=>'No', '1'=>'yes'));
+        $mform->addElement('text', 'goal', get_string('totalpointsgoal', $plugin), array('size'=>'10'));
+        $mform->addElement('text', 'nextlevel', get_string('nextlevel', $plugin), array('size'=>'10'));
+        $mform->addElement('text', 'quizpreviouslevel', get_string('selectquizzes', $plugin), array('size'=>'10'));
+        $mform->addElement('text', 'quiznextlevel', get_string('quiznextlevel', $plugin), array('size'=>'10'));
+        $mform->addElement('text', 'promotionstop', get_string('nopromotion', $plugin), array('size'=>'10'));
+        //$mform->setHelpButton('promotionstop', array('promotionstop', get_string('nopromotion', $plugin), $plugin));
+        $ignorform=array(
+            $mform->createElement('date_selector', 'ignoredate', '', array('startyear'=>2002, 'stopyear'=>date('Y', time()), 'applydst'=>true)),
+            $mform->createElement('static', 'description', '', get_string('ignor_2', $plugin))
+        );
+        $mform->addGroup($ignorform, 'ignor', get_string('ignor_1', $plugin), ' ', false);
+
+        $options = get_courses();
+        unset($options[SITEID]);
+        foreach ($options as $option) {
+            $options[$option->id] = $option->fullname;
+        }
+        $mform->addElement('select', 'usecourse', get_string('selectcourse', $plugin), $options);
+
+        //-----------------------------------------------------------------------------
         $mform->addElement('header', 'security', get_string('security', 'form'));
+        //-----------------------------------------------------------------------------
 
-        $securitymeasuresarray=array();
-        $securitymeasuresarray[] = &$mform->createElement('radio', 'secmeass', '', get_string('s_off', 'reader'), 0);
-        $securitymeasuresarray[] = &$mform->createElement('radio', 'secmeass', '', get_string('s_anywhere', 'reader'), 1);
-        $securitymeasuresarray[] = &$mform->createElement('radio', 'secmeass', '', get_string('s_computers', 'reader'), 2);
-        $mform->addGroup($securitymeasuresarray, 'securitymeasuresarray', get_string('s_securitymeasures', 'reader'), array(' '), false);
+        $elements=array(
+            $mform->createElement('radio', 'checkip', '', get_string('off', $plugin), 0),
+            $mform->createElement('radio', 'checkip', '', get_string('anywhere', $plugin), 1),
+            $mform->createElement('radio', 'checkip', '', get_string('computers', $plugin), 2)
+        );
+        $mform->addGroup($elements, 'elements', get_string('securitymeasures', $plugin), array(' '), false);
 
         $mform->addElement('selectyesno', 'popup', get_string('popup', 'quiz'));
-        //$mform->setHelpButton('popup', array("popup", get_string('popup', 'quiz'), "quiz"));
-        if (isset($readercfg->fix_popup)) {
-            $mform->setAdvanced('popup', $readercfg->fix_popup);
+        //$mform->setHelpButton('popup', array('popup', get_string('popup', 'quiz'), 'quiz'));
+        if (isset($config->adv_popup)) {
+            $mform->setAdvanced('popup', $config->adv_popup);
         }
-        if (isset($readercfg->popup)) {
-            $mform->setDefault('popup', $readercfg->popup);
+        if (isset($config->popup)) {
+            $mform->setDefault('popup', $config->popup);
         }
 
         $mform->addElement('passwordunmask', 'password', get_string('requirepassword', 'quiz'));
         $mform->setType('password', PARAM_TEXT);
-        //$mform->setHelpButton('password', array("requirepassword", get_string('requirepassword', 'quiz'), "quiz"));
+        //$mform->setHelpButton('password', array('requirepassword', get_string('requirepassword', 'quiz'), 'quiz'));
 
-        if (isset($readercfg->fix_password)) {
-            $mform->setAdvanced('password', $readercfg->fix_password);
+        if (isset($config->adv_password)) {
+            $mform->setAdvanced('password', $config->adv_password);
         }
-        if (isset($readercfg->password)) {
-            $mform->setDefault('password', $readercfg->password);
+        if (isset($config->password)) {
+            $mform->setDefault('password', $config->password);
         }
 
         $mform->addElement('text', 'subnet', get_string('requiresubnet', 'quiz'));
         $mform->setType('subnet', PARAM_TEXT);
-        //$mform->setHelpButton('subnet', array("requiresubnet", get_string('requiresubnet', 'quiz'), "quiz"));
-        if (isset($readercfg->fix_subnet)) {
-            $mform->setAdvanced('subnet', $readercfg->fix_subnet);
+        //$mform->setHelpButton('subnet', array('requiresubnet', get_string('requiresubnet', 'quiz'), 'quiz'));
+        if (isset($config->adv_subnet)) {
+            $mform->setAdvanced('subnet', $config->adv_subnet);
         }
-        if (isset($readercfg->subnet)) {
-            $mform->setDefault('subnet', $readercfg->subnet);
+        if (isset($config->subnet)) {
+            $mform->setDefault('subnet', $config->subnet);
         }
 
-        $mform->addElement('select', 'individualstrictip', get_string('s_individualstrictip', 'reader'), array('0'=>'No', '1'=>'yes'));
+        $mform->addElement('select', 'individualstrictip', get_string('individualstrictip', $plugin), array('0'=>'No', '1'=>'yes'));
 
-        $mform->addElement('select', 'sendmessagesaboutcheating', get_string('s_sendmessagesaboutcheating', 'reader'), array('0'=>'No', '1'=>'yes'));
+        $mform->addElement('select', 'sendmessagesaboutcheating', get_string('sendmessagesaboutcheating', $plugin), array('0'=>'No', '1'=>'yes'));
 
-        $mform->addElement('textarea', 'cheated_message', stripslashes(get_string('s_cheated_message', 'reader')), 'rows="5" cols="50"');
-        $mform->addElement('textarea', 'not_cheated_message', get_string('s_not_cheated_message', 'reader'), 'rows="5" cols="50"');
+        $mform->addElement('textarea', 'cheated_message', stripslashes(get_string('cheated_message', $plugin)), 'rows="5" cols="50"');
+        $mform->addElement('textarea', 'not_cheated_message', get_string('not_cheated_message', $plugin), 'rows="5" cols="50"');
 
 //-------------------------------------------------------------------------------
 
         $mform->setType('subnet', PARAM_TEXT);
-        //$mform->setHelpButton('subnet', array("requiresubnet", get_string('requiresubnet', 'quiz'), "quiz"));
+        //$mform->setHelpButton('subnet', array('requiresubnet', get_string('requiresubnet', 'quiz'), 'quiz'));
 
         //-----
-        $mform->setDefault('timelimit', $readercfg->quiztimeout);
-        $mform->setDefault('percentforreading', $readercfg->percentforreading);
-        $mform->setDefault('nextlevel', $readercfg->quiznextlevel);
+        $mform->setDefault('timelimit', $config->quiztimelimit);
+        $mform->setDefault('percentforreading', $config->percentforreading);
+        $mform->setDefault('nextlevel', $config->quiznextlevel);
         $mform->addRule('nextlevel', null, 'required', null, 'client');
-        $mform->setDefault('quizpreviouslevel', $readercfg->quizpreviouslevel);
+        $mform->setDefault('quizpreviouslevel', $config->quizpreviouslevel);
         $mform->addRule('quizpreviouslevel', null, 'required', null, 'client');
-        $mform->setDefault('quiznextlevel', $readercfg->quizonnextlevel);
+        $mform->setDefault('quiznextlevel', $config->quizonnextlevel);
         $mform->addRule('quiznextlevel', null, 'required', null, 'client');
 
-        $mform->setDefault('pointreport', $readercfg->pointreport);
-        $mform->setDefault('questionmark', $readercfg->questionmark);
-        $mform->setDefault('bookcovers', $readercfg->bookcovers);
-        $mform->setDefault('attemptsofday', $readercfg->attemptsofday);
-        if (isset($readercfg->goal)) {
-            $mform->setDefault('goal', $readercfg->goal);
+        $mform->setDefault('pointreport', $config->pointreport);
+        $mform->setDefault('questionmark', $config->questionmark);
+        $mform->setDefault('bookcovers', $config->bookcovers);
+        if (isset($config->goal)) {
+            $mform->setDefault('goal', $config->goal);
         }
-        if (isset($readercfg->secmeass)) {
-            $mform->setDefault('secmeass', $readercfg->secmeass);
+        if (isset($config->checkip)) {
+            $mform->setDefault('checkip', $config->checkip);
         }
-        $mform->setDefault('levelcheck', $readercfg->levelcheck);
+        $mform->setDefault('levelcheck', $config->levelcheck);
 
-        $mform->setDefault('reportwordspoints', $readercfg->reportwordspoints);
-        $mform->setDefault('wordsprogressbar', $readercfg->wordsprogressbar);
-        $mform->setDefault('sendmessagesaboutcheating', $readercfg->sendmessagesaboutcheating);
-        $mform->setDefault('cheated_message', $readercfg->cheated_message);
-        $mform->setDefault('not_cheated_message', $readercfg->not_cheated_message);
+        $mform->setDefault('reportwordspoints', $config->reportwordspoints);
+        $mform->setDefault('wordsprogressbar', $config->wordsprogressbar);
+        $mform->setDefault('sendmessagesaboutcheating', $config->sendmessagesaboutcheating);
+        $mform->setDefault('cheated_message', $config->cheated_message);
+        $mform->setDefault('not_cheated_message', $config->not_cheated_message);
 
-        if ($readercfg->usecourse == 0) {
+        if ($config->usecourse == 0) {
             $mform->setDefault('usecourse', $COURSE->id);
         } else {
-            $mform->setDefault('usecourse', $readercfg->usecourse);
+            $mform->setDefault('usecourse', $config->usecourse);
         }
 
         //if ($mform->timelimit != 0 || !isset($mform->timelimit)) {

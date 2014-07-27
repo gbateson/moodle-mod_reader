@@ -150,7 +150,7 @@ class reader_admin_reports_booksummary_table extends reader_admin_reports_table 
      * @return xxx
      */
     public function header_averagerating()  {
-        return get_string('averagerating', 'reader');
+        return get_string('averagerating', 'mod_reader');
     }
 
     /**
@@ -159,12 +159,27 @@ class reader_admin_reports_booksummary_table extends reader_admin_reports_table 
      * @return xxx
      */
     public function header_countrating()  {
-        return get_string('countrating', 'reader');
+        return get_string('countrating', 'mod_reader');
     }
 
     ////////////////////////////////////////////////////////////////////////////////
     // functions to format data cells                                             //
     ////////////////////////////////////////////////////////////////////////////////
+
+   /**
+     * col_percentgrade
+     *
+     * @param xxx $row
+     * @return xxx
+     */
+    public function col_averagegrade($row)  {
+        if (! isset($row->averagegrade)) {
+            return $this->empty_cell();
+        }
+        $params = array('id' => $this->output->reader->cm->id, 'bookid' => $row->bookid);
+        $url = new moodle_url('/mod/reader/view_attempts.php', $params);
+        return html_writer::link($url, round($row->averagegrade).'%', array('onclick' => "this.target='_blank'"));
+    }
 
     /**
      * col_averagerating
@@ -185,7 +200,7 @@ class reader_admin_reports_booksummary_table extends reader_admin_reports_table 
     public function display_action_settings_showhidebooks($action) {
         $value = optional_param($action, 0, PARAM_INT);
         $settings = '';
-        $settings .= get_string('newsetting', 'reader').': ';
+        $settings .= get_string('newsetting', 'mod_reader').': ';
         $options = array('0' => get_string('show'), '1' => get_string('hide'));
         $settings .= html_writer::select($options, $action, $value, '', array());
         return $this->display_action_settings($action, $settings);

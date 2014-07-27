@@ -177,7 +177,12 @@ class reader_downloader {
      * @todo Finish documenting this function
      */
     public function __construct($output) {
-        global $DB;
+        global $CFG, $DB;
+
+        // get course category PHP library (Moodle >= 2.6)
+        if (file_exists($CFG->dirroot.'/lib/coursecatlib.php')) {
+            require_once($CFG->dirroot.'/lib/coursecatlib.php');
+        }
 
         $this->course = $output->reader->course;
         $this->cm     = $output->reader->cm;
@@ -188,10 +193,12 @@ class reader_downloader {
         if ($this->reader->usecourse) {
             $this->defaultcourseid = $this->reader->usecourse;
         } else {
-            $this->defaultcourseid = get_config('reader', 'usecourse');
+            $this->defaultcourseid = get_config('mod_reader', 'usecourse');
         }
         if ($this->defaultcourseid) {
             $this->defaultcategoryid = $DB->get_field('course', 'category', array('id' => $this->defaultcourseid));
+        } else {
+            $this->defaultcategoryid = $DB->get_field('course_categories', 'MIN(id)', array());
         }
 
         // get page parameters
@@ -859,6 +866,15 @@ class reader_downloader {
             return false; // shouldn't happen !!
         }
 
+        // can we use html in progress bar title?
+        if (floatval($CFG->release) <= 2.7) {
+            // Moodle <= 2.7 uses update_progress_bar
+            $usehtml = true;
+        } else {
+            // Moodle >= 2.8 uses updateProgressBar
+            $usehtml = false;
+        }
+
         $this->bar = reader_download_progress_bar::create($itemids, 'readerdownload');
 
         // show memory on main Reader module developer site
@@ -917,7 +933,7 @@ class reader_downloader {
             }
 
             // show this book in the progress bar
-            $title = ($i + 1).' / '.$i_max.' '.$titlehtml;
+            $title = ($i + 1).' / '.$i_max.' '.($usehtml ? $titlehtml : $titletext);
             $this->bar->start_item($itemid, $title);
 
             // set $params to select $book
@@ -967,17 +983,17 @@ class reader_downloader {
             $error = 0;
             if (isset($book->id)) {
                 if ($DB->update_record('reader_books', $book)) {
-                    $msg = get_string('bookupdated', 'reader', $titletext);
+                    $msg = get_string('bookupdated', 'mod_reader', $titletext);
                 } else {
-                    $msg = get_string('booknotupdated', 'reader', $titletext);
+                    $msg = get_string('booknotupdated', 'mod_reader', $titletext);
                     $error = 1;
                 }
             } else {
                 $book->quizid = 0;
                 if ($book->id = $DB->insert_record('reader_books', $book)) {
-                    $msg = get_string('bookadded', 'reader', $titletext);
+                    $msg = get_string('bookadded', 'mod_reader', $titletext);
                 } else {
-                    $msg = get_string('booknotadded', 'reader', $titletext);
+                    $msg = get_string('booknotadded', 'mod_reader', $titletext);
                     $error = 1;
                 }
             }
@@ -985,7 +1001,7 @@ class reader_downloader {
             // download associated image (i.e. book cover)
             if ($error==0) {
                 $this->download_image($type, $itemid, $book->image, $r);
-                $msg .= html_writer::empty_tag('br').get_string('imageadded', 'reader', $book->image);
+                $msg .= html_writer::empty_tag('br').get_string('imageadded', 'mod_reader', $book->image);
             }
 
             if ($started_list==false) {
@@ -993,9 +1009,9 @@ class reader_downloader {
                 echo $this->output->box_start('generalbox', 'notice');
                 echo html_writer::start_tag('div');
                 echo $this->output->showhide_js_start();
-                //echo html_writer::tag('p', get_string('targetcategory', 'reader').': '.$DB->get_field('course_categories', 'name', array('id' => $this->targetcategoryid)));
-                //echo html_writer::tag('p', get_string('targetcourse', 'reader').': '.$DB->get_field('course', 'fullname', array('id' => $this->targetcourseid)));
-                echo html_writer::tag('b', get_string('downloadedbooks', 'reader'));
+                //echo html_writer::tag('p', get_string('targetcategory', 'mod_reader').': '.$DB->get_field('course_categories', 'name', array('id' => $this->targetcategoryid)));
+                //echo html_writer::tag('p', get_string('targetcourse', 'mod_reader').': '.$DB->get_field('course', 'fullname', array('id' => $this->targetcourseid)));
+                echo html_writer::tag('b', get_string('downloadedbooks', 'mod_reader'));
                 echo $this->output->available_list_img();
                 echo html_writer::start_tag('ol');
             }
@@ -1040,9 +1056,9 @@ class reader_downloader {
                         }
 
                         if ($book->quizid==0) {
-                            $msg .= html_writer::empty_tag('br').get_string('quizadded', 'reader', $link);
+                            $msg .= html_writer::empty_tag('br').get_string('quizadded', 'mod_reader', $link);
                         } else {
-                            $msg .= html_writer::empty_tag('br').get_string('quizupdated', 'reader', $link);
+                            $msg .= html_writer::empty_tag('br').get_string('quizupdated', 'mod_reader', $link);
                         }
 
                         if ($book->id==0 || $book->quizid != $quiz->id) {
@@ -1053,7 +1069,7 @@ class reader_downloader {
                         // delete quiz
                         $msg .= html_writer::empty_tag('br');
                         $msg .= html_writer::tag('span', get_string('error').': ', array('class' => 'notifyproblem'));
-                        $msg .= get_string('quizhasnoquestions', 'reader');
+                        $msg .= get_string('quizhasnoquestions', 'mod_reader');
                         $this->remove_coursemodule($quiz->id, 'quiz');
 
                         // mark $book in "reader_books" table as having no quiz
@@ -1205,8 +1221,8 @@ class reader_downloader {
             $DB->update_record('reader', $this->reader);
         }
 
-        if ($set_config && get_config('reader', 'usecourse')==0) {
-            set_config('usecourse', $courseid, 'reader');
+        if ($set_config && get_config('mod_reader', 'usecourse')==0) {
+            set_config('usecourse', $courseid, 'mod_reader');
         }
     }
 
@@ -1347,7 +1363,7 @@ class reader_downloader {
         if ($categoryid==0 && $this->can_create_course()) {
 
             if ($categorytext=='') {
-                $categorytext = get_string('defaultcategoryname', 'reader');
+                $categorytext = get_string('defaultcategoryname', 'mod_reader');
             }
             $categorytext = $this->get_unique_name($categorytext, 'course_categories', 'name');
 
@@ -1384,7 +1400,7 @@ class reader_downloader {
         if ($categoryid) {
 
             if ($coursetext=='') {
-                $coursetext = get_string('defaultcoursename', 'reader');
+                $coursetext = get_string('defaultcoursename', 'mod_reader');
             }
             $coursetext = $this->get_unique_name($coursetext, 'course', 'shortname');
 
@@ -1421,7 +1437,7 @@ class reader_downloader {
         }
 
         // use course id specified by site config settings
-        if ($courseid = get_config('reader', 'usecourse')) {
+        if ($courseid = get_config('mod_reader', 'usecourse')) {
             if ($this->can_manage_course($courseid)) {
                 $this->set_quiz_courseid($courseid);
                 return $courseid;
@@ -1429,7 +1445,7 @@ class reader_downloader {
         }
 
         // get default name for Reader quiz course
-        $coursetext = get_string('defaultcoursename', 'reader');
+        $coursetext = get_string('defaultcoursename', 'mod_reader');
 
         // course with default Reader course name
         if ($courseid = $DB->get_field('course', 'id', array('shortname' => $coursetext))) {
@@ -1911,16 +1927,6 @@ class reader_downloader {
             $this->bar->add_quiz($categories, $module->question_instances);
         }
 
-        // create module - usually this is not necessary !!
-        //if (empty($module)) {
-        //    $this->create_question_module($module, $quiz);
-        //}
-
-        // create question instances - usually this is not necessary !!
-        //if (empty($module->question_instances)) {
-        //    $this->create_question_instances($module, $categories);
-        //}
-
         // prune questions to leave only main questions or sub questions
         // e.g. questions used by random or multianswer questions
         $this->prune_question_categories($module, $categories);
@@ -1944,90 +1950,6 @@ class reader_downloader {
 
         // convert old ids to new ids and make other adjustments
         $this->add_question_postprocessing($restoreids, $module, $quiz);
-    }
-
-    /**
-     * create_question_module
-     *
-     * @param xxx $module (passed by reference)
-     * @param xxx $quiz
-     * @return xxx
-     * @todo Finish documenting this function
-     */
-    public function create_question_module(&$module, $quiz) {
-        $module = (object)array(
-            'id' => 9876543210,  // enough to be unique for the time it takes to add this question
-            'question_instances' => array(),
-            // the fields below are probably not necessary
-            'modtype'       => 'quiz',
-            'name'          => $quiz->name,
-            'intro'         => '',
-            'timeopen'      => 0,
-            'timeclose'     => 0,
-            'optionflags'   => 1,
-            'penaltyscheme' => 1,
-            'attempts_number' => 0,
-            'attemptonlast' => 0,
-            'grademethod'   => 1,
-            'decimalpoints' => 2,
-            'review'        => 4652015,
-            'questions'     => '',
-            'questionsperpage' => 0,
-            'shufflequestions' => 0,
-            'shuffleanswers' => 1,
-            'sumgrades'     => 0,
-            'grade'         => 100,
-            'timecreated'   => 0,
-            'timemodified'  => 0,
-            'timelimit'     => 0,
-            'password'      => '',
-            'subnet'        => '',
-            'popup'         => 0,
-            'delay1'        => 0,
-            'delay2'        => 0,
-            'feedbacks'     => array(),
-        );
-    }
-
-    /**
-     * create_question_instances
-     *
-     * @param xxx $module (passed by reference)
-     * @param xxx $categories (passed by reference)
-     * @return xxx
-     * @todo Finish documenting this function
-     */
-    public function create_question_instances(&$module, &$categories) {
-
-        if (empty($module)) {
-            return; // shouldn't happen !!
-        }
-
-        if (empty($module->question_instances)) {
-            $module->question_instances = array();
-        }
-
-        if (count($module->question_instances)) {
-            return; // instances already exist
-        }
-
-        if (empty($categories)) {
-            return; // no questions to add :-(
-        }
-
-        $instanceid = 1;
-        foreach ($categories as $category) {
-            $has_random = $this->has_random_questions($category);
-            foreach ($category->questions as $question) {
-                if ($has_random==false || $question->qtype=='random') {
-                    $module->question_instances[] = (object)array(
-                        'id' => $instanceid++,
-                        'question' => $question->id,
-                        'grade' => 1,
-                    );
-                }
-            }
-        }
     }
 
     /**
@@ -2360,7 +2282,7 @@ class reader_downloader {
 
         if (empty($category->info)) {
             $a = (object)array('category' => $category->name, 'quiz' => $quiz->name);
-            $category->info = get_string('defaultquestioncategoryinfo', 'reader', $a);
+            $category->info = get_string('defaultquestioncategoryinfo', 'mod_reader', $a);
         }
 
         $category->parent = 0;

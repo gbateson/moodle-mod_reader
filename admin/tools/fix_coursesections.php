@@ -44,7 +44,7 @@ require_capability('moodle/site:config', $context);
 $PAGE->set_url($CFG->wwwroot.$SCRIPT);
 
 // set title
-$title = get_string('fix_coursesections', 'reader');
+$title = get_string('fix_coursesections', 'mod_reader');
 $PAGE->set_title($title);
 $PAGE->set_heading($title);
 $PAGE->set_pagelayout('admin');
@@ -54,7 +54,7 @@ echo $OUTPUT->box_start();
 
 // get ids of courses storing Reader Quizzes
 $courseids = array();
-if ($courseid = get_config('reader', 'usecourse')) {
+if ($courseid = get_config('mod_reader', 'usecourse')) {
     $courseids[] = $courseid;
 }
 $select = 'SELECT DISTINCT usecourse FROM {reader} WHERE usecourse IS NOT NULL AND usecourse > ?';

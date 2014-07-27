@@ -63,11 +63,11 @@ class mod_reader_admin_users_import_renderer extends mod_reader_admin_users_rend
         if ($lines = $mform->get_file_content('import')) {
             $lines = preg_split('/[\r\n]+/s', $lines);
 
-            echo html_writer::tag('p', get_string('fileuploaded', 'reader'));
+            echo html_writer::tag('p', get_string('fileuploaded', 'mod_reader'));
 
             // cache useful strings
             $str = (object)array(
-                'skipped' => get_string('skipped', 'reader'),
+                'skipped' => get_string('skipped', 'mod_reader'),
                 'success' => get_string('success'),
                 'error'   => get_string('error')
             );
@@ -88,7 +88,7 @@ class mod_reader_admin_users_import_renderer extends mod_reader_admin_users_rend
 
                 // make sure we have exactly 11 commas (=12 columns)
                 if (substr_count($line, ',') != 11) {
-                    echo get_string('skipline', 'reader', $line).html_writer::empty_tag('br');
+                    echo get_string('skipline', 'mod_reader', $line).html_writer::empty_tag('br');
                     continue; // unexpected format - shouldn't happen !!
                 }
 
@@ -119,7 +119,7 @@ class mod_reader_admin_users_import_renderer extends mod_reader_admin_users_rend
                         $users[$username] = $user;
                     } else {
                         $users[$username] = (object)array('id' => 0); // no such user ?!
-                        echo get_string('usernamenotfound', 'reader', $username).html_writer::empty_tag('br');
+                        echo get_string('usernamenotfound', 'mod_reader', $username).html_writer::empty_tag('br');
                     }
                 }
 
@@ -132,7 +132,7 @@ class mod_reader_admin_users_import_renderer extends mod_reader_admin_users_rend
                 }
                 if (empty($books[$image])) {
                     $books[$image] = (object)array('id' => 0, 'quizid' => 0); // no such book ?!
-                    echo get_string('booknotfound', 'reader', $image).html_writer::empty_tag('br');
+                    echo get_string('booknotfound', 'mod_reader', $image).html_writer::empty_tag('br');
                 }
 
                 if (empty($books[$image]->id) || empty($books[$image]->quizid)) {

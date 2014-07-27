@@ -89,13 +89,13 @@ class mod_reader_admin_books_renderer extends mod_reader_admin_renderer {
             $type = reader_downloader::BOOKS_WITH_QUIZZES;
             $params = array('id' => $cmid, 'tab' => $tab, 'mode' => 'download', 'type' => $type);
             $url = new moodle_url('/mod/reader/admin/books.php', $params);
-            $tabs[] = new tabobject($tab, $url, get_string('downloadbookswithquizzes', 'reader'));
+            $tabs[] = new tabobject($tab, $url, get_string('downloadbookswithquizzes', 'mod_reader'));
 
             $tab = self::TAB_BOOKS_DOWNLOAD_WITHOUT;
             $type = reader_downloader::BOOKS_WITHOUT_QUIZZES;
             $params = array('id' => $cmid, 'tab' => $tab, 'mode' => 'download', 'type' => $type);
             $url = new moodle_url('/mod/reader/admin/books.php', $params);
-            $tabs[] = new tabobject($tab, $url, get_string('downloadbookswithoutquizzes', 'reader'));
+            $tabs[] = new tabobject($tab, $url, get_string('downloadbookswithoutquizzes', 'mod_reader'));
         }
         return $this->attach_tabs_subtree(parent::get_tabs(), parent::TAB_BOOKS, $tabs);
     }

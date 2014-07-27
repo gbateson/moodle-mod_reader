@@ -26,7 +26,7 @@
  */
 
 /** Include required files */
-require_once(dirname(__FILE__).'/../../../config.php');
+require_once('../../../config.php');
 require_once($CFG->dirroot.'/mod/reader/quiz/attemptlib.php');
 require_once($CFG->dirroot.'/mod/reader/lib.php');
 require_once($CFG->dirroot.'/question/engine/lib.php');
@@ -51,23 +51,23 @@ array_unshift($sqlparams, $book);
 
 // check the user can access the requested book
 if (! $DB->record_exists_sql("SELECT rb.* FROM $from WHERE $where", $sqlparams)) {
-    echo get_string('quiznotavailable', 'reader');
+    echo get_string('quiznotavailable', 'mod_reader');
     die;
 }
 
-$readerobj = reader::create($reader->id, $USER->id, $book);
+$readerquiz = reader_quiz::create($reader->id, $USER->id, $book);
 
 // This script should only ever be posted to, so set page URL to the view page.
-$PAGE->set_url($readerobj->view_url());
+$PAGE->set_url($readerquiz->view_url());
 
 // Check login and sesskey.
-//require_login($readerobj->get_courseid(), false, $readerobj->get_cm());
+//require_login($readerquiz->get_courseid(), false, $readerquiz->get_cm());
 //require_sesskey();
 $PAGE->set_pagelayout('base');
 
 // if no questions have been set up yet redirect to edit.php
-if (! $readerobj->has_questions()) {
-    redirect($readerobj->edit_url());
+if (! $readerquiz->has_questions()) {
+    redirect($readerquiz->edit_url());
 }
 
 // Look for an existing attempt.
@@ -76,14 +76,14 @@ $lastattempt = end($attempts);
 
 // If an in-progress attempt exists, check password then redirect to it.
 if ($lastattempt && !$lastattempt->timefinish) {
-    redirect($readerobj->attempt_url($lastattempt->id, $page));
+    redirect($readerquiz->attempt_url($lastattempt->id, $page));
 }
 
 // Get number for the next or unfinished attempt
 $lastattempt = false;
 $attemptnumber = 1;
 
-$quba = question_engine::make_questions_usage_by_activity('mod_reader', $readerobj->get_context());
+$quba = question_engine::make_questions_usage_by_activity('mod_reader', $readerquiz->get_context());
 $quba->set_preferred_behaviour('deferredfeedback');
 
 // Create the new attempt and initialize the question sessions
@@ -116,18 +116,18 @@ if ($reader->attemptonlast && $lastattempt) {
     // Starting a normal, new, reader attempt.
 
     // Fully load all the questions in this reader.
-    $readerobj->preload_questions();
-    $readerobj->load_questions();
+    $readerquiz->preload_questions();
+    $readerquiz->load_questions();
 
     // Add them all to the $quba.
     $slots = array();
-    $questionsinuse = array_keys($readerobj->get_questions());
+    $questionsinuse = array_keys($readerquiz->get_questions());
 
-    foreach ($readerobj->get_questions() as $qid => $questiondata) {
+    foreach ($readerquiz->get_questions() as $qid => $questiondata) {
         if ($questiondata->qtype == 'random') {
             $question = question_bank::get_qtype('random')->choose_other_question($questiondata, $questionsinuse, $reader->shuffleanswers);
             if (is_null($question)) {
-                throw new moodle_exception('notenoughrandomquestions', 'reader', $readerobj->view_url(), $questiondata);
+                throw new moodle_exception('notenoughrandomquestions', 'reader', $readerquiz->view_url(), $questiondata);
             }
         } else {
             if (! $reader->shuffleanswers) {
@@ -182,5 +182,5 @@ if (function_exists('events_trigger_legacy')) {
 
 //$transaction->allow_commit();
 
-// Redirect to the attempt page.
-redirect($readerobj->attempt_url($attempt->id, $page));
+// Redirect to the attempt page
+redirect($readerquiz->attempt_url($attempt->id, $page));

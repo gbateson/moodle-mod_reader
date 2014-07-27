@@ -43,7 +43,7 @@ reader_add_to_log($course->id, 'reader', 'index', "index.php?id=$course->id", ''
 $PAGE->set_url('/mod/reader/index.php', array('id' => $course->id));
 $PAGE->set_title($course->fullname);
 $PAGE->set_heading($course->shortname);
-$PAGE->navbar->add(get_string('modulenameplural', 'reader'));
+$PAGE->navbar->add(get_string('modulenameplural', 'mod_reader'));
 
 // Output starts here
 
@@ -52,7 +52,7 @@ echo $OUTPUT->header();
 // Get all the appropriate data
 
 if (! $readers = get_all_instances_in_course('reader', $course)) {
-    echo $OUTPUT->heading(get_string('noreaders', 'reader'), 2);
+    echo $OUTPUT->heading(get_string('noreaders', 'mod_reader'), 2);
     echo $OUTPUT->continue_button(new moodle_url('/course/view.php', array('id' => $course->id)));
     echo $OUTPUT->footer();
     die();
@@ -152,7 +152,7 @@ foreach ($readers as $reader) {
         $text = html_writer::tag('a', $aggregates[$reader->id]->averagescore, $params);
         $row->cells[] = new html_table_cell($text);
 
-        $text = get_string('reader:viewreports', 'reader', $aggregates[$reader->id]->usercount);
+        $text = get_string('reader:viewreports', 'mod_reader', $aggregates[$reader->id]->usercount);
         $text = html_writer::tag('a', $text, $params);
         $row->cells[] = new html_table_cell($text);
     }
@@ -160,7 +160,7 @@ foreach ($readers as $reader) {
     $table->data[] = $row;
 }
 
-echo $OUTPUT->heading(get_string('modulenameplural', 'reader'), 2);
+echo $OUTPUT->heading(get_string('modulenameplural', 'mod_reader'), 2);
 echo html_writer::table($table);
 
 // Finish the page

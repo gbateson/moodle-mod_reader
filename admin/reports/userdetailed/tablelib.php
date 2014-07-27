@@ -177,7 +177,7 @@ class reader_admin_reports_userdetailed_table extends reader_admin_reports_table
      * @return xxx
      */
     public function header_words() {
-        return get_string('words', 'reader');
+        return get_string('words', 'mod_reader');
     }
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -195,9 +195,9 @@ class reader_admin_reports_userdetailed_table extends reader_admin_reports_table
             return $this->empty_cell();
         }
         if ($this->download) {
-            $fmt = get_string('strftimefinishshort', 'reader');
+            $fmt = get_string('strftimefinishshort', 'mod_reader');
         } else {
-            $fmt = get_string('strftimefinish', 'reader');
+            $fmt = get_string('strftimefinish', 'mod_reader');
         }
         return userdate($row->timefinish, $fmt);
     }
@@ -212,7 +212,9 @@ class reader_admin_reports_userdetailed_table extends reader_admin_reports_table
         if (! isset($row->percentgrade)) {
             return $this->empty_cell();
         }
-        return round($row->percentgrade).'%';
+        $params = array('id' => $this->output->reader->cm->id, 'attemptid' => $row->id);
+        $url = new moodle_url('/mod/reader/view_attempts.php', $params);
+        return html_writer::link($url, round($row->percentgrade).'%', array('onclick' => "this.target='_blank'"));
     }
 
     /**

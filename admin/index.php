@@ -54,7 +54,7 @@ reader_add_to_log($course->id, 'reader', 'Reader admin index', "admin/books/inde
 $PAGE->set_url('/mod/reader/admin/index.php', array('id' => $cm->id));
 
 // set title
-$title = $course->shortname.': '.format_string($reader->name).': '.get_string('adminarea', 'reader');
+$title = $course->shortname.': '.format_string($reader->name).': '.get_string('adminarea', 'mod_reader');
 $PAGE->set_title($title);
 $PAGE->set_heading($title);
 

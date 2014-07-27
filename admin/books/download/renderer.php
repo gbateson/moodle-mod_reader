@@ -77,12 +77,12 @@ class mod_reader_admin_books_download_renderer extends mod_reader_admin_books_re
             case reader_downloader::BOOKS_WITH_QUIZZES: $str = 'uploadquiztoreader'; break;
             case reader_downloader::BOOKS_WITHOUT_QUIZZES: $str = 'uploaddatanoquizzes'; break;
         }
-        echo $this->heading(get_string($str, 'reader'));
+        echo $this->heading(get_string($str, 'mod_reader'));
 
         // create an object to represent main download site (moodlereader.net)
-        $remotesite = new reader_remotesite_moodlereadernet(get_config('reader', 'serverlink'),
-                                                            get_config('reader', 'serverlogin'),
-                                                            get_config('reader', 'serverpassword'));
+        $remotesite = new reader_remotesite_moodlereadernet(get_config('mod_reader', 'serverlink'),
+                                                            get_config('mod_reader', 'serverlogin'),
+                                                            get_config('mod_reader', 'serverpassword'));
 
         // create an object to handle the downloading of data from remote sites
         $downloader = new reader_downloader($this);
@@ -116,18 +116,18 @@ class mod_reader_admin_books_download_renderer extends mod_reader_admin_books_re
 
             $output .= $this->form_start($tab, $mode, $type);
 
-            //$output .= $this->formheader(get_string('pagesettings', 'reader'));
+            //$output .= $this->formheader(get_string('pagesettings', 'mod_reader'));
             $output .= $this->downloadmode_menu($downloadmode); // "normal" or "repair"
             $output .= $this->downloadtype_menu($type); // "with" or "without" quizzes
             $output .= $this->search_box();
             $output .= $this->showhide_menu($count, $updatecount);
             $output .= $this->select_menu($newcount, $updatecount);
 
-            //$output .= $this->formheader(get_string('availableitems', 'reader'));
+            //$output .= $this->formheader(get_string('availableitems', 'mod_reader'));
             $output .= $this->available_lists($downloader);
 
             if ($type==reader_downloader::BOOKS_WITH_QUIZZES) {
-                //$output .= $this->formheader(get_string('downloadsettings', 'reader'));
+                //$output .= $this->formheader(get_string('downloadsettings', 'mod_reader'));
                 $output .= $this->category_list($downloader);
                 $output .= $this->course_list($downloader);
                 $output .= $this->section_list($downloader);
@@ -135,18 +135,18 @@ class mod_reader_admin_books_download_renderer extends mod_reader_admin_books_re
 
             $output .= $this->form_end();
 
-        } else if (get_config('reader', 'serverlink') && get_config('reader', 'serverlogin')) {
+        } else if (get_config('mod_reader', 'serverlink') && get_config('mod_reader', 'serverlogin')) {
 
             // no items to download - probably internet connection has been lost
-            $output .= $this->heading(get_string('nodownloaditems', 'reader'), '3');
+            $output .= $this->heading(get_string('nodownloaditems', 'mod_reader'), '3');
 
         } else {
 
             // no items to download - probably because remote settings have not been set up
             $link = new moodle_url('/admin/settings.php', array('section' => 'modsettingreader'));
             $link = html_writer::link($link, get_string('settings'));
-            $output .= html_writer::tag('p', get_string('remotesitenotaccessible', 'reader'));
-            $output .= html_writer::tag('p', get_string('definelogindetails', 'reader', $link));
+            $output .= html_writer::tag('p', get_string('remotesitenotaccessible', 'mod_reader'));
+            $output .= html_writer::tag('p', get_string('definelogindetails', 'mod_reader', $link));
         }
 
         return $output;
@@ -928,10 +928,10 @@ class mod_reader_admin_books_download_renderer extends mod_reader_admin_books_re
      */
     public function downloadmode_menu($downloadmode) {
         $name = 'downloadmode';
-        $label = get_string($name, 'reader');
+        $label = get_string($name, 'mod_reader');
         $onchange = 'RDR_set_location_from_select(this)';
-        $downloadmodes = array(reader_downloader::NORMAL_MODE => get_string('normalmode', 'reader'),
-                               reader_downloader::REPAIR_MODE => get_string('repairmode', 'reader'));
+        $downloadmodes = array(reader_downloader::NORMAL_MODE => get_string('normalmode', 'mod_reader'),
+                               reader_downloader::REPAIR_MODE => get_string('repairmode', 'mod_reader'));
         $downloadmodes = html_writer::select($downloadmodes, $name, $downloadmode, null, array('onchange' => $onchange));
         return $this->formitem($name, $label, $downloadmodes, $name);
     }
@@ -945,10 +945,9 @@ class mod_reader_admin_books_download_renderer extends mod_reader_admin_books_re
      */
     public function downloadtype_menu($type) {
         $name = 'type';
-        $label = get_string($name, 'reader');
+        $label = get_string($name, 'mod_reader');
         $onchange = 'RDR_set_location_from_select(this)';
-        $types = array(reader_downloader::BOOKS_WITH_QUIZZES => get_string('bookswithquizzes', 'reader'),
-                       reader_downloader::BOOKS_WITHOUT_QUIZZES => get_string('bookswithoutquizzes', 'reader'));
+        $types = $this->available_booktypes();
         $types = html_writer::select($types, 'type', $type, null, array('onchange' => $onchange));
         return $this->formitem($name, $label, $types, $name);
     }
@@ -980,25 +979,25 @@ class mod_reader_admin_books_download_renderer extends mod_reader_admin_books_re
         if ($count) {
             // Publishers
             $onclick = 'clear_search_results(); showhide_lists(1, "publishers"); return false;';
-            $menu[] = html_writer::tag('a', get_string('publishers', 'reader'), array('onclick' => $onclick));
+            $menu[] = html_writer::tag('a', get_string('publishers', 'mod_reader'), array('onclick' => $onclick));
 
             // Levels
             $onclick = 'clear_search_results(); showhide_lists(1, "publishers"); showhide_lists(1, "levels"); return false;';
-            $menu[] = html_writer::tag('a', get_string('levels', 'reader'), array('onclick' => $onclick));
+            $menu[] = html_writer::tag('a', get_string('levels', 'mod_reader'), array('onclick' => $onclick));
 
             // Books
             $onclick = 'clear_search_results(); showhide_lists(1, "publishers"); showhide_lists(1, "levels"); showhide_lists(1, "items"); return false;';
-            $menu[] = html_writer::tag('a', get_string('books', 'reader'), array('onclick' => $onclick));
+            $menu[] = html_writer::tag('a', get_string('books', 'mod_reader'), array('onclick' => $onclick));
 
             // Downloads
             $onclick = 'clear_search_results(); showhide_lists(1, "publishers", 1); showhide_lists(1, "levels", 1); showhide_lists(1, "items", 1); return false;';
-            $menu[] = html_writer::tag('a', get_string('downloads', 'reader'), array('onclick' => $onclick));
+            $menu[] = html_writer::tag('a', get_string('downloads', 'mod_reader'), array('onclick' => $onclick));
         }
 
         if ($updatecount) {
             // Updates
             $onclick = 'clear_search_results(); showhide_lists(1, "publishers", 2); showhide_lists(1, "levels", 2); showhide_lists(1, "items", 2); return false;';
-            $menu[] = html_writer::tag('a', get_string('updates', 'reader')." ($updatecount)", array('onclick' => $onclick));
+            $menu[] = html_writer::tag('a', get_string('updates', 'mod_reader')." ($updatecount)", array('onclick' => $onclick));
         }
 
         if ($menu = implode(' / ', $menu)) {
@@ -1032,7 +1031,7 @@ class mod_reader_admin_books_download_renderer extends mod_reader_admin_books_re
         if ($updatecount) {
             // Updates
             $onclick = 'select_updated("update", "item"); return false;';
-            $menu[] = html_writer::tag('a', get_string('updates', 'reader')." ($updatecount)", array('onclick' => $onclick));
+            $menu[] = html_writer::tag('a', get_string('updates', 'mod_reader')." ($updatecount)", array('onclick' => $onclick));
         }
 
         if ($menu = implode(' / ', $menu)) {
@@ -1220,12 +1219,12 @@ class mod_reader_admin_books_download_renderer extends mod_reader_admin_books_re
         $output .= html_writer::tag('span', s($text), array('class' => $cssclass));
         if ($count) {
             if ($newcount==$count) {
-                $msg = get_string('dataallavailable', 'reader', number_format($count));
+                $msg = get_string('dataallavailable', 'mod_reader', number_format($count));
             } else if ($newcount==0) {
-                $msg = get_string('dataalldownloaded', 'reader', number_format($count));
+                $msg = get_string('dataalldownloaded', 'mod_reader', number_format($count));
             } else {
                 $a = (object)array('new' => number_format($newcount), 'all' => number_format($count));
-                $msg = get_string('datasomeavailable', 'reader', $a);
+                $msg = get_string('datasomeavailable', 'mod_reader', $a);
             }
             $output .= html_writer::tag('span', s(' - '.$msg), array('class' => 'itemcount'));
         }
@@ -1297,10 +1296,10 @@ class mod_reader_admin_books_download_renderer extends mod_reader_admin_books_re
     public function available_new_img($updatecount=0, $updatetime=0) {
         $src = $this->pix_url('i/new');
         if ($updatecount) {
-            $str = get_string('updatesavailable', 'reader', $updatecount);
+            $str = get_string('updatesavailable', 'mod_reader', $updatecount);
             $onclick = '';
         } else if ($updatetime) {
-            $str = get_string('updatedon', 'reader', userdate($updatetime));
+            $str = get_string('updatedon', 'mod_reader', userdate($updatetime));
             $onclick = '';
         } else {
             $str = get_string('update'); // shouldn't happen !!
@@ -1346,7 +1345,7 @@ class mod_reader_admin_books_download_renderer extends mod_reader_admin_books_re
         $categorytype = $downloader->get_course_categorytype();
         $categoryid = $downloader->get_course_categoryid();
 
-        // to get all categories we coud use:
+        // to get all categories we could use:
         //    $categories = get_categories();
         // but it is better select only categories
         // containing courses relevant to this user,
@@ -1437,10 +1436,10 @@ class mod_reader_admin_books_download_renderer extends mod_reader_admin_books_re
             $categorytypes[reader_downloader::CATEGORYTYPE_DEFAULT] = get_string('default');
         }
         if ($downloader->course->category) {
-            $categorytypes[reader_downloader::CATEGORYTYPE_CURRENT] = get_string('current', 'reader');
+            $categorytypes[reader_downloader::CATEGORYTYPE_CURRENT] = get_string('current', 'mod_reader');
         }
         if ($count_hidden) {
-            $categorytypes[reader_downloader::CATEGORYTYPE_HIDDEN] = get_string('hidden', 'reader');
+            $categorytypes[reader_downloader::CATEGORYTYPE_HIDDEN] = get_string('hidden', 'mod_reader');
         }
         if ($count_visible) {
             $categorytypes[reader_downloader::CATEGORYTYPE_VISIBLE] = get_string('visible');
@@ -1541,10 +1540,10 @@ class mod_reader_admin_books_download_renderer extends mod_reader_admin_books_re
             $coursetypes[reader_downloader::COURSETYPE_DEFAULT] = get_string('default');
         }
         if ($categoryid == $downloader->course->category) {
-            $coursetypes[reader_downloader::COURSETYPE_CURRENT] = get_string('current', 'reader');
+            $coursetypes[reader_downloader::COURSETYPE_CURRENT] = get_string('current', 'mod_reader');
         }
         if ($count_hidden) {
-            $coursetypes[reader_downloader::COURSETYPE_HIDDEN] = get_string('hidden', 'reader');
+            $coursetypes[reader_downloader::COURSETYPE_HIDDEN] = get_string('hidden', 'mod_reader');
         }
         if ($count_visible) {
             $coursetypes[reader_downloader::COURSETYPE_VISIBLE] = get_string('visible');
@@ -1554,7 +1553,7 @@ class mod_reader_admin_books_download_renderer extends mod_reader_admin_books_re
         }
         $coursetypes = html_writer::select($coursetypes, 'targetcoursetype', $coursetype, null, $params);
 
-        $label = get_string('course'); // get_string('targetcourse', 'reader');
+        $label = get_string('course'); // get_string('targetcourse', 'mod_reader');
         return $this->formitem('targetcourse', $label, $coursetypes.' '.$courseids.' '.$coursetext, 'targetcourse');
     }
 
@@ -1635,26 +1634,26 @@ class mod_reader_admin_books_download_renderer extends mod_reader_admin_books_re
 
         $sectiontypes = array();
         if ($downloader->can_manage_course($courseid)) {
-            $sectiontypes[reader_downloader::SECTIONTYPE_DEFAULT] = get_string('sectiontypedefault', 'reader');
+            $sectiontypes[reader_downloader::SECTIONTYPE_DEFAULT] = get_string('sectiontypedefault', 'mod_reader');
         }
         if ($count_visible) {
-            $sectiontypes[reader_downloader::SECTIONTYPE_VISIBLE] = get_string('sectiontypevisible', 'reader');
+            $sectiontypes[reader_downloader::SECTIONTYPE_VISIBLE] = get_string('sectiontypevisible', 'mod_reader');
         }
         if ($count_hidden) {
-            $sectiontypes[reader_downloader::SECTIONTYPE_HIDDEN] = get_string('sectiontypehidden', 'reader');
+            $sectiontypes[reader_downloader::SECTIONTYPE_HIDDEN] = get_string('sectiontypehidden', 'mod_reader');
         }
         if ($count_visible || $count_hidden) {
-            $sectiontypes[reader_downloader::SECTIONTYPE_LAST] = get_string('sectiontypelast', 'reader');
+            $sectiontypes[reader_downloader::SECTIONTYPE_LAST] = get_string('sectiontypelast', 'mod_reader');
         }
         if ($downloader->can_manage_course($courseid)) {
-            $sectiontypes[reader_downloader::SECTIONTYPE_NEW] = get_string('sectiontypenew', 'reader');
+            $sectiontypes[reader_downloader::SECTIONTYPE_NEW] = get_string('sectiontypenew', 'mod_reader');
         }
 
         $action = reader_downloader::ACTION_SECTIONTYPE;
         $params = array('onchange' => 'RDR_set_menuitems(this, '.$action.')');
         $sectiontypes = html_writer::select($sectiontypes, 'targetsectiontype', $sectiontype, null, $params);
 
-        //$label = get_string('targetsection', 'reader');
+        //$label = get_string('targetsection', 'mod_reader');
         $label = get_string('section');
         return $this->formitem('targetsection', $label, $sectiontypes.' '.$sectionnums.' '.$sectiontext, 'targetsection');
     }

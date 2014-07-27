@@ -26,7 +26,7 @@
  */
 
 /** Include required files */
-require_once(dirname(__FILE__).'/../../../config.php');
+require_once('../../../config.php');
 require_once($CFG->dirroot.'/mod/reader/quiz/attemptlib.php');
 require_once($CFG->dirroot.'/mod/reader/lib.php');
 require_once($CFG->dirroot.'/mod/reader/quiz/accessrules.php');
@@ -37,62 +37,63 @@ $attemptid = required_param('attempt', PARAM_INT);
 $page = optional_param('page', 0, PARAM_INT);
 $id = optional_param('id', 0, PARAM_INT);
 
-$attemptobj = reader_attempt::create($attemptid);
+$readerattempt = reader_attempt::create($attemptid);
+$timenow = time();
 
-$PAGE->set_url($attemptobj->attempt_url(0, $page));
+$PAGE->set_url($readerattempt->attempt_url(0, $page));
 
 // Check login.
-require_login($attemptobj->get_course(), false, $attemptobj->get_cm());
+require_login($readerattempt->get_course(), false, $readerattempt->get_cm());
 
 // Check that this attempt belongs to this user.
-if ($attemptobj->get_userid() != $USER->id) {
-    if ($attemptobj->has_capability('mod/reader:viewreports')) {
-        redirect($attemptobj->review_url(0, $page));
+if ($readerattempt->get_userid() != $USER->id) {
+    if ($readerattempt->has_capability('mod/reader:viewreports')) {
+        redirect($readerattempt->review_url(0, $page));
     } else {
-        throw new moodle_reader_exception($attemptobj->get_readerobj(), 'notyourattempt');
+        throw new moodle_reader_exception($readerattempt->get_readerquiz(), 'notyourattempt');
     }
 }
 
-navigation_node::override_active_url($attemptobj->start_attempt_url());
+navigation_node::override_active_url($readerattempt->start_attempt_url());
 
 // If the attempt is already closed, send them to the review page.
 
-if ($attemptobj->is_finished()) {
-    redirect($attemptobj->review_url(0, $page));
+if ($readerattempt->is_finished()) {
+    redirect($readerattempt->review_url(0, $page));
 }
 
 // Check the access rules.
 $output = $PAGE->get_renderer('mod_quiz');
-$accessmanager = $attemptobj->get_access_manager(time());
+$accessmanager = $readerattempt->get_access_manager($timenow);
 $messages = $accessmanager->prevent_access();
 
 $pagetext = $page + 1;
-$logaction = 'view attempt: '.substr($attemptobj->readerobj->book->name, 0, 26); // 40 char limit
-$loginfo   = "readerID {$attemptobj->readerobj->reader->id}; ".
-             "reader quiz {$attemptobj->readerobj->book->id}; ".
+$logaction = 'view attempt: '.substr($readerattempt->readerquiz->book->name, 0, 26); // 40 char limit
+$loginfo   = "readerID {$readerattempt->readerquiz->reader->id}; ".
+             "reader quiz {$readerattempt->readerquiz->book->id}; ".
              "page: {$pagetext}";
-reader_add_to_log($attemptobj->readerobj->course->id, 'reader', $logaction, "view.php?id=$id", $loginfo);
+reader_add_to_log($readerattempt->readerquiz->course->id, 'reader', $logaction, "view.php?id=$id", $loginfo);
 
 // Get the list of questions needed by this page.
-$slots = $attemptobj->get_slots($page);
+$slots = $readerattempt->get_slots($page);
 
 // Check.
 if (empty($slots)) {
-    throw new moodle_reader_exception($attemptobj->get_readerobj(), 'noquestionsfound');
+    throw new moodle_reader_exception($readerattempt->get_readerquiz(), 'noquestionsfound');
 }
 
 // Initialise the JavaScript.
-$headtags = $attemptobj->get_html_head_contributions($page);
+$headtags = $readerattempt->get_html_head_contributions($page);
 $PAGE->requires->js_init_call('M.mod_quiz.init_attempt_form', null, false, reader_get_js_module());
 
 // Arrange for the navigation to be displayed.
-$headtags = $attemptobj->get_html_head_contributions($page);
-$PAGE->set_heading($attemptobj->get_course()->fullname);
-$PAGE->set_title(format_string($attemptobj->get_reader_name()));
+$headtags = $readerattempt->get_html_head_contributions($page);
+$PAGE->set_heading($readerattempt->get_course()->fullname);
+$PAGE->set_title(format_string($readerattempt->get_reader_name()));
 
 //echo $OUTPUT->header();
 
-if ($attemptobj->is_last_page($page)) {
+if ($readerattempt->is_last_page($page)) {
     $nextpage = -1;
 } else {
     $nextpage = $page + 1;
@@ -101,15 +102,12 @@ if ($attemptobj->is_last_page($page)) {
 //print_r ($page);
 //die;
 
-//print_r ($attemptobj);
+//print_r ($readerattempt);
 
-$accessmanager->show_attempt_timer_if_needed($attemptobj->get_attempt(), time());
+$accessmanager->show_attempt_timer_if_needed($readerattempt->get_attempt(), $timenow);
 
-if ($attemptobj->readerobj->reader->timelimit > 0) {
-    //print_r ($attemptobj);
-    //echo $attemptobj->readerobj->reader->timelimit."/";
-    //echo $attemptobj->attempt->timestart;
-    $totaltimertime = $attemptobj->readerobj->reader->timelimit * 60 - (time() - $attemptobj->attempt->timestart);
+if ($readerattempt->readerquiz->reader->timelimit > 0) {
+    $totaltimertime = $readerattempt->readerquiz->reader->timelimit - ($timenow - $readerattempt->attempt->timestart);
     if ($totaltimertime < 0) $totaltimertime = 0; {
         echo '<script type="text/javascript">'."\n";
         echo '//<![CDATA['."\n";
@@ -164,7 +162,4 @@ if ($attemptobj->readerobj->reader->timelimit > 0) {
 
 $_SESSION['SESSION']->reader_lastattemptpage = $_SERVER['QUERY_STRING'];
 
-echo $output->attempt_page($attemptobj, $page, $accessmanager, $messages, $slots, $id, $nextpage);
-
-//print_r ($_SESSION['SESSION']);
-//echo $OUTPUT->footer();
+echo $output->attempt_page($readerattempt, $page, $accessmanager, $messages, $slots, $id, $nextpage);

@@ -26,7 +26,7 @@
  */
 
 /** Include required files */
-require_once(dirname(__FILE__).'/../../../config.php');
+require_once('../../../config.php');
 require_once($CFG->dirroot.'/mod/reader/lib.php');
 require_once($CFG->dirroot.'/mod/reader/quiz/accessrules.php');
 require_once($CFG->dirroot.'/mod/reader/quiz/attemptlib.php');
@@ -64,7 +64,7 @@ if (empty($attemptobj->get_quiz()->showblocks)) {
     $PAGE->blocks->show_only_fake_blocks();
 }
 
-$title = get_string('likebook', 'reader');
+$title = get_string('likebook', 'mod_reader');
 if ($accessmanager->securewindow_required($attemptobj->is_preview_user())) {
     $accessmanager->setup_secure_page($attemptobj->get_course()->shortname . ': ' .
             format_string($attemptobj->get_quiz_name()), '');
@@ -94,16 +94,16 @@ echo $OUTPUT->heading($title, 3);
 
 echo $OUTPUT->box_start('generalbox');
 
-echo get_string('likebook', 'reader');
+echo get_string('likebook', 'mod_reader');
 
 echo "<br /><br />";
 
 echo '<form action="processattempt.php" method="post">';
 
-echo '<input type="radio" name="likebook" value="3" id="like-3"> <label for="like-3" style="cursor:pointer;">'.get_string('bookrating3', 'reader').'.</label><br />';
-echo '<input type="radio" name="likebook" value="2" id="like-2"> <label for="like-2" style="cursor:pointer;">'.get_string('bookrating2', 'reader').'.</label><br />';
-echo '<input type="radio" name="likebook" value="1" id="like-1"> <label for="like-1" style="cursor:pointer;">'.get_string('bookrating1', 'reader').'.</label><br />';
-echo '<input type="radio" name="likebook" value="0" id="like-0"> <label for="like-0" style="cursor:pointer;">'.get_string('bookrating0', 'reader').'.</label><br /><br />';
+echo '<input type="radio" name="likebook" value="3" id="like-3"> <label for="like-3" style="cursor:pointer;">'.get_string('bookrating3', 'mod_reader').'.</label><br />';
+echo '<input type="radio" name="likebook" value="2" id="like-2"> <label for="like-2" style="cursor:pointer;">'.get_string('bookrating2', 'mod_reader').'.</label><br />';
+echo '<input type="radio" name="likebook" value="1" id="like-1"> <label for="like-1" style="cursor:pointer;">'.get_string('bookrating1', 'mod_reader').'.</label><br />';
+echo '<input type="radio" name="likebook" value="0" id="like-0"> <label for="like-0" style="cursor:pointer;">'.get_string('bookrating0', 'mod_reader').'.</label><br /><br />';
 
 echo '<input name="attempt" value="'.$attemptid.'" type="hidden">';
 echo '<input name="finishattempt" value="1" type="hidden">';

@@ -68,10 +68,10 @@ class mod_reader_admin_users_export_form extends moodleform {
         $filename = clean_filename($title).'_attempts';
         $filename = preg_replace($search, '_', $filename).'.txt';
 
-        $this->_form->addElement('text', 'filename', get_string('filename', 'reader'), array('size' => 40));
+        $this->_form->addElement('text', 'filename', get_string('filename', 'mod_reader'), array('size' => 40));
         $this->_form->setDefault('filename', $filename);
         $this->_form->setType('filename', PARAM_FILE);
 
-        $this->add_action_buttons(false, get_string('usersexport', 'reader'));
+        $this->add_action_buttons(false, get_string('usersexport', 'mod_reader'));
     }
 }

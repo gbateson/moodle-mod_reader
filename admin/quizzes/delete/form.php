@@ -60,27 +60,27 @@ class mod_reader_admin_quizzes_delete_form extends moodleform {
     function definition() {
         global $course, $reader;
 
-        $this->_form->addElement('text', 'publisher', get_string('publisher', 'reader'), array('size' => 40));
+        $this->_form->addElement('text', 'publisher', get_string('publisher', 'mod_reader'), array('size' => 40));
         $this->_form->setType('publisher', PARAM_TEXT);
 
-        $this->_form->addElement('text', 'level', get_string('level', 'reader'), array('size' => 40));
+        $this->_form->addElement('text', 'level', get_string('level', 'mod_reader'), array('size' => 40));
         $this->_form->setType('level', PARAM_TEXT);
 
-        $this->_form->addElement('text', 'difficulty', get_string('difficulty', 'reader'), array('size' => 40));
+        $this->_form->addElement('text', 'difficulty', get_string('difficulty', 'mod_reader'), array('size' => 40));
         $this->_form->setType('difficulty', PARAM_INT);
 
-        $this->_form->addElement('text', 'words', get_string('words', 'reader'), array('size' => 40));
+        $this->_form->addElement('text', 'words', get_string('words', 'mod_reader'), array('size' => 40));
         $this->_form->setType('words', PARAM_INT);
 
         $this->_form->addElement('text', 'genre', get_string('genre', 'block_readerview'), array('size' => 40));
         $this->_form->setType('genre', PARAM_TEXT);
 
-        $this->_form->addElement('text', 'image', get_string('image', 'reader'), array('size' => 40));
+        $this->_form->addElement('text', 'image', get_string('image', 'mod_reader'), array('size' => 40));
         $this->_form->setType('image', PARAM_TEXT);
 
-        $this->_form->addElement('text', 'hidden', get_string('hidden', 'reader'), array('size' => 40));
+        $this->_form->addElement('text', 'hidden', get_string('hidden', 'mod_reader'), array('size' => 40));
         $this->_form->setType('hidden', PARAM_INT);
 
-        $this->add_action_buttons(false, get_string('delete', 'reader'));
+        $this->add_action_buttons(false, get_string('delete', 'mod_reader'));
     }
 }

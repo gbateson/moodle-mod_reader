@@ -526,6 +526,78 @@ class mod_reader {
         return $this->can('viewreports');
     }
 
+    /*
+     * get_delay
+     *
+     * @param integer $userid
+     * @return boolean
+     **/
+    public function get_delay($userid=0, $groupid=0) {
+        global $DB, $USER;
+
+        if ($userid==0) {
+            $userid = $USER->id;
+        }
+        if ($groupid==0 && $this->course->groupmode) {
+            if ($groupid = groups_get_user_groups($this->course->id, $userid)) {
+                if ($groupid = reset($groupid)) { // first grouping
+                    if ($groupid = reset($groupid)) { // first group
+                        if (isset($groupid->id)) {
+                            $groupid = $groupid->id;
+                        }
+                    }
+                }
+            }
+            if (empty($groupid)) {
+                $groupid = 0;
+            }
+        }
+
+        // get current reading level for current user in current reader
+        if ($level = $DB->get_record('reader_levels', array('userid' => $userid, 'readerid' => $this->id))) {
+            $level = $level->currentlevel;
+        } else {
+            $level = 0;
+        }
+
+        $select = '';
+        $params = array();
+
+        if (empty($this->id)) {
+            $select .= 'readerid = ?';
+            $params[] = 0;
+        } else {
+            $select .= '(readerid = ? OR readerid = ?)';
+            array_push($params, 0, $this->id);
+        }
+
+        if ($groupid==0) {
+            $select .= ' AND groupid = ?';
+            $params[] = 0;
+        } else {
+            $select .= ' AND (groupid = ? OR groupid = ?)';
+            array_push($params, 0, $groupid);
+        }
+
+        if ($level==0) {
+            $select .= ' AND level = ?';
+            $params[] = 0;
+        } else {
+            $select .= ' AND (level = ? OR level = ?)';
+            array_push($params, 0, $level);
+        }
+
+        $sort = 'readerid DESC, groupid DESC, level DESC, delay ASC';
+        if ($delay = $DB->get_records_select('reader_delays', $select, $params, $sort)) {
+            $delay = reset($delay); // use shortest and most specific delay available
+            $delay = $delay->delay;
+        } else {
+            $delay = 0;
+        }
+
+        return $delay;
+    }
+
     /**
      * get_standard_modes
      *

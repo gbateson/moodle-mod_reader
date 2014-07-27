@@ -57,7 +57,7 @@ class mod_reader_admin_renderer extends mod_reader_renderer {
         } else {
             $heading = 'reader:manage'.$type;
         }
-        return $this->heading(get_string($heading, 'reader'));
+        return $this->heading(get_string($heading, 'mod_reader'));
     }
 
     /**
@@ -72,7 +72,7 @@ class mod_reader_admin_renderer extends mod_reader_renderer {
         foreach ($this->actions as $action) {
             $params = array('id' => $cmid, 'action' => $action);
             $href = new moodle_url("/mod/reader/admin/$type.php", $params);
-            $text = get_string($type.$action, 'reader');
+            $text = get_string($type.$action, 'mod_reader');
             $links[] = html_writer::link($href, $text);
         }
         return html_writer::alist($links);
@@ -87,5 +87,19 @@ class mod_reader_admin_renderer extends mod_reader_renderer {
     public function continue_button($id) {
         $url = new moodle_url('/mod/reader/admin/index.php', array('id' => $id));
         return parent::continue_button($url);
+    }
+
+    /**
+     * available_booktypes
+     *
+     * @param xxx
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function available_booktypes() {
+        global $CFG;
+        require_once($CFG->dirroot.'/mod/reader/admin/books/download/downloader.php');
+        return array(reader_downloader::BOOKS_WITH_QUIZZES => get_string('bookswithquizzes', 'mod_reader'),
+                     reader_downloader::BOOKS_WITHOUT_QUIZZES => get_string('bookswithoutquizzes', 'mod_reader'));
     }
 }

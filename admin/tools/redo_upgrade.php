@@ -44,7 +44,7 @@ require_capability('moodle/site:config', $context);
 $PAGE->set_url($CFG->wwwroot.$SCRIPT);
 
 // set title
-$title = get_string('redo_upgrade', 'reader');
+$title = get_string('redo_upgrade', 'mod_reader');
 $PAGE->set_title($title);
 $PAGE->set_heading($title);
 $PAGE->set_pagelayout('admin');
@@ -84,7 +84,7 @@ if ($version = optional_param('version', 0, PARAM_INT)) {
     }
 
     // report
-    echo html_writer::tag('p', "Reader module version set to $version - $text");
+    echo html_writer::tag('p', "Reader module version set to just before $version - $text");
 
     // link to upgrade page
     $href = new moodle_url('/admin/index.php', array('confirmplugincheck' => 1, 'cache'=>0));

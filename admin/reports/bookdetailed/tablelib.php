@@ -150,7 +150,7 @@ class reader_admin_reports_bookdetailed_table extends reader_admin_reports_table
      * @return xxx
      */
     public function header_bookrating() {
-        return get_string('bookrating', 'reader');
+        return get_string('bookrating', 'mod_reader');
     }
 
     ////////////////////////////////////////////////////////////////////////////////

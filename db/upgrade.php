@@ -40,11 +40,19 @@ defined('MOODLE_INTERNAL') || die;
  */
 function xmldb_reader_upgrade($oldversion) {
     global $CFG, $DB, $OUTPUT;
+    require_once($CFG->dirroot.'/mod/reader/db/upgradelib.php');
+
     $result = true;
+
+    // cache the plugin name, as it is used often
+    $plugin = 'mod_reader';
 
     $dbman = $DB->get_manager();
 
-    require_once($CFG->dirroot.'/mod/reader/db/upgradelib.php');
+    // fix config names
+    if ($oldversion <= 2014070487) {
+        xmldb_reader_fix_config_names();
+    }
 
     $newversion = 2013033101;
     if ($result && $oldversion < $newversion) {
@@ -314,7 +322,7 @@ function xmldb_reader_upgrade($oldversion) {
     $newversion = 2013052100;
     if ($result && $oldversion < $newversion) {
 
-        $strupdating = 'Updating ordering questions for Reader module'; // get_string('fixordering', 'reader');
+        $strupdating = 'Updating ordering questions for Reader module'; // get_string('fixordering', $plugin);
 
         $select = 'qa.question AS questionid, COUNT(*) AS countanswers, SUM(qa.fraction) AS sumanswers';
         $from   = '{question_answers} qa LEFT JOIN {question} q ON qa.question = q.id';
@@ -374,7 +382,7 @@ function xmldb_reader_upgrade($oldversion) {
 
         // get previously saved "keepoldquizzes" setting
         // (usually there won't be one, "get_config()" will return false)
-        $keepoldquizzes = get_config('reader', 'keepoldquizzes');
+        $keepoldquizzes = get_config($plugin, 'keepoldquizzes');
 
         // if necessary, get default "keepoldquizzes" setting
         if ($keepoldquizzes===null || $keepoldquizzes===false || $keepoldquizzes==='') {
@@ -396,7 +404,7 @@ function xmldb_reader_upgrade($oldversion) {
         // if this is the first time to set "keepoldquizzes", then check with user
         if ($keepoldquizzes===null || $keepoldquizzes===false || $keepoldquizzes==='') {
 
-            $message = get_string('upgradeoldquizzesinfo', 'reader');
+            $message = get_string('upgradeoldquizzesinfo', $plugin);
             $message = format_text($message, FORMAT_MARKDOWN);
 
             $params = array(
@@ -416,7 +424,7 @@ function xmldb_reader_upgrade($oldversion) {
             $buttons = html_writer::tag('div', $buttons, array('class' => 'buttons'));
 
             $output = '';
-            $output .= $OUTPUT->heading(get_string('keepoldquizzes', 'reader'));
+            $output .= $OUTPUT->heading(get_string('keepoldquizzes', $plugin));
             $output .= $OUTPUT->box($message.$buttons, 'generalbox', 'notice');
             $output .= $OUTPUT->footer();
 
@@ -425,7 +433,7 @@ function xmldb_reader_upgrade($oldversion) {
         }
 
         // save this value of the 'keepoldquizzes' config setting
-        set_config('keepoldquizzes', $keepoldquizzes, 'reader');
+        set_config('keepoldquizzes', $keepoldquizzes, $plugin);
 
         // fix duplicate books and quizzes
         xmldb_reader_fix_duplicates();
@@ -538,16 +546,16 @@ function xmldb_reader_upgrade($oldversion) {
 
     $newversion = 2013121107;
     if ($result && $oldversion < $newversion) {
-        $readercfg = get_config('reader');
+        $readercfg = get_config($plugin);
         $vars = get_object_vars($readercfg);
         foreach ($vars as $oldname => $value) {
             if (substr($oldname, 0, 7)=='reader_') {
-                unset_config($oldname, 'reader');
+                unset_config($oldname, $plugin);
                 $newname = substr($oldname, 7);
                 if (isset($readercfg->$newname)) {
                     // do nothing
                 } else {
-                    set_config($newname, $value, 'reader');
+                    set_config($newname, $value, $plugin);
                 }
             }
         }
@@ -707,6 +715,118 @@ function xmldb_reader_upgrade($oldversion) {
     $newversion = 2014052876;
     if ($result && $oldversion < $newversion) {
         update_capabilities('mod/reader');
+        upgrade_mod_savepoint(true, "$newversion", 'reader');
+    }
+
+    $newversion = 2014070487;
+    if ($result && $oldversion < $newversion) {
+        // required only to update config names
+        upgrade_mod_savepoint(true, "$newversion", 'reader');
+    }
+
+    $newversion = 2014070688;
+    if ($result && $oldversion < $newversion) {
+        // remove table "reader_conflicts"
+        $tables = array('reader_conflicts', 'reader_check_question_id');
+        foreach ($tables as $table) {
+            $table = new xmldb_table($table);
+            if ($dbman->table_exists($table)) {
+                $dbman->drop_table($table);
+            }
+        }
+        upgrade_mod_savepoint(true, "$newversion", 'reader');
+    }
+
+    $newversion = 2014071189;
+    if ($result && $oldversion < $newversion) {
+        // convert timelimit from minutes to seconds
+        $DB->execute('UPDATE {reader} SET timelimit = timelimit * ?', array(60));
+        if ($value = get_config($plugin, 'quiztimeout')) {
+            unset_config('quiztimeout', $plugin);
+            set_config('quiztimelimit', $value * 60, $plugin);
+        }
+        upgrade_mod_savepoint(true, "$newversion", 'reader');
+    }
+
+    $newversion = 2014071290;
+    if ($result && $oldversion < $newversion) {
+
+        $readermoduleid = $DB->get_field('modules', 'id', array('name' => 'reader'));
+
+        if ($records = $DB->get_records('reader')) {
+            foreach ($records as $record) {
+
+                // move "attemptsofday" info to "reader_delays" table
+                if (isset($record->attemptsofday)) {
+                    $delay = $record->attemptsofday * 24 * 60 * 60;
+                    $params = array('readerid' => $record->id, 'groupid' => 0, 'level' => 0);
+                    if ($DB->record_exists('reader_delays', $params)) {
+                        $DB->set_field('reader_delays', 'delay', $delay, $params);
+                    } else {
+                        $params['delay'] = $delay;
+                        $params = (object)$params;
+                        $DB->insert_record('reader_delays', $params);
+                    }
+                }
+
+                // move timeopen and timeclose to "course_modules" table
+                if (isset($record->timeopen) && $record->timeopen) {
+                    $params = array('module' => $readermoduleid, 'instance' => $record->id);
+                    $DB->set_field('course_modules', 'availablefrom', $record->timeopen, $params);
+                }
+                if (isset($record->timeclose) && $record->timeclose) {
+                    $params = array('module' => $readermoduleid, 'instance' => $record->id);
+                    $DB->set_field('course_modules', 'availableuntil', $record->timeclose, $params);
+                }
+            }
+        }
+
+        // modify fields in "reader" table
+        $table = new xmldb_table('reader');
+
+        // remove fields from "reader" table
+        $fields = array('attemptsofday', 'delay1', 'delay2', 'optionflags', 'penaltyscheme', 'timeopen', 'timeclose');
+        foreach ($fields as $field) {
+            $field = new xmldb_field($field);
+            if ($dbman->field_exists($table, $field)) {
+                $dbman->drop_field($table, $field);
+            }
+        }
+
+        // rename field "secmeass" (security measures) to "checkip"
+        $field = new xmldb_field('secmeass', XMLDB_TYPE_INTEGER, '4', null, null, null, '0');
+        if ($dbman->field_exists($table, $field)) {
+            $dbman->rename_field($table, $field, 'checkip');
+        }
+
+        // create reader_attempt_questions table (replaces "reader_check_question_id")
+        $table = new xmldb_table('reader_attempt_questions');
+        if (! $dbman->table_exists($table)) {
+            $table->add_field('id',           XMLDB_TYPE_INTEGER, '11', XMLDB_UNSIGNED, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+            $table->add_field('userid',       XMLDB_TYPE_INTEGER, '11');
+            $table->add_field('attemptid',    XMLDB_TYPE_INTEGER, '11');
+            $table->add_field('questionid',   XMLDB_TYPE_INTEGER, '11');
+            $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '11');
+
+            // Add index on primary key
+            $table->add_key('primary', XMLDB_KEY_PRIMARY, array('id'));
+
+            // Add indexes to table reader_attempt_questions
+            $table->add_index('readatteques_use_ix', XMLDB_INDEX_NOTUNIQUE, array('userid'));
+            $table->add_index('readatteques_que_ix', XMLDB_INDEX_NOTUNIQUE, array('questionid'));
+            $table->add_index('readatteques_att_ix', XMLDB_INDEX_NOTUNIQUE, array('attemptid'));
+            $table->add_index('readatteques_tim_ix', XMLDB_INDEX_NOTUNIQUE, array('timemodified'));
+
+            $dbman->create_table($table);
+        }
+
+        // add index on field "level" in table "reader_delays"
+        $table = new xmldb_table('reader_delays');
+        $index = new xmldb_index('readdela_lev_ix', XMLDB_INDEX_NOTUNIQUE, array('level'));
+        if (! $dbman->index_exists($table, $index)) {
+            $dbman->add_index($table, $index);
+        }
+
         upgrade_mod_savepoint(true, "$newversion", 'reader');
     }
 

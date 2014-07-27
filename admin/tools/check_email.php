@@ -39,7 +39,7 @@ require_capability('moodle/site:config', reader_get_context(CONTEXT_SYSTEM));
 // it is the path below $CFG->wwwroot of this script
 $PAGE->set_url($CFG->wwwroot.$SCRIPT);
 
-$title = get_string('check_email', 'reader');
+$title = get_string('check_email', 'mod_reader');
 $PAGE->set_title($title);
 $PAGE->set_heading($title);
 $PAGE->set_pagelayout('admin');
@@ -52,14 +52,14 @@ if (! $user = $DB->get_record('user', array('username' => 'gueststudent'))) {
     $user = $admin;
 }
 
-$subject = get_string('check_email', 'reader');
-$message = get_string('welcometocourse', 'moodle', get_string('modulename', 'reader'));
+$subject = get_string('check_email', 'mod_reader');
+$message = get_string('welcometocourse', 'moodle', get_string('modulename', 'mod_reader'));
 
 email_to_user($user, $admin, $subject, $message);
-echo '<p>'.get_string('sentemailmoodle', 'reader', $user).'</p>';
+echo '<p>'.get_string('sentemailmoodle', 'mod_reader', $user).'</p>';
 
 mail($user->email, $subject, $message);
-echo '<p>'.get_string('sentemailphp', 'reader', $user).'</p>';
+echo '<p>'.get_string('sentemailphp', 'mod_reader', $user).'</p>';
 
 echo html_writer::tag('p', 'All done');
 if ($id) {

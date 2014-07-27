@@ -62,7 +62,7 @@ $output = $PAGE->get_renderer('mod_reader', "admin_attempts_$mode");
 $output->init($reader);
 
 echo $output->header();
-echo $output->heading(get_string($action, 'reader'));
+echo $output->heading(get_string($action, 'mod_reader'));
 
 echo $output->box_start('generalbox', 'notice');
 $link = new moodle_url('/mod/reader/admin/index.php', array('id' => $id));

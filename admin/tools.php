@@ -94,11 +94,11 @@ foreach ($files as $file) {
     $text = substr($file, 0, strrpos($file, '.'));
     $desc = '';
     if ($strman->string_exists($text.'desc', 'reader')) {
-        $desc = get_string($text.'desc', 'reader');
+        $desc = get_string($text.'desc', 'mod_reader');
         $desc = format_text($desc, FORMAT_MARKDOWN);
     }
     if ($strman->string_exists($text, 'reader')) {
-        $text = get_string($text, 'reader');
+        $text = get_string($text, 'mod_reader');
     }
     $text = html_writer::tag('a', $text, array('href' => $href));
 

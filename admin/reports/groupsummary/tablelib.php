@@ -171,7 +171,7 @@ class reader_admin_reports_groupsummary_table extends reader_admin_reports_table
      * @return string
      */
     public function header_countactive() {
-        return get_string('countactive', 'reader').$this->help_icon('countactive');
+        return get_string('countactive', 'mod_reader').$this->help_icon('countactive');
     }
 
     /**
@@ -180,7 +180,7 @@ class reader_admin_reports_groupsummary_table extends reader_admin_reports_table
      * @return string
      */
     public function header_countinactive() {
-        return get_string('countinactive', 'reader').$this->help_icon('countinactive');
+        return get_string('countinactive', 'mod_reader').$this->help_icon('countinactive');
     }
 
     /**
@@ -189,7 +189,7 @@ class reader_admin_reports_groupsummary_table extends reader_admin_reports_table
      * @return string
      */
     public function header_percentactive() {
-        return get_string('percentactive', 'reader').$this->help_icon('percentactive');
+        return get_string('percentactive', 'mod_reader').$this->help_icon('percentactive');
     }
 
     /**
@@ -198,7 +198,7 @@ class reader_admin_reports_groupsummary_table extends reader_admin_reports_table
      * @return string
      */
     public function header_percentinactive() {
-        return get_string('percentinactive', 'reader').$this->help_icon('percentinactive');
+        return get_string('percentinactive', 'mod_reader').$this->help_icon('percentinactive');
     }
 
     /**
@@ -207,7 +207,7 @@ class reader_admin_reports_groupsummary_table extends reader_admin_reports_table
      * @return string
      */
     public function header_averagetaken() {
-        return get_string('averagetaken', 'reader').$this->help_icon('averagetaken');
+        return get_string('averagetaken', 'mod_reader').$this->help_icon('averagetaken');
     }
 
     /**
@@ -216,7 +216,7 @@ class reader_admin_reports_groupsummary_table extends reader_admin_reports_table
      * @return string
      */
     public function header_averagepassed() {
-        return get_string('averagepassed', 'reader').$this->help_icon('averagepassed');
+        return get_string('averagepassed', 'mod_reader').$this->help_icon('averagepassed');
     }
 
     /**
@@ -225,7 +225,7 @@ class reader_admin_reports_groupsummary_table extends reader_admin_reports_table
      * @return string
      */
     public function header_averagefailed() {
-        return get_string('averagefailed', 'reader').$this->help_icon('averagefailed');
+        return get_string('averagefailed', 'mod_reader').$this->help_icon('averagefailed');
     }
 
     /**
@@ -234,7 +234,7 @@ class reader_admin_reports_groupsummary_table extends reader_admin_reports_table
      * @return string
      */
     public function header_averagepercentgrade() {
-        return get_string('averagegrade', 'reader').$this->help_icon('averagegrade');
+        return get_string('averagegrade', 'mod_reader').$this->help_icon('averagegrade');
     }
 
     /**
@@ -244,9 +244,9 @@ class reader_admin_reports_groupsummary_table extends reader_admin_reports_table
      * @return xxx
      */
     public function header_averagewords($type='')  {
-        $averagewords = get_string('averagewords', 'reader');
+        $averagewords = get_string('averagewords', 'mod_reader');
         if ($type) {
-            $strtype = get_string($type, 'reader').' ';
+            $strtype = get_string($type, 'mod_reader').' ';
             if ($this->is_downloading()) { // $this->download
                 $averagewords .= "($strtype)";
             } else {
@@ -405,10 +405,10 @@ class reader_admin_reports_groupsummary_table extends reader_admin_reports_table
         $name = $action.'[0]';
         $value = optional_param($name, '', PARAM_INT);
         $params = array('type' => 'input', 'id' => "id_$name", 'name' => $name, 'size' => 6, 'value' => $value);
-        $settings .= get_string('alllevels', 'reader').': '.html_writer::empty_tag('input', $params);
+        $settings .= get_string('alllevels', 'mod_reader').': '.html_writer::empty_tag('input', $params);
 
         // separate levels
-        $settings .= html_writer::tag('div', get_string('separatelevels', 'reader').':', array('class' => 'separate clearfix'));
+        $settings .= html_writer::tag('div', get_string('separatelevels', 'mod_reader').':', array('class' => 'separate clearfix'));
         for ($col=0; $col<=1; $col++) {
             $settings .= html_writer::start_tag('ul', array('class' => 'levels', 'class' => 'levels'));
             for ($row=0; $row<=4; $row++) {
@@ -416,7 +416,7 @@ class reader_admin_reports_groupsummary_table extends reader_admin_reports_table
                 $name = $action."[$i]";
                 $value = optional_param($name, '', PARAM_INT);
                 $params = array('type' => 'input', 'id' => "id_$name", 'name' => $name, 'size' => 6, 'value' => $value);
-                $level = get_string('leveli', 'reader', $i).': '.html_writer::empty_tag('input', $params);
+                $level = get_string('leveli', 'mod_reader', $i).': '.html_writer::empty_tag('input', $params);
                 $settings .= html_writer::tag('li', $level, array('class' => 'level'));
             }
             $settings .= html_writer::end_tag('ul');
@@ -440,7 +440,7 @@ class reader_admin_reports_groupsummary_table extends reader_admin_reports_table
 
         // time (as number of hours) for which message should be displayed
         $name = $action.'time';
-        $settings .= get_string($name, 'reader').': ';
+        $settings .= get_string($name, 'mod_reader').': ';
         $options = array('168' => '1 Week',
                          '240' => '10 Days',
                          '336' => '2 Weeks',
@@ -452,7 +452,7 @@ class reader_admin_reports_groupsummary_table extends reader_admin_reports_table
         //  - generate id
         //  - disable file uploads
         $name = $action.'text';
-        $editor = new MoodleQuickForm_editor($name, get_string($name, 'reader'));
+        $editor = new MoodleQuickForm_editor($name, get_string($name, 'mod_reader'));
         $editor->updateAttributes(array('id' => 'id_'.$name));
         $editor->setMaxfiles(0);
         $settings .= $editor->toHtml();

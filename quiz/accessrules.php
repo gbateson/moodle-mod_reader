@@ -38,8 +38,8 @@ defined('MOODLE_INTERNAL') || die;
  * @subpackage reader
  */
 class reader_access_manager {
-    private $_readerobj;
-    private $_timenow;
+    private $readerquiz;
+    private $timenow;
     private $_passwordrule = null;
     private $_securewindowrule = null;
     private $_safebrowserrule = null;
@@ -47,15 +47,15 @@ class reader_access_manager {
 
     /**
      * Create an instance for a particular quiz.
-     * @param object $quizobj An instance of the class quiz from quiz/attemptlib.php.
+     * @param object $readerquiz An instance of the class quiz from quiz/attemptlib.php.
      *      The quiz we will be controlling access to.
      * @param int $timenow The time to use as 'now'.
      * @param bool $canignoretimelimits Whether this user is exempt from time
      *      limits (has_capability('mod/quiz:ignoretimelimits', ...)).
      */
-    public function __construct($quizobj, $timenow, $canignoretimelimits) {
-        $this->_readerobj = $quizobj;
-        $this->_timenow = $timenow;
+    public function __construct($readerquiz, $timenow, $canignoretimelimits) {
+        $this->readerquiz = $readerquiz;
+        $this->timenow = $timenow;
         $this->create_standard_rules($canignoretimelimits);
     }
 
@@ -66,32 +66,29 @@ class reader_access_manager {
      * @todo Finish documenting this function
      */
     private function create_standard_rules($canignoretimelimits) {
-        $quiz = $this->_readerobj->get_reader();
-        if ($quiz->attempts > 0) {
-            $this->_rules[] = new num_attempts_access_rule($this->_readerobj, $this->_timenow);
+        $reader = $this->readerquiz->get_reader();
+        if ($reader->attempts > 0) {
+            $this->_rules[] = new num_attempts_access_rule($this->readerquiz, $this->timenow);
         }
-        $this->_rules[] = new open_close_date_access_rule1($this->_readerobj, $this->_timenow);
-        if (! empty($quiz->timelimit) && !$canignoretimelimits) {
-            $this->_rules[] = new time_limit_access_rule($this->_readerobj, $this->_timenow);
+        if (! empty($reader->timelimit) && ! $canignoretimelimits) {
+            $this->_rules[] = new time_limit_access_rule($this->readerquiz, $this->timenow);
         }
-        if (! empty($quiz->delay1) || !empty($quiz->delay2)) {
-            $this->_rules[] = new inter_attempt_delay_access_rule($this->_readerobj, $this->_timenow);
+        if (! empty($reader->delay1) || !empty($reader->delay2)) {
+            $this->_rules[] = new inter_attempt_delay_access_rule($this->readerquiz, $this->timenow);
         }
-        if (! empty($quiz->subnet)) {
-            $this->_rules[] = new ipaddress_access_rule($this->_readerobj, $this->_timenow);
+        if (! empty($reader->subnet)) {
+            $this->_rules[] = new ipaddress_access_rule($this->readerquiz, $this->timenow);
         }
-        if (! empty($quiz->password)) {
-            $this->_passwordrule = new password_access_rule($this->_readerobj, $this->_timenow);
+        if (! empty($reader->password)) {
+            $this->_passwordrule = new password_access_rule($this->readerquiz, $this->timenow);
             $this->_rules[] = $this->_passwordrule;
         }
-        if (! empty($quiz->popup)) {
-            if ($quiz->popup == 1) {
-                $this->_securewindowrule = new securewindow_access_rule(
-                        $this->_readerobj, $this->_timenow);
+        if (! empty($reader->popup)) {
+            if ($reader->popup == 1) {
+                $this->_securewindowrule = new securewindow_access_rule($this->readerquiz, $this->timenow);
                 $this->_rules[] = $this->_securewindowrule;
-            } else if ($quiz->popup == 2) {
-                $this->_safebrowserrule = new safebrowser_access_rule(
-                        $this->_readerobj, $this->_timenow);
+            } else if ($reader->popup == 2) {
+                $this->_safebrowserrule = new safebrowser_access_rule($this->readerquiz, $this->timenow);
                 $this->_rules[] = $this->_safebrowserrule;
             }
         }
@@ -251,7 +248,7 @@ class reader_access_manager {
     public function print_start_attempt_button($canpreview, $buttontext, $unfinished) {
         global $OUTPUT;
 
-        $url = $this->_readerobj->start_attempt_url();
+        $url = $this->readerquiz->start_attempt_url();
         $button = new single_button($url, $buttontext);
         $button->class .= ' quizstartbuttondiv';
 
@@ -286,7 +283,7 @@ class reader_access_manager {
      */
     public function back_to_view_page($canpreview, $message = '') {
         global $CFG, $OUTPUT, $PAGE;
-        $url = $this->_readerobj->view_url();
+        $url = $this->readerquiz->view_url();
         if ($this->securewindow_required($canpreview)) {
             $PAGE->set_pagelayout('popup');
             echo $OUTPUT->header();
@@ -317,7 +314,7 @@ class reader_access_manager {
     public function print_finish_review_link($canpreview, $return = false) {
         global $CFG;
         $output = '';
-        $url = $this->_readerobj->view_url();
+        $url = $this->readerquiz->view_url();
         $output .= '<div class="finishreview">';
         if ($this->securewindow_required($canpreview)) {
             $url = addslashes_js(htmlspecialchars($url));
@@ -367,13 +364,13 @@ class reader_access_manager {
      * in a javascript alert on the start attempt button.
      */
     public function confirm_start_attempt_message() {
-        $quiz = $this->_readerobj->get_reader();
-        if ($quiz->timelimit && $quiz->attempts) {
-            return get_string('confirmstartattempttimelimit', 'quiz', $quiz->attempts);
-        } else if ($quiz->timelimit) {
+        $reader = $this->readerquiz->get_reader();
+        if ($reader->timelimit && $reader->attempts) {
+            return get_string('confirmstartattempttimelimit', 'quiz', $reader->attempts);
+        } else if ($reader->timelimit) {
             return get_string('confirmstarttimelimit', 'quiz');
-        } else if ($quiz->attempts) {
-            return get_string('confirmstartattemptlimit', 'quiz', $quiz->attempts);
+        } else if ($reader->attempts) {
+            return get_string('confirmstartattemptlimit', 'quiz', $reader->attempts);
         }
         return '';
     }
@@ -394,9 +391,9 @@ class reader_access_manager {
             return '';
         }
 
-        $when = quiz_attempt_state($this->_readerobj->get_reader(), $attempt);
+        $when = quiz_attempt_state($this->readerquiz->get_reader(), $attempt);
         $reviewoptions = mod_reader_display_options::make_from_quiz(
-                $this->_readerobj->get_reader(), $when);
+                $this->readerquiz->get_reader(), $when);
 
         if (! $reviewoptions->attempt) {
             $message = $this->cannot_review_message($when, true);
@@ -413,7 +410,7 @@ class reader_access_manager {
         if ($this->securewindow_required($canpreview)) {
             return $this->_securewindowrule->make_review_link($linktext, $attempt->id);
         } else {
-            return '<a href="' . $this->_readerobj->review_url($attempt->id) . '" title="' .
+            return '<a href="' . $this->readerquiz->review_url($attempt->id) . '" title="' .
                     get_string('reviewthisattempt', 'quiz') . '">' . $linktext . '</a>';
         }
     }
@@ -428,27 +425,12 @@ class reader_access_manager {
      * @return string an appropraite message.
      */
     public function cannot_review_message($when, $short = false) {
-        $quiz = $this->_readerobj->get_reader();
+        // reader module does not allow review of attempts
         if ($short) {
-            $langstrsuffix = 'short';
-            $dateformat = get_string('strftimedatetimeshort', 'langconfig');
+            return get_string('noreviewshort', 'quiz');
         } else {
-            $langstrsuffix = '';
-            $dateformat = '';
+            return get_string('noreview', 'quiz');
         }
-
-        if ($when==mod_reader_display_options::DURING) {
-            return '';
-        }
-        if ($when==mod_reader_display_options::IMMEDIATELY_AFTER) {
-            return '';
-        }
-        if ($when==mod_reader_display_options::LATER_WHILE_OPEN) {
-            if ($quiz->timeclose && $quiz->reviewattempt & mod_reader_display_options::AFTER_CLOSE) {
-                return get_string('noreviewuntil' . $langstrsuffix, 'quiz', userdate($quiz->timeclose, $dateformat));
-            }
-        }
-        return get_string('noreview' . $langstrsuffix, 'quiz');
     }
 }
 
@@ -464,18 +446,18 @@ class reader_access_manager {
  * @copyright  2009 Tim Hunt
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-abstract class reader_access_rule_base {
-    public $_quiz;
-    public $_readerobj;
-    public $_timenow;
+abstract class readerquiz_access_rule_base {
+    public $readerquiz;
+    public $reader;
+    public $timenow;
     /**
      * Create an instance of this rule for a particular quiz.
-     * @param object $quiz the quiz we will be controlling access to.
+     * @param object $readerquiz the quiz we will be controlling access to.
      */
-    public function __construct($quizobj, $timenow) {
-        $this->_readerobj = $quizobj;
-        $this->_quiz = $quizobj->get_reader();
-        $this->_timenow = $timenow;
+    public function __construct($readerquiz, $timenow) {
+        $this->readerquiz = $readerquiz;
+        $this->reader = $readerquiz->get_reader();
+        $this->timenow = $timenow;
     }
     /**
      * Whether or not a user should be allowed to start a new attempt at this quiz now.
@@ -523,102 +505,11 @@ abstract class reader_access_rule_base {
      * If, because of this rule, the user has to finish their attempt by a certain time,
      * you should override this method to return the amount of time left in seconds.
      * @param object $attempt the current attempt
-     * @param int $timenow the time now. We don't use $this->_timenow, so we can
+     * @param int $timenow the time now. We don't use $this->timenow, so we can
      * give the user a more accurate indication of how much time is left.
      * @return mixed false if there is no deadline, of the time left in seconds if there is one.
      */
     public function time_left($attempt, $timenow) {
-        //echo "7634756435";
-        return false;
-    }
-}
-
-
-
-/**
- * A rule enforcing open and close dates.
- *
- * @copyright  2009 Tim Hunt
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
-class open_close_date_access_rule1 extends reader_access_rule_base {
-
-    /**
-     * description
-     *
-     * @return xxx
-     * @todo Finish documenting this function
-     */
-    public function description() {
-        $result = array();
-        if ($this->_timenow < $this->_quiz->timeopen) {
-            $result[] = get_string('quiznotavailable', 'quiz', userdate($this->_quiz->timeopen));
-        } else if ($this->_quiz->timeclose && $this->_timenow > $this->_quiz->timeclose) {
-            $result[] = get_string('quizclosed', 'quiz', userdate($this->_quiz->timeclose));
-        } else {
-            if ($this->_quiz->timeopen) {
-                $result[] = get_string('quizopenedon', 'quiz', userdate($this->_quiz->timeopen));
-            }
-            if ($this->_quiz->timeclose) {
-                $result[] = get_string('quizcloseson', 'quiz', userdate($this->_quiz->timeclose));
-            }
-        }
-        return $result;
-    }
-
-    /**
-     * prevent_access
-     *
-     * @return xxx
-     * @todo Finish documenting this function
-     */
-    public function prevent_access() {
-        if ($this->_timenow < $this->_quiz->timeopen || ($this->_quiz->timeclose && $this->_timenow > $this->_quiz->timeclose)) {
-            return get_string('notavailable', 'quiz');
-        }
-        return false;
-    }
-
-    /**
-     * is_finished
-     *
-     * @param xxx $numprevattempts
-     * @param xxx $lastattempt
-     * @return xxx
-     * @todo Finish documenting this function
-     */
-    public function is_finished($numprevattempts, $lastattempt) {
-        return $this->_quiz->timeclose && $this->_timenow > $this->_quiz->timeclose;
-    }
-
-    /**
-     * time_left
-     *
-     * @param xxx $attempt
-     * @param xxx $timenow
-     * @return xxx
-     * @todo Finish documenting this function
-     */
-    public function time_left($attempt, $timenow) {
-        // If this is a teacher preview after the close date, do not show
-        // the time.
-        //print_r ($this->_quiz);
-        //$this->_quiz->timeclose = $this->_quiz->timelimit * 60;
-
-        //echo "[".$this->_quiz->timeclose."/".$timenow."]";
-
-        if ($attempt->preview && $timenow > $this->_quiz->timeclose) {
-            return false;
-        }
-
-        // Otherwise, return to the time left until the close date, providing
-        // that is less than QUIZ_SHOW_TIME_BEFORE_DEADLINE
-        if ($this->_quiz->timeclose) {
-            $timeleft = $this->_quiz->timeclose - $timenow;
-            if ($timeleft < QUIZ_SHOW_TIME_BEFORE_DEADLINE) {
-                return $timeleft;
-            }
-        }
         return false;
     }
 }

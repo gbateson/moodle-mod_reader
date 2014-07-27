@@ -53,7 +53,7 @@ require_course_login($course, true, $cm);
 $reader = mod_reader::create($reader, $cm, $course);
 $PAGE->set_url($reader->reports_url());
 
-$title = format_string($reader->name).': '.get_string('reports').': '.get_string('report'.$mode, 'reader');
+$title = format_string($reader->name).': '.get_string('reports').': '.get_string('report'.$mode, 'mod_reader');
 $PAGE->set_title($title);
 $PAGE->set_heading($title);
 

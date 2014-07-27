@@ -183,7 +183,7 @@ class reader_admin_reports_table extends table_sql {
         if ($download) {
             $title = $this->output->reader->course->shortname;
             $title .= ' '.$this->output->reader->name;
-            $title .= ' '.get_string('report'.$this->output->mode, 'reader');
+            $title .= ' '.get_string('report'.$this->output->mode, 'mod_reader');
             $title = strip_tags(format_string($title, true));
             $this->is_downloading($download, clean_filename($title), $title);
 
@@ -712,7 +712,7 @@ class reader_admin_reports_table extends table_sql {
         }
 
         echo html_writer::empty_tag('input', $params);
-        echo html_writer::tag('label', get_string($action, 'reader'), array('for'=>$id));
+        echo html_writer::tag('label', get_string($action, 'mod_reader'), array('for'=>$id));
 
         if ($settings) {
             echo html_writer::tag('div', $settings, array('class' => 'actionsettings'));
@@ -865,7 +865,7 @@ class reader_admin_reports_table extends table_sql {
      * @return xxx
      */
     public function header_countpassed()  {
-        return get_string('countpassed', 'reader');
+        return get_string('countpassed', 'mod_reader');
     }
 
     /**
@@ -874,7 +874,7 @@ class reader_admin_reports_table extends table_sql {
      * @return xxx
      */
     public function header_countfailed()  {
-        return get_string('countfailed', 'reader');
+        return get_string('countfailed', 'mod_reader');
     }
 
     /**
@@ -883,7 +883,7 @@ class reader_admin_reports_table extends table_sql {
      * @return xxx
      */
     public function header_averageduration()  {
-        return get_string('averageduration', 'reader');
+        return get_string('averageduration', 'mod_reader');
     }
 
     /**
@@ -892,7 +892,7 @@ class reader_admin_reports_table extends table_sql {
      * @return xxx
      */
     public function header_averagegrade()  {
-        return get_string('averagegrade', 'reader');
+        return get_string('averagegrade', 'mod_reader');
     }
 
     /**
@@ -901,7 +901,7 @@ class reader_admin_reports_table extends table_sql {
      * @return xxx
      */
     public function header_totalwords($type='')  {
-        $totalwords = get_string('totalwords', 'reader');
+        $totalwords = get_string('totalwords', 'mod_reader');
         if ($type) {
             if ($this->download) {
                 $totalwords .= " ($type)";
@@ -918,7 +918,7 @@ class reader_admin_reports_table extends table_sql {
      * @return xxx
      */
     public function header_currentlevel() {
-        return get_string('currentlevel', 'reader');
+        return get_string('currentlevel', 'mod_reader');
     }
 
     /**
@@ -927,9 +927,9 @@ class reader_admin_reports_table extends table_sql {
      * @return xxx
      */
     public function header_difficulty() {
-        return get_string('bookdifficulty', 'reader');
-        //$long = get_string('difficulty', 'reader');
-        //$short = get_string('difficultyshort', 'reader');
+        return get_string('bookdifficulty', 'mod_reader');
+        //$long = get_string('difficulty', 'mod_reader');
+        //$short = get_string('difficultyshort', 'mod_reader');
         //return $long.html_writer::empty_tag('br')."($short)";
     }
 
@@ -939,7 +939,7 @@ class reader_admin_reports_table extends table_sql {
      * @return xxx
      */
     public function header_name() {
-        return get_string('booktitle', 'reader');
+        return get_string('booktitle', 'mod_reader');
     }
 
     /**
@@ -948,7 +948,7 @@ class reader_admin_reports_table extends table_sql {
      * @return xxx
      */
     public function header_publisher() {
-        return get_string('publisher', 'reader');
+        return get_string('publisher', 'mod_reader');
     }
 
     /**
@@ -957,7 +957,7 @@ class reader_admin_reports_table extends table_sql {
      * @return xxx
      */
     public function header_level() {
-        return get_string('level', 'reader');
+        return get_string('level', 'mod_reader');
     }
 
     /**
@@ -966,7 +966,7 @@ class reader_admin_reports_table extends table_sql {
      * @return xxx
      */
     public function header_passed() {
-        return implode('/', array(get_string('passedshort', 'reader'), get_string('failedshort', 'reader'), get_string('cheatedshort', 'reader')));
+        return implode('/', array(get_string('passedshort', 'mod_reader'), get_string('failedshort', 'mod_reader'), get_string('cheatedshort', 'mod_reader')));
     }
 
     /**
@@ -1022,7 +1022,7 @@ class reader_admin_reports_table extends table_sql {
     public function col_studentview($row)  {
         $params = array('id' => $this->output->reader->cm->id, 'viewasstudent' => $row->userid);
         $url = new moodle_url('/mod/reader/admin.php', $params);
-        $img = $this->output->pix_icon('t/preview', get_string('studentview', 'reader'));
+        $img = $this->output->pix_icon('t/preview', get_string('studentview', 'mod_reader'));
         return html_writer::link($url, $img);
     }
 
@@ -1112,10 +1112,10 @@ class reader_admin_reports_table extends table_sql {
      */
     public function col_passed($row)  {
         if (isset($row->passed) && $row->passed=='true') {
-            $text = get_string('passedshort', 'reader');
+            $text = get_string('passedshort', 'mod_reader');
             $class = 'passed';
         } else {
-            $text = get_string('failedshort', 'reader');
+            $text = get_string('failedshort', 'mod_reader');
             $class = 'failed';
         }
         if ($this->download) {
@@ -1142,7 +1142,7 @@ class reader_admin_reports_table extends table_sql {
                 } else {
                     $src = $this->output->pix_url('t/clear'); // Moodle >= 2.0
                 }
-                $img = html_writer::empty_tag('img', array('src' => $src, 'alt' => get_string('bookrating', 'reader')));
+                $img = html_writer::empty_tag('img', array('src' => $src, 'alt' => get_string('bookrating', 'mod_reader')));
             }
             return str_repeat($img, $rating);
         } else {
@@ -1351,10 +1351,10 @@ class reader_admin_reports_table extends table_sql {
     public function display_action_settings_passfailattempts($action) {
         $value = optional_param($action, 0, PARAM_INT);
         $settings = '';
-        $settings .= get_string('newsetting', 'reader').': ';
-        $options = array('true'    => get_string('passedshort', 'reader').' - '.get_string('passed', 'reader'),
-                         'false'   => get_string('failedshort', 'reader').' - '.get_string('failed', 'reader'),
-                         'cheated' => get_string('cheatedshort', 'reader').' - '.get_string('cheated', 'reader'));
+        $settings .= get_string('newsetting', 'mod_reader').': ';
+        $options = array('true'    => get_string('passedshort', 'mod_reader').' - '.get_string('passed', 'mod_reader'),
+                         'false'   => get_string('failedshort', 'mod_reader').' - '.get_string('failed', 'mod_reader'),
+                         'cheated' => get_string('cheatedshort', 'mod_reader').' - '.get_string('cheated', 'mod_reader'));
         $settings .= html_writer::select($options, $action, $value, '', array());
         return $this->display_action_settings($action, $settings);
     }

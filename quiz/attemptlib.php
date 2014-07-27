@@ -47,16 +47,16 @@ class moodle_reader_exception extends moodle_exception {
     /**
      * __construct
      *
-     * @param xxx $readerobj
+     * @param xxx $readerquiz
      * @param xxx $errorcode
      * @param xxx $a (optional, default=null)
      * @param xxx $link (optional, default='')
      * @param xxx $debuginfo (optional, default=null)
      * @todo Finish documenting this function
      */
-    public function __construct($readerobj, $errorcode, $a = null, $link = '', $debuginfo = null) {
+    public function __construct($readerquiz, $errorcode, $a = null, $link = '', $debuginfo = null) {
         if (! $link) {
-            $link = $readerobj->view_url();
+            $link = $readerquiz->view_url();
         }
         parent::__construct($errorcode, 'reader', $link, $a, $debuginfo);
     }
@@ -74,12 +74,14 @@ class moodle_reader_exception extends moodle_exception {
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @since      Moodle 2.0
  */
-class reader {
+class reader_quiz {
     // Fields initialised in the constructor.
     public $course;
     public $cm;
     public $reader;
     public $context;
+    public $book;
+    public $quiz;
     public $questionids;
 
     // Fields set later if that data is needed.
@@ -123,7 +125,9 @@ class reader {
         $this->book = $book;
         $this->quiz = $quiz;
 
-        $this->questionids = explode(',', reader_questions_in_reader($this->quiz->questions));
+        $this->questionids = explode(',', $this->quiz->questions);
+        $this->questionids = array_map('intval', $this->questionids);
+        $this->questionids = array_filter($this->questionids); // remove blanks
     }
 
     /**
@@ -143,7 +147,7 @@ class reader {
         $book = $DB->get_record('reader_books', array('id' => $bookid), '*', MUST_EXIST);
         $quiz = $DB->get_record('quiz', array('id' => $book->quizid),   '*', MUST_EXIST);
 
-        $quiz->timelimit         = $reader->timelimit * 60;
+        $quiz->timelimit         = $reader->timelimit;
         $quiz->attempts          = 1;
         $quiz->questionsperpage  = 1;
         $quiz->shuffleanswers    = 1;
@@ -153,7 +157,7 @@ class reader {
         // Update reader with override information
         //$reader = reader_update_effective_access($reader, $userid);
 
-        return new reader($reader, $cm, $course, $book, $quiz);
+        return new reader_quiz($reader, $cm, $course, $book, $quiz);
     }
 
     // Functions for loading more data =====================================================
@@ -190,7 +194,6 @@ class reader {
         get_question_options($questionstoprocess);
     }
 
-    // Simple getters ======================================================================
     /** @return int the course id. */
     public function get_courseid() {
         return $this->course->id;
@@ -211,12 +214,7 @@ class reader {
         return $this->reader;
     }
 
-    /**
-     * get_quiz
-     *
-     * @return xxx
-     * @todo Finish documenting this function
-     */
+    /** @return object the quiz record for this reader. */
     public function get_quiz() {
         return $this->quiz;
     }
@@ -269,7 +267,11 @@ class reader {
      * @return object the question object with that id.
      */
     public function get_question($id) {
-        return $this->questions[$id];
+        if (empty($this->questions[$id])) {
+            return null;
+        } else {
+            return $this->questions[$id];
+        }
     }
 
     /**
@@ -322,7 +324,7 @@ class reader {
      */
     public function view_url() {
         global $CFG;
-        return $CFG->wwwroot . '/mod/reader/view.php?id=' . $this->cm->id;
+        return $CFG->wwwroot.'/mod/reader/view.php?id=' . $this->cm->id;
     }
 
     /**
@@ -330,7 +332,7 @@ class reader {
      */
     public function edit_url() {
         global $CFG;
-        return $CFG->wwwroot . '/mod/reader/view.php?id=' . $this->cm->id;
+        return $CFG->wwwroot.'/mod/reader/view.php?id=' . $this->cm->id;
     }
 
     /**
@@ -338,9 +340,9 @@ class reader {
      * @param int $page optional page number to go to in the attempt.
      * @return string the URL of that attempt.
      */
-    public function attempt_url($attemptid, $page = 0) {
+    public function attempt_url($attemptid, $page=0) {
         global $CFG;
-        $url = $CFG->wwwroot . '/mod/reader/quiz/attempt.php?attempt=' . $attemptid;
+        $url = $CFG->wwwroot.'/mod/reader/quiz/attempt.php?attempt=' . $attemptid;
         if ($page) {
             $url .= '&page=' . $page;
         }
@@ -350,7 +352,7 @@ class reader {
     /**
      * @return string the URL of this reader's edit page. Needs to be POSTed to with a cmid parameter.
      */
-    public function start_attempt_url($page = 0) {
+    public function start_attempt_url($page=0) {
         $params = array('cmid' => $this->cm->id, 'sesskey' => sesskey());
         if ($page) {
             $params['page'] = $page;
@@ -379,7 +381,6 @@ class reader {
         return '';
     }
 
-    // Private methods =====================================================================
     /**
      * Check that the definition of a particular question is loaded, and if not throw an exception.
      * @param $id a questionid.
@@ -401,7 +402,7 @@ class reader {
  */
 class reader_attempt {
     // Fields initialised in the constructor.
-    public $readerobj;
+    public $readerquiz;
     public $attempt;
     public $quba;
 
@@ -426,7 +427,7 @@ class reader_attempt {
         $book = $DB->get_record('reader_books', array('quizid' => $attempt->quizid), '*', MUST_EXIST);
         $quiz = $DB->get_record('quiz',         array('id'     => $attempt->quizid), '*', MUST_EXIST);
 
-        $this->readerobj = reader::create($reader->id, $attempt->userid, $book->id);
+        $this->readerquiz = reader_quiz::create($reader->id, $attempt->userid, $book->id);
         $this->quba = question_engine::load_questions_usage_by_activity($this->attempt->uniqueid);
 
         $this->determine_layout();
@@ -497,7 +498,6 @@ class reader_attempt {
             $this->pagelayout[$page] = explode(',', $pagelayout);
         }
     }
-// Number the questions.
 
     /**
      * number_questions
@@ -513,13 +513,12 @@ class reader_attempt {
                     $question->_number = $number;
                     $number += $question->length;
                 } else {
-                    $question->_number = get_string('infoshort', 'reader');
+                    $question->_number = get_string('infoshort', 'mod_reader');
                 }
                 $question->_page = $page;
             }
         }
     }
-// Simple getters ======================================================================
 
     /**
      * set_rating
@@ -576,7 +575,7 @@ class reader_attempt {
      * @todo Finish documenting this function
      */
     public function get_reader() {
-        return $this->readerobj->get_reader();
+        return $this->readerquiz->get_reader();
     }
 
     /**
@@ -586,47 +585,47 @@ class reader_attempt {
      * @todo Finish documenting this function
      */
     public function get_quiz() {
-        return $this->readerobj->get_quiz();
+        return $this->readerquiz->get_quiz();
     }
 
     /**
-     * get_readerobj
+     * get_readerquiz
      *
      * @return xxx
      * @todo Finish documenting this function
      */
-    public function get_readerobj() {
-        return $this->readerobj;
+    public function get_readerquiz() {
+        return $this->readerquiz;
     }
 
     /** @return int the course id. */
     public function get_courseid() {
-        return $this->readerobj->get_courseid();
+        return $this->readerquiz->get_courseid();
     }
 
     /** @return int the course id. */
     public function get_course() {
-        return $this->readerobj->get_course();
+        return $this->readerquiz->get_course();
     }
 
     /** @return int the reader id. */
     public function get_readerid() {
-        return $this->readerobj->get_readerid();
+        return $this->readerquiz->get_readerid();
     }
 
     /** @return string the name of this reader. */
     public function get_reader_name() {
-        return $this->readerobj->get_reader_name();
+        return $this->readerquiz->get_reader_name();
     }
 
     /** @return object the course_module object. */
     public function get_cm() {
-        return $this->readerobj->get_cm();
+        return $this->readerquiz->get_cm();
     }
 
     /** @return object the course_module object. */
     public function get_cmid() {
-        return $this->readerobj->get_cmid();
+        return $this->readerquiz->get_cmid();
     }
 
     /**
@@ -634,12 +633,12 @@ class reader_attempt {
      * rather than attempting it.
      */
     public function is_preview_user() {
-        return $this->readerobj->is_preview_user();
+        return $this->readerquiz->is_preview_user();
     }
 
     /** @return int the number of attempts allowed at this reader (0 = infinite). */
     public function get_num_attempts_allowed() {
-        return $this->readerobj->get_num_attempts_allowed();
+        return $this->readerquiz->get_num_attempts_allowed();
     }
 
     /** @return int number fo pages in this reader. */
@@ -653,7 +652,7 @@ class reader_attempt {
      *      for this reader at this time.
      */
     public function get_access_manager($timenow) {
-        return $this->readerobj->get_access_manager($timenow);
+        return $this->readerquiz->get_access_manager($timenow);
     }
 
     /** @return int the attempt id. */
@@ -743,21 +742,21 @@ class reader_attempt {
      */
     public function get_overall_feedback($grade) {
         return reader_feedback_for_grade($grade, $this->get_reader(),
-                $this->readerobj->get_context());
+                $this->readerquiz->get_context());
     }
 
     /**
      * Wrapper round the has_capability funciton that automatically passes in the reader context.
      */
     public function has_capability($capability, $userid = null, $doanything = true) {
-        return $this->readerobj->has_capability($capability, $userid, $doanything);
+        return $this->readerquiz->has_capability($capability, $userid, $doanything);
     }
 
     /**
      * Wrapper round the require_capability funciton that automatically passes in the reader context.
      */
     public function require_capability($capability, $userid = null, $doanything = true) {
-        return $this->readerobj->require_capability($capability, $userid, $doanything);
+        return $this->readerquiz->require_capability($capability, $userid, $doanything);
     }
 
     /**
@@ -786,13 +785,13 @@ class reader_attempt {
         if ($reviewing) {
             if (is_null($this->reviewoptions)) {
                 $this->reviewoptions = reader_get_review_options($this->get_reader(),
-                        $this->attempt, $this->readerobj->get_context());
+                        $this->attempt, $this->readerquiz->get_context());
             }
             return $this->reviewoptions;
 
         } else {
             $options = mod_reader_display_options::make_from_reader($this->get_quiz(),
-                    mod_reader_display_options::DURING, $this->readerobj->course->showgrades);
+                    mod_reader_display_options::DURING, $this->readerquiz->course->showgrades);
             $options->flags = 'question_display_options::HIDDEN';
             return $options;
         }
@@ -962,12 +961,11 @@ class reader_attempt {
         return $this->quba->get_question_action_time($slot);
     }
 
-    // URLs related to this attempt ========================================================
     /**
      * @return string reader view url.
      */
     public function view_url() {
-        return $this->readerobj->view_url();
+        return $this->readerquiz->view_url();
     }
 
     /**
@@ -979,7 +977,7 @@ class reader_attempt {
         } else {
             $page = 0;
         }
-        return $this->readerobj->start_attempt_url($page);
+        return $this->readerquiz->start_attempt_url($page);
     }
 
     /**
@@ -1024,8 +1022,6 @@ class reader_attempt {
         return $this->page_and_question_url('review', $slot, $page, $showall, $thispage);
     }
 
-    // Bits of content =====================================================================
-
     /**
      * Initialise the JS etc. required all the questions on a page..
      * @param mixed $page a page number, or 'all'.
@@ -1060,7 +1056,7 @@ class reader_attempt {
         if ($this->is_preview() && $this->is_preview_user()) {
             return $OUTPUT->single_button(new moodle_url(
                     $this->start_attempt_url(), array('forcenew' => true)),
-                    get_string('startnewpreview', 'reader'));
+                    get_string('startnewpreview', 'mod_reader'));
         } else {
             return '';
         }
@@ -1138,7 +1134,7 @@ class reader_attempt {
 
         $bc = new block_contents();
         $bc->attributes['id'] = 'mod_reader_navblock';
-        $bc->title = get_string('readernavigation', 'reader');
+        $bc->title = get_string('readernavigation', 'mod_reader');
         $bc->content = $output->navigation_panel($panel);
         return $bc;
     }
@@ -1220,9 +1216,9 @@ class reader_attempt {
         $this->attempt->timemodified = $timestamp;
         $this->attempt->timefinish   = $timestamp;
         $this->attempt->sumgrades    = $this->quba->get_total_mark();
-        $this->attempt->percentgrade = round($this->quba->get_total_mark() / $this->readerobj->quiz->sumgrades * 100);
+        $this->attempt->percentgrade = round($this->quba->get_total_mark() / $this->readerquiz->quiz->sumgrades * 100);
 
-        if ($this->readerobj->reader->percentforreading <= $this->attempt->percentgrade) {
+        if ($this->readerquiz->reader->percentforreading <= $this->attempt->percentgrade) {
             $this->attempt->passed = 'true';
             $passedlog = "Passed";
         } else {
@@ -1230,13 +1226,13 @@ class reader_attempt {
             $passedlog = "Failed";
         }
 
-        //reader_add_to_log($this->readerobj->course->id, 'reader', 'finish attempt: '.$this->readerobj->book->name, "view.php?id={$this->readerobj->reader->id}", $this->attempt->percentgrade."%/".$this->attempt->passed);
+        //reader_add_to_log($this->readerquiz->course->id, 'reader', 'finish attempt: '.$this->readerquiz->book->name, "view.php?id={$this->readerquiz->reader->id}", $this->attempt->percentgrade."%/".$this->attempt->passed);
 
-        $logaction = 'view attempt: '.substr($this->readerobj->book->name, 0, 26); // 40 char limit
-        $loginfo   = "readerID {$this->readerobj->reader->id}; ".
-                     "reader quiz {$this->readerobj->book->id}; ".
+        $logaction = 'view attempt: '.substr($this->readerquiz->book->name, 0, 26); // 40 char limit
+        $loginfo   = "readerID {$this->readerquiz->reader->id}; ".
+                     "reader quiz {$this->readerquiz->book->id}; ".
                      "{$this->attempt->percentgrade}/{$passedlog}";
-        reader_add_to_log($this->readerobj->course->id, 'reader', $logaction, "view.php?id={$this->attempt->id}", $loginfo);
+        reader_add_to_log($this->readerquiz->course->id, 'reader', $logaction, "view.php?id={$this->attempt->id}", $loginfo);
 
         $DB->update_record('reader_attempts', $this->attempt);
     }
@@ -1257,8 +1253,6 @@ class reader_attempt {
                 $prefix, $this->get_display_options(true)->markdp,
                 get_string('gradingattempt', 'reader_grading', $a));
     }
-
-    // Private methods =====================================================================
 
     /**
      * Get a URL for a particular question on a particular page of the reader.
@@ -1343,7 +1337,7 @@ class reader_nav_question_button implements renderable {
  */
 abstract class reader_nav_panel_base {
     /** @var reader_attempt */
-    public $attemptobj;
+    public $readerattempt;
     /** @var question_display_options */
     public $options;
     /** @var integer */
@@ -1351,9 +1345,8 @@ abstract class reader_nav_panel_base {
     /** @var boolean */
     public $showall;
 
-    public function __construct(reader_attempt $attemptobj,
-            question_display_options $options, $page, $showall) {
-        $this->attemptobj = $attemptobj;
+    public function __construct(reader_attempt $readerattempt, question_display_options $options, $page, $showall) {
+        $this->readerattempt = $readerattempt;
         $this->options = $options;
         $this->page = $page;
         $this->showall = $showall;
@@ -1367,8 +1360,8 @@ abstract class reader_nav_panel_base {
      */
     public function get_question_buttons() {
         $buttons = array();
-        foreach ($this->attemptobj->get_slots() as $slot) {
-            $qa = $this->attemptobj->get_question_attempt($slot);
+        foreach ($this->readerattempt->get_slots() as $slot) {
+            $qa = $this->readerattempt->get_question_attempt($slot);
             $showcorrectness = $this->options->correctness && $qa->has_marks();
 
             $button = new reader_nav_question_button();
@@ -1410,11 +1403,12 @@ abstract class reader_nav_panel_base {
      * @todo Finish documenting this function
      */
     public function render_restart_preview_link($output) {
-        if (! $this->attemptobj->is_own_preview()) {
+        if (! $this->readerattempt->is_own_preview()) {
             return '';
         }
-        return $output->restart_preview_button(new moodle_url(
-                $this->attemptobj->start_attempt_url(), array('forcenew' => true)));
+        $url = $this->readerattempt->start_attempt_url();
+        $url = new moodle_url($url, array('forcenew' => true));
+        return $output->restart_preview_button($url);
     }
 
     public abstract function get_question_url($slot);
@@ -1429,13 +1423,13 @@ abstract class reader_nav_panel_base {
     public function user_picture() {
         global $DB;
 
-        if (! $this->attemptobj->get_reader()->showuserpicture) {
+        if (! $this->readerattempt->get_reader()->showuserpicture) {
             return null;
         }
 
-        $user = $DB->get_record('user', array('id' => $this->attemptobj->get_userid()));
+        $user = $DB->get_record('user', array('id' => $this->readerattempt->get_userid()));
         $userpicture = new user_picture($user);
-        $userpicture->courseid = $this->attemptobj->get_courseid();
+        $userpicture->courseid = $this->readerattempt->get_courseid();
         return $userpicture;
     }
 }
@@ -1457,7 +1451,7 @@ class reader_attempt_nav_panel extends reader_nav_panel_base {
      * @todo Finish documenting this function
      */
     public function get_question_url($slot) {
-        return $this->attemptobj->attempt_url($slot, -1, $this->page);
+        return $this->readerattempt->attempt_url($slot, -1, $this->page);
     }
 
     /**
@@ -1469,7 +1463,7 @@ class reader_attempt_nav_panel extends reader_nav_panel_base {
      * @todo Finish documenting this function
      */
     public function render_before_button_bits(mod_reader_renderer $output) {
-        return html_writer::tag('div', get_string('navnojswarning', 'reader'),
+        return html_writer::tag('div', get_string('navnojswarning', 'mod_reader'),
                 array('id' => 'readernojswarning'));
     }
 
@@ -1482,8 +1476,8 @@ class reader_attempt_nav_panel extends reader_nav_panel_base {
      * @todo Finish documenting this function
      */
     public function render_end_bits(mod_reader_renderer $output) {
-        return html_writer::link($this->attemptobj->summary_url(),
-                get_string('endtest', 'reader'), array('class' => 'endtestlink')) .
+        return html_writer::link($this->readerattempt->summary_url(),
+                get_string('endtest', 'mod_reader'), array('class' => 'endtestlink')) .
                 $output->countdown_timer() .
                 $this->render_restart_preview_link($output);
     }
@@ -1506,7 +1500,7 @@ class reader_review_nav_panel extends reader_nav_panel_base {
      * @todo Finish documenting this function
      */
     public function get_question_url($slot) {
-        return $this->attemptobj->review_url($slot, -1, $this->showall, $this->page);
+        return $this->readerattempt->review_url($slot, -1, $this->showall, $this->page);
     }
 
     /**
@@ -1519,16 +1513,16 @@ class reader_review_nav_panel extends reader_nav_panel_base {
      */
     public function render_end_bits(mod_reader_renderer $output) {
         $html = '';
-        if ($this->attemptobj->get_num_pages() > 1) {
+        if ($this->readerattempt->get_num_pages() > 1) {
             if ($this->showall) {
-                $html .= html_writer::link($this->attemptobj->review_url(null, 0, false),
-                        get_string('showeachpage', 'reader'));
+                $html .= html_writer::link($this->readerattempt->review_url(null, 0, false),
+                        get_string('showeachpage', 'mod_reader'));
             } else {
-                $html .= html_writer::link($this->attemptobj->review_url(null, 0, true),
-                        get_string('showall', 'reader'));
+                $html .= html_writer::link($this->readerattempt->review_url(null, 0, true),
+                        get_string('showall', 'mod_reader'));
             }
         }
-        $html .= $output->finish_review_link($this->attemptobj->view_url());
+        $html .= $output->finish_review_link($this->readerattempt->view_url());
         $html .= $this->render_restart_preview_link($output);
         return $html;
     }
@@ -1545,7 +1539,7 @@ class reader_review_nav_panel extends reader_nav_panel_base {
 function reader_clean_layout($layout, $removeemptypages = false) {
     // Remove repeated ','s. This can happen when a restore fails to find the right
     // id to relink to.
-    $layout = preg_replace('/,{2,}/', ',', trim($layout, ','));
+    $layout = preg_replace('/,,+/', ',', trim($layout, ','));
 
     // Remove duplicate question ids
     $layout = explode(',', $layout);
@@ -1592,11 +1586,10 @@ function reader_clean_layout($layout, $removeemptypages = false) {
 function reader_get_js_module() {
     global $PAGE;
     return array(
-        'name' => 'mod_quiz',
+        'name'     => 'mod_quiz',
         'fullpath' => '/mod/quiz/module.js',
-        'requires' => array('base', 'dom', 'event-delegate', 'event-key',
-                'core_question_engine'),
-        'strings' => array(
+        'requires' => array('base', 'dom', 'event-delegate', 'event-key', 'core_question_engine'),
+        'strings'  => array(
             array('timesup', 'quiz'),
             array('functiondisabledbysecuremode', 'quiz'),
             array('flagged', 'question'),

@@ -74,7 +74,7 @@ class mod_reader_admin_users_sendmessage_form extends moodleform {
         $mform->setType('groupids', PARAM_INT);
 
         // timefinish
-        $mform->addElement('date_time_selector', 'timefinish', get_string('sendmessagetime', 'reader'), array('optional' => true));
+        $mform->addElement('date_time_selector', 'timefinish', get_string('sendmessagetime', 'mod_reader'), array('optional' => true));
         $mform->setDefault('timefinish', 0);
         $mform->setType('timefinish', PARAM_INT);
 
@@ -83,13 +83,13 @@ class mod_reader_admin_users_sendmessage_form extends moodleform {
         $mform->setType('messageid', PARAM_INT);
 
         // message
-        $mform->addElement('editor', 'message', get_string('sendmessagetext', 'reader'), array('size' => 40));
+        $mform->addElement('editor', 'message', get_string('sendmessagetext', 'mod_reader'), array('size' => 40));
         $mform->setDefault('message', '');
         $mform->setType('message', PARAM_RAW);
 
         // active messages
         if ($messages = $this->format_messages($groups)) {
-            $messages = html_writer::tag('h3', get_string('activemessages', 'reader')).
+            $messages = html_writer::tag('h3', get_string('activemessages', 'mod_reader')).
                         html_writer::tag('ol', $messages, array('class' => 'messages'));
             $mform->addElement('static', 'messages', '', $messages);
         }
@@ -179,12 +179,12 @@ class mod_reader_admin_users_sendmessage_form extends moodleform {
                         $days = ' ('.$days.' days remaining)';
                     }
                     $timefinish = userdate($timefinish, $dateformat).$days;
-                    $timefinish = html_writer::tag('b', get_string('sendmessagetime', 'reader')).': '.$timefinish;
+                    $timefinish = html_writer::tag('b', get_string('sendmessagetime', 'mod_reader')).': '.$timefinish;
                     $item .= html_writer::tag('li', $timefinish, array('class' => 'timefinish'));
                 }
                 if ($text = $message->messagetext) {
                     $text = strip_tags(format_text($text, $message->messageformat));
-                    //$text = html_writer::tag('b', get_string('sendmessagetext', 'reader')).': '.$text;
+                    //$text = html_writer::tag('b', get_string('sendmessagetext', 'mod_reader')).': '.$text;
                     $item .= html_writer::tag('li', $text, array('class' => 'messagetext'));
                 }
                 if ($item) {

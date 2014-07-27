@@ -26,7 +26,7 @@
  */
 
 /** Include required files */
-require_once(dirname(__FILE__).'/../../../config.php');
+require_once('../../../config.php');
 require_once($CFG->dirroot.'/mod/reader/lib.php');
 require_once($CFG->dirroot.'/mod/reader/quiz/accessrules.php');
 require_once($CFG->dirroot.'/mod/reader/quiz/attemptlib.php');

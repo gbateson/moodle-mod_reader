@@ -220,7 +220,7 @@ class reader_download_progress_bar extends reader_download_progress_task {
     public function __construct($name='', $weighting=100, $tasks=array()) {
         parent::__construct($name, $weighting, $tasks);
         $this->bar = new progress_bar($name, 500, true);
-        $this->title = get_string($this->name, 'reader');
+        $this->title = get_string($this->name, 'mod_reader');
         $this->start_current();
         $this->reset_timeout();
     }

@@ -44,7 +44,7 @@ require_capability('moodle/site:config', $context);
 // it is the path below $CFG->wwwroot of this script
 $PAGE->set_url($CFG->wwwroot.$SCRIPT);
 
-$title = get_string('fix_slashesinnames', 'reader');
+$title = get_string('fix_slashesinnames', 'mod_reader');
 $PAGE->set_title($title);
 $PAGE->set_heading($title);
 $PAGE->set_pagelayout('admin');
@@ -66,7 +66,7 @@ if ($books = $DB->get_records ('reader_books')) {
     }
 }
 
-if (! $reader_usecourse = get_config('reader', 'usecourse')) {
+if (! $reader_usecourse = get_config('mod_reader', 'usecourse')) {
     $params = array('fullname' => 'Reader Quizzes', 'visible' => 0);
     if (! $reader_usecourse = $DB->get_field('course', 'id', $params)) {
         // look for external "usecourse" in Reader activities

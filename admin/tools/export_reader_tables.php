@@ -44,7 +44,7 @@ require_capability('moodle/site:config', $context);
 $PAGE->set_url($CFG->wwwroot.$SCRIPT);
 
 // set title
-$title = get_string('export_reader_tables', 'reader');
+$title = get_string('export_reader_tables', 'mod_reader');
 $PAGE->set_title($title);
 $PAGE->set_heading($title);
 $PAGE->set_pagelayout('admin');
@@ -98,7 +98,7 @@ function reader_export_db_header() {
         $readerversion = $DB->get_field('modules', 'version', array('name' => 'reader'));
     } else {
         // Moodle >= 2.7
-            $readerversion = $DB->get_field('config_plugins', 'value', array('plugin' => 'mod_reader', 'name' => 'version'));
+        $readerversion = $DB->get_field('config_plugins', 'value', array('plugin' => 'mod_reader', 'name' => 'version'));
     }
     $readerrelease = preg_replace('/^([0-9]{4})([0-9]{2})([0-9]{2})([0-9]{2})$/', '$1.$2.$3 ($4)', $readerversion);
 

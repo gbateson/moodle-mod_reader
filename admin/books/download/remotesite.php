@@ -346,18 +346,18 @@ class reader_remotesite {
             if (empty($response->error)) {
                 $error = ' '; // a single space to trigger error report
             } else {
-                $error = get_string('curlerror', 'reader', $response->error);
+                $error = get_string('curlerror', 'mod_reader', $response->error);
             }
         } else {
             if ($error = $this->check_curl_results($response->results)) {
-                $error = get_string('servererror', 'reader', $error);
+                $error = get_string('servererror', 'mod_reader', $error);
             }
         }
 
         // report $error (and quit), if necessary
         if ($error) {
             $output = '';
-            $output .= html_writer::tag('h3', get_string('cannotdownloadata', 'reader'));
+            $output .= html_writer::tag('h3', get_string('cannotdownloadata', 'mod_reader'));
             if ($error = trim($error)) {
                 $output .= html_writer::tag('p', $error);
             }

@@ -94,7 +94,7 @@ class mod_reader_admin_reports_renderer extends mod_reader_admin_renderer {
                 $tab = constant('self::TAB_REPORTS_'.strtoupper($mode));
                 $params = array('id' => $cmid, 'tab' => $tab, 'mode' => $mode);
                 $url = new moodle_url('/mod/reader/admin/reports.php', $params);
-                $tabs[] = new tabobject($tab, $url, get_string('report'.$mode, 'reader'));
+                $tabs[] = new tabobject($tab, $url, get_string('report'.$mode, 'mod_reader'));
             }
         }
         return $this->attach_tabs_subtree(parent::get_tabs(), parent::TAB_REPORTS, $tabs);

@@ -179,7 +179,7 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
      * @return xxx
      */
     public function header_startlevel()  {
-        return get_string('startlevel', 'reader');
+        return get_string('startlevel', 'mod_reader');
     }
 
     /**
@@ -188,7 +188,7 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
      * @return xxx
      */
     public function header_currentlevel()  {
-        return get_string('currentlevel', 'reader');
+        return get_string('currentlevel', 'mod_reader');
     }
 
     /**
@@ -197,7 +197,7 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
      * @return xxx
      */
     public function header_nopromote()  {
-        return get_string('nopromote', 'reader');
+        return get_string('nopromote', 'mod_reader');
     }
 
     /**
@@ -206,7 +206,7 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
      * @return xxx
      */
     public function header_wordsthisterm()  {
-        return $this->header_totalwords(get_string('thisterm', 'reader'));
+        return $this->header_totalwords(get_string('thisterm', 'mod_reader'));
     }
 
     /**
@@ -215,7 +215,7 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
      * @return xxx
      */
     public function header_wordsallterms()  {
-        return $this->header_totalwords(get_string('allterms', 'reader'));
+        return $this->header_totalwords(get_string('allterms', 'mod_reader'));
     }
 
     /**
@@ -224,7 +224,7 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
      * @return xxx
      */
     public function header_goal()  {
-        return get_string('goal', 'reader');
+        return get_string('goal', 'mod_reader');
     }
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -298,7 +298,7 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
     public function display_action_settings_setcurrentlevel($action) {
         $value = optional_param($action, 0, PARAM_INT);
         $settings = '';
-        $settings .= get_string('newreadinglevel', 'reader').': ';
+        $settings .= get_string('newreadinglevel', 'mod_reader').': ';
         $settings .= html_writer::select(range(0, 15), $action, $value, '', array());
         return $this->display_action_settings($action, $settings);
     }
@@ -317,7 +317,7 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
         $options = array_map('number_format', $options);
 
         $settings = '';
-        $settings .= get_string('newreadinggoal', 'reader').': ';
+        $settings .= get_string('newreadinggoal', 'mod_reader').': ';
         $settings .= html_writer::select($options, $action, $value, '', array());
         return $this->display_action_settings($action, $settings);
     }
@@ -331,7 +331,7 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
     public function display_action_settings_awardextrapoints($action) {
         $value = optional_param($action, 0, PARAM_INT);
         $settings = '';
-        $settings .= get_string('numberofextrapoints', 'reader').': ';
+        $settings .= get_string('numberofextrapoints', 'mod_reader').': ';
         $options = $this->output->available_extrapoints();
         $settings .= html_writer::select($options, $action, $value, '', array());
         return $this->display_action_settings($action, $settings);
@@ -344,7 +344,26 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
      * @return xxx
      */
     public function display_action_settings_awardbookpoints($action) {
-        $settings = $this->output->available_items($action);
+
+        $name = 'type';
+        $options = $this->output->available_booktypes();
+
+        $value = reader_downloader::BOOKS_WITHOUT_QUIZZES;
+        $value = optional_param($name, $value, PARAM_INT);
+
+        $params = array('action' => $action,
+                        'mode'   => $this->output->mode,
+                        'id'     => $this->output->reader->cm->id,
+                        'type'   => ''); // will be added by javascript
+        $onchange = $this->output->available_items_url('/mod/reader/view_books.php', $params);
+        $onchange = "request($onchange, 'publishers')";
+
+        $settings = '';
+        $settings .= get_string($name, 'mod_reader').': ';
+        $settings .= html_writer::select($options, $name, $value, '', array('onchange' => $onchange));
+        $settings .= html_writer::empty_tag('br');
+
+        $settings .= $this->output->available_items($action);
         return $this->display_action_settings($action, $settings);
     }
 
@@ -436,14 +455,14 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
                             'type' => reader_downloader::BOOKS_WITH_QUIZZES, // 1
                             'mode' => 'download');
             $url = new moodle_url('/mod/reader/admin/books.php', $params);
-            $msg = get_string('downloadextrapoints', 'reader');
+            $msg = get_string('downloadextrapoints', 'mod_reader');
             $msg = html_writer::link($url, $msg);
             echo $this->output->notification($msg, 'notifyproblem');
             return false; // shouldn't happen !!
         }
 
         // award extrapoints to selected userids
-        $this->execute_action_awardpoints($book);
+        $this->execute_action_awardpoints($book, true);
     }
 
     /**
@@ -456,7 +475,7 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
         global $DB;
 
         // try localized version of "Extra points"
-        $params = array('publisher' => get_string('extrapoints', 'reader'),
+        $params = array('publisher' => get_string('extrapoints', 'mod_reader'),
                         'level'     => '99',
                         'length'    => sprintf('%01.1f', $length)); // 0.5, 1.0, 2.0, ...
         if ($book = $DB->get_records('reader_books', $params)) {
@@ -493,17 +512,17 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
         }
 
         // award points for this book
-        $this->execute_action_awardpoints($book);
+        $this->execute_action_awardpoints($book, false);
     }
 
     /**
      * execute_action_awardpoints
      *
-     * @param string $book
-     * @param array  $userids
+     * @param string  $book
+     * @param boolean $allowmultiple
      * @return xxx
      */
-    public function execute_action_awardpoints($book) {
+    public function execute_action_awardpoints($book, $allowmultiple) {
         global $DB;
 
         // get selected userids
@@ -517,22 +536,34 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
         }
 
         // cache common settings
-        $cmid  = $this->output->reader->cm->id;
+        $readerid = $this->output->reader->id;
+        $cmid = $this->output->reader->cm->id;
         $contextid = $this->output->reader->context->id;
 
-        // we make the $time in the past, so it doesn't interfere with
-        // the restriction on the frequency at which quizzes can be taken
-        // "attemptsofday" is the minimum number of days (0..3) between quizzes
-        $time  = time() - ($this->output->reader->attemptsofday * 3600 * 24);
 
         // loop through userids
+        $changessaved = false;
         foreach ($userids as $userid) {
+
+            $params = array('reader'  => $readerid,
+                            'userid'  => $userid,
+                            'bookid'  => $book->id,
+                            'preview' => 0);
+            if ($allowmultiple==false && $DB->record_exists('reader_attempts', $params)) {
+                echo 'User (id='.$userid.') has already been awarded points for the selected book<br />';
+                continue;
+            }
+
+            // we make the $time in the past, so it doesn't interfere with
+            // the restriction on the frequency at which quizzes can be taken
+            // "delaylevel" is the minimum number of seconds between quizzes
+            $time  = time() - ($this->output->reader->get_delay($userid));
 
             // get next attempt number
             $select = 'MAX(attempt)';
             $from   = '{reader_attempts}';
-            $where  = 'reader = ? AND userid = ? AND timefinish > ? AND preview != ?';
-            $params = array($this->output->reader->id, $userid, 0, 1);
+            $where  = 'reader = ? AND userid = ? AND timefinish > ? AND preview = ?';
+            $params = array($readerid, $userid, 0, 0);
 
             if($attemptnumber = $DB->get_field_sql("SELECT $select FROM $from WHERE $where", $params)) {
                 $attemptnumber += 1;
@@ -542,7 +573,7 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
 
             $attempt = (object)array(
                 'uniqueid'     => reader_get_new_uniqueid($contextid, $book->quizid),
-                'reader'       => $this->output->reader->id,
+                'reader'       => $readerid,
                 'userid'       => $userid,
                 'bookid'       => $book->id,
                 'quizid'       => $book->quizid,
@@ -570,9 +601,12 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
 
             // log this action
             reader_add_to_log($this->output->reader->course->id, 'reader', "AWP (userid: $userid; set: $book->words)", 'admin.php?id='.$cmid, $cmid);
+            $changessaved = true;
         }
 
         // send "Changes saved" message to browser
-        echo $this->output->notification(get_string('changessaved'), 'notifysuccess');
+        if ($changessaved) {
+            echo $this->output->notification(get_string('changessaved'), 'notifysuccess');
+        }
     }
 }

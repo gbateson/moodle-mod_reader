@@ -60,11 +60,11 @@ class reader_admin_reports_groupsummary_filtering extends reader_admin_reports_f
             case 'averagefailed':
             case 'averagewordsthisterm':
             case 'averagewordsallterms':
-                $label = get_string($fieldname, 'reader');
+                $label = get_string($fieldname, 'mod_reader');
                 return new reader_admin_reports_filter_number($fieldname, $label, $advanced, $fieldname, $default, 'having');
 
             case 'averagepercentgrade':
-                $label = get_string('averagegrade', 'reader');
+                $label = get_string('averagegrade', 'mod_reader');
                 return new reader_admin_reports_filter_number($fieldname, $label, $advanced, $fieldname, $default, 'having');
 
             default:

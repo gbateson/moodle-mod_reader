@@ -181,13 +181,13 @@ function xmldb_reader_check_stale_files() {
         // based on "upgrade_stale_php_files_page()" (in 'admin/renderer.php')
 
         $a = (object)array('dirpath'=>$dirpath, 'filelist'=>html_writer::alist($stalefilenames));
-        $message = format_text(get_string('upgradestalefilesinfo', 'reader', $a), FORMAT_MARKDOWN);
+        $message = format_text(get_string('upgradestalefilesinfo', 'mod_reader', $a), FORMAT_MARKDOWN);
 
         $button = $OUTPUT->single_button($FULLME, get_string('reload'), 'get');
         $button = html_writer::tag('div', $button, array('class' => 'buttons'));
 
         $output = '';
-        $output .= $OUTPUT->heading(get_string('upgradestalefiles', 'reader'));
+        $output .= $OUTPUT->heading(get_string('upgradestalefiles', 'mod_reader'));
         $output .= $OUTPUT->box($message.$button, 'generalbox', 'notice');
         $output .= $OUTPUT->footer();
 
@@ -494,6 +494,7 @@ function xmldb_reader_fix_quiz_ids($newid, $oldid) {
 function xmldb_reader_remove_coursemodule($cmid_or_instanceid, $modname='') {
     global $CFG, $DB;
     require_once($CFG->dirroot.'/course/lib.php');
+    require_once($CFG->dirroot.'/mod/reader/lib.php');
 
     // get course module - with sectionnum :-)
     if ($modname) {
@@ -554,9 +555,9 @@ function xmldb_reader_quiz_courseids() {
 
     $courseids = array();
 
-    if ($courseid = get_config('reader', 'reader_usecourse')) { // old config name
+    if ($courseid = get_config('mod_reader', 'reader_usecourse')) { // old config name
         $courseids[] = $courseid;
-    } else if ($courseid = get_config('reader', 'usecourse')) { // new config name
+    } else if ($courseid = get_config('mod_reader', 'usecourse')) { // new config name
         $courseids[] = $courseid;
     }
 
@@ -701,7 +702,7 @@ function xmldb_reader_fix_question_instances() {
 
         $i = 0; // record counter
         $bar = new progress_bar('readerfixinstances', 500, true);
-        $strupdating = 'Checking Reader question instances'; // get_string('fixinstances', 'reader');
+        $strupdating = 'Checking Reader question instances'; // get_string('fixinstances', 'mod_reader');
 
         // loop through answer records
         foreach ($rs as $reader_question_instance) {
@@ -944,10 +945,10 @@ function xmldb_reader_fix_wrong_quizids() {
     $orderby = 'rb.publisher,rb.level,rb.name';
 
     // Note - you could store bookquizids as a config setting:
-    // $bookquizids = get_config('reader', 'bookquizids');
+    // $bookquizids = get_config('mod_reader', 'bookquizids');
     // $bookquizids = unserialize($bookquizids);
-    // set_config('bookquizids', serialize($bookquizids), 'reader');
-    // unset_config('bookquizids', 'reader');
+    // set_config('bookquizids', serialize($bookquizids), 'mod_reader');
+    // unset_config('bookquizids', 'mod_reader');
 
     // get list of books with manually fixed quiz ids
     if (isset($SESSION->bookquizids)) {
@@ -1010,8 +1011,8 @@ function xmldb_reader_fix_wrong_quizids() {
                         );
 
                         $table = new html_table();
-                        $table->head = array(get_string('sectionname', 'reader'),
-                                             get_string('quizname', 'reader'),
+                        $table->head = array(get_string('sectionname', 'mod_reader'),
+                                             get_string('quizname', 'mod_reader'),
                                              get_string('select'));
                         $table->align = array('left', 'left', 'center');
 
@@ -1021,7 +1022,7 @@ function xmldb_reader_fix_wrong_quizids() {
                             // create button url with this quiz id
                             $params[$quizidparamname] = $quiz->id;
                             $url = new moodle_url('/admin/index.php', $params);
-                            $button = $OUTPUT->single_button($url, get_string('selectthisquiz', 'reader'), 'get');
+                            $button = $OUTPUT->single_button($url, get_string('selectthisquiz', 'mod_reader'), 'get');
                             $table->data[] = new html_table_row(array($quiz->sectionname, $quiz->name, $button));
                         }
                         unset($params[$quizidparamname]);
@@ -1029,10 +1030,10 @@ function xmldb_reader_fix_wrong_quizids() {
                         // create button to always use default quiz
                         $params['usedefaultquizid'] = 1;
                         $url = new moodle_url('/admin/index.php', $params);
-                        $button = $OUTPUT->single_button($url, get_string('usedefaultquizid', 'reader'), 'get');
+                        $button = $OUTPUT->single_button($url, get_string('usedefaultquizid', 'mod_reader'), 'get');
                         $table->data[] = new html_table_row(array('', '', $button));
 
-                        $message = get_string('fixwrongquizidinfo', 'reader');
+                        $message = get_string('fixwrongquizidinfo', 'mod_reader');
                         $message = format_text($message, FORMAT_MARKDOWN);
                         $message .= html_writer::table($table);
 
@@ -1046,7 +1047,7 @@ function xmldb_reader_fix_wrong_quizids() {
                         $params = (object)array('name' => "$sectionname: $book->name", 'id' => $book->id);
 
                         $output = '';
-                        $output .= $OUTPUT->heading(get_string('fixwrongquizid', 'reader', $params));
+                        $output .= $OUTPUT->heading(get_string('fixwrongquizid', 'mod_reader', $params));
                         $output .= $OUTPUT->box($message, 'generalbox', 'notice');
                         $output .= $OUTPUT->footer();
 
@@ -1336,7 +1337,7 @@ function xmldb_reader_fix_nonunique_quizids() {
 
         if ($fixmissingquizzes===null || $fixmissingquizzes===false || $fixmissingquizzes==='') {
 
-            $message = get_string('fixmissingquizzesinfo', 'reader');
+            $message = get_string('fixmissingquizzesinfo', 'mod_reader');
             $message = format_text($message, FORMAT_MARKDOWN);
 
             $params = array(
@@ -1356,7 +1357,7 @@ function xmldb_reader_fix_nonunique_quizids() {
             $buttons = html_writer::tag('div', $buttons, array('class' => 'buttons'));
 
             $output = '';
-            $output .= $OUTPUT->heading(get_string('fixmissingquizzes', 'reader'));
+            $output .= $OUTPUT->heading(get_string('fixmissingquizzes', 'mod_reader'));
             $output .= $OUTPUT->box($message.$buttons, 'generalbox', 'notice');
             $output .= $OUTPUT->footer();
 
@@ -1389,7 +1390,7 @@ function reader_install_missingquizzes($books) {
     require_once($CFG->dirroot.'/mod/reader/lib/question/restorelib.php');
 
     // get reader config data
-    $readercfg = get_config('reader');
+    $readercfg = get_config('mod_reader');
 
     // remove the "reader_" prefix from the config settings, if necessary
     $vars = get_object_vars($readercfg);
@@ -2108,7 +2109,7 @@ function reader_xmldb_init_qtypes() {
 function xmldb_reader_fix_duplicates() {
     global $DB;
 
-    $keepoldquizzes = get_config('reader', 'keepoldquizzes');
+    $keepoldquizzes = get_config('mod_reader', 'keepoldquizzes');
     $courseids = xmldb_reader_quiz_courseids();
     $interactive = xmldb_reader_interactive();
 
@@ -2403,7 +2404,7 @@ function xmldb_reader_fix_duplicate_attempts() {
         if ($interactive) {
             $bar = new progress_bar('readerfixordering', 500, true);
         }
-        $strupdating = 'Fixing duplicate Reader attempts'; // get_string('fixattempts', 'reader');
+        $strupdating = 'Fixing duplicate Reader attempts'; // get_string('fixattempts', 'mod_reader');
         $strdeleted = get_string('deleted');
 
         $started_box = false;
@@ -2714,7 +2715,7 @@ function xmldb_reader_fix_multichoice_questions() {
 
         $i = 0; // record counter
         $bar = new progress_bar('readerfixmultichoice', 500, true);
-        $strupdating = 'Fixing Reader multichoice questions'; // get_string('fixmultichoice', 'reader');
+        $strupdating = 'Fixing Reader multichoice questions'; // get_string('fixmultichoice', 'mod_reader');
 
         $started_box = false;
 
@@ -2913,7 +2914,7 @@ function xmldb_reader_fix_extrapoints() {
     $time = time();
 
     // define publisher name (also used as section name)
-    $publisher = get_string('extrapoints', 'reader');
+    $publisher = get_string('extrapoints', 'mod_reader');
     $level = '99';
     $old_publisher = 'Extra_Points';
 
@@ -2937,7 +2938,7 @@ function xmldb_reader_fix_extrapoints() {
     // reset legacy point descriptions (upper/lower case difference is intentional)
     $oldnames = array('0.5 Points', 'One Point', 'Two points', 'Three points', 'Four points', 'Five points');
     foreach ($oldnames as $i => $oldname) {
-        $newname = get_string('extrapoints'.$i, 'reader');
+        $newname = get_string('extrapoints'.$i, 'mod_reader');
         $DB->set_field('reader_books', 'name', $newname, array('name' => $oldname));
         $DB->set_field('quiz', 'name', $newname, array('course' => $course->id, 'name' => $oldname));
     }
@@ -2952,7 +2953,7 @@ function xmldb_reader_fix_extrapoints() {
     for ($i=0; $i<=$i_max; $i++) {
 
         // set quiz / book name
-        $name = get_string('extrapoints'.$i, 'reader');
+        $name = get_string('extrapoints'.$i, 'mod_reader');
 
         // get / create quiz's course_module record
         $select = 'cm.*, q.name AS quizname';
@@ -3037,7 +3038,7 @@ function xmldb_reader_merge_tables(&$dbman, $oldname, $newname, $fields, $unique
             $i = 0; // record counter
             $bar = new progress_bar('readermergetable'.$oldname, 500, true);
             $a = (object)array('new' => $newname, 'old' => $oldname);
-            $strupdating = get_string('mergingtables', 'reader', $a);
+            $strupdating = get_string('mergingtables', 'mod_reader', $a);
 
             // loop through answer records
             foreach ($rs as $record) {
@@ -3182,4 +3183,24 @@ function xmldb_reader_rm($target) {
             break;
     }
     return $ok;
+}
+
+/**
+ * xmldb_reader_fix_config_names
+ *
+ * @param boolean  $fix_config
+ * @todo Finish documenting this function
+ */
+function xmldb_reader_fix_config_names() {
+    global $DB;
+    $reader = get_config('reader');
+    $reader = get_object_vars($reader);
+    $mod_reader = get_config('mod_reader');
+    $mod_reader = get_object_vars($mod_reader);
+    foreach ($reader as $name => $value) {
+        if (! array_key_exists($name, $mod_reader)) {
+            set_config($name, $value, 'mod_reader');
+        }
+        unset_config($name, 'reader');
+    }
 }

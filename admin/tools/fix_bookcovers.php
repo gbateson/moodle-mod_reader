@@ -27,8 +27,9 @@
 
 /** Include required files */
 require_once('../../../../config.php');
-require_once($CFG->dirroot.'/mod/reader/locallib.php');
+require_once($CFG->dirroot.'/mod/reader/admin/tools/lib.php');
 require_once($CFG->dirroot.'/mod/reader/admin/tools/renderer.php');
+require_once($CFG->dirroot.'/mod/reader/locallib.php');
 require_once($CFG->dirroot.'/lib/xmlize.php');
 
 $id  = optional_param('id',  0, PARAM_INT);
@@ -58,7 +59,7 @@ require_capability('moodle/site:config', $context);
 $PAGE->set_url($CFG->wwwroot.$SCRIPT);
 
 // set title
-$title = get_string('fix_bookcovers', 'reader');
+$title = get_string('fix_bookcovers', 'mod_reader');
 $PAGE->set_title($title);
 $PAGE->set_heading($title);
 $PAGE->set_pagelayout('admin');
@@ -73,7 +74,7 @@ echo $output->box_start();
 $action = optional_param('action', '', PARAM_ALPHA);
 reader_print_images_form($readercfg, $action);
 
-$readercfg = get_config('reader');
+$readercfg = get_config('mod_reader');
 $courseid  = $readercfg->usecourse;
 make_upload_directory('reader/images');
 
@@ -162,7 +163,9 @@ function reader_fetch_all_book_images($readercfg) {
 function reader_fetch_my_book_images($readercfg) {
     global $DB;
 
-    if (! $books = $DB->get_records('reader_books', null, 'publisher,level,name')) {
+    $select = 'publisher <> ? AND publisher <> ? AND publisher <> ? AND publisher <> ? AND level <> ?';
+    $params = array('Extra points', 'Extra_Points', 'testing', '_testing_only', '99');
+    if (! $books = $DB->get_records_select('reader_books', $select, $params, 'publisher,level,name')) {
         echo 'Oops - no books have been installed on this site';
         return false;
     }
@@ -391,7 +394,7 @@ function reader_get_itemids($readercfg) {
             $itemname  = $xml['myxml']['#']['item'][$i]['#'];
             $i++;
 
-            if ($publisher=='Extra_Points' || $publisher=='testing' || $publisher=='_testing_only') {
+            if ($publisher=='Extra points' || $publisher=='Extra_Points' || $publisher=='testing' || $publisher=='_testing_only') {
                 continue;
             }
 
@@ -464,7 +467,7 @@ function reader_print_images_form($readercfg, $action) {
     }
 
     // prompt
-    echo get_string('whichbooks', 'reader').' ';
+    echo get_string('whichbooks', 'mod_reader').' ';
     echo html_writer::empty_tag('br');
 
     // actions
@@ -475,7 +478,7 @@ function reader_print_images_form($readercfg, $action) {
             $params['checked'] = 'checked';
         }
         echo html_writer::empty_tag('input', $params).' ';
-        echo get_string($a.'books', 'reader');
+        echo get_string($a.'books', 'mod_reader');
         echo html_writer::empty_tag('br');
     }
 
@@ -493,7 +496,7 @@ function reader_print_images_form($readercfg, $action) {
  * @todo Finish documenting this function
  */
 function reader_print_all_done() {
-    echo html_writer::tag('p', get_string('alldone', 'reader'));
+    echo html_writer::tag('p', get_string('alldone', 'mod_reader'));
 }
 
 /**

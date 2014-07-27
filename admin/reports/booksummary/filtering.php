@@ -53,15 +53,15 @@ class reader_admin_reports_booksummary_filtering extends reader_admin_reports_fi
 
             case 'publisher':
             case 'level':
-                $label = get_string($fieldname, 'reader');
+                $label = get_string($fieldname, 'mod_reader');
                 return new reader_admin_reports_filter_text($fieldname, $label, $advanced, $fieldname, $default, 'where');
 
             case 'name':
-                $label = get_string('booktitle', 'reader');
+                $label = get_string('booktitle', 'mod_reader');
                 return new reader_admin_reports_filter_text($fieldname, $label, $advanced, $fieldname, $default, 'where');
 
             case 'difficulty':
-                $label = get_string('bookdifficulty', 'reader');
+                $label = get_string('bookdifficulty', 'mod_reader');
                 return new reader_admin_reports_filter_number($fieldname, $label, $advanced, $fieldname, $default, 'where');
 
             case 'countpassed':
@@ -69,11 +69,11 @@ class reader_admin_reports_booksummary_filtering extends reader_admin_reports_fi
             case 'averagegrade':
             case 'averagerating':
             case 'countrating':
-                $label = get_string($fieldname, 'reader');
+                $label = get_string($fieldname, 'mod_reader');
                 return new reader_admin_reports_filter_number($fieldname, $label, $advanced, $fieldname, $default, 'having');
 
             case 'averageduration':
-                $label = get_string($fieldname, 'reader');
+                $label = get_string($fieldname, 'mod_reader');
                 return new reader_admin_reports_filter_duration($fieldname, $label, $advanced, $fieldname, $default, 'having');
 
             default:

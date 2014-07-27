@@ -53,25 +53,25 @@ class reader_admin_reports_bookdetailed_filtering extends reader_admin_reports_f
 
             case 'publisher':
             case 'level':
-                $label = get_string($fieldname, 'reader');
+                $label = get_string($fieldname, 'mod_reader');
                 return new reader_admin_reports_filter_text($fieldname, $label, $advanced, $fieldname, $default, 'where');
 
              case 'name':
-                $label = get_string('booktitle', 'reader');
+                $label = get_string('booktitle', 'mod_reader');
                 return new reader_admin_reports_filter_text($fieldname, $label, $advanced, $fieldname, $default, 'where');
 
             case 'difficulty':
-                $label = get_string('bookdifficulty', 'reader');
+                $label = get_string('bookdifficulty', 'mod_reader');
                 return new reader_admin_reports_filter_number($fieldname, $label, $advanced, $fieldname, $default, 'where');
 
             case 'bookrating':
-                $label = get_string($fieldname, 'reader');
+                $label = get_string($fieldname, 'mod_reader');
                 return new reader_admin_reports_filter_number($fieldname, $label, $advanced, $fieldname, $default, 'where');
 
             case 'passed':
-                $label = get_string($fieldname, 'reader');
-                $options = array('true'  => get_string('passedshort', 'reader').' - '.get_string('passed', 'reader'),
-                                 'false' => get_string('failedshort', 'reader').' - '.get_string('failed', 'reader'));
+                $label = get_string($fieldname, 'mod_reader');
+                $options = array('true'  => get_string('passedshort', 'mod_reader').' - '.get_string('passed', 'mod_reader'),
+                                 'false' => get_string('failedshort', 'mod_reader').' - '.get_string('failed', 'mod_reader'));
                 return new reader_admin_reports_filter_simpleselect($fieldname, $label, $advanced, $fieldname, $options, $default, 'where');
 
             default:

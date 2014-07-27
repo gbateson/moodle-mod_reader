@@ -71,10 +71,10 @@ class mod_reader_renderer extends plugin_renderer_base {
 
     /**
      * available_sql
+     * generate sql to select books that this user is currently allowed to attempt
      *
-     * @param xxx $noquiz
-     * @return xxx
-     * @todo Finish documenting this function
+     * @param boolean $noquiz TRUE books that have no associated quiz, FALSE otherwise
+     * @return array (string $from, string $where, array $params)
      */
     public function available_sql($noquiz=false) {
         global $USER;
@@ -100,9 +100,9 @@ class mod_reader_renderer extends plugin_renderer_base {
         //     OR the level of the book is one of the levels this user is currently allowed to take in this reader
 
         // "id" values of books whose quizzes this user has already attempted
-        $recordids  = 'SELECT rb.id '.
-                      'FROM {reader_attempts} ra LEFT JOIN {reader_books} rb ON ra.bookid = rb.id '.
-                      'WHERE ra.userid = ? AND ra.deleted = ? AND rb.id IS NOT NULL';
+        $recordids  = 'SELECT ra.bookid '.
+                      'FROM {reader_attempts} ra '.
+                      'WHERE ra.userid = ? AND ra.deleted = ?';
 
         // "sametitle" values for books whose quizzes this user has already attempted
         $sametitles = 'SELECT DISTINCT rb.sametitle '.
@@ -110,8 +110,8 @@ class mod_reader_renderer extends plugin_renderer_base {
                       'WHERE ra.userid = ? AND ra.deleted = ? AND rb.id IS NOT NULL AND rb.sametitle <> ?';
 
         $from       = '{reader_books}';
-        $where      = "id NOT IN ($recordids) AND (sametitle = ? OR sametitle NOT IN ($sametitles)) AND hidden = ?";
-        $sqlparams = array($userid, 0, '', $userid, 0, '', 0);
+        $where      = "id NOT IN ($recordids) AND level <> ? AND (sametitle = ? OR sametitle NOT IN ($sametitles)) AND hidden = ?";
+        $params     = array($userid, 0, '99', '', $userid, 0, '', 0);
 
         $levels = array();
         if (isset($_SESSION['SESSION']->reader_teacherview) && $_SESSION['SESSION']->reader_teacherview == 'teacherview') {
@@ -145,7 +145,7 @@ class mod_reader_renderer extends plugin_renderer_base {
             }
         }
 
-        return array($from, $where, $sqlparams);
+        return array($from, $where, $params);
     }
 
     /**
@@ -156,35 +156,49 @@ class mod_reader_renderer extends plugin_renderer_base {
      * @todo Finish documenting this function
      */
     public function available_items($action='') {
+        global $CFG;
 
         // get parameters passed from browser
         $publisher = optional_param('publisher', null, PARAM_CLEAN); // book publisher
         $level     = optional_param('level',     null, PARAM_CLEAN); // book level
         $bookid    = optional_param('bookid',    null, PARAM_INT  ); // book id
-        $action    = optional_param('action', $action, PARAM_CLEAN);
+        if ($action=='') {
+            $action = optional_param('action', $action, PARAM_CLEAN);
+        }
+
+        require_once($CFG->dirroot.'/mod/reader/admin/books/download/downloader.php');
+        $type = reader_downloader::BOOKS_WITHOUT_QUIZZES;
+        $type = optional_param('type', $type, PARAM_INT);
 
         // get SQL $from and $where statements to extract available books
-        $noquiz = ($action=='noquiz' || $action=='awardbookpoints');
-        list($from, $where, $sqlparams) = $this->available_sql($noquiz);
+        $noquiz = ($type==reader_downloader::BOOKS_WITHOUT_QUIZZES);
+        list($from, $where, $params) = $this->available_sql($noquiz);
 
+        $output = '';
         switch (true) {
-            case ($publisher===null || $publisher===''):
-                $output = '';
+            case ($publisher===null || $publisher=='' || optional_param('go', null, PARAM_CLEAN)):
                 $output .= $this->request_js();
                 $output .= html_writer::start_tag('div', array('id' => 'publishers'));
-                $output .= $this->available_publishers($action, $from, $where, $sqlparams);
+                $output .= $this->available_publishers($action, $from, $where, $params, $type, $publisher, $level, $bookid);
                 $output .= html_writer::end_tag('div');
-                return $output;
+                break;
 
-            case ($level===null || $level===''):
-                return $this->available_levels($publisher, $action, $from, $where, $sqlparams);
+            case ($level===null || $level==''):
+                $output .= html_writer::start_tag('div', array('id' => 'levels'));
+                $output .= $this->available_levels($action, $from, $where, $params, $type, $publisher, $level, $bookid);
+                $output .= html_writer::end_tag('div');
+                break;
 
-            case ($bookid===null || $bookid===0):
-                return $this->available_books($publisher, $level, $action, $from, $where, $sqlparams);
+            case ($bookid===null || $bookid==0) :
+                $output .= html_writer::start_tag('div', array('id' => 'books'));
+                $output .= $this->available_books($action, $from, $where, $params, $type, $publisher, $level, $bookid);
+                $output .= html_writer::end_tag('div');
+                break;
 
             default:
-                return $this->available_book($bookid, $action, $from, $where, $sqlparams);
+                $output .= $this->available_book($action, $from, $where, $params, $type, $publisher, $level, $bookid);
         }
+        return $output;
     }
 
     /**
@@ -205,6 +219,7 @@ class mod_reader_renderer extends plugin_renderer_base {
         return "'$url='+escape(this.options[this.selectedIndex].value)";
     }
 
+
     /**
      * available_publishers
      *
@@ -212,41 +227,46 @@ class mod_reader_renderer extends plugin_renderer_base {
      * @param xxx $from
      * @param xxx $where
      * @param xxx $sqlparams
+     * @param xxx $publisher (optional, default="")
+     * @param xxx $level (optional, default="")
+     * @param xxx $bookid (optional, default=0)
      * @return xxx
      * @todo Finish documenting this function
      */
-    public function available_publishers($action, $from, $where, $sqlparams) {
+    public function available_publishers($action, $sqlfrom, $sqlwhere, $sqlparams, $type, $publisher='', $level='', $bookid=0) {
         global $DB;
         $output = '';
 
         $select = 'publisher, COUNT(*) AS countbooks';
-        if ($records = $DB->get_records_sql("SELECT $select FROM $from WHERE $where GROUP BY publisher ORDER BY publisher", $sqlparams)) {
+        if ($records = $DB->get_records_sql("SELECT $select FROM $sqlfrom WHERE $sqlwhere GROUP BY publisher ORDER BY publisher", $sqlparams)) {
             $count = count($records);
         } else {
             $count = 0;
         }
 
-        $output .= html_writer::tag('div', get_string('publisher', 'reader'), array('class' => 'selecteditemhdr'));
+        // publisher title
+        $output .= html_writer::tag('div', get_string('publisher', 'mod_reader'), array('class' => 'selecteditemhdr'));
 
+        // publisher list
         if ($count==0) {
             if ($this->reader->can_managebooks()) {
-                $output .= get_string('nobooksfound', 'reader');
+                $msg = get_string('nobooksfound', 'mod_reader');
             } else {
-                $output .= get_string('nobooksinlist', 'reader');
+                $msg = get_string('nobooksinlist', 'mod_reader');
             }
+            $output .= html_writer::tag('div', $msg, array('class' => 'selecteditemtxt'));
 
         } else if ($count==1) {
             $record = reset($records);
-            $output .= html_writer::tag('div', $record->publisher, array('class' => 'selecteditemtxt'));
-
-            $output .= html_writer::start_tag('div', array('id' => 'levels'));
-            $output .= $this->available_levels($record->publisher, $action, $from, $where, $sqlparams);
-            $output .= html_writer::end_tag('div');
+            $publisher = $record->publisher;
+            $output .= html_writer::tag('div', $publisher, array('class' => 'selecteditemtxt'));
+            $output .= html_writer::empty_tag('input', array('type' => 'hidden', 'name' => 'publisher', 'value' => $publisher));
 
         } else if ($count > 1) {
             $params = array('action'    => $action,
                             'mode'      => $this->mode,
                             'id'        => $this->reader->cm->id,
+                            'type'      => $type,
                             'publisher' => ''); // will be added by javascript
             $url = $this->available_items_url('/mod/reader/view_books.php', $params);
 
@@ -257,13 +277,23 @@ class mod_reader_renderer extends plugin_renderer_base {
             $output .= html_writer::start_tag('select', $params);
 
             foreach ($records as $record) {
-                $output .= html_writer::tag('option', "$record->publisher ($record->countbooks books)", array('value' => $record->publisher));
+                $params = array('value' => $record->publisher);
+                if ($publisher==$record->publisher) {
+                    $params['selected'] = 'selected';
+                }
+                $output .= html_writer::tag('option', "$record->publisher ($record->countbooks books)", $params);
             }
-            $record = null;
 
             $output .= html_writer::end_tag('select');
-            $output .= html_writer::tag('div', '', array('id' => 'levels'));
         }
+
+        $output .= html_writer::start_tag('div', array('id' => 'levels'));
+        if ($count==0 || $publisher=='') {
+            $output .= html_writer::tag('div', '', array('id' => 'books'));
+        } else {
+            $output .= $this->available_levels($action, $sqlfrom, $sqlwhere, $sqlparams, $type, $publisher, $level, $bookid);
+        }
+        $output .= html_writer::end_tag('div');
 
         return $output;
     }
@@ -271,53 +301,49 @@ class mod_reader_renderer extends plugin_renderer_base {
     /**
      * available_levels
      *
-     * @param xxx $publisher
      * @param xxx $action
      * @param xxx $from
      * @param xxx $where
      * @param xxx $sqlparams
+     * @param xxx $publisher
+     * @param xxx $level (optional, default = "")
+     * @param xxx $bookid (optional, default = 0)
      * @return xxx
      * @todo Finish documenting this function
      */
-    public function available_levels($publisher, $action, $from, $where, $sqlparams) {
+    public function available_levels($action, $sqlfrom, $sqlwhere, $sqlparams, $type, $publisher, $level='', $bookid=0) {
         global $DB;
         $output = '';
 
-        $where .= ' AND publisher = ?';
-        array_push($sqlparams, $publisher);
-
         $select = "level, COUNT(*) AS countbooks, ROUND(SUM(difficulty) / COUNT(*), 0) AS average_difficulty";
-        if ($records = $DB->get_records_sql("SELECT $select FROM $from WHERE $where GROUP BY level ORDER BY average_difficulty", $sqlparams)) {
+        $where  = $sqlwhere.' AND publisher = ?';
+        $params = array_merge($sqlparams, array($publisher));
+
+        if ($records = $DB->get_records_sql("SELECT $select FROM $sqlfrom WHERE $where GROUP BY level ORDER BY average_difficulty", $params)) {
             $count = count($records);
         } else {
             $count = 0;
         }
 
-        $selecteditemhdr = html_writer::tag('div', get_string('level', 'reader'), array('class' => 'selecteditemhdr'));
+        // level title
+        $output .= html_writer::tag('div', get_string('level', 'mod_reader'), array('class' => 'selecteditemhdr'));
 
+        // level list
         if ($count==0) {
-            $output .= 'Sorry, there are currently no books for you by '.$publisher;
+            $$msg = 'Sorry, there are currently no books for you by '.$publisher;
+            $output .= html_writer::tag('div', $msg, array('class' => 'selecteditemtxt'));
 
         } else if ($count==1) {
             $record = reset($records);
-            if ($record->level=='' || $record->level=='--' || $record->level=='No Level') {
-                // do nothing
-            } else {
-                $output .= $selecteditemhdr;
-                $output .= html_writer::tag('div', $record->level, array('class' => 'selecteditemtxt'));
-            }
-            $output .= html_writer::empty_tag('input', array('type' => 'hidden', 'name' => 'level', 'value' => $record->level));
-
-            $output .= html_writer::start_tag('div', array('id' => 'books'));
-            $output .= $this->available_books($publisher, $record->level, $action, $from, $where, $sqlparams);
-            $output .= html_writer::end_tag('div');
+            $level = $record->level;
+            $output .= html_writer::tag('div', $level, array('class' => 'selecteditemtxt'));
+            $output .= html_writer::empty_tag('input', array('type' => 'hidden', 'name' => 'level', 'value' => $level));
 
         } else if ($count > 1) {
-            $output .= $selecteditemhdr;
-
             $params = array('action'    => $action,
                             'mode'      => $this->mode,
                             'id'        => $this->reader->cm->id,
+                            'type'      => $type,
                             'publisher' => $publisher,
                             'level'     => ''); // will be added by javascript
             $url = $this->available_items_url('/mod/reader/view_books.php', $params);
@@ -334,13 +360,23 @@ class mod_reader_renderer extends plugin_renderer_base {
                 } else {
                     $displaylevel = $record->level;
                 }
-                $output .= html_writer::tag('option', "$displaylevel ($record->countbooks books)", array('value' => $record->level));
+                $params = array('value' => $record->level);
+                if ($level==$record->level) {
+                    $params['selected'] = 'selected';
+                }
+                $output .= html_writer::tag('option', "$displaylevel ($record->countbooks books)", $params);
             }
-            $record = null;
 
             $output .= html_writer::end_tag('select');
-            $output .= html_writer::tag('div', '', array('id' => 'books'));
         }
+
+        $output .= html_writer::start_tag('div', array('id' => 'books'));
+        if ($count==0 || $level=='') {
+            $output .= html_writer::tag('div', '', array('id' => 'book'));
+        } else {
+            $output .= $this->available_books($action, $sqlfrom, $sqlwhere, $sqlparams, $type, $publisher, $level, $bookid);
+        }
+        $output .= html_writer::end_tag('div');
 
         return $output;
     }
@@ -348,49 +384,46 @@ class mod_reader_renderer extends plugin_renderer_base {
     /**
      * available_books
      *
-     * @param xxx $publisher
-     * @param xxx $level
      * @param xxx $action
      * @param xxx $from
      * @param xxx $where
      * @param xxx $sqlparams
+     * @param xxx $publisher
+     * @param xxx $level (optional, default = 0)
      * @return xxx
      * @todo Finish documenting this function
      */
-    public function available_books($publisher, $level, $action, $from, $where, $sqlparams) {
+    public function available_books($action, $sqlfrom, $sqlwhere, $sqlparams, $type, $publisher, $level, $bookid=0) {
         global $DB;
         $output = '';
 
         $select = '*';
-        $where .= " AND publisher = ? AND level = ?";
-        array_push($sqlparams, $publisher, $level);
+        $where  = $sqlwhere.' AND publisher = ? AND level = ?';
+        $params = array_merge($sqlparams, array($publisher, $level));
 
-        if ($records = $DB->get_records_sql("SELECT $select FROM $from WHERE $where ORDER BY name", $sqlparams)) {
+        if ($records = $DB->get_records_sql("SELECT $select FROM $sqlfrom WHERE $where ORDER BY name", $params)) {
             $count = count($records);
         } else {
             $count = 0;
         }
 
-        $output .= html_writer::tag('div', get_string('book', 'reader'), array('class' => 'selecteditemhdr'));
+        $output .= html_writer::tag('div', get_string('book', 'mod_reader'), array('class' => 'selecteditemhdr'));
 
         if ($count==0) {
-            $output .= 'Sorry, there are currently no books for you by '.$publisher;
-            $output .= (($level=='' || $level=='--') ? '' : " ($level)");
+            $msg = "Sorry, there are currently no books for you by $publisher ($level)";
+            $output .= html_writer::tag('div', $msg, array('class' => 'selecteditemtxt'));
 
         } else if ($count==1) {
             $record = reset($records); // just one book found
-            $output .= html_writer::tag('div', $record->name, array('class' => 'selecteditemtxt'));
+            $bookid = $record->id;
+            $output .= html_writer::tag('div', $this->format_bookname($record), array('class' => 'selecteditemtxt'));
             $output .= html_writer::empty_tag('input', array('type' => 'hidden', 'name' => 'bookid', 'value' => $record->id));
 
-            $output .= html_writer::start_tag('div', array('id' => 'bookid', 'style' => 'clear: both;'));
-            $output .= $this->available_book($record, $action, $from, $where, $sqlparams);
-            $output .= html_writer::end_tag('div');
-
         } else if ($count > 1) {
-
             $params = array('action'    => $action,
                             'mode'      => $this->mode,
                             'id'        => $this->reader->cm->id,
+                            'type'      => $type,
                             'publisher' => $publisher,
                             'level'     => $level,
                             'bookid'    => ''); // will be added by javascript
@@ -403,12 +436,24 @@ class mod_reader_renderer extends plugin_renderer_base {
             $output .= html_writer::start_tag('select', $params);
 
             foreach ($records as $record) {
-                $output .= html_writer::tag('option', "[RL-$record->difficulty] $record->name", array('value' => $record->id));
+                $params = array('value' => $record->id);
+                if ($bookid==$record->id) {
+                    $params['selected'] = 'selected';
+                }
+                $output .= html_writer::tag('option', "[RL-$record->difficulty] $record->name", $params);
             }
 
             $output .= html_writer::end_tag('select');
-            $output .= html_writer::tag('div', '', array('id' => 'bookid', 'style' => 'clear: both;'));
+
         }
+
+        $output .= html_writer::start_tag('div', array('id' => 'bookid', 'style' => 'clear: both;'));
+        if ($count==0 || $bookid==0) {
+            // do nothing
+        } else {
+            $output .= $this->available_book($action, $sqlfrom, $sqlwhere, $sqlparams, $type, $publisher, $level, $bookid);
+        }
+        $output .= html_writer::end_tag('div');
 
         return $output;
     }
@@ -424,21 +469,31 @@ class mod_reader_renderer extends plugin_renderer_base {
      * @return xxx
      * @todo Finish documenting this function
      */
-    public function available_book($book, $action, $from, $where, $sqlparams) {
+    public function available_book($action, $sqlfrom, $sqlwhere, $sqlparams, $type, $publisher, $level, $bookid) {
         global $DB;
         $output = '';
 
         $select = 'id, publisher, level, name, words';
-        $where .= " AND id = ?";
-        array_push($sqlparams, (is_int($book) ? $book : $book->id));
+        $where  = $sqlwhere.' AND publisher = ? AND level = ? AND id = ?';
+        $params = array_merge($sqlparams, array($publisher, $level, $bookid));
 
-        if ($record = $DB->get_record_sql("SELECT $select FROM $from WHERE $where", $sqlparams)) {
-            $params = array('type' => 'hidden', 'name' => 'bookid', 'value' => $record->id);
-            $output .= html_writer::empty_tag('input', $params);
-            $output .= "$record->name (".number_format($record->words)." words)";
+        if ($record = $DB->get_record_sql("SELECT $select FROM $sqlfrom WHERE $where", $params)) {
+            $output .= html_writer::tag('div', $this->format_bookname($record), array('class' => 'selecteditemtxt'));
+            $output .= html_writer::empty_tag('input', array('type' => 'hidden', 'name' => 'bookid', 'value' => $record->id));
         }
 
         return $output;
+    }
+
+    /**
+     * format_bookname
+     *
+     * @param xxx $book
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function format_bookname($book) {
+        return "$book->name (".number_format($book->words)." words)";
     }
 
     /**
@@ -465,8 +520,8 @@ class mod_reader_renderer extends plugin_renderer_base {
         }
         $done = true;
 
-        global $CFG;
-        $src = $CFG->wwwroot.'/mod/reader/pix/ajax-loader.gif';
+        global $PAGE;
+        $src = $PAGE->theme->pix_url('i/ajaxloader', 'core')->out();
 
         $js = '';
 
@@ -636,7 +691,7 @@ class mod_reader_renderer extends plugin_renderer_base {
 
             echo '<script type="text/javascript">'."\n";
             echo '//<![CDATA['."\n";
-            echo 'alert("'.addslashes_js(get_string('youhavebeenpromoted', 'reader'. $level->currentlevel)).'");'."\n";
+            echo 'alert("'.addslashes_js(get_string('youhavebeenpromoted', 'mod_reader'. $level->currentlevel)).'");'."\n";
             echo '//]]>'."\n";
             echo '</script>';
         }
@@ -810,27 +865,27 @@ class mod_reader_renderer extends plugin_renderer_base {
             if ($this->reader->can_managebooks()) {
                 $tab = self::TAB_BOOKS;
                 $url = new moodle_url('/mod/reader/admin/books.php', array('id' => $cmid, 'tab' => $tab));
-                $tabs[$tab] = new tabobject($tab, $url, get_string('books', 'reader'));
+                $tabs[$tab] = new tabobject($tab, $url, get_string('books', 'mod_reader'));
             }
             if ($this->reader->can_managequizzes()) {
                 $tab = self::TAB_QUIZZES;
                 $url = new moodle_url('/mod/reader/admin/quizzes.php', array('id' => $cmid, 'tab' => $tab));
-                $tabs[$tab] = new tabobject($tab, $url, get_string('quizzes', 'reader'));
+                $tabs[$tab] = new tabobject($tab, $url, get_string('quizzes', 'mod_reader'));
             }
             if ($this->reader->can_manageusers()) {
                 $tab = self::TAB_USERS;
                 $url = new moodle_url('/mod/reader/admin/users.php', array('id' => $cmid, 'tab' => $tab));
-                $tabs[$tab] = new tabobject($tab, $url, get_string('users', 'reader'));
+                $tabs[$tab] = new tabobject($tab, $url, get_string('users', 'mod_reader'));
             }
             if ($this->reader->can_managetools()) {
                 $tab = self::TAB_TOOLS;
                 $url = new moodle_url('/mod/reader/admin/tools.php', array('id' => $cmid, 'tab' => $tab));
-                $tabs[$tab] = new tabobject($tab, $url, get_string('tools', 'reader'));
+                $tabs[$tab] = new tabobject($tab, $url, get_string('tools', 'mod_reader'));
             }
             if ($this->reader->can_managetools()) {
                 $tab = self::TAB_ADMINAREA;
                 $url = new moodle_url('/mod/reader/admin.php', array('id' => $cmid, 'tab' => $tab, 'a' => 'admin'));
-                $tabs[$tab] = new tabobject($tab, $url, get_string('adminarea', 'reader'));
+                $tabs[$tab] = new tabobject($tab, $url, get_string('adminarea', 'mod_reader'));
             }
         }
         return $tabs;

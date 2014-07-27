@@ -51,7 +51,6 @@ class mod_reader_admin_quizzes_renderer extends mod_reader_admin_renderer {
     const TAB_QUIZZES_EDIT     = 32;
     const TAB_QUIZZES_DELETE   = 33;
     const TAB_QUIZZES_SHOWHIDE = 34;
-    const TAB_QUIZZES_DELAY    = 35;
     /**#@-*/
 
     /**
@@ -86,7 +85,7 @@ class mod_reader_admin_quizzes_renderer extends mod_reader_admin_renderer {
                 $tab = constant('self::TAB_QUIZZES_'.strtoupper($mode));
                 $params = array('id' => $cmid, 'tab' => $tab, 'mode' => $mode);
                 $url = new moodle_url('/mod/reader/admin/quizzes.php', $params);
-                $tabs[] = new tabobject($tab, $url, get_string($mode, 'reader'));
+                $tabs[] = new tabobject($tab, $url, get_string($mode, 'mod_reader'));
             }
         }
         return $this->attach_tabs_subtree(parent::get_tabs(), parent::TAB_QUIZZES, $tabs);
@@ -98,6 +97,6 @@ class mod_reader_admin_quizzes_renderer extends mod_reader_admin_renderer {
      * @return string HTML output to display navigation tabs
      */
     static public function get_standard_modes() {
-        return array('add', 'edit', 'delete', 'showhide', 'delay');
+        return array('add', 'edit', 'delete', 'showhide');
     }
 }

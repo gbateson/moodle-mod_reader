@@ -48,10 +48,11 @@ class mod_reader_admin_users_renderer extends mod_reader_admin_renderer {
      * @var integer
      */
     const TAB_USERS_SETGOALS    = 51;
-    const TAB_USERS_SETLEVELS   = 52;
-    const TAB_USERS_SENDMESSAGE = 53;
-    const TAB_USERS_IMPORT      = 54;
-    const TAB_USERS_EXPORT      = 55;
+    const TAB_USERS_SETDELAYS   = 52;
+    const TAB_USERS_SETLEVELS   = 53;
+    const TAB_USERS_SENDMESSAGE = 54;
+    const TAB_USERS_IMPORT      = 55;
+    const TAB_USERS_EXPORT      = 56;
     /**#@-*/
 
     /**
@@ -86,7 +87,7 @@ class mod_reader_admin_users_renderer extends mod_reader_admin_renderer {
                 $tab = constant('self::TAB_USERS_'.strtoupper($mode));
                 $params = array('id' => $cmid, 'tab' => $tab, 'mode' => $mode);
                 $url = new moodle_url('/mod/reader/admin/users.php', $params);
-                $tabs[] = new tabobject($tab, $url, get_string($mode, 'reader'));
+                $tabs[] = new tabobject($tab, $url, get_string($mode, 'mod_reader'));
             }
         }
         return $this->attach_tabs_subtree(parent::get_tabs(), parent::TAB_USERS, $tabs);
@@ -98,6 +99,6 @@ class mod_reader_admin_users_renderer extends mod_reader_admin_renderer {
      * @return string HTML output to display navigation tabs
      */
     static public function get_standard_modes() {
-        return array('setgoals', 'setlevels', 'sendmessage', 'import', 'export');
+        return array('setgoals', 'setdelays', 'setlevels', 'sendmessage', 'import', 'export');
     }
 }

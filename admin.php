@@ -141,7 +141,7 @@ $studentuserid          = optional_param('studentuserid', 0, PARAM_INT);
 $studentusername        = optional_param('studentusername', NULL, PARAM_CLEAN);
 $bookquiznumber         = optional_param('bookquiznumber', 0, PARAM_INT);
 
-$readercfg = get_config('reader');
+$readercfg = get_config('mod_reader');
 
 reader_change_to_teacherview();
 
@@ -312,7 +312,7 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $quizzesid) {
         $DB->insert_record('reader_books', $newquiz);
     }
 
-    $message_forteacher = '<center><h3>'.get_string('quizzesadded', 'reader').'</h3></center><br /><br />';
+    $message_forteacher = '<center><h3>'.get_string('quizzesadded', 'mod_reader').'</h3></center><br /><br />';
 
     reader_add_to_log($course->id, 'reader', 'AA-Quizzes Added', 'admin.php?id='.$id, $cm->instance);
 }
@@ -749,12 +749,12 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $changeallcurren
 if (has_capability('mod/reader:addinstance', $contextmodule) && $act == 'awardextrapoints' && $award && $student) {
     $useridold = $USER->id;
     if ($bookdata = $DB->get_record('reader_books', array('name' => $award))) {
-        foreach ($student as $student_) {
+        foreach ($student as $s) {
 
             $select = 'MAX(attempt)';
             $from   = '{reader_attempts}';
             $where  = 'reader = ? AND userid = ? AND timefinish > ? AND preview <> ?';
-            $params = array($reader->id, $student_, 0, 1);
+            $params = array($reader->id, $s, 0, 1);
 
             if($attemptnumber = $DB->get_field_sql("SELECT $select FROM $from WHERE $where", $params)) {
                 $attemptnumber += 1;
@@ -762,7 +762,7 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $act == 'awardex
                 $attemptnumber = 1;
             }
 
-            $USER->id = $student_;
+            $USER = $s;
 
             $attempt = reader_create_attempt($reader, $attemptnumber, $bookdata->id, true);
 
@@ -781,14 +781,13 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $act == 'awardex
             $attempt->percentgrade = 100;
             $attempt->passed       = 'true';
 
-            //if ($reader->attemptsofday != 0) {
-                $attempt->timefinish   = time() - $reader->attemptsofday * 3600 * 24;
-                $attempt->timecreated  = time() - $reader->attemptsofday * 3600 * 24;
-                $attempt->timemodified = time() - $reader->attemptsofday * 3600 * 24;
-            //}
+            $time = time() - $reader->get_delay($s->id);
+            $attempt->timefinish   = $time;
+            $attempt->timecreated  = $time;
+            $attempt->timemodified = $time;
 
             $DB->update_record('reader_attempts', $attempt);
-            reader_add_to_log($course->id, 'reader', "AWP (userid: {$student_}; set: {$award})", 'admin.php?id='.$id, $cm->instance);
+            reader_add_to_log($course->id, 'reader', "AWP (userid: {$s}; set: {$award})", 'admin.php?id='.$id, $cm->instance);
         }
     }
     $USER->id = $useridold;
@@ -1165,9 +1164,9 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
     if (! $quizzesid) {
         if ($quizdata  = get_all_instances_in_course('quiz', $DB->get_record('course', array('id' => $reader->usecourse)), NULL, true)) {
         //if ($quizdata  = get_records('quiz')) {
-            $existdata['publisher'][0]  = get_string('selectalreadyexist', 'reader');
-            $existdata['difficulty'][0] = get_string('selectalreadyexist', 'reader');
-            $existdata['level'][0]      = get_string('selectalreadyexist', 'reader');
+            $existdata['publisher'][0]  = get_string('selectalreadyexist', 'mod_reader');
+            $existdata['difficulty'][0] = get_string('selectalreadyexist', 'mod_reader');
+            $existdata['level'][0]      = get_string('selectalreadyexist', 'mod_reader');
 
             if ($publishers = $DB->get_records('reader_books')) {
                 foreach ($publishers as $publishers_) {
@@ -1188,7 +1187,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
 
                 echo $output->box_start('generalbox');
 
-                echo '<h2>'.get_string('selectquizzes', 'reader').'</h2><br />';
+                echo '<h2>'.get_string('selectquizzes', 'mod_reader').'</h2><br />';
 
                 echo '<form action="admin.php?a=admin&id='.$id.'" method="post" enctype="multipart/form-data">';
                 echo '<table style="width:100%">';
@@ -1272,7 +1271,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
                 echo $output->box_end();
 
             } else {
-                notice(get_string('noquizzesfound', 'reader'));
+                notice(get_string('noquizzesfound', 'mod_reader'));
             }
 
         }
@@ -1383,7 +1382,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
             ));
         }
 
-        echo '<center><h3>'.get_string('needdeletethisattemptstoo', 'reader').':</h3>';
+        echo '<center><h3>'.get_string('needdeletethisattemptstoo', 'mod_reader').':</h3>';
 
         if (count($table->data)) {
             echo html_writer::table($table);
@@ -1532,7 +1531,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
     }
 
     echo '<table style="width:100%"><tr><td align="right">';
-    echo $output->single_button(new moodle_url('admin.php',$options), get_string('downloadexcel', 'reader'), 'post', $options);
+    echo $output->single_button(new moodle_url('admin.php',$options), get_string('downloadexcel', 'mod_reader'), 'post', $options);
     echo '</td></tr></table>';
 
     reader_print_search_form();
@@ -1808,7 +1807,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
     }
 
     echo '<table style="width:100%"><tr><td align="right">';
-    echo $output->single_button(new moodle_url('admin.php',$options), get_string('downloadexcel', 'reader'), 'post', $options);
+    echo $output->single_button(new moodle_url('admin.php',$options), get_string('downloadexcel', 'mod_reader'), 'post', $options);
     echo '</td></tr></table>';
 
     reader_print_search_form();
@@ -1942,7 +1941,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
     }
 
     echo '<table style="width:100%"><tr><td align="right">';
-    echo $output->single_button(new moodle_url('admin.php',$options), get_string('downloadexcel', 'reader'), 'post', $options);
+    echo $output->single_button(new moodle_url('admin.php',$options), get_string('downloadexcel', 'mod_reader'), 'post', $options);
     echo '</td></tr></table>';
 
     reader_print_search_form();
@@ -2061,7 +2060,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
     }
 
     echo '<table style="width:100%"><tr><td align="right">';
-    echo $output->single_button(new moodle_url('admin.php',$options), get_string('downloadexcel', 'reader'), 'post', $options);
+    echo $output->single_button(new moodle_url('admin.php',$options), get_string('downloadexcel', 'mod_reader'), 'post', $options);
     echo '</td></tr></table>';
 
     reader_print_search_form();
@@ -2089,7 +2088,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
     $table = new html_table();
 
     if (! $searchtext && ! $gid) {
-      echo "<center><h2><font color=\"red\">".get_string('pleasespecifyyourclassgroup', 'reader').'</font></h2></center>';
+      echo "<center><h2><font color=\"red\">".get_string('pleasespecifyyourclassgroup', 'mod_reader').'</font></h2></center>';
     } else {
 
         if (has_capability('mod/reader:manageattempts', $contextmodule)) {
@@ -2238,7 +2237,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
         }
 
         echo '<table style="width:100%"><tr><td align="right">';
-        echo $output->single_button(new moodle_url('admin.php',$options), get_string('downloadexcel', 'reader'), 'post', $options);
+        echo $output->single_button(new moodle_url('admin.php',$options), get_string('downloadexcel', 'mod_reader'), 'post', $options);
         echo '</td></tr></table>';
     }
     reader_print_search_form();
@@ -2263,13 +2262,13 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
 
     if (has_capability('mod/reader:managequizzes', $contextmodule)) {
       echo '<form action="?a=admin&id='.$id.'&act='.$act.'&sort='.$sort.'&orderby='.$orderby.'&gid='.$gid.'" method="post"><div> ';
-      echo ' <div style="margin:20px 0;font-size:16px;">'.get_string('restoredeletedattempt', 'reader').'</div>';
-      echo '<div style="float:left;width:200px;">'.get_string('studentuserid', 'reader').'</div>';
+      echo ' <div style="margin:20px 0;font-size:16px;">'.get_string('restoredeletedattempt', 'mod_reader').'</div>';
+      echo '<div style="float:left;width:200px;">'.get_string('studentuserid', 'mod_reader').'</div>';
       echo '<div style="float:left;width:200px;"><input type="text" name="studentuserid" value="" style="width:120px;" /></div><div style="clear:both;"></div>';
       echo '<div>or</div>';
-      echo '<div style="float:left;width:200px;">'.get_string('studentusername', 'reader').'</div>';
+      echo '<div style="float:left;width:200px;">'.get_string('studentusername', 'mod_reader').'</div>';
       echo '<div style="float:left;width:200px;"><input type="text" name="studentusername" value="" style="width:120px;" /></div><div style="clear:both;"></div>';
-      echo '<div style="float:left;width:200px;">'.get_string('bookquiznumber', 'reader').'</div>';
+      echo '<div style="float:left;width:200px;">'.get_string('bookquiznumber', 'mod_reader').'</div>';
       echo '<div style="float:left;width:200px;"><input type="text" name="bookquiznumber" value="" style="width:120px;" /></div><div style="clear:both;"></div>';
       //echo ' <input type="hidden" name="" value="" />';
       echo ' <input type="submit" name="submit" value="Restore" />';
@@ -2930,7 +2929,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
         echo '<input type="submit" name="submit" value="GO!" /></center></form>';
       }
     } else {
-        echo "<center><h2><font color=\"red\">".get_string('pleasespecifyyourclassgroup', 'reader')."</font></h2></center>";
+        echo "<center><h2><font color=\"red\">".get_string('pleasespecifyyourclassgroup', 'mod_reader')."</font></h2></center>";
     }
 
 } else if ($act == 'checksuspiciousactivity' && has_capability('mod/reader:manageusers', $contextmodule)) {
@@ -2938,9 +2937,9 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
     $table = new html_table();
 
     echo '<form action="admin.php?a='.$a.'&id='.$id.'&act='.$act.'" method="post">';
-    echo get_string('checkonlythiscourse', 'reader').' <input type="checkbox" name="useonlythiscourse" value="yes" checked /><br />';
-    echo get_string('withoutdayfilter', 'reader').' <input type="checkbox" name="withoutdayfilter" value="yes" /><br />';
-    echo get_string('selectipmask', 'reader').' <select id="ip_mask" name="ipmask"><br />';
+    echo get_string('checkonlythiscourse', 'mod_reader').' <input type="checkbox" name="useonlythiscourse" value="yes" checked /><br />';
+    echo get_string('withoutdayfilter', 'mod_reader').' <input type="checkbox" name="withoutdayfilter" value="yes" /><br />';
+    echo get_string('selectipmask', 'mod_reader').' <select id="ip_mask" name="ipmask"><br />';
     $ipmaskselect = array('2' => 'xxx.xxx.', '3' => 'xxx.xxx.xxx.');
     foreach ($ipmaskselect as $key => $value) {
         echo '<option value="'.$key.'"';
@@ -2951,7 +2950,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
     }
     echo '</select><br />';
     //echo 'Other ip mask <input type="text" name="ipmaskother" value="" />';
-    echo get_string('fromthistime', 'reader').' <select id="from_time" name="fromtime">';
+    echo get_string('fromthistime', 'mod_reader').' <select id="from_time" name="fromtime">';
 //change by Tom 28 June 2010
     $fromtimeselect = array('86400' => '1 day',
                             '604800' => '1 week',
@@ -2966,7 +2965,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
         echo '>'.$value.'</option>';
     }
     echo '</select><br />';
-    echo get_string('maxtimebetweenquizzes', 'reader').' <select id="max_time" name="maxtime">';
+    echo get_string('maxtimebetweenquizzes', 'mod_reader').' <select id="max_time" name="maxtime">';
     $fromtimeselect = array('900' => '15 minutes',
                             '1800' => '30 minutes',
                             '2700' => '45 minutes',
@@ -3327,7 +3326,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
     }
 
     echo '<table style="width:100%"><tr><td align="right">';
-    echo $output->single_button(new moodle_url('admin.php', $options), get_string('downloadexcel', 'reader'), 'post', $options);
+    echo $output->single_button(new moodle_url('admin.php', $options), get_string('downloadexcel', 'mod_reader'), 'post', $options);
     echo '</td></tr></table>';
 
     echo '<table style="width:100%"><tr><td align="right">';
@@ -3381,16 +3380,16 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
             global $COURSE, $CFG, $DB, $course, $reader;
 
             $mform    = &$this->_form;
-            $mform->addElement('header', 'setgoal', get_string('setgoal', 'reader'));
-            $mform->addElement('select', 'wordsorpoints', get_string('wordsorpoints', 'reader'), array('points' => get_string('points', 'reader'), 'words' => get_string('words', 'reader')));
-            $groups = array('0' => get_string('allparticipants', 'reader'));
+            $mform->addElement('header', 'setgoal', get_string('setgoal', 'mod_reader'));
+            $mform->addElement('select', 'wordsorpoints', get_string('wordsorpoints', 'mod_reader'), array('points' => get_string('points', 'mod_reader'), 'words' => get_string('words', 'mod_reader')));
+            $groups = array('0' => get_string('allparticipants', 'mod_reader'));
             if ($usergroups = groups_get_all_groups($course->id)){
                 foreach ($usergroups as $group){
                     $groups[$group->id] = $group->name;
                 }
-                $mform->addElement('select', 'separategroups', get_string('separategroups', 'reader'), $groups);
+                $mform->addElement('select', 'separategroups', get_string('separategroups', 'mod_reader'), $groups);
             }
-            $mform->addElement('text', 'levelall', get_string('all', 'reader'), array('size'=>'10'));
+            $mform->addElement('text', 'levelall', get_string('all', 'mod_reader'), array('size'=>'10'));
             $mform->setType('levelall', PARAM_INT);
             for($i=1; $i<=10; $i++) {
                 $name = 'levelc['.$i.']';
@@ -3455,37 +3454,36 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
         function definition() {
             global $COURSE, $CFG, $DB, $course, $reader;
 
-            if ($default = $DB->get_record('reader_delays', array('readerid' => $reader->id,  'level' => 99))) {
-              if ($default->delay) {
-                $defdelaytime = round($default->delay / 3600);
-              }
+            if ($default = $DB->get_record('reader_delays', array('readerid' => $reader->id,  'groupid' => 0, 'level' => 0))) {
+                $defaultdelay = $default->delay;
             } else {
-                $defdelaytime = $reader->attemptsofday * 24;
+                $defaultdelay = 0;
             }
 
-            $dtimes = array(0=>'Default ('.$defdelaytime.')', 1=>'Without delay', 14400=>4, 28800=>8, 43200=>12, 57600=>16, 86400=>24, 129600=>36, 172800=>48, 259200=>72, 345600=>96, 432000=>120);
+            $dtimes = array(0=>'Default ('.$defaultdelay.')', 1=>'Without delay', 14400=>4, 28800=>8, 43200=>12, 57600=>16, 86400=>24, 129600=>36, 172800=>48, 259200=>72, 345600=>96, 432000=>120);
 
             $mform    = &$this->_form;
-            $mform->addElement('header', 'forcedtimedelay', get_string('forcedtimedelay', 'reader')." (hours)");
-            $groups = array('0' => get_string('allparticipants', 'reader'));
+            $mform->addElement('header', 'forcedtimedelay', get_string('forcedtimedelay', 'mod_reader')." (hours)");
+            $groups = array('0' => get_string('allparticipants', 'mod_reader'));
             if ($usergroups = groups_get_all_groups($course->id)){
                 foreach ($usergroups as $group){
                     $groups[$group->id] = $group->name;
                 }
-                $mform->addElement('select', 'separategroups', get_string('separategroups', 'reader'), $groups);
+                $mform->addElement('select', 'separategroups', get_string('separategroups', 'mod_reader'), $groups);
             }
-            $mform->addElement('select', 'levelc[99]', get_string('all', 'reader'), $dtimes);
+            $mform->addElement('select', 'levelc[99]', get_string('all', 'mod_reader'), $dtimes);
             for($i=1; $i<=10; $i++) {
                 $mform->addElement('select', 'levelc['.$i.']', $i, $dtimes);
             }
 
             /* SET default */
-            $data = $DB->get_records("reader_delays", array('readerid' => $reader->id));
-            foreach ($data as $data_) {
-                if ($data_->level == 99) {
-                    $mform->setDefault('levelall', $data_->delay);
-                } else {
-                    $mform->setDefault('levelc['.$data_->level.']', $data_->delay);
+            if ($delays = $DB->get_records("reader_delays", array('readerid' => $reader->id))) {
+                foreach ($delays as $delay) {
+                    if ($delay->level == 99) {
+                        $mform->setDefault('levelall', $delay->delay);
+                    } else {
+                        $mform->setDefault('levelc['.$delay->level.']', $delay->delay);
+                    }
                 }
             }
 
@@ -3499,7 +3497,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
     $table = new html_table();
 
     echo '<form action="admin.php?a='.$a.'&id='.$id.'&act='.$act.'" method="post">';
-    echo get_string('best', 'reader').' <select id="booksratingbest" name="booksratingbest">';
+    echo get_string('best', 'mod_reader').' <select id="booksratingbest" name="booksratingbest">';
     $fromselect = array('5' => "5", '10' => "10", '25' => "25", '50' => "50", '0' => "All");
     foreach ($fromselect as $key => $value) {
         echo '<option value="'.$key.'"';
@@ -3510,7 +3508,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
     }
     echo '</select><br />';
 
-    echo get_string('showlevel', 'reader').' <select id="booksratinglevel" name="booksratinglevel"><br />';
+    echo get_string('showlevel', 'mod_reader').' <select id="booksratinglevel" name="booksratinglevel"><br />';
     $fromselect = array('0' => "0", '1' => "1", '2' => "2", '3' => "3", '4' => "4", '5' => "5", '6' => "6", '7' => "7", '8' => "8", '9' => "9", '10' => "10", '11' => "11", '12' => "12", '13' => "13", '14' => "14", '15' => "15", '99' => "All");
     foreach ($fromselect as $key => $value) {
         echo '<option value="'.$key.'"';
@@ -3521,7 +3519,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
     }
     echo '</select><br />';
     //echo 'Other ip mask <input type="text" name="ipmaskother" value="" />';
-    echo get_string('term', 'reader').' <select id="booksratingterm" name="booksratingterm">';
+    echo get_string('term', 'mod_reader').' <select id="booksratingterm" name="booksratingterm">';
     $fromselect = array('0' => "All terms", $reader->ignoredate => "Current");
     foreach ($fromselect as $key => $value) {
         echo '<option value="'.$key.'"';
@@ -3531,7 +3529,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
         echo '>'.$value.'</option>';
     }
     echo '</select><br />';
-    echo get_string('onlybookswithmorethan', 'reader').' <select id="booksratingwithratings" name="booksratingwithratings">';
+    echo get_string('onlybookswithmorethan', 'mod_reader').' <select id="booksratingwithratings" name="booksratingwithratings">';
     $fromselect = array('0' => "0", '5' => "5", '10' => "10", '25' => "25", '50' => "50");
     foreach ($fromselect as $key => $value) {
         echo '<option value="'.$key.'"';
@@ -3540,7 +3538,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
         }
         echo '>'.$value.'</option>';
     }
-    echo '</select> '.get_string('ratings', 'reader').':<br />';
+    echo '</select> '.get_string('ratings', 'mod_reader').':<br />';
     echo '<input type="submit" name="booksratingshow" value="Go" /><br />';
     echo '</form>';
 
@@ -3703,7 +3701,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
     }
 
     echo '<table style="width:100%"><tr><td align="right">';
-    echo $output->single_button(new moodle_url('admin.php',$options), get_string('downloadexcel', 'reader'), 'post', $options);
+    echo $output->single_button(new moodle_url('admin.php',$options), get_string('downloadexcel', 'mod_reader'), 'post', $options);
     echo '</td></tr></table>';
 
     reader_select_perpage($id, $act, $sort, $orderby, $gid);
@@ -4003,7 +4001,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
 
             $mform    = &$this->_form;
 
-            $mform->addElement('header', 'setgoal', get_string('changenumberofsectionsinquiz', 'reader'));
+            $mform->addElement('header', 'setgoal', get_string('changenumberofsectionsinquiz', 'mod_reader'));
             $mform->addElement('text', 'numberofsections', '', array('size'=>'10'));
 
             $this->add_action_buttons(false, $submitlabel="Save");
@@ -4193,7 +4191,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
     $publisherform = array();
 
     $publisherkey = 'id='.$id.'&publisher=Select_Publisher';
-    $publisherform[$publisherkey] = get_string('selectpublisher', 'reader');
+    $publisherform[$publisherkey] = get_string('selectpublisher', 'mod_reader');
 
     if ($records = $DB->get_records('reader_books', null, 'publisher')) {
         foreach ($records as $record) {
@@ -4230,7 +4228,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
     echo html_writer::start_tag('table', array('width'=>'600px'));
 
     echo html_writer::start_tag('tr');
-    echo html_writer::tag('td', get_string('publisherseries', 'reader'), array('width'=>'200px'));
+    echo html_writer::tag('td', get_string('publisherseries', 'mod_reader'), array('width'=>'200px'));
     echo html_writer::tag('td', '', array('width'=>'10px'));
     echo html_writer::tag('td', '', array('width'=>'200px'));
     echo html_writer::end_tag('tr');
@@ -4343,7 +4341,7 @@ class reader_menu {
      * @todo Finish documenting this function
      */
     public function out($context) {
-        $out = ''; // '<h3>'.get_string('menu', 'reader').':</h3>';
+        $out = ''; // '<h3>'.get_string('menu', 'mod_reader').':</h3>';
         $started_sections = false;
         foreach ($this->sections as $sectionname => $items) {
             $started_items = false;
@@ -4355,7 +4353,7 @@ class reader_menu {
                     }
                     if ($started_items==false) {
                         $started_items = true;
-                        $out .= '<li class="readermenusection"><b>'.get_string($sectionname, 'reader').'</b><ul class="readermenuitems">';
+                        $out .= '<li class="readermenusection"><b>'.get_string($sectionname, 'mod_reader').'</b><ul class="readermenuitems">';
                     }
                     $out .= '<li class="readermenuitem">'.$itemtext.'</li>';
                 }
@@ -4447,7 +4445,7 @@ class reader_menu_item {
     public function out($context) {
         $out = '';
         if (has_capability('mod/reader:'.$this->capability, $context)) {
-            $out = get_string($this->displaystring, 'reader');
+            $out = get_string($this->displaystring, 'mod_reader');
             $url = new moodle_url('/mod/reader/'.$this->scriptname, $this->scriptparams);
             if ($url->compare($this->get_fullme(), URL_MATCH_PARAMS)) {
                 // current page - do not convert to link
@@ -4496,7 +4494,7 @@ function reader_setbookinstances($cmid, $reader) {
     global $CFG, $DB, $output;
 
     if ($reader->bookinstances == 0) {
-        echo '<div>'.get_string('coursespecificquizselection', 'reader').'</div>';
+        echo '<div>'.get_string('coursespecificquizselection', 'mod_reader').'</div>';
     }
 
     $currentbooks = array();
@@ -4763,3 +4761,1022 @@ function reader_duration_selector($name, $value) {
     $duration = array('' => '') + $duration;
     return html_writer::select($duration, $name, $value, '');
 }
+
+/**
+ * reader_order_object
+ *
+ * @param xxx $array
+ * @param xxx $key
+ * @return xxx
+ * @todo Finish documenting this function
+ */
+function reader_order_object($array, $key) {
+    $tmp = array();
+    foreach($array as $akey => $array2) {
+        $tmp[$akey] = $array2->$key;
+    }
+    sort($tmp, SORT_NUMERIC);
+    $tmp2 = array();
+    $tmp_size = count($tmp);
+    foreach($tmp as $key => $value) {
+        $tmp2[$key] = $array[$key];
+    }
+    return $tmp2;
+}
+
+/**
+ * reader_make_table_headers
+ *
+ * @uses $CFG
+ * @uses $USER
+ * @param xxx $titlesarray
+ * @param xxx $orderby "ASC" or "DESC"
+ * @param xxx $sort name of a table column
+ * @param xxx $link
+ * @return xxx
+ * @todo Finish documenting this function
+ */
+function reader_make_table_headers(&$table, $headers, $orderby, $sort, $params) {
+    global $CFG;
+
+    if ($orderby == 'ASC') {
+        $direction = 'DESC';
+        $directionimg = 'down';
+    } else {
+        $direction = 'ASC';
+        $directionimg = 'up';
+    }
+
+    $table->head = array();
+    foreach ($headers as $text => $columnname) {
+        $header = $text;
+
+        if ($columnname) {
+
+            // append sort icon
+            if ($sort == $columnname) {
+                $imgparams = array('theme' => $CFG->theme, 'image' => "t/$directionimg", 'rev' => $CFG->themerev);
+                $header .= ' '.html_writer::empty_tag('img', array('src' => new moodle_url('/theme/image.php', $imgparams), 'alt' => ''));
+            }
+
+            // convert $header to link
+            $params['sort'] = $columnname;
+            $params['orderby'] = $direction;
+            $header = html_writer::tag('a', $header, array('href' => new moodle_url('/mod/reader/admin.php', $params)));
+        }
+
+        // add header to table
+        $table->head[] = $header;
+    }
+}
+
+/**
+ * reader_sort_table
+ *
+ * @param xxx $table
+ * @param xxx $columns
+ * @param xxx $sortdirection
+ * @param xxx $sortcolumn
+ * @param array $dates (optional, default=null)
+ * @return xxx
+ * @todo Finish documenting this function
+ */
+function reader_sort_table(&$table, $columns, $sortdirection, $sortcolumn, $dates=null) {
+
+    if (empty($table->data)) {
+        return; // nothing to do
+    }
+
+    $columnnames = array_values($columns);
+    $columnnames = array_flip($columnnames);
+    // $columnnames maps column-name => column-number
+
+    if ($sortcolumn) {
+        if (array_key_exists($sortcolumn, $columnnames)) {
+            $sortindex = $columnnames[$sortcolumn];
+        } else {
+            $sortindex = 0; // default is first column
+        }
+
+        $values = array();
+        foreach ($table->data as $r => $row) {
+            $values[$r] = strip_tags($row->cells[$sortindex]->text);
+        }
+
+        if (empty($sortdirection) || $sortdirection=='ASC') {
+            asort($values);
+        } else {
+            arsort($values);
+        }
+    } else {
+        // sorting not required, but we still want to format dates
+        $values = range(0, count($table->data) - 1);
+    }
+
+    $data = array();
+    foreach (array_keys($values) as $r) {
+        if ($dates) {
+            // format date columns - must be done after sorting
+            foreach ($dates as $columnname => $fmt) {
+                $c = $columnnames[$columnname];
+                $date = $table->data[$r]->cells[$c]->text;
+                $table->data[$r]->cells[$c]->text = date($fmt, $date);
+            }
+        }
+        $data[] = $table->data[$r];
+    }
+    $table->data = $data;
+}
+
+/**
+ * reader_print_group_select_box
+ *
+ * @uses $CFG
+ * @uses $COURSE
+ * @uses $gid
+ * @param xxx $courseid
+ * @param xxx $link
+ * @return xxx
+ * @todo Finish documenting this function
+ */
+function reader_print_group_select_box($courseid, $link) {
+    global $CFG, $COURSE, $gid;
+
+    $groups = groups_get_all_groups ($courseid);
+
+    if ($groups) {
+        echo '<table style="width:100%"><tr><td align="right">';
+        echo '<form action="" method="post" id="mform_gr">';
+        echo '<select name="gid" id="id_gid">';
+        echo '<option value="0">'.get_string('allgroups', 'mod_reader').'</option>';
+        foreach ($groups as $groupid => $group) {
+            if ($groupid == $gid) {
+                $selected = ' selected="selected"';
+            } else {
+                $selected = '';
+            }
+            echo '<option value="'.$groupid.'"'.$selected.'>'.$group->name.'</option>';
+        }
+        echo '</select>';
+        echo '<input type="submit" id="form_gr_submit" value="'.get_string('go').'" />';
+        echo '</form>';
+        echo '</td></tr></table>'."\n";
+
+        // javascript to submit group form automatically and hide "Go" button
+        echo '<script type="text/javascript">'."\n";
+        echo "//<![CDATA[\n";
+        echo "var obj = document.getElementById('id_gid');\n";
+        echo "if (obj) {\n";
+        echo "    obj.onchange = new Function('this.form.submit(); return true;');\n";
+        echo "}\n";
+        echo "var obj = document.getElementById('form_gr_submit');\n";
+        echo "if (obj) {\n";
+        echo "    obj.style.display = 'none';\n";
+        echo "}\n";
+        echo "obj = null;\n";
+        echo "//]]>\n";
+        echo "</script>\n";
+    }
+}
+
+/**
+ * reader_get_pages
+ *
+ * @uses $CFG
+ * @uses $COURSE
+ * @param xxx $table
+ * @param xxx $page
+ * @param xxx $perpage
+ * @return xxx
+ * @todo Finish documenting this function
+ */
+function reader_get_pages($table, $page, $perpage) {
+    global $CFG, $COURSE;
+
+    $totalcount = count ($table);
+    $startrec  = $page * $perpage;
+    $finishrec = $startrec + $perpage;
+
+    if (empty($table)) {
+        $table = array();
+    }
+    $viewtable = array();
+    foreach ($table as $key => $value) {
+        if ($key >= $startrec && $key < $finishrec) {
+            $viewtable[] = $value;
+        }
+    }
+
+    return array($totalcount, $viewtable, $startrec, $finishrec, $page);
+}
+
+/**
+ * reader_username_link
+ *
+ * @uses $CFG
+ * @uses $COURSE
+ * @param xxx $userdata
+ * @param xxx $courseid
+ * @param xxx $nolink (optional, default = false)
+ * @return xxx
+ * @todo Finish documenting this function
+ */
+function reader_username_link($userdata, $courseid, $nolink=false) {
+    $username = $userdata->username;
+    if ($nolink) {
+        return $username; // e.g. for excel
+    }
+    if (isset($userdata->userid)) {
+        $userid = $userdata->userid;
+    } else {
+        $userid = $userdata->id;
+    }
+    $params = array('id' => $userid, 'course' => $courseid);
+    $params = array('href' => new moodle_url('/user/view.php', $params));
+    return html_writer::tag('a', $username, $params);
+}
+
+/**
+ * reader_fullname_link_viewasstudent
+ *
+ * @param xxx $userdata
+ * @param xxx $id
+ * @param xxx $nolink (optional, default=false)
+ * @return xxx
+ * @todo Finish documenting this function
+ */
+function reader_fullname_link_viewasstudent($userdata, $id, $nolink=false) {
+    $fullname = $userdata->firstname.' '.$userdata->lastname;
+    if ($nolink) {
+        return $fullname;
+    }
+    if (isset($userdata->userid)) {
+        $userid = $userdata->userid;
+    } else {
+        $userid = $userdata->id;
+    }
+    $params = array('id' => $id, 'viewasstudent' => $userid);
+    $params = array('href' => new moodle_url('/mod/reader/admin.php', $params));
+    return html_writer::tag('a', $fullname, $params);
+}
+
+/**
+ * reader_fullname_link
+ *
+ * @uses $CFG
+ * @uses $COURSE
+ * @param xxx $userdata
+ * @param xxx $courseid
+ * @param xxx $nolink (optional, default=false)
+ * @return xxx
+ * @todo Finish documenting this function
+ */
+function reader_fullname_link($userdata, $courseid, $nolink=false) {
+    $fullname = $userdata->firstname.' '.$userdata->lastname;
+    if ($nolink) {
+        return $fullname;
+    }
+    if (isset($userdata->userid)) {
+        $userid = $userdata->userid;
+    } else {
+        $userid = $userdata->id;
+    }
+    $params = array('id' => $userid, 'course' => $courseid);
+    $params = array('href' => new moodle_url('/user/view.php', $params));
+    return html_writer::tag('a', $fullname, $params);
+}
+
+/**
+ * reader_select_perpage
+ *
+ * @uses $CFG
+ * @uses $COURSE
+ * @uses $_SESSION
+ * @uses $book
+ * @param xxx $id
+ * @param xxx $act
+ * @param xxx $sort
+ * @param xxx $orderby
+ * @param xxx $gid
+ * @todo Finish documenting this function
+ */
+function reader_select_perpage($id, $act, $sort, $orderby, $gid) {
+    global $CFG, $COURSE, $_SESSION;
+
+    echo '<table style="width:100%"><tr><td align="right">';
+
+    $params = array('action' => new moodle_url('/mod/reader/admin.php'), 'method' => 'get', 'class' => 'popupform');
+    echo html_writer::start_tag('form', $params);
+
+    $params = array('a' => 'admin',  'id'  => $id,
+                    'act'  => $act,  'gid' => $gid,
+                    'sort' => $sort, 'orderby' => $orderby,
+                    'book' => optional_param('book', '', PARAM_CLEAN));
+    foreach ($params as $name => $value) {
+        echo html_writer::empty_tag('input', array('type' => 'hidden', 'name' => $name, 'value' => $value));
+    }
+
+    echo 'Perpage ';
+
+    echo html_writer::start_tag('select', array('id' => 'id_perpage', 'name' => 'perpage'));
+
+    $perpages = array(30, 60, 100, 200, 500);
+    foreach ($perpages as $perpage) {
+
+        $params = array('value' => $perpage);
+        if ($_SESSION['SESSION']->reader_perpage == $perpage) {
+            $params['selected'] = 'selected';
+        }
+        echo html_writer::tag('option', $perpage, $params);
+    }
+
+    echo html_writer::end_tag('select');
+
+    $params = array('type' => 'submit', 'id' => 'id_perpage_submit', 'name' => 'perpage_submit', 'value' => get_string('go'));
+    echo html_writer::empty_tag('input', $params);
+
+    echo html_writer::end_tag('form');
+    echo '</td></tr></table>';
+
+    // javascript to submit perpage form automatically and hide "Go" button
+    echo '<script type="text/javascript">'."\n";
+    echo "//<![CDATA[\n";
+    echo "var obj = document.getElementById('id_perpage');\n";
+    echo "if (obj) {\n";
+    echo "    obj.onchange = new Function('this.form.submit(); return true;');\n";
+    echo "}\n";
+    echo "var obj = document.getElementById('id_perpage_submit');\n";
+    echo "if (obj) {\n";
+    echo "    obj.style.display = 'none';\n";
+    echo "}\n";
+    echo "obj = null;\n";
+    echo "//]]>\n";
+    echo "</script>\n";
+}
+
+/**
+ * reader_print_search_form
+ *
+ * @uses $CFG
+ * @uses $COURSE
+ * @uses $OUTPUT
+ * @uses $_SESSION
+ * @uses $book
+ * @uses $searchtext
+ * @param xxx $id
+ * @param xxx $act
+ * @todo Finish documenting this function
+ */
+function reader_print_search_form($id='', $act='', $book='') {
+    global $OUTPUT;
+
+    $id = optional_param('id', 0, PARAM_INT);
+    $act = optional_param('act', NULL, PARAM_CLEAN);
+    $book = optional_param('book', NULL, PARAM_CLEAN);
+    $searchtext = optional_param('searchtext', NULL, PARAM_CLEAN);
+    $searchtext = str_replace('\\"', '"', $searchtext);
+
+    $output = '';
+
+    $params = array('a' => 'admin', 'id' => $id, 'act' => $act, 'book' => $book);
+    $action = new moodle_url('/mod/reader/admin.php', $params);
+
+    $params = array('action' => $action, 'method' => 'post', 'id' => 'mform1');
+    $output .= html_writer::start_tag('form', $params);
+
+    $params = array('type' => 'text', 'name' => 'searchtext', 'value' => $searchtext, 'style' => 'width:120px;');
+    $output .= html_writer::empty_tag('input', $params);
+
+    $params = array('type' => 'submit', 'name' => 'submit', 'value' => get_string('search', 'mod_reader'));
+    $output .= html_writer::empty_tag('input', $params);
+
+    $output .= html_writer::end_tag('form');
+
+    if ($searchtext) {
+        $params = array('id' => $id, 'act' => $act);
+        $output .= $OUTPUT->single_button(new moodle_url('/mod/reader/admin.php', $params), get_string('showall', 'mod_reader'), 'post', $params);
+    }
+
+    echo '<table style="width:100%"><tr><td align="right">'.$output.'</td></tr></table>';
+}
+
+/**
+ * reader_check_search_text
+ *
+ * @param xxx $searchtext
+ * @param xxx $coursestudent
+ * @param xxx $book (optional, default=false)
+ * @return xxx
+ * @todo Finish documenting this function
+ */
+function reader_check_search_text($searchtext, $coursestudent, $book=false) {
+
+    $searchtext = trim($searchtext);
+    if ($searchtext=='') {
+        return true; // no search string, so everything matches
+    }
+
+    if (strstr($searchtext, '"')) {
+        $texts = str_replace('\"', '"', $searchtext);
+        $texts = explode('"', $searchtext);
+    } else {
+        $texts = explode(' ', $searchtext);
+    }
+    array_filter($texts); // remove blanks
+
+    foreach ($texts as $text) {
+        $text = strtolower($text);
+
+        if ($coursestudent) {
+            $username  = strtolower($coursestudent->username);
+            $firstname = strtolower($coursestudent->firstname);
+            $lastname  = strtolower($coursestudent->lastname);
+            if (strstr($username, $text) || strstr("$firstname $lastname", $text)) {
+                return true;
+            }
+        }
+
+        if ($book) {
+            if (is_array($book)) {
+                $booktitle = strtolower($book['booktitle']);
+                $booklevel = strtolower($book['booklevel']);
+                $publisher = strtolower($book['publisher']);
+            } else {
+                $booktitle = strtolower($book->name);
+                $booklevel = strtolower($book->level);
+                $publisher = strtolower($book->publisher);
+            }
+
+            if (strpos($booktitle, $text)===false && strpos($booklevel, $text)==false || strpos($publisher, $text)==false) {
+                // do nothing
+            } else {
+                return true;
+            }
+        }
+    }
+
+    return false; // no part of the searchtext matched user or book details
+}
+
+/**
+ * reader_check_search_text_quiz
+ *
+ * @uses $CFG
+ * @uses $COURSE
+ * @uses $_SESSION
+ * @param xxx $searchtext
+ * @param xxx $book
+ * @return xxx
+ * @todo Finish documenting this function
+ */
+function reader_check_search_text_quiz($searchtext, $book) {
+
+    $searchtext = trim($searchtext);
+    if ($searchtext=='') {
+        return true; // no search string, so everything matches
+    }
+
+    if (strstr($searchtext, '"')) {
+        $texts = str_replace('\"', '"', $searchtext);
+        $texts = explode('"', $searchtext);
+    } else {
+        $texts = explode(' ', $searchtext);
+    }
+    array_filter($texts); // remove blanks
+
+    foreach ($texts as $text) {
+        $text = strtolower($text);
+        if ($book) {
+            if (is_array($book)) {
+                $booktitle = strtolower($book['booktitle']);
+                $booklevel = strtolower($book['booklevel']);
+                $publisher = strtolower($book['publisher']);
+            } else {
+                $booktitle = strtolower($book->name);
+                $level     = strtolower($book->level);
+                $publisher = strtolower($book->publisher);
+            }
+
+            if (strpos($booktitle, $text)===false && strpos($booklevel, $text)==false || strpos($publisher, $text)==false) {
+                // do nothing
+            } else {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+/**
+ * reader_level_menu
+ *
+ * @uses $CFG
+ * @uses $COURSE
+ * @uses $_SESSION
+ * @uses $act
+ * @uses $gid
+ * @uses $id
+ * @uses $orderby
+ * @uses $page
+ * @uses $sort
+ * @param xxx $userid
+ * @param xxx $readerlevel
+ * @param xxx $slevel
+ * @return xxx
+ * @todo Finish documenting this function
+ */
+function reader_level_menu($userid, $readerlevel, $slevel) {
+    global $id, $act, $gid, $sort, $orderby, $page;
+
+    if (empty($readerlevel)) {
+        $readerlevel = new stdClass();
+    }
+    if (! isset($readerlevel->$slevel)) {
+        $readerlevel->$slevel = 0;
+    }
+
+    $values = range(0, 14);
+    $name = 'level_'.$userid.'_'.$slevel;
+
+    $output = '';
+    $output .= html_writer::start_tag('div', array('id' => 'id_'.$name));
+
+    $onchange = "request('admin.php?ajax=true&' + this.options[this.selectedIndex].value, 'id_$name'); return false;";
+    $output .= html_writer::start_tag('select', array('id' => 'id_select_'.$name, 'name' => 'select_'.$name, 'onchange' => $onchange));
+
+    foreach ($values as $value) {
+        $params = array('a' => 'admin', 'id' => $id, 'act' => $act, 'changelevel' => $value, 'userid' => $userid, 'slevel' => $slevel);
+        $params = array('value' => new moodle_url('/mod/reader/admin.php', $params));
+        if ($value == $readerlevel->$slevel) {
+            $params['selected'] = 'selected';
+        }
+        $output .= html_writer::tag('option', $value, $params);
+    }
+
+    $output .= html_writer::end_tag('select');
+    $output .= html_writer::end_tag('div');
+
+    return $output;
+}
+
+/**
+ * reader_promotionstop_menu
+ *
+ * @uses $CFG
+ * @uses $COURSE
+ * @uses $_SESSION
+ * @uses $act
+ * @uses $gid
+ * @uses $id
+ * @uses $orderby
+ * @uses $page
+ * @uses $sort
+ * @param xxx $userid
+ * @param xxx $data
+ * @param xxx $field
+ * @param xxx $rand
+ * @return xxx
+ * @todo Finish documenting this function
+ */
+function reader_promotionstop_menu($userid, $data, $field, $rand) {
+    global $CFG, $COURSE, $_SESSION, $id, $act, $gid, $sort, $orderby, $page;
+
+    if (empty($data)) {
+        $data = new stdClass();
+    }
+    if (empty($data->$field)) {
+        $data->$field = 0; // default
+    }
+
+    $values = array(0,1,2,3,4,5,6,7,8,9,10,12,99);
+    $name = '_stoppr_'.$rand.'_'.$userid;
+
+    $output = '';
+    $output .= html_writer::start_tag('div', array('id' => 'id_'.$name));
+
+    $onchange = "request('admin.php?ajax=true&' + this.options[this.selectedIndex].value, 'id_$name'); return false;";
+    $output .= html_writer::start_tag('select', array('id' => 'id_select_'.$name, 'name' => 'select_'.$name, 'onchange' => $onchange));
+
+    foreach ($values as $value) {
+        $params = array('a' => 'admin', 'id' => $id, 'act' => $act, $field => $value, 'userid' => $userid);
+        $params = array('value' => new moodle_url('/mod/reader/admin.php', $params));
+        if ($value == $data->$field) {
+            $params['selected'] = 'selected';
+        }
+        $output .= html_writer::tag('option', $value, $params);
+    }
+
+    $output .= html_writer::end_tag('select');
+    $output .= html_writer::end_tag('div');
+
+    return $output;
+}
+
+/**
+ * reader_goals_menu
+ *
+ * @uses $CFG
+ * @uses $COURSE
+ * @uses $DB
+ * @uses $_SESSION
+ * @uses $act
+ * @uses $gid
+ * @uses $id
+ * @uses $orderby
+ * @uses $page
+ * @uses $sort
+ * @param xxx $userid
+ * @param xxx $studentlevel
+ * @param xxx $field
+ * @param xxx $rand
+ * @param xxx $reader
+ * @return xxx
+ * @todo Finish documenting this function
+ */
+function reader_goals_menu($userid, $studentlevel, $field, $rand, $reader) {
+    global $CFG, $COURSE, $DB, $_SESSION, $id, $act, $gid, $sort, $orderby, $page;
+
+    $goal = 0;
+
+    if (! empty($studentlevel->goal)) {
+        $goal = $studentlevel->goal;
+    }
+
+    if (empty($goal)) {
+        $data = $DB->get_records('reader_goals', array('readerid' => $reader->id));
+        foreach ($data as $data_) {
+            $noneed = false;
+            if (! empty($data_->groupid)) {
+                if (! groups_is_member($data_->groupid, $userid)) {
+                    $noneed = true;
+                }
+            }
+            if (! empty($data_->level)) {
+                if ($studentlevel->currentlevel != $data_->level) {
+                    $noneed = true;
+                }
+            }
+            if (! $noneed) {
+                $goal = $data_->goal;
+            }
+        }
+    }
+    if (empty($goal) && !empty($reader->goal)) {
+        $goal = $reader->goal;
+    }
+
+    if (isset($studentlevel->$field) && $studentlevel->$field) {
+        $selectedvalue = $studentlevel->$field;
+    } else {
+        $selectedvalue = $goal;
+    }
+
+    if (empty($reader->wordsorpoints) || $reader->wordsorpoints == 'words') {
+        $values = array(
+            0,5000,6000,7000,8000,9000,
+            10000,12500,15000,20000,25000,30000,35000,40000,45000,50000,60000,70000,80000,90000,
+            100000,125000,150000,175000,200000,250000,300000,350000,400000,450000,500000
+        );
+        if (! empty($goal) && ! in_array($goal, $values)) {
+            $temp = array();
+            $i_max = count($values) - 1;
+            for ($i=0; $i<=$i_max; $i++) {
+                if ($i < $i_max && $goal < $values[$i+1] && $goal > $values[$i]) {
+                    $temp[] = $goal;
+                    $temp[] = $values[$i];
+                } else {
+                    $temp[] = $values[$i];
+                }
+            }
+            $values = $temp;
+        }
+    } else {
+        $values = array(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15);
+    }
+
+    $name = 'goal_'.$rand.'_'.$userid;
+
+    $output = '';
+    $output .= html_writer::start_tag('div', array('id' => 'id_'.$name));
+
+    $onchange = "request('admin.php?ajax=true&' + this.options[this.selectedIndex].value, 'id_$name'); return false;";
+    $output .= html_writer::start_tag('select', array('id' => 'id_select_'.$name, 'name' => 'select_'.$name, 'onchange' => $onchange));
+
+    foreach ($values as $value) {
+        $params = array('a' => 'admin', 'id' => $id, 'act' => $act, 'set'.$field => $value, 'userid' => $userid);
+        $params = array('value' => new moodle_url('/mod/reader/admin.php', $params));
+        if ($value==$selectedvalue) {
+            $params['selected'] = "selected";
+        }
+        $output .= html_writer::tag('option', $value, $params);
+    }
+
+    $output .= html_writer::end_tag('select');
+    $output .= html_writer::end_tag('div');
+
+    return $output;
+}
+
+/**
+ * reader_promo_menu
+ *
+ * @uses $CFG
+ * @uses $COURSE
+ * @uses $_SESSION
+ * @uses $act
+ * @uses $gid
+ * @uses $id
+ * @uses $orderby
+ * @uses $page
+ * @uses $sort
+ * @param xxx $userid
+ * @param xxx $data
+ * @param xxx $field
+ * @param xxx $rand
+ * @return xxx
+ * @todo Finish documenting this function
+ */
+function reader_promo_menu($userid, $data, $field, $rand) {
+    global $CFG, $COURSE, $_SESSION, $id, $act, $gid, $sort, $orderby, $page;
+
+    $values = array('0' => 'Promo', '1' => 'NoPromo');
+    $name = 'promo_'.$rand.'_'.$userid;
+
+    $output = '';
+    $output .= html_writer::start_tag('div', array('id' => 'id_'.$name));
+
+    $onchange = "request('admin.php?ajax=true&' + this.options[this.selectedIndex].value, 'id_$name'); return false;";
+    $output .= html_writer::start_tag('select', array('id' => 'id_select_'.$name, 'name' => 'select_'.$name, 'onchange' => $onchange));
+
+    foreach ($values as $key => $value) {
+        $params = array('a' => 'admin', 'id' => $id, 'act' => $act, $field => $key, 'userid' => $userid);
+        $params = array('value' => new moodle_url('/mod/reader/admin.php', $params));
+        if ($key == $data->$field) {
+            $params['selected'] = "selected";
+        }
+        $output .= html_writer::tag('option', $value, $params);
+    }
+
+    $output .= html_writer::end_tag('select');
+    $output .= html_writer::end_tag('div');
+
+    return $output;
+}
+
+/**
+ * reader_ip_menu
+ *
+ * @uses $CFG
+ * @uses $COURSE
+ * @uses $DB
+ * @uses $_SESSION
+ * @uses $act
+ * @uses $gid
+ * @uses $id
+ * @uses $orderby
+ * @uses $page
+ * @uses $sort
+ * @param xxx $userid
+ * @param xxx $reader
+ * @return xxx
+ * @todo Finish documenting this function
+ */
+function reader_ip_menu($userid, $reader) {
+    global $CFG, $COURSE, $DB, $_SESSION, $id, $act, $gid, $sort, $orderby, $page;
+
+    $params = array('readerid' => $reader->id, 'userid' => $userid);
+    if ($data = $DB->get_record('reader_strict_users_list', $params)) {
+        $selectedvalue = $data->needtocheckip;
+    } else {
+        $selectedvalue = 0;
+    }
+
+    $values = array(0 => 'No', 1 => 'Yes');
+    $name = 'selectip_'.$userid.'_'.$reader->id;
+
+    $output = '';
+    $output .= html_writer::start_tag('div', array('id' => 'id_'.$name));
+
+    $onchange = "request('admin.php?ajax=true&' + this.options[this.selectedIndex].value, 'id_$name'); return false;";
+    $output .= html_writer::start_tag('select', array('id' => 'id_select_'.$name, 'name' => 'select_'.$name, 'onchange' => $onchange));
+
+    foreach ($values as $key => $value) {
+        $params = array('a' => 'admin', 'id' => $id, 'act' => $act, 'setip' => 1, 'userid' => $userid, 'needip' => $key);
+        $params = array('value' => new moodle_url('/mod/reader/admin.php', $params));
+        if ($key == $selectedvalue) {
+            $params['selected'] = "selected";
+        }
+        $output .= html_writer::tag('option', $value, $params);
+    }
+
+    $output .= html_writer::end_tag('select');
+    $output .= html_writer::end_tag('div');
+
+    return $output;
+}
+
+/**
+ * reader_difficulty_menu
+ *
+ * @uses $CFG
+ * @uses $COURSE
+ * @uses $DB
+ * @uses $_SESSION
+ * @uses $act
+ * @uses $gid
+ * @uses $id
+ * @uses $orderby
+ * @uses $page
+ * @uses $sort
+ * @param xxx $difficulty
+ * @param xxx $bookid
+ * @param xxx $reader
+ * @return xxx
+ * @todo Finish documenting this function
+ */
+function reader_difficulty_menu($difficulty, $bookid, $reader) {
+    global $CFG, $COURSE, $DB, $_SESSION, $id, $act, $gid, $sort, $orderby, $page;
+
+    $values = array(0,1,2,3,4,5,6,7,8,9,10,12,13,14);
+    $name = 'difficulty_'.$bookid.'_'.$difficulty;
+
+    $output = '';
+    $output .= html_writer::start_tag('div', array('id' => 'id_'.$name));
+
+    $onchange = "request('admin.php?ajax=true&' + this.options[this.selectedIndex].value, 'id_$name'); return false;";
+    $output .= html_writer::start_tag('select', array('id' => 'id_select_'.$name, 'name' => 'select_'.$name, 'onchange' => $onchange));
+
+    foreach ($values as $value) {
+        $params = array('a' => 'admin', 'id' => $id, 'act' => $act, 'difficulty' => $value, 'bookid' => $bookid, 'slevel' => $difficulty);
+        $params = array('value' => new moodle_url('/mod/reader/admin.php', $params));
+        if ($value == $difficulty) {
+            $params['selected'] = "selected";
+        }
+        $output .= html_writer::tag('option', $value, $params);
+    }
+
+    $output .= html_writer::end_tag('select');
+    $output .= html_writer::end_tag('div');
+
+    return $output;
+}
+
+/**
+ * reader_length_menu
+ *
+ * @uses $CFG
+ * @uses $COURSE
+ * @uses $_SESSION
+ * @uses $act
+ * @uses $gid
+ * @uses $id
+ * @uses $orderby
+ * @uses $page
+ * @uses $sort
+ * @param xxx $length
+ * @param xxx $bookid
+ * @param xxx $reader
+ * @return xxx
+ * @todo Finish documenting this function
+ */
+function reader_length_menu($length, $bookid, $reader) {
+    global $CFG, $COURSE, $_SESSION, $id, $act, $gid, $sort, $orderby, $page;
+
+    $values = array(
+        0.50,0.60,0.70,0.80,0.90,1.00,1.10,1.20,1.30,1.40,1.50,1.60,1.70,1.80,1.90,2.00,3.00,4.00,5.00,6.00,7.00,8.00,9.00,10.00,
+        15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100,110,120,130,140,150,160,170,175,180,190,200,225,250,275,300,350,400
+    );
+
+    $name = 'length_'.$bookid.'_'.$length;
+
+    $output = '';
+    $output .= html_writer::start_tag('div', array('id' => 'id_'.$name));
+
+    $onchange = "request('admin.php?ajax=true&' + this.options[this.selectedIndex].value, 'id_$name'); return false;";
+    $output .= html_writer::start_tag('select', array('id' => 'id_select_'.$name, 'name' => 'select_'.$name, 'onchange' => $onchange));
+
+    foreach ($values as $value) {
+        $params = array('a' => 'admin', 'id' => $id, 'act' => $act, 'length' => $value, 'bookid' => $bookid, 'slevel' => $length);
+        $params = array('value' => new moodle_url('/mod/reader/admin.php', $params));
+        if ($value == $length) {
+            $params['selected'] = "selected";
+        }
+        $output .= html_writer::tag('option', $value, $params);
+    }
+
+    $output .= html_writer::end_tag('select');
+    $output .= html_writer::end_tag('div');
+
+    return $output;
+}
+
+/**
+ * reader_ra_checkbox
+ *
+ * @uses $CFG
+ * @uses $USER
+ * @uses $act
+ * @uses $excel
+ * @uses $id
+ * @param xxx $data
+ * @return xxx
+ * @todo Finish documenting this function
+ */
+function reader_ra_checkbox($data) {
+    global $act, $excel, $id;
+
+    if ($excel) {
+        return ($data['checkbox']==1 ? 'yes' : 'no');
+    }
+
+    $target_id = 'atcheck_'.$data['id'];
+    $target_url = "'admin.php?'+'ajax=true&id=$id&act=$act&checkattempt=".$data['id']."&checkattemptvalue='+(this.checked ? 1 : 0)";
+
+    $params = array('type'    => 'checkbox',
+                    'name'    => 'checkattempt',
+                    'value'   => '1',
+                    'onclick' => "request($target_url,'$target_id')");
+
+    if ($data['checkbox'] == 1) {
+        $params['checked'] = 'checked';
+    }
+
+    // create checkbox INPUT element and target DIV
+    return html_writer::empty_tag('input', $params).
+           html_writer::tag('div', '', array('id' => $target_id));
+}
+
+/**
+ * reader_groups_get_user_groups
+ *
+ * @uses $CFG
+ * @uses $DB
+ * @uses $USER
+ * @param xxx $userid (optional, default=0)
+ * @return xxx
+ * @todo Finish documenting this function
+ */
+function reader_groups_get_user_groups($userid=0) {
+    global $CFG, $DB, $USER;
+
+    if (empty($userid)) {
+        $userid = $USER->id;
+    }
+
+    $select = 'g.id, gg.groupingid';
+    $from =   '{groups} g '.
+              'JOIN {groups_members} gm ON gm.groupid = g.id '.
+              'LEFT JOIN {groupings_groups} gg ON gg.groupid = g.id';
+    $where  = 'gm.userid = ?';
+    $params = array($userid);
+
+    if (! $rs = $DB->get_recordset_sql("SELECT $select FROM $from WHERE $where", $params)) {
+        return array('0' => array());
+    }
+
+    $result    = array();
+    $allgroups = array();
+
+    foreach ($rs as $group) {
+        $allgroups[$group->id] = $group->id;
+        if (is_null($group->groupingid)) {
+            continue;
+        }
+        if (! array_key_exists($group->groupingid, $result)) {
+            $result[$group->groupingid] = array();
+        }
+        $result[$group->groupingid][$group->id] = $group->id;
+    }
+    $rs->close();
+
+    $result['0'] = array_keys($allgroups); // all groups
+
+    return $result;
+}
+
+/**
+ * reader_format_passed
+ *
+ * @param string $passed
+ * @param boolean $fulltext (optional, default=false)
+ * @return string
+ * @todo Finish documenting this function
+ */
+function reader_format_passed($passed, $fulltext=false) {
+    $passed = strtolower($passed);
+    if ($fulltext) {
+        switch ($passed) {
+            case 'true': return 'Passed'; break;
+            case 'false': return 'Failed'; break;
+            case 'cheated': return 'Cheated'; break;
+        }
+    } else {
+        switch ($passed) {
+            case 'true': return 'P'; break;
+            case 'false': return 'F'; break;
+            case 'cheated': return 'C'; break;
+        }
+    }
+    return $passed; // shouldn't happen !!
+}
+

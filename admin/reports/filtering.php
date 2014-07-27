@@ -300,7 +300,7 @@ class reader_admin_reports_options extends moodleform {
     public function definition() {
         $mform = $this->_form;
 
-        $label = get_string('displayoptions', 'reader');
+        $label = get_string('displayoptions', 'mod_reader');
         $mform->addElement('header', 'displayoptions', $label);
 
         // add element for each $fields
@@ -321,7 +321,7 @@ class reader_admin_reports_options extends moodleform {
      * @param string $name of field i.e. "rowsperpage"
      */
     protected function add_field_rowsperpage($mform, $name, $default) {
-        $label = get_string($name, 'reader');
+        $label = get_string($name, 'mod_reader');
         $options = array_merge(range(1, 9, 1), range(10, 90, 10), range(100, 1000, 100));
         $options = array_combine($options, $options);
         $this->add_select_autosubmit($mform, $name, $label, $options, $default);
@@ -334,7 +334,7 @@ class reader_admin_reports_options extends moodleform {
      * @param string $name of field i.e. "showhidden"
      */
     protected function add_field_showhidden($mform, $name, $default) {
-        $label = get_string($name, 'reader');
+        $label = get_string($name, 'mod_reader');
         $options = array('0' => get_string('no'), '1' => get_string('yes'));
         $this->add_select_autosubmit($mform, $name, $label, $options, $default, true);
     }
@@ -346,7 +346,7 @@ class reader_admin_reports_options extends moodleform {
      * @param string $name of field i.e. "showdeleted"
      */
     protected function add_field_showdeleted($mform, $name, $default) {
-        $label = get_string($name, 'reader');
+        $label = get_string($name, 'mod_reader');
         $options = array('0' => get_string('no'), '1' => get_string('yes'));
         $this->add_select_autosubmit($mform, $name, $label, $options, $default, true);
     }

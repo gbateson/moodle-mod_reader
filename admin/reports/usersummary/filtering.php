@@ -53,11 +53,11 @@ class reader_admin_reports_usersummary_filtering extends reader_admin_reports_fi
 
             case 'startlevel':
             case 'currentlevel':
-                $label = get_string($fieldname, 'reader');
+                $label = get_string($fieldname, 'mod_reader');
                 return new reader_admin_reports_filter_number($fieldname, $label, $advanced, $fieldname, $default, 'where');
 
             case 'nopromote':
-                $label = get_string($fieldname, 'reader');
+                $label = get_string($fieldname, 'mod_reader');
                 return new user_filter_yesno($fieldname, $label, $advanced, $fieldname);
 
             case 'countpassed':
@@ -66,11 +66,11 @@ class reader_admin_reports_usersummary_filtering extends reader_admin_reports_fi
             case 'averagegrade':
             case 'wordsthisterm':
             case 'wordsallterms':
-                $label = get_string($fieldname, 'reader');
+                $label = get_string($fieldname, 'mod_reader');
                 return new reader_admin_reports_filter_number($fieldname, $label, $advanced, $fieldname, $default, 'having');
 
             case 'averageduration':
-                $label = get_string($fieldname, 'reader');
+                $label = get_string($fieldname, 'mod_reader');
                 return new reader_admin_reports_filter_duration($fieldname, $label, $advanced, $fieldname, null, 'having');
 
             default:
