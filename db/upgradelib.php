@@ -3470,12 +3470,13 @@ function xmldb_reader_fix_config_names() {
     global $DB;
     $reader = get_config('reader');
     $reader = get_object_vars($reader);
-    $mod_reader = get_config('mod_reader');
-    $mod_reader = get_object_vars($mod_reader);
-    foreach ($reader as $name => $value) {
-        if (! array_key_exists($name, $mod_reader)) {
-            set_config($name, $value, 'mod_reader');
+    if ($mod_reader = get_config('mod_reader')) {
+        $mod_reader = get_object_vars($mod_reader);
+        foreach ($reader as $name => $value) {
+            if (! array_key_exists($name, $mod_reader)) {
+                set_config($name, $value, 'mod_reader');
+            }
+            unset_config($name, 'reader');
         }
-        unset_config($name, 'reader');
     }
 }
