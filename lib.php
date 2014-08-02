@@ -183,18 +183,26 @@ function reader_submit_instance($reader, $id) {
  * @todo Finish documenting this function
  */
 function reader_delete_instance($id) {
-    global $CFG, $DB;
-
-    if (! $reader = $DB->get_record('reader', array('id' => $id))) {
-        return false;
-    }
-
+    global $DB;
     $result = true;
 
-    # Delete any dependent records here #
-
-    if (! $DB->delete_records('reader', array('id' => $reader->id))) {
-        $result = false;
+    if ($reader = $DB->get_record('reader', array('id' => $id))) {
+        if ($attempts = $DB->get_records('reader_attempts', array('reader' => $id), 'id', 'id,reader')) {
+            $ids = array_keys($attempts);
+            $DB->delete_records_list('reader_attempt_questions', 'attemptid', $ids);
+            $DB->delete_records_list('reader_attempts', 'id',  $ids);
+            unset($ids);
+        }
+        unset($attempts);
+        $DB->delete_records('reader_book_instances',    array('readerid' => $id));
+        $DB->delete_records('reader_cheated_log',       array('readerid' => $id));
+        $DB->delete_records('reader_delays',            array('readerid' => $id));
+        $DB->delete_records('reader_grades',            array('reader'   => $id));
+        $DB->delete_records('reader_goals',             array('readerid' => $id));
+        $DB->delete_records('reader_levels',            array('readerid' => $id));
+        $DB->delete_records('reader_messages',          array('readerid' => $id));
+        $DB->delete_records('reader_strict_users_list', array('readerid' => $id));
+        $DB->delete_records('reader', array('id' => $id));
     }
 
     return $result;
@@ -608,7 +616,6 @@ function reader_repaginate($layout, $perpage, $shuffle=false) {
     $questions = explode(',', $layout);
     $questions = array_filter($questions); // remove blanks
     if ($shuffle) {
-        srand((float)microtime() * 1000000); // for php < 4.2
         shuffle($questions);
     }
     $i = 1;
@@ -1328,46 +1335,6 @@ function reader_copy_to_quizattempt($readerattempt) {
         if (defined('quiz_attempt::IN_PROGRESS')) {
             $state = quiz_attempt::IN_PROGRESS; // 'inprogress'
             $timecheckstate = $readerattempt->timemodified;
-        }
-    }
-
-    // replace faulty question category contexts
-    // with the quiz's course module context
-    if ($layout = $readerattempt->layout) {
-        $layout = explode(',', $layout);
-        $layout = array_filter($layout);
-        $layout = array_unique($layout);
-        // "layout" is a comma-separated list of slot numbers
-
-        // get quiz context
-        $cm = get_coursemodule_from_instance('quiz', $readerattempt->quizid);
-        $quizcontext = reader_get_context(CONTEXT_MODULE, $cm->id);
-
-        // get question ids used in this attempt
-        list($select, $params) = $DB->get_in_or_equal($layout);
-        $select = "questionusageid = ? AND slot $select";
-        array_unshift($params, $readerattempt->uniqueid);
-        if ($questionids = $DB->get_records_select_menu('question_attempts', $select, $params, 'slot', 'id,questionid')) {
-            $questionids = array_unique($questionids);
-
-            // get question category ids used by questions in this attempt
-            list($select, $params) = $DB->get_in_or_equal($questionids);
-            if ($categoryids = $DB->get_records_select_menu('question', "id $select", $params, 'id', 'id,category')) {
-                $categoryids = array_unique($categoryids);
-
-                // get context ids used by question categories in this attempt
-                list($select, $params) = $DB->get_in_or_equal($categoryids);
-                if ($contextids = $DB->get_records_select_menu('question_categories', "id $select", $params, 'id', 'id,contextid')) {
-                    $contextids = array_unique($contextids);
-
-                    // check context ids (used in question categories) are valid
-                    foreach ($contextids as $contextid) {
-                        if (! $DB->record_exists('context', array('id' => $contextid))) {
-                            $DB->set_field('question_categories', 'contextid', $quizcontext->id, array('contextid' => $contextid));
-                        }
-                    }
-                }
-            }
         }
     }
 

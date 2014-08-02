@@ -504,15 +504,6 @@ class reader_admin_reports_table extends table_sql {
      */
     function add_filter_params($select, $from, $where, $groupby, $having, $orderby, $params) {
 
-        // search string to detect db fieldname in a filter string
-        // - not preceded by {:`"'_. a-z 0-9
-        // - starts with lowercase a-z
-        // - followed by lowercase a-z, 0-9 or underscore
-        // - not followed by }:`"'_. a-z 0-9
-        $before = '[{:`"'."'".'a-zA-Z0-9_.]';
-        $after  = '[}:`"'."'".'a-zA-Z0-9_.]';
-        $search = "/(?<!$before)([a-z][a-z0-9_]*)(?!$after)/";
-
         // get filter $sql and $params
         if ($this->filter) {
             list($filterwhere, $filterhaving, $filterparams) = $this->filter->get_sql_filter();
@@ -528,17 +519,37 @@ class reader_admin_reports_table extends table_sql {
         }
 
         if ($groupby) {
-            $where .= " GROUP BY $groupby";
+            $where .= " GROUP BY ".get_table_names_and_aliases($groupby);
         }
         if ($having) {
-            $where .= " HAVING $having";
+            $where .= " HAVING $having"; // table aliases are NOT required
         }
         if ($orderby) {
-            $where .= " ORDER BY $orderby";
+            $where .= " ORDER BY ".get_table_names_and_aliases($orderby);
         }
 
+        return array($select, $from, $where, $params);
+    }
+
+    /**
+     * get_table_name_and_alias
+     *
+     * @param string $fieldname
+     * @return array($tablename, $tablealias, $jointype, $jointable, $joinconditions)
+     * @todo Finish documenting this function
+     */
+    public function get_table_names_and_aliases($sql) {
+        // search string to detect db fieldname in an sql string
+        // - not preceded by {:`"'_. a-z 0-9
+        // - starts with lowercase a-z
+        // - followed by lowercase a-z, 0-9 or underscore
+        // - not followed by }:`"'_. a-z 0-9
+        $before = '[{:`"'."'".'a-zA-Z0-9_.]';
+        $after  = '[}:`"'."'".'a-zA-Z0-9_.]';
+        $search = "/(?<!$before)([a-z][a-z0-9_]*)(?!$after)/";
+
         // extract all database table names from the SQL
-        if (preg_match_all($search, $where, $matches, PREG_OFFSET_CAPTURE)) {
+        if (preg_match_all($search, $sql, $matches, PREG_OFFSET_CAPTURE)) {
             $i_max = count($matches[0]) - 1;
             for ($i=$i_max; $i>=0; $i--) {
                 list($match, $start) = $matches[1][$i];
@@ -547,12 +558,12 @@ class reader_admin_reports_table extends table_sql {
                     if (strpos($from, '{'.$tablename.'}')===false) {
                         $from .= ', {'.$tablename.'} '.$tablealias;
                     }
-                    $where = substr_replace($where, "$tablealias.$match", $start, strlen($match));
+                    $sql = substr_replace($sql, "$tablealias.$match", $start, strlen($match));
                 }
             }
         }
 
-        return array($select, $from, $where, $params);
+        return $sql;
     }
 
     /**
@@ -575,12 +586,12 @@ class reader_admin_reports_table extends table_sql {
             // "reader_attempts" fields
             case 'percentgrade':
             case 'passed':
+            case 'timestart':
             case 'timefinish':
             case 'bookrating':
                 return array('reader_attempts', 'ra');
 
             default:
-                return array('reader_xxx_'.$fieldname, 'xxx');
                 die("What table alias for field: $fieldname");
         }
     }
@@ -806,15 +817,6 @@ class reader_admin_reports_table extends table_sql {
     }
 
     /**
-     * header_grade
-     *
-     * @return xxx
-     */
-    public function header_grade()  {
-        return get_string('grade');
-    }
-
-    /**
      * header_selected
      *
      * @return xxx
@@ -887,12 +889,48 @@ class reader_admin_reports_table extends table_sql {
     }
 
     /**
+     * header_duration
+     *
+     * @return xxx
+     */
+    public function header_duration()  {
+        return get_string('duration', 'mod_reader');
+    }
+
+    /**
      * header_averagegrade
      *
      * @return xxx
      */
     public function header_averagegrade()  {
         return get_string('averagegrade', 'mod_reader');
+    }
+
+    /**
+     * header_percentgrade
+     *
+     * @return xxx
+     */
+    public function header_percentgrade() {
+        return get_string('grade');
+    }
+
+    /**
+     * header_grade
+     *
+     * @return xxx
+     */
+    public function header_grade()  {
+        return get_string('grade');
+    }
+
+    /**
+     * header_timefinish
+     *
+     * @return xxx
+     */
+    public function header_timefinish() {
+        return get_string('date');
     }
 
     /**
@@ -1051,12 +1089,56 @@ class reader_admin_reports_table extends table_sql {
      * @param xxx $row
      * @return xxx
      */
-    public function col_grade($row)  {
+    public function col_grade_old($row)  {
         if (isset($row->grade)) {
             return $row->grade.'%';
         } else {
             return $this->empty_cell();
         }
+    }
+
+    /**
+     * col_grade
+     *
+     * @param xxx $row
+     * @return xxx
+     */
+    public function col_grade($row)  {
+        if (isset($row->grade)) {
+            $params = array('id' => $this->output->reader->cm->id, 'attemptid' => $row->id);
+            $url = new moodle_url('/mod/reader/view_attempts.php', $params);
+            return html_writer::link($url, round($row->grade).'%', array('onclick' => "this.target='_blank'"));
+        } else {
+            return $this->empty_cell();
+        }
+    }
+
+    /**
+     * col_timefinish
+     *
+     * @param xxx $row
+     * @return xxx
+     */
+    public function col_timefinish($row)  {
+        return $this->col_time($row, 'timefinish');
+    }
+
+    /**
+     * col_time
+     *
+     * @param xxx $row
+     * @return xxx
+     */
+    public function col_time($row, $colname)  {
+        if (empty($row->$colname)) {
+            return $this->empty_cell();
+        }
+        if ($this->download) {
+            $fmt = get_string('strfattempttimeshort', 'mod_reader');
+        } else {
+            $fmt = get_string('strfattempttime', 'mod_reader');
+        }
+        return userdate($row->$colname, $fmt);
     }
 
     /**
@@ -1066,7 +1148,17 @@ class reader_admin_reports_table extends table_sql {
      * @return xxx
      */
     public function col_averageduration($row)  {
-        if (empty($row->averageduration)) {
+        return $this->col_duration($row, 'averageduration');
+    }
+
+    /**
+     * col_duration
+     *
+     * @param xxx $row
+     * @return xxx
+     */
+    public function col_duration($row, $colname='duration')  {
+        if (empty($row->$colname)) {
             return $this->empty_cell();
         }
 
@@ -1087,7 +1179,7 @@ class reader_admin_reports_table extends table_sql {
             );
         }
 
-        return format_time($row->averageduration, $this->date_strings);
+        return format_time($row->$colname, $this->date_strings);
     }
 
     /**

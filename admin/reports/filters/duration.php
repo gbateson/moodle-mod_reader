@@ -45,7 +45,7 @@ class reader_admin_reports_filter_duration extends reader_admin_reports_filter_n
     function setupForm(&$mform)  {
         $objs = array(
             $mform->createElement('select', $this->_name.'_op', null, $this->get_operators()),
-            $mform->createElement('duration', $this->_name, null, array('optional'=>0, 'defaultunit'=>1))
+            $mform->createElement('duration', $this->_name, null, array('optional'=>0, 'defaultunit'=>60))
         );
         $mform->addElement('group', $this->_name.'_grp', $this->_label, $objs, '', false);
         $mform->disabledIf($this->_name.'_grp', $this->_name.'_op', 'eq', 0);

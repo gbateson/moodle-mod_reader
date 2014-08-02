@@ -40,7 +40,7 @@ class reader_admin_reports_userdetailed_table extends reader_admin_reports_table
     /** @var columns used in this table */
     protected $tablecolumns = array(
         'studentview', 'username', 'fullname', 'currentlevel', 'difficulty', 'name',
-        'selected', 'timefinish', 'percentgrade', 'passed', 'words', 'totalwords',
+        'selected', 'timefinish', 'duration', 'grade', 'passed', 'words', 'totalwords',
     );
 
     /** @var suppressed columns in this table */
@@ -66,8 +66,9 @@ class reader_admin_reports_userdetailed_table extends reader_admin_reports_table
         'group'      => 0, 'username'     => 1, 'realname'     => 0,
         'lastname'   => 1, 'firstname'    => 1, 'currentlevel' => 1,
         'difficulty' => 1, 'name'         => 1,
-        'timefinish' => 1, 'percentgrade' => 1, 'passed' => 1,
-        'words'      => 1, //'totalwords'   => 1
+        'timefinish' => 1, 'duration'     => 1,
+        'grade'      => 1, 'passed'       => 1,
+        'words'      => 1, //'totalwords' => 1
     );
 
     /** @var option fields */
@@ -95,8 +96,11 @@ class reader_admin_reports_userdetailed_table extends reader_admin_reports_table
         // get users who can access this Reader activity
         list($usersql, $userparams) = $this->select_sql_users();
 
-        $words  = 'CASE WHEN (ra.passed = :passed) THEN rb.words ELSE 0 END';
-        $select = "ra.id, ra.timefinish, ra.percentgrade, ra.passed, ($words) AS words, 0 AS totalwords, ".
+        $words    = 'CASE WHEN (ra.passed = :passed) THEN rb.words ELSE 0 END';
+        $grade    = 'CASE WHEN (ra.percentgrade IS NULL) THEN 0 ELSE ra.percentgrade END';
+        $duration = 'CASE WHEN (ra.timefinish IS NULL OR ra.timefinish = 0) THEN 0 ELSE (ra.timefinish - ra.timestart) END';
+
+        $select = "ra.id, ra.timefinish, ($duration) as duration, ($grade) as grade, ra.passed, ($words) AS words, 0 AS totalwords, ".
                   $this->get_userfields('u', array('username'), 'userid').', '.
                   'rl.currentlevel, rb.difficulty, rb.name';
         $from   = '{reader_attempts} ra '.
@@ -140,7 +144,6 @@ class reader_admin_reports_userdetailed_table extends reader_admin_reports_table
                 return array('', '');
 
             case 'timefinish':
-            case 'percentgrade':
             case 'passed':
                 return array('reader_attempts', 'ra');
 
@@ -154,24 +157,6 @@ class reader_admin_reports_userdetailed_table extends reader_admin_reports_table
     ////////////////////////////////////////////////////////////////////////////////
 
     /**
-     * header_timefinish
-     *
-     * @return xxx
-     */
-    public function header_timefinish() {
-        return get_string('date');
-    }
-
-    /**
-     * header_percentgrade
-     *
-     * @return xxx
-     */
-    public function header_percentgrade() {
-        return get_string('grade');
-    }
-
-    /**
      * header_words
      *
      * @return xxx
@@ -183,39 +168,6 @@ class reader_admin_reports_userdetailed_table extends reader_admin_reports_table
     ////////////////////////////////////////////////////////////////////////////////
     // functions to format data cells                                             //
     ////////////////////////////////////////////////////////////////////////////////
-
-    /**
-     * col_timefinish
-     *
-     * @param xxx $row
-     * @return xxx
-     */
-    public function col_timefinish($row)  {
-        if (empty($row->timefinish)) {
-            return $this->empty_cell();
-        }
-        if ($this->download) {
-            $fmt = get_string('strftimefinishshort', 'mod_reader');
-        } else {
-            $fmt = get_string('strftimefinish', 'mod_reader');
-        }
-        return userdate($row->timefinish, $fmt);
-    }
-
-   /**
-     * col_percentgrade
-     *
-     * @param xxx $row
-     * @return xxx
-     */
-    public function col_percentgrade($row)  {
-        if (! isset($row->percentgrade)) {
-            return $this->empty_cell();
-        }
-        $params = array('id' => $this->output->reader->cm->id, 'attemptid' => $row->id);
-        $url = new moodle_url('/mod/reader/view_attempts.php', $params);
-        return html_writer::link($url, round($row->percentgrade).'%', array('onclick' => "this.target='_blank'"));
-    }
 
     /**
      * col_totalwords

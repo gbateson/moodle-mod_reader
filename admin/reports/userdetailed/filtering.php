@@ -64,10 +64,6 @@ class reader_admin_reports_userdetailed_filtering extends reader_admin_reports_f
                 $label = get_string('date');
                 return new reader_admin_reports_filter_date($fieldname, $label, $advanced, $fieldname, $default, 'where');
 
-            case 'percentgrade':
-                $label = get_string('grade');
-                return new reader_admin_reports_filter_number($fieldname, $label, $advanced, $fieldname, $default, 'where');
-
             case 'passed':
                 $label = get_string($fieldname, 'mod_reader');
                 $options = array('true'  => get_string('passedshort', 'mod_reader').' - '.get_string('passed', 'mod_reader'),

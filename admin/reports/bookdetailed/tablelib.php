@@ -40,7 +40,7 @@ class reader_admin_reports_bookdetailed_table extends reader_admin_reports_table
     /** @var columns used in this table */
     protected $tablecolumns = array(
         'publisher', 'level', 'name', 'difficulty',
-        'selected', 'username', 'fullname', 'passed', 'bookrating'
+        'selected', 'username', 'fullname', 'timefinish', 'duration', 'grade', 'passed', 'bookrating'
     );
 
     /** @var suppressed columns in this table */
@@ -63,9 +63,9 @@ class reader_admin_reports_bookdetailed_table extends reader_admin_reports_table
 
     /** @var filter fields ($fieldname => $advanced) */
     protected $filterfields = array(
-        'group'    => 0, 'publisher'  => 0, 'level'    => 1, 'name' => 0, 'difficulty' => 1,
-        'username' => 1, 'firstname'  => 1, 'lastname' => 1,
-        'passed'   => 1, 'bookrating' => 1
+        'group'      => 0, 'publisher'  => 0, 'level'    => 1, 'name'   => 0, 'difficulty' => 1,
+        'username'   => 1, 'firstname'  => 1, 'lastname' => 1,
+        'timefinish' => 1, 'duration'   => 1, 'grade'    => 1, 'passed' => 1, 'bookrating' => 1
     );
 
     protected $optionfields = array('rowsperpage' => self::DEFAULT_ROWSPERPAGE,
@@ -92,7 +92,10 @@ class reader_admin_reports_bookdetailed_table extends reader_admin_reports_table
         // get users who can access this Reader activity
         list($usersql, $userparams) = $this->select_sql_users();
 
-        $select = 'ra.id, ra.passed, ra.bookrating, '.
+        $duration = 'CASE WHEN (ra.timefinish IS NULL OR ra.timefinish = 0) THEN 0 ELSE (ra.timefinish - ra.timestart) END';
+        $grade    = 'CASE WHEN (ra.percentgrade IS NULL) THEN 0 ELSE (ra.percentgrade) END';
+
+        $select = "ra.id, ra.passed, ra.bookrating, ra.timefinish, ($duration) AS duration, ($grade) AS grade, ".
                   $this->get_userfields('u', array('username'), 'userid').', '.
                   'rb.publisher, rb.level, rb.name, rb.difficulty';
         $from   = '{reader_attempts} ra '.

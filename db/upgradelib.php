@@ -1163,7 +1163,8 @@ function xmldb_reader_fix_uniqueids(&$dbman) {
  * @todo Finish documenting this function
  */
 function xmldb_reader_fix_uniqueid(&$dbman, &$contexts, &$quizzes, &$attempt, &$started_box) {
-    global $DB;
+    global $CFG, $DB;
+    require_once($CFG->dirroot.'/mod/reader/lib.php');
 
     static $uniqueid = null;
     static $readermoduleid = null;
@@ -2176,7 +2177,8 @@ function xmldb_reader_get_question_categories() {
  * @todo Finish documenting thi function
  */
 function xmldb_reader_fix_question_categories() {
-    global $DB, $OUTPUT;
+    global $CFG, $DB, $OUTPUT;
+    require_once($CFG->dirroot.'/mod/reader/lib.php');
 
     $interactive = xmldb_reader_interactive();
 
@@ -3008,6 +3010,279 @@ function xmldb_reader_fix_extrapoints() {
             echo html_writer::tag('div', "Re-building course cache: $course->shortname ... ", array('class' => 'notifysuccess'));
         }
         rebuild_course_cache($course->id, true); // $clearonly must be set to true
+    }
+}
+
+/**
+ * xmldb_reader_fix_orphans
+ * remove records orphaned by deleted reader activities
+ *
+ * @todo Finish documenting this function
+ */
+function xmldb_reader_fix_orphans() {
+    global $DB;
+    $tables = array(
+        array('reader_attempts',          'reader',    'reader', 'id'),
+        array('reader_book_instances',    'readerid',  'reader', 'id'),
+        array('reader_cheated_log',       'readerid',  'reader', 'id'),
+        array('reader_delays',            'readerid',  'reader', 'id'),
+        array('reader_grades',            'reader',    'reader', 'id'),
+        array('reader_goals',             'readerid',  'reader', 'id'),
+        array('reader_levels',            'readerid',  'reader', 'id'),
+        array('reader_messages',          'readerid',  'reader', 'id'),
+        array('reader_strict_users_list', 'readerid',  'reader', 'id'),
+        array('reader_attempt_questions', 'attemptid', 'reader_attempts', 'id'),
+    );
+    foreach ($tables as $table) {
+        list($table1, $field1, $table2, $field2) = $table;
+        $select = 't1.id, t1.'.$field1;
+        $from   = '{'.$table1.'} t1 LEFT JOIN {'.$table2.'} t2 ON t1.'.$field1.' = t2.'.$field2;
+        $where  = 't2.'.$field2.' IS NULL';
+        $order  = 't1.id';
+        if ($records = $DB->get_records_sql("SELECT $select FROM $from WHERE $where ORDER BY $order")) {
+            $DB->delete_records_list($table1, 'id',  array_keys($records));
+        }
+    }
+}
+
+/**
+ * xmldb_reader_fix_slots
+ *
+ * @todo Finish documenting this function
+ */
+function xmldb_reader_fix_slots() {
+    global $CFG, $DB;
+    require_once($CFG->dirroot.'/mod/reader/lib.php');
+
+    $interactive = xmldb_reader_interactive();
+
+    if (! $quizids = $DB->get_records_select_menu('reader_books', null, null, 'quizid', 'id,quizid')) {
+        return; // no quizzes - unusual ?!
+    }
+    $quizids = array_unique($quizids);
+
+    // get attempts at these quizzes
+    list($select, $params) = $DB->get_in_or_equal($quizids);
+    if ($i_max = $DB->count_records_select('quiz_attempts', "quiz $select", $params)) {
+        $rs = $DB->get_recordset_select('quiz_attempts', "quiz $select", $params, 'quiz');
+    } else {
+        $rs = false;
+    }
+
+    if ($rs) {
+        $i = 0; // record counter
+        if ($interactive) {
+            $bar = new progress_bar('readerfixquizslots', 500, true);
+        }
+        $strupdating = 'Fixing faulty question slots in Quiz attempts'; // get_string('fixattempts', 'mod_reader');
+
+        // loop through attempts
+        foreach ($rs as $attempt) {
+            $i++; // increment record count
+
+            // apply for more script execution time (3 mins)
+            upgrade_set_timeout();
+
+            if ($slots = $attempt->layout) {
+                $slots = explode(',', $slots);
+                $slots = array_filter($slots);
+                $slots = array_unique($slots);
+                list($select, $params) = $DB->get_in_or_equal($slots);
+                $select = "questionusageid = ? AND slot $select";
+                array_unshift($params, $attempt->uniqueid);
+                $slots = $DB->get_records_select_menu('question_attempts', $select, $params, 'slot', 'id,slot');
+            }
+            if (empty($slots)) {
+                // no valid slots - shoudln't happen !!
+                $DB->delete_records('quiz_attempts', array('id' => $attempt->id));
+            } else {
+                $slots = implode(',0,', $slots).',0';
+                if ($slots==$attempt->layout) {
+                    // this is what we hope for and expect
+                } else {
+                    // update $attempt->layout in $DB
+                    $DB->set_field('quiz_attempts', 'layout', $slots, array('id' => $attempt->id));
+                }
+            }
+            // update progress bar
+            $bar->update($i, $i_max, $strupdating.": ($i/$i_max)");
+        }
+        $rs->close();
+    }
+
+    $cm = null;
+    $quizid = 0;
+    $quizcontext = null;
+
+    // get reader attempts at these quizzes
+    list($select, $params) = $DB->get_in_or_equal($quizids);
+    if ($i_max = $DB->count_records_select('reader_attempts', "quizid $select", $params)) {
+        $rs = $DB->get_recordset_select('reader_attempts', "quizid $select", $params, 'quizid');
+    } else {
+        $rs = false;
+    }
+
+    if ($rs) {
+        $i = 0; // record counter
+        if ($interactive) {
+            $bar = new progress_bar('readerfixreaderslots', 500, true);
+        }
+        $strupdating = 'Fixing faulty question slots in Reader attempts'; // get_string('fixattempts', 'mod_reader');
+
+        $cm = null;
+        $quizcontext = null;
+        $reset_question_ids = false;
+
+        // loop through attempts
+        foreach ($rs as $attempt) {
+            $i++; // increment record count
+
+            // apply for more script execution time (3 mins)
+            upgrade_set_timeout();
+
+            // get quiz context
+            if ($quizid && $quizid==$attempt->quizid) {
+                // do nothing
+            } else {
+                $quizid = $attempt->quizid;
+                if ($cm = get_coursemodule_from_instance('quiz', $quizid)) {
+                    $quizcontext = reader_get_context(CONTEXT_MODULE, $cm->id);
+                    $quiz = $DB->get_record('quiz', array('id' => $quizid));
+                    $book = $DB->get_record('reader_books', array('quizid' => $quizid));
+                }
+            }
+
+            if (empty($cm) || empty($quizcontext) || empty($attempt->layout)) {
+                // invalid attempt - shouldn't happen !!
+                $DB->delete_records('reader_attempts', array('id' => $attempt->id));
+            } else if ($slots = $attempt->layout) {
+                $slots = explode(',', $slots);
+                $slots = array_filter($slots);
+                $slots = array_unique($slots);
+
+                // get question ids used in this attempt
+                list($select, $params) = $DB->get_in_or_equal($slots);
+                $select = "questionusageid = ? AND slot $select";
+                array_unshift($params, $attempt->uniqueid);
+                if ($questionids = $DB->get_records_select_menu('question_attempts', $select, $params, 'slot', 'id,questionid')) {
+                    $questionids = array_unique($questionids);
+
+                    // get question category ids used by questions in this attempt
+                    list($select, $params) = $DB->get_in_or_equal($questionids);
+                    if ($categoryids = $DB->get_records_select_menu('question', "id $select", $params, 'id', 'id,category')) {
+                        $categoryids = array_unique($categoryids);
+
+                        // get context ids used by question categories in this attempt
+                        list($select, $params) = $DB->get_in_or_equal($categoryids);
+                        if ($contextids = $DB->get_records_select_menu('question_categories', "id $select", $params, 'id', 'id,contextid')) {
+                            $contextids = array_unique($contextids);
+
+                            // check context ids (used in question categories) are valid
+                            foreach ($contextids as $contextid) {
+                                if ($DB->record_exists('context', array('id' => $contextid))) {
+                                    continue;
+                                }
+                                foreach ($categoryids as $categoryid) {
+                                    if (! $category = $DB->get_record('question_categories', array('id' => $categoryid))) {
+                                        continue;
+                                    }
+                                    if ($category->contextid != $contextid) {
+                                        continue;
+                                    }
+                                    foreach ($questionids as $questionid) {
+                                        if (! $question = $DB->get_record('question', array('id' => $questionid))) {
+                                            continue;
+                                        }
+                                        if ($question->category != $categoryid) {
+                                            continue;
+                                        }
+
+                                        $quizid = $attempt->quizid;
+                                        if ($cm = get_coursemodule_from_instance('quiz', $quizid)) {
+                                            $quizcontext = reader_get_context(CONTEXT_MODULE, $cm->id);
+                                            $quiz = $DB->get_record('quiz', array('id' => $quizid));
+                                            $book = $DB->get_record('reader_books', array('quizid' => $quizid));
+                                        }
+
+                                        $select = 'q.id, q.category, q.name, q.qtype';
+                                        $from   = '{question} q JOIN {question_categories} qc ON q.category = qc.id';
+                                        $where  = 'q.name = ? AND qc.name = ? AND qc.contextid = ?';
+                                        $params = array($question->name, $category->name, $quizcontext->id);
+                                        if ($question = $DB->get_records_sql("SELECT $select FROM $from WHERE $where", $params)) {
+                                            $question = reset($question); // should only be one !!
+                                            if ($question->qtype=='multichoice') {
+                                                xmldb_reader_fix_slots_multichoice($attempt->uniqueid, $questionid, $question->id);
+                                            }
+                                            $DB->set_field('question_attempts', 'questionid', $question->id, array('questionusageid' => $attempt->uniqueid, 'questionid' => $questionid));
+                                            $DB->set_field('quiz_question_instances', 'question', $question->id, array('quiz' => $quizid, 'question' => $questionid));
+                                            $DB->set_field('reader_question_instances', 'question', $question->id, array('quiz' => $quizid, 'question' => $questionid));
+                                        } else {
+                                            // no similar question so set $category->contextid = $quizcontext->id;
+                                            $DB->set_field('question_categories', 'contextid', $quizcontext->id, array('id' => $categoryid));
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // update progress bar
+            $bar->update($i, $i_max, $strupdating.": ($i/$i_max)");
+        }
+        $rs->close();
+    }
+}
+
+/**
+ * xmldb_reader_fix_slots_multichoice
+ *
+ * @param string  $questionusageid
+ * @param integer $oldquestionid
+ * @param integer $newquestionid
+ */
+function xmldb_reader_fix_slots_multichoice($questionusageid, $oldquestionid, $newquestionid) {
+    global $DB;
+
+    $params = array('questionusageid' => $questionusageid, 'questionid' => $oldquestionid);
+    if ($qattemptids = $DB->get_records_menu('question_attempts', $params, 'id', 'id, questionid')) {
+        $qattemptids = array_keys($qattemptids);
+        foreach ($qattemptids as $qattemptid) {
+
+            $params = array('questionattemptid' => $qattemptid);
+            if ($stepids = $DB->get_records_menu('question_attempt_steps', $params, 'id', 'id,questionattemptid')) {
+                $stepids = array_keys($stepids);
+                foreach ($stepids as $stepid) {
+
+                    $params = array('attemptstepid' => $stepid, 'name' => '_order');
+                    if (! $data = $DB->get_records('question_attempt_step_data', $params)) {
+                        continue;
+                    }
+                    $data = reset($data); // should only be one !!
+
+                    $ids = explode(',', $data->value);
+                    list($select, $params) = $DB->get_in_or_equal($ids);
+                    if ($answers = $DB->get_records_select('question_answers', "id $select", $params)) {
+                        foreach ($ids as $i => $id) {
+                            if (array_key_exists($id, $answers)) {
+                                $answer = $DB->sql_compare_text('answer');
+                                $select = "question = ? AND $answer = ?";
+                                $params = array($newquestionid, $answers[$id]->answer);
+                                $ids[$i] = $DB->get_field_select('question_answers', 'id', $select, $params);
+                            } else {
+                                $ids[$i] = false;
+                            }
+                        }
+                        $ids = array_filter($ids);
+                    } else {
+                        $ids = array(); // no valid answerids :-(
+                    }
+                    $data->value = implode(',', $ids);
+                    $DB->update_record('question_attempt_step_data', $data);
+                }
+            }
+        }
     }
 }
 

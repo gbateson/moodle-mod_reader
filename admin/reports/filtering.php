@@ -91,6 +91,15 @@ class reader_admin_reports_filtering extends user_filtering {
                 return new reader_admin_reports_filter_text($fieldname, $label, $advanced, $fieldname, $default, 'where');
                 break;
 
+            case 'duration':
+                $label = get_string($fieldname, 'mod_reader');
+                return new reader_admin_reports_filter_duration($fieldname, $label, $advanced, $fieldname, $default, 'having');
+                break;
+
+            case 'grade':
+                $label = get_string($fieldname);
+                return new reader_admin_reports_filter_number($fieldname, $label, $advanced, $fieldname, $default, 'having');
+
             default:
                 // other fields (e.g. from user record)
                 die("Unknown filter field: $fieldname");

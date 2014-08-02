@@ -64,15 +64,19 @@ class reader_admin_reports_bookdetailed_filtering extends reader_admin_reports_f
                 $label = get_string('bookdifficulty', 'mod_reader');
                 return new reader_admin_reports_filter_number($fieldname, $label, $advanced, $fieldname, $default, 'where');
 
-            case 'bookrating':
-                $label = get_string($fieldname, 'mod_reader');
-                return new reader_admin_reports_filter_number($fieldname, $label, $advanced, $fieldname, $default, 'where');
+            case 'timefinish':
+                $label = get_string('date');
+                return new reader_admin_reports_filter_date($fieldname, $label, $advanced, $fieldname, $default, 'where');
 
             case 'passed':
                 $label = get_string($fieldname, 'mod_reader');
                 $options = array('true'  => get_string('passedshort', 'mod_reader').' - '.get_string('passed', 'mod_reader'),
                                  'false' => get_string('failedshort', 'mod_reader').' - '.get_string('failed', 'mod_reader'));
                 return new reader_admin_reports_filter_simpleselect($fieldname, $label, $advanced, $fieldname, $options, $default, 'where');
+
+            case 'bookrating':
+                $label = get_string($fieldname, 'mod_reader');
+                return new reader_admin_reports_filter_number($fieldname, $label, $advanced, $fieldname, $default, 'where');
 
             default:
                 // other fields (e.g. from user record)
