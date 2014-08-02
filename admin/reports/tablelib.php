@@ -519,13 +519,13 @@ class reader_admin_reports_table extends table_sql {
         }
 
         if ($groupby) {
-            $where .= " GROUP BY ".get_table_names_and_aliases($groupby);
+            $where .= " GROUP BY ".$this->get_table_names_and_aliases($groupby);
         }
         if ($having) {
             $where .= " HAVING $having"; // table aliases are NOT required
         }
         if ($orderby) {
-            $where .= " ORDER BY ".get_table_names_and_aliases($orderby);
+            $where .= " ORDER BY ".$this->get_table_names_and_aliases($orderby);
         }
 
         return array($select, $from, $where, $params);
