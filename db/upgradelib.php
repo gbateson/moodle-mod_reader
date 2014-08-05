@@ -3263,10 +3263,10 @@ function xmldb_reader_fix_slots_multianswer($oldquestionid, $newquestionid) {
 
     $i = 0;
     foreach ($oldsubquestions as $oldid => $oldname) {
+        $i++;
         foreach ($newsubquestions as $newid => $newname) {
             if ($oldname==$newname) {
                 // convert step data for subquestion $i
-                $i++;
                 $dataname = '_sub'.$i.'_order';
                 $answerids = xmldb_reader_fix_slots_answerids($oldid, $newid);
                 xmldb_reader_fix_slots_stepdata($oldquestionid, $dataname, $answerids);
