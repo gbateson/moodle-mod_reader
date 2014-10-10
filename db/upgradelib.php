@@ -3056,15 +3056,18 @@ function xmldb_reader_fix_slots() {
     global $CFG, $DB;
     require_once($CFG->dirroot.'/mod/reader/lib.php');
 
-    $interactive = xmldb_reader_interactive();
+    // check we have Moodle >= 2.2
+    $dbman = $DB->get_manager();
+    if ($dbman->field_exists('question_attempts', 'questionusageid')) {
 
-    if (! $quizids = $DB->get_records_select_menu('reader_books', null, null, 'quizid', 'id,quizid')) {
-        return; // no quizzes - unusual ?!
+        if ($quizids = $DB->get_records_select_menu('reader_books', null, null, 'quizid', 'id,quizid')) {
+            $quizids = array_unique($quizids);
+            $interactive = xmldb_reader_interactive();
+
+            xmldb_reader_fix_slots_quizattempts($interactive, $quizids);
+            xmldb_reader_fix_slots_readerattempts($interactive, $quizids);
+        }
     }
-    $quizids = array_unique($quizids);
-
-    xmldb_reader_fix_slots_quizattempts($interactive, $quizids);
-    xmldb_reader_fix_slots_readerattempts($interactive, $quizids);
 }
 
 /**

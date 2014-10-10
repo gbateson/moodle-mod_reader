@@ -105,7 +105,7 @@ $findcheated            = optional_param('findcheated', NULL, PARAM_CLEAN);
 $separategroups         = optional_param('separategroups', NULL, PARAM_CLEAN);
 $levelall               = optional_param('levelall', NULL, PARAM_CLEAN);
 $levelc                 = reader_optional_param_array('levelc', NULL, PARAM_CLEAN);
-$wordsorpoints          = optional_param('wordsorpoints', NULL, PARAM_CLEAN);
+$wordsorpoints          = optional_param('wordsorpoints', NULL, PARAM_INT);
 $setgoal                = optional_param('setgoal', NULL, PARAM_CLEAN);
 $wordscount             = optional_param('wordscount', NULL, PARAM_CLEAN);
 $viewasstudent          = optional_param('viewasstudent', NULL, PARAM_CLEAN);
@@ -858,10 +858,23 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $uncheated) {
 }
 
 if (has_capability('mod/reader:addinstance', $contextmodule) && $act == 'setgoal') {
-    if ($wordsorpoints) {
-        $DB->set_field('reader',  'wordsorpoints',  $wordsorpoints, array('id' => $reader->id));
-    }
-    if (! $levelall) {
+    $DB->set_field('reader', 'wordsorpoints', $wordsorpoints, array('id' => $reader->id));
+
+    if ($levelall) {
+        $DB->delete_records('reader_goals', array('readerid' => $reader->id));
+        if ($separategroups) {
+            $data              = new stdClass();
+            $data->groupid     = $separategroups;
+            $data->readerid    = $reader->id;
+            $data->level       = 0;
+            $data->goal        = $levelall;
+            $data->timemodified  = time();
+            $DB->insert_record('reader_goals', $data);
+        } else {
+            $DB->set_field('reader', 'goal', $levelall);
+        }
+        reader_add_to_log($course->id, 'reader', "AA-wordsorpoints goal=$levelall", 'admin.php?id='.$id, $cm->instance);
+    } else {
         if (empty($levelc)) {
             $levelc = array();
         }
@@ -878,20 +891,6 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $act == 'setgoal
             }
         }
         reader_add_to_log($course->id, 'reader', "AA-wordsorpoints goal=$value", 'admin.php?id='.$id, $cm->instance);
-    } else {
-        $DB->delete_records('reader_goals', array('readerid' => $reader->id));
-        if ($separategroups) {
-            $data              = new stdClass();
-            $data->groupid     = $separategroups;
-            $data->readerid    = $reader->id;
-            $data->level       = 0;
-            $data->goal        = $levelall;
-            $data->timemodified  = time();
-            $DB->insert_record('reader_goals', $data);
-        } else {
-            $DB->set_field('reader', 'goal', $levelall);
-        }
-        reader_add_to_log($course->id, 'reader', "AA-wordsorpoints goal=$levelall", 'admin.php?id='.$id, $cm->instance);
     }
 }
 
@@ -912,7 +911,7 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $act == 'setbook
 if (has_capability('mod/reader:addinstance', $contextmodule) && $act == 'forcedtimedelay' && is_array($levelc)) {
     $DB->delete_records('reader_delays', array('readerid' => $reader->id, 'groupid' => $separategroups));
     foreach ($levelc as $key => $value) {
-      if ($value != 0) {
+      if ($value) {
         $data             = new stdClass();
         $data->readerid   = $reader->id;
         $data->groupid    = (empty($separategroups) ? 0 : $separategroups);
@@ -1187,7 +1186,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
 
                 echo $output->box_start('generalbox');
 
-                echo '<h2>'.get_string('selectquizzes', 'mod_reader').'</h2><br />';
+                echo '<h2>'.get_string('quizpreviouslevel', 'mod_reader').'</h2><br />';
 
                 echo '<form action="admin.php?a=admin&id='.$id.'" method="post" enctype="multipart/form-data">';
                 echo '<table style="width:100%">';
@@ -1580,7 +1579,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
     $titles['P/F/C'] = '';
     array_push($table->align, 'center', 'center', 'center', 'left', 'center', 'center');
 
-    if ($reader->wordsorpoints == 'words') {
+    if ($reader->wordsorpoints == 0) {
         $titles['Words'] = '';
         $titles['Total Words'] = '';
         array_push($table->align, 'center', 'center');
@@ -1629,7 +1628,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
         $worksheet->write_string(2, $c++, 'Score', $formatbold);
         $worksheet->write_string(2, $c++, 'P/F/C', $formatbold);
 
-        if ($reader->wordsorpoints == 'words') {
+        if ($reader->wordsorpoints == 0) {
             $worksheet->write_string(2, $c++, 'Words', $formatbold);
             $worksheet->write_string(2, $c++, 'Total Words', $formatbold);
         } else {
@@ -1677,7 +1676,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
 
             $strpassed = reader_format_passed($readerattempt['passed']);
 
-            if ($reader->wordsorpoints == 'words') {
+            if ($reader->wordsorpoints == 0) {
                 if (reader_check_search_text($searchtext, $coursestudent, $readerattempt)) {
 
                     if ($strpassed=='P') { // passed
@@ -1793,7 +1792,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
             $worksheet->write_string(3 + $r, $c, $row->cells[$c++]->text); // Score
             $worksheet->write_string(3 + $r, $c, $row->cells[$c++]->text); // P/F/C
 
-            if ($reader->wordsorpoints == 'words') {
+            if ($reader->wordsorpoints == 0) {
                 $worksheet->write_string(3 + $r, $c, $row->cells[$c++]->text); // Words
                 $worksheet->write_string(3 + $r, $c, $row->cells[$c++]->text); // Total Words
             } else {
@@ -3381,7 +3380,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
 
             $mform    = &$this->_form;
             $mform->addElement('header', 'setgoal', get_string('setgoal', 'mod_reader'));
-            $mform->addElement('select', 'wordsorpoints', get_string('wordsorpoints', 'mod_reader'), array('points' => get_string('points', 'mod_reader'), 'words' => get_string('words', 'mod_reader')));
+            $mform->addElement('select', 'wordsorpoints', get_string('wordsorpoints', 'mod_reader'), array(0 => get_string('words', 'mod_reader'), 1 => get_string('points', 'mod_reader')));
             $groups = array('0' => get_string('allparticipants', 'mod_reader'));
             if ($usergroups = groups_get_all_groups($course->id)){
                 foreach ($usergroups as $group){
@@ -3407,19 +3406,13 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
                     if ($data_->groupid) {
                         $mform->setDefault('separategroups', $data_->groupid);
                     }
-                    if ($data_->goal < 100) {
-                        $mform->setDefault('wordsorpoints', 'points');
-                    } else {
-                        $mform->setDefault('wordsorpoints', 'words');
-                    }
                 }
-            }
-            else if ($reader->goal) {
+            } else if ($reader->goal) {
                 $mform->setDefault('levelall', $reader->goal);
                 if ($reader->goal < 100) {
-                    $mform->setDefault('wordsorpoints', 'points');
+                    $mform->setDefault('wordsorpoints', 1); // points
                 } else {
-                    $mform->setDefault('wordsorpoints', 'words');
+                    $mform->setDefault('wordsorpoints', 0); // words
                 }
             }
             $this->add_action_buttons(false, $submitlabel="Save");
@@ -5431,7 +5424,7 @@ function reader_goals_menu($userid, $studentlevel, $field, $rand, $reader) {
         $selectedvalue = $goal;
     }
 
-    if (empty($reader->wordsorpoints) || $reader->wordsorpoints == 'words') {
+    if (empty($reader->wordsorpoints)) { // default = 0 = words, 1 = points
         $values = array(
             0,5000,6000,7000,8000,9000,
             10000,12500,15000,20000,25000,30000,35000,40000,45000,50000,60000,70000,80000,90000,

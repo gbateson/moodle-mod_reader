@@ -72,7 +72,7 @@ class reader_admin_reports_groupsummary_table extends reader_admin_reports_table
 
     /** @var filter fields ($fieldname => $advanced) */
     protected $filterfields = array(
-        'groupname'     => 0,
+        //'groupname'   => 0,
         'countactive'   => 1, 'countinactive'   => 1,
         'percentactive' => 1, 'percentinactive' => 1,
         'averagetaken'  => 1, 'averagepassed'   => 1, 'averagefailed' => 1,
@@ -80,7 +80,7 @@ class reader_admin_reports_groupsummary_table extends reader_admin_reports_table
     );
 
     /** @var option fields */
-    protected $optionfields = array('rowsperpage' => self::DEFAULT_ROWSPERPAGE);
+    protected $optionfields = array('rowsperpage' => self::DEFAULT_ROWSPERPAGE, 'sortfields' => array());
 
     /** @var actions */
     protected $actions = array('setreadinggoal', 'sendmessage');

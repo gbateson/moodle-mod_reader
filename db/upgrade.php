@@ -764,19 +764,10 @@ function xmldb_reader_upgrade($oldversion) {
                         $DB->set_field('reader_delays', 'delay', $delay, $params);
                     } else {
                         $params['delay'] = $delay;
+                        $params['timemodified'] = time();
                         $params = (object)$params;
                         $DB->insert_record('reader_delays', $params);
                     }
-                }
-
-                // move timeopen and timeclose to "course_modules" table
-                if (isset($record->timeopen) && $record->timeopen) {
-                    $params = array('module' => $readermoduleid, 'instance' => $record->id);
-                    $DB->set_field('course_modules', 'availablefrom', $record->timeopen, $params);
-                }
-                if (isset($record->timeclose) && $record->timeclose) {
-                    $params = array('module' => $readermoduleid, 'instance' => $record->id);
-                    $DB->set_field('course_modules', 'availableuntil', $record->timeclose, $params);
                 }
             }
         }
@@ -785,7 +776,7 @@ function xmldb_reader_upgrade($oldversion) {
         $table = new xmldb_table('reader');
 
         // remove fields from "reader" table
-        $fields = array('attemptsofday', 'delay1', 'delay2', 'optionflags', 'penaltyscheme', 'timeopen', 'timeclose');
+        $fields = array('attemptsofday', 'delay1', 'delay2', 'optionflags', 'penaltyscheme');
         foreach ($fields as $field) {
             $field = new xmldb_field($field);
             if ($dbman->field_exists($table, $field)) {
@@ -834,6 +825,81 @@ function xmldb_reader_upgrade($oldversion) {
     if ($result && $oldversion < $newversion) {
         xmldb_reader_fix_orphans();
         xmldb_reader_fix_slots();
+        upgrade_mod_savepoint(true, "$newversion", 'reader');
+    }
+
+    $newversion = 2014081294;
+    if ($result && $oldversion < $newversion) {
+        // delete unused fields in "reader" table
+        $table = new xmldb_table('reader');
+        $fields = array(
+            'attempts', 'attemptonlast', 'grademethod', 'decimalpoints',
+            'questionsperpage', 'shufflequestions', 'shuffleanswers',
+            'questions', 'sumgrades', 'grade', 'review',
+            'delaylevel0', 'delaylevel1', 'delaylevel2',
+            'delaylevel3', 'delaylevel4', 'delaylevel5',
+        );
+        foreach ($fields as $field) {
+            $field = new xmldb_field($field);
+            if ($dbman->field_exists($table, $field)) {
+                $dbman->drop_field($table, $field);
+            }
+        }
+        upgrade_mod_savepoint(true, "$newversion", 'reader');
+    }
+
+    $newversion = 2014090696;
+    if ($result && $oldversion < $newversion) {
+
+        // convert wordsorpoints field values to integers
+        $params = array('words', 0, 1);
+        $DB->execute("UPDATE {reader} SET wordsorpoints = (CASE WHEN wordsorpoints = ? THEN ? ELSE ? END)", $params);
+
+        // fix fields in the "reader" table
+        $table = new xmldb_table('reader');
+        $fields = array(
+            // convert wordsorpoints to integer
+            new xmldb_field('wordsorpoints',             XMLDB_TYPE_INTEGER, '4', null, null, null, '0'),
+
+            // fix length of yes/no fields
+            new xmldb_field('levelcheck',                XMLDB_TYPE_INTEGER, '4', null, null, null, '1'),
+            new xmldb_field('reportwordspoints',         XMLDB_TYPE_INTEGER, '4', null, null, null, '0'),
+            new xmldb_field('wordsprogressbar',          XMLDB_TYPE_INTEGER, '4', null, null, null, '1'),
+            new xmldb_field('bookinstances',             XMLDB_TYPE_INTEGER, '4', null, null, null, '0'),
+            new xmldb_field('sendmessagesaboutcheating', XMLDB_TYPE_INTEGER, '4', null, null, null, '1'),
+            new xmldb_field('checkbox',                  XMLDB_TYPE_INTEGER, '4', null, null, null, '0'),
+
+            // restore fields "timeopen" and "timeclose"
+            new xmldb_field('timeopen',  XMLDB_TYPE_INTEGER, '10', null, null, null, '0', 'introformat'),
+            new xmldb_field('timeclose', XMLDB_TYPE_INTEGER, '10', null, null, null, '0', 'timeopen'),
+
+            // fix default value for timelimit (900 secs = 15 mins)
+            new xmldb_field('timelimit', XMLDB_TYPE_INTEGER, '10', null, null, null, '900', 'timeclose')
+        );
+        foreach ($fields as $field) {
+            xmldb_reader_fix_previous_field($dbman, $table, $field);
+            if ($dbman->field_exists($table, $field)) {
+                $dbman->change_field_type($table, $field);
+            } else {
+                $dbman->add_field($table, $field);
+            }
+        }
+
+        // move "course_modules" availablefrom/until to "reader" timeopen/close
+        $readermoduleid = $DB->get_field('modules', 'id', array('name' => 'reader'));
+        if ($records = $DB->get_records('course_modules', array('module' => $readermoduleid))) {
+            foreach ($records as $record) {
+                if (isset($record->availablefrom) && $record->availablefrom) {
+                    $DB->set_field('reader', 'timefrom', $record->availablefrom, array('id' => $record->instance));
+                    $DB->set_field('course_modules', 'availablefrom', 0, array('id' => $record->id));
+                }
+                if (isset($record->availableuntil) && $record->availableuntil) {
+                    $DB->set_field('reader', 'timeclose', $record->availableuntil, array('id' => $record->instance));
+                    $DB->set_field('course_modules', 'availableuntil', 0, array('id' => $record->id));
+                }
+            }
+        }
+
         upgrade_mod_savepoint(true, "$newversion", 'reader');
     }
 

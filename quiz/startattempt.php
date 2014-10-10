@@ -82,6 +82,7 @@ if ($lastattempt && !$lastattempt->timefinish) {
 // Get number for the next or unfinished attempt
 $lastattempt = false;
 $attemptnumber = 1;
+$shuffleanswers = 1;
 
 $quba = question_engine::make_questions_usage_by_activity('mod_reader', $readerquiz->get_context());
 $quba->set_preferred_behaviour('deferredfeedback');
@@ -89,7 +90,7 @@ $quba->set_preferred_behaviour('deferredfeedback');
 // Create the new attempt and initialize the question sessions
 $attempt = reader_create_attempt($reader, $attemptnumber, $book);
 
-if ($reader->attemptonlast && $lastattempt) {
+if ($lastattempt && $reader->attemptonlast) {
     // Starting a subsequent attempt in each attempt builds on last mode.
     // looks like this should never happen
 
@@ -125,14 +126,12 @@ if ($reader->attemptonlast && $lastattempt) {
 
     foreach ($readerquiz->get_questions() as $qid => $questiondata) {
         if ($questiondata->qtype == 'random') {
-            $question = question_bank::get_qtype('random')->choose_other_question($questiondata, $questionsinuse, $reader->shuffleanswers);
+            $question = question_bank::get_qtype('random')->choose_other_question($questiondata, $questionsinuse, $shuffleanswers);
             if (is_null($question)) {
                 throw new moodle_exception('notenoughrandomquestions', 'reader', $readerquiz->view_url(), $questiondata);
             }
         } else {
-            if (! $reader->shuffleanswers) {
-                $questiondata->options->shuffleanswers = false;
-            }
+            $questiondata->options->shuffleanswers = true; // always
             $question = question_bank::make_question($questiondata);
         }
 

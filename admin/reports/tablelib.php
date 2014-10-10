@@ -41,6 +41,7 @@ class reader_admin_reports_table extends table_sql {
     const DEFAULT_ROWSPERPAGE = 30;
     const DEFAULT_SHOWDELETED = 0;
     const DEFAULT_SHOWHIDDEN  = 0;
+    const DEFAULT_SORTFIELDS  = '';
 
     /** @var is_sortable (from flexible table) */
     public $is_sortable = true;
@@ -246,15 +247,16 @@ class reader_admin_reports_table extends table_sql {
         $this->set_attribute('align', 'center');
         $this->set_attribute('class', $this->output->mode);
 
+        // get user preferences
+        $this->get_user_preferences();
+
         parent::setup();
 
         // add default sort columns if necessary
-        foreach ($this->defaultsortcolumns as $column => $sortdirection) {
-            if ($this->has_column($column) || (($column=='firstname' || $column=='lastname') && $this->has_column('fullname'))) {
-                if (! isset($this->sess->sortby)) {
-                    $this->sess->sortby = array();
-                }
-                if (! array_key_exists($column, $this->sess->sortby)) {
+        if (empty($this->sess->sortby)) {
+            $this->sess->sortby = array();
+            foreach ($this->defaultsortcolumns as $column => $sortdirection) {
+                if ($this->has_column($column)) {
                     $this->sess->sortby[$column] = $sortdirection;
                 }
             }
@@ -267,7 +269,7 @@ class reader_admin_reports_table extends table_sql {
      * this function overrides standard get_download_menu()
      * so that Excel download is disabled if xmlwriter class is missing
      */
-    function get_download_menu() {
+    public function get_download_menu() {
         $exportclasses = parent::get_download_menu();
         if (! class_exists('XMLWriter')) {
             unset($exportclasses['excel']);
@@ -312,7 +314,7 @@ class reader_admin_reports_table extends table_sql {
      *
      * @return array($select, $from, $where, $params)
      */
-    function count_sql() {
+    public function count_sql() {
         list($select, $from, $where, $params) = $this->select_sql();
         $temptable = '';
         if ($select) {
@@ -336,7 +338,7 @@ class reader_admin_reports_table extends table_sql {
      *
      * @return array($select, $from, $where, $params)
      */
-    function select_sql() {
+    public function select_sql() {
         return array('', '', '', array());
     }
 
@@ -347,10 +349,25 @@ class reader_admin_reports_table extends table_sql {
      * @param string $prefix (optional, default="") prefix for DB $params
      * @return xxx
      */
-    function select_sql_users($prefix='user') {
+    public function select_sql_users($prefix='user') {
         global $DB;
         if ($this->users===null) {
             $this->users = get_enrolled_users($this->output->reader->context, 'mod/reader:viewbooks', 0, 'u.id', 'id');
+            /***********************
+            it might be possible to restrict search to users in certain groups using the following code
+            ************************
+            if (array_key_exists('group', $this->filterfields) && array_key_exists('group', $SESSION->user_filtering) && count($SESSION->user_filtering['group'])) {
+                $this->users = array();
+                foreach ($SESSION->user_filtering['group'] as $data) {
+                    list($sql, $params) = $this->filter->_fields['group']->get_sql_filter($data);
+                    $this->users = array_merge($this->users, array_values($params));
+                }
+                $this->users = array_unique($this->users);
+            } else {
+                $this->users = get_enrolled_users($this->output->reader->context, 'mod/reader:viewbooks', 0, 'u.id', 'id');
+                $this->users = array_keys($this->users);
+            }
+            ************************/
         }
         if ($prefix=='') {
             $type = SQL_PARAMS_QM;
@@ -402,7 +419,7 @@ class reader_admin_reports_table extends table_sql {
      * @params string $groupbyfield "reader_attempts" field name ("userid" or "quizid")
      * @return xxx
      */
-    function select_sql_attempts($groupbyfield) {
+    public function select_sql_attempts($groupbyfield) {
         list($usersql, $userparams) = $this->select_sql_users();
 
         // we ignore attempts before the "ignoredate"
@@ -502,7 +519,7 @@ class reader_admin_reports_table extends table_sql {
      * @param array $params
      * @return void, but may modify $select $from $where $params
      */
-    function add_filter_params($select, $from, $where, $groupby, $having, $orderby, $params) {
+    public function add_filter_params($select, $from, $where, $groupby, $having, $orderby, $params) {
 
         // get filter $sql and $params
         if ($this->filter) {
@@ -635,7 +652,6 @@ class reader_admin_reports_table extends table_sql {
      * wrap_html_finish
      */
     public function wrap_html_finish() {
-
         // check this table has a "selected" column
         if (! $this->has_column('selected')) {
             return false;
@@ -705,6 +721,16 @@ class reader_admin_reports_table extends table_sql {
     }
 
     /**
+     * finish_html
+     *
+     * override standard method so that we can save $SESSION values as user preferences
+     */
+    public function finish_html() {
+        parent::finish_html();
+        $this->set_user_preferences();
+    }
+
+    /**
      * display_action_settings
      *
      * @param string $action
@@ -730,6 +756,48 @@ class reader_admin_reports_table extends table_sql {
         }
 
         echo html_writer::end_tag('div');
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////
+    // functions to get and set user preferences                                  //
+    ////////////////////////////////////////////////////////////////////////////////
+
+    /**
+     * get_user_preferences
+     *
+     * @uses $SESSION
+     */
+    public function get_user_preferences() {
+        global $SESSION;
+        $uniqueid = $this->uniqueid;
+        if (empty($SESSION->flextable[$this->uniqueid])) {
+            if ($prefs = get_user_preferences($this->uniqueid, null)) {
+                $prefs = unserialize(base64_decode($prefs));
+                if (empty($SESSION->flextable)) {
+                    $SESSION->flextable = array();
+                }
+                $SESSION->flextable[$this->uniqueid] = $prefs;
+            }
+        }
+    }
+
+    /**
+     * set_user_preferences
+     *
+     * @uses $SESSION
+     */
+    public function set_user_preferences() {
+        global $SESSION;
+        $uniqueid = $this->uniqueid;
+        if (isset($SESSION->flextable[$uniqueid])) {
+            $prefs = $SESSION->flextable[$uniqueid];
+            $prefs = base64_encode(serialize($prefs));
+            if ($prefs==get_user_preferences($uniqueid, null)) {
+                // do nothing
+            } else {
+                set_user_preference($uniqueid, $prefs);
+            }
+        }
     }
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -1387,7 +1455,7 @@ class reader_admin_reports_table extends table_sql {
      *
      * @uses $DB
      */
-    function display_filters() {
+    public function display_filters() {
         if (count($this->filterfields) && $this->output->reader->can_viewreports()) {
 
             $classname = 'reader_admin_reports_'.$this->output->mode.'_filtering';

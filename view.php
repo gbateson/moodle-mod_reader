@@ -73,11 +73,6 @@ if ($unset) {
     unset ($_SESSION['SESSION']->reader_lastuserfrom);
 }
 
-if ($reader->shuffleanswers == 0) {
-    $DB->set_field('reader', 'shuffleanswers', 1, array('id' => $reader->id));
-    $reader->shuffleanswers = 1;
-}
-
 // Initialize $PAGE, compute blocks
 $PAGE->set_url('/mod/reader/view.php', array('id' => $cm->id));
 
@@ -102,15 +97,16 @@ if (has_capability('mod/reader:viewreports', $contextmodule)) {
     $msg = ''; // teacher can always view this page
 } else if (! has_capability('mod/reader:viewbooks', $contextmodule)) {
     $msg = get_string('nopermissions', 'error', get_string('reader:viewreports', 'mod_reader'));
-} else if ($reader->subnet && ! address_in_subnet(getremoteaddr(), $reader->subnet)) {
+} else if (! empty($reader->subnet) && ! address_in_subnet(getremoteaddr(), $reader->subnet)) {
     $msg = get_string('subneterror', 'quiz');
-} else if (! empty($cm->availablefrom) && $cm->availablefrom > $timenow) {
-    $msg = get_string('notopenyet', 'mod_reader', userdate($cm->availablefrom));
-} else if (! empty($cm->availableuntil) && $cm->availableuntil < $timenow) {
-    $msg = get_string('alreadyclosed', 'mod_reader', userdate($cm->availableuntil));
+} else if (! empty($reader->timeopen) && $reader->timeopen > $timenow) {
+    $msg = get_string('notopenyet', 'mod_reader', userdate($reader->timeopen));
+} else if (! empty($reader->timeclose) && $reader->timeclose < $timenow) {
+    $msg = get_string('alreadyclosed', 'mod_reader', userdate($reader->timeclose));
 } else {
     $msg = ''; // reader is open and not closed, and user can view books
 }
+
 if ($msg) {
     $url = new moodle_url('/course/view.php', array('id' => $course->id));
     $msg .= html_writer::tag('p', $output->continue_button($url));
@@ -204,15 +200,15 @@ if (count($attempts)) {
         if ($promotiondate) {
             if ($lastattemptdate==0) { // first attempt
                 if ($attempt['timefinish'] > $promotiondate) {
-                    reader_add_table_promotiondate($table, $leveldata, $promotiondate, $timeformat, $dateformat);
+                    reader_view_promotiondate($table, $leveldata, $promotiondate, $timeformat, $dateformat);
                 }
             } else { // not the first attempt
                 if ($lastattemptdate < $promotiondate && $attempt['timefinish'] > $promotiondate) {
-                    reader_add_table_promotiondate($table, $leveldata, $promotiondate, $timeformat, $dateformat);
+                    reader_view_promotiondate($table, $leveldata, $promotiondate, $timeformat, $dateformat);
                 }
             }
         }
-        $lastattemptdate = $attempt['timefinish']; // fixing postgress problem
+        $lastattemptdate = $attempt['timefinish'];
 
         $alreadyansweredbooksid[] = $attempt['quizid'];
 
@@ -236,7 +232,16 @@ if (count($attempts)) {
         }
 
         if ($reader->pointreport == 1) {
-            if ($reader->reportwordspoints != 1) {
+            // hide status or points
+            if ($reader->reportwordspoints == 1) {
+                // points
+                $table->data[] = array(date($dateformat, $attempt['timefinish']),
+                                            $attempt['booktitle'],
+                                            $attempt['booklevel'].'[RL'.$attempt['bookdiff'].']',
+                                            $attempt['bookpercent'],
+                                            $attempt['totalpoints']);
+            } else {
+                // words
                 $table->data[] = array(date($dateformat, $attempt['timefinish']),
                                             $attempt['booktitle'],
                                             $attempt['booklevel'].'[RL' .$attempt['bookdiff'].']',
@@ -244,14 +249,9 @@ if (count($attempts)) {
                                             $showwords,
                                             $attempt['bookpercent'],
                                             $attempt['totalpoints']);
-            } else {  //without words
-                $table->data[] = array(date($dateformat, $attempt['timefinish']),
-                                            $attempt['booktitle'],
-                                            $attempt['booklevel'].'[RL'.$attempt['bookdiff'].']',
-                                            $attempt['bookpercent'],
-                                            $attempt['totalpoints']);
             }
         } else {
+            // show status or points
             if ($reader->reportwordspoints == 2) {  //points and words
                 $table->data[] = array(date($dateformat, $attempt['timefinish']),
                                             $attempt['booktitle'],
@@ -280,7 +280,7 @@ if (count($attempts)) {
         }
     }
     if ($promotiondate && $attempt['timefinish'] < $promotiondate) {
-        reader_add_table_promotiondate($table, $leveldata, $promotiondate, $timeformat, $dateformat);
+        reader_view_promotiondate($table, $leveldata, $promotiondate, $timeformat, $dateformat);
     }
 }
 
@@ -354,7 +354,7 @@ if (isset($_SESSION['SESSION']->reader_changetostudentview) && $_SESSION['SESSIO
 echo "</td></tr></table>";
 
 if ($reader->levelcheck == 1) {
-    echo reader_level_blockgraph($reader, $leveldata, $dateformat);
+    echo reader_view_blockgraph($reader, $leveldata, $dateformat);
 }
 
 if (! empty($table->data)) {
@@ -451,16 +451,36 @@ if ($promoteinfo->nopromote == 1) {
     print_string('butyoumaytakequizzes', 'reader');
 }
 
-if ($delay = $reader->get_delay()) { // && $_SESSION['SESSION']->reader_teacherview != "teacherview"
-    if ($timenow > ($lastattemptdate + $delay)) {
+$showform = true;
+if ($attempt = $DB->get_record('reader_attempts', array('reader' => $cm->instance, 'userid' => $USER->id, 'timefinish' => 0))) {
+    if ($reader->timelimit < ($timenow - $attempt->timestart)) {
         $showform = true;
-        echo '<span style="background-color:#00CC00">&nbsp;&nbsp;'.get_string('youcantakeaquiznow', 'mod_reader').'&nbsp;&nbsp;</span>';
+        $attempt->timemodified = $timenow;
+        $attempt->timefinish   = $timenow;
+        $attempt->passed       = 'false';
+        $attempt->percentgrade = 0;
+        $attempt->sumgrades    = '0';
+        $attempt->bookrating   = 0;
+        $DB->update_record('reader_attempts', $attempt);
     } else {
         $showform = false;
-        echo '<span style="background-color:#FF9900">&nbsp;&nbsp;'.get_string('youcantakeaquizafter', 'mod_reader').' '.reader_format_delay($delay).'&nbsp;&nbsp;</span>';
+        $bookname = $DB->get_field('reader_books', 'name', array('quizid' => $attempt->quizid));
+        print_string('pleasecompletequiz', 'reader', $bookname);
+        if (empty($_SESSION['SESSION']->reader_lastattemptpage)) {
+            $url = $CFG->wwwroot.'/mod/reader/quiz/attempt.php?attempt='.$attempt->id.'&page=1#q0';
+        } else {
+            $url = $CFG->wwwroot.'/mod/reader/quiz/attempt.php?'.$_SESSION['SESSION']->reader_lastattemptpage;
+        }
+        echo ' <a href="'.$url.'">'.get_string('complete', 'mod_reader').'</a>';
     }
-} else {
-    $showform = true;
+} else if ($delay = $reader->get_delay()) { // && $_SESSION['SESSION']->reader_teacherview != "teacherview"
+    if ($timenow < ($lastattemptdate + $delay)) {
+        $showform = false;
+        $msg = userdate($lastattemptdate + $delay);
+        $msg = get_string('youcantakeaquizafter', 'mod_reader', $msg);
+        $msg = html_writer::tag('span', $msg, array('class' => 'delayon'));
+        echo html_writer::tag('div', $msg);
+    }
 }
 
 $select = 'readerid = ? AND timefinish = ? OR timefinish > ?';
@@ -515,30 +535,6 @@ if ($messages = $DB->get_records_select('reader_messages', $select, $params)) {
     }
 }
 
-if ($attempt = $DB->get_record('reader_attempts', array('reader' => $cm->instance, 'userid' => $USER->id, 'timefinish' => 0))) {
-    $showform = false;
-
-    if ($reader->timelimit < ($timenow - $attempt->timestart)) {
-        $showform = true;
-        $attempt->timemodified = $timenow;
-        $attempt->timefinish   = $timenow;
-        $attempt->passed       = 'false';
-        $attempt->percentgrade = 0;
-        $attempt->sumgrades    = '0';
-        $attempt->bookrating   = 0;
-        $DB->update_record('reader_attempts', $attempt);
-    } else {
-        $bookname = $DB->get_field('reader_books', 'name', array('quizid' => $attempt->quizid));
-        print_string('pleasecompletequiz', 'reader', $bookname);
-        if (empty($_SESSION['SESSION']->reader_lastattemptpage)) {
-            $url = $CFG->wwwroot.'/mod/reader/quiz/attempt.php?attempt='.$attempt->id.'&page=1#q0';
-        } else {
-            $url = $CFG->wwwroot.'/mod/reader/quiz/attempt.php?'.$_SESSION['SESSION']->reader_lastattemptpage;
-        }
-        echo ' <a href="'.$url.'">'.get_string('complete', 'mod_reader').'</a>';
-    }
-}
-
 if (isset($_SESSION['SESSION']->reader_changetostudentview)) {
     if ($showform == false && $_SESSION['SESSION']->reader_changetostudentview > 0) {
         echo '<br />'.get_string('thisblockunavailable', 'mod_reader').'<br />';
@@ -547,7 +543,6 @@ if (isset($_SESSION['SESSION']->reader_changetostudentview)) {
 }
 
 if ($showform && has_capability('mod/reader:viewbooks', $contextmodule)) {
-
     echo '<h3>'.get_string('searchforthebookthatyouwant', 'mod_reader').':</h3>';
     echo reader_search_books($id, $reader, $USER->id, true, 'takequiz');
 
@@ -557,9 +552,6 @@ if ($showform && has_capability('mod/reader:viewbooks', $contextmodule)) {
     $url = new moodle_url('/course/view.php', array('id' => $course->id));
     $btn = $output->single_button($url, get_string('returntocoursepage', 'mod_reader'), 'get');
     echo html_writer::tag('div', $btn, array('style' => 'clear: both; padding: 12px;'));
-
-} else if (! $DB->get_record('reader_attempts', array('reader' => $cm->instance, 'userid' => $USER->id, 'timefinish' => 0))) {
-    print_string('pleasewait', 'reader');
 }
 
 echo html_writer::tag('div', '', array('style'=>'clear:both;'));
@@ -571,7 +563,7 @@ echo $output->footer();
 reader_change_to_teacherview();
 
 /**
- * reader_level_blockgraph
+ * reader_view_blockgraph
  *
  * @param xxx $reader
  * @param xxx $leveldata
@@ -579,7 +571,7 @@ reader_change_to_teacherview();
  * @return xxx
  * @todo Finish documenting this function
  */
-function reader_level_blockgraph($reader, $leveldata, $dateformat) {
+function reader_view_blockgraph($reader, $leveldata, $dateformat) {
 
     // max attempts allowed at each difficulty level
     $prevmax = $reader->quizpreviouslevel;
@@ -668,7 +660,7 @@ function reader_level_blockgraph($reader, $leveldata, $dateformat) {
 }
 
 /**
- * reader_add_table_promotiondate
+ * reader_view_promotiondate
  *
  * @param xxx $table (passed by reference)
  * @param xxx $leveldata
@@ -677,7 +669,7 @@ function reader_level_blockgraph($reader, $leveldata, $dateformat) {
  * @param xxx $dateformat
  * @todo Finish documenting this function
  */
-function reader_add_table_promotiondate(&$table, $leveldata, $promotiondate, $timeformat, $dateformat) {
+function reader_view_promotiondate(&$table, $leveldata, $promotiondate, $timeformat, $dateformat) {
     // format the "You were promoted ..." message
     $params = (object)array(
         'level' => $leveldata['currentlevel'],

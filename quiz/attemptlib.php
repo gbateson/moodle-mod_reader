@@ -147,11 +147,13 @@ class reader_quiz {
         $book = $DB->get_record('reader_books', array('id' => $bookid), '*', MUST_EXIST);
         $quiz = $DB->get_record('quiz', array('id' => $book->quizid),   '*', MUST_EXIST);
 
+        $quiz->timeopen          = $reader->timeopen;
+        $quiz->timeclose         = $reader->timeclose;
         $quiz->timelimit         = $reader->timelimit;
         $quiz->attempts          = 1;
         $quiz->questionsperpage  = 1;
         $quiz->shuffleanswers    = 1;
-        $quiz->quizpassword      = $reader->password;
+        $quiz->password          = $reader->password;
         $quiz->subnet            = $reader->subnet;
 
         // Update reader with override information
@@ -226,7 +228,7 @@ class reader_quiz {
 
     /** @return int the number of attempts allowed at this reader (0 = infinite). */
     public function get_num_attempts_allowed() {
-        return $this->reader->attempts;
+        return 1;
     }
 
     /** @return int the course_module id. */

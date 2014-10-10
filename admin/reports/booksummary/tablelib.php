@@ -63,14 +63,16 @@ class reader_admin_reports_booksummary_table extends reader_admin_reports_table 
 
     /** @var filter fields ($fieldname => $advanced) */
     protected $filterfields = array(
-        'group'           => 0, 'publisher'    => 0, 'level'         => 1, 'name'  => 0,
+        //'group'         => 0,
+        'publisher'       => 0, 'level'        => 1, 'name'          => 0,
         'difficulty'      => 1, 'countpassed'  => 1, 'countfailed'   => 1,
         'averageduration' => 1, 'averagegrade' => 1, 'averagerating' => 1, 'countrating'  => 1,
     );
 
     /** @var option fields */
     protected $optionfields = array('rowsperpage' => self::DEFAULT_ROWSPERPAGE,
-                                    'showhidden'  => self::DEFAULT_SHOWHIDDEN);
+                                    'showhidden'  => self::DEFAULT_SHOWHIDDEN,
+                                    'sortfields'  => array());
 
     /** @var actions */
     protected $actions = array('showhidebooks');

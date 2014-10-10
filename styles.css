@@ -26,12 +26,14 @@
  */
 
 /** reader view **/
-#page-mod-reader-view .readersearchform tr.advanced { display: none; }
 #page-mod-reader-view h2 span.readingreporttitle {
     background-color : #ffcc66; /* gentle orange */
     padding          : 6px 12px;
 }
 #page-mod-reader-view div.tabtree { margin-bottom: 0px; }
+#page-mod-reader-view .readersearchform tr.advanced { display: none; }
+#page-mod-reader-view div span.delayoff { background-color: #ccff99; padding: 2px 6px; }
+#page-mod-reader-view div span.delayon  { background-color: #ff7373; padding: 2px 6px; }
 
 /** reader admin menu **/
 #page-mod-reader-admin div.tabtree { margin-bottom: 0px; }

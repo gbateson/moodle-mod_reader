@@ -27,9 +27,9 @@
 
 /** Include required files */
 require_once('../../../config.php');
-require_once($CFG->dirroot.'/mod/reader/quiz/attemptlib.php');
 require_once($CFG->dirroot.'/mod/reader/lib.php');
 require_once($CFG->dirroot.'/mod/reader/quiz/accessrules.php');
+require_once($CFG->dirroot.'/mod/reader/quiz/attemptlib.php');
 require_once($CFG->dirroot.'/question/engine/lib.php');
 
 // Get submitted parameters.
@@ -62,8 +62,10 @@ if ($readerattempt->is_finished()) {
     redirect($readerattempt->review_url(0, $page));
 }
 
-// Check the access rules.
+// set renderer (mod_quiz_renderer)
 $output = $PAGE->get_renderer('mod_quiz');
+
+// Check the access rules.
 $accessmanager = $readerattempt->get_access_manager($timenow);
 $messages = $accessmanager->prevent_access();
 
@@ -99,12 +101,7 @@ if ($readerattempt->is_last_page($page)) {
     $nextpage = $page + 1;
 }
 
-//print_r ($page);
-//die;
-
-//print_r ($readerattempt);
-
-$accessmanager->show_attempt_timer_if_needed($readerattempt->get_attempt(), $timenow);
+$accessmanager->show_attempt_timer_if_needed($readerattempt->get_attempt(), $timenow, $output);
 
 if ($readerattempt->readerquiz->reader->timelimit > 0) {
     $totaltimertime = $readerattempt->readerquiz->reader->timelimit - ($timenow - $readerattempt->attempt->timestart);

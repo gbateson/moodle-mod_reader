@@ -67,7 +67,7 @@ class reader_access_manager {
      */
     private function create_standard_rules($canignoretimelimits) {
         $reader = $this->readerquiz->get_reader();
-        if ($reader->attempts > 0) {
+        if (! empty($reader->attempts)) {
             $this->_rules[] = new num_attempts_access_rule($this->readerquiz, $this->timenow);
         }
         if (! empty($reader->timelimit) && ! $canignoretimelimits) {

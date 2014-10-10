@@ -59,7 +59,8 @@ class reader_admin_reports_userdetailed_table extends reader_admin_reports_table
     protected $leftaligncolumns = array('username', 'fullname', 'name');
 
     /** @var default sort columns */
-    protected $defaultsortcolumns = array('username' => SORT_ASC, 'lastname' => SORT_ASC, 'firstname' => SORT_ASC, 'name' => SORT_ASC); // timefinish => SORT_DESC
+    //protected $defaultsortcolumns = array('username' => SORT_ASC, 'lastname' => SORT_ASC, 'firstname' => SORT_ASC, 'timefinish' => SORT_DESC, 'name' => SORT_ASC);
+    protected $defaultsortcolumns = array('username' => SORT_ASC, 'timefinish' => SORT_DESC);
 
     /** @var filter fields ($fieldname => $advanced) */
     protected $filterfields = array(
@@ -74,7 +75,8 @@ class reader_admin_reports_userdetailed_table extends reader_admin_reports_table
     /** @var option fields */
     protected $optionfields = array('rowsperpage' => self::DEFAULT_ROWSPERPAGE,
                                     'showhidden'  => self::DEFAULT_SHOWHIDDEN,
-                                    'showdeleted' => self::DEFAULT_SHOWDELETED);
+                                    'showdeleted' => self::DEFAULT_SHOWDELETED,
+                                    'sortfields'  => array());
 
     /** @var actions */
     protected $actions = array('deleteattempts', 'restoreattempts', 'passfailattempts');

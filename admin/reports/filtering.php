@@ -57,10 +57,10 @@ class reader_admin_reports_filtering extends user_filtering {
      * @param array  $params        extra page parameters
      * @param array  $optionfields  names of display option fields
      */
-    function __construct($filterfields=null, $baseurl=null, $params=null, $optionfields=null) {
+    public function __construct($filterfields=null, $baseurl=null, $params=null, $optionfields=null) {
         if ($optionfields) {
             $classname = str_replace('filtering', 'options', get_class($this));
-            $this->_optionsform = new $classname($optionfields, $baseurl);
+            $this->_optionsform = new $classname($optionfields, $baseurl, $filterfields);
         }
         parent::user_filtering($filterfields, $baseurl, $params);
     }
@@ -73,7 +73,7 @@ class reader_admin_reports_filtering extends user_filtering {
      * @param xxx $advanced
      * @return xxx
      */
-    function get_field($fieldname, $advanced)  {
+    public function get_field($fieldname, $advanced)  {
         global $DB;
 
         $default = $this->get_default_value($fieldname);
@@ -113,7 +113,7 @@ class reader_admin_reports_filtering extends user_filtering {
      * @param string $fieldname
      * @return array sql string and $params
      */
-    function get_default_value($fieldname) {
+    public function get_default_value($fieldname) {
         $default = get_user_preferences('reader_'.$fieldname, '');
         $rawdata = data_submitted();
         if ($rawdata && isset($rawdata->$fieldname) && ! is_array($rawdata->$fieldname)) {
@@ -129,7 +129,7 @@ class reader_admin_reports_filtering extends user_filtering {
      * @param string $type of sql (optional, default = "filter") "filter", "where" or "having"
      * @return array sql string and $params
      */
-    function get_sql($extra='', array $params=null, $type='filter') {
+    public function get_sql($extra='', array $params=null, $type='filter') {
         global $SESSION;
 
         $sqls = array();
@@ -174,7 +174,7 @@ class reader_admin_reports_filtering extends user_filtering {
      * @param array named params (optional, default = null) recommended prefix "ex"
      * @return array ($wherefilter, $havingfilter, $params)
      */
-    function get_sql_filter($extra='', array $params=null) {
+    public function get_sql_filter($extra='', array $params=null) {
         list($wherefilter, $whereparams) = $this->get_sql_where($extra, $params);
         list($havingfilter, $havingparams) = $this->get_sql_having($extra, $params);
 
@@ -211,7 +211,7 @@ class reader_admin_reports_filtering extends user_filtering {
      * @param array named params (optional, default = null) recommended prefix "ex"
      * @return array ($sql, $params)
      */
-    function get_sql_where($extra='', array $params=null) {
+    public function get_sql_where($extra='', array $params=null) {
         return $this->get_sql($extra, $params, 'where');
     }
 
@@ -221,14 +221,14 @@ class reader_admin_reports_filtering extends user_filtering {
      * @param array named params (recommended prefix ex)
      * @return array ($sql, $params)
      */
-    function get_sql_having($extra='', array $params=null) {
+    public function get_sql_having($extra='', array $params=null) {
         return $this->get_sql($extra, $params, 'having');
     }
 
     /**
      * display options form
      */
-    function display_options() {
+    public function display_options() {
         if ($this->_optionsform) {
             $this->_optionsform->display();
         }
@@ -237,7 +237,7 @@ class reader_admin_reports_filtering extends user_filtering {
     /**
      * get a single option value
      */
-    function get_optionvalue($name, $default=null) {
+    public function get_optionvalue($name, $default=null) {
         if ($this->_optionsform) {
             return $this->_optionsform->get_value($name, $default);
         } else {
@@ -274,32 +274,50 @@ class reader_admin_reports_options extends moodleform {
     const SUBMIT_BUTTON_NAME = 'submitoptions';
 
     /** @var list of display option fields array($name => $default) */
-    protected $fields = array();
+    protected $optionfields = array();
+
+    /** @var list of filter/sort field names */
+    protected $sortfields = null;
 
     /**
      * constructor (see "moodleform" in lib/formslib.php)
      */
-    public function __construct($fields, $action) {
+    public function __construct($optionfields, $action, $sortfields) {
         global $SESSION;
 
         // get and set values in $SESSION
-        foreach ($fields as $field => $default) {
-            if (! isset($SESSION->reader_options)) {
-                $SESSION->reader_options = array();
+        $uniqueid = $this->get_maintable_uniqueid();
+        foreach ($optionfields as $field => $default) {
+            if (! isset($SESSION->flextable[$uniqueid]->display)) {
+                $SESSION->flextable[$uniqueid]->display = array();
             }
-            if (isset($SESSION->reader_options[$field])) {
-                $default = $SESSION->reader_options[$field];
+            if (isset($SESSION->flextable[$uniqueid]->display[$field])) {
+                $default = $SESSION->flextable[$uniqueid]->display[$field];
             }
-            if (is_numeric($default)) {
+            if (is_array($default) || is_numeric($default)) {
                 $type = PARAM_INT;
             } else {
                 $type = PARAM_ALPHA;
             }
-            $value = optional_param($field, $default, $type);
-            $SESSION->reader_options[$field] = $value;
+            if ($field=='sortfields') {
+                $value = optional_param_array('sortfields', $default, PARAM_INT);
+                foreach ($value as $sortfield => $sortdirection) {
+                    if ($sortdirection==0) {
+                        unset($SESSION->flextable[$uniqueid]->sortby[$sortfield]);
+                        unset($value[$sortfield]);
+                    } else {
+                        $sortdirection = ($sortdirection==SORT_ASC ? SORT_ASC : SORT_DESC);
+                        $SESSION->flextable[$uniqueid]->sortby[$sortfield] = $sortdirection;
+                    }
+                }
+            } else {
+                $value = optional_param($field, $default, $type);
+            }
+            $SESSION->flextable[$uniqueid]->display[$field] = $value;
         }
 
-        $this->fields = $fields;
+        $this->optionfields = $optionfields;
+        $this->sortfields  = $sortfields;
         parent::moodleform($action);
     }
 
@@ -313,14 +331,117 @@ class reader_admin_reports_options extends moodleform {
         $mform->addElement('header', 'displayoptions', $label);
 
         // add element for each $fields
-        foreach ($this->fields as $name => $default) {
+        foreach ($this->optionfields as $name => $default) {
             $add_field = 'add_field_'.$name;
             $value = $this->get_value($name, $default);
             $this->$add_field($mform, $name, $value);
         }
-        if (count($this->fields)) {
+        if (count($this->optionfields)) {
             $this->add_field_submitbutton($mform, self::SUBMIT_BUTTON_NAME);
         }
+    }
+
+    /**
+     * get_maintable_uniqueid
+     * convert convert class name, e.g. reader_admin_reports_xxx_options
+     * to id string of main table, e.g. mod-reader-admin-reports-xxx
+     */
+     protected function get_maintable_uniqueid() {
+        $uniqueid = get_class($this);
+        $uniqueid = substr($uniqueid, 0, -8);
+        $uniqueid = str_replace('_', '-', $uniqueid);
+        return 'mod-'.$uniqueid;
+     }
+
+    /**
+     * add_field_sortfields
+     *
+     * @param object $mform
+     * @param string $name of field i.e. "rowsperpage"
+     */
+    protected function add_field_sortfields($mform, $name, $default) {
+        global $SESSION;
+
+        $uniqueid = $this->get_maintable_uniqueid();
+        if (isset($SESSION->flextable[$uniqueid]->sortby)) {
+            $sortby = $SESSION->flextable[$uniqueid]->sortby;
+        } else {
+            $sortby = array();
+        }
+
+        // onchange event handler for the <select> elements
+        $onchange = 'this.form.elements["'.self::SUBMIT_BUTTON_NAME.'"].click()';
+        $separator = '';
+        $elements = array();
+        foreach ($sortby as $sortfield => $sortdirection) {
+            if (array_key_exists($sortfield, $this->sortfields)) {
+                switch ($sortfield) {
+                    case 'firstname':
+                    case 'lastname':
+                    case 'username':
+                        $label = get_string($sortfield);
+                        break;
+                    case 'groupname':
+                        $label = get_string('group');
+                        break;
+                    case 'name':
+                        $label = get_string('booktitle', 'mod_reader');
+                        break;
+                    default:
+                        $label = get_string($sortfield, 'mod_reader');
+                }
+                $options = array(
+                    SORT_ASC  => get_string('asc'),
+                    SORT_DESC => get_string('desc'),
+                    0         => get_string('remove')
+                );
+
+                if ($separator=='') {
+                    $separator = html_writer::empty_tag('br');
+                } else {
+                    $elements[] = $mform->createElement('static', '', '', $separator);
+                }
+                $elements[] = $mform->createElement('static', '', '', $label.':');
+                $elements[] = $mform->createElement('select', $sortfield, '', $options, array('onchange' => $onchange));
+            }
+        }
+
+        if (count($elements)) {
+            $label = get_string('sortby');
+            $mform->addGroup($elements, $name, $label, '');
+            foreach ($sortby as $sortfield => $sortdirection) {
+                $mform->setType($name.'['.$sortfield.']', PARAM_INT);
+                $mform->setDefault($name.'['.$sortfield.']', $sortdirection);
+            }
+            $mform->setAdvanced($name);
+        }
+    }
+
+    /**
+     * get_sortdirection_img
+     *
+     * @param object $mform
+     * @param string $name of field i.e. "rowsperpage"
+     */
+    protected function get_sortdirection_img($sortdirection) {
+        global $OUTPUT;
+        $type = ($sortdirection==SORT_ASC ? 'asc' : 'desc');
+        $alt = get_string($type);
+        $src = $OUTPUT->pix_url('t/sort_'.$type);
+        return html_writer::empty_tag('img', array('src' => $src, 'alt' => $alt, 'class' => 'iconsort'));
+    }
+
+    /**
+     * get_sortremove_img
+     *
+     * @param object $mform
+     * @param string $name of field i.e. "rowsperpage"
+     */
+    protected function get_sortremove_img() {
+        global $OUTPUT;
+        $alt = get_string('remove');
+        $src = $OUTPUT->pix_url('t/delete');
+        return html_writer::empty_tag('img', array('src' => $src, 'alt' => $alt, 'class' => 'iconsort'));
     }
 
     /**
@@ -408,8 +529,9 @@ class reader_admin_reports_options extends moodleform {
      */
     public function get_value($name, $default=null) {
         global $SESSION;
-        if (isset($SESSION->reader_options[$name])) {
-            return $SESSION->reader_options[$name];
+        $uniqueid = $this->get_maintable_uniqueid();
+        if (isset($SESSION->flextable[$uniqueid]->display[$name])) {
+            return $SESSION->flextable[$uniqueid]->display[$name];
         } else {
             return $default; // shouldn't happen !!
         }
@@ -421,7 +543,7 @@ class reader_admin_reports_options extends moodleform {
     public function get_sql() {
         $wherefilter = '';
         $whereparams = array();
-        foreach ($this->fields as $name => $default) {
+        foreach ($this->optionfields as $name => $default) {
             $value = $this->get_value($name, $default);
             $get_sql = 'get_sql_'.$name;
             if ($sql = $this->$get_sql($name, $value)) {
@@ -431,6 +553,16 @@ class reader_admin_reports_options extends moodleform {
             }
         }
         return array($wherefilter, $whereparams);
+    }
+
+    /**
+     * get_sql_sortfields
+     *
+     * @param string $name of field i.e. "rowsperpage"
+     * @param object $value
+     */
+    protected function get_sql_sortfields($name, $value) {
+        return null;
     }
 
     /**

@@ -150,7 +150,7 @@ class reader_admin_reports_filter_group extends reader_admin_reports_filter_sele
                         break;
                 }
                 if ($filter) {
-                    $filter = 'id '.$filter;
+                    $filter = 'u.id '.$filter;
                 }
             }
         }

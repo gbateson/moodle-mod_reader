@@ -880,6 +880,7 @@ class reader_downloader {
         // show memory on main Reader module developer site
         $show_memory = (file_exists($CFG->dirroot.'/mod/reader/admin/tools/print_cheatsheet.php'));
 
+        $errors = 0;
         $output = '';
         $time = time();
         $started_list = false;
@@ -1087,6 +1088,7 @@ class reader_downloader {
                         $this->available[$r]->items[$book->publisher]->items[$book->level]->newcount++;
                         $this->available[$r]->items[$book->publisher]->newcount++;
                         $this->available[$r]->newcount++;
+                        $error = 1;
                     }
                 }
             }
@@ -1097,11 +1099,26 @@ class reader_downloader {
 
             // reclaim a bit of memory
             unset($xml['myxml']['#']['item']);
+
+            // keep track of how many errors were found
+            $errors += $error;
         }
 
         // finish the progress bar
-        $duration = microtime_diff($starttime, microtime());
-        $title = ($i + 1)." / $i_max ".get_string('success').' ('.format_time(round($duration)).')';
+        $title = get_string('itemsdownloaded', 'mod_reader', ($i + 1).' / '.$i_max);
+        if ($duration = microtime_diff($starttime, microtime())) {
+            $title .= ' ('.format_time(round($duration)).')';
+        }
+        if ($errors) {
+            $errors = get_string('errorsfound', 'mod_reader').': '.$errors;
+            if ($usehtml) {
+                $title .= html_writer::empty_tag('br');
+                $title .= html_writer::tag('span', $errors, array('class' => 'error'));
+            } else {
+                $title .= ' '.$errors; // no formatting available in Moodle >= 2.7
+            }
+            $title .= ' ('.get_string('seedetailsbelow', 'mod_reader').')';
+        }
         $this->bar->finish($title);
 
         if ($started_list==true) {

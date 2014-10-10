@@ -37,16 +37,7 @@ if (! defined('ANY_VERSION')) {
     }
 }
 
-if (isset($plugin) && is_object($plugin)) {
-    // Moodle >= 2.5
-    $saveplugin = null;
-} else {
-    // Moodle <= 2.4
-    if (isset($plugin)) {
-        $saveplugin = $plugin;
-    } else {
-        $saveplugin = false;
-    }
+if (floatval($GLOBALS['CFG']->release) <= 2.6) {
     $plugin = new stdClass();
 }
 
@@ -54,17 +45,10 @@ $plugin->cron      = 3600;
 $plugin->component = 'mod_reader';
 $plugin->maturity  = MATURITY_BETA; // ALPHA=50, BETA=100, RC=150, STABLE=200
 $plugin->requires  = 2010112400;    // Moodle 2.0
-$plugin->release   = '2014-08-05 (93)';
-$plugin->version   = 2014080593;
+$plugin->release   = '2014-10-10 (00)';
+$plugin->version   = 2014101000;
 $plugin->dependencies = array('qtype_ordering' => (defined('ANY_VERSION') ? ANY_VERSION : 'any'));
 
-// setup $module for Moodle <= 2.4
-if (isset($saveplugin)) {
-    $module = $plugin;
-    if ($saveplugin) {
-        $plugin = $saveplugin;
-    } else {
-        unset($plugin);
-    }
+if (floatval($GLOBALS['CFG']->release) <= 2.6) {
+    $module = clone($plugin);
 }
-unset($saveplugin);

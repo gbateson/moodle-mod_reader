@@ -12,23 +12,12 @@
         <FIELD NAME="intro" TYPE="text" NOTNULL="false" SEQUENCE="false" NEXT="introformat" PREVIOUS="name"/>
         <FIELD NAME="introformat" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="0" SEQUENCE="false" NEXT="timeopen" PREVIOUS="intro"/>
         <FIELD NAME="timeopen" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="timeclose" PREVIOUS="introformat"/>
-        <FIELD NAME="timeclose" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="attempts" PREVIOUS="timeopen"/>
-        <FIELD NAME="attempts" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="attemptonlast" PREVIOUS="timeclose"/>
-        <FIELD NAME="attemptonlast" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="grademethod" PREVIOUS="attempts"/>
-        <FIELD NAME="grademethod" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="1" SEQUENCE="false" NEXT="decimalpoints" PREVIOUS="attemptonlast"/>
-        <FIELD NAME="decimalpoints" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="2" SEQUENCE="false" NEXT="review" PREVIOUS="grademethod"/>
-        <FIELD NAME="review" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="questionsperpage" PREVIOUS="decimalpoints"/>
-        <FIELD NAME="questionsperpage" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="1" SEQUENCE="false" NEXT="shufflequestions" PREVIOUS="review"/>
-        <FIELD NAME="shufflequestions" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="shuffleanswers" PREVIOUS="questionsperpage"/>
-        <FIELD NAME="shuffleanswers" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="1" SEQUENCE="false" NEXT="questions" PREVIOUS="shufflequestions"/>
-        <FIELD NAME="questions" TYPE="text" NOTNULL="false" SEQUENCE="false" NEXT="sumgrades" PREVIOUS="shuffleanswers"/>
-        <FIELD NAME="sumgrades" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="grade" PREVIOUS="questions"/>
-        <FIELD NAME="grade" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="usecourse" PREVIOUS="sumgrades"/>
-        <FIELD NAME="usecourse" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="timecreated" PREVIOUS="grade"/>
+        <FIELD NAME="timeclose" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" PREVIOUS="timeopen" NEXT="timelimit"/>
+        <FIELD NAME="timelimit" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="900" SEQUENCE="false" NEXT="usecourse" PREVIOUS="timeclose"/>
+        <FIELD NAME="usecourse" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="timecreated" PREVIOUS="timelimit"/>
         <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="timemodified" PREVIOUS="usecourse"/>
-        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="timelimit" PREVIOUS="timecreated"/>
-        <FIELD NAME="timelimit" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="15" SEQUENCE="false" NEXT="password" PREVIOUS="timemodified"/>
-        <FIELD NAME="password" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" NEXT="subnet" PREVIOUS="timelimit"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" PREVIOUS="timecreated" NEXT="password"/>
+        <FIELD NAME="password" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" NEXT="subnet" PREVIOUS="timemodified"/>
         <FIELD NAME="subnet" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" NEXT="popup" PREVIOUS="password"/>
         <FIELD NAME="popup" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="individualstrictip" PREVIOUS="subnet"/>
         <FIELD NAME="individualstrictip" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="percentforreading" PREVIOUS="popup"/>
@@ -42,16 +31,16 @@
         <FIELD NAME="ignoredate" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="goal" PREVIOUS="bookcovers"/>
         <FIELD NAME="goal" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="wordsorpoints" PREVIOUS="ignoredate"/>
         <FIELD NAME="wordsorpoints" TYPE="char" LENGTH="30" NOTNULL="false" DEFAULT="words" SEQUENCE="false" NEXT="checkip" PREVIOUS="goal"/>
-        <FIELD NAME="checkip" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="promotionstop" PREVIOUS="wordsorpoints"/>
+        <FIELD NAME="checkip" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="promotionstop" PREVIOUS="wordsorpoints"/>
         <FIELD NAME="promotionstop" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="99" SEQUENCE="false" NEXT="levelcheck" PREVIOUS="checkip"/>
-        <FIELD NAME="levelcheck" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="1" SEQUENCE="false" NEXT="reportwordspoints" PREVIOUS="promotionstop"/>
-        <FIELD NAME="reportwordspoints" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="wordsprogressbar" PREVIOUS="levelcheck"/>
-        <FIELD NAME="wordsprogressbar" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="1" SEQUENCE="false" NEXT="bookinstances" PREVIOUS="reportwordspoints"/>
-        <FIELD NAME="bookinstances" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="sendmessagesaboutcheating" PREVIOUS="wordsprogressbar"/>
-        <FIELD NAME="sendmessagesaboutcheating" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="1" SEQUENCE="false" NEXT="cheated_message" PREVIOUS="bookinstances"/>
+        <FIELD NAME="levelcheck" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="1" SEQUENCE="false" NEXT="reportwordspoints" PREVIOUS="promotionstop"/>
+        <FIELD NAME="reportwordspoints" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="wordsprogressbar" PREVIOUS="levelcheck"/>
+        <FIELD NAME="wordsprogressbar" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="1" SEQUENCE="false" NEXT="bookinstances" PREVIOUS="reportwordspoints"/>
+        <FIELD NAME="bookinstances" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="sendmessagesaboutcheating" PREVIOUS="wordsprogressbar"/>
+        <FIELD NAME="sendmessagesaboutcheating" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="1" SEQUENCE="false" NEXT="cheated_message" PREVIOUS="bookinstances"/>
         <FIELD NAME="cheated_message" TYPE="text" NOTNULL="false" SEQUENCE="false" NEXT="not_cheated_message" PREVIOUS="sendmessagesaboutcheating"/>
         <FIELD NAME="not_cheated_message" TYPE="text" NOTNULL="false" SEQUENCE="false" NEXT="checkbox" PREVIOUS="cheated_message"/>
-        <FIELD NAME="checkbox" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" PREVIOUS="not_cheated_message"/>
+        <FIELD NAME="checkbox" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="0" SEQUENCE="false" PREVIOUS="not_cheated_message"/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>

@@ -114,19 +114,17 @@ function reader_add_instance($reader) {
     global $CFG, $DB, $USER;
     $reader->timemodified = time();
 
-    $reader->id = $DB->insert_record('reader', $reader);
-    //print_r ($reader);
-    //die;
+    $reader->password = $reader->requirepassword;
+    unset($reader->requirepassword);
 
-    //No promotion after level
-    if (isset($reader->promotionstop)) {
-        $allstudents = $DB->get_records('reader_levels', array('readerid' => $reader->id));
-        foreach ($allstudents as $allstudents_) {
-            $DB->set_field('reader_levels', 'promotionstop', $reader->promotionstop, array('id' => $allstudents_->id));
-        }
-    }
+    $reader->subnet = $reader->requiresubnet;
+    unset($reader->requiresubnet);
 
-    return $reader->id;
+    // we don't need to set "reader_levels" records
+    // because this is a new reader activity
+    // so there won't be any levels yet
+
+    return $DB->insert_record('reader', $reader);
 }
 
 /**
@@ -145,14 +143,15 @@ function reader_update_instance($reader, $id) {
     $reader->timemodified = time();
     $reader->id = $reader->instance;
 
-    # May have to add extra stuff in here #
+    $reader->password = $reader->requirepassword;
+    unset($reader->requirepassword);
 
-    //No promotion after level
+    $reader->subnet = $reader->requiresubnet;
+    unset($reader->requiresubnet);
+
+    // update "promotionstop" field in "reader_levels" table
     if (isset($reader->promotionstop)) {
-        $allstudents = $DB->get_records('reader_levels', array('readerid' => $reader->id));
-        foreach ($allstudents as $allstudents_) {
-            $DB->set_field('reader_levels', 'promotionstop', $reader->promotionstop, array('id' => $allstudents_->id));
-        }
+        $DB->set_field('reader_levels', 'promotionstop', $reader->promotionstop, array('readerid' => $reader->id));
     }
 
     return $DB->update_record('reader', $reader);
@@ -537,7 +536,7 @@ function reader_create_attempt($reader, $attemptnumber, $book, $adduniqueid=fals
             'bookid'  => $book->id,
             'quizid'  => $book->quizid,
             'preview' => 0,
-            'layout'  => reader_repaginate($reader->questions, $reader->questionsperpage)
+            'layout'  => reader_repaginate($reader->questions)
         );
     }
 
@@ -607,12 +606,12 @@ function reader_create_attempt($reader, $attemptnumber, $book, $adduniqueid=fals
  * reader_repaginate
  *
  * @param xxx $layout
- * @param xxx $perpage
+ * @param xxx $perpage (optional, default=1)
  * @param xxx $shuffle (optional, default=false)
  * @return xxx
  * @todo Finish documenting this function
  */
-function reader_repaginate($layout, $perpage, $shuffle=false) {
+function reader_repaginate($layout, $perpage=1, $shuffle=false) {
     $questions = explode(',', $layout);
     $questions = array_filter($questions); // remove blanks
     if ($shuffle) {
@@ -2369,7 +2368,7 @@ function reader_search_books($cmid, $reader, $userid, $showform=false, $action='
                     $book->publisher,
                     (($book->level=='' || $book->level=='--') ? '' : $book->level),
                     $book->name,
-                    reader_valid_genres($book->genre),
+                    (empty($book->genre) ? '' : reader_valid_genres($book->genre)),
                     $book->difficulty
                 );
 

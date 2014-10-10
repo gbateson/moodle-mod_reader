@@ -59,7 +59,7 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
     protected $leftaligncolumns = array('username', 'fullname');
 
     /** @var default sort columns */
-    protected $defaultsortcolumns = array('username' => SORT_ASC, 'lastname' => SORT_ASC, 'firstname' => SORT_ASC);
+    protected $defaultsortcolumns = array('username' => SORT_ASC); // , 'lastname' => SORT_ASC, 'firstname' => SORT_ASC
 
     /** @var filter fields ($fieldname => $advanced) */
     protected $filterfields = array(
@@ -72,7 +72,7 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
     );
 
     /** @var option fields */
-    protected $optionfields = array('rowsperpage' => self::DEFAULT_ROWSPERPAGE);
+    protected $optionfields = array('rowsperpage' => self::DEFAULT_ROWSPERPAGE, 'sortfields' => array());
 
     /** @var actions */
     protected $actions = array('setcurrentlevel', 'setreadinggoal', 'awardextrapoints', 'awardbookpoints');

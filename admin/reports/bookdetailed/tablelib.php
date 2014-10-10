@@ -63,14 +63,16 @@ class reader_admin_reports_bookdetailed_table extends reader_admin_reports_table
 
     /** @var filter fields ($fieldname => $advanced) */
     protected $filterfields = array(
-        'group'      => 0, 'publisher'  => 0, 'level'    => 1, 'name'   => 0, 'difficulty' => 1,
-        'username'   => 1, 'firstname'  => 1, 'lastname' => 1,
-        'timefinish' => 1, 'duration'   => 1, 'grade'    => 1, 'passed' => 1, 'bookrating' => 1
+        // 'group'   => 0,
+        'publisher'  => 0, 'level'     => 1, 'name'     => 0, 'difficulty' => 1,
+        'username'   => 1, 'firstname' => 1, 'lastname' => 1,
+        'timefinish' => 1, 'duration'  => 1, 'grade'    => 1, 'passed' => 1, 'bookrating' => 1
     );
 
     protected $optionfields = array('rowsperpage' => self::DEFAULT_ROWSPERPAGE,
                                     'showhidden'  => self::DEFAULT_SHOWHIDDEN,
-                                    'showdeleted' => self::DEFAULT_SHOWDELETED);
+                                    'showdeleted' => self::DEFAULT_SHOWDELETED,
+                                    'sortfields'  => array());
 
     /** @var actions */
     protected $actions = array('deleteattempts', 'restoreattempts', 'passfailattempts');
