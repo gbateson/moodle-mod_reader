@@ -187,6 +187,7 @@ class mod_reader_admin_users_import_renderer extends mod_reader_admin_users_rend
                     'bookid'        => $books[$image]->id,
                     'quizid'        => $books[$image]->quizid,
                     'attempt'       => $values['attempt'],
+                    'deleted'       => 0,
                     'sumgrades'     => $values['sumgrades'],
                     'percentgrade'  => $values['percentgrade'],
                     'passed'        => $values['passed'],
@@ -200,7 +201,7 @@ class mod_reader_admin_users_import_renderer extends mod_reader_admin_users_rend
                     'ip'            => $values['ip'],
                 );
 
-                $params = array('userid' => $users[$username]->id, 'quizid' => $books[$image]->quizid, 'timefinish' => $values['timefinish']);
+                $params = array('userid' => $users[$username]->id, 'quizid' => $books[$image]->quizid, 'timefinish' => $values['timefinish'], 'deleted' => 0);
                 if ($DB->record_exists('reader_attempts', $params)) {
                     echo html_writer::tag('span', $str->skipped, array('class' => 'importskipped'));
                 } else if ($DB->insert_record('reader_attempts', $attempt)) {

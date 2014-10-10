@@ -3715,9 +3715,9 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
     $books = array();
     $levels = array();
 
-    // get all attempts
+    // get all attempts for this Reader (excluding deleted attempts)
     $sortfields = 'userid,quizid,timefinish,uniqueid DESC';
-    $readerattempts = $DB->get_records('reader_attempts', array('reader' => $reader->id), $sortfields);
+    $readerattempts = $DB->get_records('reader_attempts', array('reader' => $reader->id, 'deleted' => 0), $sortfields);
 
     // prune the attempts
     $userid = 0;
@@ -3926,6 +3926,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
                 'bookid'        => $books[$image]->id,
                 'quizid'        => $books[$image]->quizid,
                 'attempt'       => $values['attempt'],
+                'deleted'       => 0,
                 'sumgrades'     => $values['sumgrades'],
                 'percentgrade'  => $values['percentgrade'],
                 'passed'        => $values['passed'],
@@ -3939,7 +3940,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
                 'ip'            => $values['ip'],
             );
 
-            $params = array('userid' => $users[$username]->id, 'quizid' => $books[$image]->quizid, 'timefinish' => $values['timefinish']);
+            $params = array('userid' => $users[$username]->id, 'quizid' => $books[$image]->quizid, 'timefinish' => $values['timefinish'], 'deleted' => 0);
             if ($DB->record_exists('reader_attempts', $params)) {
                 echo html_writer::tag('span', 'skipped', array('class' => 'importskipped'));
             } else if ($DB->insert_record('reader_attempts', $readerattempt)) {
