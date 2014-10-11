@@ -1026,14 +1026,26 @@ class reader_downloader {
             }
             if (! isset($this->downloaded[$r]->items[$book->publisher]->items[$book->level]->items[$book->name])) {
                 // a new item
-                $this->available[$r]->items[$book->publisher]->items[$book->level]->newcount--;
-                $this->available[$r]->items[$book->publisher]->newcount--;
-                $this->available[$r]->newcount--;
+                if (isset($this->available[$r]->newcount)) {
+                    if (isset($this->available[$r]->items[$book->publisher]->newcount)) {
+                        if (isset($this->available[$r]->items[$book->publisher]->items[$book->level]->newcount)) {
+                            $this->available[$r]->items[$book->publisher]->items[$book->level]->newcount--;
+                        }
+                        $this->available[$r]->items[$book->publisher]->newcount--;
+                    }
+                    $this->available[$r]->newcount--;
+                }
             } else if ($this->downloaded[$r]->items[$book->publisher]->items[$book->level]->items[$book->name]->time < $itemtime) {
                 // an updated item
-                $this->available[$r]->items[$book->publisher]->items[$book->level]->updatecount--;
-                $this->available[$r]->items[$book->publisher]->updatecount--;
-                $this->available[$r]->updatecount--;
+                if (isset($this->available[$r]->updatecount)) {
+                    if (isset($this->available[$r]->items[$book->publisher]->updatecount)) {
+                        if (isset($this->available[$r]->items[$book->publisher]->items[$book->level]->updatecount)) {
+                            $this->available[$r]->items[$book->publisher]->items[$book->level]->updatecount--;
+                        }
+                        $this->available[$r]->items[$book->publisher]->updatecount--;
+                    }
+                    $this->available[$r]->updatecount--;
+                }
             }
 
             // flag this item as "downloaded" and set update $time

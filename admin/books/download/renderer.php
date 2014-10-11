@@ -1100,6 +1100,10 @@ class mod_reader_admin_books_download_renderer extends mod_reader_admin_books_re
                     $showlevels = true;
                 }
 
+                if (empty($items->items)) {
+                    $items->items = array();
+                }
+
                 $iii = 0;
                 $started_items = false;
                 foreach ($items->items as $itemname => $item) {

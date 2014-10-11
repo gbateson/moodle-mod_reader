@@ -1114,8 +1114,11 @@ if (! $excel) {
             new reader_menu_item('setgoal', 'manageusers', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'setgoal')),
             new reader_menu_item('studentslevels', 'manageusers', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'studentslevels')),
             new reader_menu_item('sendmessage', 'manageusers', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'sendmessage')),
-            new reader_menu_item('exportstudentrecords', 'manageusers', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'exportstudentrecords', 'excel'=>1)),
-            new reader_menu_item('importstudentrecord', 'manageusers', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'importstudentrecord')),
+            //new reader_menu_item('exportstudentrecords', 'manageusers', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'exportstudentrecords', 'excel'=>1)),
+            //new reader_menu_item('importstudentrecord', 'manageusers', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'importstudentrecord')),
+            new reader_menu_item('exportstudentrecords', 'manageusers', 'admin/users.php', array('id' => $id, 'tab' => 56, 'mode' => 'export')),
+            new reader_menu_item('importstudentrecord', 'manageusers', 'admin/users.php', array('id' => $id, 'tab' => 55, 'mode' => 'import')),
+
         ),
     );
     $menu = new reader_menu($menu);
@@ -3763,7 +3766,9 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
 
         if (! headers_sent()) {
             $filename = $COURSE->shortname.'_attempts.txt';
-            header('Content-Type: text/plain; filename="'.$filename.'"');
+            header('Content-Disposition: attachment; filename="'.$filename.'"');
+            header('Cache-Control: no-cache, must-revalidate');
+            header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
         }
 
         echo $users[$userid]->username.','.

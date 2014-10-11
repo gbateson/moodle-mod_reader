@@ -45,8 +45,8 @@ $plugin->cron      = 3600;
 $plugin->component = 'mod_reader';
 $plugin->maturity  = MATURITY_BETA; // ALPHA=50, BETA=100, RC=150, STABLE=200
 $plugin->requires  = 2010112400;    // Moodle 2.0
-$plugin->release   = '2014-10-10 (01)';
-$plugin->version   = 2014101001;
+$plugin->release   = '2014-10-10 (02)';
+$plugin->version   = 2014101002;
 $plugin->dependencies = array('qtype_ordering' => (defined('ANY_VERSION') ? ANY_VERSION : 'any'));
 
 if (floatval($GLOBALS['CFG']->release) <= 2.6) {

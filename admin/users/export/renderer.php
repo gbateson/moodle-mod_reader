@@ -43,6 +43,20 @@ require_once($CFG->dirroot.'/mod/reader/admin/users/renderer.php');
 class mod_reader_admin_users_export_renderer extends mod_reader_admin_users_renderer {
 
     /**
+     * require_page_header
+     */
+    public function require_page_header() {
+        return empty($_POST['filename']);
+    }
+
+    /**
+     * require_page_footer
+     */
+    public function require_page_footer() {
+        return empty($_POST['filename']);
+    }
+
+    /**
      * render_page
      *
      * @return string formatted html output
@@ -75,7 +89,9 @@ class mod_reader_admin_users_export_renderer extends mod_reader_admin_users_rend
             if ($attempts = $DB->get_records_sql("SELECT $select FROM $from WHERE $where ORDER BY $order", $params)) {
 
                 if (! headers_sent()) {
-                    header('Content-Type: text/plain; filename="'.$filename.'"');
+                    header('Content-Disposition: attachment; filename="'.$filename.'"');
+                    header('Cache-Control: no-cache, must-revalidate');
+                    header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
                 }
 
                 $userid = 0;
