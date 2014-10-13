@@ -848,16 +848,26 @@ function xmldb_reader_upgrade($oldversion) {
         upgrade_mod_savepoint(true, "$newversion", 'reader');
     }
 
-    $newversion = 2014090696;
+    $newversion = 2014101213;
     if ($result && $oldversion < $newversion) {
 
         // convert wordsorpoints field values to integers
-        $params = array('words', 0, 1);
-        $DB->execute("UPDATE {reader} SET wordsorpoints = (CASE WHEN wordsorpoints = ? THEN ? ELSE ? END)", $params);
+        $table = 'reader';
+        $field = 'wordsorpoints';
+
+        // convert "wordspoints" values from char to integer ('words' => 0, 'points' => 1)
+        $fields = $DB->get_columns($table);
+        if (isset($fields[$field])) {
+            if ($fields[$field]->meta_type=='C') { // 'C' is a char/string field
+                $params = array('words', 0, 1);
+                $DB->execute('UPDATE {'.$table.'} SET '.$field.' = (CASE WHEN '.$field.' = ? THEN ? ELSE ? END)', $params);
+            }
+        }
 
         // fix fields in the "reader" table
         $table = new xmldb_table('reader');
         $fields = array(
+
             // convert wordsorpoints to integer
             new xmldb_field('wordsorpoints',             XMLDB_TYPE_INTEGER, '4', null, null, null, '0'),
 

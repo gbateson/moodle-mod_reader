@@ -28,15 +28,6 @@
 // prevent direct access to this script
 defined('MOODLE_INTERNAL') || die();
 
-if (! defined('ANY_VERSION')) {
-    // Moodle <= 2.1 : do our own dependency check
-    if (isset($CFG) && ! file_exists($CFG->dirroot.'/question/type/ordering')) {
-        // EITHER installing new site: upgrade_plugins() in "lib/upgradelib.php"
-        // OR admin just logged in: moodle_needs_upgrading() in "lib/moodlelib.php"
-        throw new moodle_exception('requireqtypeordering', 'reader', new moodle_url('/admin/index.php'), $CFG->dirroot);
-    }
-}
-
 if (floatval($GLOBALS['CFG']->release) <= 2.6) {
     $plugin = new stdClass();
 }
@@ -45,9 +36,19 @@ $plugin->cron      = 3600;
 $plugin->component = 'mod_reader';
 $plugin->maturity  = MATURITY_BETA; // ALPHA=50, BETA=100, RC=150, STABLE=200
 $plugin->requires  = 2010112400;    // Moodle 2.0
-$plugin->release   = '2014-10-10 (02)';
-$plugin->version   = 2014101002;
-$plugin->dependencies = array('qtype_ordering' => (defined('ANY_VERSION') ? ANY_VERSION : 'any'));
+$plugin->release   = '2014-10-12 (13)';
+$plugin->version   = 2014101213;
+
+if (defined('ANY_VERSION')) {
+    $plugin->dependencies = array('qtype_ordering' => ANY_VERSION);
+} else {
+    // Moodle <= 2.1 : do our own dependency check
+    if (isset($CFG) && ! file_exists($CFG->dirroot.'/question/type/ordering')) {
+        // EITHER installing new site: upgrade_plugins() in "lib/upgradelib.php"
+        // OR admin just logged in: moodle_needs_upgrading() in "lib/moodlelib.php"
+        throw new moodle_exception('requireqtypeordering', 'reader', new moodle_url('/admin/index.php'), $CFG->dirroot);
+    }
+}
 
 if (floatval($GLOBALS['CFG']->release) <= 2.6) {
     $module = clone($plugin);

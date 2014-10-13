@@ -956,8 +956,13 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $book && is_arra
 }
 
 if ((has_capability('mod/reader:managequizzes', $contextmodule)) && $numberofsections && $act == 'changenumberofsectionsinquiz') {
-    if ($reader->usecourse) {
-        $DB->set_field('course',  'numsections',  $numberofsections, array('id' => $reader->usecourse));
+    switch (true) {
+        case (isset($reader->usecourse) && $reader->usecourse > 0):
+            mod_reader::set_numsections($reader->usecourse, $numberofsections);
+            break;
+        case (isset($readercfg->usecourse) && $readercfg->usecourse > 0):
+            mod_reader::set_numsections($readercfg->usecourse, $numberofsections);
+            break;
     }
 }
 
@@ -4002,6 +4007,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
 
             $mform->addElement('header', 'setgoal', get_string('changenumberofsectionsinquiz', 'mod_reader'));
             $mform->addElement('text', 'numberofsections', '', array('size'=>'10'));
+            $mform->setType('numberofsections', PARAM_INT);
 
             $this->add_action_buttons(false, $submitlabel="Save");
         }
