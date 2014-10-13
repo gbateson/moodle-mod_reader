@@ -3006,11 +3006,12 @@ function reader_change_to_teacherview() {
  */
 function reader_change_to_studentview($userid, $link, $location) {
     global $DB, $USER;
-    // in admin.php, prepare settings going to view.php
+    // cancel teacherview
+    unset($_SESSION['SESSION']->reader_teacherview);
+    // prepare settings going to view.php
     $_SESSION['SESSION']->reader_changetostudentview = $USER->id;
     $_SESSION['SESSION']->reader_changetostudentviewlink = $link;
     $_SESSION['USER'] = $DB->get_record('user', array('id' => $userid));
-    unset($_SESSION['SESSION']->reader_teacherview);
     header("Location: $location");
     // script will terminate here
 }

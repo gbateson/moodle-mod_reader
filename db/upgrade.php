@@ -900,7 +900,7 @@ function xmldb_reader_upgrade($oldversion) {
         if ($records = $DB->get_records('course_modules', array('module' => $readermoduleid))) {
             foreach ($records as $record) {
                 if (isset($record->availablefrom) && $record->availablefrom) {
-                    $DB->set_field('reader', 'timefrom', $record->availablefrom, array('id' => $record->instance));
+                    $DB->set_field('reader', 'timeopen', $record->availablefrom, array('id' => $record->instance));
                     $DB->set_field('course_modules', 'availablefrom', 0, array('id' => $record->id));
                 }
                 if (isset($record->availableuntil) && $record->availableuntil) {

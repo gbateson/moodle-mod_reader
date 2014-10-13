@@ -526,7 +526,7 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $act == 'changer
 
 if (has_capability('mod/reader:manageattempts', $contextmodule) && $viewasstudent) {
     $link = "gid={$gid}&searchtext={$searchtext}&page={$page}&sort={$sort}&orderby={$orderby}";
-    $location = "view.php?a=quizzes&id=".$id;
+    $location = "view.php?a=quizzes&id={$id}";
     reader_change_to_studentview($viewasstudent, $link, $location);
     // script will finish here
 }

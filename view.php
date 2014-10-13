@@ -473,7 +473,7 @@ if ($attempt = $DB->get_record('reader_attempts', array('reader' => $cm->instanc
         }
         echo ' <a href="'.$url.'">'.get_string('complete', 'mod_reader').'</a>';
     }
-} else if ($delay = $reader->get_delay()) { // && $_SESSION['SESSION']->reader_teacherview != "teacherview"
+} else if ($delay = $reader->get_delay()) {
     if ($timenow < ($lastattemptdate + $delay)) {
         $showform = false;
         $msg = userdate($lastattemptdate + $delay);
