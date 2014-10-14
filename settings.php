@@ -43,13 +43,13 @@ $settings->add($setting);
 $name = 'quiztimelimit';
 $text = get_string($name, $plugin);
 $help = get_string('config'.$name, $plugin);
-if (class_exists('admin_setting_configduration')) {
-    // Moodle >= 2.4
+if (class_exists('admin_setting_configduration') && method_exists('admin_setting_configduration', 'set_advanced_flag_options')) {
+    // Moodle >= 2.6
     $default = array('v' => $config->quiztimelimit, 'u' => 1, 'adv' => false);
     $setting = new admin_setting_configduration("$plugin/$name", $text, $help, $default, 60);
     $setting->set_advanced_flag_options(admin_setting_flag::ENABLED, !empty($default['adv']));
 } else {
-    // Moodle <= 2.3
+    // Moodle <= 2.5
     $default = array('value' => $config->quiztimelimit, 'adv' => false);
     $setting = new admin_setting_configtext_with_advanced("$plugin/$name", $text, $help, $default, PARAM_INT);
 }
