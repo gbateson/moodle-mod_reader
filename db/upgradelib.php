@@ -160,6 +160,8 @@ function xmldb_reader_check_stale_files() {
         'admin/books/download.php',
         // replaced by "admin/books/download/ajax.js.php"
         'admin/books/download.js.php',
+        // replaced by "admin/users/setdelays"
+        'admin/users/setdelay',
     );
 
     $stalefilenames = array();
