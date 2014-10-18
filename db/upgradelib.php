@@ -3126,7 +3126,9 @@ function xmldb_reader_fix_slots_quizattempts($interactive, $quizids) {
                 }
             }
             // update progress bar
-            $bar->update($i, $i_max, $strupdating.": ($i/$i_max)");
+            if ($interactive) {
+                $bar->update($i, $i_max, $strupdating.": ($i/$i_max)");
+            }
         }
         $rs->close();
     }
