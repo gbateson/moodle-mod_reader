@@ -119,7 +119,7 @@ class mod_reader_mod_form extends moodleform_mod {
         $name = 'levelcheck';
         $mform->addElement('selectyesno', $name, get_string($name, $plugin));
         $this->set_type_default_advanced($mform, $config, $name, PARAM_INT);
-        //$mform->addHelpButton($name, $name, $plugin);
+        $mform->addHelpButton($name, $name, $plugin);
 
         $name = 'percentforreading';
         $mform->addElement('text', $name, get_string($name, $plugin), $textoptions);
@@ -135,19 +135,19 @@ class mod_reader_mod_form extends moodleform_mod {
         $mform->addElement('text', $name, get_string($name, $plugin), $textoptions);
         $this->set_type_default_advanced($mform, $config, $name, PARAM_INT);
         $mform->addRule($name, null, 'required', null, 'client');
-        //$mform->addHelpButton($name, $name, $plugin);
+        $mform->addHelpButton($name, $name, $plugin);
 
         $name = 'quizpreviouslevel';
         $mform->addElement('text', $name, get_string($name, $plugin), $textoptions);
         $this->set_type_default_advanced($mform, $config, $name, PARAM_INT);
         $mform->addRule($name, null, 'required', null, 'client');
-        //$mform->addHelpButton($name, $name, $plugin);
+        $mform->addHelpButton($name, $name, $plugin);
 
         $name = 'quiznextlevel';
         $mform->addElement('text', $name, get_string($name, $plugin), $textoptions);
         $this->set_type_default_advanced($mform, $config, $name, PARAM_INT);
         $mform->addRule($name, null, 'required', null, 'client');
-        //$mform->addHelpButton($name, $name, $plugin);
+        $mform->addHelpButton($name, $name, $plugin);
 
         $name = 'promotionstop';
         $mform->addElement('text', $name, get_string($name, $plugin), $textoptions);
@@ -194,14 +194,14 @@ class mod_reader_mod_form extends moodleform_mod {
         foreach ($options as $option) {
             $options[$option->id] = $option->fullname;
         }
-        $mform->addElement('select', $name, get_string('selectcourse', $plugin), $options);
+        $mform->addElement('select', $name, get_string($name, $plugin), $options);
         $this->set_type_default_advanced($mform, $config, $name, PARAM_INT, $COURSE->id);
-        //$mform->addHelpButton($name, $name, $plugin);
+        $mform->addHelpButton($name, $name, $plugin);
 
         $name = 'bookinstances';
         $mform->addElement('selectyesno', $name, get_string($name, $plugin));
         $this->set_type_default_advanced($mform, $config, $name, PARAM_INT);
-        //$mform->addHelpButton($name, $name, $plugin);
+        $mform->addHelpButton($name, $name, $plugin);
 
         //-----------------------------------------------------------------------------
         $mform->addElement('header', 'security', get_string('security', 'form'));

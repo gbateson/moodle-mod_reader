@@ -66,7 +66,7 @@ if ($readerattempt->is_finished()) {
 $output = $PAGE->get_renderer('mod_quiz');
 
 // Check the access rules.
-$accessmanager = $readerattempt->get_access_manager($timenow);
+$accessmanager = $readerattempt->get_access_manager($readerattempt->get_readerquiz(), $timenow);
 $messages = $accessmanager->prevent_access();
 
 $pagetext = $page + 1;
@@ -101,60 +101,100 @@ if ($readerattempt->is_last_page($page)) {
     $nextpage = $page + 1;
 }
 
-$accessmanager->show_attempt_timer_if_needed($readerattempt->get_attempt(), $timenow, $output);
+//$PAGE->requires->js_init_call('M.mod_quiz.init_attempt_form', null, false, reader_get_js_module());
+
+$js = 'RDR = new Object();';
+
+$js .= "RDR.AddCssText = function(txt) {\n";
+$js .= "    var obj = document.createElement('style');\n";
+$js .= "    obj.setAttribute('type', 'text/css');\n";
+$js .= "    if (obj.styleSheet) {\n";
+$js .= "        obj.styleSheet.cssText = txt;\n";
+$js .= "    } else {\n";
+$js .= "        obj.appendChild(document.createTextNode(txt));\n";
+$js .= "    }\n";
+$js .= "    document.getElementsByTagName('head')[0].appendChild(obj);\n";
+$js .= "}\n";
+
+$js .= "RDR.AddCssUrl = function(url) {\n";
+$js .= "    var obj = document.createElement('link');\n";
+$js .= "    obj.setAttribute('rel', 'stylesheet');\n";
+$js .= "    obj.setAttribute('type', 'text/css');\n";
+$js .= "    obj.setAttribute('href', url);\n";
+$js .= "    document.getElementsByTagName('head')[0].appendChild(obj);\n";
+$js .= "}\n";
+
+$js .= "RDR.timer = new Object();\n";
+$js .= "RDR.timer.PadNumber = function(time) {\n";
+$js .= "   return ((time < 10 ? '0' : '') + time);\n";
+$js .= "}\n";
+$js .= "RDR.timer.UpdateTimer = function(secs) {\n";
+$js .= "    var days = Math.floor(secs / 86400);\n";
+$js .= "    secs -= (days * 86400);\n";
+$js .= "    var hours = Math.floor(secs / 3600);\n";
+$js .= "    secs -= (hours * 3600);\n";
+$js .= "    var mins = Math.floor(secs / 60);\n";
+$js .= "    secs -= (mins * 60);\n";
+$js .= "    var str = '';\n";
+$js .= "    if (days > 0) {\n";
+$js .= "        str += days + ' days ';\n";
+$js .= "    }\n";
+$js .= "    if (hours > 0) {\n";
+$js .= "        str += RDR.timer.PadNumber(hours) + ':';\n";
+$js .= "    }\n";
+$js .= "    str += RDR.timer.PadNumber(mins) + ':' + RDR.timer.PadNumber(secs);\n";
+$js .= "    document.getElementById('readerquiztimer').innerHTML = str;\n";
+$js .= "}\n";
+$js .= "RDR.timer.ShowTimer = function() {\n";
+$js .= "    RDR.timer.timeelapsed++;\n";
+$js .= "    var timeremaining = RDR.timer.timeallowed - RDR.timer.timeelapsed;\n";
+$js .= "    if (timeremaining <= 0) {\n";
+$js .= "        clearInterval(RDR.timer.timer);\n";
+$js .= "    } else {\n";
+$js .= "        RDR.timer.UpdateTimer(timeremaining);\n";
+$js .= "    }\n";
+$js .= "}\n";
+$js .= "RDR.timer.CreateTimer = function() {\n";
+$js .= "    RDR.AddCssText('".
+               '#page-mod-reader-quiz-attempt #readerquiztimer {'.
+                   'position: fixed;'.
+                   'width: 117px;'.
+                   'height: 54px;'.
+                   'bottom: 0;'.
+                   'z-index: 1000;'.
+                   'background-color: #ffffff;'.
+                   'border: 1px solid #dddddd;'.
+                   'font-size: 27px;'.
+                   'text-align: center;'.
+                   'padding-top: 20px;'.
+               '}'.
+            "');\n";
+$js .= "    var obj = document.createElement('div');\n";
+$js .= "    obj.setAttribute('id', 'readerquiztimer');\n";
+$js .= "    document.body.appendChild(obj);\n";
+$js .= "}\n";
+$js .= "RDR.timer.StartTimer = function(timeallowed) {\n";
+$js .= "   RDR.timer.CreateTimer();\n";
+$js .= "   RDR.timer.timeelapsed = 0;\n";
+$js .= "   RDR.timer.timeallowed = timeallowed;\n";
+$js .= "   RDR.timer.timer = setInterval(RDR.timer.ShowTimer, 1000);\n";
+$js .= "}\n";
 
 if ($readerattempt->readerquiz->reader->timelimit > 0) {
-    $totaltimertime = $readerattempt->readerquiz->reader->timelimit - ($timenow - $readerattempt->attempt->timestart);
-    if ($totaltimertime < 0) $totaltimertime = 0; {
-        echo '<script type="text/javascript">'."\n";
-        echo '//<![CDATA['."\n";
-
-        echo "var timeminuse = 0;\n";
-        echo "var totaltime  = $totaltimertime;\n";
-
-        echo 'function showDiv() {'."\n";
-        echo '    timeminuse = timeminuse + 1;'."\n";
-        echo '    var timer = totaltime - timeminuse;'."\n";
-        echo '    if (timer >= 0) {'."\n";
-        echo '        UpdateTimer(timer);'."\n";
-        echo '    }'."\n";
-        echo '}'."\n";
-
-        echo 'function UpdateTimer(Seconds) {'."\n";
-        echo '    var Days = Math.floor(Seconds / 86400);'."\n";
-        echo '    Seconds -= Days * 86400;'."\n";
-        echo '    var Hours = Math.floor(Seconds / 3600);'."\n";
-        echo '    Seconds -= Hours * (3600);'."\n";
-        echo '    var Minutes = Math.floor(Seconds / 60);'."\n";
-        echo '    Seconds -= Minutes * (60);'."\n";
-        echo '    var TimeStr = ((Days > 0) ? Days + " days " : "") + ((Hours > 0) ? LeadingZero(Hours) + ":" : "") + LeadingZero(Minutes) + ":" + LeadingZero(Seconds);'."\n";
-        echo '    document.getElementById("fixededit").innerHTML = TimeStr;'."\n";
-        echo '}'."\n";
-
-        echo 'function LeadingZero(Time) {'."\n";
-        echo '   return (Time < 10) ? "0" + Time : + Time;'."\n";
-        echo '}'."\n";
-
-        echo 'var timer = setInterval(showDiv, 1000);'."\n";
-        echo '//]]>'."\n";
-        echo '</script>'."\n";
-
-        echo '<style type="text/css">'."\n";
-        echo '#fixededit {'."\n";
-        echo '    position    : fixed;'."\n";
-        echo '    width       : 117px;'."\n";
-        echo '    height      : 54px;'."\n";
-        echo '    bottom      : 0;'."\n";
-        echo '    z-index     : 1000;'."\n";
-        echo '    background-color: #ffffff;'."\n";
-        echo '    border      : 1px solid #dddddd;'."\n";
-        echo '    font-size   : 27px;'."\n";
-        echo '    text-align  : center;'."\n";
-        echo '    padding-top : 20px;'."\n";
-        echo '}'."\n";
-        echo '</style>'."\n";
-        echo html_writer::tag('div', '', array('id' => 'fixededit'));
+    $totaltimertime = $readerattempt->readerquiz->reader->timelimit;
+    $totaltimertime -= ($timenow - $readerattempt->attempt->timestart);
+    if ($totaltimertime < 0) {
+        $totaltimertime = 0;
     }
+    $js .= "RDR.timer.StartTimer($totaltimertime)\n";
+}
+
+if ($readerattempt->readerquiz->reader->questionmark==0) {
+    $js .= "RDR.AddCssText('#page-mod-reader-quiz-attempt div.info div.grade {display: none;}');\n";
+}
+
+if ($js) {
+    $PAGE->requires->js_init_code($js, true);
 }
 
 $_SESSION['SESSION']->reader_lastattemptpage = $_SERVER['QUERY_STRING'];

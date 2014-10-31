@@ -919,5 +919,11 @@ function xmldb_reader_upgrade($oldversion) {
         upgrade_mod_savepoint(true, "$newversion", 'reader');
     }
 
+    $newversion = 2014103119;
+    if ($result && $oldversion < $newversion) {
+        unset_config('quizonnextlevel', 'mod_reader');
+        upgrade_mod_savepoint(true, "$newversion", 'reader');
+    }
+
     return $result;
 }

@@ -76,7 +76,12 @@ $string['bookcovers_help'] = '**No**
 : Show the book covers on the main page of this Reader activity.';
 $string['bookdifficulty'] = 'Book difficulty';
 $string['bookeditdetails'] = 'Edit book details';
-$string['bookinstances'] = 'Course-specific quiz selection';
+$string['bookinstances'] = 'Custom book data';
+$string['bookinstances_help'] = '**No**
+: This Reader activity will use only the standard Reader book data such as word count and reading level
+
+**Yes**
+: This Reader activity will use custom values for Reader book data. Note that enabling this option will cause some extra load on your web server.';
 $string['booklevelmanagement'] = 'Book & Level Management';
 $string['booknotadded'] = 'Book NOT added: {$a}';
 $string['booknotfound'] = 'Book not found {$a}';
@@ -134,12 +139,12 @@ $string['configintro'] = 'The values you set here define the default values that
 You can also configure which reader settings are considered advanced.';
 $string['configkeepoldquizzes'] = '';
 $string['configlevelcheck'] = '';
+$string['confignextlevel'] = '';
 $string['confignot_cheated_message'] = '';
 $string['configpercentforreading'] = '';
 $string['configpointreport'] = '';
 $string['configquestionmark'] = '';
 $string['configquiznextlevel'] = '';
-$string['configquizonnextlevel'] = '';
 $string['configquizpreviouslevel'] = '';
 $string['configquiztimelimit'] = '';
 $string['configreportwordspoints'] = '';
@@ -375,7 +380,12 @@ $string['keepoldquizzes'] = 'Keep old quizzes';
 $string['lastupdatedtime'] = 'The quizzes on this site were last updated on {$a}.  Do you want to update the site now?';
 $string['lengthex11'] = 'Length (Ex. 1.1)';
 $string['level'] = 'Level';
-$string['levelcheck'] = 'Use the quiz taking level restriction feature';
+$string['levelcheck'] = 'Restrict reading level';
+$string['levelcheck_help'] = '**No**
+: Students will always be allowed to take Reader quizzes for books at any reading level.
+
+**Yes**
+: Students will only be allowed to take Reader quizzes for books at or near their current reading level. The number of quizzes that students are allowed to take is specified in the settings on this page for "Quizzes at current/previous/next level"';
 $string['leveldelay'] = 'Level {$a} delay';
 $string['leveli'] = 'Level {$a}';
 $string['levels'] = 'Levels';
@@ -395,7 +405,8 @@ $string['needtocheckupdates'] = 'This site has not checked for quiz updates in (
 $string['newreadinggoal'] = 'New reading goal';
 $string['newreadinglevel'] = 'New reading level';
 $string['newsetting'] = 'New value for this setting';
-$string['nextlevel'] = 'Give next level, when student answered more than correct quizzes';
+$string['nextlevel'] = 'Quizzes at current level';
+$string['nextlevel_help'] = 'The number of quizzes at the current reading level that a student must pass in order to be promoted to the next reading level. Note that only quizzes passed since the most recent promotion count towards the next promotion.';
 $string['no_password'] = 'No password required';
 $string['noaction'] = 'Take no action';
 $string['nobooksfound'] = 'No books found';
@@ -463,10 +474,11 @@ $string['quizfordays'] = 'Frequency restriction (days)';
 $string['quizhasnoquestions'] = 'Quiz has no questions';
 $string['quizmanagement'] = 'Quiz management';
 $string['quizname'] = 'Quiz name';
-$string['quiznextlevel'] = 'Allow to select quizzes of next level';
+$string['quiznextlevel'] = 'Quizzes at next level';
+$string['quiznextlevel_help'] = 'The number of quizzes that a student may take from the next reading level, i.e. the reading level that is just above their current reading level. Note that these quizzes do NOT count toward promotion.';
 $string['quiznotavailable'] = 'Sorry, this quiz is not currently available to you';
-$string['quizonnextlevel'] = 'Allow to select quizzes of next level';
-$string['quizpreviouslevel'] = 'Select Quizzes';
+$string['quizpreviouslevel'] = 'Quizzes at previous level';
+$string['quizpreviouslevel_help'] = 'The number of quizzes that a student may take from the previous reading level, i.e. the reading level that is just below their current reading level. Note that these quizzes do NOT count toward promotion.';
 $string['quizsetdelay'] = 'Set delay on Reader quizzes';
 $string['quizshowhide'] = 'Show / Hide Reader quizzes';
 $string['quiztimelimit'] = 'Quiz time limit';
@@ -532,7 +544,6 @@ $string['select'] = 'Select';
 $string['select_course'] = 'Select Course';
 $string['select_help'] = 'Click on the kind of items you wish to be selected in the list below';
 $string['selectalreadyexist'] = 'Select already exist';
-$string['selectcourse'] = 'Teacher-made quizzes for this module can be found in this course, which is not open for students access.';
 $string['selectedbookname'] = 'Selected book name';
 $string['selectipmask'] = 'Select ip mask';
 $string['selectlevel'] = 'Select Level';
@@ -552,8 +563,8 @@ $string['sentemailphp'] = 'An email has been sent via PHP mail to: {$a->email}';
 $string['separategroups'] = 'Separate groups';
 $string['separatelevels'] = 'Separate levels';
 $string['servererror'] = 'Message from server: {$a}';
-$string['serverlink'] = 'Link to Reader server (with quizzes)';
-$string['serverlogin'] = 'Reader server login';
+$string['serverlink'] = 'Reader server URL';
+$string['serverlogin'] = 'Reader server username';
 $string['serverpassword'] = 'Reader server password';
 $string['setbookinstances'] = 'Select quizzes to make available to students';
 $string['setcurrentlevel'] = 'Change reading level for selected students';
@@ -696,7 +707,8 @@ Click the button below to resume the Moodle update process.';
 $string['uploaddatanoquizzes'] = 'Download data for books that have no quizzes';
 $string['uploadquiztoreader'] = 'Download quizzes from the Reader Quiz Database';
 $string['use_this_course'] = 'Use this course';
-$string['usecourse'] = 'Quiz location';
+$string['usecourse'] = 'Reader quizzes course';
+$string['usecourse_help'] = 'This is the course on this Moodle site that contains the Reader quizzes for this Reader activity. This course should be hidden from students. It generally contains quizzes that have been downloaded by the Reader module from an external Reader quiz repository, e.g. moodlereader.net.';
 $string['usedefaultquizid'] = 'Always use default quiz';
 $string['userexport'] = 'Export user data';
 $string['userimport'] = 'Import user data';

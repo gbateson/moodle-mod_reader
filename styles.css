@@ -25,6 +25,10 @@
  * @since      Moodle 2.0
  */
 
+
+/** reader mod edit **/
+#page-mod-reader-mod .mform .fitem .fitemtitle {min-width: 190px; margin-right: 8px;}
+
 /** reader view **/
 #page-mod-reader-view h2 span.readingreporttitle {
     background-color : #ffcc66; /* gentle orange */

@@ -236,46 +236,43 @@ if (count($attempts)) {
             if ($reader->reportwordspoints == 1) {
                 // points
                 $table->data[] = array(date($dateformat, $attempt['timefinish']),
-                                            $attempt['booktitle'],
-                                            $attempt['booklevel'].'[RL'.$attempt['bookdiff'].']',
-                                            $attempt['bookpercent'],
-                                            $attempt['totalpoints']);
+                                       $attempt['booktitle'],
+                                       $attempt['booklevel'].'[RL'.$attempt['bookdiff'].']',
+                                       $attempt['bookpercent'],
+                                       $attempt['totalpoints']);
             } else {
                 // words
                 $table->data[] = array(date($dateformat, $attempt['timefinish']),
-                                            $attempt['booktitle'],
-                                            $attempt['booklevel'].'[RL' .$attempt['bookdiff'].']',
-                                            //$attempt['words'],
-                                            $showwords,
-                                            $attempt['bookpercent'],
-                                            $attempt['totalpoints']);
+                                       $attempt['booktitle'],
+                                       $attempt['booklevel'].'[RL' .$attempt['bookdiff'].']',
+                                       $showwords,
+                                       $attempt['bookpercent'],
+                                       $attempt['totalpoints']);
             }
         } else {
             // show status or points
             if ($reader->reportwordspoints == 2) {  //points and words
                 $table->data[] = array(date($dateformat, $attempt['timefinish']),
-                                            $attempt['booktitle'],
-                                            $attempt['booklevel'].'[RL'.$attempt['bookdiff'].']',
-                                            $attempt['statustext'],
-                                            //$attempt['words'],
-                                            $showwords,
-                                            $attempt['bookpoints'],
-                                            $attempt['totalpoints']);
+                                       $attempt['booktitle'],
+                                       $attempt['booklevel'].'[RL'.$attempt['bookdiff'].']',
+                                       $attempt['statustext'],
+                                       $showwords,
+                                       $attempt['bookpoints'],
+                                       $attempt['totalpoints']);
             } else if ($reader->reportwordspoints == 1) {  //points only
                 $table->data[] = array(date($dateformat, $attempt['timefinish']),
-                                            $attempt['booktitle'],
-                                            $attempt['booklevel'].'[RL'.$attempt['bookdiff'].']',
-                                            $attempt['statustext'],
-                                            $attempt['bookpoints'],
-                                            $attempt['totalpoints']);
+                                       $attempt['booktitle'],
+                                       $attempt['booklevel'].'[RL'.$attempt['bookdiff'].']',
+                                       $attempt['statustext'],
+                                       $attempt['bookpoints'],
+                                       $attempt['totalpoints']);
             } else if ($reader->reportwordspoints == 0) {  //words only
                 $table->data[] = array(date($dateformat, $attempt['timefinish']),
-                                            $attempt['booktitle'],
-                                            $attempt['booklevel'].'[RL'.$attempt['bookdiff'].']',
-                                            $attempt['statustext'],
-                                            //$attempt['words'],
-                                            $showwords,
-                                            $totalwords);
+                                       $attempt['booktitle'],
+                                       $attempt['booklevel'].'[RL'.$attempt['bookdiff'].']',
+                                       $attempt['statustext'],
+                                       $showwords,
+                                       $totalwords);
             }
         }
     }
@@ -584,9 +581,9 @@ function reader_view_blockgraph($reader, $leveldata, $dateformat) {
     $nextallow = $leveldata['onnextlevel'];
 
     // num of attempts completed at each difficulty level
-    $prevdone = $prevmax - $prevallow;
-    $thisdone = $thismax - $thisallow;
-    $nextdone = $nextmax - $nextallow;
+    $prevdone = ($prevmax - $prevallow);
+    $thisdone = ($thismax - $thisallow);
+    $nextdone = ($nextmax - $nextallow);
 
     // images
     $previmg = html_writer::empty_tag('img', array('src'=>new moodle_url('/mod/reader/pix/progress/lm1.jpg'), 'border'=>0, 'alt'=>'lm1', 'height'=>16, 'width'=>28, 'style'=>'margin:0 4px 0 0'));

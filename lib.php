@@ -52,9 +52,9 @@ function reader_get_config_defaults() {
         'pointreport'        => '0',
         'percentforreading'  => '60',
         'questionmark'       => '0',
-        'quiznextlevel'      => '6',
+        'nextlevel'          => '6',
+        'quiznextlevel'      => '1',
         'quizpreviouslevel'  => '3',
-        'quizonnextlevel'    => '1',
         'bookcovers'         => '1',
         'usecourse'          => '0',
         'iptimelimit'        => '0',
@@ -376,6 +376,7 @@ function reader_get_level_data($reader, $userid=0) {
             switch (true) {
 
                 case ($difficulty == ($level->currentlevel - 1)):
+                    // previous level
                     if ($level->currentlevel < $level->startlevel) {
                         $count['prev'] = -1;
                     } else if ($level->time < $attempt->timefinish) {
@@ -384,12 +385,14 @@ function reader_get_level_data($reader, $userid=0) {
                     break;
 
                 case ($difficulty == $level->currentlevel):
+                    // current level
                     if (strtolower($attempt->passed)=='true') {
                         $count['this'] += 1;
                     }
                     break;
 
                 case ($difficulty == ($level->currentlevel + 1)):
+                    // next level
                     if ($level->time < $attempt->timefinish) {
                         $count['next'] += 1;
                     }

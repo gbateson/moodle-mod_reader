@@ -1586,17 +1586,39 @@ function reader_clean_layout($layout, $removeemptypages = false) {
  * @todo Finish documenting this function
  */
 function reader_get_js_module() {
-    global $PAGE;
-    return array(
-        'name'     => 'mod_quiz',
-        'fullpath' => '/mod/quiz/module.js',
-        'requires' => array('base', 'dom', 'event-delegate', 'event-key', 'core_question_engine'),
-        'strings'  => array(
-            array('timesup', 'quiz'),
-            array('functiondisabledbysecuremode', 'quiz'),
-            array('flagged', 'question'),
-        ),
-    );
+    global $CFG;
+    switch (floatval($CFG->release)) {
+        case 2.0:
+        case 2.1:
+        case 2.2:
+            return array(
+                'name'     => 'mod_quiz',
+                'fullpath' => '/mod/quiz/module.js',
+                'requires' => array('base', 'dom', 'event-delegate', 'event-key', 'core_question_engine'),
+                'strings'  => array(
+                    array('timesup', 'quiz'),
+                    array('functiondisabledbysecuremode', 'quiz'),
+                    array('flagged', 'question'),
+                ),
+            );
+        default:
+            // Moodle >= 2.3
+            return array(
+                'name' => 'mod_quiz',
+                'fullpath' => '/mod/quiz/module.js',
+                'requires' => array('base', 'dom', 'event-delegate', 'event-key',
+                        'core_question_engine', 'moodle-core-formchangechecker'),
+                'strings' => array(
+                    array('cancel', 'moodle'),
+                    array('flagged', 'question'),
+                    array('functiondisabledbysecuremode', 'quiz'),
+                    array('startattempt', 'quiz'),
+                    array('timesup', 'quiz'),
+                    array('changesmadereallygoaway', 'moodle'),
+                ),
+            );
+
+    }
 }
 
 /** Include required files */
