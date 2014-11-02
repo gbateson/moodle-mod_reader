@@ -39,8 +39,8 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
 
     /** @var columns used in this table */
     protected $tablecolumns = array(
-        'selected', 'studentview', 'username', 'fullname', 'startlevel', 'currentlevel', 'nopromote',
-        'countpassed', 'countfailed', 'averageduration', 'averagegrade', 'wordsthisterm', 'wordsallterms'
+        'selected', 'studentview', 'username', 'fullname', 'startlevel', 'currentlevel',  'nopromote',
+        'countpassed', 'countfailed', 'averageduration', 'averagegrade', 'totalthisterm', 'totalallterms'
     );
 
     /** @var suppressed columns in this table */
@@ -53,7 +53,7 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
     protected $textcolumns = array('username', 'fullname');
 
     /** @var number columns in this table */
-    protected $numbercolumns = array('startlevel', 'currentlevel', 'countpassed', 'countfailed', 'wordsthisterm', 'wordsallterms');
+    protected $numbercolumns = array('startlevel', 'currentlevel', 'countpassed', 'countfailed', 'totalthisterm', 'totalallterms');
 
     /** @var columns that are not to be center aligned */
     protected $leftaligncolumns = array('username', 'fullname');
@@ -68,7 +68,7 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
         'startlevel'      => 1, 'currentlevel'  => 1, 'nopromote' => 1,
         'countpassed'     => 1, 'countfailed'   => 1,
         'averageduration' => 1, 'averagegrade'  => 1,
-        'wordsthisterm'   => 1, 'wordsallterms' => 1
+        'totalthisterm'   => 1, 'totalallterms' => 1
     );
 
     /** @var option fields */
@@ -94,7 +94,7 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
         // add "goal" column if required
         if ($this->output->reader->goal && ($DB->record_exists_select('reader_goals', $select, $params) || $DB->record_exists_select('reader_levels', $select, $params))) {
             if ($last = array_pop($tablecolumns)) {
-                if ($last=='wordsallterms') {
+                if ($last=='totalallterms') {
                     $tablecolumns[] = 'goal';
                     $tablecolumns[] = $last;
                 } else {
@@ -127,7 +127,7 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
         $select = $this->get_userfields('u', array('username'), 'userid').', '.
                   'raa.countpassed, raa.countfailed, '.
                   'raa.averageduration, raa.averagegrade, '.
-                  'raa.wordsthisterm, raa.wordsallterms,'.
+                  'raa.totalthisterm, raa.totalallterms,'.
                   'rl.startlevel, rl.currentlevel, rl.nopromote, 0 AS goal';
         $from   = '{user} u '.
                   "LEFT JOIN ($attemptsql) raa ON raa.userid = u.id ".
@@ -159,8 +159,8 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
             case 'countfailed':
             case 'averageduration':
             case 'averagegrade':
-            case 'wordsthisterm':
-            case 'wordsallterms':
+            case 'totalthisterm':
+            case 'totalallterms':
                 return array('', '');
                 //return array('reader_attempts', 'raa');
 
@@ -201,21 +201,21 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
     }
 
     /**
-     * header_wordsthisterm
+     * header_totalthisterm
      *
      * @return xxx
      */
-    public function header_wordsthisterm()  {
-        return $this->header_totalwords(get_string('thisterm', 'mod_reader'));
+    public function header_totalthisterm()  {
+        return $this->header_total(get_string('thisterm', 'mod_reader'));
     }
 
     /**
-     * header_wordsallterms
+     * header_totalallterms
      *
      * @return xxx
      */
-    public function header_wordsallterms()  {
-        return $this->header_totalwords(get_string('allterms', 'mod_reader'));
+    public function header_totalallterms()  {
+        return $this->header_total(get_string('allterms', 'mod_reader'));
     }
 
     /**

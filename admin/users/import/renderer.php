@@ -151,12 +151,12 @@ class mod_reader_admin_users_import_renderer extends mod_reader_admin_users_rend
 
                     if ($sameuser==false) {
                         if ($userid==0) {
-                            echo html_writer::start_tag('ul'); // start users
+                            echo html_writer::start_tag('ul', array('class' => 'importusers')); // start users
                         } else {
                             echo html_writer::end_tag('ul'); // end books
                             echo html_writer::end_tag('li'); // end user
                         }
-                        echo html_writer::start_tag('li'); // start user
+                        echo html_writer::start_tag('li', array('class' => 'importuser')); // start user
                         $fullname = fullname($users[$username]).' (username='.$username.', id='.$users[$username]->id.')';
                         echo html_writer::tag('span', $fullname, array('class' => 'importusername'));
                         $userid = $users[$username]->id;
@@ -164,16 +164,16 @@ class mod_reader_admin_users_import_renderer extends mod_reader_admin_users_rend
                     }
 
                     if ($bookid==0) {
-                        echo html_writer::start_tag('ul'); // start books
+                        echo html_writer::start_tag('ul', array('class' => 'importbooks')); // start books
                     }
 
-                    echo html_writer::start_tag('li'); // start book
+                    echo html_writer::start_tag('li', array('class' => 'importbook')); // start book
                     echo html_writer::tag('span', $books[$image]->name, array('class' => 'importbookname'));
-                    echo html_writer::start_tag('ul'); // start attempt list
+                    echo html_writer::start_tag('ul', array('class' => 'importattempts')); // start attempt list
                     $bookid = $books[$image]->id;
                 }
 
-                echo html_writer::start_tag('li'); // start attempt
+                echo html_writer::start_tag('li', array('class' => 'importattempt')); // start attempt
 
                 $strpassed = reader_format_passed($values['passed'], true);
                 $timefinish = userdate($values['timefinish'])." ($strpassed)";

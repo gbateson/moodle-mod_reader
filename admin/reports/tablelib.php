@@ -456,17 +456,23 @@ class reader_admin_reports_table extends table_sql {
                         'passed1' => 'true', 'time1' => $ignoredate,  // countpassed (this term)
                         'passed2' => 'true', 'time2' => $ignoredate); // countfailed (this term)
 
+        if ($this->output->reader->wordsorpoints==0) {
+            $totalfield = 'rb.words'; // words
+        } else {
+            $totalfield = 'rb.length'; // points
+        }
+
         switch ($groupbyfield) {
             case 'userid':
-                $wordsthisterm = "SUM(CASE WHEN (ra.reader = :reader7 AND ra.passed = :passed3 AND ra.timefinish > :time3) THEN rb.words ELSE 0 END)";
-                $wordsallterms = "SUM(CASE WHEN (ra.passed = :passed4 AND ra.timefinish > :time4) THEN rb.words ELSE 0 END)";
+                $totalthisterm = "SUM(CASE WHEN (ra.reader = :reader7 AND ra.passed = :passed3 AND ra.timefinish > :time3) THEN $totalfield ELSE 0 END)";
+                $totalallterms = "SUM(CASE WHEN (ra.passed = :passed4 AND ra.timefinish > :time4) THEN $totalfield ELSE 0 END)";
 
-                $select .= ",$wordsthisterm AS wordsthisterm".
-                           ",$wordsallterms AS wordsallterms";
+                $select .= ",$totalthisterm AS totalthisterm".
+                           ",$totalallterms AS totalallterms";
 
                 $params += array('reader7' => $this->output->reader->id,
-                                 'passed3' => 'true', 'time3' => $ignoredate, // wordsthisterm
-                                 'passed4' => 'true', 'time4' => 0);          // wordsallterms
+                                 'passed3' => 'true', 'time3' => $ignoredate, // totalthisterm
+                                 'passed4' => 'true', 'time4' => 0);          // totalallterms
                 break;
 
             case 'bookid':
@@ -1006,16 +1012,20 @@ class reader_admin_reports_table extends table_sql {
      *
      * @return xxx
      */
-    public function header_totalwords($type='')  {
-        $totalwords = get_string('totalwords', 'mod_reader');
+    public function header_total($type='')  {
+        if ($this->output->reader->wordsorpoints==0) {
+            $total = get_string('totalwords', 'mod_reader');
+        } else {
+            $total = get_string('totalpoints', 'mod_reader');
+        }
         if ($type) {
             if ($this->download) {
-                $totalwords .= " ($type)";
+                $total .= " ($type)";
             } else {
-                $totalwords .= ' '.html_writer::tag('span', "($type)", array('class' => 'nowrap'));
+                $total .= ' '.html_writer::tag('span', "($type)", array('class' => 'nowrap'));
             }
         }
-        return $totalwords;
+        return $total;
     }
 
     /**
@@ -1311,13 +1321,13 @@ class reader_admin_reports_table extends table_sql {
     }
 
     /**
-     * col_wordsthisterm
+     * col_totalthisterm
      *
      * @param xxx $row
      * @return xxx
      */
-    public function col_wordsthisterm($row) {
-        $wordsthisterm = number_format($row->wordsthisterm);
+    public function col_totalthisterm($row) {
+        $totalthisterm = number_format($row->totalthisterm);
         switch (true) {
             case isset($row->userid):
                 $params = array('mode' => 'userdetailed', 'userid' => $row->userid);
@@ -1331,9 +1341,9 @@ class reader_admin_reports_table extends table_sql {
                 $report_url = '';
         }
         if ($report_url) {
-        //    $wordsthisterm = html_writer::link($report_url, $wordsthisterm);
+        //    $totalthisterm = html_writer::link($report_url, $totalthisterm);
         }
-        return $wordsthisterm;
+        return $totalthisterm;
     }
 
     /**

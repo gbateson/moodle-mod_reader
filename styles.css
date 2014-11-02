@@ -28,6 +28,7 @@
 
 /** reader mod edit **/
 #page-mod-reader-mod .mform .fitem .fitemtitle {min-width: 190px; margin-right: 8px;}
+#page-mod-reader-mod .mform .fitem fieldset.felement {padding-left: 0%;}
 
 /** reader view **/
 #page-mod-reader-view h2 span.readingreporttitle {
@@ -154,6 +155,13 @@
                                          -o-border-radius: 6px;    /* Opera */
                                          border-radius: 6px;      /* CSS3 */}
 }
+#page-mod-reader-admin-users ul.importusers {}
+#page-mod-reader-admin-users li.importuser {}
+#page-mod-reader-admin-users span.importusername { font-size: 1.2em; }
+#page-mod-reader-admin-users ul.importbooks {}
+#page-mod-reader-admin-users li.importbook { font-weight: bold; margin-top: 6px; margin-bottom: 6px; }
+#page-mod-reader-admin-users ul.importattempts { list-style-type: none; margin: 0px; }
+#page-mod-reader-admin-users li.importattempt { font-weight: normal; }
 
 /** reader admin tools **/
 #page-mod-reader-admin-tools div.tabtree { margin-bottom: 0px; }

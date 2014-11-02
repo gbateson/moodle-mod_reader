@@ -287,9 +287,9 @@ function xmldb_reader_upgrade($oldversion) {
         // force all text fields to be long text - the default for Moodle 2.3+
         $tables = array(
             'reader' => array(
-                new xmldb_field('intro',   XMLDB_TYPE_TEXT, 'long', null, XMLDB_NOTNULL),
-                new xmldb_field('cheated', XMLDB_TYPE_TEXT, 'long', null, XMLDB_NOTNULL),
-                new xmldb_field('not',     XMLDB_TYPE_TEXT, 'long', null, XMLDB_NOTNULL),
+                new xmldb_field('intro', XMLDB_TYPE_TEXT, 'long', null, XMLDB_NOTNULL),
+                new xmldb_field('cheated_message', XMLDB_TYPE_TEXT, 'long', null, XMLDB_NOTNULL),
+                new xmldb_field('not_cheated_message', XMLDB_TYPE_TEXT, 'long', null, XMLDB_NOTNULL),
             ),
             'reader_attempts' => array(
                 new xmldb_field('layout',  XMLDB_TYPE_TEXT, 'long', null, XMLDB_NOTNULL),
@@ -784,10 +784,10 @@ function xmldb_reader_upgrade($oldversion) {
             }
         }
 
-        // rename field "secmeass" (security measures) to "checkip"
+        // rename field "secmeass" (security measures) to "checkcheating"
         $field = new xmldb_field('secmeass', XMLDB_TYPE_INTEGER, '4', null, null, null, '0');
         if ($dbman->field_exists($table, $field)) {
-            $dbman->rename_field($table, $field, 'checkip');
+            $dbman->rename_field($table, $field, 'checkcheating');
         }
 
         // create reader_attempt_questions table (replaces "reader_check_question_id")
@@ -923,6 +923,116 @@ function xmldb_reader_upgrade($oldversion) {
     if ($result && $oldversion < $newversion) {
         unset_config('quizonnextlevel', 'mod_reader');
         upgrade_mod_savepoint(true, "$newversion", 'reader');
+    }
+
+    $newversion = 2014110220;
+    if ($result && $oldversion < $newversion) {
+
+        // rename fields in "reader" table
+        $tables = array(
+            'reader' => array(
+                'uniqueip'        => new xmldb_field('individualstrictip',  XMLDB_TYPE_INTEGER, '4',  null, null, null, '0',  'popup'),
+                'minpassgrade'    => new xmldb_field('percentforreading',   XMLDB_TYPE_INTEGER, '4',  null, null, null, '60', 'uniqueip'),
+                'thislevel'       => new xmldb_field('nextlevel',           XMLDB_TYPE_INTEGER, '4',  null, null, null, '6',  'minpassgrade'),
+                'nextlevel'       => new xmldb_field('quiznextlevel',       XMLDB_TYPE_INTEGER, '4',  null, null, null, '1',  'thislevel'),
+                'prevlevel'       => new xmldb_field('quizpreviouslevel',   XMLDB_TYPE_INTEGER, '4',  null, null, null, '3',  'nextlevel'),
+                'stoplevel'       => new xmldb_field('promotionstop',       XMLDB_TYPE_INTEGER, '4',  null, null, null, '99', 'prevlevel'),
+                'wordsorpoints'   => new xmldb_field('reportwordspoints',   XMLDB_TYPE_INTEGER, '4',  null, null, null, '0',  'levelcheck'),
+                'showprogressbar' => new xmldb_field('wordsprogressbar',    XMLDB_TYPE_INTEGER, '4',  null, null, null, '1',  'wordsorpoints'),
+                'checkcheating'   => new xmldb_field('checkip',             XMLDB_TYPE_INTEGER, '4',  null, null, null, '1',  'showprogressbar'),
+                'notifycheating'  => new xmldb_field('sendmessagesaboutcheating', XMLDB_TYPE_INTEGER, '4', null, null, null, '1', 'bookinstances'),
+                'cheatedmessage'  => new xmldb_field('cheated_message',     XMLDB_TYPE_TEXT, 'long',  null, null, null, null, 'checkcheating'),
+                'clearedmessage'  => new xmldb_field('not_cheated_message', XMLDB_TYPE_TEXT, 'long',  null, null, null, null, 'cheatedmessage'),
+            ),
+            'reader_levels' => array(
+                'readerid'        => new xmldb_field('readerid',            XMLDB_TYPE_INTEGER, '11', null, null, null, '0',  'userid'),
+                'startlevel'      => new xmldb_field('startlevel',          XMLDB_TYPE_INTEGER, '4',  null, null, null, '0',  'readerid'),
+                'currentlevel'    => new xmldb_field('currentlevel',        XMLDB_TYPE_INTEGER, '4',  null, null, null, '0',  'startlevel'),
+                'stoplevel'       => new xmldb_field('promotionstop',       XMLDB_TYPE_INTEGER, '4',  null, null, null, '99', 'currentlevel'),
+            ),
+        );
+        foreach ($tables as $table => $fields) {
+            $table = new xmldb_table($table);
+            if ($table->getName()=='reader_levels') {
+                $indexes = array('readleve_rea_ix' => 'readerid',
+                                 'readleve_sta_ix' => 'startlevel',
+                                 'readleve_cur_ix' => 'currentlevel');
+            } else {
+                $indexes = array();;
+            }
+            foreach ($indexes as $index => $field) {
+                $index = new xmldb_index($index, XMLDB_INDEX_NOTUNIQUE, array($field));
+                if ($dbman->index_exists($table, $index)) {
+                    $dbman->drop_index($table, $index);
+                }
+            }
+            foreach ($fields as $newname => $field) {
+                if ($dbman->field_exists($table, $field)) {
+                    if ($dbman->field_exists($table, $newname)) {
+                        if ($field->getName() != $newname) {
+                            $field->setName($newname);
+                        }
+                        xmldb_reader_fix_previous_field($dbman, $table, $field);
+                        $dbman->change_field_type($table, $field);
+                    } else {
+                        xmldb_reader_fix_previous_field($dbman, $table, $field);
+                        $dbman->change_field_type($table, $field);
+                        if ($field->getName() != $newname) {
+                            $dbman->rename_field($table, $field, $newname);
+                        }
+                    }
+                }
+            }
+            foreach ($indexes as $index => $field) {
+                $index = new xmldb_index($index, XMLDB_INDEX_NOTUNIQUE, array($field));
+                if (! $dbman->index_exists($table, $index)) {
+                    $dbman->add_index($table, $index);
+                }
+            }
+        }
+
+        // rename Reader config settings
+        $readercfg = get_config($plugin);
+        $configs = array(
+            'individualstrictip'  => 'uniqueip',
+            'percentforreading'   => 'minpassgrade',
+            'nextlevel'           => 'thislevel',
+            'quiznextlevel'       => 'nextlevel',
+            'quizpreviouslevel'   => 'prevlevel',
+            'promotionstop'       => 'stoplevel',
+            'reportwordspoints'   => 'wordsorpoints',
+            'wordsprogressbar'    => 'showprogressbar',
+            'checkip'             => 'checkcheating',
+            'sendmessagesaboutcheating' => 'notifycheating',
+            'cheated_message'     => 'cheatedmessage',
+            'not_cheated_message' => 'clearedmessage',
+            'serverlink'          => 'serverurl',
+            'serverlogin'         => 'serverusername',
+        );
+        foreach ($configs as $oldname => $newname) {
+            if (isset($readercfg->$oldname)) {
+                if (isset($readercfg->$newname)) {
+                    // do nothing
+                } else {
+                    unset_config($oldname, $plugin);
+                    $value = $readercfg->$oldname;
+                    set_config($newname, $value, $plugin);
+                }
+            }
+        }
+
+        // remove obsolete Reader config settings
+        unset_config('update', $plugin);
+
+        // remove obsolete Reader fields
+        $table = new xmldb_table('reader');
+        $fields = array('reportwordspoints', 'pointreport');
+        foreach ($fields as $field) {
+            $field = new xmldb_field($field);
+            if ($dbman->field_exists($table, $field)) {
+                $dbman->drop_field($table, $field);
+            }
+        }
     }
 
     return $result;

@@ -101,14 +101,16 @@ class mod_reader_mod_form extends moodleform_mod {
         $this->set_type_default_advanced($mform, $config, $name, PARAM_INT);
         $mform->addHelpButton($name, $name, $plugin);
 
-        $name = 'wordsprogressbar';
+        $name = 'showprogressbar';
         $mform->addElement('selectyesno', $name, get_string($name, $plugin));
         $this->set_type_default_advanced($mform, $config, $name, PARAM_INT);
         $mform->addHelpButton($name, $name, $plugin);
 
-        $name = 'pointreport';
-        $label = get_string($name, $plugin);
-        $mform->addElement('selectyesno', $name, $label);
+        $name = 'wordsorpoints';
+        $options = array(0 => get_string('showwordcount', $plugin),
+                         1 => get_string('showpoints', $plugin),
+                         2 => get_string('showpointsandwordcount', $plugin));
+        $mform->addElement('select', $name, get_string($name, $plugin), $options);
         $this->set_type_default_advanced($mform, $config, $name, PARAM_INT);
         $mform->addHelpButton($name, $name, $plugin);
 
@@ -121,7 +123,7 @@ class mod_reader_mod_form extends moodleform_mod {
         $this->set_type_default_advanced($mform, $config, $name, PARAM_INT);
         $mform->addHelpButton($name, $name, $plugin);
 
-        $name = 'percentforreading';
+        $name = 'minpassgrade';
         $mform->addElement('text', $name, get_string($name, $plugin), $textoptions);
         $this->set_type_default_advanced($mform, $config, $name, PARAM_INT);
         $mform->addHelpButton($name, $name, $plugin);
@@ -131,25 +133,25 @@ class mod_reader_mod_form extends moodleform_mod {
         $this->set_type_default_advanced($mform, $config, $name, PARAM_INT);
         $mform->addHelpButton($name, 'totalpointsgoal', $plugin);
 
+        $name = 'thislevel';
+        $mform->addElement('text', $name, get_string($name, $plugin), $textoptions);
+        $this->set_type_default_advanced($mform, $config, $name, PARAM_INT);
+        $mform->addRule($name, null, 'required', null, 'client');
+        $mform->addHelpButton($name, $name, $plugin);
+
+        $name = 'prevlevel';
+        $mform->addElement('text', $name, get_string($name, $plugin), $textoptions);
+        $this->set_type_default_advanced($mform, $config, $name, PARAM_INT);
+        $mform->addRule($name, null, 'required', null, 'client');
+        $mform->addHelpButton($name, $name, $plugin);
+
         $name = 'nextlevel';
         $mform->addElement('text', $name, get_string($name, $plugin), $textoptions);
         $this->set_type_default_advanced($mform, $config, $name, PARAM_INT);
         $mform->addRule($name, null, 'required', null, 'client');
         $mform->addHelpButton($name, $name, $plugin);
 
-        $name = 'quizpreviouslevel';
-        $mform->addElement('text', $name, get_string($name, $plugin), $textoptions);
-        $this->set_type_default_advanced($mform, $config, $name, PARAM_INT);
-        $mform->addRule($name, null, 'required', null, 'client');
-        $mform->addHelpButton($name, $name, $plugin);
-
-        $name = 'quiznextlevel';
-        $mform->addElement('text', $name, get_string($name, $plugin), $textoptions);
-        $this->set_type_default_advanced($mform, $config, $name, PARAM_INT);
-        $mform->addRule($name, null, 'required', null, 'client');
-        $mform->addHelpButton($name, $name, $plugin);
-
-        $name = 'promotionstop';
+        $name = 'stoplevel';
         $mform->addElement('text', $name, get_string($name, $plugin), $textoptions);
         $this->set_type_default_advanced($mform, $config, $name, PARAM_INT);
         $mform->addHelpButton($name, $name, $plugin);
@@ -166,13 +168,13 @@ class mod_reader_mod_form extends moodleform_mod {
         $mform->addHelpButton($name, $name, $plugin);
         $this->set_type_default_advanced($mform, $config, $name, PARAM_INT);
 
-        $name = 'reportwordspoints';
-        $options = array(0 => get_string('showwordcount', $plugin),
-                         1 => get_string('showpoints', $plugin),
-                         2 => get_string('showpointsandwordcount', $plugin));
-        $mform->addElement('select', $name, get_string($name, $plugin), $options);
-        $this->set_type_default_advanced($mform, $config, $name, PARAM_INT);
-        $mform->addHelpButton($name, $name, $plugin);
+        //$name = 'wordsorpoints';
+        //$options = array(0 => get_string('showwordcount', $plugin),
+        //                 1 => get_string('showpoints', $plugin),
+        //                 2 => get_string('showpointsandwordcount', $plugin));
+        //$mform->addElement('select', $name, get_string($name, $plugin), $options);
+        //$this->set_type_default_advanced($mform, $config, $name, PARAM_INT);
+        //$mform->addHelpButton($name, $name, $plugin);
 
         $name = 'questionmark';
         $mform->addElement('selectyesno', $name, get_string($name, $plugin));
@@ -207,19 +209,11 @@ class mod_reader_mod_form extends moodleform_mod {
         $mform->addElement('header', 'security', get_string('security', 'form'));
         //-----------------------------------------------------------------------------
 
-        $name = 'checkip';
-        $options = array(0 => get_string('off', $plugin),
-                         1 => get_string('anywhere', $plugin),
-                         2 => get_string('adjoiningcomputers', $plugin));
-        $mform->addElement('select', $name, get_string($name, $plugin), $options);
-        $this->set_type_default_advanced($mform, $config, $name, PARAM_INT);
-        //$mform->addHelpButton($name, $name, $plugin);
-
         $name = 'popup';
-        $mform->addElement('selectyesno', $name, get_string($name, 'quiz'));
+        $mform->addElement('selectyesno', $name, get_string($name, $plugin));
         $this->set_type_default_advanced($mform, $config, $name, PARAM_INT);
-        $mform->addHelpButton($name, 'browsersecurity', 'quiz');
-        //$mform->addHelpButton($name, $name, $plugin);
+        $mform->addHelpButton($name, $name, $plugin);
+        //$mform->addHelpButton($name, 'browsersecurity', 'quiz');
 
         $name = 'requirepassword';
         $mform->addElement('passwordunmask', $name, get_string($name, 'quiz'));
@@ -231,27 +225,36 @@ class mod_reader_mod_form extends moodleform_mod {
         $this->set_type_default_advanced($mform, $config, $name, PARAM_TEXT);
         $mform->addHelpButton($name, $name, 'quiz');
 
-        $name = 'individualstrictip';
-        $mform->addElement('selectyesno', $name, get_string($name, $plugin));
-        $this->set_type_default_advanced($mform, $config, $name, PARAM_INT);
+        // this setting just duplicates checkcheating?
+        //$name = 'uniqueip';
+        //$mform->addElement('selectyesno', $name, get_string($name, $plugin));
+        //$this->set_type_default_advanced($mform, $config, $name, PARAM_INT);
         //$mform->addHelpButton($name, $name, $plugin);
 
-        $name = 'sendmessagesaboutcheating';
+        $name = 'checkcheating';
+        $options = array(0 => get_string('off', $plugin),
+                         1 => get_string('anywhere', $plugin),
+                         2 => get_string('adjoiningcomputers', $plugin));
+        $mform->addElement('select', $name, get_string($name, $plugin), $options);
+        $this->set_type_default_advanced($mform, $config, $name, PARAM_INT);
+        $mform->addHelpButton($name, $name, $plugin);
+
+        $name = 'notifycheating';
         $mform->addElement('selectyesno', $name, get_string($name, $plugin));
         $this->set_type_default_advanced($mform, $config, $name, PARAM_INT);
-        //$mform->addHelpButton($name, $name, $plugin);
+        $mform->addHelpButton($name, $name, $plugin);
 
-        $name = 'cheated_message';
+        $name = 'cheatedmessage';
         $options = array('rows' => 5, 'cols' => 50);
         $mform->addElement('textarea', $name, stripslashes(get_string($name, $plugin)), $options);
         $this->set_type_default_advanced($mform, $config, $name, PARAM_TEXT);
-        //$mform->addHelpButton($name, $name, $plugin);
+        $mform->addHelpButton($name, $name, $plugin);
 
-        $name = 'not_cheated_message';
+        $name = 'clearedmessage';
         $options = array('rows' => 5, 'cols' => 50);
         $mform->addElement('textarea', $name, stripslashes(get_string($name, $plugin)), $options);
         $this->set_type_default_advanced($mform, $config, $name, PARAM_TEXT);
-        //$mform->addHelpButton($name, $name, $plugin);
+        $mform->addHelpButton($name, $name, $plugin);
 
         //-----------------------------------------------------------------------------
         // add standard elements, common to all modules

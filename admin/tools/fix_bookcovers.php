@@ -95,8 +95,8 @@ echo $output->footer();
  */
 function reader_fetch_all_book_images($readercfg) {
 
-    $server    = $readercfg->serverlink;
-    $login     = $readercfg->serverlogin;
+    $server    = $readercfg->serverurl;
+    $login     = $readercfg->serverusername;
     $password  = $readercfg->serverpassword;
     $courseid  = $readercfg->usecourse;
 
@@ -246,8 +246,8 @@ function reader_fetch_attempted_book_images($readercfg) {
 function reader_fetch_book_image($readercfg, $itemids, $remotenames, $publisher, $level, $itemname, $imagefile) {
     global $CFG, $DB;
 
-    $server    = $readercfg->serverlink;
-    $login     = $readercfg->serverlogin;
+    $server    = $readercfg->serverurl;
+    $login     = $readercfg->serverusername;
     $password  = $readercfg->serverpassword;
     $courseid  = $readercfg->usecourse;
 
@@ -360,8 +360,8 @@ function reader_get_itemids($readercfg) {
 
     $itemids = array();
 
-    $server    = $readercfg->serverlink;
-    $login     = $readercfg->serverlogin;
+    $server    = $readercfg->serverurl;
+    $login     = $readercfg->serverusername;
     $password  = $readercfg->serverpassword;
 
     $params = array('a' => 'publishers', 'login' => $login, 'password' => $password);

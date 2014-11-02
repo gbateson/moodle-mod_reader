@@ -121,13 +121,13 @@ class mod_reader_renderer extends plugin_renderer_base {
         } else {
             // a student with level-checking enabled
             $leveldata = reader_get_level_data($this->reader, $userid);
-            if ($leveldata['onthislevel'] > 0 && $leveldata['currentlevel'] >= 0) {
+            if ($leveldata['thislevel'] > 0 && $leveldata['currentlevel'] >= 0) {
                 $levels[] = $leveldata['currentlevel'];
             }
-            if ($leveldata['onprevlevel'] > 0 && $leveldata['currentlevel'] >= 1) {
+            if ($leveldata['prevlevel'] > 0 && $leveldata['currentlevel'] >= 1) {
                 $levels[] = ($leveldata['currentlevel'] - 1);
             }
-            if ($leveldata['onnextlevel'] > 0) {
+            if ($leveldata['nextlevel'] > 0) {
                 $levels[] = ($leveldata['currentlevel'] + 1);
             }
             if (empty($levels)) {
@@ -626,7 +626,7 @@ class mod_reader_renderer extends plugin_renderer_base {
                 'startlevel'    => 0,
                 'currentlevel'  => 0,
                 'nopromote'     => 0,
-                'promotionstop' => $this->promotionstop,
+                'stoplevel' => $this->stoplevel,
                 'goal'          => 0,
                 'time'          => time(),
             );
@@ -670,7 +670,7 @@ class mod_reader_renderer extends plugin_renderer_base {
         }
 
         // if this is the highest allowed level, then enable the "nopromote" switch
-        if ($level->promotionstop > 0 && $level->promotionstop <= $level->currentlevel) {
+        if ($level->stoplevel > 0 && $level->stoplevel <= $level->currentlevel) {
             $DB->set_field('reader_levels', 'nopromote', 1, array('readerid' => $this->id, 'userid' => $USER->id));
             $level->nopromote = 1;
         }
@@ -680,7 +680,7 @@ class mod_reader_renderer extends plugin_renderer_base {
         }
 
         // promote this student, if they have done enough quizzes at this level
-        if ($count['this'] >= $this->nextlevel) {
+        if ($count['this'] >= $this->thislevel) {
             $level->currentlevel += 1;
             $level->time = time();
             $DB->update_record('reader_levels', $level);
@@ -700,12 +700,12 @@ class mod_reader_renderer extends plugin_renderer_base {
         $leveldata = array(
             'promotiondate' => $level->time,
             'currentlevel'  => $level->currentlevel,                      // current level of this user
-            'onprevlevel'   => $this->quizpreviouslevel - $count['prev'], // number of quizzes allowed at previous level
-            'onthislevel'   => $this->nextlevel         - $count['this'], // number of quizzes allowed at current level
-            'onnextlevel'   => $this->quiznextlevel     - $count['next']  // number of quizzes allowed at next level
+            'prevlevel'   => $this->prevlevel - $count['prev'], // number of quizzes allowed at previous level
+            'thislevel'   => $this->thislevel         - $count['this'], // number of quizzes allowed at current level
+            'nextlevel'   => $this->nextlevel     - $count['next']  // number of quizzes allowed at next level
         );
         if ($level->currentlevel==0 || $count['prev'] == -1) {
-            $leveldata['onprevlevel'] = -1;
+            $leveldata['prevlevel'] = -1;
         }
 
         return $leveldata;

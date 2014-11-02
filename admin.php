@@ -84,7 +84,7 @@ $searchtext             = optional_param('searchtext', NULL, PARAM_CLEAN);
 $needip                 = optional_param('needip', NULL, PARAM_CLEAN);
 $setip                  = optional_param('setip', NULL, PARAM_CLEAN);
 $nopromote              = optional_param('nopromote', NULL, PARAM_CLEAN);
-$promotionstop          = optional_param('promotionstop', NULL, PARAM_CLEAN);
+$stoplevel          = optional_param('stoplevel', NULL, PARAM_CLEAN);
 $private                = optional_param('private', 0, PARAM_INT);
 $ajax                   = optional_param('ajax', NULL, PARAM_CLEAN);
 $changeallstartlevel    = optional_param('changeallstartlevel', -1, PARAM_INT);
@@ -434,7 +434,7 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && ($changelevel ||
             'currentlevel'  => $changelevel,
             'readerid'      => $reader->id,
             'nopromote'     => 0,
-            'promotionstop' => 99,
+            'stoplevel' => 99,
             'goal'          => null,
             'time'          => time()
         );
@@ -543,7 +543,7 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $act == 'student
             'currentlevel'  => 0,
             'readerid'      => $reader->id,
             'nopromote'     => 0,
-            'promotionstop' => 99,
+            'stoplevel' => 99,
             'goal'          => $setgoal,
             'time'          => time()
         );
@@ -568,7 +568,7 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && isset($nopromote
             'currentlevel'  => 0,
             'readerid'      => $reader->id,
             'nopromote'     => $nopromote,
-            'promotionstop' => 99,
+            'stoplevel' => 99,
             'goal'          => null,
             'time'          => time()
         );
@@ -581,10 +581,10 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && isset($nopromote
     }
 }
 
-if (has_capability('mod/reader:addinstance', $contextmodule) && isset($promotionstop) && $userid) {
+if (has_capability('mod/reader:addinstance', $contextmodule) && isset($stoplevel) && $userid) {
     $params = array('userid' => $userid, 'readerid' => $reader->id);
     if ($studentlevel = $DB->get_record('reader_levels', $params)) {
-        $studentlevel->promotionstop = $promotionstop;
+        $studentlevel->stoplevel = $stoplevel;
         $DB->update_record('reader_levels', $studentlevel);
     } else {
         $studentlevel = (object)array(
@@ -593,15 +593,15 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && isset($promotion
             'currentlevel'  => 0,
             'readerid'      => $reader->id,
             'nopromote'     => 0,
-            'promotionstop' => $promotionstop,
+            'stoplevel' => $stoplevel,
             'goal'          => null,
             'time'          => time()
         );
         $studentlevel->id = $DB->insert_record('reader_levels', $level);
     }
-    reader_add_to_log($course->id, 'reader', substr("AA-Student Promotion Stop Changed ({$userid} set to {$promotionstop})",0,39), 'admin.php?id='.$id, $cm->instance);
+    reader_add_to_log($course->id, 'reader', substr("AA-Student Promotion Stop Changed ({$userid} set to {$stoplevel})",0,39), 'admin.php?id='.$id, $cm->instance);
     if ($ajax == 'true') {
-        echo reader_promotionstop_menu($userid, $studentlevel, 'promotionstop', 2);
+        echo reader_promotionstop_menu($userid, $studentlevel, 'stoplevel', 2);
         die;
     }
 }
@@ -639,7 +639,7 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $changeallstartl
                 'currentlevel'  => $changeallstartlevel,
                 'readerid'      => $reader->id,
                 'nopromote'     => 0,
-                'promotionstop' => 99,
+                'stoplevel' => 99,
                 'goal'          => null,
                 'time'          => time()
             );
@@ -662,7 +662,7 @@ if (has_capability('mod/reader:addinstance', $contextmodule) &&  $changeallcurre
                 'currentlevel'  => $changeallcurrentlevel,
                 'readerid'      => $reader->id,
                 'nopromote'     => 0,
-                'promotionstop' => 99,
+                'stoplevel' => 99,
                 'goal'          => null,
                 'time'          => time()
             );
@@ -690,13 +690,13 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $changeallpromo)
                 'currentlevel'  => 0,
                 'readerid'      => $reader->id,
                 'nopromote'     => $nopromote,
-                'promotionstop' => 99,
+                'stoplevel' => 99,
                 'goal'          => null,
                 'time'          => time()
             );
             $studentlevel->id = $DB->insert_record('reader_levels', $studentlevel);
         }
-        reader_add_to_log($course->id, 'reader', substr("AA-Student Promotion Stop Changed ({$coursestudent->id} set to {$promotionstop})",0,39), 'admin.php?id='.$id, $cm->instance);
+        reader_add_to_log($course->id, 'reader', substr("AA-Student Promotion Stop Changed ({$coursestudent->id} set to {$stoplevel})",0,39), 'admin.php?id='.$id, $cm->instance);
     }
 }
 
@@ -704,7 +704,7 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $changeallstoppr
     foreach ($coursestudents as $coursestudent) {
         $params = array('userid' => $coursestudent->id, 'readerid' => $reader->id);
         if ($studentlevel = $DB->get_record('reader_levels', $params)) {
-            $studentlevel->promotionstop = $changeallstoppromo;
+            $studentlevel->stoplevel = $changeallstoppromo;
             $DB->update_record('reader_levels', $studentlevel);
         } else {
             $studentlevel = (object)array(
@@ -713,7 +713,7 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $changeallstoppr
                 'currentlevel'  => 0,
                 'readerid'      => $reader->id,
                 'nopromote'     => 0,
-                'promotionstop' => $changeallstoppromo,
+                'stoplevel' => $changeallstoppromo,
                 'goal'          => null,
                 'time'          => time()
             );
@@ -736,7 +736,7 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $changeallcurren
                 'currentlevel'  => 0,
                 'readerid'      => $reader->id,
                 'nopromote'     => 0,
-                'promotionstop' => 99,
+                'stoplevel' => 99,
                 'goal'          => changeallcurrentgoal,
                 'time'          => time()
             );
@@ -818,11 +818,11 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $cheated) {
 
     $DB->insert_record('reader_cheated_log', $data);
 
-    if ($reader->sendmessagesaboutcheating == 1) {
+    if ($reader->notifycheating == 1) {
         $user1 = $DB->get_record('user', array('id' => $userid1->userid));
         $user2 = $DB->get_record('user', array('id' => $userid2->userid));
-        email_to_user($user1,get_admin(),'Cheated notice',$reader->cheated_message);
-        email_to_user($user2,get_admin(),'Cheated notice',$reader->cheated_message);
+        email_to_user($user1,get_admin(),'Cheated notice',$reader->cheatedmessage);
+        email_to_user($user2,get_admin(),'Cheated notice',$reader->cheatedmessage);
     }
 }
 
@@ -849,11 +849,11 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $uncheated) {
 
     $DB->insert_record('reader_cheated_log', $data);
 
-    if ($reader->sendmessagesaboutcheating == 1) {
+    if ($reader->notifycheating == 1) {
         $user1 = $DB->get_record('user', array('id' => $userid1->userid));
         $user2 = $DB->get_record('user', array('id' => $userid2->userid));
-        email_to_user($user1,get_admin(),'Points restored notice',$reader->not_cheated_message);
-        email_to_user($user2,get_admin(),'Points restored notice',$reader->not_cheated_message);
+        email_to_user($user1,get_admin(),'Points restored notice',$reader->clearedmessage);
+        email_to_user($user2,get_admin(),'Points restored notice',$reader->clearedmessage);
     }
 }
 
@@ -970,7 +970,7 @@ if ($act == 'adjustscores' && !empty($adjustscoresaddpoints) && !empty($adjustsc
     foreach ($adjustscoresupbooks as $key => $value) {
         $data = $DB->get_record('reader_attempts', array('id' => $value));
         $newpoint = $data->percentgrade + $adjustscoresaddpoints;
-        $passed = (($newpoint >= $reader->percentforreading) ? 'true' : 'false');
+        $passed = (($newpoint >= $reader->minpassgrade) ? 'true' : 'false');
         $attempt = new stdClass();
         $attempt->id           = $value;
         $attempt->passed       = $passed;
@@ -988,7 +988,7 @@ if ($act == 'adjustscores' && !empty($adjustscoresupall) && !empty($adjustscores
         foreach ($dataarr as $ida) {
             $data = $DB->get_record('reader_attempts', array('id' => $ida->id));
             $newpoint = $data->percentgrade + $adjustscorespby;
-            $passed = (($newpoint >= $reader->percentforreading) ? 'true' : 'false');
+            $passed = (($newpoint >= $reader->minpassgrade) ? 'true' : 'false');
             $attempt = new stdClass();
             $attempt->id = $ida->id;
             $attempt->passed  = $passed;
@@ -1194,7 +1194,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
 
                 echo $output->box_start('generalbox');
 
-                echo '<h2>'.get_string('quizpreviouslevel', 'mod_reader').'</h2><br />';
+                echo '<h2>'.get_string('prevlevel', 'mod_reader').'</h2><br />';
 
                 echo '<form action="admin.php?a=admin&id='.$id.'" method="post" enctype="multipart/form-data">';
                 echo '<table style="width:100%">';
@@ -1322,7 +1322,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
                     $totalpoints = round(($readerattempt->sumgrades / $totalgrade) * 100, 2);
                 }
                 $totalpointsaverage += $totalpoints;
-                if ($totalpoints >= $reader->percentforreading) {
+                if ($totalpoints >= $reader->minpassgrade) {
                     $correctpoints += 1;
                 }
             }
@@ -2290,7 +2290,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
 
     $titles = array('Image'=>'', 'Username'=>'username', 'Fullname<br />Click to view screen'=>'fullname', 'Start level'=>'startlevel', 'Current level'=>'currentlevel', 'NoPromote'=>'nopromote', 'Stop Promo At'=>'promotionstops', 'Goal'=>'goal');
 
-    if ($reader->individualstrictip == 1) {
+    if ($reader->uniqueip == 1) {
         $titles['Restrict IP'] = '';
     }
 
@@ -2317,7 +2317,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
                     'startlevel'    => 0,
                     'currentlevel'  => 0,
                     'nopromote'     => 0,
-                    'promotionstop' => 99,
+                    'stoplevel' => 99,
                     'goal'          => null,
                     'time'          => time()
                 );
@@ -2338,10 +2338,10 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
                 reader_level_menu($coursestudent->id, $studentlevel, 'startlevel'),
                 reader_level_menu($coursestudent->id, $studentlevel, 'currentlevel'),
                 reader_promo_menu($coursestudent->id, $studentlevel, 'nopromote', 1),
-                reader_promotionstop_menu($coursestudent->id, $studentlevel, 'promotionstop', 2),
+                reader_promotionstop_menu($coursestudent->id, $studentlevel, 'stoplevel', 2),
                 reader_goals_menu($coursestudent->id, $studentlevel, 'goal', 3, $reader)
             );
-            if ($reader->individualstrictip == 1) {
+            if ($reader->uniqueip == 1) {
                 $cells[] = reader_ip_menu($coursestudent->id, $reader);
             }
             $table->data[] = new html_table_row($cells);
@@ -5758,30 +5758,3 @@ function reader_groups_get_user_groups($userid=0) {
 
     return $result;
 }
-
-/**
- * reader_format_passed
- *
- * @param string $passed
- * @param boolean $fulltext (optional, default=false)
- * @return string
- * @todo Finish documenting this function
- */
-function reader_format_passed($passed, $fulltext=false) {
-    $passed = strtolower($passed);
-    if ($fulltext) {
-        switch ($passed) {
-            case 'true': return 'Passed'; break;
-            case 'false': return 'Failed'; break;
-            case 'cheated': return 'Cheated'; break;
-        }
-    } else {
-        switch ($passed) {
-            case 'true': return 'P'; break;
-            case 'false': return 'F'; break;
-            case 'cheated': return 'C'; break;
-        }
-    }
-    return $passed; // shouldn't happen !!
-}
-

@@ -49,39 +49,29 @@ define('READER_REVIEW_GENERALFEEDBACK', 32*0x1041);
 function reader_get_config_defaults() {
     $defaults = array(
         'quiztimelimit'      => '900', // 900 secs = 15 mins
-        'pointreport'        => '0',
-        'percentforreading'  => '60',
+        'wordsorpoints'        => '0',
+        'minpassgrade'       => '60',
         'questionmark'       => '0',
-        'nextlevel'          => '6',
-        'quiznextlevel'      => '1',
-        'quizpreviouslevel'  => '3',
+        'thislevel'          => '6',
+        'nextlevel'          => '1',
+        'prevlevel'          => '3',
         'bookcovers'         => '1',
         'usecourse'          => '0',
         'iptimelimit'        => '0',
         'levelcheck'         => '1',
-        'reportwordspoints'  => '0',
-        'wordsprogressbar'   => '1',
+        'wordsorpoints'      => '0',
+        'showprogressbar'    => '1',
         'checkbox'           => '0',
-        'sendmessagesaboutcheating' => '1',
+        'notifycheating'      => '1',
         'editingteacherrole' => '1',
         'update'             => '1',
         'last_update'        => '1',
         'update_interval'    => '604800',
-        'cheated_message'    => 'We are sorry to say that the MoodleReader program has discovered '.
-                                'that you have probably cheated when you took the above quiz. '.
-                                "'Cheating' means that you either helped another person to take the quiz ".
-                                'or that you received help from someone else to take the quiz. '.
-                                "Both people have been marked 'cheated'\n\n".
-                                'Sometimes the computer makes mistakes. '.
-                                'If you honestly did not receive help and did not help someone else, '.
-                                'then please inform your teacher and your points will be restored.'."\n\n".
-                                '--The MoodleReader Module Manager',
-        'not_cheated_message' => 'We are happy to inform you that your points for the above quiz have been restored. '.
-                                 'We apologize for the mistake!'."\n\n".
-                                 '--The MoodleReader Module Manager',
-        'serverlink'          => 'http://moodlereader.net/quizbank',
-        'serverlogin'         => '',
-        'serverpassword'      => ''
+        'cheatedmessage'     => get_string('cheatedmessagedefault', 'mod_reader'),
+        'clearedmessage'     => get_string('clearedmessagedefault', 'mod_reader'),
+        'serverurl'          => 'http://moodlereader.net/quizbank',
+        'serverusername'     => '',
+        'serverpassword'     => ''
     );
 
     $readercfg = get_config('mod_reader');
@@ -149,9 +139,9 @@ function reader_update_instance($reader, $id) {
     $reader->subnet = $reader->requiresubnet;
     unset($reader->requiresubnet);
 
-    // update "promotionstop" field in "reader_levels" table
-    if (isset($reader->promotionstop)) {
-        $DB->set_field('reader_levels', 'promotionstop', $reader->promotionstop, array('readerid' => $reader->id));
+    // update "stoplevel" field in "reader_levels" table
+    if (isset($reader->stoplevel)) {
+        $DB->set_field('reader_levels', 'stoplevel', $reader->stoplevel, array('readerid' => $reader->id));
     }
 
     return $DB->update_record('reader', $reader);
@@ -355,7 +345,7 @@ function reader_get_level_data($reader, $userid=0) {
             'startlevel'    => 0,
             'currentlevel'  => 0,
             'nopromote'     => 0,
-            'promotionstop' => $reader->promotionstop,
+            'stoplevel' => $reader->stoplevel,
             'goal'          => 0,
             'time'          => time(),
         );
@@ -402,7 +392,7 @@ function reader_get_level_data($reader, $userid=0) {
     }
 
     // if this is the highest allowed level, then enable the "nopromote" switch
-    if ($level->promotionstop > 0 && $level->promotionstop <= $level->currentlevel) {
+    if ($level->stoplevel > 0 && $level->stoplevel <= $level->currentlevel) {
         $DB->set_field('reader_levels', 'nopromote', 1, array('readerid' => $reader->id, 'userid' => $USER->id));
         $level->nopromote = 1;
     }
@@ -412,7 +402,7 @@ function reader_get_level_data($reader, $userid=0) {
     }
 
     // promote this student, if they have done enough quizzes at this level
-    if ($count['this'] >= $reader->nextlevel) {
+    if ($count['this'] >= $reader->thislevel) {
         $level->currentlevel += 1;
         $level->time = time();
         $DB->update_record('reader_levels', $level);
@@ -431,13 +421,13 @@ function reader_get_level_data($reader, $userid=0) {
     // prepare level data
     $leveldata = array(
         'promotiondate' => $level->time,
-        'currentlevel'  => $level->currentlevel,                        // current level of this user
-        'onprevlevel'   => $reader->quizpreviouslevel - $count['prev'], // number of quizzes allowed at previous level
-        'onthislevel'   => $reader->nextlevel         - $count['this'], // number of quizzes allowed at current level
-        'onnextlevel'   => $reader->quiznextlevel     - $count['next']  // number of quizzes allowed at next level
+        'currentlevel'  => $level->currentlevel,                // current level of this user
+        'prevlevel'   => $reader->prevlevel - $count['prev'], // number of quizzes allowed at previous level
+        'thislevel'   => $reader->thislevel - $count['this'], // number of quizzes allowed at current level
+        'nextlevel'   => $reader->nextlevel - $count['next']  // number of quizzes allowed at next level
     );
     if ($level->currentlevel==0 || $count['prev'] == -1) {
-        $leveldata['onprevlevel'] = -1;
+        $leveldata['prevlevel'] = -1;
     }
 
     return $leveldata;
@@ -1081,7 +1071,7 @@ function reader_get_goal_progress($progress, $reader) {
     //        'startlevel'    => 0,
     //        'currentlevel'  => 0,
     //        'readerid'      => $reader->id,
-    //        'promotionstop' => $reader->promotionstop,
+    //        'stoplevel' => $reader->stoplevel,
     //        'time'          => time(),
     //    );
     //    $levels->id = $DB->insert_record('reader_levels', $levels);
@@ -1293,6 +1283,32 @@ function reader_format_delay($seconds) {
     }
 
     return "$text ";
+}
+
+/**
+ * reader_format_passed
+ *
+ * @param string $passed
+ * @param boolean $fulltext (optional, default=false)
+ * @return string
+ * @todo Finish documenting this function
+ */
+function reader_format_passed($passed, $fulltext=false) {
+    $passed = strtolower($passed);
+    if ($fulltext) {
+        switch ($passed) {
+            case 'true': return 'Passed'; break;
+            case 'false': return 'Failed'; break;
+            case 'cheated': return 'Cheated'; break;
+        }
+    } else {
+        switch ($passed) {
+            case 'true': return 'P'; break;
+            case 'false': return 'F'; break;
+            case 'cheated': return 'C'; break;
+        }
+    }
+    return $passed; // shouldn't happen !!
 }
 
 /**
@@ -1722,13 +1738,13 @@ function reader_available_sql($cmid, $reader, $userid, $noquiz=false) {
     } else {
         // a student with level-checking enabled
         $leveldata = reader_get_level_data($reader, $userid);
-        if ($leveldata['onthislevel'] > 0 && $leveldata['currentlevel'] >= 0) {
+        if ($leveldata['thislevel'] > 0 && $leveldata['currentlevel'] >= 0) {
             $levels[] = $leveldata['currentlevel'];
         }
-        if ($leveldata['onprevlevel'] > 0 && $leveldata['currentlevel'] >= 1) {
+        if ($leveldata['prevlevel'] > 0 && $leveldata['currentlevel'] >= 1) {
             $levels[] = ($leveldata['currentlevel'] - 1);
         }
-        if ($leveldata['onnextlevel'] > 0) {
+        if ($leveldata['nextlevel'] > 0) {
             $levels[] = ($leveldata['currentlevel'] + 1);
         }
         if (empty($levels)) {
@@ -2229,13 +2245,13 @@ function reader_search_books($cmid, $reader, $userid, $showform=false, $action='
             }
         } else {
             $leveldata = reader_get_level_data($reader, $userid);
-            if ($leveldata['onprevlevel'] > 0 && $leveldata['currentlevel'] >= 1) {
+            if ($leveldata['prevlevel'] > 0 && $leveldata['currentlevel'] >= 1) {
                 $levels[] = ($leveldata['currentlevel'] - 1);
             }
-            if ($leveldata['onthislevel'] > 0 && $leveldata['currentlevel'] >= 0) {
+            if ($leveldata['thislevel'] > 0 && $leveldata['currentlevel'] >= 0) {
                 $levels[] = $leveldata['currentlevel'];
             }
-            if ($leveldata['onnextlevel'] > 0) {
+            if ($leveldata['nextlevel'] > 0) {
                 $levels[] = ($leveldata['currentlevel'] + 1);
             }
         }

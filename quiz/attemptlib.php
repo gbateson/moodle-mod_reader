@@ -1220,7 +1220,7 @@ class reader_attempt {
         $this->attempt->sumgrades    = $this->quba->get_total_mark();
         $this->attempt->percentgrade = round($this->quba->get_total_mark() / $this->readerquiz->quiz->sumgrades * 100);
 
-        if ($this->readerquiz->reader->percentforreading <= $this->attempt->percentgrade) {
+        if ($this->readerquiz->reader->minpassgrade <= $this->attempt->percentgrade) {
             $this->attempt->passed = 'true';
             $passedlog = "Passed";
         } else {

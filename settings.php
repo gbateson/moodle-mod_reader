@@ -67,8 +67,8 @@ $options = array(
 $setting = new admin_setting_configselect_with_advanced("$plugin/$name", $text, $help, $default, $options);
 $settings->add($setting);
 
-// pointreport
-$name = 'pointreport';
+// wordsorpoints
+$name = 'wordsorpoints';
 $text = get_string($name, $plugin);
 $help = get_string('config'.$name, $plugin);
 $default = array('value' => $config->$name, 'adv' => false);
@@ -103,8 +103,8 @@ $options = array(
 $setting = new admin_setting_configselect_with_advanced("$plugin/$name", $text, $help, $default, $options);
 $settings->add($setting);
 
-// percentforreading
-$name = 'percentforreading';
+// minpassgrade
+$name = 'minpassgrade';
 $text = get_string($name, $plugin);
 $help = get_string('config'.$name, $plugin);
 $default = array('value' => $config->$name, 'adv' => false);
@@ -135,8 +135,8 @@ $options = array(
 $setting = new admin_setting_configselect_with_advanced("$plugin/$name", $text, $help, $default, $options);
 $settings->add($setting);
 
-// reportwordspoints
-$name = 'reportwordspoints';
+// wordsorpoints
+$name = 'wordsorpoints';
 $text = get_string($name, $plugin);
 $help = get_string('config'.$name, $plugin);
 $default = array('value' => $config->$name, 'adv' => false);
@@ -148,8 +148,8 @@ $options = array(
 $setting = new admin_setting_configselect_with_advanced("$plugin/$name", $text, $help, $default, $options);
 $settings->add($setting);
 
-// wordsprogressbar
-$name = 'wordsprogressbar';
+// showprogressbar
+$name = 'showprogressbar';
 $text = get_string($name, $plugin);
 $help = get_string('config'.$name, $plugin);
 $default = array('value' => $config->$name, 'adv' => false);
@@ -160,24 +160,24 @@ $options = array(
 $setting = new admin_setting_configselect_with_advanced("$plugin/$name", $text, $help, $default, $options);
 $settings->add($setting);
 
+// thislevel
+$name = 'thislevel';
+$text = get_string($name, $plugin);
+$help = get_string('config'.$name, $plugin);
+$default = array('value' => $config->$name, 'adv' => false);
+$setting = new admin_setting_configtext_with_advanced("$plugin/$name", $text, $help, $default, PARAM_INT);
+$settings->add($setting);
+
+// prevlevel
+$name = 'prevlevel';
+$text = get_string($name, $plugin);
+$help = get_string('config'.$name, $plugin);
+$default = array('value' => $config->$name, 'adv' => false);
+$setting = new admin_setting_configtext_with_advanced("$plugin/$name", $text, $help, $default, PARAM_INT);
+$settings->add($setting);
+
 // nextlevel
 $name = 'nextlevel';
-$text = get_string($name, $plugin);
-$help = get_string('config'.$name, $plugin);
-$default = array('value' => $config->$name, 'adv' => false);
-$setting = new admin_setting_configtext_with_advanced("$plugin/$name", $text, $help, $default, PARAM_INT);
-$settings->add($setting);
-
-// quizpreviouslevel
-$name = 'quizpreviouslevel';
-$text = get_string($name, $plugin);
-$help = get_string('config'.$name, $plugin);
-$default = array('value' => $config->$name, 'adv' => false);
-$setting = new admin_setting_configtext_with_advanced("$plugin/$name", $text, $help, $default, PARAM_INT);
-$settings->add($setting);
-
-// quiznextlevel
-$name = 'quiznextlevel';
 $text = get_string($name, $plugin);
 $help = get_string('config'.$name, $plugin);
 $default = array('value' => $config->$name, 'adv' => false);
@@ -196,8 +196,8 @@ foreach (get_courses() as $course) {
 $setting = new admin_setting_configselect_with_advanced("$plugin/$name", $text, $help, $default, $options);
 $settings->add($setting);
 
-// update
-$name = 'update';
+// notifycheating
+$name = 'notifycheating';
 $text = get_string($name, $plugin);
 $help = get_string('config'.$name, $plugin);
 $default = array('value' => $config->$name, 'adv' => false);
@@ -208,44 +208,32 @@ $options = array(
 $setting = new admin_setting_configselect_with_advanced("$plugin/$name", $text, $help, $default, $options);
 $settings->add($setting);
 
-// sendmessagesaboutcheating
-$name = 'sendmessagesaboutcheating';
-$text = get_string($name, $plugin);
-$help = get_string('config'.$name, $plugin);
-$default = array('value' => $config->$name, 'adv' => false);
-$options = array(
-    0 => get_string('no'),
-    1 => get_string('yes')
-);
-$setting = new admin_setting_configselect_with_advanced("$plugin/$name", $text, $help, $default, $options);
-$settings->add($setting);
-
-// cheated_message
-$name = 'cheated_message';
+// cheatedmessage
+$name = 'cheatedmessage';
 $text = get_string($name, $plugin);
 $help = get_string('config'.$name, $plugin);
 $default = $config->$name;
 $setting = new admin_setting_configtextarea("$plugin/$name", $text, $help, $default);
 $settings->add($setting);
 
-// not_cheated_message
-$name = 'not_cheated_message';
+// clearedmessage
+$name = 'clearedmessage';
 $text = get_string($name, $plugin);
 $help = get_string('config'.$name, $plugin);
 $default = $config->$name;
 $setting = new admin_setting_configtextarea("$plugin/$name", $text, $help, $default);
 $settings->add($setting);
 
-// serverlink
-$name = 'serverlink';
+// serverurl
+$name = 'serverurl';
 $text = get_string($name, $plugin);
 $help = get_string('config'.$name, $plugin);
 $default = array('value' => 'http://moodlereader.net/quizbank', 'adv' => false);
 $setting = new admin_setting_configtext_with_advanced("$plugin/$name", $text, $help, $default, PARAM_TEXT);
 $settings->add($setting);
 
-// serverlogin
-$name = 'serverlogin';
+// serverusername
+$name = 'serverusername';
 $text = get_string($name, $plugin);
 $help = get_string('config'.$name, $plugin);
 $default = array('value' => '', 'adv' => false);

@@ -1406,9 +1406,9 @@ function reader_install_missingquizzes($books) {
     }
 
     $params = array('a' => 'publishers',
-                    'login' => $readercfg->serverlogin,
+                    'login' => $readercfg->serverusername,
                     'password' => $readercfg->serverpassword);
-    $url = new moodle_url($readercfg->serverlink.'/', $params);
+    $url = new moodle_url($readercfg->serverurl.'/', $params);
 
     if(! $xml = reader_file($url)) {
         return false; // shouldn't happen
@@ -1454,9 +1454,9 @@ function reader_install_missingquizzes($books) {
 
     // set download url
     $params = array('a' => 'quizzes',
-                    'login' => $readercfg->serverlogin,
+                    'login' => $readercfg->serverusername,
                     'password' => $readercfg->serverpassword);
-    $url = new moodle_url($readercfg->serverlink.'/', $params);
+    $url = new moodle_url($readercfg->serverurl.'/', $params);
     // http://moodlereader.net/quizbank
 
     // download quiz data and convert to array
@@ -1542,7 +1542,7 @@ function reader_install_missingquizzes($books) {
 
         // download questions for this quiz
         $params = array('getid' => $itemid, 'pass' => ''); // $pass
-        $url = new moodle_url($readercfg->serverlink.'/getfile.php', $params);
+        $url = new moodle_url($readercfg->serverurl.'/getfile.php', $params);
         $xml = reader_file($url);
         $xml = preg_replace($test101, '', $xml); // remove "Test101" question category (if any)
 
@@ -1764,7 +1764,7 @@ function reader_xmldb_get_quiz_images($readercfg, $xml, $targetcourseid) {
         }
 
         $params = array('imagelink' => urlencode($image));
-        $image_file_url = new moodle_url($readercfg->serverlink.'/getfile_quiz_image.php', $params);
+        $image_file_url = new moodle_url($readercfg->serverurl.'/getfile_quiz_image.php', $params);
         $image_contents = file_get_contents($image_file_url);
 
         if ($fp = @fopen($CFG->dataroot.'/'.$dirname.$basename, 'w+')) {

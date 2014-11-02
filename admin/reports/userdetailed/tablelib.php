@@ -40,7 +40,8 @@ class reader_admin_reports_userdetailed_table extends reader_admin_reports_table
     /** @var columns used in this table */
     protected $tablecolumns = array(
         'studentview', 'username', 'fullname', 'currentlevel', 'difficulty', 'name',
-        'selected', 'timefinish', 'duration', 'grade', 'passed', 'words', 'totalwords',
+        'selected', 'timefinish', 'duration', 'grade', 'passed',
+        'words', 'totalwords', 'points', 'totalpoints'
     );
 
     /** @var suppressed columns in this table */
@@ -53,7 +54,7 @@ class reader_admin_reports_userdetailed_table extends reader_admin_reports_table
     protected $textcolumns = array('username', 'fullname', 'name');
 
     /** @var number columns in this table */
-    protected $numbercolumns = array('currentlevel', 'difficulty', 'words', 'totalwords');
+    protected $numbercolumns = array('currentlevel', 'difficulty', 'words', 'totalwords', 'points', 'totalpoints');
 
     /** @var columns that are not to be center aligned */
     protected $leftaligncolumns = array('username', 'fullname', 'name');
@@ -69,7 +70,8 @@ class reader_admin_reports_userdetailed_table extends reader_admin_reports_table
         'difficulty' => 1, 'name'         => 1,
         'timefinish' => 1, 'duration'     => 1,
         'grade'      => 1, 'passed'       => 1,
-        'words'      => 1, //'totalwords' => 1
+        'words'      => 1, //'totalwords' => 1,
+        'points'     => 1, //'totalpoints' => 1,
     );
 
     /** @var option fields */
@@ -86,6 +88,31 @@ class reader_admin_reports_userdetailed_table extends reader_admin_reports_table
     ////////////////////////////////////////////////////////////////////////////////
 
     /**
+     * Constructor
+     *
+     * @param int $uniqueid
+     */
+    public function __construct($uniqueid, $output) {
+        if ($output->reader->wordsorpoints==0) {
+            $values = array('points', 'totalpoints');
+        } else {
+            $values = array('words', 'totalwords');
+        }
+        foreach ($values as $value) {
+            if ($i = array_search($value, $this->tablecolumns)) {
+                array_splice($this->tablecolumns, $i, 1);
+            }
+            if ($i = array_search($value, $this->numbercolumns)) {
+                array_splice($this->numbercolumns, $i, 1);
+            }
+            if (array_key_exists($value, $this->filterfields)) {
+                unset($this->filterfields[$value]);
+            }
+        }
+        parent::__construct($uniqueid, $output);
+    }
+
+    /**
      * select_sql
      *
      * @uses $DB
@@ -98,11 +125,21 @@ class reader_admin_reports_userdetailed_table extends reader_admin_reports_table
         // get users who can access this Reader activity
         list($usersql, $userparams) = $this->select_sql_users();
 
-        $words    = 'CASE WHEN (ra.passed = :passed) THEN rb.words ELSE 0 END';
+        if ($this->output->reader->wordsorpoints==0) {
+            $field1 = 'rb.words';
+            $field2 = 'words';
+            $field3 = 'totalwords';
+        } else {
+            $field1 = 'rb.length';
+            $field2 = 'points';
+            $field3 = 'totalpoints';
+        }
+
+        $score    = 'CASE WHEN (ra.passed = :passed) THEN '.$field1.' ELSE 0 END';
         $grade    = 'CASE WHEN (ra.percentgrade IS NULL) THEN 0 ELSE ra.percentgrade END';
         $duration = 'CASE WHEN (ra.timefinish IS NULL OR ra.timefinish = 0) THEN 0 ELSE (ra.timefinish - ra.timestart) END';
 
-        $select = "ra.id, ra.timefinish, ($duration) as duration, ($grade) as grade, ra.passed, ($words) AS words, 0 AS totalwords, ".
+        $select = "ra.id, ra.timefinish, ($duration) as duration, ($grade) as grade, ra.passed, ($score) AS $field2, 0 AS $field3, ".
                   $this->get_userfields('u', array('username'), 'userid').', '.
                   'rl.currentlevel, rb.difficulty, rb.name';
         $from   = '{reader_attempts} ra '.
@@ -167,6 +204,33 @@ class reader_admin_reports_userdetailed_table extends reader_admin_reports_table
         return get_string('words', 'mod_reader');
     }
 
+    /**
+     * header_points
+     *
+     * @return xxx
+     */
+    public function header_points() {
+        return get_string('points', 'mod_reader');
+    }
+
+    /**
+     * header_totalwords
+     *
+     * @return xxx
+     */
+    public function header_totalwords() {
+        return $this->header_total();
+    }
+
+    /**
+     * header_totalpoints
+     *
+     * @return xxx
+     */
+    public function header_totalpoints() {
+        return $this->header_total();
+    }
+
     ////////////////////////////////////////////////////////////////////////////////
     // functions to format data cells                                             //
     ////////////////////////////////////////////////////////////////////////////////
@@ -178,8 +242,29 @@ class reader_admin_reports_userdetailed_table extends reader_admin_reports_table
      * @return xxx
      */
     public function col_totalwords($row)  {
+        return $this->col_total($row, 'words');
+    }
+
+    /**
+     * col_totalpoints
+     *
+     * @param xxx $row
+     * @return xxx
+     */
+    public function col_totalpoints($row)  {
+        return $this->col_total($row, 'points');
+    }
+
+    /**
+     * col_totalwords
+     *
+     * @param xxx $row
+     * @param xxx $field
+     * @return xxx
+     */
+    public function col_total($row, $field)  {
         static $userid = 0;
-        static $totalwords = 0;
+        static $total = 0;
 
         if (empty($row->userid)) {
             return $this->empty_cell(); // shouldn't happen !!
@@ -189,13 +274,13 @@ class reader_admin_reports_userdetailed_table extends reader_admin_reports_table
             // same user
         } else {
             $userid = $row->userid;
-            $totalwords = 0;
+            $total = 0;
         }
 
-        if (isset($row->passed) && $row->passed=='true' && isset($row->words)) {
-            $totalwords += $row->words;
+        if (isset($row->passed) && $row->passed=='true' && isset($row->$field)) {
+            $total += $row->$field;
         }
 
-        return number_format($totalwords);
+        return number_format($total);
     }
 }

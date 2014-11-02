@@ -80,8 +80,8 @@ class mod_reader_admin_books_download_renderer extends mod_reader_admin_books_re
         echo $this->heading(get_string($str, 'mod_reader'));
 
         // create an object to represent main download site (moodlereader.net)
-        $remotesite = new reader_remotesite_moodlereadernet(get_config('mod_reader', 'serverlink'),
-                                                            get_config('mod_reader', 'serverlogin'),
+        $remotesite = new reader_remotesite_moodlereadernet(get_config('mod_reader', 'serverurl'),
+                                                            get_config('mod_reader', 'serverusername'),
                                                             get_config('mod_reader', 'serverpassword'));
 
         // create an object to handle the downloading of data from remote sites
@@ -135,7 +135,7 @@ class mod_reader_admin_books_download_renderer extends mod_reader_admin_books_re
 
             $output .= $this->form_end();
 
-        } else if (get_config('mod_reader', 'serverlink') && get_config('mod_reader', 'serverlogin')) {
+        } else if (get_config('mod_reader', 'serverurl') && get_config('mod_reader', 'serverusername')) {
 
             // no items to download - probably internet connection has been lost
             $output .= $this->heading(get_string('nodownloaditems', 'mod_reader'), '3');

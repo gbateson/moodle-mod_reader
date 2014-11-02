@@ -72,6 +72,8 @@ class reader_admin_reports_userdetailed_filtering extends reader_admin_reports_f
 
             case 'words':
             case 'totalwords':
+            case 'points':
+            case 'totalpoints':
                 $label = get_string($fieldname, 'mod_reader');
                 return new reader_admin_reports_filter_number($fieldname, $label, $advanced, $fieldname, $default, 'where');
 

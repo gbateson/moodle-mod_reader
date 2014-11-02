@@ -109,8 +109,8 @@ class reader_admin_reports_groupsummary_table extends reader_admin_reports_table
                   'SUM(raa.countpassed) AS countpassed,'.
                   'SUM(raa.countfailed) AS countfailed,'.
                   'SUM(raa.averagegrade) AS sumaveragegrade,'.
-                  'SUM(raa.wordsthisterm) AS wordsthisterm,'.
-                  'SUM(raa.wordsallterms) AS wordsallterms';
+                  'SUM(raa.totalthisterm) AS totalthisterm,'.
+                  'SUM(raa.totalallterms) AS totalallterms';
 
         $from   = '{user} u '.
                   "LEFT JOIN ($attemptsql) raa ON u.id = raa.userid ".
@@ -374,7 +374,7 @@ class reader_admin_reports_groupsummary_table extends reader_admin_reports_table
         if (empty($row->countusers)) {
             return '';
         } else {
-            return number_format(round($row->wordsthisterm / $row->countusers));
+            return number_format(round($row->totalthisterm / $row->countusers));
         }
     }
 
@@ -388,7 +388,7 @@ class reader_admin_reports_groupsummary_table extends reader_admin_reports_table
         if (empty($row->countusers)) {
             return '';
         } else {
-            return number_format(round($row->wordsallterms / $row->countusers));
+            return number_format(round($row->totalallterms / $row->countusers));
         }
     }
 

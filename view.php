@@ -132,8 +132,8 @@ echo $output->box_start('generalbox');
 
 $table = new html_table();
 
-if ($reader->pointreport == 1) {
-    if ($reader->reportwordspoints != 1) {  //1 - only points
+if ($reader->wordsorpoints == 1) {
+    if ($reader->wordsorpoints != 1) {  //1 - only points
         $table->head = array('Date', 'Book Title', 'Level', 'Words', 'Percent Correct', 'Total Points');
         $table->align = array('left', 'left', 'left', 'center', 'center', 'center');
     } else {
@@ -141,13 +141,13 @@ if ($reader->pointreport == 1) {
         $table->align = array('left', 'left', 'left', 'center', 'center');
     }
 } else {
-    if ($reader->reportwordspoints == 2) {  //points and words
+    if ($reader->wordsorpoints == 2) {  //points and words
         $table->head = array('Date', 'Book Title', 'Level', 'Status', 'Words', 'Points This Book', 'Total Points');
         $table->align = array('left', 'left', 'left', 'center', 'center', 'center', 'center');
-    } else if ($reader->reportwordspoints == 1) {  //points only
+    } else if ($reader->wordsorpoints == 1) {  //points only
         $table->head = array('Date', 'Book Title', 'Level', 'Status', 'Points This Book', 'Total Points');
         $table->align = array('left', 'left', 'left', 'center', 'center', 'center');
-    } else if ($reader->reportwordspoints == 0) {  //words only
+    } else if ($reader->wordsorpoints == 0) {  //words only
         $table->head = array('Date', 'Book Title', 'Level', 'Status', 'Words', 'Total words');
         $table->align = array('left', 'left', 'left', 'center', 'center', 'center');
     }
@@ -231,9 +231,9 @@ if (count($attempts)) {
             $showwords = '';
         }
 
-        if ($reader->pointreport == 1) {
+        if ($reader->wordsorpoints == 1) {
             // hide status or points
-            if ($reader->reportwordspoints == 1) {
+            if ($reader->wordsorpoints == 1) {
                 // points
                 $table->data[] = array(date($dateformat, $attempt['timefinish']),
                                        $attempt['booktitle'],
@@ -251,7 +251,7 @@ if (count($attempts)) {
             }
         } else {
             // show status or points
-            if ($reader->reportwordspoints == 2) {  //points and words
+            if ($reader->wordsorpoints == 2) {  //points and words
                 $table->data[] = array(date($dateformat, $attempt['timefinish']),
                                        $attempt['booktitle'],
                                        $attempt['booklevel'].'[RL'.$attempt['bookdiff'].']',
@@ -259,14 +259,14 @@ if (count($attempts)) {
                                        $showwords,
                                        $attempt['bookpoints'],
                                        $attempt['totalpoints']);
-            } else if ($reader->reportwordspoints == 1) {  //points only
+            } else if ($reader->wordsorpoints == 1) {  //points only
                 $table->data[] = array(date($dateformat, $attempt['timefinish']),
                                        $attempt['booktitle'],
                                        $attempt['booklevel'].'[RL'.$attempt['bookdiff'].']',
                                        $attempt['statustext'],
                                        $attempt['bookpoints'],
                                        $attempt['totalpoints']);
-            } else if ($reader->reportwordspoints == 0) {  //words only
+            } else if ($reader->wordsorpoints == 0) {  //words only
                 $table->data[] = array(date($dateformat, $attempt['timefinish']),
                                        $attempt['booktitle'],
                                        $attempt['booklevel'].'[RL'.$attempt['bookdiff'].']',
@@ -360,7 +360,7 @@ if (! empty($table->data)) {
     //echo '<center>'.get_string('nodata', 'mod_reader').'</center>';
 }
 
-if ($reader->wordsprogressbar) {
+if ($reader->showprogressbar) {
     echo '<table width="800" cellpadding="5" cellspacing="1" class="generaltable boxaligncenter"><tr>';
     echo '<th width="500" style="text-align:right;font-weight:lighter;">'.get_string('totalwords', 'mod_reader').': '.$totalwords.'</th>';
     echo '<th style="text-align:right;font-weight:lighter;">'.get_string('totalwordsall', 'mod_reader').": ".$totalwordsall.'</th>';
@@ -374,7 +374,7 @@ if ($reader->wordsprogressbar) {
     echo '</td></tr></table>';
 }
 
-//if ($reader->nextlevel == $leveldata['onthislevel']) {
+//if ($reader->thislevel == $leveldata['thislevel']) {
 //    $displaymore = "";
 //} else {
 //    $displaymore = " more ";
@@ -384,7 +384,7 @@ echo '<h3>'.get_string('yourcurrentlevel', 'mod_reader').': '.$leveldata['curren
 
 $promoteinfo = $DB->get_record('reader_levels', array('userid' => $USER->id, 'readerid' => $reader->id));
 if ($promoteinfo->nopromote == 1) {
-    if ($promoteinfo->promotionstop == $leveldata['currentlevel']) {
+    if ($promoteinfo->stoplevel == $leveldata['currentlevel']) {
         print_string('pleaseaskyourinstructor', 'reader');
     } else {
         print_string('yourteacherhasstopped', 'reader');
@@ -392,34 +392,34 @@ if ($promoteinfo->nopromote == 1) {
 
     print_string('youcantakeasmanyquizzesasyouwant', 'reader', $leveldata['currentlevel']);
 
-    if ($leveldata['onprevlevel'] <= 0) {
+    if ($leveldata['prevlevel'] <= 0) {
         $quizcount = 'no';
     } else {
-        $quizcount = $leveldata['onprevlevel'];
+        $quizcount = $leveldata['prevlevel'];
     }
-    if ($leveldata['onprevlevel'] == 1) { $quiztext = 'quiz'; } else { $quiztext = 'quizzes'; }
+    if ($leveldata['prevlevel'] == 1) { $quiztext = 'quiz'; } else { $quiztext = 'quizzes'; }
     print_string('youmayalsotake', 'reader', $quizcount);
     echo '{$quiztext} '.get_string('atlevel', 'mod_reader').' '.($leveldata['currentlevel'] - 1).' ';
 
 } else if ($reader->levelcheck == 1) {
 
-    if ($leveldata['onthislevel'] == 1) {
-        print_string('youmusttakequiz', 'reader', $leveldata['onthislevel']);
+    if ($leveldata['thislevel'] == 1) {
+        print_string('youmusttakequiz', 'reader', $leveldata['thislevel']);
     } else {
-        print_string('youmusttakequizzes', 'reader', $leveldata['onthislevel']);
+        print_string('youmusttakequizzes', 'reader', $leveldata['thislevel']);
     }
     print_string('atlevelbeforebeingpromoted', 'reader', $leveldata['currentlevel']);
 
-    if ($leveldata['onprevlevel'] <= 0) {
+    if ($leveldata['prevlevel'] <= 0) {
         $quizcount = 'no';
     } else {
-        $quizcount = $leveldata['onprevlevel'];
+        $quizcount = $leveldata['prevlevel'];
     }
-    if ($leveldata['onprevlevel'] == 1) { $quiztext = "quiz"; } else { $quiztext = "quizzes"; }
+    if ($leveldata['prevlevel'] == 1) { $quiztext = "quiz"; } else { $quiztext = "quizzes"; }
 
     if (($leveldata['currentlevel'] - 1) >= 0) {
 
-        if ($leveldata['onprevlevel'] > 0 && $leveldata['onnextlevel'] <= 0) {
+        if ($leveldata['prevlevel'] > 0 && $leveldata['nextlevel'] <= 0) {
             $quiznextlevelso = 'but';
         } else {
             $quiznextlevelso = 'and';
@@ -430,17 +430,17 @@ if ($promoteinfo->nopromote == 1) {
         print_string('youcantake', 'reader');
     }
 
-    if ($leveldata['onnextlevel'] <= 0) {
+    if ($leveldata['nextlevel'] <= 0) {
         $quizcount = 'no';
     } else {
-        $quizcount = $leveldata['onnextlevel'];
+        $quizcount = $leveldata['nextlevel'];
     }
 
     if (! isset($quiznextlevelso)) {
         $quiznextlevelso = "";
     }
 
-    if ($leveldata['onnextlevel'] == 1) {
+    if ($leveldata['nextlevel'] == 1) {
         $quiztext = ' quiz '; } else { $quiztext = ' quizzes ';
     }
     echo $quiznextlevelso.get_string('andnextmore', 'mod_reader', $quizcount).$quiztext.get_string('atlevel', 'mod_reader'). ' ' . ($leveldata['currentlevel'] + 1 .'.');
@@ -571,14 +571,14 @@ reader_change_to_teacherview();
 function reader_view_blockgraph($reader, $leveldata, $dateformat) {
 
     // max attempts allowed at each difficulty level
-    $prevmax = $reader->quizpreviouslevel;
-    $thismax = $reader->nextlevel;
-    $nextmax = $reader->quiznextlevel;
+    $prevmax = $reader->prevlevel;
+    $thismax = $reader->thislevel;
+    $nextmax = $reader->nextlevel;
 
     // num of attempts allowed at each difficulty level
-    $prevallow = $leveldata['onprevlevel'];
-    $thisallow = $leveldata['onthislevel'];
-    $nextallow = $leveldata['onnextlevel'];
+    $prevallow = $leveldata['prevlevel'];
+    $thisallow = $leveldata['thislevel'];
+    $nextallow = $leveldata['nextlevel'];
 
     // num of attempts completed at each difficulty level
     $prevdone = ($prevmax - $prevallow);
