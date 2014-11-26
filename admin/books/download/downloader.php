@@ -866,15 +866,6 @@ class reader_downloader {
             return false; // shouldn't happen !!
         }
 
-        // can we use html in progress bar title?
-        if (floatval($CFG->release) <= 2.7) {
-            // Moodle <= 2.7 uses update_progress_bar
-            $usehtml = true;
-        } else {
-            // Moodle >= 2.8 uses updateProgressBar
-            $usehtml = false;
-        }
-
         $this->bar = reader_download_progress_bar::create($itemids, 'readerdownload');
 
         // show memory on main Reader module developer site
@@ -934,7 +925,7 @@ class reader_downloader {
             }
 
             // show this book in the progress bar
-            $title = ($i + 1).' / '.$i_max.' '.($usehtml ? $titlehtml : $titletext);
+            $title = ($i + 1).' / '.$i_max.' '.$titlehtml;
             $this->bar->start_item($itemid, $title);
 
             // set $params to select $book
@@ -1123,12 +1114,8 @@ class reader_downloader {
         }
         if ($errors) {
             $errors = get_string('errorsfound', 'mod_reader').': '.$errors;
-            if ($usehtml) {
-                $title .= html_writer::empty_tag('br');
-                $title .= html_writer::tag('span', $errors, array('class' => 'error'));
-            } else {
-                $title .= ' '.$errors; // no formatting available in Moodle >= 2.7
-            }
+            $title .= html_writer::empty_tag('br');
+            $title .= html_writer::tag('span', $errors, array('class' => 'error'));
             $title .= ' ('.get_string('seedetailsbelow', 'mod_reader').')';
         }
         $this->bar->finish($title);
