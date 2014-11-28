@@ -52,7 +52,7 @@ class course_module_edited extends \core\event\base {
      * @return string
      */
     public static function get_name() {
-        return get_string('eventcoursemoduleedited', 'mod_reader');
+        return get_string('event_course_module_edited', 'mod_reader');
     }
 
     /**
@@ -61,7 +61,7 @@ class course_module_edited extends \core\event\base {
      * @return string
      */
     public function get_description() {
-        return get_string('eventcoursemoduleedited_desc', 'mod_reader', $this);
+        return get_string('event_course_module_edited_desc', 'mod_reader', $this);
     }
 
     /**

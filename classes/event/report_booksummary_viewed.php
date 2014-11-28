@@ -52,7 +52,7 @@ class report_booksummary_viewed extends \core\event\base {
      * @return string
      */
     public static function get_name() {
-        return get_string('eventreportbooksummaryviewed', 'mod_reader');
+        return get_string('event_report_booksummary_viewed', 'mod_reader');
     }
 
     /**
@@ -61,7 +61,7 @@ class report_booksummary_viewed extends \core\event\base {
      * @return string
      */
     public function get_description() {
-        return get_string('eventreportbooksummaryviewed_desc', 'mod_reader', $this);
+        return get_string('event_report_booksummary_viewed_desc', 'mod_reader', $this);
     }
 
     /**

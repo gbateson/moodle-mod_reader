@@ -52,7 +52,7 @@ class quiz_started extends \core\event\base {
      * @return string
      */
     public static function get_name() {
-        return get_string('eventquizstarted', 'mod_reader');
+        return get_string('event_quiz_started', 'mod_reader');
     }
 
     /**
@@ -61,7 +61,7 @@ class quiz_started extends \core\event\base {
      * @return string
      */
     public function get_description() {
-        return get_string('eventquizstarted_desc', 'mod_reader', $this);
+        return get_string('event_quiz_started_desc', 'mod_reader', $this);
     }
 
     /**

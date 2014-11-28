@@ -52,7 +52,7 @@ class report_userdetailed_viewed extends \core\event\base {
      * @return string
      */
     public static function get_name() {
-        return get_string('eventreportuserdetailedviewed', 'mod_reader');
+        return get_string('event_report_userdetailed_viewed', 'mod_reader');
     }
 
     /**
@@ -61,7 +61,7 @@ class report_userdetailed_viewed extends \core\event\base {
      * @return string
      */
     public function get_description() {
-        return get_string('eventreportuserdetailedviewed_desc', 'mod_reader', $this);
+        return get_string('event_report_userdetailed_viewed_desc', 'mod_reader', $this);
     }
 
     /**

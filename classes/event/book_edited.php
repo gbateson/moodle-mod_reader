@@ -52,7 +52,7 @@ class book_edited extends \core\event\base {
      * @return string
      */
     public static function get_name() {
-        return get_string('eventbookedited', 'mod_reader');
+        return get_string('event_book_edited', 'mod_reader');
     }
 
     /**
@@ -61,7 +61,7 @@ class book_edited extends \core\event\base {
      * @return string
      */
     public function get_description() {
-        return get_string('eventbookedited_desc', 'mod_reader', $this);
+        return get_string('event_book_edited_desc', 'mod_reader', $this);
     }
 
     /**

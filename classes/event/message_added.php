@@ -52,7 +52,7 @@ class message_added extends \core\event\base {
      * @return string
      */
     public static function get_name() {
-        return get_string('eventmessageadded', 'mod_reader');
+        return get_string('event_message_added', 'mod_reader');
     }
 
     /**
@@ -61,7 +61,7 @@ class message_added extends \core\event\base {
      * @return string
      */
     public function get_description() {
-        return get_string('eventmessageadded_desc', 'mod_reader', $this);
+        return get_string('event_message_added_desc', 'mod_reader', $this);
     }
 
     /**

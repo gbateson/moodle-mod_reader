@@ -1520,12 +1520,131 @@ function reader_optional_param_array($name, $default, $type, $recursive=true) {
 
 /**
  * reader_add_to_log
+ *
+ **************************
+    AA-Attempts Deleted
+    AA-Book Deleted
+    AA-Books status changed
+    AA-Change difficulty individual (xxx xxx to xxx)
+    AA-Change length (xxx xxx to xxx)
+    AA-Change length individual (xxx xxx to xxx)
+    AA-Change Student Goal (xxx)
+    AA-changeallcurrentlevel userid: xxx, currentlevel=xxx
+    AA-changeallstartlevel userid: xxx, startlevel=xxx
+    AA-cheated
+    AA-excel
+    AA-goal userid: xxx, goal=xxx
+    AA-Mass changes difficulty (xxx to xxx)
+    AA-Mass changes length (xxx to xxx)
+    AA-Mass changes level (xxx to xxx)
+    AA-Mass changes publisher (xxx to xxx)
+    AA-Message Added
+    AA-Message Deleted
+    AA-Quizzes Added
+    AA-reader_deleted_attempts
+    AA-reader_restore_attempts
+    AA-set passed (uncheated)
+    AA-Student check ip Changed (xxx xxx)
+    AA-Student Level Changed (xxx xxx to xxx)
+    AA-Student NoPromote Changed (xxx set to xxx)
+    AA-Student Promotion Stop Changed (xxx set to xxx)
+    AA-wordsorpoints goal=xxx
+    admin area
+    Admin users
+    Ajax get list of books
+    Ajax get list of users
+    attempt
+    AWP (userid: xxx; set: xxx->words)
+    AWP (userid: xxx; set: xxx)
+    Cron
+    delete mod
+    finish attempt:
+    index
+    Reader admin index
+    view attempt
+    view personal page
+ **************************
+ * @param integer $courseid
+ * @param string  $action
+ * @param string  $url
+ * @param string  $info
+ * @param integer $cm
+ * @param integer $user
+ * @param integer $legacy_add_to_log (optional, default=true)
+ * @return void, but may update log tabes in DB
  */
-function reader_add_to_log($courseid, $module, $action, $url='', $info='', $cm=0, $user=0) {
+function reader_add_to_log($courseid, $module, $action, $url='', $info='', $cm=0, $user=0, $legacy_add_to_log=true) {
+    global $PAGE;
+
+    // detect new event API (Moodle >= 2.6)
     if (function_exists('get_log_manager')) {
-        $manager = get_log_manager();
-        $manager->legacy_add_to_log($courseid, $module, $action, $url, $info, $cm, $user);
+
+        // log action in legacy log
+        if ($legacy_add_to_log) {
+            $manager = get_log_manager();
+            if (method_exists($manager, 'legacy_add_to_log')) {
+                $manager->legacy_add_to_log($courseid, $module, $action, $url, $info, $cm, $user);
+            }
+        }
+
+        // map old $action to new $eventname
+        switch ($action) {
+            case 'attemptadded':          $eventname = 'attempt_added';         break;
+            case 'attemptdeleted':        $eventname = 'attempt_deleted';       break;
+            case 'attemptedited':         $eventname = 'attempt_edited';        break;
+            case 'attemptsubmitted':      $eventname = 'attempt_submitted';     break;
+            case 'bookadded':             $eventname = 'book_added';            break;
+            case 'bookdeleted':           $eventname = 'book_deleted';          break;
+            case 'bookedited':            $eventname = 'book_edited';           break;
+            case 'booksdownloaded':       $eventname = 'books_downloaded';      break;
+            case 'course_module_added':   $eventname = 'course_module_added';   break;
+            case 'course_module_deleted': $eventname = 'course_module_deleted'; break;
+            case 'course_module_edited':  $eventname = 'course_module_edited';  break;
+            case 'course_module_viewed':  $eventname = 'course_module_viewed';  break;
+            case 'cronrun':               $eventname = 'cron_run';              break;
+            case 'downloadsviewed':       $eventname = 'downloads_viewed';      break;
+            case 'index':                 $eventname = 'course_module_instance_list_viewed'; break;
+            case 'messageadded':          $eventname = 'message_added';         break;
+            case 'messagedeleted':        $eventname = 'message_deleted';       break;
+            case 'messageedited':         $eventname = 'message_edited';        break;
+            case 'quizadded':             $eventname = 'quiz_added';            break;
+            case 'quizdelayset':          $eventname = 'quiz_delay_set';        break;
+            case 'quizdeleted':           $eventname = 'quiz_deleted';          break;
+            case 'quizedited':            $eventname = 'quiz_edited';           break;
+            case 'quizfinished':          $eventname = 'quiz_finished';         break;
+            case 'quizselected':          $eventname = 'quiz_selected';         break;
+            case 'quizstarted':           $eventname = 'quiz_started';          break;
+            case 'reportbookdetailed':    $eventname = 'report_bookdetailed_viewed'; break;
+            case 'reportbooksummary':     $eventname = 'report_booksummary_viewed';  break;
+            case 'reportgroups':          $eventname = 'report_groups_viewed';       break;
+            case 'reportuserdetailed':    $eventname = 'report_userdetailed_viewed'; break;
+            case 'reportusersummary':     $eventname = 'report_usersummary_viewed';  break;
+            case 'toolrun':               $eventname = 'tool_run';              break;
+            case 'usergoalset':           $eventname = 'user_goal_set';         break;
+            case 'userlevelset':          $eventname = 'user_level_set';        break;
+            case 'usersexported':         $eventname = 'users_exported';        break;
+            case 'usersimported':         $eventname = 'users_imported';        break;
+            case 'view':                  $eventname = 'course_module_viewed'; break;
+            default: $eventname = $action;
+        }
+
+        $classname = '\\mod_reader\\event\\'.$eventname;
+        if (class_exists($classname)) {
+            $params = array('objectid' => $PAGE->cm->instance,
+                            'context'  => $PAGE->context);
+            // use call_user_func() to prevent syntax error in PHP 5.2.x
+            $event = call_user_func(array($classname, 'create'), $params);
+            if (isset($PAGE->course)) {
+                $event->add_record_snapshot('course', $PAGE->course);
+            }
+            if (isset($PAGE->activityrecord)) {
+                $event->add_record_snapshot($PAGE->cm->modname, $PAGE->activityrecord);
+            }
+            $event->trigger();
+        }
+
     } else if (function_exists('add_to_log')) {
+        // Moodle <= 2.6
         add_to_log($courseid, $module, $action, $url, $info, $cm, $user);
     }
 }

@@ -52,7 +52,7 @@ class user_level_set extends \core\event\base {
      * @return string
      */
     public static function get_name() {
-        return get_string('eventuserlevelset', 'mod_reader');
+        return get_string('event_user_level_set', 'mod_reader');
     }
 
     /**
@@ -61,7 +61,7 @@ class user_level_set extends \core\event\base {
      * @return string
      */
     public function get_description() {
-        return get_string('eventuserlevelset_desc', 'mod_reader', $this);
+        return get_string('event_user_level_set_desc', 'mod_reader', $this);
     }
 
     /**

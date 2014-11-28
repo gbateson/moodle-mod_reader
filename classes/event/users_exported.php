@@ -52,7 +52,7 @@ class users_exported extends \core\event\base {
      * @return string
      */
     public static function get_name() {
-        return get_string('eventusersexported', 'mod_reader');
+        return get_string('event_users_exported', 'mod_reader');
     }
 
     /**
@@ -61,7 +61,7 @@ class users_exported extends \core\event\base {
      * @return string
      */
     public function get_description() {
-        return get_string('eventusersexported_desc', 'mod_reader', $this);
+        return get_string('event_users_exported_desc', 'mod_reader', $this);
     }
 
     /**

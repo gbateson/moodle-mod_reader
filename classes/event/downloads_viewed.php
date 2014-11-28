@@ -52,7 +52,7 @@ class downloads_viewed extends \core\event\base {
      * @return string
      */
     public static function get_name() {
-        return get_string('eventdownloadsviewed', 'mod_reader');
+        return get_string('event_downloads_viewed', 'mod_reader');
     }
 
     /**
@@ -61,7 +61,7 @@ class downloads_viewed extends \core\event\base {
      * @return string
      */
     public function get_description() {
-        return get_string('eventdownloadsviewed_desc', 'mod_reader', $this);
+        return get_string('event_downloads_viewed_desc', 'mod_reader', $this);
     }
 
     /**

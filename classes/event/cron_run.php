@@ -52,7 +52,7 @@ class cron_run extends \core\event\base {
      * @return string
      */
     public static function get_name() {
-        return get_string('eventcronrun', 'mod_reader');
+        return get_string('event_cron_run', 'mod_reader');
     }
 
     /**
@@ -61,7 +61,7 @@ class cron_run extends \core\event\base {
      * @return string
      */
     public function get_description() {
-        return get_string('eventcronrun_desc', 'mod_reader', $this);
+        return get_string('event_cron_run_desc', 'mod_reader', $this);
     }
 
     /**

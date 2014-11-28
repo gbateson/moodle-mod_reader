@@ -52,7 +52,7 @@ class tool_run extends \core\event\base {
      * @return string
      */
     public static function get_name() {
-        return get_string('eventtoolrun', 'mod_reader');
+        return get_string('event_tool_run', 'mod_reader');
     }
 
     /**
@@ -61,7 +61,7 @@ class tool_run extends \core\event\base {
      * @return string
      */
     public function get_description() {
-        return get_string('eventtoolrun_desc', 'mod_reader', $this);
+        return get_string('event_tool_run_desc', 'mod_reader', $this);
     }
 
     /**

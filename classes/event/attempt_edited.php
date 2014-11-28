@@ -52,7 +52,7 @@ class attempt_edited extends \core\event\base {
      * @return string
      */
     public static function get_name() {
-        return get_string('eventattemptedited', 'mod_reader');
+        return get_string('event_attempt_edited', 'mod_reader');
     }
 
     /**
@@ -61,7 +61,7 @@ class attempt_edited extends \core\event\base {
      * @return string
      */
     public function get_description() {
-        return get_string('eventattemptedited_desc', 'mod_reader', $this);
+        return get_string('event_attempt_edited_desc', 'mod_reader', $this);
     }
 
     /**
