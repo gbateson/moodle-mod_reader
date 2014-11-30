@@ -15,12 +15,11 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * mod/reader/classes/event/course_module_viewed.php
+ * This file contains an event for when a reader activity is viewed.
  *
  * @package    mod_reader
- * @copyright  2014 Gordon Bateson (gordon.bateson@gmail.com)
+ * @copyright  2013 Adrian Greeve <adrian@moodle.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @since      Moodle 2.6
  */
 
 namespace mod_reader\event;
@@ -29,66 +28,79 @@ namespace mod_reader\event;
 defined('MOODLE_INTERNAL') || die();
 
 /**
- * The course_module_viewed event class.
+ * Event for when a reader activity is viewed.
  *
  * @package    mod_reader
- * @copyright  2014 Gordon Bateson (gordon.bateson@gmail.com)
+ * @copyright  2014 Gordon Bateson
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @since      Moodle 2.6
  */
-class course_module_viewed extends \core\event\base {
+class course_module_viewed extends \core\event\course_module_viewed {
 
     /**
-     * Init method
+     * Init method.
      */
     protected function init() {
         $this->data['objecttable'] = 'reader';
-        parent::init();
+        $this->data['crud'] = 'r';
+        $this->data['edulevel'] = self::LEVEL_PARTICIPATING;
     }
 
     /**
-     * Returns localised event name
+     * Does this event replace a legacy event?
      *
-     * @return string
+     * @return string legacy event name
      */
-    public static function get_name() {
-        return get_string('event_course_module_viewed', 'mod_reader');
+    public static function get_legacy_eventname() {
+        return 'reader_viewed';
     }
 
     /**
-     * Returns description of this event
+     * Returns non-localised description of what happened.
      *
      * @return string
      */
     public function get_description() {
-        return get_string('event_course_module_viewed_desc', 'mod_reader', $this);
+        return 'User with id ' . $this->userid . ' viewed content ' . $this->get_url() . ' In phase ' . $this->other['content'];
     }
 
     /**
-     * Returns relevant URL
+     * Returns localised general event name.
      *
+     * @return string
+     */
+    public static function get_name() {
+        return get_string('event_reader_viewed', 'mod_reader');
+    }
+
+    /**
+     * Returns relevant URL.
      * @return \moodle_url
      */
     public function get_url() {
-        return new \moodle_url('/mod/reader/view.php', array('id' => $this->objectid));
+        $url = '/mod/reader/view.php';
+        return new \moodle_url($url, array('id'=>$this->context->instanceid));
     }
 
     /**
-     * Return the legacy event log data
+     * Legacy event data if get_legacy_eventname() is not empty.
      *
-     * @return array
+     * @return mixed
+     */
+    protected function get_legacy_eventdata() {
+        global $USER;
+        $reader = $this->get_record_snapshot('reader', $this->objectid);
+        $course    = $this->get_record_snapshot('course', $this->courseid);
+        $cm        = $this->get_record_snapshot('course_modules', $this->context->instanceid);
+        return (object)array('reader' => $reader, 'course' => $course, 'cm' => $cm, 'user' => $USER);
+    }
+
+    /**
+     * replace add_to_log() statement.
+     *
+     * @return array of parameters to be passed to legacy add_to_log() function.
      */
     protected function get_legacy_logdata() {
-        return array($this->courseid, 'reader', 'OLD_course_module_viewed', 'view.php?id='.$this->objectid, $this->other['readerid'], $this->contextinstanceid);
-    }
-
-    /**
-     * Custom validation
-     *
-     * @throws \coding_exception
-     * @return void
-     */
-    protected function validate_data() {
-        parent::validate_data();
+        $url = new \moodle_url('view.php', array('id' => $this->context->instanceid));
+        return array($this->courseid, 'reader', 'view', $url->out(), $this->objectid, $this->context->instanceid);
     }
 }
