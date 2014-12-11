@@ -1521,6 +1521,14 @@ function reader_optional_param_array($name, $default, $type, $recursive=true) {
 /**
  * reader_add_to_log
  *
+ * @param integer $courseid
+ * @param string  $module name e.g. "reader"
+ * @param string  $action
+ * @param string  $url (optional, default='')
+ * @param string  $info (optional, default='') often a reader id
+ * @param string  $cmid (optional, default=0)
+ * @param integer $userid (optional, default=0)
+ *
  **************************
     AA-Attempts Deleted
     AA-Book Deleted
@@ -1564,28 +1572,12 @@ function reader_optional_param_array($name, $default, $type, $recursive=true) {
     view attempt
     view personal page
  **************************
- * @param integer $courseid
- * @param string  $action
- * @param string  $url
- * @param string  $info
- * @param integer $cm
- * @param integer $user
- * @param integer $legacy_add_to_log (optional, default=true)
- * @return void, but may update log tabes in DB
  */
-function reader_add_to_log($courseid, $module, $action, $url='', $info='', $cm=0, $user=0, $legacy_add_to_log=true) {
-    global $PAGE;
+function reader_add_to_log($courseid, $module, $action, $url='', $info='', $cmid=0, $userid=0) {
+    global $DB, $PAGE;
 
     // detect new event API (Moodle >= 2.6)
     if (function_exists('get_log_manager')) {
-
-        // log action in legacy log
-        if ($legacy_add_to_log) {
-            $manager = get_log_manager();
-            if (method_exists($manager, 'legacy_add_to_log')) {
-                $manager->legacy_add_to_log($courseid, $module, $action, $url, $info, $cm, $user);
-            }
-        }
 
         // map old $action to new $eventname
         switch ($action) {
@@ -1624,28 +1616,65 @@ function reader_add_to_log($courseid, $module, $action, $url='', $info='', $cm=0
             case 'userlevelset':          $eventname = 'user_level_set';        break;
             case 'usersexported':         $eventname = 'users_exported';        break;
             case 'usersimported':         $eventname = 'users_imported';        break;
-            case 'view':                  $eventname = 'course_module_viewed'; break;
+            case 'view':                  $eventname = 'course_module_viewed';  break;
             default: $eventname = $action;
         }
 
         $classname = '\\mod_reader\\event\\'.$eventname;
         if (class_exists($classname)) {
-            $params = array('objectid' => $PAGE->cm->instance,
-                            'context'  => $PAGE->context);
-            // use call_user_func() to prevent syntax error in PHP 5.2.x
-            $event = call_user_func(array($classname, 'create'), $params);
-            if (isset($PAGE->course)) {
-                $event->add_record_snapshot('course', $PAGE->course);
+
+            if ($action=='index') {
+                // course context
+                if ($PAGE->course && $PAGE->course->id==$courseid) {
+                    // normal Moodle use
+                    $objectid = $PAGE->course->id;
+                    $context  = $PAGE->context;
+                    $course   = $PAGE->course;
+                } else if ($courseid) {
+                    // Moodle upgrade
+                    $objectid = $courseid;
+                    $context  = reader_get_context(CONTEXT_COURSE, $courseid);
+                    $course   = $DB->get_record('course', array('id' => $courseid));
+                } else {
+                    $objectid = 0; // shouldn't happen !!
+                }
+                $reader = null;
+            } else {
+                // course module context
+                if ($PAGE->cm && $PAGE->cm->id==$cmid) {
+                    // normal Moodle use
+                    $objectid = $PAGE->cm->instance;
+                    $context  = $PAGE->context;
+                    $course   = $PAGE->course;
+                    $reader   = $PAGE->activityrecord;
+                } else if ($cmid) {
+                    // Moodle upgrade
+                    $objectid = $DB->get_field('course_modules', 'instance', array('id' => $cmid));
+                    $context  = reader_get_context(CONTEXT_MODULE, $cmid);
+                    $course   = $DB->get_record('course', array('id' => $courseid));
+                    $reader   = $DB->get_record('reader', array('id' => $objectid));
+                } else {
+                    $objectid = 0; // shouldn't happen !!
+                }
             }
-            if (isset($PAGE->activityrecord)) {
-                $event->add_record_snapshot($PAGE->cm->modname, $PAGE->activityrecord);
+
+            if ($objectid) {
+                // use call_user_func() to prevent syntax error in PHP 5.2.x
+                $params = array('objectid' => $objectid, 'context' => $context);
+                $event = call_user_func(array($classname, 'create'), $params);
+                if ($course) {
+                    $event->add_record_snapshot('course', $course);
+                }
+                if ($reader) {
+                    $event->add_record_snapshot('reader', $reader);
+                }
+                $event->trigger();
             }
-            $event->trigger();
         }
 
     } else if (function_exists('add_to_log')) {
-        // Moodle <= 2.6
-        add_to_log($courseid, $module, $action, $url, $info, $cm, $user);
+        // Moodle <= 2.5
+        add_to_log($courseid, $module, $action, $url, $info, $cmid, $userid);
     }
 }
 

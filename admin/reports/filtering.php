@@ -273,6 +273,11 @@ class reader_admin_reports_options extends moodleform {
 
     const SUBMIT_BUTTON_NAME = 'submitoptions';
 
+    const USERS_ENROLLED_WITH    = 0;
+    const USERS_ENROLLED_WITHOUT = 1;
+    const USERS_ENROLLED_ALL     = 2;
+    const USERS_ALL_WITH         = 3;
+
     /** @var list of display option fields array($name => $default) */
     protected $optionfields = array();
 
@@ -357,7 +362,8 @@ class reader_admin_reports_options extends moodleform {
      * add_field_sortfields
      *
      * @param object $mform
-     * @param string $name of field i.e. "rowsperpage"
+     * @param string $name of field i.e. "sortfields"
+     * @param mixed  $default value for this $field
      */
     protected function add_field_sortfields($mform, $name, $default) {
         global $SESSION;
@@ -397,11 +403,11 @@ class reader_admin_reports_options extends moodleform {
                 );
 
                 if ($separator=='') {
-                    $separator = html_writer::empty_tag('br');
+                    $separator = html_writer::empty_tag('br'); // first time through
                 } else {
                     $elements[] = $mform->createElement('static', '', '', $separator);
                 }
-                $elements[] = $mform->createElement('static', '', '', $label.':');
+                $elements[] = $mform->createElement('static', '', '', $label.': ');
                 $elements[] = $mform->createElement('select', $sortfield, '', $options, array('onchange' => $onchange));
             }
         }
@@ -420,8 +426,8 @@ class reader_admin_reports_options extends moodleform {
     /**
      * get_sortdirection_img
      *
-     * @param object $mform
-     * @param string $name of field i.e. "rowsperpage"
+     * @param string $sortdirection (SORT_ASC or SORT_DESC)
+     * @return string html img tag
      */
     protected function get_sortdirection_img($sortdirection) {
         global $OUTPUT;
@@ -434,8 +440,7 @@ class reader_admin_reports_options extends moodleform {
     /**
      * get_sortremove_img
      *
-     * @param object $mform
-     * @param string $name of field i.e. "rowsperpage"
+     * @return string html img tag
      */
     protected function get_sortremove_img() {
         global $OUTPUT;
@@ -445,10 +450,27 @@ class reader_admin_reports_options extends moodleform {
     }
 
     /**
+     * add_field_usertype
+     *
+     * @param object $mform
+     * @param string $name of field i.e. "add_field_usertype"
+     * @param mixed  $default value for this $field
+     */
+    protected function add_field_usertype($mform, $name, $default) {
+        $label = get_string('usertype', 'mod_reader');
+        $options = array(self::USERS_ENROLLED_WITH    => get_string('usersenrolledwith',    'mod_reader'),
+                         self::USERS_ENROLLED_WITHOUT => get_string('usersenrolledwithout', 'mod_reader'),
+                         self::USERS_ENROLLED_ALL     => get_string('usersenrolledall',     'mod_reader'),
+                         self::USERS_ALL_WITH         => get_string('usersallwith',         'mod_reader'));
+        $this->add_select_autosubmit($mform, $name, $label, $options, $default);
+    }
+
+    /**
      * add_field_rowsperpage
      *
      * @param object $mform
      * @param string $name of field i.e. "rowsperpage"
+     * @param mixed  $default value for this $field
      */
     protected function add_field_rowsperpage($mform, $name, $default) {
         $label = get_string($name, 'mod_reader');
@@ -462,6 +484,7 @@ class reader_admin_reports_options extends moodleform {
      *
      * @param object $mform
      * @param string $name of field i.e. "showhidden"
+     * @param mixed  $default value for this $field
      */
     protected function add_field_showhidden($mform, $name, $default) {
         $label = get_string($name, 'mod_reader');
@@ -474,6 +497,7 @@ class reader_admin_reports_options extends moodleform {
      *
      * @param object $mform
      * @param string $name of field i.e. "showdeleted"
+     * @param mixed  $default value for this $field
      */
     protected function add_field_showdeleted($mform, $name, $default) {
         $label = get_string($name, 'mod_reader');
@@ -505,7 +529,7 @@ class reader_admin_reports_options extends moodleform {
      * add_field_submitbutton
      *
      * @param object $mform
-     * @param string $name of field i.e. "showdeleted"
+     * @param string $name of field i.e. "submitbutton"
      */
     protected function add_field_submitbutton($mform, $name) {
         $mform->addElement('submit', $name, get_string('go'));
@@ -556,22 +580,32 @@ class reader_admin_reports_options extends moodleform {
     }
 
     /**
-     * get_sql_sortfields
-     *
-     * @param string $name of field i.e. "rowsperpage"
-     * @param object $value
-     */
-    protected function get_sql_sortfields($name, $value) {
-        return null;
-    }
-
-    /**
      * get_sql_rowsperpage
      *
      * @param string $name of field i.e. "rowsperpage"
      * @param object $value
      */
     protected function get_sql_rowsperpage($name, $value) {
+        return null;
+    }
+
+    /**
+     * get_sql_usertype
+     *
+     * @param string $name of field i.e. "usertype"
+     * @param object $value
+     */
+    protected function get_sql_usertype($name, $value) {
+        return null;
+    }
+
+    /**
+     * get_sql_sortfields
+     *
+     * @param string $name of field i.e. "sortfields"
+     * @param object $value
+     */
+    protected function get_sql_sortfields($name, $value) {
         return null;
     }
 

@@ -70,6 +70,7 @@ class reader_admin_reports_bookdetailed_table extends reader_admin_reports_table
     );
 
     protected $optionfields = array('rowsperpage' => self::DEFAULT_ROWSPERPAGE,
+                                    'usertype'    => self::DEFAULT_USERTYPE,
                                     'showhidden'  => self::DEFAULT_SHOWHIDDEN,
                                     'showdeleted' => self::DEFAULT_SHOWDELETED,
                                     'sortfields'  => array());

@@ -38,10 +38,11 @@ require_once($CFG->dirroot.'/lib//tablelib.php');
  */
 class reader_admin_reports_table extends table_sql {
 
+    const DEFAULT_USERTYPE    = 0;  // i.e. enrolled users with attempts
     const DEFAULT_ROWSPERPAGE = 30;
-    const DEFAULT_SHOWDELETED = 0;
-    const DEFAULT_SHOWHIDDEN  = 0;
-    const DEFAULT_SORTFIELDS  = '';
+    const DEFAULT_SHOWDELETED = 0;  // i.e. ignore deleted attempts
+    const DEFAULT_SHOWHIDDEN  = 0;  // i.e. ignore hidden quizzes
+    const DEFAULT_SORTFIELDS  = ''; // i.e. no special sorting
 
     /** @var is_sortable (from flexible table) */
     public $is_sortable = true;
@@ -352,7 +353,33 @@ class reader_admin_reports_table extends table_sql {
     public function select_sql_users($prefix='user') {
         global $DB;
         if ($this->users===null) {
-            $this->users = get_enrolled_users($this->output->reader->context, 'mod/reader:viewbooks', 0, 'u.id', 'id');
+
+            $usertype = $this->filter->get_optionvalue('usertype');
+            switch ($usertype) {
+
+                case reader_admin_reports_options::USERS_ENROLLED_WITH:
+                case reader_admin_reports_options::USERS_ENROLLED_WITHOUT:
+                case reader_admin_reports_options::USERS_ENROLLED_ALL:
+                    list($enrolled, $params) = get_enrolled_sql($this->output->reader->context, 'mod/reader:viewbooks');
+                    $select = 'u.id';
+                    $from   = '{user} u JOIN ('.$enrolled.') e ON e.id = u.id';
+                    $where  = 'u.deleted = 0';
+                    $order  = 'id';
+                    if ($usertype==reader_admin_reports_options::USERS_ENROLLED_WITH) {
+                        list($from, $params) = $this->join_users_with_attempts('tmp', "$from JOIN", $params);
+                    }
+                    if ($usertype==reader_admin_reports_options::USERS_ENROLLED_WITHOUT) {
+                        list($from, $params) = $this->join_users_with_attempts('tmp', "$from LEFT JOIN", $params);
+                        $where .= ' AND tmp.userid IS NULL';
+                    }
+                    $this->users = $DB->get_records_sql("SELECT $select FROM $from WHERE $where ORDER BY $order", $params);
+                    break;
+
+                case reader_admin_reports_options::USERS_ALL_WITH:
+                    list($sql, $params) = $this->join_users_with_attempts();
+                    $this->users = $DB->get_records_sql($sql, $params);
+                    break;
+            }
             /***********************
             it might be possible to restrict search to users in certain groups using the following code
             ************************
@@ -375,6 +402,26 @@ class reader_admin_reports_table extends table_sql {
             $type = SQL_PARAMS_NAMED;
         }
         return $DB->get_in_or_equal(array_keys($this->users), $type, $prefix);
+    }
+
+    /**
+     * join_users_with_attempts
+     *
+     * @param string $alias  (optional, default="")
+     * @param string $join   (optional, default="")
+     * @param array  $params (optional, default=array())
+     * @return array(string, array())
+     */
+    public function join_users_with_attempts($alias='', $join='', $params=array()) {
+        $select = 'DISTINCT userid';
+        $from   = '{reader_attempts}';
+        $where  = 'reader = '.$this->output->reader->id.' AND deleted = 0';
+        $order  = 'userid';
+        $sql = "SELECT $select FROM $from WHERE $where ORDER BY $order";
+        if ($alias) {
+            $sql = "$join ($sql) $alias ON $alias.userid = u.id";
+        }
+        return array($sql, $params);
     }
 
     /**

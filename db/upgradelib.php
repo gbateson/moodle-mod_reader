@@ -3562,3 +3562,75 @@ function xmldb_reader_fix_config_names() {
         }
     }
 }
+
+/**
+ * xmldb_reader_migrate_logs
+ *
+ * @todo Finish documenting this function
+ */
+function xmldb_reader_migrate_logs($dbman) {
+    global $CFG, $DB;
+    require_once($CFG->dirroot.'/mod/reader/lib.php');
+
+    if (function_exists('get_log_manager')) {
+        $interactive = xmldb_reader_interactive();
+
+        if ($loglegacy = get_config('loglegacy', 'logstore_legacy')) {
+            set_config('loglegacy', 0, 'logstore_legacy');
+        }
+
+        $legacy_log_tablename = 'log';
+        $legacy_log_table = new xmldb_table($legacy_log_tablename);
+
+        $standard_log_tablename = 'logstore_standard_log';
+        $standard_log_table = new xmldb_table($standard_log_tablename);
+
+        if ($dbman->table_exists($legacy_log_table) && $dbman->table_exists($standard_log_table)) {
+
+            $select = 'module = ?';
+            $params = array('reader');
+
+            if ($time = $DB->get_field($standard_log_tablename, 'MAX(timecreated)', array('component' => 'reader'))) {
+                $select .= ' AND time > ?';
+                $params[] = $time;
+            } else if ($time = $DB->get_field($standard_log_tablename, 'MIN(timecreated)', array())) {
+                $select .= ' AND time > ?';
+                $params[] = $time;
+            }
+
+            if ($count = $DB->count_records_select($legacy_log_tablename, $select, $params)) {
+                $rs = $DB->get_recordset_select($legacy_log_tablename, $select, $params);
+            } else {
+                $rs = false;
+            }
+
+            if ($rs) {
+                if ($interactive) {
+                    $i = 0;
+                    $bar = new progress_bar('readermigratelogs', 500, true);
+                }
+                $strupdating = get_string('migratinglogs', 'mod_reader');
+                foreach ($rs as $log) {
+                    upgrade_set_timeout(); // 3 mins
+                    reader_add_to_log($log->course,
+                                      $log->module,
+                                      $log->action,
+                                      $log->url,
+                                      $log->info,
+                                      $log->cmid,
+                                      $log->userid);
+                    if ($interactive) {
+                        $i++;
+                        $bar->update($i, $count, $strupdating.": ($i/$count)");
+                    }
+                }
+                $rs->close();
+            }
+        }
+
+        // reset loglegacy config setting
+        if ($loglegacy) {
+            set_config('loglegacy', $loglegacy, 'logstore_legacy');
+        }
+    }
+}

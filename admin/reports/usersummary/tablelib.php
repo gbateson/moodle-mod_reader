@@ -72,7 +72,9 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
     );
 
     /** @var option fields */
-    protected $optionfields = array('rowsperpage' => self::DEFAULT_ROWSPERPAGE, 'sortfields' => array());
+    protected $optionfields = array('rowsperpage' => self::DEFAULT_ROWSPERPAGE,
+                                    'usertype'    => self::DEFAULT_USERTYPE,
+                                    'sortfields'  => array());
 
     /** @var actions */
     protected $actions = array('setcurrentlevel', 'setreadinggoal', 'awardextrapoints', 'awardbookpoints');

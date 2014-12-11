@@ -36,7 +36,16 @@ defined('MOODLE_INTERNAL') || die();
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @since      Moodle 2.6
  */
-class report_usersummary_viewed extends \core\event\base {
+class report_usersummary_viewed extends base {
+
+    /**
+     * Return the legacy event name
+     *
+     * @return array
+     */
+    public static function get_legacy_eventname() {
+        return 'reportusersummaryviewed';
+    }
 
     /**
      * Init method
@@ -44,52 +53,6 @@ class report_usersummary_viewed extends \core\event\base {
     protected function init() {
         $this->data['objecttable'] = 'reader';
         $this->data['crud'] = 'r';
-        $this->data['edulevel'] = self::LEVEL_PARTICIPATING;
-    }
-
-    /**
-     * Returns localised event name
-     *
-     * @return string
-     */
-    public static function get_name() {
-        return get_string('event_report_usersummary_viewed', 'mod_reader');
-    }
-
-    /**
-     * Returns description of this event
-     *
-     * @return string
-     */
-    public function get_description() {
-        return get_string('event_report_usersummary_viewed_desc', 'mod_reader', $this);
-    }
-
-    /**
-     * Returns relevant URL
-     *
-     * @return \moodle_url
-     */
-    public function get_url() {
-        return new \moodle_url('/mod/reader/view.php', array('id' => $this->objectid));
-    }
-
-    /**
-     * Return the legacy event log data
-     *
-     * @return array
-     */
-    protected function get_legacy_logdata() {
-        return array($this->courseid, 'reader', 'OLD_report_usersummary_viewed', 'view.php?id='.$this->objectid, $this->other['readerid'], $this->contextinstanceid);
-    }
-
-    /**
-     * Custom validation
-     *
-     * @throws \coding_exception
-     * @return void
-     */
-    protected function validate_data() {
-        parent::validate_data();
+        $this->data['edulevel'] = self::LEVEL_TEACHING;
     }
 }

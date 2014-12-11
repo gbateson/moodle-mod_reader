@@ -1035,5 +1035,25 @@ function xmldb_reader_upgrade($oldversion) {
         }
     }
 
+    $newversion = 2014120526;
+    if ($oldversion < $newversion) {
+        xmldb_reader_migrate_logs($dbman);
+        upgrade_mod_savepoint(true, "$newversion", 'reader');
+    }
+
+    $newversion = 2014121127;
+    if ($oldversion < $newversion) {
+        if (function_exists('get_log_manager')) {
+            if ($dbman->table_exists('log')) {
+                $update = '{log}';
+                $set    = 'action = REPLACE(REPLACE(action, ?, ?), ?, ?)';
+                $where  = 'module = ? AND '.$DB->sql_like('action', '?');
+                $params = array('OLD_', '', '_', '', 'reader', 'OLD_%');
+                $DB->execute('UPDATE '.$update.' SET '.$set.' WHERE '.$where, $params);
+            }
+        }
+        upgrade_mod_savepoint(true, "$newversion", 'reader');
+    }
+
     return $result;
 }
