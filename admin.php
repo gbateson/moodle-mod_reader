@@ -208,7 +208,7 @@ if ($id) {
 require_login($course->id, true, $cm);
 $reader = mod_reader::create($reader, $cm, $course);
 
-reader_add_to_log($course->id, 'reader', 'admin area', 'admin.php?id='.$id, $cm->instance);
+reader_add_to_log($course->id, 'reader', 'admin area', 'admin.php?id='.$cm->id, $cm->instance, $cm->id);
 
 if ($act == 'fullreports' && $ct == 0) {
     $reader->ignoredate = 0;
@@ -314,20 +314,20 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $quizzesid) {
 
     $message_forteacher = '<center><h3>'.get_string('quizzesadded', 'mod_reader').'</h3></center><br /><br />';
 
-    reader_add_to_log($course->id, 'reader', 'AA-Quizzes Added', 'admin.php?id='.$id, $cm->instance);
+    reader_add_to_log($course->id, 'reader', 'AA-Quizzes Added', 'admin.php?id='.$cm->id, $cm->instance, $cm->id);
 }
 
 if (has_capability('mod/reader:manageattempts', $contextmodule) && $act == 'viewattempts') {
     if ($attemptid) {
         $DB->set_field('reader_attempts', 'deleted', 1, array('id' => $attemptid));
-        reader_add_to_log($course->id, 'reader', 'AA-reader_deleted_attempts', 'admin.php?id='.$id, $cm->instance);
+        reader_add_to_log($course->id, 'reader', 'AA-reader_deleted_attempts', 'admin.php?id='.$cm->id, $cm->instance, $cm->id);
     }
     if ($bookquiznumber) {
         if ($studentuserid==0) {
             $studentuserid = $DB->get_field('user', 'id', array('username' => $studentusername));
         }
         $DB->set_field('reader_attempts', 'deleted', 0, array('userid' => $studentuserid, 'quizid' => $bookquiznumber));
-        reader_add_to_log($course->id, 'reader', 'AA-reader_restore_attempts', 'admin.php?id='.$id, $cm->instance);
+        reader_add_to_log($course->id, 'reader', 'AA-reader_restore_attempts', 'admin.php?id='.$cm->id, $cm->instance, $cm->id);
     }
 }
 
@@ -352,13 +352,13 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $messagetext) {
         $DB->insert_record('reader_messages', $message);
     }
 
-    reader_add_to_log($course->id, 'reader', 'AA-Message Added', 'admin.php?id='.$id, $cm->instance);
+    reader_add_to_log($course->id, 'reader', 'AA-Message Added', 'admin.php?id='.$cm->id, $cm->instance, $cm->id);
 }
 
 if (has_capability('mod/reader:addinstance', $contextmodule) && $deletemessage) {
     $DB->delete_records('reader_messages', array('id' => $deletemessage));
 
-    reader_add_to_log($course->id, 'reader', 'AA-Message Deleted', 'admin.php?id='.$id, $cm->instance);
+    reader_add_to_log($course->id, 'reader', 'AA-Message Deleted', 'admin.php?id='.$cm->id, $cm->instance, $cm->id);
 }
 
 if (has_capability('mod/reader:addinstance', $contextmodule) && $checkattempt && $ajax == 'true') {
@@ -378,12 +378,12 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $bookid) {
         }
     }
 
-    reader_add_to_log($course->id, 'reader', 'AA-Books status changed', 'admin.php?id='.$id, $cm->instance);
+    reader_add_to_log($course->id, 'reader', 'AA-Books status changed', 'admin.php?id='.$cm->id, $cm->instance, $cm->id);
 }
 
 if (has_capability('mod/reader:addinstance', $contextmodule) && $deletequiz && $deleteallattempts) {
     $DB->delete_records('reader_attempts', array('quizid' => $deletequiz, 'reader' => $reader->id));
-    reader_add_to_log($course->id, 'reader', 'AA-Attempts Deleted', 'admin.php?id='.$id, $cm->instance);
+    reader_add_to_log($course->id, 'reader', 'AA-Attempts Deleted', 'admin.php?id='.$cm->id, $cm->instance, $cm->id);
 }
 
 if (has_capability('mod/reader:addinstance', $contextmodule) && $deletebook && $deletequiz) {
@@ -394,7 +394,7 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $deletebook && $
     } else {
         $needdeleteattemptsfirst = $DB->get_records('reader_attempts', $params, 'timefinish');
     }
-    reader_add_to_log($course->id, 'reader', 'AA-Book Deleted', 'admin.php?id='.$id, $cm->instance);
+    reader_add_to_log($course->id, 'reader', 'AA-Book Deleted', 'admin.php?id='.$cm->id, $cm->instance, $cm->id);
 }
 
 if (has_capability('mod/reader:addinstance', $contextmodule) && $ajax == 'true' && isset($sametitlekey)) {
@@ -440,7 +440,7 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && ($changelevel ||
         );
         $studentlevel->id = $DB->insert_record('reader_levels', $studentlevel);
     }
-    reader_add_to_log($course->id, 'reader', substr("AA-Student Level Changed ({$userid} {$slevel} to {$changelevel})", 0, 39), 'admin.php?id='.$id, $cm->instance);
+    reader_add_to_log($course->id, 'reader', substr("AA-Student Level Changed ({$userid} {$slevel} to {$changelevel})", 0, 39), 'admin.php?id='.$cm->id, $cm->instance, $cm->id);
     if ($ajax == 'true') {
         echo reader_level_menu($userid, $studentlevel, $slevel);
         die;
@@ -458,17 +458,17 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $sctionoption ==
         $difficultystring = substr($difficultystring, 0, -1);
         $DB->execute('UPDATE {reader_book_instances} SET difficulty = ? WHERE difficulty = ? and readerid = ? and bookid IN (?)', array($todifficulty,$difficulty,$reader->id,$difficultystring));
     }
-    reader_add_to_log($course->id, 'reader', substr("AA-Mass changes difficulty ({$difficulty} to {$todifficulty})", 0, 39), 'admin.php?id='.$id, $cm->instance);
+    reader_add_to_log($course->id, 'reader', substr("AA-Mass changes difficulty ({$difficulty} to {$todifficulty})", 0, 39), 'admin.php?id='.$cm->id, $cm->instance, $cm->id);
 }
 
 if (has_capability('mod/reader:addinstance', $contextmodule) && $level && $tolevel && $publisher) {
     $DB->set_field('reader_books',  'level',  $tolevel, array('level' => $level,  'publisher' => $publisher));
-    reader_add_to_log($course->id, 'reader', substr("AA-Mass changes level ({$level} to {$tolevel})", 0, 39), 'admin.php?id='.$id, $cm->instance);
+    reader_add_to_log($course->id, 'reader', substr("AA-Mass changes level ({$level} to {$tolevel})", 0, 39), 'admin.php?id='.$cm->id, $cm->instance, $cm->id);
 }
 
 if (has_capability('mod/reader:addinstance', $contextmodule) && $topublisher && $publisher) {
     $DB->set_field('reader_books',  'publisher',  $topublisher, array('publisher' => $publisher));
-    reader_add_to_log($course->id, 'reader', substr("AA-Mass changes publisher ({$publisher} to {$topublisher})", 0, 39), 'admin.php?id='.$id, $cm->instance);
+    reader_add_to_log($course->id, 'reader', substr("AA-Mass changes publisher ({$publisher} to {$topublisher})", 0, 39), 'admin.php?id='.$cm->id, $cm->instance, $cm->id);
 }
 
 if (has_capability('mod/reader:addinstance', $contextmodule) && $length && $tolength && $publisher) {
@@ -482,7 +482,7 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $length && $tole
         $lengthstring = substr($lengthstring, 0, -1);
         $DB->execute('UPDATE {reader_book_instances} SET length = ? WHERE length = ? and readerid = ? and bookid IN (?)', array($tolength,$length,$reader->id,$lengthstring));
     }
-    reader_add_to_log($course->id, 'reader', substr("AA-Mass changes length ({$length} to {$tolength})", 0, 39), 'admin.php?id='.$id, $cm->instance);
+    reader_add_to_log($course->id, 'reader', substr("AA-Mass changes length ({$length} to {$tolength})", 0, 39), 'admin.php?id='.$cm->id, $cm->instance, $cm->id);
 }
 
 if (has_capability('mod/reader:addinstance', $contextmodule) && $act == 'changereaderlevel' && ($difficulty || $difficulty == 0) && empty($length)) {
@@ -496,7 +496,7 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $act == 'changer
     if ($DB->get_record('reader_book_instances', $params)) {
         $DB->set_field('reader_book_instances',  'difficulty',  $difficulty, $params);
     }
-    reader_add_to_log($course->id, 'reader', substr("AA-Change difficulty individual ({$bookid} {$slevel} to {$difficulty})", 0, 39), 'admin.php?id='.$id, $cm->instance);
+    reader_add_to_log($course->id, 'reader', substr("AA-Change difficulty individual ({$bookid} {$slevel} to {$difficulty})", 0, 39), 'admin.php?id='.$cm->id, $cm->instance, $cm->id);
   }
   if ($ajax == 'true') {
       $book = $DB->get_record('reader_books', array('id' => $bookid));
@@ -510,12 +510,12 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $act == 'changer
     if ($DB->get_record('reader_books', array('id' => $bookid))) {
         $DB->set_field('reader_books',  'length',  $length, array('id' => $bookid));
     }
-    reader_add_to_log($course->id, 'reader', substr("AA-Change length ({$bookid} {$slevel} to {$length})",0,39), 'admin.php?id='.$id, $cm->instance);
+    reader_add_to_log($course->id, 'reader', substr("AA-Change length ({$bookid} {$slevel} to {$length})",0,39), 'admin.php?id='.$cm->id, $cm->instance, $cm->id);
   } else {
     if ($DB->get_record('reader_book_instances', array('readerid' => $reader->id, 'bookid' => $bookid))) {
         $DB->set_field('reader_book_instances',  'length',  $length, array('readerid' => $reader->id,  'bookid' => $bookid));
     }
-    reader_add_to_log($course->id, 'reader', substr("AA-Change length individual ({$bookid} {$slevel} to {$length})",0,39), 'admin.php?id='.$id, $cm->instance);
+    reader_add_to_log($course->id, 'reader', substr("AA-Change length individual ({$bookid} {$slevel} to {$length})",0,39), 'admin.php?id='.$cm->id, $cm->instance, $cm->id);
   }
   if ($ajax == 'true') {
       $book = $DB->get_record('reader_books', array('id' => $bookid));
@@ -549,7 +549,7 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $act == 'student
         );
         $studentlevel->id = $DB->insert_record('reader_levels', $studentlevel);
     }
-    reader_add_to_log($course->id, 'reader', "AA-Change Student Goal ({$setgoal})", 'admin.php?id='.$id, $cm->instance);
+    reader_add_to_log($course->id, 'reader', "AA-Change Student Goal ({$setgoal})", 'admin.php?id='.$cm->id, $cm->instance, $cm->id);
     if ($ajax == 'true') {
         echo reader_goals_menu($userid, $studentlevel, 'goal', 3, $reader);
         die;
@@ -574,7 +574,7 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && isset($nopromote
         );
         $studentlevel->id = $DB->insert_record('reader_levels', $studentlevel);
     }
-    reader_add_to_log($course->id, 'reader', substr("AA-Student NoPromote Changed ({$userid} set to {$nopromote})",0,39), 'admin.php?id='.$id, $cm->instance);
+    reader_add_to_log($course->id, 'reader', substr("AA-Student NoPromote Changed ({$userid} set to {$nopromote})",0,39), 'admin.php?id='.$cm->id, $cm->instance, $cm->id);
     if ($ajax == 'true') {
         echo reader_promo_menu($userid, $studentlevel, 'nopromote', 1);
         die;
@@ -599,7 +599,7 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && isset($stoplevel
         );
         $studentlevel->id = $DB->insert_record('reader_levels', $level);
     }
-    reader_add_to_log($course->id, 'reader', substr("AA-Student Promotion Stop Changed ({$userid} set to {$stoplevel})",0,39), 'admin.php?id='.$id, $cm->instance);
+    reader_add_to_log($course->id, 'reader', substr("AA-Student Promotion Stop Changed ({$userid} set to {$stoplevel})",0,39), 'admin.php?id='.$cm->id, $cm->instance, $cm->id);
     if ($ajax == 'true') {
         echo reader_promotionstop_menu($userid, $studentlevel, 'stoplevel', 2);
         die;
@@ -619,7 +619,7 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $setip) {
         );
         $users_list->id = $DB->insert_record('reader_strict_users_list', $users_list);
     }
-    reader_add_to_log($course->id, 'reader', substr("AA-Student check ip Changed ({$userid} {$needip})",0,39), 'admin.php?id='.$id, $cm->instance);
+    reader_add_to_log($course->id, 'reader', substr("AA-Student check ip Changed ({$userid} {$needip})",0,39), 'admin.php?id='.$cm->id, $cm->instance, $cm->id);
     if ($ajax == 'true') {
         echo reader_ip_menu($userid, $reader);
         die;
@@ -645,7 +645,7 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $changeallstartl
             );
             $studentlevel->id = $DB->insert_record('reader_levels', $studentlevel);
         }
-        reader_add_to_log($course->id, 'reader', substr("AA-changeallstartlevel userid: {$coursestudent->id}, startlevel={$changeallstartlevel}",0,39), 'admin.php?id='.$id, $cm->instance);
+        reader_add_to_log($course->id, 'reader', substr("AA-changeallstartlevel userid: {$coursestudent->id}, startlevel={$changeallstartlevel}",0,39), 'admin.php?id='.$cm->id, $cm->instance, $cm->id);
     }
 }
 
@@ -668,7 +668,7 @@ if (has_capability('mod/reader:addinstance', $contextmodule) &&  $changeallcurre
             );
             $studentlevel->id = $DB->insert_record('reader_levels', $studentlevel);
         }
-        reader_add_to_log($course->id, 'reader', substr("AA-changeallcurrentlevel userid: {$coursestudent->id}, currentlevel={$changeallcurrentlevel}",0,39), 'admin.php?id='.$id, $cm->instance);
+        reader_add_to_log($course->id, 'reader', substr("AA-changeallcurrentlevel userid: {$coursestudent->id}, currentlevel={$changeallcurrentlevel}",0,39), 'admin.php?id='.$cm->id, $cm->instance, $cm->id);
     }
 }
 
@@ -696,7 +696,7 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $changeallpromo)
             );
             $studentlevel->id = $DB->insert_record('reader_levels', $studentlevel);
         }
-        reader_add_to_log($course->id, 'reader', substr("AA-Student Promotion Stop Changed ({$coursestudent->id} set to {$stoplevel})",0,39), 'admin.php?id='.$id, $cm->instance);
+        reader_add_to_log($course->id, 'reader', substr("AA-Student Promotion Stop Changed ({$coursestudent->id} set to {$stoplevel})",0,39), 'admin.php?id='.$cm->id, $cm->instance, $cm->id);
     }
 }
 
@@ -719,7 +719,7 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $changeallstoppr
             );
             $studentlevel->id = $DB->insert_record('reader_levels', $studentlevel);
         }
-        reader_add_to_log($course->id, 'reader', substr("AA-Student NoPromote Changed ({$coursestudent->id} set to {$changeallstoppromo})",0,39), 'admin.php?id='.$id, $cm->instance);
+        reader_add_to_log($course->id, 'reader', substr("AA-Student NoPromote Changed ({$coursestudent->id} set to {$changeallstoppromo})",0,39), 'admin.php?id='.$cm->id, $cm->instance, $cm->id);
     }
 }
 
@@ -742,7 +742,7 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $changeallcurren
             );
             $studentlevel->id = $DB->insert_record('reader_levels', $studentlevel);
         }
-        reader_add_to_log($course->id, 'reader', substr("AA-goal userid: {$coursestudent->id}, goal={$changeallcurrentgoal}",0,39), 'admin.php?id='.$id, $cm->instance);
+        reader_add_to_log($course->id, 'reader', substr("AA-goal userid: {$coursestudent->id}, goal={$changeallcurrentgoal}",0,39), 'admin.php?id='.$cm->id, $cm->instance, $cm->id);
     }
 }
 
@@ -787,7 +787,7 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $act == 'awardex
             $attempt->timemodified = $time;
 
             $DB->update_record('reader_attempts', $attempt);
-            reader_add_to_log($course->id, 'reader', "AWP (userid: {$s}; set: {$award})", 'admin.php?id='.$id, $cm->instance);
+            reader_add_to_log($course->id, 'reader', "AWP (userid: {$s}; set: {$award})", 'admin.php?id='.$cm->id, $cm->instance, $cm->id);
         }
     }
     $USER->id = $useridold;
@@ -797,7 +797,7 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $cheated) {
     list($cheated1, $cheated2) = explode('_', $cheated);
     $DB->set_field('reader_attempts',  'passed',  'cheated', array('id' => $cheated1));
     $DB->set_field('reader_attempts',  'passed',  'cheated', array('id' => $cheated2));
-    reader_add_to_log($course->id, 'reader', 'AA-cheated', 'admin.php?id='.$id, $cm->instance);
+    reader_add_to_log($course->id, 'reader', 'AA-cheated', 'admin.php?id='.$cm->id, $cm->instance, $cm->id);
 
     $userid1 = $DB->get_record('reader_attempts', array('id' => $cheated1));
     $userid2 = $DB->get_record('reader_attempts', array('id' => $cheated2));
@@ -830,7 +830,7 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $uncheated) {
     list($cheated1, $cheated2) = explode('_', $uncheated);
     $DB->set_field('reader_attempts',  'passed',  'true', array('id' => $cheated1));
     $DB->set_field('reader_attempts',  'passed',  'true', array('id' => $cheated2));
-    reader_add_to_log($course->id, 'reader', "AA-set passed (uncheated)", 'admin.php?id='.$id, $cm->instance);
+    reader_add_to_log($course->id, 'reader', "AA-set passed (uncheated)", 'admin.php?id='.$cm->id, $cm->instance, $cm->id);
 
     $userid1 = $DB->get_record('reader_attempts', array('id' => $cheated1));
     $userid2 = $DB->get_record('reader_attempts', array('id' => $cheated2));
@@ -873,7 +873,7 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $act == 'setgoal
         } else {
             $DB->set_field('reader', 'goal', $levelall);
         }
-        reader_add_to_log($course->id, 'reader', "AA-wordsorpoints goal=$levelall", 'admin.php?id='.$id, $cm->instance);
+        reader_add_to_log($course->id, 'reader', "AA-wordsorpoints goal=$levelall", 'admin.php?id='.$cm->id, $cm->instance, $cm->id);
     } else {
         if (empty($levelc)) {
             $levelc = array();
@@ -890,7 +890,7 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $act == 'setgoal
                 $dataid = $DB->insert_record('reader_goals', $data);
             }
         }
-        reader_add_to_log($course->id, 'reader', "AA-wordsorpoints goal=$value", 'admin.php?id='.$id, $cm->instance);
+        reader_add_to_log($course->id, 'reader', "AA-wordsorpoints goal=$value", 'admin.php?id='.$cm->id, $cm->instance, $cm->id);
     }
 }
 
@@ -1029,7 +1029,7 @@ if ($excel) {
         $filename = 'report_'.$exceldata['time'].'_'.$exceldata['course_shotname'].'_'.$exceldata['groupname'].'.xls';
         $workbook->send($filename);
     }
-    reader_add_to_log($course->id, 'reader', 'AA-excel', 'admin.php?id='.$id, $cm->instance);
+    reader_add_to_log($course->id, 'reader', 'AA-excel', 'admin.php?id='.$cm->id, $cm->instance, $cm->id);
 }
 
 // Initialize $PAGE, compute blocks

@@ -241,6 +241,34 @@ function reader_print_recent_activity($course, $isteacher, $timestart) {
     return false; // True if anything was printed, otherwise false
 }
 
+/*
+ * This function defines what log actions will be selected from the Moodle logs
+ * and displayed for course -> report -> activity module -> HotPot -> View OR All actions
+ *
+ * Note: This is not used by new logging system. Event with
+ *       crud = 'r' and edulevel = LEVEL_PARTICIPATING will
+ *       be considered as view action.
+ *
+ * @return array(string) of text strings used to log HotPot view actions
+ */
+function reader_get_view_actions() {
+    return array('view', 'index');
+}
+
+/*
+ * This function defines what log actions will be selected from the Moodle logs
+ * and displayed for course -> report -> activity module -> Hot Potatoes Quiz -> Post OR All actions
+ *
+ * Note: This is not used by new logging system. Event with
+ *       crud = ('c' || 'u' || 'd') and edulevel = LEVEL_PARTICIPATING
+ *       will be considered as post action.
+ *
+ * @return array(string) of text strings used to log HotPot post actions
+ */
+function reader_get_post_actions() {
+    return array('attemptsubmitted,');
+}
+
 /**
  * reader_cron
  *
@@ -253,43 +281,45 @@ function reader_cron() {
     global $CFG, $DB;
 
     // delete expired messages
-    $select = 'timefinish > ? && timefinish < ?';
+    $select = 'timefinish > ? AND timefinish < ?';
     $params = array(0, time());
     $DB->delete_records_select('reader_messages', $select, $params);
 
-    //Check questions list
-
-    $publishersquizzes = $DB->get_records('reader_books');
-
-    foreach ($publishersquizzes as $publishersquizze) {
-        $quizdata = $DB->get_record('quiz', array('id' => $publishersquizze->quizid));
-        if (empty($quizdata)) {
-            $quizdata = (object)array('questions' => '');
-        }
-        $questions = explode(',', $quizdata->questions);
-        $answersgrade = $DB->get_records('reader_question_instances', array('quiz' => $publishersquizze->quizid));
-        $doublecheck = array();
-        foreach ($answersgrade as $answersgrade_) {
-            if (! in_array($answersgrade_->question, $questions)) {
-                $DB->delete_records('reader_question_instances', array('quiz' => $publishersquizze->quizid, 'question' => $answersgrade_->question));
-                $editedquizzes[$publishersquizze->id] = $publishersquizze->quizid;
-            }
-            if (! in_array($answersgrade_->question, $doublecheck)) {
-                $doublecheck[] = $answersgrade_->question;
-            } else {
-                reader_add_to_log(1, 'reader', 'Cron', '', "Double entries found!! reader_question_instances; quiz: {$publishersquizze->quizid}; question: {$answersgrade_->question}");
-            }
-        }
-    }
-
-    $publishersquizzes = $DB->get_records('reader_books');
-
-    foreach ($publishersquizzes as $publishersquizze) {
-        if (strstr($publishersquizze->name, "\'")) {
-            $DB->set_field('reader_books', 'name', stripslashes($publishersquizze->name), array('id' => $publishersquizze->id));
-            echo '..reader title updating: '.$publishersquizze->name."\n";
-        }
-    }
+    // check for duplicate and orphaned questions
+    //
+    // -------------------------------------------
+    //   this is probably not necessary now
+    //      because these checks are done
+    // when quizzes and questions are downloaded
+    // -------------------------------------------
+    //
+    //$select = 'quizid > ?';
+    //$params = array(0);
+    //if ($books = $DB->get_records_select('reader_books', $select, $params)) {
+    //    foreach ($books as $book) {
+    //        if ($instances = $DB->get_records('reader_question_instances', array('quiz' => $book->quizid))) {
+    //            if ($quiz = $DB->get_record('quiz', array('id' => $book->quizid))) {
+    //                $questions = explode(',', $quiz->questions);
+    //            } else {
+    //                $questions = array();
+    //            }
+    //            $doublecheck = array();
+    //            foreach ($instances as $instance) {
+    //                if (! in_array($instance->question, $questions)) {
+    //                    // remove orphaned question
+    //                    $params = array('quiz' => $book->quizid, 'question' => $instance->question);
+    //                    $DB->delete_records('reader_question_instances', $params);
+    //                }
+    //                if (in_array($instance->question, $doublecheck)) {
+    //                    // notify about duplicates
+    //                    reader_add_to_log(1, 'reader', 'Cron', '', "Double entries found!! reader_question_instances; quiz: {$book->quizid}; question: {$instance->question}");
+    //                } else {
+    //                    $doublecheck[] = $instance->question;
+    //                }
+    //            }
+    //        }
+    //    }
+    //}
 
     return true;
 }

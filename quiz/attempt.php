@@ -69,12 +69,9 @@ $output = $PAGE->get_renderer('mod_quiz');
 $accessmanager = $readerattempt->get_access_manager($readerattempt->get_readerquiz(), $timenow);
 $messages = $accessmanager->prevent_access();
 
-$pagetext = $page + 1;
 $logaction = 'view attempt: '.substr($readerattempt->readerquiz->book->name, 0, 26); // 40 char limit
-$loginfo   = "readerID {$readerattempt->readerquiz->reader->id}; ".
-             "reader quiz {$readerattempt->readerquiz->book->id}; ".
-             "page: {$pagetext}";
-reader_add_to_log($readerattempt->readerquiz->course->id, 'reader', $logaction, "view.php?id=$id", $loginfo);
+$loginfo   = 'readerID '.$readerattempt->get_readerid().'; reader quiz '.$readerattempt->get_quizid().'; page: '.($page + 1);
+reader_add_to_log($readerattempt->get_courseid(), 'reader', $logaction, 'view.php?id='.$readerattempt->get_cmid(), $readerattempt->get_readerid(), $readerattempt->get_cmid());
 
 // Get the list of questions needed by this page.
 $slots = $readerattempt->get_slots($page);

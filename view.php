@@ -53,8 +53,7 @@ if ($id) {
 }
 
 require_login($course->id, true, $cm);
-
-reader_add_to_log($course->id, 'reader', 'view', "view.php?id=$id", "$cm->instance");
+reader_add_to_log($course->id, 'reader', 'view', 'view.php?id='.$cm->id, $reader->id, $cm->id);
 
 $contextmodule = reader_get_context(CONTEXT_MODULE, $cm->id);
 $timenow = time();

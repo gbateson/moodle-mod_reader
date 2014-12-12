@@ -48,7 +48,7 @@ if ($id) {
 require_login($course, true, $cm);
 $reader = mod_reader::create($reader, $cm, $course);
 
-reader_add_to_log($course->id, 'reader', 'Admin users', "admin/quizzes.php?id=$id", "$cm->instance");
+reader_add_to_log($course->id, 'reader', 'Admin quizzes', 'admin/quizzes.php?id='.$cm->id, $reader->id, $cm->id);
 
 // Initialize $PAGE, compute blocks
 $PAGE->set_url('/mod/reader/admin/quizzes.php', array('id' => $cm->id));

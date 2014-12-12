@@ -1045,11 +1045,14 @@ function xmldb_reader_upgrade($oldversion) {
     if ($oldversion < $newversion) {
         if (function_exists('get_log_manager')) {
             if ($dbman->table_exists('log')) {
+                // fix incorrect legacy actions in log table
+                // remove "OLD_" prefix, and all underscores
+                // e.g. OLD_attempt_added => attemptadded
                 $update = '{log}';
                 $set    = 'action = REPLACE(REPLACE(action, ?, ?), ?, ?)';
                 $where  = 'module = ? AND '.$DB->sql_like('action', '?');
                 $params = array('OLD_', '', '_', '', 'reader', 'OLD_%');
-                $DB->execute('UPDATE '.$update.' SET '.$set.' WHERE '.$where, $params);
+                $DB->execute("UPDATE $update SET $set WHERE $where", $params);
             }
         }
         upgrade_mod_savepoint(true, "$newversion", 'reader');

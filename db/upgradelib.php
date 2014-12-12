@@ -538,9 +538,9 @@ function xmldb_reader_remove_coursemodule($cmid_or_instanceid, $modname='') {
         if (! delete_mod_from_section($cm->id, $sectionid)) {
             notify("Could not delete the $cm->modname (id=$cm->id) from that section (id=$sectionid)");
         }
-    }
 
-    reader_add_to_log($cm->course, 'course', 'delete mod', "view.php?id=$cm->course", "$cm->modname $cm->instance", $cm->id);
+        add_to_log($cm->course, 'course', 'delete mod', "view.php?id=$cm->course", "$cm->modname $cm->instance", $cm->id);
+    }
 
     $rebuild_course_cache = true;
     return $rebuild_course_cache;

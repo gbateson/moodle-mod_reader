@@ -89,7 +89,6 @@ class reader_quiz {
     public $accessmanager = null;
     public $ispreviewuser = null;
 
-    // Constructor =========================================================================
     /**
      * Constructor, assuming we already have the necessary data loaded.
      *
@@ -162,8 +161,6 @@ class reader_quiz {
         return new reader_quiz($reader, $cm, $course, $book, $quiz);
     }
 
-    // Functions for loading more data =====================================================
-
     /**
      * Load just basic information about all the questions in this reader.
      */
@@ -196,9 +193,9 @@ class reader_quiz {
         get_question_options($questionstoprocess);
     }
 
-    /** @return int the course id. */
-    public function get_courseid() {
-        return $this->course->id;
+    /** @return object the module context for this reader. */
+    public function get_context() {
+        return $this->context;
     }
 
     /** @return object the row of the course table. */
@@ -206,9 +203,19 @@ class reader_quiz {
         return $this->course;
     }
 
-    /** @return int the reader id. */
-    public function get_readerid() {
-        return $this->reader->id;
+    /** @return int the course id. */
+    public function get_courseid() {
+        return $this->course->id;
+    }
+
+    /** @return object the course_module object. */
+    public function get_cm() {
+        return $this->cm;
+    }
+
+    /** @return int the course_module id. */
+    public function get_cmid() {
+        return $this->cm->id;
     }
 
     /** @return object the row of the reader table. */
@@ -221,6 +228,16 @@ class reader_quiz {
         return $this->quiz;
     }
 
+    /** @return int the quiz id. */
+    public function get_quizid() {
+        return $this->quiz->id;
+    }
+
+    /** @return int the reader id. */
+    public function get_readerid() {
+        return $this->reader->id;
+    }
+
     /** @return string the name of this reader. */
     public function get_reader_name() {
         return $this->reader->name;
@@ -229,21 +246,6 @@ class reader_quiz {
     /** @return int the number of attempts allowed at this reader (0 = infinite). */
     public function get_num_attempts_allowed() {
         return 1;
-    }
-
-    /** @return int the course_module id. */
-    public function get_cmid() {
-        return $this->cm->id;
-    }
-
-    /** @return object the course_module object. */
-    public function get_cm() {
-        return $this->cm;
-    }
-
-    /** @return object the module context for this reader. */
-    public function get_context() {
-        return $this->context;
     }
 
     /**
@@ -320,7 +322,6 @@ class reader_quiz {
         return require_capability($capability, $this->context, $userid, $doanything);
     }
 
-    // URLs related to this attempt ========================================================
     /**
      * @return string the URL of this reader's view page.
      */
@@ -370,8 +371,6 @@ class reader_quiz {
         return new moodle_url('/mod/reader/review.php', array('attempt' => $attemptid));
     }
 
-    // Bits of content =====================================================================
-
     /**
      * @param string $title the name of this particular reader page.
      * @return array the data that needs to be sent to print_header_simple as the $navigation
@@ -412,7 +411,6 @@ class reader_attempt {
     public $pagelayout; // array page no => array of numbers on the page in order.
     public $reviewoptions = null;
 
-    // Constructor =========================================================================
     /**
      * Constructor assuming we already have the necessary data loaded.
      *
@@ -600,14 +598,29 @@ class reader_attempt {
         return $this->readerquiz;
     }
 
+    /** @return int the course */
+    public function get_course() {
+        return $this->readerquiz->get_course();
+    }
+
     /** @return int the course id. */
     public function get_courseid() {
         return $this->readerquiz->get_courseid();
     }
 
-    /** @return int the course id. */
-    public function get_course() {
-        return $this->readerquiz->get_course();
+    /** @return object the course_module object. */
+    public function get_cm() {
+        return $this->readerquiz->get_cm();
+    }
+
+    /** @return int the course_module id. */
+    public function get_cmid() {
+        return $this->readerquiz->get_cmid();
+    }
+
+    /** @return int the quiz record id. */
+    public function get_quizid() {
+        return $this->readerquiz->get_quizid();
     }
 
     /** @return int the reader id. */
@@ -618,16 +631,6 @@ class reader_attempt {
     /** @return string the name of this reader. */
     public function get_reader_name() {
         return $this->readerquiz->get_reader_name();
-    }
-
-    /** @return object the course_module object. */
-    public function get_cm() {
-        return $this->readerquiz->get_cm();
-    }
-
-    /** @return object the course_module object. */
-    public function get_cmid() {
-        return $this->readerquiz->get_cmid();
     }
 
     /**
@@ -1165,8 +1168,6 @@ class reader_attempt {
         return $links;
     }
 
-    // Methods for processing ==================================================
-
     /**
      * Process all the actions that were submitted as part of the current request.
      *
@@ -1222,19 +1223,17 @@ class reader_attempt {
 
         if ($this->readerquiz->reader->minpassgrade <= $this->attempt->percentgrade) {
             $this->attempt->passed = 'true';
-            $passedlog = "Passed";
+            $passedlog = 'Passed';
         } else {
             $this->attempt->passed = 'false';
-            $passedlog = "Failed";
+            $passedlog = 'Failed';
         }
 
-        //reader_add_to_log($this->readerquiz->course->id, 'reader', 'finish attempt: '.$this->readerquiz->book->name, "view.php?id={$this->readerquiz->reader->id}", $this->attempt->percentgrade."%/".$this->attempt->passed);
+        //reader_add_to_log($this->get_courseid(), 'reader', 'finish attempt: '.$this->readerquiz->book->name, "view.php?id=".$this->get_cmid(), $this->attempt->percentgrade.'%/'.$this->attempt->passed);
 
         $logaction = 'view attempt: '.substr($this->readerquiz->book->name, 0, 26); // 40 char limit
-        $loginfo   = "readerID {$this->readerquiz->reader->id}; ".
-                     "reader quiz {$this->readerquiz->book->id}; ".
-                     "{$this->attempt->percentgrade}/{$passedlog}";
-        reader_add_to_log($this->readerquiz->course->id, 'reader', $logaction, "view.php?id={$this->attempt->id}", $loginfo);
+        $loginfo   = 'readerID '.$this->get_readerid().'; reader quiz '.$this->get_quizid().'; '.$this->attempt->percentgrade.'%/'.$passedlog;
+        reader_add_to_log($this->get_courseid(), 'reader', $logaction, 'view.php?id='.$this->get_cmid(), $this->get_readerid(), $this->get_cmid());
 
         $DB->update_record('reader_attempts', $this->attempt);
     }

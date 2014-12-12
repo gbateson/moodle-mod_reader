@@ -38,7 +38,7 @@ if (! $course = $DB->get_record('course', array('id' => $id))) {
 
 require_course_login($course);
 
-reader_add_to_log($course->id, 'reader', 'index', "index.php?id=$course->id", '');
+reader_add_to_log($course->id, 'reader', 'index', 'index.php?id='.$course->id);
 
 $PAGE->set_url('/mod/reader/index.php', array('id' => $course->id));
 $PAGE->set_title($course->fullname);

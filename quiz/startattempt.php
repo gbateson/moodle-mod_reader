@@ -161,7 +161,7 @@ $attempt->uniqueid = $quba->get_id(); // an new id in the "question_usages" tabl
 $attempt->id = $DB->insert_record('reader_attempts', $attempt);
 
 // Log the new attempt.
-reader_add_to_log($course->id, 'reader', 'attempt', 'review.php?attempt=' . $attempt->id, $id, $book);
+reader_add_to_log($course->id, 'reader', 'attempt', 'review.php?attempt='.$attempt->id, $reader->id, $cm->id);
 
 // Trigger event
 $event = (object)array(

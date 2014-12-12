@@ -46,7 +46,7 @@ if ($id) {
 }
 
 require_course_login($course, true, $cm);
-reader_add_to_log($course->id, 'reader', 'Ajax get list of users', "view.php?id=$id", "$cm->instance");
+reader_add_to_log($course->id, 'reader', 'Ajax get list of users', 'view.php?id='.$cm->id, $reader->id, $cm->id);
 
 if ($search) {
     echo reader_search_users($id, $reader, $USER->id);
