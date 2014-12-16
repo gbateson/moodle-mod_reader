@@ -273,10 +273,16 @@ class reader_admin_reports_options extends moodleform {
 
     const SUBMIT_BUTTON_NAME = 'submitoptions';
 
+    /**#@+
+    * values for report $usertype
+    *
+    * @const integer
+    */
     const USERS_ENROLLED_WITH    = 0;
     const USERS_ENROLLED_WITHOUT = 1;
     const USERS_ENROLLED_ALL     = 2;
     const USERS_ALL_WITH         = 3;
+    /**#@-*/
 
     /** @var list of display option fields array($name => $default) */
     protected $optionfields = array();

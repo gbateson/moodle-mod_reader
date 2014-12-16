@@ -53,10 +53,12 @@ class reader_admin_reports_usersummary_filtering extends reader_admin_reports_fi
 
             case 'startlevel':
             case 'currentlevel':
+            case 'stoplevel':
+            case 'goal':
                 $label = get_string($fieldname, 'mod_reader');
                 return new reader_admin_reports_filter_number($fieldname, $label, $advanced, $fieldname, $default, 'where');
 
-            case 'nopromote':
+            case 'allowpromotion':
                 $label = get_string($fieldname, 'mod_reader');
                 return new user_filter_yesno($fieldname, $label, $advanced, $fieldname);
 

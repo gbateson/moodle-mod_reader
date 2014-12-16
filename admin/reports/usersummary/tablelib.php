@@ -39,7 +39,8 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
 
     /** @var columns used in this table */
     protected $tablecolumns = array(
-        'selected', 'studentview', 'username', 'fullname', 'startlevel', 'currentlevel',  'nopromote',
+        'selected', 'studentview', 'username', 'fullname',
+        'startlevel', 'currentlevel', 'stoplevel', 'allowpromotion', 'goal',
         'countpassed', 'countfailed', 'averageduration', 'averagegrade', 'totalthisterm', 'totalallterms'
     );
 
@@ -47,13 +48,14 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
     protected $suppresscolumns = array();
 
     /** @var columns in this table that are not sortable */
-    protected $nosortcolumns = array('nopromote');
+    protected $nosortcolumns = array('allowpromotion');
 
     /** @var text columns in this table */
     protected $textcolumns = array('username', 'fullname');
 
     /** @var number columns in this table */
-    protected $numbercolumns = array('startlevel', 'currentlevel', 'countpassed', 'countfailed', 'totalthisterm', 'totalallterms');
+    protected $numbercolumns = array('startlevel', 'currentlevel', 'stoplevel', 'allowpromotion', 'goal',
+                                     'countpassed', 'countfailed', 'totalthisterm', 'totalallterms');
 
     /** @var columns that are not to be center aligned */
     protected $leftaligncolumns = array('username', 'fullname');
@@ -65,7 +67,7 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
     protected $filterfields = array(
         'group'           => 0, 'realname'      => 0,
         'lastname'        => 1, 'firstname'     => 1, 'username'  => 1,
-        'startlevel'      => 1, 'currentlevel'  => 1, 'nopromote' => 1,
+        'startlevel'      => 1, 'currentlevel'  => 1, 'stoplevel' => 1, 'goal' => 1, 'allowpromotion' => 1,
         'countpassed'     => 1, 'countfailed'   => 1,
         'averageduration' => 1, 'averagegrade'  => 1,
         'totalthisterm'   => 1, 'totalallterms' => 1
@@ -77,7 +79,8 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
                                     'sortfields'  => array());
 
     /** @var actions */
-    protected $actions = array('setcurrentlevel', 'setreadinggoal', 'awardextrapoints', 'awardbookpoints');
+    protected $actions = array('setstartlevel', 'setcurrentlevel', 'setstoplevel', 'setallowpromotion', 'setreadinggoal',
+                               'awardextrapoints', 'awardbookpoints');
 
     /*
      * get_tablecolumns
@@ -126,15 +129,37 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
         // get users who can access this Reader activity
         list($usersql, $userparams) = $this->select_sql_users();
 
+        $usertype = $this->filter->get_optionvalue('usertype');
+        switch ($usertype) {
+
+            case reader_admin_reports_options::USERS_ENROLLED_WITHOUT:
+                $raa_join   = 'LEFT JOIN';
+                $raa_join_u = 'raa.userid IS NULL';
+                break;
+
+            case reader_admin_reports_options::USERS_ENROLLED_ALL:
+                $raa_join   = 'LEFT JOIN';
+                $raa_join_u = 'raa.userid IS NULL OR raa.userid = u.id';
+                break;
+
+            case reader_admin_reports_options::USERS_ENROLLED_WITH:
+            case reader_admin_reports_options::USERS_ALL_WITH:
+            default: // shouldn't happen !!
+                $raa_join   = 'JOIN';
+                $raa_join_u = 'raa.userid = u.id';
+                break;
+
+        }
+
         $select = $this->get_userfields('u', array('username'), 'userid').', '.
                   'raa.countpassed, raa.countfailed, '.
                   'raa.averageduration, raa.averagegrade, '.
                   'raa.totalthisterm, raa.totalallterms,'.
-                  'rl.startlevel, rl.currentlevel, rl.nopromote, 0 AS goal';
+                  'rl.startlevel, rl.currentlevel, rl.stoplevel, rl.allowpromotion, rl.goal';
         $from   = '{user} u '.
-                  "LEFT JOIN ($attemptsql) raa ON raa.userid = u.id ".
-                  'LEFT JOIN {reader_levels} rl ON u.id = rl.userid';
-        $where  = "rl.readerid = :readerid AND u.id $usersql";
+                  "$raa_join ($attemptsql) raa ON $raa_join_u ".
+                  "LEFT JOIN {reader_levels} rl ON rl.userid IS NULL OR rl.userid = u.id";
+        $where  = "(rl.readerid IS NULL OR rl.readerid = :readerid) AND u.id $usersql";
 
         $params = $attemptparams + array('readerid' => $this->output->reader->id) + $userparams;
 
@@ -154,6 +179,9 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
             // "reader_levels" fields
             case 'startlevel':
             case 'currentlevel':
+            case 'stoplevel':
+            case 'allowpromotion':
+            case 'goal':
                 return array('reader_levels', 'rl');
 
             // "reader_attempts" aggregate fields
@@ -194,12 +222,21 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
     }
 
     /**
-     * header_nopromote
+     * header_stoplevel
      *
      * @return xxx
      */
-    public function header_nopromote()  {
-        return get_string('nopromote', 'mod_reader');
+    public function header_stoplevel()  {
+        return get_string('stoplevel', 'mod_reader');
+    }
+
+    /**
+     * header_allowpromotion
+     *
+     * @return xxx
+     */
+    public function header_allowpromotion()  {
+        return get_string('allowpromotion', 'mod_reader');
     }
 
     /**
@@ -287,9 +324,85 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
         }
     }
 
+    /**
+     * col_allowpromotion
+     *
+     * @param xxx $row
+     * @return xxx
+     */
+    public function col_stoplevel($row)  {
+        if ($row->stoplevel==99) {
+            return get_string('unlimited');
+        } else {
+            return number_format($row->stoplevel);
+        }
+    }
+
+    /**
+     * col_allowpromotion
+     *
+     * @param xxx $row
+     * @return xxx
+     */
+    public function col_allowpromotion($row)  {
+        if ($row->allowpromotion) {
+            $text = get_string('yes');
+            $class = 'passed';
+        } else {
+            $text = get_string('no');
+            $class = 'failed';
+        }
+        if ($this->download) {
+            return $text;
+        } else {
+            return html_writer::tag('span', $text, array('class' => $class));
+        }
+    }
+
     ////////////////////////////////////////////////////////////////////////////////
     // functions to format, display and handle action settings                    //
     ////////////////////////////////////////////////////////////////////////////////
+
+    /**
+     * display_action_onclickchange
+     *
+     * @param string $action
+     * @param string $type "onclick" or "onchange"
+     * @param string $more (optional, default="")
+     * @return xxx
+     */
+    public function display_action_onclickchange($action, $type, $more='') {
+        return array($type => "var obj=document.getElementById('id_action_$action');if(obj)obj.checked=true;$more");
+    }
+
+    /**
+     * display_action_settings_setlevel
+     *
+     * @param string  $action
+     * @param boolean $unlimited (optional, default=false)
+     * @return xxx
+     */
+    public function display_action_settings_setlevel($action, $unlimited=false) {
+        $value = optional_param($action, 0, PARAM_INT);
+        $options = range(0, 15);
+        if ($unlimited) {
+            $options += array(99 => get_string('unlimited'));
+        }
+        $settings = '';
+        $settings .= get_string('newreadinglevel', 'mod_reader').': ';
+        $settings .= html_writer::select($options, $action, $value, '', $this->display_action_onclickchange($action, 'onchange'));
+        return $this->display_action_settings($action, $settings);
+    }
+
+    /**
+     * display_action_settings_setcurrentlevel
+     *
+     * @param string $action
+     * @return xxx
+     */
+    public function display_action_settings_setstartlevel($action) {
+        return $this->display_action_settings_setlevel($action);
+    }
 
     /**
      * display_action_settings_setcurrentlevel
@@ -298,10 +411,32 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
      * @return xxx
      */
     public function display_action_settings_setcurrentlevel($action) {
+        return $this->display_action_settings_setlevel($action);
+    }
+
+    /**
+     * display_action_settings_setstoplevel
+     *
+     * @param string $action
+     * @return xxx
+     */
+    public function display_action_settings_setstoplevel($action) {
+        return $this->display_action_settings_setlevel($action, true);
+    }
+
+    /**
+     * display_action_settings_setallowpromotion
+     *
+     * @param string $action
+     * @return xxx
+     */
+    public function display_action_settings_setallowpromotion($action) {
         $value = optional_param($action, 0, PARAM_INT);
+        $options = array(0 => get_string('disallowpromotion', 'mod_reader'),
+                         1 => get_string('allowpromotion',  'mod_reader'));
         $settings = '';
-        $settings .= get_string('newreadinglevel', 'mod_reader').': ';
-        $settings .= html_writer::select(range(0, 15), $action, $value, '', array());
+        //$settings .= get_string('newsetting', 'mod_reader').': ';
+        $settings .= html_writer::select($options, $action, $value, '', $this->display_action_onclickchange($action, 'onchange'));
         return $this->display_action_settings($action, $settings);
     }
 
@@ -320,7 +455,7 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
 
         $settings = '';
         $settings .= get_string('newreadinggoal', 'mod_reader').': ';
-        $settings .= html_writer::select($options, $action, $value, '', array());
+        $settings .= html_writer::select($options, $action, $value, '', $this->display_action_onclickchange($action, 'onchange'));
         return $this->display_action_settings($action, $settings);
     }
 
@@ -335,7 +470,7 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
         $settings = '';
         $settings .= get_string('numberofextrapoints', 'mod_reader').': ';
         $options = $this->output->available_extrapoints();
-        $settings .= html_writer::select($options, $action, $value, '', array());
+        $settings .= html_writer::select($options, $action, $value, '', $this->display_action_onclickchange($action, 'onchange'));
         return $this->display_action_settings($action, $settings);
     }
 
@@ -362,11 +497,75 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
 
         $settings = '';
         $settings .= get_string($name, 'mod_reader').': ';
-        $settings .= html_writer::select($options, $name, $value, '', array('onchange' => $onchange));
+        $settings .= html_writer::select($options, $name, $value, '', $this->display_action_onclickchange($action, 'onchange', $onchange));
         $settings .= html_writer::empty_tag('br');
 
         $settings .= $this->output->available_items($action);
         return $this->display_action_settings($action, $settings);
+    }
+
+    /**
+     * execute_action_setlevelfield
+     *
+     * @param string $action
+     * @param string $field name
+     * @return void, but may update/insert record in "reader_levels" table
+     */
+    public function execute_action_setlevelfield($action, $field) {
+        global $DB;
+
+        $value = optional_param($action, null, PARAM_INT);
+        if ($value===null) {
+            return; // no value specified
+        }
+
+        if ($userids = $this->get_selected('userid')) {
+            list($select, $params) = $this->select_sql_users();
+            $userids = array_intersect($userids, $params);
+        }
+
+        if (empty($userids)) {
+            return; // no (valid) userids selected
+        }
+
+        // update selected userids to the new value
+        $time = time();
+        foreach ($userids as $userid) {
+            $params = array('userid' => $userid, 'readerid' => $this->output->reader->id);
+            $level = $DB->get_record('reader_levels', $params);
+            if ($level===false) {
+                $level = (object)array(
+                    'userid'         => $userid,
+                    'readerid'       => $this->output->reader->id,
+                    'startlevel'     => 0,
+                    'currentlevel'   => 0,
+                    'stoplevel'      => $this->output->reader->stoplevel,
+                    'allowpromotion' => 1,
+                    'goal'           => $this->output->reader->goal,
+                    'time'           => $time,
+                );
+            }
+            $level->time = $time;
+            $level->$field = $value;
+            if (isset($level->id)) {
+                $DB->update_record('reader_levels', $level);
+            } else {
+                $level->id = $DB->insert_record('reader_levels', $level);
+            }
+        }
+
+        // send "Changes saved" message to browser
+        echo $this->output->notification(get_string('changessaved'), 'notifysuccess');
+    }
+
+    /**
+     * execute_action_setstartlevel
+     *
+     * @param string $action
+     * @return xxx
+     */
+    public function execute_action_setstartlevel($action) {
+        $this->execute_action_setlevelfield($action, 'startlevel');
     }
 
     /**
@@ -376,31 +575,27 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
      * @return xxx
      */
     public function execute_action_setcurrentlevel($action) {
-        global $DB;
+        $this->execute_action_setlevelfield($action, 'currentlevel');
+    }
 
-        $currentlevel = optional_param($action, null, PARAM_INT);
-        if ($currentlevel===null) {
-            return; // no current level specified
-        }
+    /**
+     * execute_action_setstoplevel
+     *
+     * @param string $action
+     * @return xxx
+     */
+    public function execute_action_setstoplevel($action) {
+        $this->execute_action_setlevelfield($action, 'stoplevel');
+    }
 
-        if ($userids = $this->get_selected('userid')) {
-            list($select, $params) = $this->select_sql_users();
-            $userids = array_intersect($userids, $params);
-        }
-
-        if (empty($userids)) {
-            return; // no (valid) userids selected
-        }
-
-        // update selected userids to the new currentlevel
-        list($select, $params) = $DB->get_in_or_equal($userids);
-        $select = "userid $select AND readerid = ?";
-        $params[] = $this->output->reader->id;
-        $DB->set_field_select('reader_levels', 'time', time(), $select, $params);
-        $DB->set_field_select('reader_levels', 'currentlevel', $currentlevel, $select, $params);
-
-        // send "Changes saved" message to browser
-        echo $this->output->notification(get_string('changessaved'), 'notifysuccess');
+    /**
+     * execute_action_setallowpromotion
+     *
+     * @param string $action
+     * @return xxx
+     */
+    public function execute_action_setallowpromotion($action) {
+        $this->execute_action_setlevelfield($action, 'allowpromotion');
     }
 
     /**
@@ -410,31 +605,7 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
      * @return xxx
      */
     public function execute_action_setreadinggoal($action) {
-        global $DB;
-
-        $readinggoal = optional_param($action, null, PARAM_INT);
-        if ($readinggoal===null) {
-            return; // no reading goal specified
-        }
-
-        if ($userids = $this->get_selected('userid')) {
-            list($select, $params) = $this->select_sql_users();
-            $userids = array_intersect($userids, $params);
-        }
-
-        if (empty($userids)) {
-            return; // no (valid) userids selected
-        }
-
-        // update selected userids to the new readinggoal
-        list($select, $params) = $DB->get_in_or_equal($userids);
-        $select = "userid $select AND readerid = ?";
-        $params[] = $this->output->reader->id;
-        $DB->set_field_select('reader_levels', 'time', time(), $select, $params);
-        $DB->set_field_select('reader_levels', 'goal', $readinggoal, $select, $params);
-
-        // send "Changes saved" message to browser
-        echo $this->output->notification(get_string('changessaved'), 'notifysuccess');
+        $this->execute_action_setlevelfield($action, 'goal');
     }
 
     /**

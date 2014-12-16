@@ -1689,9 +1689,9 @@ class mod_reader_admin_books_download_renderer extends mod_reader_admin_books_re
         }
         $output = '';
         if ($action) {
-            $label .= $this->help_icon($action, 'reader');
+            $label .= $this->help_icon($action, 'mod_reader');
         } else if ($onclick) {
-            $label .= $this->help_icon($onclick, 'reader');
+            $label .= $this->help_icon($onclick, 'mod_reader');
         }
         $output .= html_writer::tag('div', $label, array('id' => $id.'label', 'class' => 'label'));
         $output .= html_writer::tag('div', $element, array('id' => $id.'element', 'class' => 'element'));

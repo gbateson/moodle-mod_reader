@@ -347,6 +347,18 @@ if (isset($_SESSION['SESSION']->reader_changetostudentview) && $_SESSION['SESSIO
     echo '<a href="'.$url.'">'.get_string('returntostudentlist', 'mod_reader').'</a>';
     echo '</span></small>';
 }
+if (class_exists('\core\session\manager')) {
+    $is_loggedinas = \core\session\manager::is_loggedinas();
+} else {
+    $is_loggedinas = session_is_loggedinas();
+}
+if ($is_loggedinas) {
+    $params = array('id' => $id, 'sesskey' => sesskey());
+    $url = new moodle_url('/mod/reader/view_loginas.php', $params);
+    echo '</td><td width="50%" align="right"><small><span style="text-align: right;">';
+    echo '<a href="'.$url.'">'.get_string('returntoreports', 'mod_reader').'</a>';
+    echo '</span></small>';
+}
 echo "</td></tr></table>";
 
 if ($reader->levelcheck == 1) {
@@ -382,39 +394,47 @@ if ($reader->showprogressbar) {
 echo '<h3>'.get_string('yourcurrentlevel', 'mod_reader').': '.$leveldata['currentlevel'].'</h3>';
 
 $promoteinfo = $DB->get_record('reader_levels', array('userid' => $USER->id, 'readerid' => $reader->id));
-if ($promoteinfo->nopromote == 1) {
+if ($promoteinfo->allowpromotion == 0) {
     if ($promoteinfo->stoplevel == $leveldata['currentlevel']) {
-        print_string('pleaseaskyourinstructor', 'reader');
+        print_string('pleaseaskyourinstructor', 'mod_reader');
     } else {
-        print_string('yourteacherhasstopped', 'reader');
+        print_string('yourteacherhasstopped', 'mod_reader');
     }
 
-    print_string('youcantakeasmanyquizzesasyouwant', 'reader', $leveldata['currentlevel']);
+    print_string('youcantakeasmanyquizzesasyouwant', 'mod_reader', $leveldata['currentlevel']);
 
     if ($leveldata['prevlevel'] <= 0) {
         $quizcount = 'no';
     } else {
         $quizcount = $leveldata['prevlevel'];
     }
-    if ($leveldata['prevlevel'] == 1) { $quiztext = 'quiz'; } else { $quiztext = 'quizzes'; }
-    print_string('youmayalsotake', 'reader', $quizcount);
+    if ($leveldata['prevlevel'] == 1) {
+        $quiztext = 'quiz';
+    } else {
+        $quiztext = 'quizzes';
+    }
+    print_string('youmayalsotake', 'mod_reader', $quizcount);
     echo '{$quiztext} '.get_string('atlevel', 'mod_reader').' '.($leveldata['currentlevel'] - 1).' ';
 
 } else if ($reader->levelcheck == 1) {
 
     if ($leveldata['thislevel'] == 1) {
-        print_string('youmusttakequiz', 'reader', $leveldata['thislevel']);
+        print_string('youmusttakequiz', 'mod_reader', $leveldata['thislevel']);
     } else {
-        print_string('youmusttakequizzes', 'reader', $leveldata['thislevel']);
+        print_string('youmusttakequizzes', 'mod_reader', $leveldata['thislevel']);
     }
-    print_string('atlevelbeforebeingpromoted', 'reader', $leveldata['currentlevel']);
+    print_string('atlevelbeforebeingpromoted', 'mod_reader', $leveldata['currentlevel']);
 
     if ($leveldata['prevlevel'] <= 0) {
         $quizcount = 'no';
     } else {
         $quizcount = $leveldata['prevlevel'];
     }
-    if ($leveldata['prevlevel'] == 1) { $quiztext = "quiz"; } else { $quiztext = "quizzes"; }
+    if ($leveldata['prevlevel'] == 1) {
+        $quiztext = "quiz";
+    } else {
+        $quiztext = "quizzes";
+    }
 
     if (($leveldata['currentlevel'] - 1) >= 0) {
 
@@ -423,10 +443,10 @@ if ($promoteinfo->nopromote == 1) {
         } else {
             $quiznextlevelso = 'and';
         }
-        print_string('youmayalsotake', 'reader', $quizcount);
+        print_string('youmayalsotake', 'mod_reader', $quizcount);
         echo "{$quiztext} ".get_string('atlevel', 'mod_reader')." ".($leveldata['currentlevel'] - 1)." ";
     } else {
-        print_string('youcantake', 'reader');
+        print_string('youcantake', 'mod_reader');
     }
 
     if ($leveldata['nextlevel'] <= 0) {
@@ -436,7 +456,7 @@ if ($promoteinfo->nopromote == 1) {
     }
 
     if (! isset($quiznextlevelso)) {
-        $quiznextlevelso = "";
+        $quiznextlevelso = '';
     }
 
     if ($leveldata['nextlevel'] == 1) {
@@ -444,7 +464,7 @@ if ($promoteinfo->nopromote == 1) {
     }
     echo $quiznextlevelso.get_string('andnextmore', 'mod_reader', $quizcount).$quiztext.get_string('atlevel', 'mod_reader'). ' ' . ($leveldata['currentlevel'] + 1 .'.');
 } else if ($reader->levelcheck == 0) {
-    print_string('butyoumaytakequizzes', 'reader');
+    print_string('butyoumaytakequizzes', 'mod_reader');
 }
 
 $showform = true;
@@ -461,7 +481,7 @@ if ($attempt = $DB->get_record('reader_attempts', array('reader' => $cm->instanc
     } else {
         $showform = false;
         $bookname = $DB->get_field('reader_books', 'name', array('quizid' => $attempt->quizid));
-        print_string('pleasecompletequiz', 'reader', $bookname);
+        print_string('pleasecompletequiz', 'mod_reader', $bookname);
         if (empty($_SESSION['SESSION']->reader_lastattemptpage)) {
             $url = $CFG->wwwroot.'/mod/reader/quiz/attempt.php?attempt='.$attempt->id.'&page=1#q0';
         } else {

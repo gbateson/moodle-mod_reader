@@ -1058,5 +1058,23 @@ function xmldb_reader_upgrade($oldversion) {
         upgrade_mod_savepoint(true, "$newversion", 'reader');
     }
 
+    $newversion = 2014121529;
+    if ($oldversion < $newversion) {
+        // rename "nopromote" to "allowpromotion"
+        // add switch values, i.e. (0 ? 1 : 0)
+        $tablename = 'reader_levels';
+        $newname = 'allowpromotion';
+        $oldname = 'nopromote';
+        $table = new xmldb_table($tablename);
+        $field = new xmldb_field($oldname, XMLDB_TYPE_INTEGER, '4',  null, null, null, '1', 'stoplevel');
+        if ($dbman->field_exists($table, $field)) {
+            xmldb_reader_fix_previous_field($dbman, $table, $field);
+            $dbman->change_field_type($table, $field);
+            $dbman->rename_field($table, $field, $newname);
+            $DB->execute('UPDATE {'.$tablename.'} SET '.$newname.' = (CASE WHEN '.$newname.' = ? THEN ? ELSE ? END)', array(0, 1, 0));
+       }
+        upgrade_mod_savepoint(true, "$newversion", 'reader');
+    }
+
     return $result;
 }

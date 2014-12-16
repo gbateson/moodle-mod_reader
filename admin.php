@@ -41,31 +41,31 @@ require_once($CFG->dirroot.'/question/editlib.php');
 
 $id                     = optional_param('id', 0, PARAM_INT);
 $r                      = optional_param('r',  0, PARAM_INT);
-$a                      = optional_param('a', NULL, PARAM_CLEAN);
-$act                    = optional_param('act', NULL, PARAM_CLEAN);
-$quizzesid              = optional_param('quizzesid', NULL, PARAM_CLEAN);
-$publisher              = optional_param('publisher', NULL, PARAM_CLEAN);
-$publisherex            = optional_param('publisherex', NULL, PARAM_CLEAN);
-$difficulty             = optional_param('difficulty', NULL, PARAM_CLEAN);
-$todifficulty           = optional_param('todifficulty', NULL, PARAM_CLEAN);
-$difficultyex           = optional_param('difficultyex', NULL, PARAM_CLEAN);
-$level                  = optional_param('level', NULL, PARAM_CLEAN);
-$tolevel                = optional_param('tolevel', NULL, PARAM_CLEAN);
-$topublisher            = optional_param('topublisher', NULL, PARAM_CLEAN);
-$levelex                = optional_param('levelex', NULL, PARAM_CLEAN);
-$length                 = optional_param('length', NULL, PARAM_CLEAN);
-$tolength               = optional_param('tolength', NULL, PARAM_CLEAN);
-$gid                    = optional_param('gid', NULL, PARAM_CLEAN);
-$excel                  = optional_param('excel', NULL, PARAM_CLEAN);
-$del                    = optional_param('del', NULL, PARAM_CLEAN);
-$attemptid              = optional_param('attemptid', NULL, PARAM_CLEAN);
-$restoreattemptid       = optional_param('restoreattemptid', NULL, PARAM_CLEAN);
-$upassword              = optional_param('upassword', NULL, PARAM_CLEAN);
+$a                      = optional_param('a', null, PARAM_CLEAN);
+$act                    = optional_param('act', null, PARAM_CLEAN);
+$quizzesid              = optional_param('quizzesid', null, PARAM_CLEAN);
+$publisher              = optional_param('publisher', null, PARAM_CLEAN);
+$publisherex            = optional_param('publisherex', null, PARAM_CLEAN);
+$difficulty             = optional_param('difficulty', null, PARAM_CLEAN);
+$todifficulty           = optional_param('todifficulty', null, PARAM_CLEAN);
+$difficultyex           = optional_param('difficultyex', null, PARAM_CLEAN);
+$level                  = optional_param('level', null, PARAM_CLEAN);
+$tolevel                = optional_param('tolevel', null, PARAM_CLEAN);
+$topublisher            = optional_param('topublisher', null, PARAM_CLEAN);
+$levelex                = optional_param('levelex', null, PARAM_CLEAN);
+$length                 = optional_param('length', null, PARAM_CLEAN);
+$tolength               = optional_param('tolength', null, PARAM_CLEAN);
+$gid                    = optional_param('gid', null, PARAM_CLEAN);
+$excel                  = optional_param('excel', null, PARAM_CLEAN);
+$del                    = optional_param('del', null, PARAM_CLEAN);
+$attemptid              = optional_param('attemptid', null, PARAM_CLEAN);
+$restoreattemptid       = optional_param('restoreattemptid', null, PARAM_CLEAN);
+$upassword              = optional_param('upassword', null, PARAM_CLEAN);
 $groupids               = reader_optional_param_array('groupids', 0, PARAM_INT);
-$activehours            = optional_param('activehours', NULL, PARAM_CLEAN);
-$messagetext            = optional_param('messagetext', NULL, PARAM_CLEAN);
+$activehours            = optional_param('activehours', null, PARAM_CLEAN);
+$messagetext            = optional_param('messagetext', null, PARAM_CLEAN);
 $messageformat          = optional_param('messageformat', 0, PARAM_INT);
-$bookid                 = reader_optional_param_array('bookid', NULL, PARAM_CLEAN);
+$bookid                 = reader_optional_param_array('bookid', null, PARAM_CLEAN);
 $deletebook             = optional_param('deletebook', 0, PARAM_INT);
 $deleteallattempts      = optional_param('deleteallattempts', 0, PARAM_INT);
 $editmessage            = optional_param('editmessage', 0, PARAM_INT);
@@ -79,66 +79,66 @@ $slevel                 = optional_param('slevel', 0, PARAM_ALPHA);
 $page                   = optional_param('page', 0, PARAM_INT);
 $perpage                = optional_param('perpage', 0, PARAM_INT);
 $userid                 = optional_param('userid', 0, PARAM_INT);
-$changelevel            = optional_param('changelevel', NULL, PARAM_CLEAN);
-$searchtext             = optional_param('searchtext', NULL, PARAM_CLEAN);
-$needip                 = optional_param('needip', NULL, PARAM_CLEAN);
-$setip                  = optional_param('setip', NULL, PARAM_CLEAN);
-$nopromote              = optional_param('nopromote', NULL, PARAM_CLEAN);
-$stoplevel          = optional_param('stoplevel', NULL, PARAM_CLEAN);
+$changelevel            = optional_param('changelevel', null, PARAM_CLEAN);
+$searchtext             = optional_param('searchtext', null, PARAM_CLEAN);
+$needip                 = optional_param('needip', null, PARAM_CLEAN);
+$setip                  = optional_param('setip', null, PARAM_CLEAN);
+$allowpromotion         = optional_param('allowpromotion', null, PARAM_CLEAN);
+$stoplevel              = optional_param('stoplevel', null, PARAM_CLEAN);
 $private                = optional_param('private', 0, PARAM_INT);
-$ajax                   = optional_param('ajax', NULL, PARAM_CLEAN);
-$changeallstartlevel    = optional_param('changeallstartlevel', -1, PARAM_INT);
-$changeallcurrentlevel  = optional_param('changeallcurrentlevel', -1, PARAM_INT);
-$changeallcurrentgoal   = optional_param('changeallcurrentgoal', NULL, PARAM_CLEAN);
-$changeallpromo         = optional_param('changeallpromo', NULL, PARAM_CLEAN);
-$changeallstoppromo     = optional_param('changeallstoppromo', -1, PARAM_INT);
-$userimagename          = optional_param('userimagename', NULL, PARAM_CLEAN);
-$award                  = optional_param('award', NULL, PARAM_CLEAN);
-$student                = reader_optional_param_array('student', NULL, PARAM_CLEAN);
-$useonlythiscourse      = optional_param('useonlythiscourse', NULL, PARAM_CLEAN);
+$ajax                   = optional_param('ajax', null, PARAM_CLEAN);
+$changeallstartlevel    = optional_param('changeallstartlevel', null, PARAM_INT);
+$changeallcurrentlevel  = optional_param('changeallcurrentlevel', null, PARAM_INT);
+$changeallstoplevel     = optional_param('changeallstoplevel', null, PARAM_INT);
+$changeallpromotion     = optional_param('changeallpromotion', null, PARAM_INT);
+$changeallgoal          = optional_param('changeallgoal', null, PARAM_INT);
+$userimagename          = optional_param('userimagename', null, PARAM_CLEAN);
+$award                  = optional_param('award', null, PARAM_CLEAN);
+$student                = reader_optional_param_array('student', null, PARAM_CLEAN);
+$useonlythiscourse      = optional_param('useonlythiscourse', null, PARAM_CLEAN);
 $ipmask                 = optional_param('ipmask', 3, PARAM_CLEAN);
 $fromtime               = optional_param('fromtime', 86400, PARAM_CLEAN);
 $maxtime                = optional_param('maxtime', 1800, PARAM_CLEAN);
-$cheated                = optional_param('cheated', NULL, PARAM_CLEAN);
-$uncheated              = optional_param('uncheated', NULL, PARAM_CLEAN);
-$findcheated            = optional_param('findcheated', NULL, PARAM_CLEAN);
-$separategroups         = optional_param('separategroups', NULL, PARAM_CLEAN);
-$levelall               = optional_param('levelall', NULL, PARAM_CLEAN);
-$levelc                 = reader_optional_param_array('levelc', NULL, PARAM_CLEAN);
-$wordsorpoints          = optional_param('wordsorpoints', NULL, PARAM_INT);
-$setgoal                = optional_param('setgoal', NULL, PARAM_CLEAN);
-$wordscount             = optional_param('wordscount', NULL, PARAM_CLEAN);
-$viewasstudent          = optional_param('viewasstudent', NULL, PARAM_CLEAN);
-$booksratingbest        = optional_param('booksratingbest', NULL, PARAM_CLEAN);
-$booksratinglevel       = optional_param('booksratinglevel', NULL, PARAM_CLEAN);
+$cheated                = optional_param('cheated', null, PARAM_CLEAN);
+$uncheated              = optional_param('uncheated', null, PARAM_CLEAN);
+$findcheated            = optional_param('findcheated', null, PARAM_CLEAN);
+$separategroups         = optional_param('separategroups', null, PARAM_CLEAN);
+$levelall               = optional_param('levelall', null, PARAM_CLEAN);
+$levelc                 = reader_optional_param_array('levelc', null, PARAM_CLEAN);
+$wordsorpoints          = optional_param('wordsorpoints', null, PARAM_INT);
+$setgoal                = optional_param('setgoal', null, PARAM_CLEAN);
+$wordscount             = optional_param('wordscount', null, PARAM_CLEAN);
+$viewasstudent          = optional_param('viewasstudent', null, PARAM_CLEAN);
+$booksratingbest        = optional_param('booksratingbest', null, PARAM_CLEAN);
+$booksratinglevel       = optional_param('booksratinglevel', null, PARAM_CLEAN);
 //$booksratinglevel       = optional_param('booksratinglevel');
-$booksratingterm        = optional_param('booksratingterm', NULL, PARAM_CLEAN);
-$booksratingwithratings = optional_param('booksratingwithratings', NULL, PARAM_CLEAN);
-$booksratingshow        = optional_param('booksratingshow', NULL, PARAM_CLEAN);
-$quiz                   = reader_optional_param_array('quiz', NULL, PARAM_CLEAN);
-$sametitlekey           = optional_param('sametitlekey', NULL, PARAM_CLEAN);
-$sametitleid            = optional_param('sametitleid', NULL, PARAM_CLEAN);
-$wordstitlekey          = optional_param('wordstitlekey', NULL, PARAM_CLEAN);
-$wordstitleid           = optional_param('wordstitleid', NULL, PARAM_CLEAN);
-$leveltitlekey          = optional_param('leveltitlekey', NULL, PARAM_CLEAN);
-$leveltitleid           = optional_param('leveltitleid', NULL, PARAM_CLEAN);
-$publishertitlekey      = optional_param('publishertitlekey', NULL, PARAM_CLEAN);
-$publishertitleid       = optional_param('publishertitleid', NULL, PARAM_CLEAN);
-$checkattempt           = optional_param('checkattempt', NULL, PARAM_CLEAN);
+$booksratingterm        = optional_param('booksratingterm', null, PARAM_CLEAN);
+$booksratingwithratings = optional_param('booksratingwithratings', null, PARAM_CLEAN);
+$booksratingshow        = optional_param('booksratingshow', null, PARAM_CLEAN);
+$quiz                   = reader_optional_param_array('quiz', null, PARAM_CLEAN);
+$sametitlekey           = optional_param('sametitlekey', null, PARAM_CLEAN);
+$sametitleid            = optional_param('sametitleid', null, PARAM_CLEAN);
+$wordstitlekey          = optional_param('wordstitlekey', null, PARAM_CLEAN);
+$wordstitleid           = optional_param('wordstitleid', null, PARAM_CLEAN);
+$leveltitlekey          = optional_param('leveltitlekey', null, PARAM_CLEAN);
+$leveltitleid           = optional_param('leveltitleid', null, PARAM_CLEAN);
+$publishertitlekey      = optional_param('publishertitlekey', null, PARAM_CLEAN);
+$publishertitleid       = optional_param('publishertitleid', null, PARAM_CLEAN);
+$checkattempt           = optional_param('checkattempt', null, PARAM_CLEAN);
 $checkattemptvalue      = optional_param('checkattemptvalue', 0, PARAM_INT);
 $book                   = optional_param('book', 0, PARAM_INT);
-$noquizuserid           = reader_optional_param_array('noquizuserid', NULL, PARAM_CLEAN);
-$withoutdayfilter       = optional_param('withoutdayfilter', NULL, PARAM_CLEAN);
-$numberofsections       = optional_param('numberofsections', NULL, PARAM_CLEAN);
-$ct                     = optional_param('ct', NULL, PARAM_CLEAN);
-$adjustscoresupbooks    = reader_optional_param_array('adjustscoresupbooks', NULL, PARAM_CLEAN);
-$adjustscoresaddpoints  = optional_param('adjustscoresaddpoints', NULL, PARAM_CLEAN);
-$adjustscoresupall      = optional_param('adjustscoresupall', NULL, PARAM_CLEAN);
-$adjustscorespand       = optional_param('adjustscorespand', NULL, PARAM_CLEAN);
-$adjustscorespby        = optional_param('adjustscorespby', NULL, PARAM_CLEAN);
-$sctionoption           = optional_param('sctionoption', NULL, PARAM_CLEAN);
+$noquizuserid           = reader_optional_param_array('noquizuserid', null, PARAM_CLEAN);
+$withoutdayfilter       = optional_param('withoutdayfilter', null, PARAM_CLEAN);
+$numberofsections       = optional_param('numberofsections', null, PARAM_CLEAN);
+$ct                     = optional_param('ct', null, PARAM_CLEAN);
+$adjustscoresupbooks    = reader_optional_param_array('adjustscoresupbooks', null, PARAM_CLEAN);
+$adjustscoresaddpoints  = optional_param('adjustscoresaddpoints', null, PARAM_CLEAN);
+$adjustscoresupall      = optional_param('adjustscoresupall', null, PARAM_CLEAN);
+$adjustscorespand       = optional_param('adjustscorespand', null, PARAM_CLEAN);
+$adjustscorespby        = optional_param('adjustscorespby', null, PARAM_CLEAN);
+$sctionoption           = optional_param('sctionoption', null, PARAM_CLEAN);
 $studentuserid          = optional_param('studentuserid', 0, PARAM_INT);
-$studentusername        = optional_param('studentusername', NULL, PARAM_CLEAN);
+$studentusername        = optional_param('studentusername', null, PARAM_CLEAN);
 $bookquiznumber         = optional_param('bookquiznumber', 0, PARAM_INT);
 
 $readercfg = get_config('mod_reader');
@@ -429,14 +429,14 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && ($changelevel ||
         $DB->update_record('reader_levels', $studentlevel);
     } else {
         $studentlevel = (object)array(
-            'userid'        => $userid,
-            'startlevel'    => $changelevel,
-            'currentlevel'  => $changelevel,
-            'readerid'      => $reader->id,
-            'nopromote'     => 0,
-            'stoplevel' => 99,
-            'goal'          => null,
-            'time'          => time()
+            'userid'         => $userid,
+            'startlevel'     => $changelevel,
+            'currentlevel'   => $changelevel,
+            'readerid'       => $reader->id,
+            'allowpromotion' => 1,
+            'stoplevel'      => 99,
+            'goal'           => null,
+            'time'           => time()
         );
         $studentlevel->id = $DB->insert_record('reader_levels', $studentlevel);
     }
@@ -538,14 +538,14 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $act == 'student
         $DB->update_record('reader_levels',  $studentlevel);
     } else {
         $studentlevel = (object)array(
-            'userid'        => $userid,
-            'startlevel'    => 0,
-            'currentlevel'  => 0,
-            'readerid'      => $reader->id,
-            'nopromote'     => 0,
-            'stoplevel' => 99,
-            'goal'          => $setgoal,
-            'time'          => time()
+            'userid'         => $userid,
+            'startlevel'     => 0,
+            'currentlevel'   => 0,
+            'readerid'       => $reader->id,
+            'allowpromotion' => 1,
+            'stoplevel'      => 99,
+            'goal'           => $setgoal,
+            'time'           => time()
         );
         $studentlevel->id = $DB->insert_record('reader_levels', $studentlevel);
     }
@@ -556,27 +556,27 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $act == 'student
     }
 }
 
-if (has_capability('mod/reader:addinstance', $contextmodule) && isset($nopromote) && $userid) {
+if (has_capability('mod/reader:addinstance', $contextmodule) && isset($allowpromotion) && $userid) {
     $params = array('userid' => $userid, 'readerid' => $reader->id);
     if ($studentlevel = $DB->get_record('reader_levels', $params)) {
-        $studentlevel->nopromote = $nopromote;
+        $studentlevel->allowpromotion = $allowpromotion;
         $DB->update_record('reader_levels',  $studentlevel);
     } else {
         $studentlevel = (object)array(
-            'userid'        => $userid,
-            'startlevel'    => 0,
-            'currentlevel'  => 0,
-            'readerid'      => $reader->id,
-            'nopromote'     => $nopromote,
-            'stoplevel' => 99,
-            'goal'          => null,
-            'time'          => time()
+            'userid'         => $userid,
+            'startlevel'     => 0,
+            'currentlevel'   => 0,
+            'readerid'       => $reader->id,
+            'allowpromotion' => $allowpromotion,
+            'stoplevel'      => 99,
+            'goal'           => null,
+            'time'           => time()
         );
         $studentlevel->id = $DB->insert_record('reader_levels', $studentlevel);
     }
-    reader_add_to_log($course->id, 'reader', substr("AA-Student NoPromote Changed ({$userid} set to {$nopromote})",0,39), 'admin.php?id='.$cm->id, $cm->instance, $cm->id);
+    reader_add_to_log($course->id, 'reader', substr("AA-Student AllowPromotion Changed ({$userid} set to {$allowpromotion})",0,39), 'admin.php?id='.$cm->id, $cm->instance, $cm->id);
     if ($ajax == 'true') {
-        echo reader_promo_menu($userid, $studentlevel, 'nopromote', 1);
+        echo reader_promo_menu($userid, $studentlevel, 'allowpromotion', 1);
         die;
     }
 }
@@ -588,14 +588,14 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && isset($stoplevel
         $DB->update_record('reader_levels', $studentlevel);
     } else {
         $studentlevel = (object)array(
-            'userid'        => $userid,
-            'startlevel'    => 0,
-            'currentlevel'  => 0,
-            'readerid'      => $reader->id,
-            'nopromote'     => 0,
-            'stoplevel' => $stoplevel,
-            'goal'          => null,
-            'time'          => time()
+            'userid'         => $userid,
+            'startlevel'     => 0,
+            'currentlevel'   => 0,
+            'readerid'       => $reader->id,
+            'allowpromotion' => 1,
+            'stoplevel'      => $stoplevel,
+            'goal'           => null,
+            'time'           => time()
         );
         $studentlevel->id = $DB->insert_record('reader_levels', $level);
     }
@@ -634,14 +634,14 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $changeallstartl
             $DB->update_record('reader_levels', $studentlevel);
         } else {
             $studentlevel = (object)array(
-                'userid'        => $coursestudent->id,
-                'startlevel'    => $changeallstartlevel,
-                'currentlevel'  => $changeallstartlevel,
-                'readerid'      => $reader->id,
-                'nopromote'     => 0,
-                'stoplevel' => 99,
-                'goal'          => null,
-                'time'          => time()
+                'readerid'       => $reader->id,
+                'userid'         => $coursestudent->id,
+                'startlevel'     => $changeallstartlevel,
+                'currentlevel'   => $changeallstartlevel,
+                'stoplevel'      => 99,
+                'allowpromotion' => 1,
+                'goal'           => $reader->goal,
+                'time'           => time()
             );
             $studentlevel->id = $DB->insert_record('reader_levels', $studentlevel);
         }
@@ -649,7 +649,7 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $changeallstartl
     }
 }
 
-if (has_capability('mod/reader:addinstance', $contextmodule) &&  $changeallcurrentlevel >= 0) {
+if (has_capability('mod/reader:addinstance', $contextmodule) &&  isset($changeallcurrentlevel)) {
     foreach ($coursestudents as $coursestudent) {
         $params = array('userid' => $coursestudent->id, 'readerid' => $reader->id);
         if ($studentlevel = $DB->get_record('reader_levels', $params)) {
@@ -657,14 +657,14 @@ if (has_capability('mod/reader:addinstance', $contextmodule) &&  $changeallcurre
             $DB->update_record('reader_levels', $studentlevel);
         } else {
             $studentlevel = (object)array(
-                'userid'        => $coursestudent->id,
-                'startlevel'    => $changeallcurrentlevel,
-                'currentlevel'  => $changeallcurrentlevel,
-                'readerid'      => $reader->id,
-                'nopromote'     => 0,
-                'stoplevel' => 99,
-                'goal'          => null,
-                'time'          => time()
+                'readerid'       => $reader->id,
+                'userid'         => $coursestudent->id,
+                'startlevel'     => $changeallcurrentlevel,
+                'currentlevel'   => $changeallcurrentlevel,
+                'stoplevel'      => 99,
+                'allowpromotion' => 1,
+                'goal'           => $reader->id,
+                'time'           => time()
             );
             $studentlevel->id = $DB->insert_record('reader_levels', $studentlevel);
         }
@@ -672,27 +672,22 @@ if (has_capability('mod/reader:addinstance', $contextmodule) &&  $changeallcurre
     }
 }
 
-if (has_capability('mod/reader:addinstance', $contextmodule) && $changeallpromo) {
-    if (strtolower($changeallpromo) == 'promo') {
-        $nopromote = 0;
-    } else {
-        $nopromote = 1;
-    }
+if (has_capability('mod/reader:addinstance', $contextmodule) && isset($changeallpromotion)) {
     foreach ($coursestudents as $coursestudent) {
         $params = array('userid' => $coursestudent->id, 'readerid' => $reader->id);
         if ($studentlevel = $DB->get_record('reader_levels', $params)) {
-            $studentlevel->nopromote = $nopromote;
+            $studentlevel->allowpromotion = $changeallpromotion;
             $DB->update_record('reader_levels', $studentlevel);
         } else {
             $studentlevel = (object)array(
-                'userid'        => $coursestudent->id,
-                'startlevel'    => 0,
-                'currentlevel'  => 0,
-                'readerid'      => $reader->id,
-                'nopromote'     => $nopromote,
-                'stoplevel' => 99,
-                'goal'          => null,
-                'time'          => time()
+                'readerid'       => $reader->id,
+                'userid'         => $coursestudent->id,
+                'startlevel'     => 0,
+                'currentlevel'   => 0,
+                'stoplevel'      => 99,
+                'allowpromotion' => $changeallpromotion,
+                'goal'           => $reader->goal,
+                'time'           => time()
             );
             $studentlevel->id = $DB->insert_record('reader_levels', $studentlevel);
         }
@@ -700,49 +695,49 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $changeallpromo)
     }
 }
 
-if (has_capability('mod/reader:addinstance', $contextmodule) && $changeallstoppromo >= 0 && $gid) {
+if (has_capability('mod/reader:addinstance', $contextmodule) && isset($changeallstoplevel) && $gid) {
     foreach ($coursestudents as $coursestudent) {
         $params = array('userid' => $coursestudent->id, 'readerid' => $reader->id);
         if ($studentlevel = $DB->get_record('reader_levels', $params)) {
-            $studentlevel->stoplevel = $changeallstoppromo;
+            $studentlevel->stoplevel = $changeallstoplevel;
             $DB->update_record('reader_levels', $studentlevel);
         } else {
             $studentlevel = (object)array(
-                'userid'        => $coursestudent->id,
-                'startlevel'    => 0,
-                'currentlevel'  => 0,
-                'readerid'      => $reader->id,
-                'nopromote'     => 0,
-                'stoplevel' => $changeallstoppromo,
-                'goal'          => null,
-                'time'          => time()
+                'userid'         => $coursestudent->id,
+                'startlevel'     => 0,
+                'currentlevel'   => 0,
+                'readerid'       => $reader->id,
+                'allowpromotion' => 1,
+                'stoplevel'      => $changeallstoplevel,
+                'goal'           => null,
+                'time'           => time()
             );
             $studentlevel->id = $DB->insert_record('reader_levels', $studentlevel);
         }
-        reader_add_to_log($course->id, 'reader', substr("AA-Student NoPromote Changed ({$coursestudent->id} set to {$changeallstoppromo})",0,39), 'admin.php?id='.$cm->id, $cm->instance, $cm->id);
+        reader_add_to_log($course->id, 'reader', substr("AA-Student AllowPromotion Changed ({$coursestudent->id} set to {$changeallstoplevel})",0,39), 'admin.php?id='.$cm->id, $cm->instance, $cm->id);
     }
 }
 
-if (has_capability('mod/reader:addinstance', $contextmodule) && $changeallcurrentgoal) {
+if (has_capability('mod/reader:addinstance', $contextmodule) && isset($changeallgoal)) {
     foreach ($coursestudents as $coursestudent) {
         $params = array('userid' => $coursestudent->id, 'readerid' => $reader->id);
         if ($studentlevel = $DB->get_record('reader_levels', $params)) {
-            $studentlevel->goal = $changeallcurrentgoal;
+            $studentlevel->goal = $changeallgoal;
             $DB->update_record('reader_levels',  $studentlevel);
         } else {
             $studentlevel = (object)array(
-                'userid'        => $coursestudent->id,
-                'startlevel'    => 0,
-                'currentlevel'  => 0,
-                'readerid'      => $reader->id,
-                'nopromote'     => 0,
-                'stoplevel' => 99,
-                'goal'          => changeallcurrentgoal,
-                'time'          => time()
+                'userid'         => $coursestudent->id,
+                'startlevel'     => 0,
+                'currentlevel'   => 0,
+                'readerid'       => $reader->id,
+                'allowpromotion' => 1,
+                'stoplevel'      => 99,
+                'goal'           => $changeallgoal,
+                'time'           => time()
             );
             $studentlevel->id = $DB->insert_record('reader_levels', $studentlevel);
         }
-        reader_add_to_log($course->id, 'reader', substr("AA-goal userid: {$coursestudent->id}, goal={$changeallcurrentgoal}",0,39), 'admin.php?id='.$cm->id, $cm->instance, $cm->id);
+        reader_add_to_log($course->id, 'reader', substr("AA-goal userid: {$coursestudent->id}, goal={$changeallgoal}",0,39), 'admin.php?id='.$cm->id, $cm->instance, $cm->id);
     }
 }
 
@@ -1169,7 +1164,7 @@ $options = array(
 
 if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodule)) {
     if (! $quizzesid) {
-        if ($quizdata  = get_all_instances_in_course('quiz', $DB->get_record('course', array('id' => $reader->usecourse)), NULL, true)) {
+        if ($quizdata  = get_all_instances_in_course('quiz', $DB->get_record('course', array('id' => $reader->usecourse)), null, true)) {
         //if ($quizdata  = get_records('quiz')) {
             $existdata['publisher'][0]  = get_string('selectalreadyexist', 'mod_reader');
             $existdata['difficulty'][0] = get_string('selectalreadyexist', 'mod_reader');
@@ -1448,7 +1443,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
     }
 
     if (! $gid) {
-        $gid = NULL;
+        $gid = null;
     }
 
     $groupnames = array();
@@ -1647,7 +1642,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
     }
 
     if (! $gid) {
-        $gid = NULL;
+        $gid = null;
     }
 
     $groupnames = array();
@@ -2288,7 +2283,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
 
     $table = new html_table();
 
-    $titles = array('Image'=>'', 'Username'=>'username', 'Fullname<br />Click to view screen'=>'fullname', 'Start level'=>'startlevel', 'Current level'=>'currentlevel', 'NoPromote'=>'nopromote', 'Stop Promo At'=>'promotionstops', 'Goal'=>'goal');
+    $titles = array('Image'=>'', 'Username'=>'username', 'Fullname<br />Click to view screen'=>'fullname', 'Start level'=>'startlevel', 'Current level'=>'currentlevel', 'AllowPromotion'=>'allowpromotion', 'Stop Promo At'=>'promotionstops', 'Goal'=>'goal');
 
     if ($reader->uniqueip == 1) {
         $titles['Restrict IP'] = '';
@@ -2300,7 +2295,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
     $table->width = '100%';
 
     if (! $gid) {
-        $gid = NULL;
+        $gid = null;
     }
 
     foreach ($coursestudents as $coursestudent) {
@@ -2311,15 +2306,15 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
                 // do nothing
             } else {
                 $studentlevel = (object)array(
-                    'id'            => 0,
-                    'userid'        => $coursestudent->id,
-                    'readerid'      => $reader->id,
-                    'startlevel'    => 0,
-                    'currentlevel'  => 0,
-                    'nopromote'     => 0,
-                    'stoplevel' => 99,
-                    'goal'          => null,
-                    'time'          => time()
+                    'id'             => 0,
+                    'userid'         => $coursestudent->id,
+                    'readerid'       => $reader->id,
+                    'startlevel'     => 0,
+                    'currentlevel'   => 0,
+                    'allowpromotion' => 1,
+                    'stoplevel'      => 99,
+                    'goal'           => null,
+                    'time'           => time()
                 );
                 $studentlevel->id = $DB->insert_record('reader_levels', $studentlevel);
             }
@@ -2337,7 +2332,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
                 $linkfullname,
                 reader_level_menu($coursestudent->id, $studentlevel, 'startlevel'),
                 reader_level_menu($coursestudent->id, $studentlevel, 'currentlevel'),
-                reader_promo_menu($coursestudent->id, $studentlevel, 'nopromote', 1),
+                reader_promo_menu($coursestudent->id, $studentlevel, 'allowpromotion', 1),
                 reader_promotionstop_menu($coursestudent->id, $studentlevel, 'stoplevel', 2),
                 reader_goals_menu($coursestudent->id, $studentlevel, 'goal', 3, $reader)
             );
@@ -2351,7 +2346,9 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
     reader_sort_table($table, $titles, $orderby, $sort);
 
     if ($gid) {
-        $levels = array(0,1,2,3,4,5,6,7,8,9,10);
+
+        // startlevel for all students
+        $levels = array(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14);
         echo '<form action="?a=admin&id='.$id.'&act='.$act.'&sort='.$sort.'&orderby='.$orderby.'&gid='.$gid.'" method="post"><div> ';
         print_string('changestartlevel', 'reader');
         echo ' <select name="changeallstartlevel">';
@@ -2363,6 +2360,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
         echo ' <input type="submit" name="submit" value="Change" />';
         echo '</div></form>';
 
+        // currentlevel for all students
         $levels = array(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14);
         echo '<form action="?a=admin&id='.$id.'&act='.$act.'&sort='.$sort.'&orderby='.$orderby.'&gid='.$gid.'" method="post"><div> ';
         print_string('changecurrentlevel', 'reader');
@@ -2375,11 +2373,11 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
         echo ' <input type="submit" name="submit" value="Change" />';
         echo '</div></form>';
 
-        //Points goal for all students
+        // points reading goal for all students
         $levels = array(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15);
         echo '<form action="?a=admin&id='.$id.'&act='.$act.'&sort='.$sort.'&orderby='.$orderby.'&gid='.$gid.'" method="post"><div> ';
         print_string('setuniformgoalinpoints', 'reader');
-        echo ' <select name="changeallcurrentgoal">';
+        echo ' <select name="changeallgoal">';
         foreach ($levels as $value) {
             echo '<option value="'.$value.'">'.$value.'</option>';
         }
@@ -2388,7 +2386,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
         echo ' <input type="submit" name="submit" value="Change" />';
         echo '</div></form>';
 
-        //Words goal for all students
+        // words reading goal for all students
         $levels = array(0,5000,6000,7000,8000,9000,10000,12500,15000,20000,25000,30000,35000,40000,45000,50000,55000,60000,65000,70000,75000,80000,85000,90000,95000,100000,125000,150000,175000,200000,250000,300000,350000,400000,450000,500000);
         if (! in_array($reader->goal, $levels) && !empty($reader->goal)) {
             for ($i=0; $i<count($levels); $i++) {
@@ -2403,7 +2401,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
         }
         echo '<form action="?a=admin&id='.$id.'&act='.$act.'&sort='.$sort.'&orderby='.$orderby.'&gid='.$gid.'" method="post"><div> ';
         print_string('setuniformgoalinwords', 'reader');
-        echo ' <select name="changeallcurrentgoal">';
+        echo ' <select name="changeallgoal">';
         foreach ($levels as $value) {
             echo '<option value="'.$value.'">'.$value.'</option>';
         }
@@ -2412,11 +2410,12 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
         echo ' <input type="submit" name="submit" value="Change" />';
         echo '</div></form>';
 
-        //"NoPromo"/"Promo" for all students
-        $levels = array('Promo', 'NoPromo');
+        // allowpromotion for all students
+        $levels = array(0 => get_string('disallowpromotion', 'mod_reader'),
+                        1 => get_string('allowpromotion',    'mod_reader'));
         echo '<form action="?a=admin&id='.$id.'&act='.$act.'&sort='.$sort.'&orderby='.$orderby.'&gid='.$gid.'" method="post"><div> ';
         print_string('changeallto', 'reader');
-        echo ' <select name="changeallpromo">';
+        echo ' <select name="changeallpromotion">';
         foreach ($levels as $value) {
             echo '<option value="'.$value.'">'.$value.'</option>';
         }
@@ -2425,11 +2424,11 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
         echo ' <input type="submit" name="submit" value="Change" />';
         echo '</div></form>';
 
-        //Stop Promo for all students
+        // stoplevel for all students
         $levels = array(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15);
         echo '<form action="?a=admin&id='.$id.'&act='.$act.'&sort='.$sort.'&orderby='.$orderby.'&gid='.$gid.'" method="post"><div> ';
-        print_string('changeallstoppromoto', 'reader');
-        echo ' <select name="changeallstoppromo">';
+        print_string('changeallstoplevelto', 'reader');
+        echo ' <select name="changeallstoplevel">';
         foreach ($levels as $value) {
             echo '<option value="'.$value.'">'.$value.'</option>';
         }
@@ -3256,7 +3255,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
         $data['averagewordsthisterm'] = 0;
         $data['averagewordsallterms'] = 0;
 
-        $coursestudents = get_enrolled_users($context, NULL, $group->id);
+        $coursestudents = get_enrolled_users($context, null, $group->id);
         foreach ($coursestudents as $coursestudent) {
 
             $select = 'userid= ? AND reader= ? AND timestart > ? AND deleted = ?';
@@ -3654,7 +3653,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
     }
 
     if (! $gid) {
-        $gid = NULL;
+        $gid = null;
     }
 
     $cheatedlogs = $DB->get_records('reader_cheated_log', array('readerid' => $reader->id));
@@ -4026,7 +4025,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
     $table->width = "100%";
 
     if (! $gid) {
-        $gid = NULL;
+        $gid = null;
     }
 
     $groupnames = array();
@@ -5136,9 +5135,9 @@ function reader_print_search_form($id='', $act='', $book='') {
     global $OUTPUT;
 
     $id = optional_param('id', 0, PARAM_INT);
-    $act = optional_param('act', NULL, PARAM_CLEAN);
-    $book = optional_param('book', NULL, PARAM_CLEAN);
-    $searchtext = optional_param('searchtext', NULL, PARAM_CLEAN);
+    $act = optional_param('act', null, PARAM_CLEAN);
+    $book = optional_param('book', null, PARAM_CLEAN);
+    $searchtext = optional_param('searchtext', null, PARAM_CLEAN);
     $searchtext = str_replace('\\"', '"', $searchtext);
 
     $output = '';
@@ -5504,7 +5503,8 @@ function reader_goals_menu($userid, $studentlevel, $field, $rand, $reader) {
 function reader_promo_menu($userid, $data, $field, $rand) {
     global $CFG, $COURSE, $_SESSION, $id, $act, $gid, $sort, $orderby, $page;
 
-    $values = array('0' => 'Promo', '1' => 'NoPromo');
+    $values = array(0 => get_string('disallowpromotion', 'mod_reader'),
+                    1 => get_string('allowpromotion', 'mod_reader'));
     $name = 'promo_'.$rand.'_'.$userid;
 
     $output = '';

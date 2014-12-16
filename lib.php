@@ -370,14 +370,14 @@ function reader_get_level_data($reader, $userid=0) {
 
     if (! $level = $DB->get_record('reader_levels', array('userid' => $userid, 'readerid' => $reader->id))) {
         $level = (object)array(
-            'userid'        => $userid,
-            'readerid'      => $reader->id,
-            'startlevel'    => 0,
-            'currentlevel'  => 0,
-            'nopromote'     => 0,
-            'stoplevel' => $reader->stoplevel,
-            'goal'          => 0,
-            'time'          => time(),
+            'userid'         => $userid,
+            'readerid'       => $reader->id,
+            'startlevel'     => 0,
+            'currentlevel'   => 0,
+            'allowpromotion' => 1,
+            'stoplevel'      => $reader->stoplevel,
+            'goal'           => $reader->goal,
+            'time'           => time(),
         );
         if (! $level->id = $DB->insert_record('reader_levels', $level)) {
             // oops record could not be added - shouldn't happen !!
@@ -421,13 +421,13 @@ function reader_get_level_data($reader, $userid=0) {
         }
     }
 
-    // if this is the highest allowed level, then enable the "nopromote" switch
+    // if this is the highest allowed level, then disable the "allowpromotion" switch
     if ($level->stoplevel > 0 && $level->stoplevel <= $level->currentlevel) {
-        $DB->set_field('reader_levels', 'nopromote', 1, array('readerid' => $reader->id, 'userid' => $USER->id));
-        $level->nopromote = 1;
+        $DB->set_field('reader_levels', 'allowpromotion', 0, array('readerid' => $reader->id, 'userid' => $USER->id));
+        $level->allowpromotion = 0;
     }
 
-    if ($level->nopromote==1) {
+    if ($level->allowpromotion==0) {
         $count['this'] = 1;
     }
 
@@ -1097,12 +1097,13 @@ function reader_get_goal_progress($progress, $reader) {
     //$params = array('userid' => $USER->id, 'readerid' => $reader->id);
     //if (! $levels = $DB->get_record('reader_levels', $params)) {
     //    $levels = (object)array(
-    //        'userid'        => $USER->id,
-    //        'startlevel'    => 0,
-    //        'currentlevel'  => 0,
-    //        'readerid'      => $reader->id,
-    //        'stoplevel' => $reader->stoplevel,
-    //        'time'          => time(),
+    //        'userid'         => $USER->id,
+    //        'readerid'       => $reader->id,
+    //        'startlevel'     => 0,
+    //        'currentlevel'   => 0,
+    //        'stoplevel'      => $reader->stoplevel,
+    //        'allowpromotion' => 1,
+    //        'time'           => time(),
     //    );
     //    $levels->id = $DB->insert_record('reader_levels', $levels);
     //    $levels = $DB->get_record('reader_levels', $params);

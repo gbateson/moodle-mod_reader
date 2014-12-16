@@ -209,9 +209,9 @@
         <FIELD NAME="readerid" TYPE="int" LENGTH="11" NOTNULL="false" SEQUENCE="false" NEXT="startlevel" PREVIOUS="userid"/>
         <FIELD NAME="startlevel" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="currentlevel" PREVIOUS="readerid"/>
         <FIELD NAME="currentlevel" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="0" SEQUENCE="false" PREVIOUS="startlevel" NEXT="stoplevel"/>
-        <FIELD NAME="stoplevel" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="99" SEQUENCE="false" NEXT="nopromote" PREVIOUS="currentlevel"/>
-        <FIELD NAME="nopromote" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="goal" PREVIOUS="stoplevel"/>
-        <FIELD NAME="goal" TYPE="int" LENGTH="11" NOTNULL="false" SEQUENCE="false" NEXT="time" PREVIOUS="nopromote"/>
+        <FIELD NAME="stoplevel" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="99" SEQUENCE="false" NEXT="allowpromotion" PREVIOUS="currentlevel"/>
+        <FIELD NAME="allowpromotion" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="1" SEQUENCE="false" NEXT="goal" PREVIOUS="stoplevel"/>
+        <FIELD NAME="goal" TYPE="int" LENGTH="11" NOTNULL="false" SEQUENCE="false" NEXT="time" PREVIOUS="allowpromotion"/>
         <FIELD NAME="time" TYPE="int" LENGTH="11" NOTNULL="false" SEQUENCE="false" PREVIOUS="goal"/>
       </FIELDS>
       <KEYS>

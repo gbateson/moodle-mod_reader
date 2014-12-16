@@ -621,14 +621,14 @@ class mod_reader_renderer extends plugin_renderer_base {
 
         if (! $level = $DB->get_record('reader_levels', array('userid' => $userid, 'readerid' => $this->id))) {
             $level = (object)array(
-                'userid'        => $userid,
-                'readerid'      => $this->id,
-                'startlevel'    => 0,
-                'currentlevel'  => 0,
-                'nopromote'     => 0,
-                'stoplevel' => $this->stoplevel,
-                'goal'          => 0,
-                'time'          => time(),
+                'userid'         => $userid,
+                'readerid'       => $this->id,
+                'startlevel'     => 0,
+                'currentlevel'   => 0,
+                'allowpromotion' => 1,
+                'stoplevel'      => $this->stoplevel,
+                'goal'           => $this->goal,
+                'time'           => time(),
             );
             if (! $level->id = $DB->insert_record('reader_levels', $level)) {
                 // oops record could not be added - shouldn't happen !!
@@ -669,13 +669,13 @@ class mod_reader_renderer extends plugin_renderer_base {
             }
         }
 
-        // if this is the highest allowed level, then enable the "nopromote" switch
+        // if this is the highest allowed level, then disable the "allowpromotion" switch
         if ($level->stoplevel > 0 && $level->stoplevel <= $level->currentlevel) {
-            $DB->set_field('reader_levels', 'nopromote', 1, array('readerid' => $this->id, 'userid' => $USER->id));
-            $level->nopromote = 1;
+            $DB->set_field('reader_levels', 'allowpromotion', 0, array('readerid' => $this->id, 'userid' => $USER->id));
+            $level->allowpromotion = 0;
         }
 
-        if ($level->nopromote==1) {
+        if ($level->allowpromotion==0) {
             $count['this'] = 1;
         }
 

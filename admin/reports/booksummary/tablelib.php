@@ -71,7 +71,6 @@ class reader_admin_reports_booksummary_table extends reader_admin_reports_table 
 
     /** @var option fields */
     protected $optionfields = array('rowsperpage' => self::DEFAULT_ROWSPERPAGE,
-                                    'usertype'    => self::DEFAULT_USERTYPE,
                                     'showhidden'  => self::DEFAULT_SHOWHIDDEN,
                                     'sortfields'  => array());
 

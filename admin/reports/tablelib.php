@@ -38,11 +38,17 @@ require_once($CFG->dirroot.'/lib//tablelib.php');
  */
 class reader_admin_reports_table extends table_sql {
 
+    /**#@+
+    * default values for display options
+    *
+    * @const integer
+    */
     const DEFAULT_USERTYPE    = 0;  // i.e. enrolled users with attempts
     const DEFAULT_ROWSPERPAGE = 30;
     const DEFAULT_SHOWDELETED = 0;  // i.e. ignore deleted attempts
     const DEFAULT_SHOWHIDDEN  = 0;  // i.e. ignore hidden quizzes
     const DEFAULT_SORTFIELDS  = ''; // i.e. no special sorting
+    /**#@-*/
 
     /** @var is_sortable (from flexible table) */
     public $is_sortable = true;
@@ -262,6 +268,12 @@ class reader_admin_reports_table extends table_sql {
                 }
             }
         }
+
+        // setup filter form (but don't display it yet)
+        if (count($this->filterfields) && $this->output->reader->can_viewreports()) {
+            $classname = 'reader_admin_reports_'.$this->output->mode.'_filtering';
+            $this->filter = new $classname($this->filterfields, $this->baseurl, null, $this->optionfields);
+        }
     }
 
     /**
@@ -354,6 +366,10 @@ class reader_admin_reports_table extends table_sql {
         global $DB;
         if ($this->users===null) {
 
+if (empty($this->filter)) {
+    debugging('oops, no filter property');
+    die;
+}
             $usertype = $this->filter->get_optionvalue('usertype');
             switch ($usertype) {
 
@@ -1183,8 +1199,14 @@ class reader_admin_reports_table extends table_sql {
      * @return xxx
      */
     public function col_studentview($row)  {
-        $params = array('id' => $this->output->reader->cm->id, 'viewasstudent' => $row->userid);
-        $url = new moodle_url('/mod/reader/admin.php', $params);
+        global $USER;
+        if ($USER->id==$row->userid) {
+            $params = array('id' => $this->output->reader->cm->id);
+            $url = new moodle_url('/mod/reader/view.php', $params);
+        } else {
+            $params = array('id' => $this->output->reader->cm->id, 'userid' => $row->userid);
+            $url = new moodle_url('/mod/reader/view_loginas.php', $params);
+        }
         $img = $this->output->pix_icon('t/preview', get_string('studentview', 'mod_reader'));
         return html_writer::link($url, $img);
     }
@@ -1470,7 +1492,7 @@ class reader_admin_reports_table extends table_sql {
         if ($this->is_downloading()) {
             return ''; // no help icon required
         } else {
-            return ' '.$this->output->help_icon($strname, 'reader');
+            return ' '.$this->output->help_icon($strname, 'mod_reader');
         }
     }
 
@@ -1510,19 +1532,18 @@ class reader_admin_reports_table extends table_sql {
     /**
      * display_filters
      *
+     * filters form was setup in setup_report_table()
+     * because it may be required by execute_actions()
+     *
      * @uses $DB
      */
     public function display_filters() {
-        if (count($this->filterfields) && $this->output->reader->can_viewreports()) {
-
-            $classname = 'reader_admin_reports_'.$this->output->mode.'_filtering';
-            $this->filter = new $classname($this->filterfields, $this->baseurl, null, $this->optionfields);
-
+        if ($this->filter) {
             // set number of rows per page
             if ($rowsperpage = $this->filter->get_optionvalue('rowsperpage')) {
                 $this->pagesize = $rowsperpage;
             }
-
+            // display the filters
             if ($this->download=='') {
                 $this->filter->display_add();
                 $this->filter->display_active();
