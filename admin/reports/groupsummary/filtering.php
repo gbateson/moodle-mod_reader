@@ -53,19 +53,48 @@ class reader_admin_reports_groupsummary_filtering extends reader_admin_reports_f
 
             case 'countactive':
             case 'countinactive':
-            case 'percentactive':
-            case 'percentinactive':
-            case 'averagetaken':
-            case 'averagepassed':
-            case 'averagefailed':
-            case 'averagewordsthisterm':
-            case 'averagewordsallterms':
                 $label = get_string($fieldname, 'mod_reader');
                 return new reader_admin_reports_filter_number($fieldname, $label, $advanced, $fieldname, $default, 'having');
 
+            case 'percentactive':
+                $label = get_string($fieldname, 'mod_reader');
+                $fieldsql = '(CASE WHEN countusers=0 THEN 0 ELSE (100 * countactive / countusers) END)';
+                return new reader_admin_reports_filter_number($fieldname, $label, $advanced, $fieldname, $default, 'having', $fieldsql);
+
+            case 'percentinactive':
+                $label = get_string($fieldname, 'mod_reader');
+                $fieldsql = '(CASE WHEN countusers=0 THEN 0 ELSE (100 * countinactive / countusers) END)';
+                return new reader_admin_reports_filter_number($fieldname, $label, $advanced, $fieldname, $default, 'having', $fieldsql);
+
+            case 'averagetaken':
+                $label = get_string($fieldname, 'mod_reader');
+                $fieldsql = '(CASE WHEN countusers=0 THEN 0 ELSE (100 * (countpassed + countfailed) / countusers) END)';
+                return new reader_admin_reports_filter_number($fieldname, $label, $advanced, $fieldname, $default, 'having', $fieldsql);
+
+            case 'averagepassed':
+                $label = get_string($fieldname, 'mod_reader');
+                $fieldsql = '(CASE WHEN countusers=0 THEN 0 ELSE (100 * countpassed / countusers) END)';
+                return new reader_admin_reports_filter_number($fieldname, $label, $advanced, $fieldname, $default, 'having', $fieldsql);
+
+            case 'averagefailed':
+                $label = get_string($fieldname, 'mod_reader');
+                $fieldsql = '(CASE WHEN countusers=0 THEN 0 ELSE (100 * countfailed / countusers) END)';
+                return new reader_admin_reports_filter_number($fieldname, $label, $advanced, $fieldname, $default, 'having', $fieldsql);
+
             case 'averagepercentgrade':
                 $label = get_string('averagegrade', 'mod_reader');
-                return new reader_admin_reports_filter_number($fieldname, $label, $advanced, $fieldname, $default, 'having');
+                $fieldsql = '(CASE WHEN countusers=0 THEN 0 ELSE (100 * sumaveragegrade / countusers) END)';
+                return new reader_admin_reports_filter_number($fieldname, $label, $advanced, $fieldname, $default, 'having', $fieldsql);
+
+            case 'averagewordsthisterm':
+                $label = get_string($fieldname, 'mod_reader');
+                $fieldsql = '(CASE WHEN countusers=0 THEN 0 ELSE (100 * totalthisterm / countusers) END)';
+                return new reader_admin_reports_filter_number($fieldname, $label, $advanced, $fieldname, $default, 'having', $fieldsql);
+
+            case 'averagewordsallterms':
+                $label = get_string($fieldname, 'mod_reader');
+                $fieldsql = '(CASE WHEN countusers=0 THEN 0 ELSE (100 * totalallterms / countusers) END)';
+                return new reader_admin_reports_filter_number($fieldname, $label, $advanced, $fieldname, $default, 'having', $fieldsql);
 
             default:
                 // other fields (e.g. from user record)

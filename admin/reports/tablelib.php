@@ -1492,7 +1492,7 @@ if (empty($this->filter)) {
         if ($this->is_downloading()) {
             return ''; // no help icon required
         } else {
-            return ' '.$this->output->help_icon($strname, 'mod_reader');
+            return $this->output->help_icon($strname, 'mod_reader');
         }
     }
 
@@ -1523,6 +1523,36 @@ if (empty($this->filter)) {
 
         // no sort column, and no "fullname" column
         return '';
+    }
+
+    /**
+     * Generate the HTML for the sort link. This is a helper method used by {@link print_headers()}.
+     * @param string $text the text for the link.
+     * @param string $column the column name, may be a fake column like 'firstname' or a real one.
+     * @param bool $isprimary whether the is column is the current primary sort column.
+     * @param int $order SORT_ASC or SORT_DESC
+     * @return string HTML fragment.
+     */
+    protected function sort_link($text, $column, $isprimary, $order) {
+
+        $before = '';
+        $after = '';
+
+        $search = '/^(.*?)(<span [^>]*class="helptooltip"[^>]*>.*<\/span>)(.*?)$/';
+        if (preg_match($search, $text, $matches)) {
+
+            if ($text = trim($matches[1])) {
+                $after  = trim($matches[2].$matches[3]);
+            } else if ($text = trim($matches[3])) {
+                $before = trim($matches[1].$matches[2]);
+            } else {
+                // only a help link - shouldn't happen !!
+                return $matches[2];
+            }
+        }
+
+        $text = parent::sort_link($text, $column, $isprimary, $order);
+        return $before.$text.$after;
     }
 
     ////////////////////////////////////////////////////////////////////////////////

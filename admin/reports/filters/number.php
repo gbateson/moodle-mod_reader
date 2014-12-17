@@ -38,22 +38,30 @@ require_once($CFG->dirroot.'/user/filters/select.php');
 class reader_admin_reports_filter_number extends user_filter_select {
 
     var $_type = '';
+    var $_fieldsql = '';
 
     /**
      * Constructor
      *
-     * @param string $name the name of the filter instance
-     * @param string $label the label of the filter instance
+     * @param string  $name     the name of the filter instance
+     * @param string  $label    the label of the filter instance
      * @param boolean $advanced advanced form element flag
-     * @param string $field user table field name
-     * @param mixed $default (optional, default = null)
+     * @param string  $field    user table field name
+     * @param mixed   $default  (optional, default = null)
+     * @param string  $type     (optional, default = '') "having", "where" or ""
+     * @param string  $fieldsql (optional, default = '') sql to extract this field from the database
      */
-    function __construct($name, $label, $advanced, $field, $default=null, $type='') {
+    function __construct($name, $label, $advanced, $field, $default=null, $type='', $fieldsql='') {
         parent::user_filter_type($name, $label, $advanced);
 
-        $this->_type    = $type;
-        $this->_field   = $field;
-        $this->_default = $default;
+        if ($fieldsql=='') {
+            $fieldsql = $field;
+        }
+
+        $this->_field    = $field;
+        $this->_default  = $default;
+        $this->_type     = $type;
+        $this->_fieldsql = $fieldsql;
     }
 
     /**
@@ -122,18 +130,18 @@ class reader_admin_reports_filter_number extends user_filter_select {
         if ($this->_type==$type) {
             $name = 'ex_num_'.$type.'_'.$counter;
             if (array_key_exists('value', $data) && array_key_exists('operator', $data)) {
-                $field = $this->_field;
+                $fieldsql = $this->_fieldsql;
                 switch($data['operator']) {
                     case 1: // less than
-                        $filter = $field.' < :'.$name;
+                        $filter = $fieldsql.' < :'.$name;
                         $params[$name] = $data['value'];
                         break;
                     case 2: // equal to
-                        $filter = $field.' = :'.$name;
+                        $filter = $fieldsql.' = :'.$name;
                         $params[$name] = $data['value'];
                         break;
                     case 3: // greater than
-                        $filter = $field.' > :'.$name;
+                        $filter = $fieldsql.' > :'.$name;
                         $params[$name] = $data['value'];
                         break;
                 }

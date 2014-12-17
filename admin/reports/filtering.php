@@ -396,6 +396,9 @@ class reader_admin_reports_options extends moodleform {
                     case 'groupname':
                         $label = get_string('group');
                         break;
+                    case 'grade':
+                        $label = get_string('grade');
+                        break;
                     case 'name':
                         $label = get_string('booktitle', 'mod_reader');
                         break;

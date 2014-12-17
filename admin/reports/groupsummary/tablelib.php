@@ -56,7 +56,9 @@ class reader_admin_reports_groupsummary_table extends reader_admin_reports_table
     protected $suppresscolumns = array();
 
     /** @var columns in this table that are not sortable */
-    protected $nosortcolumns = array();
+    protected $nosortcolumns = array('percentactive', 'percentinactive',
+                                     'averagetaken' , 'averagepassed'  , 'averagefailed',
+                                     'averagepercentgrade', 'averagewordsthisterm', 'averagewordsallterms');
 
     /** @var text columns in this table */
     protected $textcolumns = array('groupname');
@@ -247,7 +249,8 @@ class reader_admin_reports_groupsummary_table extends reader_admin_reports_table
     public function header_averagewords($type='')  {
         $averagewords = get_string('averagewords', 'mod_reader');
         if ($type) {
-            $strtype = get_string($type, 'mod_reader').' ';
+            $averagewords .= ' ';
+            $strtype = get_string($type, 'mod_reader');
             if ($this->is_downloading()) { // $this->download
                 $averagewords .= "($strtype)";
             } else {
