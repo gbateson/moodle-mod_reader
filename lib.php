@@ -1626,7 +1626,6 @@ function reader_add_to_log($courseid, $module, $action, $url='', $info='', $cmid
             case 'course_module_viewed':  $eventname = 'course_module_viewed';  break;
             case 'cronrun':               $eventname = 'cron_run';              break;
             case 'downloadsviewed':       $eventname = 'downloads_viewed';      break;
-            case 'index':                 $eventname = 'course_module_instance_list_viewed'; break;
             case 'messageadded':          $eventname = 'message_added';         break;
             case 'messagedeleted':        $eventname = 'message_deleted';       break;
             case 'messageedited':         $eventname = 'message_edited';        break;
@@ -1648,31 +1647,37 @@ function reader_add_to_log($courseid, $module, $action, $url='', $info='', $cmid
             case 'usersexported':         $eventname = 'users_exported';        break;
             case 'usersimported':         $eventname = 'users_imported';        break;
             case 'view':                  $eventname = 'course_module_viewed';  break;
+            case 'index':                 // legacy $action
+            case 'view all':              $eventname = 'course_module_instance_list_viewed'; break;
             default: $eventname = $action;
         }
 
         $classname = '\\mod_reader\\event\\'.$eventname;
         if (class_exists($classname)) {
 
-            if ($action=='index') {
+            $context = null;
+            $course = null;
+            $reader = null;
+            $params = null;
+            $objectid = 0;
+
+            if ($action=='index' || $action=='view all') {
                 // course context
-                if ($PAGE->course && $PAGE->course->id==$courseid) {
+                if (isset($PAGE->course) && $PAGE->course->id==$courseid) {
                     // normal Moodle use
-                    $objectid = $PAGE->course->id;
                     $context  = $PAGE->context;
                     $course   = $PAGE->course;
                 } else if ($courseid) {
                     // Moodle upgrade
-                    $objectid = $courseid;
                     $context  = reader_get_context(CONTEXT_COURSE, $courseid);
                     $course   = $DB->get_record('course', array('id' => $courseid));
-                } else {
-                    $objectid = 0; // shouldn't happen !!
                 }
-                $reader = null;
+                if ($context) {
+                    $params = array('context' => $context);
+                }
             } else {
                 // course module context
-                if ($PAGE->cm && $PAGE->cm->id==$cmid) {
+                if (isset($PAGE->cm) && $PAGE->cm->id==$cmid) {
                     // normal Moodle use
                     $objectid = $PAGE->cm->instance;
                     $context  = $PAGE->context;
@@ -1684,14 +1689,17 @@ function reader_add_to_log($courseid, $module, $action, $url='', $info='', $cmid
                     $context  = reader_get_context(CONTEXT_MODULE, $cmid);
                     $course   = $DB->get_record('course', array('id' => $courseid));
                     $reader   = $DB->get_record('reader', array('id' => $objectid));
-                } else {
-                    $objectid = 0; // shouldn't happen !!
+                }
+                if ($context && $objectid) {
+                    $params = array('context' => $context, 'objectid' => $objectid);
                 }
             }
 
-            if ($objectid) {
+            if ($params) {
+                if ($userid) {
+                    $params['relateduserid'] = $userid;
+                }
                 // use call_user_func() to prevent syntax error in PHP 5.2.x
-                $params = array('objectid' => $objectid, 'context' => $context);
                 $event = call_user_func(array($classname, 'create'), $params);
                 if ($course) {
                     $event->add_record_snapshot('course', $course);
