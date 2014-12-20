@@ -1283,7 +1283,19 @@ class reader_admin_reports_table extends table_sql {
      * @return xxx
      */
     public function col_words($row)  {
+        $row->words = intval($row->words);
         return number_format($row->words);
+    }
+
+    /**
+     * col_points
+     *
+     * @param xxx $row
+     * @return xxx
+     */
+    public function col_points($row)  {
+        $row->points = floatval($row->points);
+        return number_format($row->points);
     }
 
     /**
