@@ -110,33 +110,44 @@ class reader_admin_reports_userdetailed_table extends reader_admin_reports_table
         list($usersql, $userparams) = $this->select_sql_users();
 
         if ($this->output->reader->wordsorpoints==0) {
-            $field1 = 'rb.words';
-            $field2 = 'attemptwords';
-            $field3 = 'termwords';
-            $field4 = $field1;
+            $wordsorpointsalias = 'words';
+            $wordsorpoints = 'words';
+            $attemptalias = 'attemptwords';
+            $termalias = 'termwords';
         } else {
-            $field1 = 'rb.length';
-            $field2 = 'attemptpoints';
-            $field3 = 'termpoints';
-            $field4 = $field1.' AS points';
+            $wordsorpointsalias = 'length AS points';
+            $wordsorpoints = 'length';
+            $attemptalias = 'attemptpoints';
+            $termalias = 'termpoints';
         }
 
-        $score    = 'CASE WHEN (ra.passed = :passed) THEN '.$field1.' ELSE 0 END';
+        $score    = "CASE WHEN (ra.passed = :passed1) THEN rb.$wordsorpoints ELSE 0 END";
         $grade    = 'CASE WHEN (ra.percentgrade IS NULL) THEN 0 ELSE ra.percentgrade END';
         $duration = 'CASE WHEN (ra.timefinish IS NULL OR ra.timefinish = 0) THEN 0 ELSE (ra.timefinish - ra.timestart) END';
 
-        $select = "ra.id, ra.timefinish, ($duration) as duration, ($grade) as grade, ra.passed, ($score) AS $field2, 0 AS $field3, ".
+        // total of all words/points this term up to and including this attempt
+        $total    = 'rat.reader = ra.reader AND rat.userid = ra.userid AND '.
+                    'rat.timefinish > :time1 AND rat.timefinish <= ra.timefinish AND '.
+                    'rat.passed = :passed2 AND rat.deleted = :deleted';
+        $total    = "(SELECT SUM(rbt.$wordsorpoints) FROM {reader_attempts} rat LEFT JOIN {reader_books} rbt ON rat.bookid = rbt.id WHERE $total)";
+
+        $select = "ra.id, ra.timefinish, ".
+                  "($duration) as duration, ($grade) as grade, ra.passed, ".
+                  "($score) AS $attemptalias, $total AS $termalias, ".
                   $this->get_userfields('u', array('username'), 'userid').', '.
-                  'rl.currentlevel, rb.difficulty, '.$field4.', rb.name';
+                  "rl.currentlevel, rb.difficulty, rb.$wordsorpointsalias, rb.name";
         $from   = '{reader_attempts} ra '.
                   'LEFT JOIN {user} u ON ra.userid = u.id '.
                   'LEFT JOIN {reader_levels} rl ON ra.reader = rl.readerid AND u.id = rl.userid '.
                   'LEFT JOIN {reader_books} rb ON ra.bookid = rb.id';
-        $where  = "ra.reader = :reader AND ra.timefinish > :time AND u.id $usersql";
+        $where  = "ra.reader = :reader AND ra.timefinish > :time2 AND u.id $usersql";
 
         $params = array('reader'   => $this->output->reader->id,
-                        'time'     => $this->output->reader->ignoredate,
-                        'passed'   => 'true') + $userparams;
+                        'time1'    => $this->output->reader->ignoredate,
+                        'time2'    => $this->output->reader->ignoredate,
+                        'passed1'  => 'true',
+                        'passed2'  => 'true',
+                        'deleted'  => 0) + $userparams;
 
         if ($this->output->reader->bookinstances) {
             $from  .= ' LEFT JOIN {reader_book_instances} rbi ON rb.id = rbi.bookid';
@@ -234,7 +245,7 @@ class reader_admin_reports_userdetailed_table extends reader_admin_reports_table
      * @return xxx
      */
     public function col_termwords($row)  {
-        return $this->col_total($row, 'words');
+        return number_format($row->termwords);
     }
 
     /**
@@ -244,35 +255,6 @@ class reader_admin_reports_userdetailed_table extends reader_admin_reports_table
      * @return xxx
      */
     public function col_termpoints($row)  {
-        return $this->col_total($row, 'points');
-    }
-
-    /**
-     * col_termwords
-     *
-     * @param xxx $row
-     * @param xxx $field
-     * @return xxx
-     */
-    public function col_total($row, $field)  {
-        static $userid = 0;
-        static $total = 0;
-
-        if (empty($row->userid)) {
-            return $this->empty_cell(); // shouldn't happen !!
-        }
-
-        if ($userid && $userid==$row->userid) {
-            // same user
-        } else {
-            $userid = $row->userid;
-            $total = 0;
-        }
-
-        if (isset($row->passed) && $row->passed=='true' && isset($row->$field)) {
-            $total += $row->$field;
-        }
-
-        return number_format($total);
+        return number_format($row->termpoints);
     }
 }
