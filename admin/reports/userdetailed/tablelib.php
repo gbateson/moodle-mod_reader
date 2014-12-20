@@ -39,40 +39,37 @@ class reader_admin_reports_userdetailed_table extends reader_admin_reports_table
 
     /** @var columns used in this table */
     protected $tablecolumns = array(
-        'studentview', 'username', 'fullname', 'currentlevel', 'difficulty', 'name',
+        'studentview', 'username', 'fullname', 'currentlevel',
+        'difficulty', 'words', 'points', 'name',
         'selected', 'timefinish', 'duration', 'grade', 'passed',
-        'words', 'totalwords', 'points', 'totalpoints'
+        'attemptwords', 'termwords', 'attemptpoints', 'termpoints'
     );
 
     /** @var suppressed columns in this table */
-    protected $suppresscolumns = array('studentview', 'username', 'fullname', 'currentlevel');
+    protected $suppresscolumns = array('studentview', 'username', 'fullname', 'currentlevel', 'difficulty');
 
     /** @var columns in this table that are not sortable */
-    protected $nosortcolumns = array('totalwords');
+    protected $nosortcolumns = array('attemptwords', 'attemptpoints', 'termwords', 'termpoints');
 
     /** @var text columns in this table */
     protected $textcolumns = array('username', 'fullname', 'name');
 
     /** @var number columns in this table */
-    protected $numbercolumns = array('currentlevel', 'difficulty', 'words', 'totalwords', 'points', 'totalpoints');
+    protected $numbercolumns = array('currentlevel', 'difficulty', 'attemptwords', 'termwords', 'attemptpoints', 'termpoints');
 
     /** @var columns that are not to be center aligned */
     protected $leftaligncolumns = array('username', 'fullname', 'name');
 
     /** @var default sort columns */
-    //protected $defaultsortcolumns = array('username' => SORT_ASC, 'lastname' => SORT_ASC, 'firstname' => SORT_ASC, 'timefinish' => SORT_DESC, 'name' => SORT_ASC);
     protected $defaultsortcolumns = array('username' => SORT_ASC, 'timefinish' => SORT_DESC);
 
     /** @var filter fields ($fieldname => $advanced) */
     protected $filterfields = array(
         'group'      => 0, 'username'     => 1, 'realname'     => 0,
         'lastname'   => 1, 'firstname'    => 1, 'currentlevel' => 1,
-        'difficulty' => 1, 'name'         => 1,
-        'timefinish' => 1, 'duration'     => 1,
-        'grade'      => 1, 'passed'       => 1,
-        'words'      => 1, //'totalwords' => 1,
-        'points'     => 1, //'totalpoints' => 1,
-    );
+        'difficulty' => 1, 'words'        => 1, 'points'       => 1, 'name'   => 1,
+        'timefinish' => 1, 'duration'     => 1, 'grade'        => 1, 'passed' => 1
+       );
 
     /** @var option fields */
     protected $optionfields = array('rowsperpage' => self::DEFAULT_ROWSPERPAGE,
@@ -83,34 +80,21 @@ class reader_admin_reports_userdetailed_table extends reader_admin_reports_table
     /** @var actions */
     protected $actions = array('deleteattempts', 'restoreattempts', 'passfailattempts');
 
-    ////////////////////////////////////////////////////////////////////////////////
-    // functions to extract data from $DB                                         //
-    ////////////////////////////////////////////////////////////////////////////////
-
     /**
      * Constructor
      *
      * @param int $uniqueid
      */
     public function __construct($uniqueid, $output) {
-        if ($output->reader->wordsorpoints==0) {
-            $values = array('points', 'totalpoints');
-        } else {
-            $values = array('words', 'totalwords');
-        }
-        foreach ($values as $value) {
-            if ($i = array_search($value, $this->tablecolumns)) {
-                array_splice($this->tablecolumns, $i, 1);
-            }
-            if ($i = array_search($value, $this->numbercolumns)) {
-                array_splice($this->numbercolumns, $i, 1);
-            }
-            if (array_key_exists($value, $this->filterfields)) {
-                unset($this->filterfields[$value]);
-            }
-        }
+        $wordsfields = array('words',  'attemptwords',  'termwords');
+        $pointsfields = array('points', 'attemptpoints', 'termpoints');
+        $this->fix_words_or_points_fields($output, $wordsfields, $pointsfields);
         parent::__construct($uniqueid, $output);
     }
+
+    ////////////////////////////////////////////////////////////////////////////////
+    // functions to extract data from $DB                                         //
+    ////////////////////////////////////////////////////////////////////////////////
 
     /**
      * select_sql
@@ -127,12 +111,14 @@ class reader_admin_reports_userdetailed_table extends reader_admin_reports_table
 
         if ($this->output->reader->wordsorpoints==0) {
             $field1 = 'rb.words';
-            $field2 = 'words';
-            $field3 = 'totalwords';
+            $field2 = 'attemptwords';
+            $field3 = 'termwords';
+            $field4 = $field1;
         } else {
             $field1 = 'rb.length';
-            $field2 = 'points';
-            $field3 = 'totalpoints';
+            $field2 = 'attemptpoints';
+            $field3 = 'termpoints';
+            $field4 = $field1.' AS points';
         }
 
         $score    = 'CASE WHEN (ra.passed = :passed) THEN '.$field1.' ELSE 0 END';
@@ -141,7 +127,7 @@ class reader_admin_reports_userdetailed_table extends reader_admin_reports_table
 
         $select = "ra.id, ra.timefinish, ($duration) as duration, ($grade) as grade, ra.passed, ($score) AS $field2, 0 AS $field3, ".
                   $this->get_userfields('u', array('username'), 'userid').', '.
-                  'rl.currentlevel, rb.difficulty, rb.name';
+                  'rl.currentlevel, rb.difficulty, '.$field4.', rb.name';
         $from   = '{reader_attempts} ra '.
                   'LEFT JOIN {user} u ON ra.userid = u.id '.
                   'LEFT JOIN {reader_levels} rl ON ra.reader = rl.readerid AND u.id = rl.userid '.
@@ -176,10 +162,12 @@ class reader_admin_reports_userdetailed_table extends reader_admin_reports_table
 
             case 'name':
             case 'words':
+            case 'length':
             case 'difficulty':
                 return array('reader_levels', 'rb');
 
-            case 'totalwords':
+            case 'termwords':
+            case 'termpoints':
                 return array('', '');
 
             case 'timefinish':
@@ -196,39 +184,43 @@ class reader_admin_reports_userdetailed_table extends reader_admin_reports_table
     ////////////////////////////////////////////////////////////////////////////////
 
     /**
-     * header_words
+     * header_attemptwords
      *
      * @return xxx
      */
-    public function header_words() {
-        return get_string('words', 'mod_reader');
+    public function header_attemptwords() {
+        $header = $this->header_words();
+        return $this->header_add_period($header, 'thisattempt');
     }
 
     /**
-     * header_points
+     * header_attemptpoints
      *
      * @return xxx
      */
-    public function header_points() {
-        return get_string('points', 'mod_reader');
+    public function header_attemptpoints() {
+        $header = $this->header_points();
+        return $this->header_add_period($header, 'thisattempt');
     }
 
     /**
-     * header_totalwords
+     * header_termwords
      *
      * @return xxx
      */
-    public function header_totalwords() {
-        return $this->header_total();
+    public function header_termwords() {
+        $header = $this->header_words();
+        return $this->header_add_period($header, 'thisterm');
     }
 
     /**
-     * header_totalpoints
+     * header_termpoints
      *
      * @return xxx
      */
-    public function header_totalpoints() {
-        return $this->header_total();
+    public function header_termpoints() {
+        $header = $this->header_points();
+        return $this->header_add_period($header, 'thisterm');
     }
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -236,27 +228,27 @@ class reader_admin_reports_userdetailed_table extends reader_admin_reports_table
     ////////////////////////////////////////////////////////////////////////////////
 
     /**
-     * col_totalwords
+     * col_termwords
      *
      * @param xxx $row
      * @return xxx
      */
-    public function col_totalwords($row)  {
+    public function col_termwords($row)  {
         return $this->col_total($row, 'words');
     }
 
     /**
-     * col_totalpoints
+     * col_termpoints
      *
      * @param xxx $row
      * @return xxx
      */
-    public function col_totalpoints($row)  {
+    public function col_termpoints($row)  {
         return $this->col_total($row, 'points');
     }
 
     /**
-     * col_totalwords
+     * col_termwords
      *
      * @param xxx $row
      * @param xxx $field

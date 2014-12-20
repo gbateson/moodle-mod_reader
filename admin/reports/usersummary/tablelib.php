@@ -41,7 +41,9 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
     protected $tablecolumns = array(
         'selected', 'studentview', 'username', 'fullname',
         'startlevel', 'currentlevel', 'stoplevel', 'allowpromotion', 'goal',
-        'countpassed', 'countfailed', 'averageduration', 'averagegrade', 'totalthisterm', 'totalallterms'
+        'countpassed', 'countfailed', 'averageduration', 'averagegrade',
+        'totalwordsthisterm', 'totalwordsallterms',
+        'totalpointsthisterm', 'totalpointsallterms'
     );
 
     /** @var suppressed columns in this table */
@@ -81,6 +83,18 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
     /** @var actions */
     protected $actions = array('setstartlevel', 'setcurrentlevel', 'setstoplevel', 'setallowpromotion', 'setreadinggoal',
                                'awardextrapoints', 'awardbookpoints');
+
+    /**
+     * Constructor
+     *
+     * @param int $uniqueid
+     */
+    public function __construct($uniqueid, $output) {
+        $wordsfields = array('totalwordsthisterm', 'totalwordsallterms');
+        $pointsfields = array('totalpointsthisterm', 'totalpointsallterms');
+        $this->fix_words_or_points_fields($output, $wordsfields, $pointsfields);
+        parent::__construct($uniqueid, $output);
+    }
 
     /*
      * get_tablecolumns
@@ -151,10 +165,18 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
 
         }
 
+        if ($this->output->reader->wordsorpoints==0) {
+            $totalthisterm = 'totalwordsthisterm';
+            $totalallterms = 'totalwordsallterms';
+        } else {
+            $totalthisterm = 'totalpointsthisterm';
+            $totalallterms = 'totalpointsallterms';
+        }
+
         $select = $this->get_userfields('u', array('username'), 'userid').', '.
                   'raa.countpassed, raa.countfailed, '.
                   'raa.averageduration, raa.averagegrade, '.
-                  'raa.totalthisterm, raa.totalallterms,'.
+                  "raa.$totalthisterm, raa.$totalallterms,".
                   'rl.startlevel, rl.currentlevel, rl.stoplevel, rl.allowpromotion, rl.goal';
         $from   = '{user} u '.
                   "$raa_join ($attemptsql) raa ON $raa_join_u ".
@@ -240,12 +262,31 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
     }
 
     /**
-     * header_totalthisterm
+     * header_goal
      *
      * @return xxx
      */
-    public function header_totalthisterm()  {
-        return $this->header_total(get_string('thisterm', 'mod_reader'));
+    public function header_goal()  {
+        return get_string('goal', 'mod_reader');
+    }
+
+    /**
+     * header_totalwords
+     *
+     * @return xxx
+     */
+    public function header_totalwords()  {
+        return get_string('totalwords', 'mod_reader');
+    }
+
+    /**
+     * header_totalwordsthisterm
+     *
+     * @return xxx
+     */
+    public function header_totalwordsthisterm()  {
+        $header = $this->header_totalwords();
+        return $this->header_add_period($header, 'thisterm');
     }
 
     /**
@@ -253,17 +294,38 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
      *
      * @return xxx
      */
-    public function header_totalallterms()  {
-        return $this->header_total(get_string('allterms', 'mod_reader'));
+    public function header_totalwordsallterms()  {
+        $header = $this->header_totalwords();
+        return $this->header_add_period($header, 'allterms');
     }
 
     /**
-     * header_goal
+     * header_totalpoints
      *
      * @return xxx
      */
-    public function header_goal()  {
-        return get_string('goal', 'mod_reader');
+    public function header_totalpoints($type='')  {
+        return get_string('totalpoints', 'mod_reader');
+    }
+
+    /**
+     * header_totalpointsthisterm
+     *
+     * @return xxx
+     */
+    public function header_totalpointsthisterm()  {
+        $header = $this->header_totalpoints();
+        return $this->header_add_period($header, 'thisterm');
+    }
+
+    /**
+     * header_totalallterms
+     *
+     * @return xxx
+     */
+    public function header_totalpointsallterms()  {
+        $header = $this->header_totalpoints();
+        return $this->header_add_period($header, 'allterms');
     }
 
     ////////////////////////////////////////////////////////////////////////////////

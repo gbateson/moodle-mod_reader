@@ -39,12 +39,12 @@ class reader_admin_reports_bookdetailed_table extends reader_admin_reports_table
 
     /** @var columns used in this table */
     protected $tablecolumns = array(
-        'publisher', 'level', 'name', 'difficulty',
+        'publisher', 'level', 'name', 'difficulty', 'words', 'points',
         'selected', 'username', 'fullname', 'timefinish', 'duration', 'grade', 'passed', 'bookrating'
     );
 
     /** @var suppressed columns in this table */
-    protected $suppresscolumns = array('publisher', 'level', 'name', 'difficulty');
+    protected $suppresscolumns = array('publisher', 'level', 'name', 'difficulty', 'words', 'points');
 
     /** @var columns in this table that are not sortable */
     protected $nosortcolumns = array();
@@ -82,6 +82,18 @@ class reader_admin_reports_bookdetailed_table extends reader_admin_reports_table
     ////////////////////////////////////////////////////////////////////////////////
 
     /**
+     * Constructor
+     *
+     * @param int $uniqueid
+     */
+    public function __construct($uniqueid, $output) {
+        $wordsfields = array('words');
+        $pointsfields = array('points');
+        $this->fix_words_or_points_fields($output, $wordsfields, $pointsfields);
+        parent::__construct($uniqueid, $output);
+    }
+
+    /**
      * select_sql
      *
      * @uses $DB
@@ -94,12 +106,18 @@ class reader_admin_reports_bookdetailed_table extends reader_admin_reports_table
         // get users who can access this Reader activity
         list($usersql, $userparams) = $this->select_sql_users();
 
+        if ($this->output->reader->wordsorpoints==0) {
+            $wordsorpoints = 'rb.words';
+        } else {
+            $wordsorpoints = 'rb.length AS points';
+        }
+
         $duration = 'CASE WHEN (ra.timefinish IS NULL OR ra.timefinish = 0) THEN 0 ELSE (ra.timefinish - ra.timestart) END';
         $grade    = 'CASE WHEN (ra.percentgrade IS NULL) THEN 0 ELSE (ra.percentgrade) END';
 
         $select = "ra.id, ra.passed, ra.bookrating, ra.timefinish, ($duration) AS duration, ($grade) AS grade, ".
                   $this->get_userfields('u', array('username'), 'userid').', '.
-                  'rb.publisher, rb.level, rb.name, rb.difficulty';
+                  'rb.publisher, rb.level, rb.name, rb.difficulty, '.$wordsorpoints;
         $from   = '{reader_attempts} ra '.
                   'LEFT JOIN {user} u ON ra.userid = u.id '.
                   'LEFT JOIN {reader_books} rb ON ra.bookid = rb.id';

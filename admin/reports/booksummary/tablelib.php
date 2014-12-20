@@ -39,7 +39,7 @@ class reader_admin_reports_booksummary_table extends reader_admin_reports_table 
 
     /** @var columns used in this table */
     protected $tablecolumns = array(
-        'publisher', 'level', 'selected', 'name', 'difficulty',
+        'publisher', 'level', 'selected', 'name', 'difficulty', 'words', 'points',
         'countpassed', 'countfailed', 'averageduration', 'averagegrade', 'averagerating', 'countrating'
     );
 
@@ -77,6 +77,18 @@ class reader_admin_reports_booksummary_table extends reader_admin_reports_table 
     /** @var actions */
     protected $actions = array('showhidebooks');
 
+    /**
+     * Constructor
+     *
+     * @param int $uniqueid
+     */
+    public function __construct($uniqueid, $output) {
+        $wordsfields = array('words');
+        $pointsfields = array('points');
+        $this->fix_words_or_points_fields($output, $wordsfields, $pointsfields);
+        parent::__construct($uniqueid, $output);
+    }
+
     ////////////////////////////////////////////////////////////////////////////////
     // functions to extract data from $DB                                         //
     ////////////////////////////////////////////////////////////////////////////////
@@ -97,7 +109,13 @@ class reader_admin_reports_booksummary_table extends reader_admin_reports_table 
         // get users who can access this Reader activity
         list($usersql, $userparams) = $this->select_sql_users();
 
-        $select = 'rb.id AS bookid, rb.publisher, rb.level, rb.name, rb.difficulty, '.
+        if ($this->output->reader->wordsorpoints==0) {
+            $wordsorpoints = 'rb.words';
+        } else {
+            $wordsorpoints = 'rb.length AS points';
+        }
+
+        $select = 'rb.id AS bookid, rb.publisher, rb.level, rb.name, rb.difficulty, '.$wordsorpoints.', '.
                   'raa.countpassed, raa.countfailed, '.
                   'raa.averageduration, raa.averagegrade, '.
                   'raa.countrating, raa.averagerating';

@@ -173,6 +173,32 @@ class reader_admin_reports_table extends table_sql {
         }
     }
 
+    /**
+     * fix_words_or_points_fields
+     *
+     * @param onject $output
+     * @param array  $wordsfields
+     * @param array  $pointsfields
+     */
+    public function fix_words_or_points_fields($output, $wordsfields, $pointsfields) {
+        if ($output->reader->wordsorpoints==0) {
+            $fields = $pointsfields;
+        } else {
+            $fields = $wordsfields;
+        }
+        foreach ($fields as $field) {
+            if ($i = array_search($field, $this->tablecolumns)) {
+                array_splice($this->tablecolumns, $i, 1);
+            }
+            if ($i = array_search($field, $this->numbercolumns)) {
+                array_splice($this->numbercolumns, $i, 1);
+            }
+            if (array_key_exists($field, $this->filterfields)) {
+                unset($this->filterfields[$field]);
+            }
+        }
+    }
+
     ////////////////////////////////////////////////////////////////////////////////
     // functions to setup table                                                   //
     ////////////////////////////////////////////////////////////////////////////////
@@ -212,14 +238,14 @@ class reader_admin_reports_table extends table_sql {
         $this->define_headers($tableheaders);
         $this->define_baseurl($baseurl);
 
-        // disable sorting on "selected" field
-        if ($this->has_column('selected')) {
-            $this->no_sorting('selected');
-        }
-
         // disable sorting on "studentview" field
         if ($this->has_column('studentview')) {
             $this->no_sorting('studentview');
+        }
+
+        // disable sorting on "selected" field
+        if ($this->has_column('selected')) {
+            $this->no_sorting('selected');
         }
 
         // basically all columns are centered
@@ -366,10 +392,6 @@ class reader_admin_reports_table extends table_sql {
         global $DB;
         if ($this->users===null) {
 
-if (empty($this->filter)) {
-    debugging('oops, no filter property');
-    die;
-}
             $usertype = $this->filter->get_optionvalue('usertype');
             switch ($usertype) {
 
@@ -520,9 +542,13 @@ if (empty($this->filter)) {
                         'passed2' => 'true', 'time2' => $ignoredate); // countfailed (this term)
 
         if ($this->output->reader->wordsorpoints==0) {
-            $totalfield = 'rb.words'; // words
+            // words
+            $totalfield = 'rb.words';
+            $totalalias = 'totalwords';
         } else {
-            $totalfield = 'rb.length'; // points
+            // points
+            $totalfield = 'rb.length';
+            $totalalias = 'totalpoints';
         }
 
         switch ($groupbyfield) {
@@ -530,8 +556,8 @@ if (empty($this->filter)) {
                 $totalthisterm = "SUM(CASE WHEN (ra.reader = :reader7 AND ra.passed = :passed3 AND ra.timefinish > :time3) THEN $totalfield ELSE 0 END)";
                 $totalallterms = "SUM(CASE WHEN (ra.passed = :passed4 AND ra.timefinish > :time4) THEN $totalfield ELSE 0 END)";
 
-                $select .= ",$totalthisterm AS totalthisterm".
-                           ",$totalallterms AS totalallterms";
+                $select .= ",$totalthisterm AS {$totalalias}thisterm".
+                           ",$totalallterms AS {$totalalias}allterms";
 
                 $params += array('reader7' => $this->output->reader->id,
                                  'passed3' => 'true', 'time3' => $ignoredate, // totalthisterm
@@ -1071,24 +1097,26 @@ if (empty($this->filter)) {
     }
 
     /**
-     * header_totalwords
+     * header_add_period
      *
+     * @param string $header localised string from mod_reader language pack
+     * @param string $period mod_reader string name for required period
+     * @param string $help (optional, default="") string name for help
      * @return xxx
      */
-    public function header_total($type='')  {
-        if ($this->output->reader->wordsorpoints==0) {
-            $total = get_string('totalwords', 'mod_reader');
+    public function header_add_period($header, $period, $help='')  {
+        $period = '('.get_string($period, 'mod_reader').')';
+        if ($this->is_downloading()) { // $this->download
+            $header = "$header $period";
         } else {
-            $total = get_string('totalpoints', 'mod_reader');
-        }
-        if ($type) {
-            if ($this->download) {
-                $total .= " ($type)";
-            } else {
-                $total .= ' '.html_writer::tag('span', "($type)", array('class' => 'nowrap'));
+            $header = html_writer::tag('span', $header, array('class' => 'nowrap')).
+                      html_writer::empty_tag('br').
+                      html_writer::tag('span', $period, array('class' => 'nowrap'));
+            if ($help) {
+                $header .= $this->help_icon($help);
             }
         }
-        return $total;
+        return $header;
     }
 
     /**
@@ -1110,6 +1138,24 @@ if (empty($this->filter)) {
         //$long = get_string('difficulty', 'mod_reader');
         //$short = get_string('difficultyshort', 'mod_reader');
         //return $long.html_writer::empty_tag('br')."($short)";
+    }
+
+    /**
+     * header_words
+     *
+     * @return xxx
+     */
+    public function header_words() {
+        return get_string('words', 'mod_reader');
+    }
+
+    /**
+     * header_points
+     *
+     * @return xxx
+     */
+    public function header_points() {
+        return get_string('points', 'mod_reader');
     }
 
     /**
@@ -1231,17 +1277,13 @@ if (empty($this->filter)) {
     }
 
     /**
-     * col_grade
+     * col_words
      *
      * @param xxx $row
      * @return xxx
      */
-    public function col_grade_old($row)  {
-        if (isset($row->grade)) {
-            return $row->grade.'%';
-        } else {
-            return $this->empty_cell();
-        }
+    public function col_words($row)  {
+        return number_format($row->words);
     }
 
     /**
@@ -1390,13 +1432,13 @@ if (empty($this->filter)) {
     }
 
     /**
-     * col_totalthisterm
+     * col_totalwordsthisterm
      *
      * @param xxx $row
      * @return xxx
      */
-    public function col_totalthisterm($row) {
-        $totalthisterm = number_format($row->totalthisterm);
+    public function col_totalwordsthisterm($row) {
+        $totalwordsthisterm = number_format($row->totalwordsthisterm);
         switch (true) {
             case isset($row->userid):
                 $params = array('mode' => 'userdetailed', 'userid' => $row->userid);
@@ -1410,9 +1452,9 @@ if (empty($this->filter)) {
                 $report_url = '';
         }
         if ($report_url) {
-        //    $totalthisterm = html_writer::link($report_url, $totalthisterm);
+        //    $totalwordsthisterm = html_writer::link($report_url, $totalwordsthisterm);
         }
-        return $totalthisterm;
+        return $totalwordsthisterm;
     }
 
     /**

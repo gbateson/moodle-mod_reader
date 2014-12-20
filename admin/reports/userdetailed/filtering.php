@@ -53,6 +53,8 @@ class reader_admin_reports_userdetailed_filtering extends reader_admin_reports_f
 
             case 'currentlevel':
             case 'difficulty':
+            case 'words':
+            case 'points':
                 $label = get_string($fieldname, 'mod_reader');
                 return new reader_admin_reports_filter_number($fieldname, $label, $advanced, $fieldname, $default, 'where');
 
@@ -69,13 +71,6 @@ class reader_admin_reports_userdetailed_filtering extends reader_admin_reports_f
                 $options = array('true'  => get_string('passedshort', 'mod_reader').' - '.get_string('passed', 'mod_reader'),
                                  'false' => get_string('failedshort', 'mod_reader').' - '.get_string('failed', 'mod_reader'));
                 return new reader_admin_reports_filter_simpleselect($fieldname, $label, $advanced, $fieldname, $options, $default, 'where');
-
-            case 'words':
-            case 'totalwords':
-            case 'points':
-            case 'totalpoints':
-                $label = get_string($fieldname, 'mod_reader');
-                return new reader_admin_reports_filter_number($fieldname, $label, $advanced, $fieldname, $default, 'where');
 
             default:
                 // other fields (e.g. from user record)

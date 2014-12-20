@@ -49,7 +49,9 @@ class reader_admin_reports_groupsummary_table extends reader_admin_reports_table
         'averagefailed', // average number of quizzes failed
         'averagepercentgrade', // average percent grade average
         'averagewordsthisterm', // average number of words this term
-        'averagewordsallterms'  // average number of words all terms
+        'averagewordsallterms', // average number of words all terms
+        'averagepointsthisterm', // average number of points this term
+        'averagepointsallterms'  // average number of points all terms
     );
 
     /** @var suppressed columns in this table */
@@ -57,14 +59,16 @@ class reader_admin_reports_groupsummary_table extends reader_admin_reports_table
 
     /** @var columns in this table that are not sortable */
     protected $nosortcolumns = array('percentactive', 'percentinactive',
-                                     'averagetaken' , 'averagepassed'  , 'averagefailed',
-                                     'averagepercentgrade', 'averagewordsthisterm', 'averagewordsallterms');
+                                     'averagetaken' , 'averagepassed', 'averagefailed', 'averagepercentgrade',
+                                     'averagewordsthisterm', 'averagewordsallterms',
+                                     'averagepointsthisterm', 'averagepointsallterms');
 
     /** @var text columns in this table */
     protected $textcolumns = array('groupname');
 
     /** @var number columns in this table */
-    protected $numbercolumns = array('countactive', 'countinactive', 'averagetaken', 'averagepassed', 'averagefailed', 'averagewordsthisterm', 'averagewordsallterms');
+    protected $numbercolumns = array('countactive', 'countinactive', 'averagetaken', 'averagepassed', 'averagefailed',
+                                     'averagewordsthisterm', 'averagewordsallterms', 'averagepointsthisterm', 'averagepointsallterms');
 
     /** @var columns that are not to be center aligned */
     protected $leftaligncolumns = array('groupname');
@@ -77,8 +81,9 @@ class reader_admin_reports_groupsummary_table extends reader_admin_reports_table
         //'groupname'   => 0,
         'countactive'   => 1, 'countinactive'   => 1,
         'percentactive' => 1, 'percentinactive' => 1,
-        'averagetaken'  => 1, 'averagepassed'   => 1, 'averagefailed' => 1,
-        'averagepercentgrade' => 1, 'averagewordsthisterm' => 1, 'averagewordsallterms' => 1
+        'averagetaken'  => 1, 'averagepassed'   => 1, 'averagefailed' => 1, 'averagepercentgrade' => 1,
+        'averagewordsthisterm' => 1, 'averagewordsallterms' => 1,
+        'averagepointsthisterm' => 1, 'averagepointsallterms' => 1
     );
 
     /** @var option fields */
@@ -93,6 +98,18 @@ class reader_admin_reports_groupsummary_table extends reader_admin_reports_table
     ////////////////////////////////////////////////////////////////////////////////
 
     /**
+     * Constructor
+     *
+     * @param int $uniqueid
+     */
+    public function __construct($uniqueid, $output) {
+        $wordsfields = array('averagewordsthisterm', 'averagewordsallterms');
+        $pointsfields = array('averagepointsthisterm', 'averagepointsallterms');
+        $this->fix_words_or_points_fields($output, $wordsfields, $pointsfields);
+        parent::__construct($uniqueid, $output);
+    }
+
+    /**
      * select_sql
      *
      * @uses $DB
@@ -105,6 +122,14 @@ class reader_admin_reports_groupsummary_table extends reader_admin_reports_table
         // get attempts at this Reader activity
         list($attemptsql, $attemptparams) = $this->select_sql_attempts('userid');
 
+        if ($this->output->reader->wordsorpoints==0) {
+            $totalthisterm = 'totalwordsthisterm';
+            $totalallterms = 'totalwordsallterms';
+        } else {
+            $totalthisterm = 'totalpointsthisterm';
+            $totalallterms = 'totalpointsallterms';
+        }
+
         $select = 'g.id AS groupid, g.name AS groupname,'.
                   'COUNT(u.id) AS countusers,'.
                   'SUM(CASE WHEN (raa.userid IS NOT NULL AND (raa.countpassed > 0 OR raa.countfailed > 0)) THEN 1 ELSE 0 END) AS countactive,'.
@@ -112,8 +137,8 @@ class reader_admin_reports_groupsummary_table extends reader_admin_reports_table
                   'SUM(raa.countpassed) AS countpassed,'.
                   'SUM(raa.countfailed) AS countfailed,'.
                   'SUM(raa.averagegrade) AS sumaveragegrade,'.
-                  'SUM(raa.totalthisterm) AS totalthisterm,'.
-                  'SUM(raa.totalallterms) AS totalallterms';
+                  "SUM(raa.$totalthisterm) AS $totalthisterm,".
+                  "SUM(raa.$totalallterms) AS $totalallterms";
 
         $from   = '{user} u '.
                   "LEFT JOIN ($attemptsql) raa ON u.id = raa.userid ".
@@ -247,19 +272,7 @@ class reader_admin_reports_groupsummary_table extends reader_admin_reports_table
      * @return xxx
      */
     public function header_averagewords($type='')  {
-        $averagewords = get_string('averagewords', 'mod_reader');
-        if ($type) {
-            $averagewords .= ' ';
-            $strtype = get_string($type, 'mod_reader');
-            if ($this->is_downloading()) { // $this->download
-                $averagewords .= "($strtype)";
-            } else {
-                $averagewords .= html_writer::tag('span', "($strtype)", array('class' => 'nowrap'));
-                $averagewords .= $this->help_icon('averagewords'.$type);
-            }
-
-        }
-        return $averagewords;
+        return get_string('averagewords', 'mod_reader');
     }
 
     /**
@@ -268,7 +281,8 @@ class reader_admin_reports_groupsummary_table extends reader_admin_reports_table
      * @return string
      */
     public function header_averagewordsthisterm() {
-        return $this->header_averagewords('thisterm');
+        $header = $this->header_averagewords();
+        return $this->header_add_period($header, 'thisterm', 'averagewordsthisterm');
     }
 
     /**
@@ -277,7 +291,38 @@ class reader_admin_reports_groupsummary_table extends reader_admin_reports_table
      * @return string
      */
     public function header_averagewordsallterms() {
-        return $this->header_averagewords('allterms');
+        $header = $this->header_averagewords();
+        return $this->header_add_period($header, 'allterms', 'averagewordsallterms');
+    }
+
+    /**
+     * header_averagepoints
+     *
+     * @param xxx $type (optional, default="") "", "thisterm" or "allterms"
+     * @return xxx
+     */
+    public function header_averagepoints($type='')  {
+        return get_string('averagepoints', 'mod_reader');
+    }
+
+    /**
+     * header_averagepointsthisterm
+     *
+     * @return string
+     */
+    public function header_averagepointsthisterm() {
+        $header = $this->header_averagepoints();
+        return $this->header_add_period($header, 'thisterm', 'averagepointsthisterm');
+    }
+
+    /**
+     * header_averagepointsallterms
+     *
+     * @return string
+     */
+    public function header_averagepointsallterms() {
+        $header = $this->header_averagepoints();
+        return $this->header_add_period($header, 'allterms', 'averagepointsallterms');
     }
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -378,7 +423,7 @@ class reader_admin_reports_groupsummary_table extends reader_admin_reports_table
         if (empty($row->countusers)) {
             return '';
         } else {
-            return number_format(round($row->totalthisterm / $row->countusers));
+            return number_format(round($row->totalwordsthisterm / $row->countusers));
         }
     }
 
@@ -392,7 +437,35 @@ class reader_admin_reports_groupsummary_table extends reader_admin_reports_table
         if (empty($row->countusers)) {
             return '';
         } else {
-            return number_format(round($row->totalallterms / $row->countusers));
+            return number_format(round($row->totalwordsthisterm / $row->countusers));
+        }
+    }
+
+    /**
+     * col_averagepointsthisterm
+     *
+     * @param xxx $row
+     * @return xxx
+     */
+    public function col_averagepointsthisterm($row) {
+        if (empty($row->countusers)) {
+            return '';
+        } else {
+            return number_format(round($row->totalpointsthisterm / $row->countusers));
+        }
+    }
+
+    /**
+     * col_averagepointsallterms
+     *
+     * @param xxx $row
+     * @return xxx
+     */
+    public function col_averagepointsallterms($row) {
+        if (empty($row->countusers)) {
+            return '';
+        } else {
+            return number_format(round($row->totalpointsthisterm / $row->countusers));
         }
     }
 
