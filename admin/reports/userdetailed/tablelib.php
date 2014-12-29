@@ -131,7 +131,7 @@ class reader_admin_reports_userdetailed_table extends reader_admin_reports_table
                     'rat.passed = :passed2 AND rat.deleted = :deleted';
         $total    = "(SELECT SUM(rbt.$wordsorpoints) FROM {reader_attempts} rat LEFT JOIN {reader_books} rbt ON rat.bookid = rbt.id WHERE $total)";
 
-        $select = "ra.id, ra.timefinish, ".
+        $select = "ra.id, ra.timefinish, ra.layout, ".
                   "($duration) as duration, ($grade) as grade, ra.passed, ".
                   "($score) AS $attemptalias, $total AS $termalias, ".
                   $this->get_userfields('u', array('username'), 'userid').', '.

@@ -1311,9 +1311,15 @@ class reader_admin_reports_table extends table_sql {
      */
     public function col_grade($row)  {
         if (isset($row->grade)) {
-            $params = array('id' => $this->output->reader->cm->id, 'attemptid' => $row->id);
-            $url = new moodle_url('/mod/reader/view_attempts.php', $params);
-            return html_writer::link($url, round($row->grade).'%', array('onclick' => "this.target='_blank'"));
+            $grade = round($row->grade).'%';
+            if (empty($row->layout)) {
+                // NULL, "", or "0" means there are no questions in this attempt,
+            } else {
+                $params = array('id' => $this->output->reader->cm->id, 'attemptid' => $row->id);
+                $url = new moodle_url('/mod/reader/view_attempts.php', $params);
+                $grade = html_writer::link($url, $grade, array('onclick' => "this.target='_blank'"));
+            }
+            return $grade;
         } else {
             return $this->empty_cell();
         }

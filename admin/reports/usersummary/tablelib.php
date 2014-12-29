@@ -105,20 +105,22 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
         global $DB;
 
         $tablecolumns = parent::get_tablecolumns();
+        if (in_array('goal', $tablecolumns)==false) {
 
-        // sql to detect if "goal" has been set for this Reader activity
-        $select = 'readerid = :readerid AND goal IS NOT NULL AND goal > :zero';
-        $params = array('readerid' => $this->output->reader->id, 'zero' => 0);
+            // sql to detect if a "goal" has been set for this Reader activity
+            $select = 'readerid = :readerid AND goal IS NOT NULL AND goal > :zero';
+            $params = array('readerid' => $this->output->reader->id, 'zero' => 0);
 
-        // add "goal" column if required
-        if ($this->output->reader->goal && ($DB->record_exists_select('reader_goals', $select, $params) || $DB->record_exists_select('reader_levels', $select, $params))) {
-            if ($last = array_pop($tablecolumns)) {
-                if ($last=='totalallterms') {
-                    $tablecolumns[] = 'goal';
-                    $tablecolumns[] = $last;
-                } else {
-                    $tablecolumns[] = $last;
-                    $tablecolumns[] = 'goal';
+            // add "goal" column if required
+            if ($this->output->reader->goal && ($DB->record_exists_select('reader_goals', $select, $params) || $DB->record_exists_select('reader_levels', $select, $params))) {
+                if ($last = array_pop($tablecolumns)) {
+                    if ($last=='totalallterms') {
+                        $tablecolumns[] = 'goal';
+                        $tablecolumns[] = $last;
+                    } else {
+                        $tablecolumns[] = $last;
+                        $tablecolumns[] = 'goal';
+                    }
                 }
             }
         }

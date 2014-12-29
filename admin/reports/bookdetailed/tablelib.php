@@ -113,9 +113,9 @@ class reader_admin_reports_bookdetailed_table extends reader_admin_reports_table
         }
 
         $duration = 'CASE WHEN (ra.timefinish IS NULL OR ra.timefinish = 0) THEN 0 ELSE (ra.timefinish - ra.timestart) END';
-        $grade    = 'CASE WHEN (ra.percentgrade IS NULL) THEN 0 ELSE (ra.percentgrade) END';
+        $grade    = 'CASE WHEN (ra.percentgrade IS NULL) THEN 0 ELSE ra.percentgrade END';
 
-        $select = "ra.id, ra.passed, ra.bookrating, ra.timefinish, ($duration) AS duration, ($grade) AS grade, ".
+        $select = "ra.id, ra.passed, ra.bookrating, ra.timefinish, ra.layout, ($duration) AS duration, ($grade) AS grade, ".
                   $this->get_userfields('u', array('username'), 'userid').', '.
                   'rb.publisher, rb.level, rb.name, rb.difficulty, '.$wordsorpoints;
         $from   = '{reader_attempts} ra '.
