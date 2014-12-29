@@ -208,6 +208,9 @@ class reader_download_progress_bar extends reader_download_progress_task {
     /** object to store current ids */
     public $current = null;
 
+    /** boolean flag */
+    public $quiet = false;
+
     /**
      * __construct
      *

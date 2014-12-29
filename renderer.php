@@ -637,7 +637,7 @@ class mod_reader_renderer extends plugin_renderer_base {
 
         $select = 'ra.*, rb.difficulty, rb.id AS bookid';
         $from   = '{reader_attempts} ra INNER JOIN {reader_books} rb ON ra.bookid = rb.id';
-        $where  = 'ra.userid= ? AND ra.reader= ? AND ra.timefinish > ?';
+        $where  = 'ra.userid= ? AND ra.readerid= ? AND ra.timefinish > ?';
         $params = array($USER->id, $this->id, $this->ignoredate);
 
         if ($attempts = $DB->get_records_sql("SELECT $select FROM $from WHERE $where ORDER BY ra.timemodified", $params)) {

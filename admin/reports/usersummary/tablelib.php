@@ -421,6 +421,16 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
         }
     }
 
+    /**
+     * col_totalwordsallterms
+     *
+     * @param xxx $row
+     * @return xxx
+     */
+    public function col_totalwordsallterms($row) {
+        return number_format($row->totalwordsallterms);
+    }
+
     ////////////////////////////////////////////////////////////////////////////////
     // functions to format, display and handle action settings                    //
     ////////////////////////////////////////////////////////////////////////////////
@@ -780,10 +790,10 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
         $changessaved = false;
         foreach ($userids as $userid) {
 
-            $params = array('reader'  => $readerid,
-                            'userid'  => $userid,
-                            'bookid'  => $book->id,
-                            'preview' => 0);
+            $params = array('readerid' => $readerid,
+                            'userid'   => $userid,
+                            'bookid'   => $book->id,
+                            'preview'  => 0);
             if ($allowmultiple==false && $DB->record_exists('reader_attempts', $params)) {
                 echo 'User (id='.$userid.') has already been awarded points for the selected book<br />';
                 continue;
@@ -797,7 +807,7 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
             // get next attempt number
             $select = 'MAX(attempt)';
             $from   = '{reader_attempts}';
-            $where  = 'reader = ? AND userid = ? AND timefinish > ? AND preview = ?';
+            $where  = 'readerid = ? AND userid = ? AND timefinish > ? AND preview = ?';
             $params = array($readerid, $userid, 0, 0);
 
             if($attemptnumber = $DB->get_field_sql("SELECT $select FROM $from WHERE $where", $params)) {
@@ -808,7 +818,7 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
 
             $attempt = (object)array(
                 'uniqueid'     => reader_get_new_uniqueid($contextid, $book->quizid),
-                'reader'       => $readerid,
+                'readerid'     => $readerid,
                 'userid'       => $userid,
                 'bookid'       => $book->id,
                 'quizid'       => $book->quizid,

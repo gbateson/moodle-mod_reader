@@ -434,6 +434,11 @@ class reader_admin_reports_table extends table_sql {
             }
             ************************/
         }
+
+        if (empty($this->users)) {
+            return array('', array());
+        }
+
         if ($prefix=='') {
             $type = SQL_PARAMS_QM;
         } else {
@@ -453,7 +458,7 @@ class reader_admin_reports_table extends table_sql {
     public function join_users_with_attempts($alias='', $join='', $params=array()) {
         $select = 'DISTINCT userid';
         $from   = '{reader_attempts}';
-        $where  = 'reader = '.$this->output->reader->id.' AND deleted = 0';
+        $where  = 'readerid = '.$this->output->reader->id.' AND deleted = 0';
         $order  = 'userid';
         $sql = "SELECT $select FROM $from WHERE $where ORDER BY $order";
         if ($alias) {
@@ -511,16 +516,16 @@ class reader_admin_reports_table extends table_sql {
         $ignoredate = $this->output->reader->ignoredate;
         $notfinished   = 'ra.timefinish IS NULL OR ra.timefinish = 0';
 
-        $sum = "SUM(CASE WHEN (ra.reader <> :reader1 OR $notfinished) THEN 0 ELSE (ra.percentgrade) END)";
-        $count = "SUM(CASE WHEN (ra.reader <> :reader2 OR $notfinished) THEN 0 ELSE 1 END)";
+        $sum = "SUM(CASE WHEN (ra.readerid <> :reader1 OR $notfinished) THEN 0 ELSE (ra.percentgrade) END)";
+        $count = "SUM(CASE WHEN (ra.readerid <> :reader2 OR $notfinished) THEN 0 ELSE 1 END)";
         $averagegrade  = "ROUND($sum / $count, 0)";
 
-        $sum = "SUM(CASE WHEN (ra.reader <> :reader3 OR $notfinished) THEN 0 ELSE (ra.timefinish - ra.timestart) END)";
-        $count = "SUM(CASE WHEN (ra.reader <> :reader4 OR $notfinished) THEN 0 ELSE 1 END)";
+        $sum = "SUM(CASE WHEN (ra.readerid <> :reader3 OR $notfinished) THEN 0 ELSE (ra.timefinish - ra.timestart) END)";
+        $count = "SUM(CASE WHEN (ra.readerid <> :reader4 OR $notfinished) THEN 0 ELSE 1 END)";
         $averageduration = "ROUND($sum / $count, 0)";
 
-        $countpassed = "SUM(CASE WHEN (ra.reader = :reader5 AND ra.passed = :passed1 AND ra.timefinish > :time1) THEN 1 ELSE 0 END)";
-        $countfailed = "SUM(CASE WHEN (ra.reader = :reader6 AND ra.passed <> :passed2 AND ra.timefinish > :time2) THEN 1 ELSE 0 END)";
+        $countpassed = "SUM(CASE WHEN (ra.readerid = :reader5 AND ra.passed = :passed1 AND ra.timefinish > :time1) THEN 1 ELSE 0 END)";
+        $countfailed = "SUM(CASE WHEN (ra.readerid = :reader6 AND ra.passed <> :passed2 AND ra.timefinish > :time2) THEN 1 ELSE 0 END)";
 
         $select = "ra.$groupbyfield,".
                   "$averagegrade AS averagegrade,".
@@ -553,7 +558,7 @@ class reader_admin_reports_table extends table_sql {
 
         switch ($groupbyfield) {
             case 'userid':
-                $totalthisterm = "SUM(CASE WHEN (ra.reader = :reader7 AND ra.passed = :passed3 AND ra.timefinish > :time3) THEN $totalfield ELSE 0 END)";
+                $totalthisterm = "SUM(CASE WHEN (ra.readerid = :reader7 AND ra.passed = :passed3 AND ra.timefinish > :time3) THEN $totalfield ELSE 0 END)";
                 $totalallterms = "SUM(CASE WHEN (ra.passed = :passed4 AND ra.timefinish > :time4) THEN $totalfield ELSE 0 END)";
 
                 $select .= ",$totalthisterm AS {$totalalias}thisterm".
@@ -567,10 +572,10 @@ class reader_admin_reports_table extends table_sql {
             case 'bookid':
                 $notrated    = "$notfinished OR ra.bookrating IS NULL";
 
-                $countrating = "SUM(CASE WHEN (ra.reader <> :reader7 OR $notrated) THEN 0 ELSE 1 END)";
+                $countrating = "SUM(CASE WHEN (ra.readerid <> :reader7 OR $notrated) THEN 0 ELSE 1 END)";
 
-                $sum = "SUM(CASE WHEN (ra.reader <> :reader8 OR $notrated) THEN 0 ELSE ra.bookrating END)";
-                $count = "SUM(CASE WHEN (ra.reader <> :reader9 OR $notrated) THEN 0 ELSE 1 END)";
+                $sum = "SUM(CASE WHEN (ra.readerid <> :reader8 OR $notrated) THEN 0 ELSE ra.bookrating END)";
+                $count = "SUM(CASE WHEN (ra.readerid <> :reader9 OR $notrated) THEN 0 ELSE 1 END)";
                 $averagerating = "ROUND($sum / $count, 0)";
 
                 $select     .= ",$countrating AS countrating".
@@ -1722,7 +1727,7 @@ class reader_admin_reports_table extends table_sql {
      */
     public function execute_action_updateattempts($field, $value) {
         $table = 'reader_attempts';
-        $select = 'reader = ?';
+        $select = 'readerid = ?';
         $params = array($this->output->reader->id);
         return $this->execute_action_update('id', $table, $field, $value, $select, $params);
     }

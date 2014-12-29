@@ -575,6 +575,8 @@ $string['returntocoursepage'] = 'Return to Course Page';
 $string['returntoreports'] = 'Return to Reports';
 $string['returntostudentlist'] = 'Return to Student List';
 $string['rowsperpage'] = 'Rows per page';
+$string['run_readercron'] = 'Run Reader cron';
+$string['run_readercrondesc'] = 'Run the cron job for the Reader module.';
 $string['search'] = 'Search';
 $string['search_help'] = 'To search for a particular book, enter some text contained in the title of the book and click the "Go" button';
 $string['searchforthebookthatyouwant'] = 'Search for the book that you want to take a quiz on';
@@ -708,6 +710,7 @@ $string['targetsection_help'] = 'Specify the course section i.e. the week or top
 : The quizzes will be added to a new section. Enter a name for the new section in the text box.';
 $string['term'] = 'Term';
 $string['therehavebeennonewquizzesorupdates'] = 'There have been no new quizzes or updates added to the MoodleReader quiz bank since the last time you checked.';
+$string['thisattempt'] = 'this attempt';
 $string['thisblockunavailable'] = 'This block is currently unavailable to this student';
 $string['thislevel'] = 'Quizzes at current level';
 $string['thislevel_help'] = 'The number of quizzes at the current reading level that a student must pass in order to be promoted to the next reading level. Note that only quizzes passed since the most recent promotion count towards the next promotion.';
@@ -739,6 +742,7 @@ $string['updatedon'] = 'Updated on {$a}';
 $string['updatequizzes'] = 'Update quizzes';
 $string['updates'] = 'Updates';
 $string['updatesavailable'] = '{$a} update(s) available';
+$string['updatinggrades'] = 'Updating Reader grades';
 $string['upgradeoldquizzesinfo'] = 'The upgrade has been paused, so that you can decide whether or not you wish to keep old versions of the Reader module quizzes on this Moodle site.
 
 If you select "Yes", all the old Reader quizzes will be kept. Choose this option if you wish to keep all statistics about answers to individual questions on old Reader quizzes.
@@ -818,5 +822,3 @@ $string['youmusttakequizzes'] = ' You can take {$a} more quizzes ';
 $string['yourcurrentlevel'] = 'Your current level';
 $string['yourteacherhasstopped'] = ' Your teacher has stopped automatic promotion for you.';
 $string['youwerepromoted'] = 'You were promoted to RL-{$a->level} on {$a->date} at {$a->time}';
-
-$string['thisattempt'] = 'this attempt';

@@ -121,11 +121,11 @@ class reader_admin_reports_bookdetailed_table extends reader_admin_reports_table
         $from   = '{reader_attempts} ra '.
                   'LEFT JOIN {user} u ON ra.userid = u.id '.
                   'LEFT JOIN {reader_books} rb ON ra.bookid = rb.id';
-        $where  = "ra.reader = :reader AND ra.timefinish > :time AND u.id $usersql";
+        $where  = "ra.readerid = :readerid AND ra.timefinish > :time AND u.id $usersql";
 
         $sortby = 'rb.name, rb.publisher, u.username';
 
-        $params = array('reader' => $this->output->reader->id, 'time' => $this->output->reader->ignoredate);
+        $params = array('readerid' => $this->output->reader->id, 'time' => $this->output->reader->ignoredate);
 
         if ($this->output->reader->bookinstances) {
             $from  .= ' LEFT JOIN {reader_book_instances} rbi ON rb.id = rbi.bookid';

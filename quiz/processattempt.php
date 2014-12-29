@@ -36,36 +36,36 @@ require_once($CFG->dirroot.'/mod/reader/quiz/attemptlib.php');
 $timenow = time();
 
 // Get submitted parameters.
-$attemptid = required_param('attempt', PARAM_INT);
-$next = optional_param('next', false, PARAM_BOOL);
-$thispage = optional_param('thispage', 0, PARAM_INT);
-$nextpage = optional_param('nextpage', 0, PARAM_INT);
-$finishattempt = optional_param('finishattempt', 0, PARAM_BOOL);
-$timeup = optional_param('timeup', 0, PARAM_BOOL); // True if form was submitted by timer.
-$scrollpos = optional_param('scrollpos', '', PARAM_RAW);
-$likebook = optional_param('likebook', NULL, PARAM_CLEAN);
+$attemptid     = required_param('attempt', PARAM_INT);
+$next          = optional_param('next',          false, PARAM_BOOL);
+$thispage      = optional_param('thispage',      0,     PARAM_INT);
+$nextpage      = optional_param('nextpage',      0,     PARAM_INT);
+$finishattempt = optional_param('finishattempt', 0,     PARAM_BOOL);
+$timeup        = optional_param('timeup',        0,     PARAM_BOOL);
+$scrollpos     = optional_param('scrollpos',     '',    PARAM_RAW);
+$likebook      = optional_param('likebook',      null,  PARAM_CLEAN);
 
 $transaction = $DB->start_delegated_transaction();
 $attemptobj = reader_attempt::create($attemptid);
 
-// Set $nexturl now.
-if ($next) {
-    $page = $nextpage;
-} else {
-    $page = $thispage;
-}
-if ($page == -1) {
-    $nexturl = $attemptobj->summary_url();
-} else {
-    $nexturl = $attemptobj->attempt_url(0, $page);
-    if ($scrollpos !== '') {
-        $nexturl->param('scrollpos', $scrollpos);
-    }
-}
-
 // We treat automatically closed attempts just like normally closed attempts
 if ($timeup) {
     $finishattempt = 1;
+}
+
+// Set $redirect now.
+if ($finishattempt) {
+    $redirect = $CFG->wwwroot.'/mod/reader/view.php?id='.$attemptobj->get_cmid();
+} else {
+    $page = ($next ? $nextpage : $thispage);
+    if ($page == -1) {
+        $redirect = $attemptobj->summary_url();
+    } else {
+        $redirect = $attemptobj->attempt_url(0, $page);
+        if ($scrollpos !== '') {
+            $redirect->param('scrollpos', $scrollpos);
+        }
+    }
 }
 
 // Check login.
@@ -74,7 +74,7 @@ require_sesskey();
 
 // Check that this attempt belongs to this user.
 if ($attemptobj->get_userid() != $USER->id) {
-    throw new moodle_reader_exception($attemptobj->get_readerobj(), 'notyourattempt');
+    throw new moodle_reader_exception($attemptobj->get_reader(), 'notyourattempt');
 }
 
 if (isset($likebook)) {
@@ -83,29 +83,25 @@ if (isset($likebook)) {
 
 // If the attempt is already closed, send them to the review page.
 if ($attemptobj->is_finished()) {
-    throw new moodle_reader_exception($attemptobj->get_readerobj(), 'attemptalreadyclosed', null, $attemptobj->review_url());
+//    throw new moodle_reader_exception($attemptobj->get_reader(), 'attemptalreadyclosed', null, $attemptobj->review_url());
 }
 
-// Don't log - we will end with a redirect to a page that is logged.
-
-if (! $finishattempt) {
-    // Just process the responses for this page and go to the next page.
+if ($finishattempt) {
+    $attemptobj->finish_attempt($timenow);
+} else {
+    // process the responses for this page
     try {
         $attemptobj->process_all_actions($timenow);
     } catch (question_out_of_sequence_exception $e) {
-        print_error('submissionoutofsequencefriendlymessage', 'question',
-                $attemptobj->attempt_url(0, $thispage));
+        print_error('submissionoutofsequencefriendlymessage', 'question', $attemptobj->attempt_url(0, $thispage));
     }
-    $transaction->allow_commit();
-    redirect($nexturl);
 }
 
-// Otherwise, we have been asked to finish attempt, so do that.
-
-// Update the reader attempt record.
-$attemptobj->finish_attempt($timenow);
-
-// Send the user to the review page.
 $transaction->allow_commit();
 
-redirect($CFG->wwwroot.'/mod/reader/view.php?id='.$attemptobj->get_cmid());
+if ($finishattempt) {
+    // Note: we can only update_grades AFTER $transaction has been committed
+    reader_update_grades($attemptobj->get_reader(), $attemptobj->get_userid());
+}
+
+redirect($redirect);

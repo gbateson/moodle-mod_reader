@@ -441,10 +441,10 @@ class reader_attempt {
     public static function create_helper($attempt_or_uniqueid) {
         global $DB;
 
-        $attempt = $DB->get_record('reader_attempts', $attempt_or_uniqueid,            '*', MUST_EXIST);
-        $reader  = $DB->get_record('reader',          array('id' => $attempt->reader), '*', MUST_EXIST);
-        $course  = $DB->get_record('course',          array('id' => $reader->course),  '*', MUST_EXIST);
-        $cm      = get_coursemodule_from_instance('reader', $reader->id, $course->id, false, MUST_EXIST);
+        $attempt = $DB->get_record('reader_attempts', $attempt_or_uniqueid,              '*', MUST_EXIST);
+        $reader  = $DB->get_record('reader',          array('id' => $attempt->readerid), '*', MUST_EXIST);
+        $course  = $DB->get_record('course',          array('id' => $reader->course),    '*', MUST_EXIST);
+        $cm      = get_coursemodule_from_instance('reader', $reader->id, $course->id,  false, MUST_EXIST);
 
         // Update reader with override information
         //$reader = reader_update_effective_access($reader, $attempt->userid);
@@ -529,12 +529,8 @@ class reader_attempt {
      * @todo Finish documenting this function
      */
     public function set_rating($likebook) {
-        global $DB, $USER;
-
-        if (isset($likebook)){
-            $this->attempt->bookrating = $likebook;
-            $this->attempt->ip         = $this->ip();
-        }
+        $this->attempt->bookrating = $likebook;
+        $this->attempt->ip         = $this->ip();
     }
 
     /**
@@ -544,28 +540,21 @@ class reader_attempt {
      * @todo Finish documenting this function
      */
     public function ip() {
-      if (isset($_SERVER)) {
-        if(isset($_SERVER['HTTP_CLIENT_IP'])){
-          $ip = $_SERVER['HTTP_CLIENT_IP'];
-        } elseif(isset($_SERVER['HTTP_FORWARDED_FOR'])){
-          $ip = $_SERVER['HTTP_FORWARDED_FOR'];
-        } elseif(isset($_SERVER['HTTP_X_FORWARDED_FOR'])){
-          $ip = $_SERVER['HTTP_X_FORWARDED_FOR'];
-        } else{
-          $ip = $_SERVER['REMOTE_ADDR'];
+        $names = array('HTTP_CLIENT_IP',
+                       'HTTP_FORWARDED_FOR',
+                       'HTTP_X_FORWARDED_FOR',
+                       'REMOTE_ADDR');
+        foreach ($names as $name) {
+            if (isset($_SERVER[$name])) {
+                return $_SERVER[$name];
+            }
         }
-      } else {
-        if (getenv( 'HTTP_CLIENT_IP')) {
-          $ip = getenv( 'HTTP_CLIENT_IP' );
-        } elseif (getenv('HTTP_FORWARDED_FOR')) {
-          $ip = getenv('HTTP_FORWARDED_FOR');
-        } elseif (getenv('HTTP_X_FORWARDED_FOR')) {
-          $ip = getenv('HTTP_X_FORWARDED_FOR');
-        } else {
-          $ip = getenv('REMOTE_ADDR');
+        foreach ($names as $name) {
+            if ($ip = getenv($name)) {
+                return $ip;
+            }
         }
-      }
-      return $ip;
+        return ''; // shouldn't happen !!
     }
 
     /**
@@ -1186,7 +1175,7 @@ class reader_attempt {
         }
         $DB->update_record('reader_attempts', $this->attempt);
 
-        if (! $this->is_preview() && $this->attempt->timefinish) {
+        if ($this->attempt->timefinish && ! $this->is_preview()) {
             reader_save_best_grade($this->get_reader(), $this->get_userid());
         }
     }
@@ -1229,9 +1218,7 @@ class reader_attempt {
             $passedlog = 'Failed';
         }
 
-        //reader_add_to_log($this->get_courseid(), 'reader', 'finish attempt: '.$this->readerquiz->book->name, "view.php?id=".$this->get_cmid(), $this->attempt->percentgrade.'%/'.$this->attempt->passed);
-
-        $logaction = 'view attempt: '.substr($this->readerquiz->book->name, 0, 26); // 40 char limit
+        $logaction = 'finish attempt: '.substr($this->readerquiz->book->name, 0, 26); // 40 char limit
         $loginfo   = 'readerID '.$this->get_readerid().'; reader quiz '.$this->get_quizid().'; '.$this->attempt->percentgrade.'%/'.$passedlog;
         reader_add_to_log($this->get_courseid(), 'reader', $logaction, 'view.php?id='.$this->get_cmid(), $this->get_readerid(), $this->get_cmid());
 

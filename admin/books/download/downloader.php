@@ -866,7 +866,9 @@ class reader_downloader {
             return false; // shouldn't happen !!
         }
 
-        $this->bar = reader_download_progress_bar::create($itemids, 'readerdownload');
+        if (CLI_SCRIPT===false) {
+            $this->bar = reader_download_progress_bar::create($itemids, 'readerdownload');
+        }
 
         // show memory on main Reader module developer site
         $show_memory = (file_exists($CFG->dirroot.'/mod/reader/admin/tools/print_cheatsheet.php'));
@@ -925,8 +927,10 @@ class reader_downloader {
             }
 
             // show this book in the progress bar
-            $title = ($i + 1).' / '.$i_max.' '.$titlehtml;
-            $this->bar->start_item($itemid, $title);
+            if ($this->bar) {
+                $title = ($i + 1).' / '.$i_max.' '.$titlehtml;
+                $this->bar->start_item($itemid, $title);
+            }
 
             // set $params to select $book
             $select = 'publisher = ? AND level = ? AND name = ?';
@@ -996,7 +1000,7 @@ class reader_downloader {
                 $msg .= html_writer::empty_tag('br').get_string('imageadded', 'mod_reader', $book->image);
             }
 
-            if ($started_list==false) {
+            if ($started_list==false && CLI_SCRIPT==false) {
                 $started_list = true;
                 echo $this->output->box_start('generalbox', 'notice');
                 echo html_writer::start_tag('div');
@@ -1095,10 +1099,16 @@ class reader_downloader {
                     }
                 }
             }
-            echo html_writer::tag('li', $msg, array('class' => 'downloaditem'));
+
+            // print this item
+            if (CLI_SCRIPT==false) {
+                echo html_writer::tag('li', $msg, array('class' => 'downloaditem'));
+            }
 
             // move the progress bar
-            $this->bar->finish_item();
+            if ($this->bar) {
+                $this->bar->finish_item();
+            }
 
             // reclaim a bit of memory
             unset($xml['myxml']['#']['item']);
@@ -1108,19 +1118,21 @@ class reader_downloader {
         }
 
         // finish the progress bar
-        $title = get_string('itemsdownloaded', 'mod_reader', ($i + 1).' / '.$i_max);
-        if ($duration = microtime_diff($starttime, microtime())) {
-            $title .= ' ('.format_time(round($duration)).')';
+        if ($this->bar) {
+            $title = get_string('itemsdownloaded', 'mod_reader', ($i + 1).' / '.$i_max);
+            if ($duration = microtime_diff($starttime, microtime())) {
+                $title .= ' ('.format_time(round($duration)).')';
+            }
+            if ($errors) {
+                $errors = get_string('errorsfound', 'mod_reader').': '.$errors;
+                $title .= html_writer::empty_tag('br');
+                $title .= html_writer::tag('span', $errors, array('class' => 'error'));
+                $title .= ' ('.get_string('seedetailsbelow', 'mod_reader').')';
+            }
+            $this->bar->finish($title);
         }
-        if ($errors) {
-            $errors = get_string('errorsfound', 'mod_reader').': '.$errors;
-            $title .= html_writer::empty_tag('br');
-            $title .= html_writer::tag('span', $errors, array('class' => 'error'));
-            $title .= ' ('.get_string('seedetailsbelow', 'mod_reader').')';
-        }
-        $this->bar->finish($title);
 
-        if ($started_list==true) {
+        if ($started_list==true && CLI_SCRIPT==false) {
             echo html_writer::end_tag('ul');
             echo html_writer::end_tag('div');
             echo $this->output->box_end();
@@ -1940,7 +1952,9 @@ class reader_downloader {
                     $module->question_instances[$instance->id]->grade = 1;
                 }
             }
-            $this->bar->add_quiz($categories, $module->question_instances);
+            if ($this->bar) {
+                $this->bar->add_quiz($categories, $module->question_instances);
+            }
         }
 
         // prune questions to leave only main questions or sub questions
@@ -1951,16 +1965,24 @@ class reader_downloader {
         $restoreids = new reader_restore_ids();
 
         foreach ($categories as $category) {
-            $this->bar->start_category($category->id);
+            if ($this->bar) {
+                $this->bar->start_category($category->id);
+            }
             $this->add_question_category($restoreids, $category, $quiz, $cm);
-            $this->bar->finish_category();
+            if ($this->bar) {
+                $this->bar->finish_category();
+            }
         }
 
         if (isset($module->question_instances)) {
             foreach ($module->question_instances as $instance) {
-                $this->bar->start_instance($instance->id);
+                if ($this->bar) {
+                    $this->bar->start_instance($instance->id);
+                }
                 $this->add_question_instance($restoreids, $instance, $quiz);
-                $this->bar->finish_instance();
+                if ($this->bar) {
+                    $this->bar->finish_instance();
+                }
             }
         }
 
@@ -2322,9 +2344,13 @@ class reader_downloader {
         $bestquestionids = $this->get_best_match_questions($categoryid, $category);
 
         foreach ($category->questions as $question) {
-            $this->bar->start_question($question->id);
+            if ($this->bar) {
+                $this->bar->start_question($question->id);
+            }
             $this->add_question($bestquestionids, $restoreids, $categoryid, $question);
-            $this->bar->finish_question();
+            if ($this->bar) {
+                $this->bar->finish_question();
+            }
         }
     }
 
@@ -2851,7 +2877,9 @@ class reader_downloader {
         }
 
         // update progress bar
-        $this->bar->finish_options();
+        if ($this->bar) {
+            $this->bar->finish_options();
+        }
     }
 
     /**
@@ -3127,7 +3155,9 @@ class reader_downloader {
 
     public function add_question_answer(&$restoreids, $bestanswerids, $xmlanswer, $answer) {
         global $DB;
-        $this->bar->start_answer($xmlanswer->id);
+        if ($this->bar) {
+            $this->bar->start_answer($xmlanswer->id);
+        }
         if (empty($bestanswerids[$xmlanswer->id])) {
             if (! $answer->id = $DB->insert_record('question_answers', $answer)) {
                 throw new moodle_exception(get_string('cannotinsertrecord', 'error', 'question_answers'));
@@ -3139,7 +3169,9 @@ class reader_downloader {
             }
         }
         $restoreids->set_ids('question_answers', $xmlanswer->id, $answer->id);
-        $this->bar->finish_answer();
+        if ($this->bar) {
+            $this->bar->finish_answer();
+        }
     }
 
     /**

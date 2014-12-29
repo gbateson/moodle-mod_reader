@@ -81,8 +81,8 @@ class mod_reader_admin_users_export_renderer extends mod_reader_admin_users_rend
             $from   = '{reader_attempts} ra '.
                       'JOIN {user} u ON ra.userid = u.id '.
                       'JOIN {reader_books} rb ON ra.bookid = rb.id '.
-                      'JOIN {reader_levels} rl ON ra.userid = rl.userid AND ra.reader = rl.readerid';
-            $where  = 'ra.reader = ? AND ra.deleted = ?';
+                      'JOIN {reader_levels} rl ON ra.userid = rl.userid AND ra.readerid = rl.readerid';
+            $where  = 'ra.readerid = ? AND ra.deleted = ?';
             $order  = 'ra.userid, ra.quizid, ra.timefinish, ra.uniqueid DESC';
             $params = array($this->reader->id, 0);
 

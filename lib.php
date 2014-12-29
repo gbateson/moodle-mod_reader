@@ -49,7 +49,7 @@ define('READER_REVIEW_GENERALFEEDBACK', 32*0x1041);
 function reader_get_config_defaults() {
     $defaults = array(
         'quiztimelimit'      => '900', // 900 secs = 15 mins
-        'wordsorpoints'        => '0',
+        'wordsorpoints'      => '0',
         'minpassgrade'       => '60',
         'questionmark'       => '0',
         'thislevel'          => '6',
@@ -62,10 +62,10 @@ function reader_get_config_defaults() {
         'wordsorpoints'      => '0',
         'showprogressbar'    => '1',
         'checkbox'           => '0',
-        'notifycheating'      => '1',
+        'notifycheating'     => '1',
         'editingteacherrole' => '1',
         'update'             => '1',
-        'last_update'        => '1',
+        'last_update'        => '0',
         'update_interval'    => '604800',
         'cheatedmessage'     => get_string('cheatedmessagedefault', 'mod_reader'),
         'clearedmessage'     => get_string('clearedmessagedefault', 'mod_reader'),
@@ -100,8 +100,8 @@ $readercfg = reader_get_config_defaults();
  * @todo Finish documenting this function
  */
 function reader_add_instance($reader) {
-
     global $CFG, $DB, $USER;
+
     $reader->timemodified = time();
 
     $reader->password = $reader->requirepassword;
@@ -110,11 +110,15 @@ function reader_add_instance($reader) {
     $reader->subnet = $reader->requiresubnet;
     unset($reader->requiresubnet);
 
-    // we don't need to set "reader_levels" records
-    // because this is a new reader activity
-    // so there won't be any levels yet
+    $reader->id = $DB->insert_record('reader', $reader);
 
-    return $DB->insert_record('reader', $reader);
+    // update calendar events
+    reader_update_events_wrapper($reader);
+
+    // update gradebook item
+    reader_grade_item_update($reader);
+
+    return $reader->id;
 }
 
 /**
@@ -144,22 +148,179 @@ function reader_update_instance($reader, $id) {
         $DB->set_field('reader_levels', 'stoplevel', $reader->stoplevel, array('readerid' => $reader->id));
     }
 
-    return $DB->update_record('reader', $reader);
+    $DB->update_record('reader', $reader);
 
+    // update calendar events
+    reader_update_events_wrapper($reader);
+
+    // update gradebook item
+    reader_grade_item_update($reader);
+
+    return $reader->id;
 }
 
 /**
- * reader_submit_instance
+ * Update calendar events for a single Reader activity
+ * This function is intended to be called just after
+ * a Reader activity has been created or edited.
  *
- * @uses $CFG
  * @param xxx $reader
- * @param xxx $id
- * @return xxx
- * @todo Finish documenting this function
  */
-function reader_submit_instance($reader, $id) {
-    global $CFG;
-    return true;
+function reader_update_events_wrapper($reader) {
+    global $DB;
+    if ($eventids = $DB->get_records('event', array('modulename'=>'reader', 'instance'=>$reader->id), 'id', 'id')) {
+        $eventids = array_keys($eventids);
+    } else {
+        $eventids = array();
+    }
+    reader_update_events($reader, $eventids, true);
+}
+
+/**
+ * reader_update_events
+ *
+ * @param xxx $reader (passed by reference)
+ * @param xxx $eventids (passed by reference)
+ * @param xxx $delete
+ */
+function reader_update_events(&$reader, &$eventids, $delete) {
+    global $CFG, $DB;
+    require_once($CFG->dirroot.'/calendar/lib.php');
+
+    static $stropens = '';
+    static $strcloses = '';
+    static $maxduration = null;
+
+    // check to see if this user is allowed
+    // to manage calendar events in this course
+    $capability = 'moodle/calendar:manageentries';
+    if (has_capability($capability, reader_get_context(CONTEXT_SYSTEM))) {
+        $can_manage_events = true; // site admin
+    } else if (has_capability($capability, reader_get_context(CONTEXT_COURSE, $reader->course))) {
+        $can_manage_events = true; // course admin/teacher
+    } else {
+        $can_manage_events = false; // not allowed to add/edit calendar events !!
+    }
+
+    // don't check calendar capabiltiies
+    // whwne adding or updating events
+    $checkcapabilties = false;
+
+    // cache text strings and max duration (first time only)
+    if (is_null($maxduration)) {
+        $maxeventlength = get_config('mod_reader', 'maxeventlength');
+        if ($maxeventlength===null) {
+            $maxeventlength = 5; // 5 days is default
+        }
+        // set $maxduration (secs) from $maxeventlength (days)
+        $maxduration = $maxeventlength * 24 * 60 * 60;
+
+        $stropens = get_string('quizopen', 'mod_quiz');
+        $strcloses = get_string('quizclose', 'mod_quiz');
+    }
+
+    // array to hold events for this reader
+    $events = array();
+
+    // only setup calendar events,
+    // if this user is allowed to
+    if ($can_manage_events) {
+
+        // set duration
+        if ($reader->timeclose && $reader->timeopen) {
+            $duration = max(0, $reader->timeclose - $reader->timeopen);
+        } else {
+            $duration = 0;
+        }
+
+        if ($duration > $maxduration) {
+            // long duration, two events
+            $events[] = (object)array(
+                'name' => $reader->name.' ('.$stropens.')',
+                'eventtype' => 'open',
+                'timestart' => $reader->timeopen,
+                'timeduration' => 0
+            );
+            $events[] = (object)array(
+                'name' => $reader->name.' ('.$strcloses.')',
+                'eventtype' => 'close',
+                'timestart' => $reader->timeclose,
+                'timeduration' => 0
+            );
+        } else if ($duration) {
+            // short duration, just a single event
+            if ($duration < DAYSECS) {
+                // less than a day (1:07 p.m.)
+                $fmt = get_string('strftimetime');
+            } else if ($duration < WEEKSECS) {
+                // less than a week (Thu, 13:07)
+                $fmt = get_string('strftimedaytime');
+            } else if ($duration < YEARSECS) {
+                // more than a week (2 Feb, 13:07)
+                $fmt = get_string('strftimerecent');
+            } else {
+                // more than a year (Thu, 2 Feb 2012, 01:07 pm)
+                $fmt = get_string('strftimerecentfull');
+            }
+            $events[] = (object)array(
+                'name' => $reader->name.' ('.userdate($reader->timeopen, $fmt).' - '.userdate($reader->timeclose, $fmt).')',
+                'eventtype' => 'open',
+                'timestart' => $reader->timeopen,
+                'timeduration' => $duration,
+            );
+        } else if ($reader->timeopen) {
+            // only an open date
+            $events[] = (object)array(
+                'name' => $reader->name.' ('.$stropens.')',
+                'eventtype' => 'open',
+                'timestart' => $reader->timeopen,
+                'timeduration' => 0,
+            );
+        } else if ($reader->timeclose) {
+            // only a closing date
+            $events[] = (object)array(
+                'name' => $reader->name.' ('.$strcloses.')',
+                'eventtype' => 'close',
+                'timestart' => $reader->timeclose,
+                'timeduration' => 0,
+            );
+        }
+    }
+
+    // cache description and visiblity (saves doing it twice for long events)
+    if (empty($reader->intro)) {
+        $description = '';
+    } else {
+        $description = $reader->intro;
+    }
+    $visible = instance_is_visible('reader', $reader);
+
+    foreach ($events as $event) {
+        $event->groupid = 0;
+        $event->userid = 0;
+        $event->courseid = $reader->course;
+        $event->modulename = 'reader';
+        $event->instance = $reader->id;
+        $event->description = $description;
+        $event->visible = $visible;
+        if (count($eventids)) {
+            $event->id = array_shift($eventids);
+            $calendarevent = calendar_event::load($event->id);
+            $calendarevent->update($event, $checkcapabilties);
+        } else {
+            calendar_event::create($event, $checkcapabilties);
+        }
+    }
+
+    // delete surplus events, if required
+    // (no need to check capabilities here)
+    if ($delete) {
+        while (count($eventids)) {
+            $id = array_shift($eventids);
+            $event = calendar_event::load($id);
+            $event->delete();
+        }
+    }
 }
 
 /**
@@ -176,7 +337,7 @@ function reader_delete_instance($id) {
     $result = true;
 
     if ($reader = $DB->get_record('reader', array('id' => $id))) {
-        if ($attempts = $DB->get_records('reader_attempts', array('reader' => $id), 'id', 'id,reader')) {
+        if ($attempts = $DB->get_records('reader_attempts', array('readerid' => $id), 'id', 'id,reader')) {
             $ids = array_keys($attempts);
             $DB->delete_records_list('reader_attempt_questions', 'attemptid', $ids);
             $DB->delete_records_list('reader_attempts', 'id',  $ids);
@@ -186,7 +347,7 @@ function reader_delete_instance($id) {
         $DB->delete_records('reader_book_instances',    array('readerid' => $id));
         $DB->delete_records('reader_cheated_log',       array('readerid' => $id));
         $DB->delete_records('reader_delays',            array('readerid' => $id));
-        $DB->delete_records('reader_grades',            array('reader'   => $id));
+        $DB->delete_records('reader_grades',            array('readerid' => $id));
         $DB->delete_records('reader_goals',             array('readerid' => $id));
         $DB->delete_records('reader_levels',            array('readerid' => $id));
         $DB->delete_records('reader_messages',          array('readerid' => $id));
@@ -208,7 +369,7 @@ function reader_delete_instance($id) {
  * @todo Finish documenting this function
  */
 function reader_user_outline($course, $user, $mod, $reader) {
-    return $return;
+    return '';
 }
 
 /**
@@ -278,48 +439,89 @@ function reader_get_post_actions() {
  * @todo Finish documenting this function
  */
 function reader_cron() {
-    global $CFG, $DB;
+    global $CFG, $DB, $PAGE;
 
     // delete expired messages
     $select = 'timefinish > ? AND timefinish < ?';
     $params = array(0, time());
     $DB->delete_records_select('reader_messages', $select, $params);
 
-    // check for duplicate and orphaned questions
-    //
-    // -------------------------------------------
-    //   this is probably not necessary now
-    //      because these checks are done
-    // when quizzes and questions are downloaded
-    // -------------------------------------------
-    //
-    //$select = 'quizid > ?';
-    //$params = array(0);
-    //if ($books = $DB->get_records_select('reader_books', $select, $params)) {
-    //    foreach ($books as $book) {
-    //        if ($instances = $DB->get_records('reader_question_instances', array('quiz' => $book->quizid))) {
-    //            if ($quiz = $DB->get_record('quiz', array('id' => $book->quizid))) {
-    //                $questions = explode(',', $quiz->questions);
-    //            } else {
-    //                $questions = array();
-    //            }
-    //            $doublecheck = array();
-    //            foreach ($instances as $instance) {
-    //                if (! in_array($instance->question, $questions)) {
-    //                    // remove orphaned question
-    //                    $params = array('quiz' => $book->quizid, 'question' => $instance->question);
-    //                    $DB->delete_records('reader_question_instances', $params);
-    //                }
-    //                if (in_array($instance->question, $doublecheck)) {
-    //                    // notify about duplicates
-    //                    reader_add_to_log(1, 'reader', 'Cron', '', "Double entries found!! reader_question_instances; quiz: {$book->quizid}; question: {$instance->question}");
-    //                } else {
-    //                    $doublecheck[] = $instance->question;
-    //                }
-    //            }
-    //        }
-    //    }
-    //}
+    $time = time();
+    $name = 'last_update';
+    $send_usage_stats = false;
+    if ($last_update = get_config('mod_reader', $name)) {
+        if (($last_update + (4 * WEEKSECS)) <= $time) {
+            set_config($name, $time, 'mod_reader');
+            $send_usage_stats = true;
+        }
+    }
+
+    if ($send_usage_stats) {
+        set_config($name, $time, 'mod_reader');
+
+        // get remotesite classes
+        require_once($CFG->dirroot.'/mod/reader/admin/books/download/remotesite.php');
+        require_once($CFG->dirroot.'/mod/reader/admin/books/download/remotesite/moodlereadernet.php');
+
+        // create an object to represent main download site (moodlereader.net)
+        $remotesite = new reader_remotesite_moodlereadernet(get_config('mod_reader', 'serverurl'),
+                                                            get_config('mod_reader', 'serverusername'),
+                                                            get_config('mod_reader', 'serverpassword'));
+
+        if ($results = $remotesite->send_usage_stats()) {
+
+            // $results is actually an object, but we can
+            // loop through the properties using foreach
+
+            // $readerids = array();
+            // foreach ($results as $itemid => $image) {
+            //     list($action, $image) = explode('::', $image, 2);
+            //     if ($action=='UPDATE') {
+            //         if ($books = $DB->get_records('reader_books', array('image' => $image))) {
+            //             list($where, $params) = $DB->get_in_or_equal(array_keys($books));
+            //             $select = 'r.usecourse, MIN(r.id) as minreaderid';
+            //             $from   = '{reader_book_instances} rbi '.
+            //                       'JOIN {reader} r ON rbi.readerid = r.id';
+            //             $where  = 'rbi.bookid '.$where;
+            //             $group  = 'r.usecourse';
+            //             if ($instances = $DB->get_records_sql("SELECT $select FROM $from WHERE $where GROUP BY $group", $params)) {
+            //                 foreach ($instances as $instance) {
+            //                     $readerid = $instance->minreaderid;
+            //                     if (empty($itemids[$readerid])) {
+            //                         $readerids[$readerid] = array();
+            //                     }
+            //                     $readerids[$readerid][] = $itemid;
+            //                 }
+            //             }
+            //         }
+            //     }
+            // }
+
+            // if (count($readerids)) {
+
+            //     // get download and renderer classes
+            //     require_once($CFG->dirroot.'/mod/reader/locallib.php');
+            //     require_once($CFG->dirroot.'/mod/reader/admin/books/download/lib.php');
+            //     require_once($CFG->dirroot.'/mod/reader/admin/books/download/renderer.php');
+
+            //     $type   = reader_downloader::BOOKS_WITH_QUIZZES;
+            //     foreach ($readerids as $readerid => $itemids) {
+
+            //         $reader = $DB->get_record('reader', array('id' => $readerid));
+            //         $cm     = get_coursemodule_from_instance('reader', $reader->id);
+            //         $course = $DB->get_record('course', array('id' => $reader->course));
+            //         $reader = mod_reader::create($reader, $cm, $course);
+
+            //         $output = $PAGE->get_renderer('mod_reader', 'admin_books_download');
+            //         $output->init($reader);
+
+            //         $downloader = new reader_downloader($output);
+            //         $downloader->add_remotesite($remotesite);
+            //         $downloader->add_selected_itemids($type, $itemids);
+            //     }
+            // }
+        }
+    }
 
     return true;
 }
@@ -386,7 +588,7 @@ function reader_get_level_data($reader, $userid=0) {
 
     $select = 'ra.*, rb.difficulty, rb.id AS bookid';
     $from   = '{reader_attempts} ra JOIN {reader_books} rb ON ra.bookid = rb.id';
-    $where  = 'ra.userid = ? AND ra.reader = ? AND ra.deleted = ? AND ra.timefinish > ?';
+    $where  = 'ra.userid = ? AND ra.readerid = ? AND ra.deleted = ? AND ra.timefinish > ?';
     $params = array($USER->id, $reader->id, 0, $reader->ignoredate);
 
     if ($attempts = $DB->get_records_sql("SELECT $select FROM $from WHERE $where ORDER BY ra.timemodified", $params)) {
@@ -477,7 +679,7 @@ function reader_get_level_data($reader, $userid=0) {
 function reader_get_user_attempts($readerid, $userid, $status = 'finished', $includepreviews = false) {
     global $DB;
 
-    $select = 'reader = ? AND userid = ?';
+    $select = 'readerid = ? AND userid = ?';
     $params = array($readerid, $userid);
 
     switch ($status) {
@@ -531,7 +733,7 @@ function reader_create_attempt($reader, $attemptnumber, $book, $adduniqueid=fals
     $dbman = $DB->get_manager();
     $use_quiz_slots = $dbman->table_exists('quiz_slots');
 
-    $params = array('reader' => $reader->id, 'userid' => $USER->id, 'attempt' => ($attemptnumber - 1));
+    $params = array('readerid' => $reader->id, 'userid' => $USER->id, 'attempt' => ($attemptnumber - 1));
     if ($attemptnumber > 1 && $reader->attemptonlast && ($attempt = $DB->get_record('reader_attempts', $params))) {
         // do nothing - we will build on previous attempt
     } else {
@@ -554,12 +756,12 @@ function reader_create_attempt($reader, $attemptnumber, $book, $adduniqueid=fals
         }
 
         $attempt = (object)array(
-            'reader'  => $reader->id,
-            'userid'  => $USER->id,
-            'bookid'  => $book->id,
-            'quizid'  => $book->quizid,
-            'preview' => 0,
-            'layout'  => reader_repaginate($reader->questions)
+            'readerid' => $reader->id,
+            'userid'   => $USER->id,
+            'bookid'   => $book->id,
+            'quizid'   => $book->quizid,
+            'preview'  => 0,
+            'layout'   => reader_repaginate($reader->questions)
         );
     }
 
@@ -678,7 +880,7 @@ function reader_save_best_grade($reader, $userid = null) {
     $bestgrade = reader_calculate_best_grade($reader, $attempts);
     $bestgrade = reader_rescale_grade($bestgrade, $reader);
     // Save the best grade in the database
-    if ($grade = $DB->get_record('reader_grades', array('reader' => $reader->id, 'userid' => $userid))) {
+    if ($grade = $DB->get_record('reader_grades', array('readerid' => $reader->id, 'userid' => $userid))) {
         $grade->grade = $bestgrade;
         $grade->timemodified = time();
         if (! $DB->update_record('reader_grades', $grade)) {
@@ -686,6 +888,7 @@ function reader_save_best_grade($reader, $userid = null) {
             return false;
         }
     } else {
+        $grade = stdClass();
         $grade->reader = $reader->id;
         $grade->userid = $userid;
         $grade->grade = $bestgrade;
@@ -757,33 +960,102 @@ function reader_calculate_best_grade($reader, $attempts) {
  */
 function reader_update_grades($reader=null, $userid=0, $nullifnone=true) {
     global $CFG, $DB;
-    if (! function_exists('grade_update')) { //workaround for buggy PHP versions
-        require_once($CFG->dirroot.'/lib/gradelib.php');
-    }
-    if ($reader != null) {
-        if ($grades = reader_get_user_grades($reader, $userid)) {
-            reader_grade_item_update($reader, $grades);
-        } else if ($userid and $nullifnone) {
-            $grade = new object();
-            $grade->userid   = $userid;
-            $grade->rawgrade = NULL;
-            reader_grade_item_update($reader, $grade);
+    require_once($CFG->dirroot.'/lib/gradelib.php');
+
+    if ($reader===null) {
+
+        // set up sql strings
+        $strupdating = get_string('updatinggrades', 'mod_reader');
+        $select = 'r.*, cm.idnumber AS cmidnumber';
+        $from   = '{reader} r, {course_modules} cm, {modules} m';
+        $where  = 'r.id = cm.instance AND cm.module = m.id AND m.name = ?';
+        $params = array('reader');
+
+        // get previous record index (if any)
+        $configname = 'update_grades';
+        $configvalue = get_config('mod_reader', $configname);
+        if (is_numeric($configvalue)) {
+            $i_min = intval($configvalue);
+        } else {
+            $i_min = 0;
         }
 
+        if ($i_max = $DB->count_records_sql("SELECT COUNT('x') FROM $from WHERE $where", $params)) {
+            if ($rs = $DB->get_recordset_sql("SELECT $select FROM $from WHERE $where", $params)) {
+                if (defined('CLI_SCRIPT') && CLI_SCRIPT) {
+                    $bar = false;
+                } else {
+                    $bar = new progress_bar('readerupgradegrades', 500, true);
+                }
+                $i = 0;
+                foreach ($rs as $reader) {
+
+                    // update grade
+                    if ($i >= $i_min) {
+                        upgrade_set_timeout(); // apply for more time (3 mins)
+                        reader_update_grades($reader, $userid, $nullifnone);
+                    }
+
+                    // update progress bar
+                    $i++;
+                    if ($bar) {
+                        $bar->update($i, $i_max, $strupdating.": ($i/$i_max)");
+                    }
+
+                    // update record index
+                    if ($i > $i_min) {
+                        set_config($configname, $i, 'mod_reader');
+                    }
+                }
+                $rs->close();
+            }
+        }
+
+        // delete the record index
+        unset_config($configname, 'mod_reader');
+
+        return; // finish here
+    }
+
+    // sanity check on $reader->id
+    if (! isset($reader->id)) {
+        return false;
+    }
+
+    if ($grades = reader_get_grades($reader, $userid)) {
+        reader_grade_item_update($reader, $grades);
+
+    } else if ($userid && $nullifnone) {
+        // no grades for this user, but we must force the creation of a "null" grade record
+        reader_grade_item_update($reader, (object)array('userid'=>$userid, 'rawgrade'=>null));
+
     } else {
-        $select = 'a.*, cm.idnumber as cmidnumber, a.course as courseid';
-        $from   = '{reader} a, {course_modules} cm, {modules} m';
-        $where  = 'm.name = ? AND m.id = cm.module AND cm.instance = a.id';
-        $params = array('reader');
-        if ($rs = $DB->get_recordset_sql("SELECT $select FROM $from WHERE $where", $params)) {
-          foreach ($rs as $reader) {
-              if ($reader->grade != 0) {
-                  reader_update_grades($reader, 0, false);
-              } else {
-                  reader_grade_item_update($reader);
-              }
-          }
-          $rs->close();
+        // no grades and no userid
+        reader_grade_item_update($reader);
+    }
+}
+
+/**
+ * reader_reset_gradebook
+ *
+ * @param xxx $courseid
+ * @param xxx $type (optional, default = "")
+ * @return void
+ * @todo Finish documenting this function
+ */
+function reader_reset_gradebook($courseid, $type='') {
+    global $DB;
+    $select = 'q.*, cm.idnumber as cmidnumber, q.course as courseid';
+    $from   = '{modules} m '.
+              'JOIN {course_modules} cm ON m.id = cm.module '.
+              'JOIN {reader} q ON cm.instance = q.id';
+    $where  = 'm.name = ? AND cm.course = ?';
+    $params = array('reader', $courseid);
+    if ($readers = $DB->get_records_sql("SELECT $select FROM $from WHERE $where", $params)) {
+        foreach ($readers as $reader) {
+            $DB->delete_records('reader_attempts', array('readerid' => $id));
+            $DB->delete_records('reader_grades',   array('readerid' => $id));
+            reader_grade_item_update($reader, 'reset');
         }
     }
 }
@@ -798,14 +1070,14 @@ function reader_update_grades($reader=null, $userid=0, $nullifnone=true) {
  */
 function reader_rescale_grade($rawgrade, $reader) {
     if ($reader->sumgrades) {
-        return round($rawgrade*$reader->grade/$reader->sumgrades, $reader->decimalpoints);
+        return round($rawgrade * $reader->grade / $reader->sumgrades, ($reader->wordsorpoints==0 ? 0 : 1));
     } else {
         return 0;
     }
 }
 
 /**
- * reader_get_user_grades
+ * reader_get_grades
  *
  * @uses $CFG
  * @uses $DB
@@ -814,20 +1086,78 @@ function reader_rescale_grade($rawgrade, $reader) {
  * @return xxx
  * @todo Finish documenting this function
  */
-function reader_get_user_grades($reader, $userid=0) {
+function reader_get_grades($reader, $userid=0) {
     global $DB;
-    $select = 'u.id, u.id AS userid, '.
-              'rg.grade AS rawgrade, rg.timemodified AS dategraded, '.
-              'MAX(ra.timefinish) AS datesubmitted';
-    $from   = '{user} u, {reader_grades} rg, {reader_attempts} ra';
-    $where  = 'u.id = rg.userid AND rg.reader = ? AND ra.reader = rg.reader AND u.id = ra.userid';
-    $groupby = 'u.id, rg.grade, rg.timemodified';
-    $params = array($reader->id);
+
+    // $fields = 'userid, rawgrade, datesubmitted, dategraded';
+    // $sort   = 'userid';
+    // $select = 'readerid = ?';
+    // $params = array($reader->id);
+
+    // if ($userid) {
+    //     $select .= ' AND userid = ?';
+    //     $params[] = $userid;
+    // }
+
+    // if ($grades = $DB->get_records_select('reader_grades', $select, $params, $sort, $fields)) {
+    //     return $grades;
+    // }
+
+    // no reader_grade records found, so let's
+    // create them by aggregating the reader_attempts
+
+    if ($reader->wordsorpoints==0) {
+        $select = 'rb.words';
+    } else {
+        $select = 'rb.points';
+    }
+    $select = 'ra.userid, '.
+              'ra.readerid, '.
+              'SUM('.$select.') AS rawgrade, '. // total words/points
+              'MAX(timefinish) AS datesubmitted, '.
+              'MAX(timemodified) AS dategraded';
+    $from   = '{reader_attempts} ra JOIN {reader_books} rb ON ra.bookid = rb.id';
+    $where  = 'ra.readerid = ? AND ra.preview = ? AND ra.deleted = ? AND ra.passed = ?';
+    $group  = 'ra.userid, ra.readerid';
+    $params = array($reader->id, 0, 0, 'true');
+
     if ($userid) {
-        $select .= ' AND u.id = ?';
+        $where .= ' AND ra.userid = ?';
         $params[] = $userid;
     }
-    return $DB->get_records_sql("SELECT $select FROM $from WHERE $where GROUP BY $groupby", $params);
+
+    if ($gradeids = $DB->get_records('reader_grades', array('readerid' => $reader->id), 'id', 'id,readerid')) {
+        $gradeids = array_keys($gradeids);
+    } else {
+        $gradeids = array();
+    }
+
+    if ($grades = $DB->get_records_sql("SELECT $select FROM $from WHERE $where GROUP BY $group", $params)) {
+        foreach ($grades as $grade) {
+            // reuse grade ids if possible
+            if (count($gradeids)) {
+                $grade->id = array_shift($gradeids);
+                $DB->update_record('reader_grades', $grade);
+                unset($grade->id);
+            } else {
+                unset($grade->id);
+                $DB->insert_record('reader_grades', $grade);
+            }
+
+            unset($grade->readerid);
+            $grades[$grade->userid] = $grade;
+        }
+    } else {
+        $grades = array();
+    }
+
+    // remove unused grade ids - usually there shouldn't be any !!
+    if (count($gradeids)) {
+        list($select, $params) = $DB->get_in_or_equal($gradeids);
+        $DB->delete_records_select('reader_grades', $select, $params);
+    }
+
+    return $grades;
 }
 
 /**
@@ -841,26 +1171,34 @@ function reader_get_user_grades($reader, $userid=0) {
  */
 function reader_grade_item_update($reader, $grades=NULL) {
     global $CFG;
-    if (! function_exists('grade_update')) { //workaround for buggy PHP versions
-        require_once($CFG->dirroot.'/lib/gradelib.php');
-    }
+    require_once($CFG->dirroot.'/lib/gradelib.php');
 
-    if (array_key_exists('cmidnumber', $reader)) { //it may not be always present
-        $params = array('itemname'=>$reader->name, 'idnumber'=>$reader->cmidnumber);
-    } else {
-        $params = array('itemname'=>$reader->name);
+    $params = array(
+        'itemname' => $reader->name
+    );
+    if ($grades==='reset') {
+        $params['reset'] = true;
+        $grades = null;
     }
-
-    if ($reader->grade > 0) {
+    if (isset($reader->cmidnumber)) {
+        //cmidnumber may not be always present
+        $params['idnumber'] = $reader->cmidnumber;
+    }
+    if ($reader->goal > 0) {
         $params['gradetype'] = GRADE_TYPE_VALUE;
-        $params['grademax']  = $reader->grade;
+        $params['grademax']  = $reader->goal;
         $params['grademin']  = 0;
     } else {
         $params['gradetype'] = GRADE_TYPE_NONE;
+        // Note: when adding a new activity, a gradeitem will *not*
+        // be created in the grade book if gradetype==GRADE_TYPE_NONE
+        // A gradeitem will be created later if gradetype changes to GRADE_TYPE_VALUE
+        // However, the gradeitem will *not* be deleted if the activity's
+        // gradetype changes back from GRADE_TYPE_VALUE to GRADE_TYPE_NONE
+        // Therefore, we force the removal of empty gradeitems
+        $params['deleted'] = true;
     }
-    $params['hidden'] = 0;
-
-    return grade_update('mod/quiz', $reader->course, 'mod', 'reader', $reader->id, 0, $grades, $params);
+    return grade_update('mod/reader', $reader->course, 'mod', 'reader', $reader->id, 0, $grades, $params);
 }
 
 /**
@@ -899,7 +1237,7 @@ function reader_get_student_attempts($userid, $reader, $allreaders = false, $boo
         $ignoredate = $reader->ignoredate;
     }
 
-    $select = 'ra.id, ra.uniqueid, ra.reader, ra.userid, ra.bookid, ra.quizid, ra.attempt, ra.deleted, '.
+    $select = 'ra.id, ra.uniqueid, ra.readerid, ra.userid, ra.bookid, ra.quizid, ra.attempt, ra.deleted, '.
               'ra.sumgrades, ra.percentgrade, ra.passed, ra.checkbox, ra.timefinish, ra.preview, ra.bookrating, '.
               'rb.name, rb.publisher, rb.level, rb.length, rb.image, rb.difficulty, rb.words, rb.sametitle';
     $from   = '{reader_attempts} ra LEFT JOIN {reader_books} rb ON ra.bookid = rb.id';
@@ -907,7 +1245,7 @@ function reader_get_student_attempts($userid, $reader, $allreaders = false, $boo
     $order  = 'ra.timefinish';
     $params = array('userid'=>$userid, 'deleted' => 0, 'ignoredate'=>$ignoredate, 'preview' => 0);
     if (! $allreaders) {
-        $where .= ' AND ra.reader = :readerid';
+        $where .= ' AND ra.readerid = :readerid';
         $params['readerid'] = $reader->id;
     }
     if (! $attempts = $DB->get_records_sql("SELECT $select FROM $from WHERE $where ORDER BY $order", $params)) {
@@ -2731,7 +3069,7 @@ function reader_available_users($cmid, $reader, $userid, $action='') {
                 }
             }
         } else if ($gid=='' || $gid=='all') {
-            if ($userids = $DB->get_records('reader_attempts', array('reader' => $reader->id), 'userid', 'DISTINCT userid')) {
+            if ($userids = $DB->get_records('reader_attempts', array('readerid' => $reader->id), 'userid', 'DISTINCT userid')) {
                 $userids = array_keys($userids);
             } else {
                 $userids = array();
@@ -3220,4 +3558,18 @@ function reader_change_to_studentview($userid, $link, $location) {
     $_SESSION['USER'] = $DB->get_record('user', array('id' => $userid));
     header("Location: $location");
     // script will terminate here
+}
+
+/**
+ * reader_supports
+ *
+ * @param   integer  $feature a FEATURE_xxx constant
+ * @return  boolean  TRUE if reader supports $feature, otherwise FALSE
+ */
+function reader_supports($feature) {
+    switch($feature) {
+        case FEATURE_GRADE_HAS_GRADE: return true;
+        case FEATURE_GRADE_OUTCOMES:  return true;
+        default: return null;
+    }
 }

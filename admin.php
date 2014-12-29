@@ -382,12 +382,12 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $bookid) {
 }
 
 if (has_capability('mod/reader:addinstance', $contextmodule) && $deletequiz && $deleteallattempts) {
-    $DB->delete_records('reader_attempts', array('quizid' => $deletequiz, 'reader' => $reader->id));
+    $DB->delete_records('reader_attempts', array('quizid' => $deletequiz, 'readerid' => $reader->id));
     reader_add_to_log($course->id, 'reader', 'AA-Attempts Deleted', 'admin.php?id='.$cm->id, $cm->instance, $cm->id);
 }
 
 if (has_capability('mod/reader:addinstance', $contextmodule) && $deletebook && $deletequiz) {
-    $params = array('quizid' => $deletequiz, 'reader' => $reader->id, 'deleted' => 0);
+    $params = array('quizid' => $deletequiz, 'readerid' => $reader->id, 'deleted' => 0);
     if ($DB->count_records('reader_attempts', $params) == 0) {
         $DB->delete_records('reader_books', array('id' => $deletebook));
         $DB->delete_records('reader_attempts', $params); // remove deleted attempts
@@ -748,7 +748,7 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $act == 'awardex
 
             $select = 'MAX(attempt)';
             $from   = '{reader_attempts}';
-            $where  = 'reader = ? AND userid = ? AND timefinish > ? AND preview <> ?';
+            $where  = 'readerid = ? AND userid = ? AND timefinish > ? AND preview <> ?';
             $params = array($reader->id, $s, 0, 1);
 
             if($attemptnumber = $DB->get_field_sql("SELECT $select FROM $from WHERE $where", $params)) {
@@ -925,7 +925,7 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $book && is_arra
             if ($value) {
                 $readerattempt = (object)array(
                     'uniqueid'     => reader_get_new_uniqueid($contextmodule->id, $quizid),
-                    'reader'       => $reader->id,
+                    'readerid'     => $reader->id,
                     'userid'       => $value,
                     'bookid'       => $book,
                     'quizid'       => $quizid,
@@ -1307,7 +1307,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
 
         $i = 0;
 
-        $params = array('quizid' => $book->quizid, 'reader' => $reader->id, 'deleted' => 0);
+        $params = array('quizid' => $book->quizid, 'readerid' => $reader->id, 'deleted' => 0);
         if ($readerattempts = $DB->get_records('reader_attempts', $params)) {
             foreach ($readerattempts as $readerattempt) {
                 $i++;
@@ -1469,7 +1469,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
                         if ($books = $DB->get_records('reader_books', array('id' => $readerattempt->bookid))) {
                             if ($book = array_shift($books)) {
                                 $totalwords['allterms'] += $book->words;
-                                if ($readerattempt->reader==$reader->id && $reader->ignoredate < $readerattempt->timefinish) {
+                                if ($readerattempt->readerid==$reader->id && $reader->ignoredate < $readerattempt->timefinish) {
                                     $totalwords['thisterm'] += $book->words;
                                 }
                             }
@@ -2022,7 +2022,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
 
             $select = 'ra.*, u.username, u.firstname, u.lastname';
             $from   = '{reader_attempts} ra INNER JOIN {user} u ON u.id = ra.userid';
-            $where  = 'ra.quizid= ? AND ra.reader= ?'.$groupuserfilter.' AND ra.deleted = ?';
+            $where  = 'ra.quizid= ? AND ra.readerid= ?'.$groupuserfilter.' AND ra.deleted = ?';
             $params = array($book->quizid, $reader->id, 0);
             if (! $readerattempts = $DB->get_records_sql("SELECT $select FROM $from WHERE $where ORDER BY ra.userid", $params)) {
                 $readerattempts = array();
@@ -3258,7 +3258,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
         $coursestudents = get_enrolled_users($context, null, $group->id);
         foreach ($coursestudents as $coursestudent) {
 
-            $select = 'userid= ? AND reader= ? AND timestart > ? AND deleted = ?';
+            $select = 'userid = ? AND readerid = ? AND timestart > ? AND deleted = ?';
             $params = array($coursestudent->id, $reader->id, $reader->ignoredate, 0);
             if ($readerattempts = $DB->get_records_select('reader_attempts', $select, $params)) {
 
@@ -3724,7 +3724,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
 
     // get all attempts for this Reader (excluding deleted attempts)
     $sortfields = 'userid,quizid,timefinish,uniqueid DESC';
-    $readerattempts = $DB->get_records('reader_attempts', array('reader' => $reader->id, 'deleted' => 0), $sortfields);
+    $readerattempts = $DB->get_records('reader_attempts', array('readerid' => $reader->id, 'deleted' => 0), $sortfields);
 
     // prune the attempts
     $userid = 0;
@@ -3930,7 +3930,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
             $readerattempt = (object)array(
                 // the "uniqueid" field is in fact an "id" from the "question_usages" table
                 'uniqueid'      => reader_get_new_uniqueid($contextmodule->id, $books[$image]->quizid),
-                'reader'        => $reader->id,
+                'readerid'      => $reader->id,
                 'userid'        => $users[$username]->id,
                 'bookid'        => $books[$image]->id,
                 'quizid'        => $books[$image]->quizid,
@@ -4046,7 +4046,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
             $data['totalwordsthisterm'] = 0;
             $data['totalwordsallterms'] = 0;
 
-            $select = 'userid= ? AND reader= ? AND timefinish > ? AND deleted = ?';
+            $select = 'userid = ? AND readerid = ? AND timefinish > ? AND deleted = ?';
             $params = array($coursestudent->id, $reader->id, $reader->ignoredate, 0);
             if ($attempts = $DB->get_records_select('reader_attempts', $select, $params)) {
                 foreach ($attempts as $attempt) {
@@ -4171,7 +4171,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
     if (is_int($book) && $book >= 1) {
         $bookdata = $DB->get_record('reader_books', array('id'=>$book));
         $quizdata = $DB->get_record('quiz', array('id'=>$bookdata->quizid));
-        $readerattempts = $DB->get_records('reader_attempts', array('quizid' => $bookdata->quizid, 'reader' => $reader->id, 'deleted' => 0));
+        $readerattempts = $DB->get_records('reader_attempts', array('quizid' => $bookdata->quizid, 'readerid' => $reader->id, 'deleted' => 0));
         foreach ($readerattempts as $readerattempt) {
             $userdata = $DB->get_record('user', array('id'=>$readerattempt->userid));
             $table->data[] = new html_table_row(array(

@@ -126,7 +126,7 @@ class reader_admin_reports_userdetailed_table extends reader_admin_reports_table
         $duration = 'CASE WHEN (ra.timefinish IS NULL OR ra.timefinish = 0) THEN 0 ELSE (ra.timefinish - ra.timestart) END';
 
         // total of all words/points this term up to and including this attempt
-        $total    = 'rat.reader = ra.reader AND rat.userid = ra.userid AND '.
+        $total    = 'rat.readerid = ra.readerid AND rat.userid = ra.userid AND '.
                     'rat.timefinish > :time1 AND rat.timefinish <= ra.timefinish AND '.
                     'rat.passed = :passed2 AND rat.deleted = :deleted';
         $total    = "(SELECT SUM(rbt.$wordsorpoints) FROM {reader_attempts} rat LEFT JOIN {reader_books} rbt ON rat.bookid = rbt.id WHERE $total)";
@@ -138,11 +138,11 @@ class reader_admin_reports_userdetailed_table extends reader_admin_reports_table
                   "rl.currentlevel, rb.difficulty, rb.$wordsorpointsalias, rb.name";
         $from   = '{reader_attempts} ra '.
                   'LEFT JOIN {user} u ON ra.userid = u.id '.
-                  'LEFT JOIN {reader_levels} rl ON ra.reader = rl.readerid AND u.id = rl.userid '.
+                  'LEFT JOIN {reader_levels} rl ON ra.readerid = rl.readerid AND u.id = rl.userid '.
                   'LEFT JOIN {reader_books} rb ON ra.bookid = rb.id';
-        $where  = "ra.reader = :reader AND ra.timefinish > :time2 AND u.id $usersql";
+        $where  = "ra.readerid = :readerid AND ra.timefinish > :time2 AND u.id $usersql";
 
-        $params = array('reader'   => $this->output->reader->id,
+        $params = array('readerid' => $this->output->reader->id,
                         'time1'    => $this->output->reader->ignoredate,
                         'time2'    => $this->output->reader->ignoredate,
                         'passed1'  => 'true',

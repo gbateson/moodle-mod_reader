@@ -64,7 +64,7 @@ if ($reader->can_viewreports()) {
         }
     }
     if ($attemptid = optional_param('attemptid', 0, PARAM_INT)) {
-        $params = array('id' => $attemptid, 'reader' => $reader->id);
+        $params = array('id' => $attemptid, 'readerid' => $reader->id);
         if ($attempt = $DB->get_record('reader_attempts', $params)) {
             if ($cm = get_coursemodule_from_instance('quiz', $attempt->quizid)) {
                 if ($quizattemptid = reader_copy_to_quizattempt($attempt)) {

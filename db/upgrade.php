@@ -954,41 +954,15 @@ function xmldb_reader_upgrade($oldversion) {
         foreach ($tables as $table => $fields) {
             $table = new xmldb_table($table);
             if ($table->getName()=='reader_levels') {
-                $indexes = array('readleve_rea_ix' => 'readerid',
-                                 'readleve_sta_ix' => 'startlevel',
-                                 'readleve_cur_ix' => 'currentlevel');
+                $indexes = array('readleve_rea_ix' => array('readerid'),
+                                 'readleve_sta_ix' => array('startlevel'),
+                                 'readleve_cur_ix' => array('currentlevel'));
             } else {
                 $indexes = array();;
             }
-            foreach ($indexes as $index => $field) {
-                $index = new xmldb_index($index, XMLDB_INDEX_NOTUNIQUE, array($field));
-                if ($dbman->index_exists($table, $index)) {
-                    $dbman->drop_index($table, $index);
-                }
-            }
-            foreach ($fields as $newname => $field) {
-                if ($dbman->field_exists($table, $field)) {
-                    if ($dbman->field_exists($table, $newname)) {
-                        if ($field->getName() != $newname) {
-                            $field->setName($newname);
-                        }
-                        xmldb_reader_fix_previous_field($dbman, $table, $field);
-                        $dbman->change_field_type($table, $field);
-                    } else {
-                        xmldb_reader_fix_previous_field($dbman, $table, $field);
-                        $dbman->change_field_type($table, $field);
-                        if ($field->getName() != $newname) {
-                            $dbman->rename_field($table, $field, $newname);
-                        }
-                    }
-                }
-            }
-            foreach ($indexes as $index => $field) {
-                $index = new xmldb_index($index, XMLDB_INDEX_NOTUNIQUE, array($field));
-                if (! $dbman->index_exists($table, $index)) {
-                    $dbman->add_index($table, $index);
-                }
-            }
+            reader_xmldb_drop_indexes($dbman, $table, $indexes);
+            reader_xmldb_update_fields($dbman, $table, $fields);
+            reader_xmldb_add_indexes($dbman, $table, $indexes);
         }
 
         // rename Reader config settings
@@ -1073,6 +1047,35 @@ function xmldb_reader_upgrade($oldversion) {
             $dbman->rename_field($table, $field, $newname);
             $DB->execute('UPDATE {'.$tablename.'} SET '.$newname.' = (CASE WHEN '.$newname.' = ? THEN ? ELSE ? END)', array(0, 1, 0));
        }
+        upgrade_mod_savepoint(true, "$newversion", 'reader');
+    }
+
+    $newversion = 2014122735;
+    if ($oldversion < $newversion) {
+
+        $table = new xmldb_table('reader_grades');
+        $indexes = array('readgrad_use_ix' => array('userid'), 'readgrad_rea_ix' => array('reader', 'readerid'));
+        $fields = array(
+            'readerid'      => new xmldb_field('reader',        XMLDB_TYPE_INTEGER, '11', null, null, null, '0', 'id'),
+            'rawgrade'      => new xmldb_field('grade',         XMLDB_TYPE_FLOAT,   null, null, null, null, '0', 'userid'),
+            'datesubmitted' => new xmldb_field('datesubmitted', XMLDB_TYPE_INTEGER, '11', null, null, null, '0', 'rawgrade'),
+            'dategraded'    => new xmldb_field('timemodified',  XMLDB_TYPE_INTEGER, '11', null, null, null, '0', 'datesubmitted'),
+        );
+        reader_xmldb_drop_indexes($dbman, $table, $indexes);
+        reader_xmldb_update_fields($dbman, $table, $fields);
+        reader_xmldb_add_indexes($dbman, $table, $indexes);
+
+        $table = new xmldb_table('reader');
+        $fields = array('maxgrade' => new xmldb_field('maxgrade', XMLDB_TYPE_INTEGER, '11', null, null, null, '0', 'goal'));
+        reader_xmldb_update_fields($dbman, $table, $fields);
+
+        $table = new xmldb_table('reader_attempts');
+        $indexes = array('readatte_rea_ix' => array('reader', 'readerid'));
+        $fields = array('readerid' => new xmldb_field('reader', XMLDB_TYPE_INTEGER, '11', null, null, null, '0', 'uniqueid'));
+        reader_xmldb_drop_indexes($dbman, $table, $indexes);
+        reader_xmldb_update_fields($dbman, $table, $fields);
+        reader_xmldb_add_indexes($dbman, $table, $indexes);
+
         upgrade_mod_savepoint(true, "$newversion", 'reader');
     }
 

@@ -45,13 +45,13 @@ class reader_remotesite_moodlereadernet extends reader_remotesite {
     const DEFAULT_FILESFOLDER = '/files';
 
     /**
-     * check_curl_results
+     * is_error_curl_xml
      *
      * @param string $results downloaded via CURL
      * @return string
      * @todo Finish documenting this function
      */
-    public function check_curl_results($results) {
+    public function is_error_curl_xml($results) {
         $search = '/^\s*<\?xml[^>]*>\s*<myxml[^>]*>\s*<error[^>]*>(.*?)<\/error>\s*<\/myxml>\s*$/is';
         if (preg_match($search, $results, $matches)) {
             return $matches[1];
@@ -253,7 +253,7 @@ class reader_remotesite_moodlereadernet extends reader_remotesite {
                 $level     = trim($item['@']['level']);
                 $itemid    = trim($item['@']['id']);
                 $itemname  = trim($item['#']);
-                $time      = (empty($item['@']['time']) ? 0 : intval($item['@']['time']));
+                $time      = (empty($item['@']->time) ? 0 : intval($item['@']->time));
 
                 if ($time==0 && isset($downloaded->items[$publisher]->items[$level]->items[$itemname])) {
                     $time = $downloaded->items[$publisher]->items[$level]->items[$itemname]->time;
@@ -405,5 +405,138 @@ class reader_remotesite_moodlereadernet extends reader_remotesite {
             case 'Advanced':     $num += 500; break;
         }
         return $num;
+    }
+
+    /*
+     * get_usage_url
+     *
+     * @return string
+     */
+    public function get_usage_url() {
+        return new moodle_url($this->baseurl.'/update_quizzes.php');
+    }
+
+    /*
+     * get_usage_post
+     *
+     * @param array $usage
+     * @return array
+     */
+    public function get_usage_post($usage) {
+        return array('json' => json_encode($usage));
+    }
+
+    /**
+     * get_usage
+     *
+     * @todo Finish documenting this function
+     */
+    function get_usage() {
+        global $DB;
+
+        $readercfg = get_config('mod_reader');
+        $time = time();
+
+        $usage = (object)array(
+            'readers'     => array(),
+            'books'       => array(),
+            'lastupdate'  => $time,
+            'userlogin'   => $readercfg->serverusername,
+            'returnimage' => 1
+        );
+
+        if ($readers = $DB->get_records ('reader')) {
+            foreach ($readers as $reader) {
+
+                $usage->readers[$reader->id] = (object)array(
+                    'totalusers'      => 0,
+                    'attemptsperuser' => 0,
+                    'ignoredate'      => $reader->ignoredate,
+                    'course'          => $reader->course,
+                    'short_name'      => $DB->get_field('course', 'shortname', array('id' => $reader->course)),
+                );
+
+                $select = 'readerid = ? and timestart >= ?';
+                $params = array($reader->id, $reader->ignoredate);
+
+                if ($countattempts = $DB->get_field_select('reader_attempts', 'COUNT(id)', $select, $params)) {
+                    if ($countusers = $DB->get_field_select('reader_attempts', 'COUNT(DISTINCT userid)', $select, $params)) {
+                        $usage->readers[$reader->id]->totalusers = $countusers;
+                        $usage->readers[$reader->id]->attemptsperuser = round($countattempts / $countusers, 1);
+                    }
+                }
+            }
+        } else {
+            $readers = array();
+        }
+
+        if ($books = $DB->get_records_select('reader_books', 'hidden <> ?', array(1))) {
+            foreach ($books as $book) {
+
+                $count = array();
+                $ratings = array();
+
+                if ($attempts = $DB->get_records('reader_attempts', array('bookid' => $book->id), 'id, passed, bookrating, reader')) {
+                    foreach ($attempts as $attempt) {
+
+                        if (empty($usage->books[$attempt->readerid])) {
+                            $usage->books[$attempt->readerid] = array();
+                        }
+                        if (empty($usage->books[$attempt->readerid][$book->image])) {
+                            $usage->books[$attempt->readerid][$book->image] = (object)array(
+                                'true'   => 0,
+                                'false'  => 0,
+                                'credit' => 0,
+                                'time'   => $book->time,
+                                'rate'   => 0,
+                                'course' => $usage->readers[$attempt->readerid]->course,
+                                'short_name' => $usage->readers[$attempt->readerid]->short_name
+                            );
+                        }
+
+                        if ($attempt->passed=='true') {
+                            $type = 'true';
+                        } else if ($attempt->passed == 'credit') {
+                            $type = 'credit';
+                        } else {
+                            $type = 'false';
+                        }
+                        $usage->books[$attempt->readerid][$book->image]->$type++;
+
+                        if (empty($count[$attempt->readerid])) {
+                            $count[$attempt->readerid] = 1;
+                        } else {
+                            $count[$attempt->readerid]++;
+                        }
+
+                        if (empty($ratings[$attempt->readerid])) {
+                            $ratings[$attempt->readerid] = $attempt->bookrating;
+                        } else {
+                            $ratings[$attempt->readerid] += $attempt->bookrating;
+                        }
+                    }
+                } else {
+                    // no attempts
+                    if (empty($usage->books[0])) {
+                        $usage->books[0] = array();
+                    }
+                    $usage->books[0][$book->image] = (object)array(
+                        'true'       => 0,
+                        'false'      => 0,
+                        'credit'     => 0,
+                        'time'       => $book->time,
+                        'rate'       => 0,
+                        'course'     => 0,
+                        'short_name' => 'NOTUSED'
+                    );
+                }
+
+                foreach ($ratings as $readerid => $rating) {
+                    $usage->books[$readerid][$book->image]->rate = round($rating / $count[$readerid], 1);
+                }
+            }
+        }
+
+        return $usage;
     }
 }

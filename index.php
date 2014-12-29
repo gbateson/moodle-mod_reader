@@ -75,15 +75,15 @@ if (has_capability('mod/reader:viewreports', $PAGE->context)) {
 
 if ($show_aggregates) {
     $params = array();
-    $select = 'ra.reader IN ('.implode(',', $readerids).')';
+    $select = 'ra.readerid IN ('.implode(',', $readerids).')';
     $tables = '{reader_attempts} ra';
-    $fields = 'ra.reader AS readerid, COUNT(ra.id) AS attemptcount, COUNT(DISTINCT ra.userid) AS usercount, ROUND(SUM(ra.percentgrade) / COUNT(ra.percentgrade), 0) AS averagescore, MAX(ra.percentgrade) AS maxscore';
+    $fields = 'ra.readerid, COUNT(ra.id) AS attemptcount, COUNT(DISTINCT ra.userid) AS usercount, ROUND(SUM(ra.percentgrade) / COUNT(ra.percentgrade), 0) AS averagescore, MAX(ra.percentgrade) AS maxscore';
     if ($single_user) {
         // restrict results to this user only
         $select .= ' AND ra.userid=:userid';
         $params['userid'] = $USER->id;
     }
-    $aggregates = $DB->get_records_sql("SELECT $fields FROM $tables WHERE $select GROUP BY ra.reader", $params);
+    $aggregates = $DB->get_records_sql("SELECT $fields FROM $tables WHERE $select GROUP BY ra.readerid", $params);
 } else {
     $aggregates = array();
 }

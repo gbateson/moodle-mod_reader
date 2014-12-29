@@ -225,7 +225,7 @@ if (count($attempts)) {
         if ($attempt['statustext'] == 'Passed' || $attempt['statustext'] == 'Credit'){
             $totalwords += $attempt['words'];
             $totalwordscount++;
-            $showwords = $attempt['words'];
+            $showwords = number_format($attempt['words']);
         } else {
             $showwords = '';
         }
@@ -271,7 +271,7 @@ if (count($attempts)) {
                                        $attempt['booklevel'].'[RL'.$attempt['bookdiff'].']',
                                        $attempt['statustext'],
                                        $showwords,
-                                       $totalwords);
+                                       number_format($totalwords));
             }
         }
     }
@@ -468,7 +468,7 @@ if ($promoteinfo->allowpromotion == 0) {
 }
 
 $showform = true;
-if ($attempt = $DB->get_record('reader_attempts', array('reader' => $cm->instance, 'userid' => $USER->id, 'timefinish' => 0))) {
+if ($attempt = $DB->get_record('reader_attempts', array('readerid' => $cm->instance, 'userid' => $USER->id, 'timefinish' => 0))) {
     if ($reader->timelimit < ($timenow - $attempt->timestart)) {
         $showform = true;
         $attempt->timemodified = $timenow;

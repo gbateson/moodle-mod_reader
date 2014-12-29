@@ -349,7 +349,7 @@ class reader_remotesite {
                 $error = get_string('curlerror', 'mod_reader', $response->error);
             }
         } else {
-            if ($error = $this->check_curl_results($response->results)) {
+            if ($error = $this->is_error_curl_xml($response->results)) {
                 $error = get_string('servererror', 'mod_reader', $error);
             }
         }
@@ -381,13 +381,13 @@ class reader_remotesite {
     }
 
     /**
-     * check_curl_results
+     * is_error_curl_xml
      *
      * @param string $results downloaded via CURL
      * @return string
      * @todo Finish documenting this function
      */
-    public function check_curl_results($results) {
+    public function is_error_curl_xml($results) {
         return '';
     }
 
@@ -1064,5 +1064,87 @@ class reader_remotesite {
             // Moodle <= 2.5
             return (($CFG->debug & DEBUG_DEVELOPER)===DEBUG_DEVELOPER);
         }
+    }
+
+    /**
+     * download_json
+     *
+     * @uses $CFG
+     * @param xxx $url
+     * @param xxx $post (optional, default=null)
+     * @param xxx $headers (optional, default=null)
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function download_json($url, $post=null, $headers=null) {
+        global $OUTPUT;
+
+        // convert $url to unescaped URL string
+        $url = $url->out(false);
+
+        // get "full response" from CURL so that we can handle errors
+        $response = download_file_content($url, $headers, $post, true);
+
+        // check for errors
+        if (empty($response->results)) {
+            return false;
+        }
+
+        $results = json_decode($response->results);
+        if (function_exists('json_last_error')) {
+            // PHP >= 5.3
+            $ok = (json_last_error()==JSON_ERROR_NONE);
+        } else {
+            // PHP <= 5.2
+            // (note this check is specific to the string we are expecting)
+            $ok = (substr($results, 0, 1)=='{' && substr($results, -1)=='}');
+        }
+
+        if ($ok) {
+            return $results;
+        } else {
+            return false;
+        }
+    }
+
+    /*
+     * send_usage_stats
+     *
+     * @return boolean TRUE if usage stats were sent, FALSE otherwise
+     */
+    public function send_usage_stats() {
+        if ($usage = $this->get_usage()) {
+            $url = $this->get_usage_url();
+            $post = $this->get_usage_post($usage);
+            return $this->download_json($url, $post);
+        }
+        return false; // no usage stats
+    }
+
+    /*
+     * get_usage
+     *
+     * @return array
+     */
+    public function get_usage() {
+        return null;
+    }
+
+    /*
+     * get_usage_url
+     *
+     * @return string
+     */
+    public function get_usage_url() {
+        return null;
+    }
+
+    /*
+     * get_usage_post
+     *
+     * @return array
+     */
+    public function get_usage_post($usage) {
+        return null;
     }
 }

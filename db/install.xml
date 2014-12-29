@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="mod/reader/db" VERSION="20140712" COMMENT="Reader Module tables"
+<XMLDB PATH="mod/reader/db" VERSION="20141228" COMMENT="Reader Module tables"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
 >
@@ -12,33 +12,34 @@
         <FIELD NAME="intro" TYPE="text" NOTNULL="false" SEQUENCE="false" NEXT="introformat" PREVIOUS="name"/>
         <FIELD NAME="introformat" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="0" SEQUENCE="false" NEXT="timeopen" PREVIOUS="intro"/>
         <FIELD NAME="timeopen" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="timeclose" PREVIOUS="introformat"/>
-        <FIELD NAME="timeclose" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" PREVIOUS="timeopen" NEXT="timelimit"/>
-        <FIELD NAME="timelimit" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="900" SEQUENCE="false" PREVIOUS="timeclose" NEXT="timecreated"/>
+        <FIELD NAME="timeclose" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="timelimit" PREVIOUS="timeopen"/>
+        <FIELD NAME="timelimit" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="900" SEQUENCE="false" NEXT="timecreated" PREVIOUS="timeclose"/>
         <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="timemodified" PREVIOUS="timelimit"/>
-        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" PREVIOUS="timecreated" NEXT="usecourse"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="usecourse" PREVIOUS="timecreated"/>
         <FIELD NAME="usecourse" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="bookinstances" PREVIOUS="timemodified"/>
         <FIELD NAME="bookinstances" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="bookcovers" PREVIOUS="usecourse"/>
         <FIELD NAME="bookcovers" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="ignoredate" PREVIOUS="bookinstances"/>
-        <FIELD NAME="ignoredate" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="goal" PREVIOUS="bookcovers"/>
-        <FIELD NAME="goal" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" PREVIOUS="ignoredate" NEXT="showprogressbar"/>
-        <FIELD NAME="showprogressbar" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="1" SEQUENCE="false" NEXT="wordsorpoints" PREVIOUS="goal"/>
-        <FIELD NAME="wordsorpoints" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="checkbox" PREVIOUS="showprogressbar"/>
-        <FIELD NAME="checkbox" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="questionmark" PREVIOUS="wordsorpoints"/>
-        <FIELD NAME="questionmark" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="minpassgrade" PREVIOUS="checkbox"/>
-        <FIELD NAME="minpassgrade" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="60" SEQUENCE="false" NEXT="levelcheck" PREVIOUS="questionmark"/>
-        <FIELD NAME="levelcheck" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="1" SEQUENCE="false" NEXT="thislevel" PREVIOUS="minpassgrade"/>
+        <FIELD NAME="ignoredate" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="minpassgrade" PREVIOUS="bookcovers"/>
+        <FIELD NAME="minpassgrade" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="60" SEQUENCE="false" NEXT="goal" PREVIOUS="ignoredate"/>
+        <FIELD NAME="goal" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="maxgrade" PREVIOUS="minpassgrade"/>
+        <FIELD NAME="maxgrade" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="wordsorpoints" PREVIOUS="goal"/>
+        <FIELD NAME="wordsorpoints" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="showprogressbar" PREVIOUS="maxgrade"/>
+        <FIELD NAME="showprogressbar" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="1" SEQUENCE="false" NEXT="checkbox" PREVIOUS="wordsorpoints"/>
+        <FIELD NAME="checkbox" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="questionmark" PREVIOUS="showprogressbar"/>
+        <FIELD NAME="questionmark" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="levelcheck" PREVIOUS="checkbox"/>
+        <FIELD NAME="levelcheck" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="1" SEQUENCE="false" NEXT="thislevel" PREVIOUS="questionmark"/>
         <FIELD NAME="thislevel" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="6" SEQUENCE="false" NEXT="prevlevel" PREVIOUS="levelcheck"/>
         <FIELD NAME="prevlevel" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="3" SEQUENCE="false" NEXT="nextlevel" PREVIOUS="thislevel"/>
-        <FIELD NAME="nextlevel" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="1" SEQUENCE="false" PREVIOUS="prevlevel" NEXT="stoplevel"/>
+        <FIELD NAME="nextlevel" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="1" SEQUENCE="false" NEXT="stoplevel" PREVIOUS="prevlevel"/>
         <FIELD NAME="stoplevel" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="99" SEQUENCE="false" NEXT="password" PREVIOUS="nextlevel"/>
         <FIELD NAME="password" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" NEXT="subnet" PREVIOUS="stoplevel"/>
         <FIELD NAME="subnet" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" NEXT="popup" PREVIOUS="password"/>
         <FIELD NAME="popup" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="uniqueip" PREVIOUS="subnet"/>
-        <FIELD NAME="uniqueip" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="0" SEQUENCE="false" PREVIOUS="popup" NEXT="checkcheating"/>
+        <FIELD NAME="uniqueip" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="checkcheating" PREVIOUS="popup"/>
         <FIELD NAME="checkcheating" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="notifycheating" PREVIOUS="uniqueip"/>
         <FIELD NAME="notifycheating" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="1" SEQUENCE="false" NEXT="cheatedmessage" PREVIOUS="checkcheating"/>
         <FIELD NAME="cheatedmessage" TYPE="text" NOTNULL="false" SEQUENCE="false" NEXT="clearedmessage" PREVIOUS="notifycheating"/>
-        <FIELD NAME="clearedmessage" TYPE="text" NOTNULL="false" SEQUENCE="false" NEXT="checkbox" PREVIOUS="cheatedmessage"/>
+        <FIELD NAME="clearedmessage" TYPE="text" NOTNULL="false" SEQUENCE="false" PREVIOUS="cheatedmessage"/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
@@ -136,7 +137,7 @@
         <INDEX NAME="readbook_sam_ix" UNIQUE="false" FIELDS="sametitle" PREVIOUS="readbook_qui_ix"/>
       </INDEXES>
     </TABLE>
-    <TABLE NAME="reader_book_instances" COMMENT="local settings for individual books" NEXT="reader_delays" PREVIOUS="reader_books">
+    <TABLE NAME="reader_book_instances" COMMENT="local settings for individual books" NEXT="reader_cheated_log" PREVIOUS="reader_books">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="11" NOTNULL="true" SEQUENCE="true" NEXT="readerid"/>
         <FIELD NAME="readerid" TYPE="int" LENGTH="11" NOTNULL="false" SEQUENCE="false" NEXT="bookid" PREVIOUS="id"/>
@@ -151,7 +152,28 @@
         <INDEX NAME="readbookinst_rea_ix" UNIQUE="false" FIELDS="readerid"/>
       </INDEXES>
     </TABLE>
-    <TABLE NAME="reader_delays" COMMENT="the required delay interval between quizzes" NEXT="reader_goals" PREVIOUS="reader_book_instances">
+    <TABLE NAME="reader_cheated_log" COMMENT="reader_cheated_log table" NEXT="reader_delays" PREVIOUS="reader_book_instances">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="11" NOTNULL="true" SEQUENCE="true" NEXT="byuserid"/>
+        <FIELD NAME="byuserid" TYPE="int" LENGTH="11" NOTNULL="false" SEQUENCE="false" NEXT="userid1" PREVIOUS="id"/>
+        <FIELD NAME="userid1" TYPE="int" LENGTH="11" NOTNULL="false" SEQUENCE="false" NEXT="userid2" PREVIOUS="byuserid"/>
+        <FIELD NAME="userid2" TYPE="int" LENGTH="11" NOTNULL="false" SEQUENCE="false" NEXT="attempt1" PREVIOUS="userid1"/>
+        <FIELD NAME="attempt1" TYPE="int" LENGTH="11" NOTNULL="false" SEQUENCE="false" NEXT="attempt2" PREVIOUS="userid2"/>
+        <FIELD NAME="attempt2" TYPE="int" LENGTH="11" NOTNULL="false" SEQUENCE="false" NEXT="courseid" PREVIOUS="attempt1"/>
+        <FIELD NAME="courseid" TYPE="int" LENGTH="11" NOTNULL="false" SEQUENCE="false" NEXT="readerid" PREVIOUS="attempt2"/>
+        <FIELD NAME="readerid" TYPE="int" LENGTH="11" NOTNULL="false" SEQUENCE="false" NEXT="quizid" PREVIOUS="courseid"/>
+        <FIELD NAME="quizid" TYPE="int" LENGTH="11" NOTNULL="false" SEQUENCE="false" NEXT="status" PREVIOUS="readerid"/>
+        <FIELD NAME="status" TYPE="char" LENGTH="255" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="date" PREVIOUS="quizid"/>
+        <FIELD NAME="date" TYPE="int" LENGTH="11" NOTNULL="false" SEQUENCE="false" PREVIOUS="status"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="readchealog_byu_ix" UNIQUE="false" FIELDS="byuserid"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="reader_delays" COMMENT="the required delay interval between quizzes" NEXT="reader_goals" PREVIOUS="reader_cheated_log">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="11" NOTNULL="true" SEQUENCE="true" NEXT="readerid"/>
         <FIELD NAME="readerid" TYPE="int" LENGTH="11" NOTNULL="false" SEQUENCE="false" NEXT="groupid" PREVIOUS="id"/>
@@ -188,27 +210,28 @@
     </TABLE>
     <TABLE NAME="reader_grades" COMMENT="grades for Reader activities" NEXT="reader_levels" PREVIOUS="reader_goals">
       <FIELDS>
-        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" NEXT="reader"/>
-        <FIELD NAME="reader" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="userid" PREVIOUS="id"/>
-        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="grade" PREVIOUS="reader"/>
-        <FIELD NAME="grade" TYPE="float" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="timemodified" PREVIOUS="userid"/>
-        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" PREVIOUS="grade"/>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" NEXT="readerid"/>
+        <FIELD NAME="readerid" TYPE="int" LENGTH="11" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="userid" PREVIOUS="id"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="11" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="rawgrade" PREVIOUS="readerid"/>
+        <FIELD NAME="rawgrade" TYPE="float" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="datesubmitted" PREVIOUS="userid"/>
+        <FIELD NAME="datesubmitted" TYPE="int" LENGTH="11" NOTNULL="false" DEFAULT="0" SEQUENCE="false" COMMENT="the date of the most recent student attempt" NEXT="dategraded" PREVIOUS="rawgrade"/>
+        <FIELD NAME="dategraded" TYPE="int" LENGTH="11" NOTNULL="false" DEFAULT="0" SEQUENCE="false" COMMENT="the date on which the system, or the teacher, most recently gave the student a grade for this reader" PREVIOUS="datesubmitted"/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
       </KEYS>
       <INDEXES>
         <INDEX NAME="readgrad_use_ix" UNIQUE="false" FIELDS="userid" NEXT="readgrad_rea_ix"/>
-        <INDEX NAME="readgrad_rea_ix" UNIQUE="false" FIELDS="reader" PREVIOUS="readgrad_use_ix"/>
+        <INDEX NAME="readgrad_rea_ix" UNIQUE="false" FIELDS="readerid" PREVIOUS="readgrad_use_ix"/>
       </INDEXES>
     </TABLE>
     <TABLE NAME="reader_levels" COMMENT="user reading levels for each Reader activity" NEXT="reader_messages" PREVIOUS="reader_grades">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="11" NOTNULL="true" SEQUENCE="true" NEXT="userid"/>
-        <FIELD NAME="userid" TYPE="int" LENGTH="11" NOTNULL="false" SEQUENCE="false" PREVIOUS="id" NEXT="readerid"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="11" NOTNULL="false" SEQUENCE="false" NEXT="readerid" PREVIOUS="id"/>
         <FIELD NAME="readerid" TYPE="int" LENGTH="11" NOTNULL="false" SEQUENCE="false" NEXT="startlevel" PREVIOUS="userid"/>
         <FIELD NAME="startlevel" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="currentlevel" PREVIOUS="readerid"/>
-        <FIELD NAME="currentlevel" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="0" SEQUENCE="false" PREVIOUS="startlevel" NEXT="stoplevel"/>
+        <FIELD NAME="currentlevel" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="stoplevel" PREVIOUS="startlevel"/>
         <FIELD NAME="stoplevel" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="99" SEQUENCE="false" NEXT="allowpromotion" PREVIOUS="currentlevel"/>
         <FIELD NAME="allowpromotion" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="1" SEQUENCE="false" NEXT="goal" PREVIOUS="stoplevel"/>
         <FIELD NAME="goal" TYPE="int" LENGTH="11" NOTNULL="false" SEQUENCE="false" NEXT="time" PREVIOUS="allowpromotion"/>
@@ -242,7 +265,7 @@
         <INDEX NAME="readmess_tim_ix" UNIQUE="false" FIELDS="timefinish" PREVIOUS="readmess_rea_ix"/>
       </INDEXES>
     </TABLE>
-    <TABLE NAME="reader_question_instances" COMMENT="question instances used in Reader module activities" NEXT="reader_cheated_log" PREVIOUS="reader_messages">
+    <TABLE NAME="reader_question_instances" COMMENT="question instances used in Reader module activities" NEXT="reader_strict_users_list" PREVIOUS="reader_messages">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="11" NOTNULL="true" SEQUENCE="true" NEXT="quiz"/>
         <FIELD NAME="quiz" TYPE="int" LENGTH="11" NOTNULL="false" SEQUENCE="false" NEXT="question" PREVIOUS="id"/>
@@ -257,28 +280,7 @@
         <INDEX NAME="readquesinst_que_ix" UNIQUE="false" FIELDS="question" PREVIOUS="readquesinst_qui_ix"/>
       </INDEXES>
     </TABLE>
-    <TABLE NAME="reader_cheated_log" COMMENT="reader_cheated_log table" NEXT="reader_strict_users_list" PREVIOUS="reader_question_instances">
-      <FIELDS>
-        <FIELD NAME="id" TYPE="int" LENGTH="11" NOTNULL="true" SEQUENCE="true" NEXT="byuserid"/>
-        <FIELD NAME="byuserid" TYPE="int" LENGTH="11" NOTNULL="false" SEQUENCE="false" NEXT="userid1" PREVIOUS="id"/>
-        <FIELD NAME="userid1" TYPE="int" LENGTH="11" NOTNULL="false" SEQUENCE="false" NEXT="userid2" PREVIOUS="byuserid"/>
-        <FIELD NAME="userid2" TYPE="int" LENGTH="11" NOTNULL="false" SEQUENCE="false" NEXT="attempt1" PREVIOUS="userid1"/>
-        <FIELD NAME="attempt1" TYPE="int" LENGTH="11" NOTNULL="false" SEQUENCE="false" NEXT="attempt2" PREVIOUS="userid2"/>
-        <FIELD NAME="attempt2" TYPE="int" LENGTH="11" NOTNULL="false" SEQUENCE="false" NEXT="courseid" PREVIOUS="attempt1"/>
-        <FIELD NAME="courseid" TYPE="int" LENGTH="11" NOTNULL="false" SEQUENCE="false" NEXT="readerid" PREVIOUS="attempt2"/>
-        <FIELD NAME="readerid" TYPE="int" LENGTH="11" NOTNULL="false" SEQUENCE="false" NEXT="quizid" PREVIOUS="courseid"/>
-        <FIELD NAME="quizid" TYPE="int" LENGTH="11" NOTNULL="false" SEQUENCE="false" NEXT="status" PREVIOUS="readerid"/>
-        <FIELD NAME="status" TYPE="char" LENGTH="255" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="date" PREVIOUS="quizid"/>
-        <FIELD NAME="date" TYPE="int" LENGTH="11" NOTNULL="false" SEQUENCE="false" PREVIOUS="status"/>
-      </FIELDS>
-      <KEYS>
-        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
-      </KEYS>
-      <INDEXES>
-        <INDEX NAME="readchealog_byu_ix" UNIQUE="false" FIELDS="byuserid"/>
-      </INDEXES>
-    </TABLE>
-    <TABLE NAME="reader_strict_users_list" COMMENT="reader_strict_users_list table" PREVIOUS="reader_cheated_log">
+    <TABLE NAME="reader_strict_users_list" COMMENT="reader_strict_users_list table" PREVIOUS="reader_question_instances">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="11" NOTNULL="true" SEQUENCE="true" NEXT="readerid"/>
         <FIELD NAME="readerid" TYPE="int" LENGTH="11" NOTNULL="false" SEQUENCE="false" NEXT="userid" PREVIOUS="id"/>

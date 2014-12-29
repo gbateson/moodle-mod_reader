@@ -182,7 +182,7 @@ class mod_reader_admin_users_import_renderer extends mod_reader_admin_users_rend
                 $attempt = (object)array(
                     // the "uniqueid" field is in fact an "id" from the "question_usages" table
                     'uniqueid'      => reader_get_new_uniqueid($this->reader->context->id, $books[$image]->quizid),
-                    'reader'        => $this->reader->id,
+                    'readerid'      => $this->reader->id,
                     'userid'        => $users[$username]->id,
                     'bookid'        => $books[$image]->id,
                     'quizid'        => $books[$image]->quizid,

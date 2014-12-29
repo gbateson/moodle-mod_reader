@@ -1201,31 +1201,38 @@ function xmldb_reader_fix_uniqueid(&$dbman, &$contexts, &$quizzes, &$attempt, &$
             $readermoduleid = $DB->get_field('modules', 'id', array('name' => 'reader'));
         }
 
+        $table = new xmldb_table('reader_attempts');
+        if ($dbman->field_exists($table, 'readerid')) {
+            $readerid = 'readerid'; // new name
+        } else {
+            $readerid = 'reader';   // old name
+        }
+
         // fetch context, if necessary
-        if (empty($contexts[$attempt->reader])) {
-            if ($cm = $DB->get_record('course_modules', array('module' => $readermoduleid, 'instance' => $attempt->reader))) {
-                $contexts[$attempt->reader] = reader_get_context(CONTEXT_MODULE, $cm->id);
+        if (empty($contexts[$attempt->$readerid])) {
+            if ($cm = $DB->get_record('course_modules', array('module' => $readermoduleid, 'instance' => $attempt->$readerid))) {
+                $contexts[$attempt->$readerid] = reader_get_context(CONTEXT_MODULE, $cm->id);
             } else {
                 // shouldn't happen - the reader has been deleted but the attempt remains ?
                 // let's see if any other attempts at this reader have a valid uniqueids
                 $select = 'ra.id, ra.uniqueid, qu.id AS questionusageid, qu.contextid, qu.preferredbehaviour';
                 $from   = '{reader_attempts} ra LEFT JOIN {question_usages} qu ON ra.uniqueid = qu.id';
-                $where  = 'ra.reader = ? AND qu.id IS NOT NULL';
-                $params = array($attempt->reader);
+                $where  = 'ra.readerid = ? AND qu.id IS NOT NULL';
+                $params = array($attempt->$readerid);
                 if ($records = $DB->get_records_sql("SELECT $select FROM $from WHERE $where", $params)) {
                     // we can get the contextid from the other "question_usage" records
                     $record = reset($records); // i.e. first record
-                    $contexts[$attempt->reader] = (object)array('id' => $record->contextid);
+                    $contexts[$attempt->$readerid] = (object)array('id' => $record->contextid);
                 } else {
                     // otherwise use the system context - should never happen !!
-                    $contexts[$attempt->reader] = reader_get_context(CONTEXT_SYSTEM);
+                    $contexts[$attempt->$readerid] = reader_get_context(CONTEXT_SYSTEM);
                 }
             }
         }
 
         // create question_usage record for this attempt
         $question_usage = (object)array(
-            'contextid' => $contexts[$attempt->reader]->id,
+            'contextid' => $contexts[$attempt->$readerid]->id,
             'component' => 'mod_reader',
             'preferredbehaviour' => $quizzes[$attempt->quizid]->preferredbehaviour
         );
@@ -3433,7 +3440,7 @@ function xmldb_reader_merge_tables(&$dbman, $oldname, $newname, $fields, $unique
  * @todo Finish documenting this function
  */
 function xmldb_reader_interactive() {
-    if (defined('STDIN') && defined('CLI_SCRIPT')) {
+    if (defined('STDIN') && defined('CLI_SCRIPT') && CLI_SCRIPT) {
         // we could check $GLOBALS['interactive']
         // which is set in "admin/cli/upgrade.php"
         // but that assumes "non-interactive=false"
@@ -3631,6 +3638,87 @@ function xmldb_reader_migrate_logs($dbman) {
         // reset loglegacy config setting
         if ($loglegacy) {
             set_config('loglegacy', $loglegacy, 'logstore_legacy');
+        }
+    }
+}
+
+/*
+ * reader_xmldb_drop_indexes
+ *
+ * @param  object $dbman
+ * @param  object $table
+ * @param  array  $indexes
+ * @return void, but may add indexes
+ */
+function reader_xmldb_drop_indexes($dbman, $table, $indexes) {
+    foreach ($indexes as $index => $fields) {
+        foreach ($fields as $field) {
+            if ($dbman->field_exists($table, $field)) {
+                $index = new xmldb_index($index, XMLDB_INDEX_NOTUNIQUE, array($field));
+                if ($dbman->index_exists($table, $index)) {
+                    $dbman->drop_index($table, $index);
+                }
+            }
+        }
+    }
+}
+
+/*
+ * reader_xmldb_add_indexes
+ *
+ * @param  object $dbman
+ * @param  object $table
+ * @param  array  $indexes
+ * @return void, but may add indexes
+ */
+function reader_xmldb_add_indexes($dbman, $table, $indexes) {
+    foreach ($indexes as $index => $fields) {
+        foreach ($fields as $field) {
+            if ($dbman->field_exists($table, $field)) {
+                $index = new xmldb_index($index, XMLDB_INDEX_NOTUNIQUE, array($field));
+                if (! $dbman->index_exists($table, $index)) {
+                    $dbman->add_index($table, $index);
+                }
+            }
+        }
+    }
+}
+
+/*
+ * reader_xmldb_update_field
+ *
+ * @param  object $dbman
+ * @param  object $table
+ * @param  array  $fields
+ * @return void, but may add indexes
+ */
+function reader_xmldb_update_fields($dbman, $table, $fields) {
+
+    foreach ($fields as $newname => $field) {
+
+        $oldexists = $dbman->field_exists($table, $field);
+        $newexists = $dbman->field_exists($table, $newname);
+
+        if ($field->getName()==$newname) {
+            // same field name - do nothing
+        } else {
+            // different field names
+            if ($oldexists) {
+                if ($newexists) {
+                    $dbman->drop_field($table, $field);
+                    $oldexists = false;
+                } else {
+                    $dbman->rename_field($table, $field, $newname);
+                    $newexists = true;
+                }
+            }
+            $field->setName($newname);
+        }
+        xmldb_reader_fix_previous_field($dbman, $table, $field);
+        if ($newexists) {
+            $dbman->change_field_type($table, $field);
+        } else {
+            $dbman->add_field($table, $field);
         }
     }
 }
