@@ -203,9 +203,11 @@ class mod_reader {
         }
         if ($course && isset($course->id)) {
             if (isset($course->numsections)) {
-                return $course->numsections; // Moodle >= 2.3
+                // Moodle <= 2.3
+                return $course->numsections;
             }
             if (isset($course->format)) {
+                // Moodle >= 2.4
                 return $DB->get_field('course_format_options', 'value', array('courseid' => $course->id, 'format' => $course->format, 'name' => 'numsections'));
             }
         }
@@ -277,6 +279,37 @@ class mod_reader {
     }
 
     /**
+     * is_loggedinas
+     *
+     * a wrapper method to offer consistent API for checking
+     * if a teacher/admin is logged in as a different user
+     */
+     static public function is_loggedinas() {
+        if (class_exists('\\core\\session\\manager')) {
+            return \core\session\manager::is_loggedinas();
+        } else {
+            return session_is_loggedinas();
+        }
+    }
+
+    /**
+     * loginas
+     *
+     * a wrapper method to offer consistent API for allowing
+     * a teacher/admin to log in as a different user
+     *
+     * @param  integer  $userid
+     * @param  object   $context
+     */
+     static public function loginas($userid, $context) {
+        if (class_exists('\\core\\session\\manager')) {
+            \core\session\manager::loginas($userid, $context);
+        } else {
+            session_loginas($userid, $context);
+        }
+    }
+
+    /**
      * Returns a js module object for the Reader module
      *
      * @param array $requires
@@ -328,7 +361,7 @@ class mod_reader {
 
         if (isset($params['mode'])) {
             // do nothing
-        } else if ($mode = optional_param('mode', 0, PARAM_ALPHA)) {
+        } else if ($mode = optional_param('mode', '', PARAM_ALPHA)) {
             $params['mode'] = $mode;
         }
 
@@ -737,7 +770,7 @@ class mod_reader {
             $stdclass->course = $this->course->id;
         }
         if (isset($this->cm) && is_object($this->cm)) {
-            $stdclass->cmidnumber = $this->cm->id;
+            $stdclass->cmidnumber = $this->cm->idnumber;
         }
         $stdclass->modname = 'reader';
         return $stdclass;

@@ -71,5 +71,9 @@ $output = $PAGE->get_renderer('mod_reader', 'admin_reports_'.$mode);
 
 if ($reader->can_viewreports()) {
     echo $output->render_report($reader, $action, $download);
+} else if (mod_reader::is_loggedinas()) {
+    echo $output->render_logout($reader);
+} else {
+    require_capability('mod/reader:viewreports', $reader->context);
 }
 

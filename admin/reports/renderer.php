@@ -129,6 +129,35 @@ class mod_reader_admin_reports_renderer extends mod_reader_admin_renderer {
     }
 
     /**
+     * render_logout
+     *
+     * a simple page to warn a teacher who is logged in as a student
+     * that they must logout and then login as themselves to continue
+     */
+    public function render_logout($reader)  {
+        global $USER;
+        $this->init($reader);
+
+        $msg = get_string('logoutrequired', 'mod_reader', fullname($USER));
+        $msg = format_text($msg, FORMAT_MARKDOWN, array('context' => $reader->context));
+
+        $tab = optional_param('tab', 0, PARAM_INT);
+        $mode = optional_param('mode', '', PARAM_ALPHA);
+        $params = array('id' => $reader->cm->id, 'tab' => $tab, 'mode' => $mode);
+
+        $button = new moodle_url('/mod/reader/view_loginas.php', $params);
+        $button = new single_button($button, get_string('logout'));
+        $button->class = 'continuebutton';
+
+        echo $this->header();
+        echo $this->box_start('generalbox', 'notice');
+        echo $this->notification($msg, 'notifyproblem');
+        echo $this->render($button);
+        echo $this->box_end();
+        echo $this->footer();
+    }
+
+    /**
      * baseurl for table
      */
     public function baseurl() {

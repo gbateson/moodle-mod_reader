@@ -133,13 +133,18 @@ class mod_reader_mod_form extends moodleform_mod {
         $this->set_type_default_advanced($mform, $config, $name, PARAM_INT);
         $mform->addHelpButton($name, 'totalpointsgoal', $plugin);
 
-        $name = 'thislevel';
+        $name = 'maxgrade';
+        $mform->addElement('text', $name, get_string($name, $plugin), $textoptions);
+        $this->set_type_default_advanced($mform, $config, $name, PARAM_INT);
+        $mform->addHelpButton($name, $name, $plugin);
+
+        $name = 'prevlevel';
         $mform->addElement('text', $name, get_string($name, $plugin), $textoptions);
         $this->set_type_default_advanced($mform, $config, $name, PARAM_INT);
         $mform->addRule($name, null, 'required', null, 'client');
         $mform->addHelpButton($name, $name, $plugin);
 
-        $name = 'prevlevel';
+        $name = 'thislevel';
         $mform->addElement('text', $name, get_string($name, $plugin), $textoptions);
         $this->set_type_default_advanced($mform, $config, $name, PARAM_INT);
         $mform->addRule($name, null, 'required', null, 'client');

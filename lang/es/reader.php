@@ -242,6 +242,7 @@ $string['configintro'] = 'The values you set here define the default values that
 You can also configure which reader settings are considered advanced.';
 $string['configkeepoldquizzes'] = '';
 $string['configlevelcheck'] = '';
+$string['configmaxgrade'] = '';
 $string['configminpassgrade'] = '';
 $string['confignextlevel'] = '';
 $string['confignotifycheating'] = '';
@@ -497,10 +498,17 @@ $string['levelcheck_help'] = '**No**
 $string['leveldelay'] = 'Level {$a} delay';
 $string['leveli'] = 'Level {$a}';
 $string['levels'] = 'Levels';
+$string['logoutrequired'] = 'You cannot continue because you are currently logged in as {$a}.
+
+To continue, please click the "Log out" button below, and then login again as yourself.';
 $string['mainpagesettings'] = 'Main page settings';
 $string['makenewquizzesavailable'] = 'Make new quizzes available in this course only';
 $string['makenewquizzesavailable2'] = 'Make new quizzes available in all courses on this site [default]';
 $string['max'] = 'Less than or equal to';
+$string['maxgrade'] = 'Maximum grade';
+$string['maxgrade_help'] = 'The maximum grade for this Reader activity.
+
+The number of words/points read will be scaled to the maximum grade and passed to the gradebook.';
 $string['mergingtables'] = 'Merging tables: {$a->old} into {$a->new}';
 $string['migratinglogs'] = 'Migrating Reader logs';
 $string['min'] = 'Greater than or equal to';

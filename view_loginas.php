@@ -27,11 +27,17 @@
 /** Include required files */
 require_once('../../config.php');
 require_once($CFG->dirroot.'/course/lib.php');
-require_once($CFG->dirroot.'/mod/reader/lib.php');
+require_once($CFG->dirroot.'/mod/reader/locallib.php');
+require_once($CFG->dirroot.'/mod/reader/renderer.php');
 
-$id       = optional_param('id',       0, PARAM_INT); // course module id
-$a        = optional_param('a',        0, PARAM_INT); // reader id
-$userid   = optional_param('userid',   0, PARAM_INT); // user id
+$tab = mod_reader_renderer::TAB_REPORTS;
+$mode = 'usersummary';
+
+$id       = optional_param('id',      0, PARAM_INT); // course module id
+$a        = optional_param('a',       0, PARAM_INT); // reader id
+$userid   = optional_param('userid',  0, PARAM_INT); // user id
+$tab      = optional_param('tab',     $tab, PARAM_INT); // navigation tab id
+$mode     = optional_param('mode',    $mode, PARAM_ALPHA); // navigation mode
 
 if ($id) {
     $cm = get_coursemodule_from_id('reader', $id, 0, false, MUST_EXIST);
@@ -52,21 +58,17 @@ require_course_login($course, true, $cm);
 
 reader_add_to_log($course->id, 'reader', 'loginas', 'view.php?id='.$cm->id, $reader->id, $cm->id);
 
-if (class_exists('\core\session\manager')) {
-    $is_loggedinas = \core\session\manager::is_loggedinas();
-} else {
-    $is_loggedinas = session_is_loggedinas();
-}
-
-if ($is_loggedinas) {
+if (mod_reader::is_loggedinas()) {
     require_sesskey();
     require_logout();
-    if ($userid==0) {
-        // from view.php (student) to admin/reports.php (teacher)
-        $url = new moodle_url('/mod/reader/admin/reports.php', array('id' => $id, 'tab' => 3));
-    } else {
+    if ($userid) {
         // from admin/reports.php (teacher) to view.php (student)
-        $url = new moodle_url('/mod/reader/view_loginas.php', array('id' => $id, 'userid' => $userid));
+        $params = array('id' => $id, 'tab' => $tab, 'mode' => $mode, 'userid' => $userid);
+        $url = new moodle_url('/mod/reader/view_loginas.php', $params);
+    } else {
+        // from view.php (student) to admin/reports.php (teacher)
+        $params = array('id' => $id, 'tab' => $tab, 'mode' => $mode);
+        $url = new moodle_url('/mod/reader/admin/reports.php', $params);
     }
     redirect($url);
 }
@@ -75,11 +77,7 @@ $context = reader_get_context(CONTEXT_COURSE, $course->id);
 require_capability('moodle/user:loginas', $context);
 
 // Login as this user and return to course home page.
-if (class_exists('\core\session\manager')) {
-    \core\session\manager::loginas($userid, $context);
-} else {
-    session_loginas($userid, $context);
-}
+mod_reader::loginas($userid, $context);
 
 $url = new moodle_url('/mod/reader/view.php', array('id' => $id));
 redirect($url);

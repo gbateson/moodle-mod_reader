@@ -50,7 +50,7 @@ class mod_reader_renderer extends plugin_renderer_base {
     const TAB_BOOKS     = 4;
     const TAB_QUIZZES   = 5;
     const TAB_USERS     = 6;
-    const TAB_TOOLS = 7;
+    const TAB_TOOLS     = 7;
     const TAB_ADMINAREA = 8;
     /**#@-*/
 
@@ -302,9 +302,10 @@ class mod_reader_renderer extends plugin_renderer_base {
      * available_levels
      *
      * @param xxx $action
-     * @param xxx $from
-     * @param xxx $where
+     * @param xxx $sqlfrom
+     * @param xxx $sqlwhere
      * @param xxx $sqlparams
+     * @param xxx $type
      * @param xxx $publisher
      * @param xxx $level (optional, default = "")
      * @param xxx $bookid (optional, default = 0)
@@ -385,11 +386,13 @@ class mod_reader_renderer extends plugin_renderer_base {
      * available_books
      *
      * @param xxx $action
-     * @param xxx $from
-     * @param xxx $where
+     * @param xxx $sqlfrom
+     * @param xxx $sqlwhere
      * @param xxx $sqlparams
+     * @param xxx $type
      * @param xxx $publisher
-     * @param xxx $level (optional, default = 0)
+     * @param xxx $level
+     * @param xxx $bookid (optional, default = 0)
      * @return xxx
      * @todo Finish documenting this function
      */
@@ -461,11 +464,14 @@ class mod_reader_renderer extends plugin_renderer_base {
     /**
      * available_book
      *
-     * @param xxx $bookid
      * @param xxx $action
-     * @param xxx $from
-     * @param xxx $where
+     * @param xxx $sqlfrom
+     * @param xxx $sqlwhere
      * @param xxx $sqlparams
+     * @param xxx $type
+     * @param xxx $publisher
+     * @param xxx $level
+     * @param xxx $bookid
      * @return xxx
      * @todo Finish documenting this function
      */

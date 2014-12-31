@@ -1069,10 +1069,11 @@ function reader_reset_gradebook($courseid, $type='') {
  * @todo Finish documenting this function
  */
 function reader_rescale_grade($rawgrade, $reader) {
-    if ($reader->sumgrades) {
-        return round($rawgrade * $reader->grade / $reader->sumgrades, ($reader->wordsorpoints==0 ? 0 : 1));
-    } else {
+    if (empty($reader->sumgrades)) {
         return 0;
+    } else {
+        $precision = ($reader->wordsorpoints==0 ? 0 : 1);
+        return round($rawgrade * $reader->grade / $reader->sumgrades, $precision);
     }
 }
 
@@ -1089,10 +1090,10 @@ function reader_rescale_grade($rawgrade, $reader) {
 function reader_get_grades($reader, $userid=0) {
     global $DB;
 
-    // $fields = 'userid, rawgrade, datesubmitted, dategraded';
-    // $sort   = 'userid';
     // $select = 'readerid = ?';
     // $params = array($reader->id);
+    // $sort   = 'userid';
+    // $fields = 'userid, rawgrade, datesubmitted, dategraded';
 
     // if ($userid) {
     //     $select .= ' AND userid = ?';
@@ -1113,13 +1114,14 @@ function reader_get_grades($reader, $userid=0) {
     }
     $select = 'ra.userid, '.
               'ra.readerid, '.
-              'SUM('.$select.') AS rawgrade, '. // total words/points
+              'SUM('.$select.') AS rawgrade, '.
               'MAX(timefinish) AS datesubmitted, '.
               'MAX(timemodified) AS dategraded';
-    $from   = '{reader_attempts} ra JOIN {reader_books} rb ON ra.bookid = rb.id';
-    $where  = 'ra.readerid = ? AND ra.preview = ? AND ra.deleted = ? AND ra.passed = ?';
+    $from   = '{reader_attempts} ra '.
+              'JOIN {reader_books} rb ON ra.bookid = rb.id';
+    $where  = 'ra.readerid = ? AND ra.passed = ? AND ra.deleted = ? AND ra.preview = ? AND ra.timefinished >= ?';
     $group  = 'ra.userid, ra.readerid';
-    $params = array($reader->id, 0, 0, 'true');
+    $params = array($reader->id, 0, 0, 'true', $reader->ignoredate);
 
     if ($userid) {
         $where .= ' AND ra.userid = ?';
