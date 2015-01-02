@@ -1324,7 +1324,7 @@ function reader_get_student_attempts($userid, $reader, $allreaders = false, $boo
                                           'timefinish'    => $attempt->timefinish,
                                           'booktitle'     => $attempt->name,
                                           'image'         => $attempt->image,
-                                          'words'         => $attempt->words,
+                                          'words'         => intval($attempt->words),
                                           'booklength'    => reader_get_reader_length($reader, $attempt->bookid),
                                           'publisher'     => $attempt->publisher,
                                           'booklevel'     => $attempt->level,
@@ -1430,25 +1430,6 @@ function reader_remove_directory($dir) {
 function reader_get_goal_progress($progress, $reader) {
     global $CFG, $DB, $USER;
 
-    if (! $progress) {
-        $progress = 0;
-    }
-
-    //$params = array('userid' => $USER->id, 'readerid' => $reader->id);
-    //if (! $levels = $DB->get_record('reader_levels', $params)) {
-    //    $levels = (object)array(
-    //        'userid'         => $USER->id,
-    //        'readerid'       => $reader->id,
-    //        'startlevel'     => 0,
-    //        'currentlevel'   => 0,
-    //        'stoplevel'      => $reader->stoplevel,
-    //        'allowpromotion' => 1,
-    //        'time'           => time(),
-    //    );
-    //    $levels->id = $DB->insert_record('reader_levels', $levels);
-    //    $levels = $DB->get_record('reader_levels', $params);
-    //}
-
     $params = array('userid' => $USER->id, 'readerid' => $reader->id);
     if ($record = $DB->get_record('reader_levels', $params)) {
         $goal = $record->goal;
@@ -1456,6 +1437,17 @@ function reader_get_goal_progress($progress, $reader) {
     } else {
         $goal = 0;
         $currentlevel = 0;
+        $record = (object)array(
+            'userid'         => $USER->id,
+            'readerid'       => $reader->id,
+            'startlevel'     => 0,
+            'currentlevel'   => $currentlevel,
+            'stoplevel'      => $reader->stoplevel,
+            'allowpromotion' => 1,
+            'goal'           => $goal,
+            'time'           => time(),
+        );
+        $record->id = $DB->insert_record('reader_levels', $record);
     }
 
     if (! $goal) {
@@ -1475,87 +1467,113 @@ function reader_get_goal_progress($progress, $reader) {
     if (! $goal) {
         $goal = $reader->goal;
     }
-
-    if ($progress > $goal) {
-        $goalchecker = $progress;
-    } else {
-        $goalchecker = $goal;
-    }
-    if ($goalchecker <= 50000) {
-        $img = 5;
-        $bgcolor = "#00FFFF";
-    } else if ($goalchecker <= 100000) {
-        $img = 10;
-        $bgcolor = "#FF00FF";
-    } else if ($goalchecker <= 500000) {
-        $img = 50;
-        $bgcolor = "#FFFF00";
-    } else {
-        $img = 100;
-        $bgcolor = "#0000FF";
-    }
     if ($goal > 1000000) {
         $goal = 1000000;
+    }
+
+    if (! $progress) {
+        $progress = 0;
     }
     if ($progress > 1000000) {
         $progress = 1000000;
     }
-    $currentpositiongoal = $goal / ($img * 10000);
-    $currentpositiongoalpix = round($currentpositiongoal * 800);
-    if ($currentpositiongoalpix > 800) {
-        $currentpositiongoalpix = 800;
+
+    if ($goal > $progress) {
+        $max = $goal;
+    } else {
+        $max = $progress;
     }
 
-    $currentposition = $progress / ($img * 10000);
-    $currentpositionpix = round($currentposition * 800);
-    if ($currentpositionpix > 800) {
-        $currentpositionpix = 800;
+    switch (true) {
+        case ($max <= 50000):
+            $max = 5;
+            $bgcolor = '#00FFFF'; // bright blue
+            break;
+        case ($max <= 100000):
+            $max = 10;
+            $bgcolor = '#FF00FF'; // bright purple
+            break;
+        case ($max <= 250000):
+            $max = 25;
+            $bgcolor = '#FFFF00'; // yellow
+            break;
+        case ($max <= 500000):
+            $max = 50;
+            $bgcolor = '#00FF00'; // green
+            break;
+        default:
+            $max = 100;
+            $bgcolor = '#0000FF'; // blue
     }
-    $currentpositionpix += 8;
+
+    $goalpix = $goal / ($max * 10000);
+    if ($goalpix > 1) {
+        $goalpix = 800;
+    } else {
+        $goalpix = round($goalpix * 800);
+    }
+
+    $markpix = $progress / ($max * 10000);
+    if ($markpix > 1) {
+        $markpix = 800;
+    } else {
+        $markpix = round($markpix * 800);
+    }
+    $markpix += 8;
 
     $html = '';
     $html .= '<style type="text/css" >'."\n";
     $html .= '#ScoreBoxDiv {'."\n";
-    $html .= '    position:absolute;'."\n";
-    $html .= '    left:5px; top:34px;'."\n";
-    $html .= '    width:824px;'."\n";
-    $html .= '    height:63px;'."\n";
+    $html .= '    position: absolute;'."\n";
+    $html .= '    height:   63px;'."\n";
+    $html .= '    left:     5px;'."\n";
+    $html .= '    top:      34px;'."\n";
+    $html .= '    width:    826px;'."\n";
+    $html .= '    z-index:  5;'."\n";
     $html .= '    background-color: '.$bgcolor.' ;'."\n";
-    $html .= '    z-index:5;'."\n";
-    $html .= '}'."\n";
-    $html .= 'img.color {'."\n";
-    $html .= '    position:absolute;'."\n";
-    $html .= '    top:40px;'."\n";
-    $html .= '    left:10px;'."\n";
-    $html .= '    z-index:20;'."\n";
-    $html .= '    clip: rect(0px '.$currentpositionpix.'px 100px 0px);'."\n";
-    $html .= '}'."\n";
-    $html .= 'img.mark {'."\n";
-    $html .= '    position:absolute;'."\n";
-    $html .= '    top:47px;'."\n";
-    $html .= '    left:'.($currentpositionpix+10).'px;'."\n";
-    $html .= '    z-index:20;'."\n";
     $html .= '}'."\n";
     $html .= 'img.grey {'."\n";
-    $html .= '    position:absolute;'."\n";
-    $html .= '    top:40px;'."\n";
-    $html .= '    left:10px;'."\n";
-    $html .= '    z-index:15;'."\n";
+    $html .= '    position: absolute;'."\n";
+    $html .= '    left:     10px;'."\n";
+    $html .= '    top:      40px;'."\n";
+    $html .= '    z-index:  15;'."\n";
+    $html .= '}'."\n";
+    $html .= 'img.color {'."\n";
+    $html .= '    position: absolute;'."\n";
+    $html .= '    left:     10px;'."\n";
+    $html .= '    top:      40px;'."\n";
+    $html .= '    z-index:  20;'."\n";
+    $html .= '    clip:     rect(0px '.$markpix.'px 100px 0px);'."\n";
+    $html .= '}'."\n";
+    $html .= 'img.mark {'."\n";
+    $html .= '    position: absolute;'."\n";
+    $html .= '    left:     '.($markpix + 10).'px;'."\n";
+    $html .= '    top:      47px;'."\n";
+    $html .= '    z-index:  20;'."\n";
     $html .= '}'."\n";
     $html .= 'img.goal {'."\n";
-    $html .= '    position:absolute;'."\n";
-    $html .= '    top:26px;'."\n";
-    $html .= '    left:'.$currentpositiongoalpix.'px;'."\n";
-    $html .= '    z-index:40;'."\n";
+    $html .= '    position: absolute;'."\n";
+    $html .= '    left:     '.$goalpix.'px;'."\n";
+    $html .= '    top:      26px;'."\n";
+    $html .= '    z-index:  40;'."\n";
     $html .= '}'."\n";
     $html .= '</style>'."\n";
-    $html .= '<div id="ScoreBoxDiv" class="ScoreBoxDiv"> &nbsp;&nbsp;&nbsp;&nbsp;</div>'."\n";
-    $html .= '<img class="color" src="'.$CFG->wwwroot.'/mod/reader/img/colorscale800px'.$img.'.png">'."\n";
-    $html .= '<img class="grey" src="'.$CFG->wwwroot.'/mod/reader/img/colorscale800px'.$img.'gs.png">'."\n";
-    $html .= '<img class="mark" src="'.$CFG->wwwroot.'/mod/reader/img/now.png">'."\n";
+
+    $params = array('id' => 'ScoreBoxDiv', 'class' => 'ScoreBoxDiv');
+    $html .= html_writer::tag('div', '&nbsp;&nbsp;&nbsp;&nbsp;', $params);
+
+    $url = new moodle_url("/mod/reader/img/colorscale800px{$max}.png");
+    $html .= html_writer::img($url, '', array('class' => 'color'));
+
+    $url  = new moodle_url("/mod/reader/img/colorscale800px{$max}gs.png");
+    $html .= html_writer::img($url,  '', array('class' => 'grey'));
+
+    $url  = new moodle_url('/mod/reader/img/now.png');
+    $html .= html_writer::img($url,  '', array('class' => 'mark'));
 
     if ($goal) {
-        $html .= '<img class="goal" src="'.$CFG->wwwroot.'/mod/reader/img/goal.png">';
+        $url  = new moodle_url('/mod/reader/img/goal.png');
+        $html .= html_writer::img($url, '', array('class' => 'goal'));
     }
 
     return $html;
