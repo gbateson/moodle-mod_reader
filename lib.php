@@ -337,7 +337,7 @@ function reader_delete_instance($id) {
     $result = true;
 
     if ($reader = $DB->get_record('reader', array('id' => $id))) {
-        if ($attempts = $DB->get_records('reader_attempts', array('readerid' => $id), 'id', 'id,reader')) {
+        if ($attempts = $DB->get_records('reader_attempts', array('readerid' => $id), 'id', 'id,readerid')) {
             $ids = array_keys($attempts);
             $DB->delete_records_list('reader_attempt_questions', 'attemptid', $ids);
             $DB->delete_records_list('reader_attempts', 'id',  $ids);
@@ -1562,18 +1562,18 @@ function reader_get_goal_progress($progress, $reader) {
     $params = array('id' => 'ScoreBoxDiv', 'class' => 'ScoreBoxDiv');
     $html .= html_writer::tag('div', '&nbsp;&nbsp;&nbsp;&nbsp;', $params);
 
-    $url = new moodle_url("/mod/reader/img/colorscale800px{$max}.png");
-    $html .= html_writer::img($url, '', array('class' => 'color'));
+    $src = new moodle_url("/mod/reader/img/colorscale800px{$max}.png");
+    $html .= html_writer::empty_tag('img', array('src' => $src, 'class' => 'color'));
 
-    $url  = new moodle_url("/mod/reader/img/colorscale800px{$max}gs.png");
-    $html .= html_writer::img($url,  '', array('class' => 'grey'));
+    $src  = new moodle_url("/mod/reader/img/colorscale800px{$max}gs.png");
+    $html .= html_writer::empty_tag('img', array('src' => $src, 'class' => 'grey'));
 
-    $url  = new moodle_url('/mod/reader/img/now.png');
-    $html .= html_writer::img($url,  '', array('class' => 'mark'));
+    $src  = new moodle_url('/mod/reader/img/now.png');
+    $html .= html_writer::empty_tag('img', array('src' => $src, 'class' => 'mark'));
 
     if ($goal) {
-        $url  = new moodle_url('/mod/reader/img/goal.png');
-        $html .= html_writer::img($url, '', array('class' => 'goal'));
+        $src  = new moodle_url('/mod/reader/img/goal.png');
+        $html .= html_writer::empty_tag('img', array('src' => $src, 'class' => 'goal'));
     }
 
     return $html;

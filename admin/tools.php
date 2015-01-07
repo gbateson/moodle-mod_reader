@@ -77,7 +77,7 @@ echo html_writer::start_tag('ol', array('class' => 'readertools'));
 $files = array();
 $items = new DirectoryIterator($dirpath);
 foreach ($items as $item) {
-    if ($item->isDot() || substr($item, 0, 1)=='.') {
+    if ($item->isDot() || substr($item, 0, 1)=='.' || trim($item)=='') {
         continue;
     }
     if ($item=='index.php' || $item=='lib.php' || $item=='renderer.php') {
