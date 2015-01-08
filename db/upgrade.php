@@ -1050,7 +1050,7 @@ function xmldb_reader_upgrade($oldversion) {
         upgrade_mod_savepoint(true, "$newversion", 'reader');
     }
 
-    $newversion = 2014122735;
+    $newversion = 2015010939;
     if ($oldversion < $newversion) {
 
         $table = new xmldb_table('reader_grades');
