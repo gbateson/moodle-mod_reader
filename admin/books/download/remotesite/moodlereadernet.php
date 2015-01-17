@@ -214,6 +214,28 @@ class reader_remotesite_moodlereadernet extends reader_remotesite {
         return array('imageid' => $itemid);
     }
 
+    /*
+     * get_xml_values_ordering
+     *
+     * @param xxx $xml (passed by reference)
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function get_xml_values_ordering(&$xml) {
+        // rename "logical" to "selecttype"
+        if (isset($xml['0']['#']['LOGICAL'])) {
+            $xml['0']['#']['SELECTTYPE'] = $xml['0']['#']['LOGICAL'];
+            unset($xml['0']['#']['LOGICAL']);
+        }
+        // convert "studentsee" to "selectcount"
+        if (isset($xml['0']['#']['STUDENTSEE'])) {
+            $xml['0']['#']['SELECTCOUNT'] = $xml['0']['#']['STUDENTSEE'];
+            $xml['0']['#']['SELECTCOUNT']['0']['#'] += 2;
+            unset($xml['0']['#']['STUDENTSEE']);
+        }
+        return parent::get_xml_values_ordering($xml);
+    }
+
     /**
      * get_available_items
      *

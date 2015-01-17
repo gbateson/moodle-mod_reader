@@ -745,7 +745,10 @@ class reader_remotesite {
      * @todo Finish documenting this function
      */
     public function get_xml_values_ordering(&$xml) {
-        $defaults = array('logical' => 1, 'studentsee' => 6, 'correctfeedback' => '', 'partiallycorrectfeedback' => '', 'incorrectfeedback' => '');
+        $defaults = array('selecttype' => 1, 'selectcount' => 6,
+                          'correctfeedback' => '', 'correctfeedbackformat' => 0,
+                          'incorrectfeedback' => '', 'incorrectfeedbackformat' => 0,
+                          'partiallycorrectfeedback' => '', 'partiallycorrectfeedbackformat' => 0);
         return $this->get_xml_values($xml['0']['#'], $defaults);
     }
 
@@ -757,7 +760,11 @@ class reader_remotesite {
      * @todo Finish documenting this function
      */
     public function get_xml_values_matchoptions(&$xml) {
-        $defaults = array('id' => 0, 'question' => 0, 'subquestions' => '', 'shuffleanswers' => 1, 'shownumcorrect' => 0, 'correctfeedback' => '', 'partiallycorrectfeedback' => '', 'incorrectfeedback' => '');
+        $defaults = array('id' => 0, 'question' => 0, // not required ?
+                          'subquestions' => '', 'shuffleanswers' => 1, 'shownumcorrect' => 0,
+                          'correctfeedback' => '', 'correctfeedbackformat' => 0,
+                          'incorrectfeedback' => '', 'incorrectfeedbackformat' => 0,
+                          'partiallycorrectfeedback' => '', 'partiallycorrectfeedbackformat' => 0);
         return $this->get_xml_values($xml['0']['#'], $defaults);
     }
 

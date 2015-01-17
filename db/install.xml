@@ -51,9 +51,9 @@
     <TABLE NAME="reader_attempts" COMMENT="details of attempts at Reader quizzes" NEXT="reader_attempt_questions" PREVIOUS="reader">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" NEXT="uniqueid"/>
-        <FIELD NAME="uniqueid" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="reader" PREVIOUS="id"/>
-        <FIELD NAME="reader" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="userid" PREVIOUS="uniqueid"/>
-        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="bookid" PREVIOUS="reader"/>
+        <FIELD NAME="uniqueid" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="readerid" PREVIOUS="id"/>
+        <FIELD NAME="readerid" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="userid" PREVIOUS="uniqueid"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="bookid" PREVIOUS="readerid"/>
         <FIELD NAME="bookid" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="quizid" PREVIOUS="userid"/>
         <FIELD NAME="quizid" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="attempt" PREVIOUS="bookid"/>
         <FIELD NAME="attempt" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="deleted" PREVIOUS="quizid"/>

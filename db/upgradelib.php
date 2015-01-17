@@ -3692,7 +3692,10 @@ function reader_xmldb_add_indexes($dbman, $table, $indexes) {
  * @param  array  $fields
  * @return void, but may add indexes
  */
-function reader_xmldb_update_fields($dbman, $table, $fields) {
+function reader_xmldb_update_fields($dbman, $table, $fields, $indexes) {
+
+    // if necessary, remove indexes on fields to be updated
+    reader_xmldb_drop_indexes($dbman, $table, $indexes);
 
     foreach ($fields as $newname => $field) {
 
@@ -3721,4 +3724,7 @@ function reader_xmldb_update_fields($dbman, $table, $fields) {
             $dbman->add_field($table, $field);
         }
     }
+
+    // if necessary, restore indexes on updated fields
+    reader_xmldb_add_indexes($dbman, $table, $indexes);
 }

@@ -1914,9 +1914,8 @@ class reader_downloader {
             if (! delete_mod_from_section($cm->id, $sectionid)) {
                 throw new moodle_exception("Could not delete the $cm->modname (id=$cm->id) from that section (id=$sectionid)");
             }
+            reader_add_to_log($cm->course, 'course', 'delete mod', "view.php?id=$cm->course", "$cm->modname $cm->instance", $cm->id);
         }
-
-        reader_add_to_log($cm->course, 'course', 'delete mod', "view.php?id=$cm->course", "$cm->modname $cm->instance", $cm->id);
 
         // Note: course cache was rebuilt in "delete_mod_from_section()" or "course_delete_module()"
     }
@@ -2433,7 +2432,7 @@ class reader_downloader {
             $question->defaultmark = $question->defaultgrade;
         }
 
-        // set questiontext on ordering questions, if necessary
+        // adjust fields on ordering questions, if necessary
         if ($question->qtype=='ordering' && empty($question->questiontext)) {
             $question->questiontext = get_string('defaultquestionname', 'qtype_ordering');
         }
@@ -2731,11 +2730,14 @@ class reader_downloader {
 
         // create $options for this ordering question
         $options = (object)array(
-            'logical' => $question->ordering->logical,
-            'studentsee' => $question->ordering->studentsee,
+            'selecttype' => $question->ordering->selecttype,
+            'selectcount' => $question->ordering->selectcount,
             'correctfeedback' => $question->ordering->correctfeedback,
+            'correctfeedbackformat' => FORMAT_MOODLE, // =0
             'incorrectfeedback' => $question->ordering->incorrectfeedback,
-            'partiallycorrectfeedback' => $question->ordering->partiallycorrectfeedback
+            'incorrectfeedbackformat' => FORMAT_MOODLE, // =0
+            'partiallycorrectfeedback' => $question->ordering->partiallycorrectfeedback,
+            'partiallycorrectfeedbackformat' => FORMAT_MOODLE // =0
         );
 
         // add/update $options for this ordering question
