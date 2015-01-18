@@ -1048,7 +1048,7 @@ function xmldb_reader_upgrade($oldversion) {
         upgrade_mod_savepoint(true, "$newversion", 'reader');
     }
 
-    $newversion = 2015010939;
+    $newversion = 2015011842;
     if ($oldversion < $newversion) {
 
         $table = new xmldb_table('reader_grades');
@@ -1072,22 +1072,9 @@ function xmldb_reader_upgrade($oldversion) {
         $indexes = array('readatte_rea_ix' => array('reader', 'readerid'));
         reader_xmldb_update_fields($dbman, $table, $fields, $indexes);
 
-        upgrade_mod_savepoint(true, "$newversion", 'reader');
-    }
-
-    $newversion = 2015011340;
-    if ($oldversion < $newversion) {
         require_once($CFG->dirroot.'/mod/reader/lib.php');
         reader_update_grades(); // all Reader activities !!
-        upgrade_mod_savepoint(true, "$newversion", 'reader');
-    }
 
-    $newversion = 2015011741;
-    if ($oldversion < $newversion) {
-        $table = new xmldb_table('reader_attempts');
-        $fields = array('readerid' => new xmldb_field('reader', XMLDB_TYPE_INTEGER, '11', null, null, null, '0', 'uniqueid'));
-        $indexes = array('readatte_rea_ix' => array('reader', 'readerid'));
-        reader_xmldb_update_fields($dbman, $table, $fields, $indexes);
         upgrade_mod_savepoint(true, "$newversion", 'reader');
     }
 
