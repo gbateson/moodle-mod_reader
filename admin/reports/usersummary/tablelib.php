@@ -566,7 +566,7 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
                         'mode'   => $this->output->mode,
                         'id'     => $this->output->reader->cm->id,
                         'type'   => ''); // will be added by javascript
-        $onchange = $this->output->available_items_url('/mod/reader/view_books.php', $params);
+        $onchange = $this->output->select_items_url('/mod/reader/view_books.php', $params);
         $onchange = "request($onchange, 'publishers')";
 
         $settings = '';
@@ -574,7 +574,7 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
         $settings .= html_writer::select($options, $name, $value, '', $this->display_action_onclickchange($action, 'onchange', $onchange));
         $settings .= html_writer::empty_tag('br');
 
-        $settings .= $this->output->available_items($action);
+        $settings .= $this->output->select_items($action);
         return $this->display_action_settings($action, $settings);
     }
 

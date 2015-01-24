@@ -1584,7 +1584,7 @@ function reader_install_missingquizzes($books) {
             echo $OUTPUT->box_end();
         }
 
-        reader_remove_directory($tempdir);
+        xmldb_reader_rm($tempdir);
     }
 
     return true;
@@ -3547,6 +3547,17 @@ function xmldb_reader_rm($target) {
             break;
     }
     return $ok;
+
+    // alternatively ...
+    //if ($items = glob($target.'/*')) {
+    //    foreach($items as $item) {
+    //        switch (true) {
+    //            case is_file($item): unlink($item); break;
+    //            case is_dir($item): xmldb_reader_rm($item); break;
+    //        }
+    //    }
+    //}
+    //return rmdir($target);
 }
 
 /**
@@ -3690,9 +3701,10 @@ function reader_xmldb_add_indexes($dbman, $table, $indexes) {
  * @param  object $dbman
  * @param  object $table
  * @param  array  $fields
+ * @param  array  $indexes (optional, default=array())
  * @return void, but may add indexes
  */
-function reader_xmldb_update_fields($dbman, $table, $fields, $indexes) {
+function reader_xmldb_update_fields($dbman, $table, $fields, $indexes=array()) {
 
     // if necessary, remove indexes on fields to be updated
     reader_xmldb_drop_indexes($dbman, $table, $indexes);

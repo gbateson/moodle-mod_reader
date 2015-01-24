@@ -81,7 +81,10 @@ $PAGE->set_heading($course->fullname);
 
 // create full object to represent this reader actvity
 $reader = mod_reader::create($reader, $cm, $course);
-$output = $PAGE->get_renderer('mod_reader');
+
+// create renderer
+$plugin = 'mod_reader';
+$output = $PAGE->get_renderer($plugin);
 $output->init($reader);
 
 echo $output->header();
@@ -95,13 +98,13 @@ if (has_capability('mod/reader:viewreports', $contextmodule)) {
     echo $output->tabs();
     $msg = ''; // teacher can always view this page
 } else if (! has_capability('mod/reader:viewbooks', $contextmodule)) {
-    $msg = get_string('nopermissions', 'error', get_string('reader:viewreports', 'mod_reader'));
+    $msg = get_string('nopermissions', 'error', get_string('reader:viewreports', $plugin));
 } else if (! empty($reader->subnet) && ! address_in_subnet(getremoteaddr(), $reader->subnet)) {
     $msg = get_string('subneterror', 'quiz');
 } else if (! empty($reader->timeopen) && $reader->timeopen > $timenow) {
-    $msg = get_string('notopenyet', 'mod_reader', userdate($reader->timeopen));
+    $msg = get_string('notopenyet', $plugin, userdate($reader->timeopen));
 } else if (! empty($reader->timeclose) && $reader->timeclose < $timenow) {
-    $msg = get_string('alreadyclosed', 'mod_reader', userdate($reader->timeclose));
+    $msg = get_string('alreadyclosed', $plugin, userdate($reader->timeclose));
 } else {
     $msg = ''; // reader is open and not closed, and user can view books
 }
@@ -111,7 +114,6 @@ if ($msg) {
     $msg .= html_writer::tag('p', $output->continue_button($url));
     echo $output->box($msg, 'generalbox', 'notice');
     echo $output->footer();
-    reader_change_to_teacherview();
     exit;
 }
 
@@ -129,30 +131,41 @@ if ($reader->levelcheck==0) {
 
 echo $output->box_start('generalbox');
 
+$plugin = $plugin;
 $table = new html_table();
+$table->attributes['class'] = 'generaltable readingreportattempts';
 
-if ($reader->wordsorpoints == 1) {
-    if ($reader->wordsorpoints != 1) {  //1 - only points
-        $table->head = array('Date', 'Book Title', 'Level', 'Words', 'Percent Correct', 'Total Points');
-        $table->align = array('left', 'left', 'left', 'center', 'center', 'center');
-    } else {
-        $table->head = array('Date', 'Book Title', 'Level', 'Percent Correct', 'Total Points');
-        $table->align = array('left', 'left', 'left', 'center', 'center');
-    }
-} else {
-    if ($reader->wordsorpoints == 2) {  //points and words
-        $table->head = array('Date', 'Book Title', 'Level', 'Status', 'Words', 'Points This Book', 'Total Points');
-        $table->align = array('left', 'left', 'left', 'center', 'center', 'center', 'center');
-    } else if ($reader->wordsorpoints == 1) {  //points only
-        $table->head = array('Date', 'Book Title', 'Level', 'Status', 'Points This Book', 'Total Points');
-        $table->align = array('left', 'left', 'left', 'center', 'center', 'center');
-    } else if ($reader->wordsorpoints == 0) {  //words only
-        $table->head = array('Date', 'Book Title', 'Level', 'Status', 'Words', 'Total words');
-        $table->align = array('left', 'left', 'left', 'center', 'center', 'center');
-    }
+$table->head = array();
+$table->head[] = get_string('date');
+$table->head[] = get_string('booktitle', $plugin);
+$table->head[] = get_string('level',     $plugin);
+$table->head[] = get_string('status');
+$table->align = array('left', 'left', 'left', 'center');
+
+if ($reader->showpercentgrades) {
+    $table->head[] = get_string('grade');
+    $table->align[] = 'center';
 }
-
-$table->width = '800';
+switch ($reader->wordsorpoints) {
+    case 2:
+        $table->head[] = get_string('words', $plugin);
+        $table->head[] = get_string('points', $plugin);
+        $table->head[] = get_string('totalpoints', $plugin);
+        array_push($table->align, 'center', 'center', 'center');
+        break;
+    case 1:
+        $table->head[] = get_string('points', $plugin);
+        $table->head[] = get_string('totalpoints', $plugin);
+        array_push($table->align, 'center', 'center');
+        break;
+    case 0:
+    default:
+        $table->head[] = get_string('words', $plugin);
+        $table->head[] = get_string('totalwords', $plugin);
+        array_push($table->align, 'center', 'center');
+        $reader->wordsorpoints = 0; // force default
+        break;
+}
 
 $totalpoints         = 0;
 $correctpoints       = 0;
@@ -207,8 +220,8 @@ if (count($attempts)) {
                 }
             }
         }
-        $lastattemptdate = $attempt['timefinish'];
 
+        $lastattemptdate = $attempt['timefinish'];
         $alreadyansweredbooksid[] = $attempt['quizid'];
 
         if ($reader->bookcovers == 1 && $attempt['status'] == 'correct') {
@@ -222,58 +235,36 @@ if (count($attempts)) {
             $bookcoversinthisterm .= html_writer::empty_tag('img', $params).' ';
         }
 
-        if ($attempt['statustext'] == 'Passed' || $attempt['statustext'] == 'Credit'){
-            $totalwords += $attempt['words'];
+        if ($attempt['passed'] == 'true'){
             $totalwordscount++;
-            $showwords = number_format($attempt['words']);
+            $totalwords += $attempt['words'];
+            $attempt['bookwords'] = number_format($attempt['words']);
         } else {
-            $showwords = '';
+            $attempt['bookwords'] = '';
         }
 
-        if ($reader->wordsorpoints == 1) {
-            // hide status or points
-            if ($reader->wordsorpoints == 1) {
-                // points
-                $table->data[] = array(date($dateformat, $attempt['timefinish']),
-                                       $attempt['booktitle'],
-                                       $attempt['booklevel'].'[RL'.$attempt['bookdiff'].']',
-                                       $attempt['bookpercent'],
-                                       $attempt['totalpoints']);
-            } else {
-                // words
-                $table->data[] = array(date($dateformat, $attempt['timefinish']),
-                                       $attempt['booktitle'],
-                                       $attempt['booklevel'].'[RL' .$attempt['bookdiff'].']',
-                                       $showwords,
-                                       $attempt['bookpercent'],
-                                       $attempt['totalpoints']);
-            }
-        } else {
-            // show status or points
-            if ($reader->wordsorpoints == 2) {  //points and words
-                $table->data[] = array(date($dateformat, $attempt['timefinish']),
-                                       $attempt['booktitle'],
-                                       $attempt['booklevel'].'[RL'.$attempt['bookdiff'].']',
-                                       $attempt['statustext'],
-                                       $showwords,
-                                       $attempt['bookpoints'],
-                                       $attempt['totalpoints']);
-            } else if ($reader->wordsorpoints == 1) {  //points only
-                $table->data[] = array(date($dateformat, $attempt['timefinish']),
-                                       $attempt['booktitle'],
-                                       $attempt['booklevel'].'[RL'.$attempt['bookdiff'].']',
-                                       $attempt['statustext'],
-                                       $attempt['bookpoints'],
-                                       $attempt['totalpoints']);
-            } else if ($reader->wordsorpoints == 0) {  //words only
-                $table->data[] = array(date($dateformat, $attempt['timefinish']),
-                                       $attempt['booktitle'],
-                                       $attempt['booklevel'].'[RL'.$attempt['bookdiff'].']',
-                                       $attempt['statustext'],
-                                       $showwords,
-                                       number_format($totalwords));
-            }
+        $cells = array(
+            new html_table_cell(date($dateformat, $attempt['timefinish'])),
+            new html_table_cell($attempt['booktitle']),
+            new html_table_cell($attempt['booklevel'].'[RL'.$attempt['bookdiff'].']'),
+            new html_table_cell($attempt['statustext']),
+        );
+        if ($reader->showpercentgrades == 1) {
+            $cells[] = new html_table_cell($attempt['bookpercent']);
         }
+        switch ($reader->wordsorpoints) {
+            case 2: $cells[] = new html_table_cell($attempt['bookwords']);
+                    $cells[] = new html_table_cell($attempt['bookpoints']);
+                    $cells[] = new html_table_cell($attempt['totalpoints']);
+                    break;
+            case 1: $cells[] = new html_table_cell($attempt['bookpoints']);
+                    $cells[] = new html_table_cell($attempt['totalpoints']);
+                    break;
+            case 0: $cells[] = new html_table_cell($attempt['bookwords']);
+                    $cells[] = new html_table_cell(number_format($totalwords));
+                    break;
+        }
+        $table->data[] = new html_table_row($cells);
     }
     if ($promotiondate && $attempt['timefinish'] < $promotiondate) {
         reader_view_promotiondate($table, $leveldata, $promotiondate, $timeformat, $dateformat);
@@ -294,7 +285,7 @@ unset($studentattempts);
 
 if ($bookcoversinprevterm) {
     // display book covers from previous term
-    echo $output->heading(get_string('booksreadinpreviousterms', 'mod_reader'), 2);
+    echo $output->heading(get_string('booksreadinpreviousterms', $plugin), 2);
     echo html_writer::tag('p', $bookcoversinprevterm);
 
     // detect incorrect quizzes from previous term
@@ -303,7 +294,7 @@ if ($bookcoversinprevterm) {
     $where  = 'ra.userid = ? AND ra.preview = ? AND ra.deleted = ? AND ra.passed <> ? AND ra.timefinish <= ?';
     $params = array(0, 0, $USER->id, 'true', $reader->ignoredate);
     if ($attempts = $DB->get_records_sql("SELECT $select FROM $from WHERE $where ORDER BY timefinish", $params)) {
-        $text = get_string('incorrectbooksreadinpreviousterms', 'mod_reader');
+        $text = get_string('incorrectbooksreadinpreviousterms', $plugin);
         $onclick = "var obj = document.getElementById('readerfailedbooklist');".
                    "if (obj) {".
                        "if (obj.style.display=='none') {".
@@ -328,12 +319,12 @@ if ($bookcoversinprevterm && $bookcoversinthisterm) {
 
 if ($bookcoversinthisterm) {
     // display book covers from this term
-    echo $output->heading(get_string('booksreadthisterm', 'mod_reader'), 2);
+    echo $output->heading(get_string('booksreadthisterm', $plugin), 2);
     echo html_writer::tag('p', $bookcoversinthisterm);
 }
 
 echo '<table width="100%"><tr><td>';
-echo '<h2><span class="readingreporttitle">'.get_string('readingreportfor', 'mod_reader', fullname($USER))."</span></h2>";
+echo '<h2 class="readingreporttitle">'.get_string('readingreportfor', $plugin, fullname($USER))."</h2>";
 if (isset($_SESSION['SESSION']->reader_changetostudentview) && $_SESSION['SESSION']->reader_changetostudentview > 0) {
     $params = array('a' => 'admin', 'id' => $id, 'act' => 'reports');
     if (isset($_SESSION['SESSION']->reader_changetostudentviewlink)) {
@@ -344,7 +335,7 @@ if (isset($_SESSION['SESSION']->reader_changetostudentview) && $_SESSION['SESSIO
     }
     $url = new moodle_url('/mod/reader/admin.php', $params);
     echo '</td><td width="50%" align="right"><small><span style="text-align: right;">';
-    echo '<a href="'.$url.'">'.get_string('returntostudentlist', 'mod_reader').'</a>';
+    echo '<a href="'.$url.'">'.get_string('returntostudentlist', $plugin).'</a>';
     echo '</span></small>';
 }
 if (class_exists('\core\session\manager')) {
@@ -356,116 +347,82 @@ if ($is_loggedinas) {
     $params = array('id' => $id, 'sesskey' => sesskey());
     $url = new moodle_url('/mod/reader/view_loginas.php', $params);
     echo '</td><td width="50%" align="right"><small><span style="text-align: right;">';
-    echo '<a href="'.$url.'">'.get_string('returntoreports', 'mod_reader').'</a>';
+    echo '<a href="'.$url.'">'.get_string('returntoreports', $plugin).'</a>';
     echo '</span></small>';
 }
 echo "</td></tr></table>";
 
-if ($reader->levelcheck == 1) {
-    echo reader_view_blockgraph($reader, $leveldata, $dateformat);
-}
-
 if (! empty($table->data)) {
-    echo '<center>'.html_writer::table($table).'</center>';
+    echo html_writer::table($table);
 } else {
-    //echo '<center>'.get_string('nodata', 'mod_reader').'</center>';
+    //echo '<center>'.get_string('nodata', $plugin).'</center>';
 }
 
 if ($reader->showprogressbar) {
-    echo '<table width="800" cellpadding="5" cellspacing="1" class="generaltable boxaligncenter"><tr>';
-    echo '<th width="500" style="text-align:right;font-weight:lighter;">'.get_string('totalwords', 'mod_reader').': '.$totalwords.'</th>';
-    echo '<th style="text-align:right;font-weight:lighter;">'.get_string('totalwordsall', 'mod_reader').": ".$totalwordsall.'</th>';
-    echo '</tr></table>';
-
-    echo '<table width="820" cellpadding="0" cellspacing="0" class="generaltable boxaligncenter"><tr><td align="center">';
-    if ($progressimage = reader_get_goal_progress($totalwords, $reader)) {
-        echo '<table width="820px"><tr><td align="center"><div style="position:relative;z-index:5;height:100px;width:850px;">'.$progressimage.'</div>';
-        echo '</td></tr><tr><td>&nbsp;<b>&nbsp;'.get_string('in1000sofwords', 'mod_reader').'</b></td></tr></table>';
-    }
-    echo '</td></tr></table>';
+    echo $output->progressbar($totalwords);
 }
 
-//if ($reader->thislevel == $leveldata['thislevel']) {
-//    $displaymore = "";
-//} else {
-//    $displaymore = " more ";
-//}
+$table = new html_table();
+$table->attributes['class'] = 'generaltable readerpromotioninfo';
 
-echo '<h3>'.get_string('yourcurrentlevel', 'mod_reader').': '.$leveldata['currentlevel'].'</h3>';
+$table->data[] = new html_table_row(array(
+    new html_table_cell(get_string('yourcurrentlevel', $plugin).': '.$leveldata['currentlevel']),
+    new html_table_cell(reader_view_blockgraph($reader, $leveldata, $dateformat))
+));
 
-$promoteinfo = $DB->get_record('reader_levels', array('userid' => $USER->id, 'readerid' => $reader->id));
-if ($promoteinfo->allowpromotion == 0) {
-    if ($promoteinfo->stoplevel == $leveldata['currentlevel']) {
-        print_string('pleaseaskyourinstructor', 'mod_reader');
-    } else {
-        print_string('yourteacherhasstopped', 'mod_reader');
+// stretch blockgraph cell across two rows and align center
+$table->data[0]->cells[1]->rowspan = 2;
+
+$list = array();
+
+if ($leveldata['allowpromotion']) {
+
+    // current level
+    if ($leveldata['thislevel'] > 0) {
+        $params = (object)array('count' => $leveldata['thislevel'],
+                                'level' => $leveldata['currentlevel']);
+        $type = ($leveldata['thislevel'] == 1 ? 'single' : 'plural');
+        $list[] = get_string('youmustpass'.$type, $plugin, $params);
+    } else if ($leveldata['thislevel']==0) {
+        $list[] = get_string('youcannottake', $plugin, $leveldata['currentlevel']);
     }
 
-    print_string('youcantakeasmanyquizzesasyouwant', 'mod_reader', $leveldata['currentlevel']);
-
-    if ($leveldata['prevlevel'] <= 0) {
-        $quizcount = 'no';
-    } else {
-        $quizcount = $leveldata['prevlevel'];
-    }
-    if ($leveldata['prevlevel'] == 1) {
-        $quiztext = 'quiz';
-    } else {
-        $quiztext = 'quizzes';
-    }
-    print_string('youmayalsotake', 'mod_reader', $quizcount);
-    echo '{$quiztext} '.get_string('atlevel', 'mod_reader').' '.($leveldata['currentlevel'] - 1).' ';
-
-} else if ($reader->levelcheck == 1) {
-
-    if ($leveldata['thislevel'] == 1) {
-        print_string('youmusttakequiz', 'mod_reader', $leveldata['thislevel']);
-    } else {
-        print_string('youmusttakequizzes', 'mod_reader', $leveldata['thislevel']);
-    }
-    print_string('atlevelbeforebeingpromoted', 'mod_reader', $leveldata['currentlevel']);
-
-    if ($leveldata['prevlevel'] <= 0) {
-        $quizcount = 'no';
-    } else {
-        $quizcount = $leveldata['prevlevel'];
-    }
-    if ($leveldata['prevlevel'] == 1) {
-        $quiztext = "quiz";
-    } else {
-        $quiztext = "quizzes";
+    // previous level
+    if ($leveldata['prevlevel'] > 0) {
+        $params = (object)array('count' => $leveldata['prevlevel'],
+                                'level' => $leveldata['currentlevel'] - 1);
+        $type = ($leveldata['prevlevel'] == 1 ? 'single' : 'plural');
+        $list[] = get_string('youcantake'.$type, $plugin, $params);
+    } else if ($leveldata['prevlevel']==0) {
+        $list[] = get_string('youcannottake', $plugin, $leveldata['currentlevel'] - 1);
     }
 
-    if (($leveldata['currentlevel'] - 1) >= 0) {
-
-        if ($leveldata['prevlevel'] > 0 && $leveldata['nextlevel'] <= 0) {
-            $quiznextlevelso = 'but';
-        } else {
-            $quiznextlevelso = 'and';
-        }
-        print_string('youmayalsotake', 'mod_reader', $quizcount);
-        echo "{$quiztext} ".get_string('atlevel', 'mod_reader')." ".($leveldata['currentlevel'] - 1)." ";
-    } else {
-        print_string('youcantake', 'mod_reader');
+    // next level
+    if ($leveldata['nextlevel'] > 0) {
+        $params = (object)array('count' => $leveldata['nextlevel'],
+                                'level' => $leveldata['currentlevel'] + 1);
+        $type = ($leveldata['nextlevel'] == 1 ? 'single' : 'plural');
+        $list[] = get_string('youcantake'.$type, $plugin, $params);
+    } else if ($leveldata['nextlevel']==0) {
+        $list[] = get_string('youcannottake', $plugin, $leveldata['currentlevel'] + 1);
     }
 
-    if ($leveldata['nextlevel'] <= 0) {
-        $quizcount = 'no';
-    } else {
-        $quizcount = $leveldata['nextlevel'];
-    }
+} else if ($leveldata['currentlevel']==$leveldata['stoplevel']) {
+    // stopped automatically - "stoplevel" reached
+    $list[] = get_string('youcantakeunlimited', $plugin, $leveldata['currentlevel']);
+    $list[] = get_string('pleaseaskyourinstructor', $plugin);
 
-    if (! isset($quiznextlevelso)) {
-        $quiznextlevelso = '';
-    }
-
-    if ($leveldata['nextlevel'] == 1) {
-        $quiztext = ' quiz '; } else { $quiztext = ' quizzes ';
-    }
-    echo $quiznextlevelso.get_string('andnextmore', 'mod_reader', $quizcount).$quiztext.get_string('atlevel', 'mod_reader'). ' ' . ($leveldata['currentlevel'] + 1 .'.');
-} else if ($reader->levelcheck == 0) {
-    print_string('butyoumaytakequizzes', 'mod_reader');
+} else {
+    // stopped by teacher - "allowpromote" disabled
+    $list[] = get_string('promotionnotallowed', $plugin);
+    $list[] = get_string('youcantakeunlimited', $plugin, $leveldata['currentlevel']);
 }
+
+$table->data[] = new html_table_row(array(
+    new html_table_cell(html_writer::alist($list))
+));
+
+echo html_writer::table($table);
 
 $showform = true;
 if ($attempt = $DB->get_record('reader_attempts', array('readerid' => $cm->instance, 'userid' => $USER->id, 'timefinish' => 0))) {
@@ -481,19 +438,19 @@ if ($attempt = $DB->get_record('reader_attempts', array('readerid' => $cm->insta
     } else {
         $showform = false;
         $bookname = $DB->get_field('reader_books', 'name', array('quizid' => $attempt->quizid));
-        print_string('pleasecompletequiz', 'mod_reader', $bookname);
+        print_string('pleasecompletequiz', $plugin, $bookname);
         if (empty($_SESSION['SESSION']->reader_lastattemptpage)) {
             $url = $CFG->wwwroot.'/mod/reader/quiz/attempt.php?attempt='.$attempt->id.'&page=1#q0';
         } else {
             $url = $CFG->wwwroot.'/mod/reader/quiz/attempt.php?'.$_SESSION['SESSION']->reader_lastattemptpage;
         }
-        echo ' <a href="'.$url.'">'.get_string('complete', 'mod_reader').'</a>';
+        echo ' <a href="'.$url.'">'.get_string('complete', $plugin).'</a>';
     }
 } else if ($delay = $reader->get_delay()) {
     if ($timenow < ($lastattemptdate + $delay)) {
         $showform = false;
         $msg = userdate($lastattemptdate + $delay);
-        $msg = get_string('youcantakeaquizafter', 'mod_reader', $msg);
+        $msg = get_string('youcantakeaquizafter', $plugin, $msg);
         $msg = html_writer::tag('span', $msg, array('class' => 'delayon'));
         echo html_writer::tag('div', $msg);
     }
@@ -537,7 +494,7 @@ if ($messages = $DB->get_records_select('reader_messages', $select, $params)) {
         if ($showmessage) {
             if ($started_list==false) {
                 $started_list = true; // only do this once
-                echo '<h3>'.get_string('messagefromyourteacher', 'mod_reader').'</h3>';
+                echo '<h3>'.get_string('messagefromyourteacher', $plugin).'</h3>';
             }
             echo '<table width="100%"><tr><td align="right"><table cellspacing="0" cellpadding="0" class="forumpost blogpost blog" '.$bgcolor.' width="90%">';
             echo '<tr><td align="left"><div style="margin-left: 10px;margin-right: 10px;">'."\n";
@@ -553,20 +510,20 @@ if ($messages = $DB->get_records_select('reader_messages', $select, $params)) {
 
 if (isset($_SESSION['SESSION']->reader_changetostudentview)) {
     if ($showform == false && $_SESSION['SESSION']->reader_changetostudentview > 0) {
-        echo '<br />'.get_string('thisblockunavailable', 'mod_reader').'<br />';
+        echo '<br />'.get_string('thisblockunavailable', $plugin).'<br />';
         $showform == true;
     }
 }
 
 if ($showform && has_capability('mod/reader:viewbooks', $contextmodule)) {
-    echo '<h3>'.get_string('searchforthebookthatyouwant', 'mod_reader').':</h3>';
-    echo reader_search_books($id, $reader, $USER->id, true, 'takequiz');
+    echo '<h3>'.get_string('searchforabook', $plugin).':</h3>';
+    echo $output->search_form($USER->id, true, 'takequiz');
 
-    echo '<h3>'.get_string('selectthebookthatyouwant', 'mod_reader').':</h3>';
-    echo reader_available_books($id, $reader, $USER->id, 'takequiz');
+    echo '<h3>'.get_string('selectabook', $plugin).':</h3>';
+    echo $output->books_menu($id, $reader, $USER->id, 'takequiz');
 
     $url = new moodle_url('/course/view.php', array('id' => $course->id));
-    $btn = $output->single_button($url, get_string('returntocoursepage', 'mod_reader'), 'get');
+    $btn = $output->single_button($url, get_string('returntocoursepage', $plugin), 'get');
     echo html_writer::tag('div', $btn, array('style' => 'clear: both; padding: 12px;'));
 }
 
@@ -575,8 +532,6 @@ echo html_writer::tag('div', '', array('style'=>'clear:both;'));
 echo $output->box_end();
 print ('<center><img src="img/credit.jpg" height="40px"></center>');
 echo $output->footer();
-
-reader_change_to_teacherview();
 
 /**
  * reader_view_blockgraph
@@ -604,13 +559,13 @@ function reader_view_blockgraph($reader, $leveldata, $dateformat) {
     $thisdone = ($thismax - $thisallow);
     $nextdone = ($nextmax - $nextallow);
 
-    // images
-    $previmg = html_writer::empty_tag('img', array('src'=>new moodle_url('/mod/reader/pix/progress/lm1.jpg'), 'border'=>0, 'alt'=>'lm1', 'height'=>16, 'width'=>28, 'style'=>'margin:0 4px 0 0'));
-    $thisimg = html_writer::empty_tag('img', array('src'=>new moodle_url('/mod/reader/pix/progress/l.jpg'), 'border'=>0, 'alt'=>'l', 'height'=>16, 'width'=>28, 'style'=>'margin:0 4px 0 0'));
-    $nextimg = html_writer::empty_tag('img', array('src'=>new moodle_url('/mod/reader/pix/progress/lp1.jpg'), 'border'=>0, 'alt'=>'lp1', 'height'=>16, 'width'=>28, 'style'=>'margin:0 4px 0 0'));
-    $spacer  = html_writer::empty_tag('img', array('src'=>new moodle_url('/mod/reader/pix/progress/spacer.jpg'), 'border'=>0, 'alt'=>'space', 'height'=>26, 'width'=>28, 'style'=>'margin:0 4px 0 0'));
-    $done    = html_writer::empty_tag('img', array('src'=>new moodle_url('/mod/reader/pix/progress/done.jpg'), 'border'=>0, 'alt'=>'done', 'height'=>26, 'width'=>28, 'style'=>'margin:0 4px 0 0'));
-    $notyet  = html_writer::empty_tag('img', array('src'=>new moodle_url('/mod/reader/pix/progress/notyet.jpg'), 'border'=>0, 'alt'=>'notyet', 'height'=>26, 'width'=>28, 'style'=>'margin:0 4px 0 0'));
+    // dots
+    $previmg = html_writer::tag('div', get_string('readinglevelshort', 'mod_reader', $leveldata['currentlevel'] - 1), array('class' => 'squarebase squarelevel'));
+    $thisimg = html_writer::tag('div', get_string('readinglevelshort', 'mod_reader', $leveldata['currentlevel'] + 0), array('class' => 'squarebase squarelevel'));
+    $nextimg = html_writer::tag('div', get_string('readinglevelshort', 'mod_reader', $leveldata['currentlevel'] + 1), array('class' => 'squarebase squarelevel'));
+    $spacer  = html_writer::tag('div', '', array('class' => 'squarebase squarespacer'));
+    $done    = html_writer::tag('div', '', array('class' => 'squarebase squaredone'));
+    $notyet  = html_writer::tag('div', '', array('class' => 'squarebase squarenotyet'));
 
     // generate $output
     $output  = '';
@@ -656,12 +611,14 @@ function reader_view_blockgraph($reader, $leveldata, $dateformat) {
 
     if ($output) {
         // prepend heading
-        $date   = date($dateformat, $leveldata['promotiondate']);
-        $since  = ($leveldata['currentlevel']==0 ? 'sincedate' : 'sincepromotion');
-        $params = array('class' => 'noverticalpadding', 'style' => 'margin: 6px auto; padding: 6px auto;');
-        $output = html_writer::tag('h3', get_string('quizzespassedtable', 'mod_reader', $leveldata['currentlevel']), $params).
-                  html_writer::tag('p', get_string($since, 'mod_reader', $date), $params).
-                  $output;
+        $text = date($dateformat, $leveldata['promotiondate']);
+        if ($leveldata['currentlevel']==0) {
+            $text = get_string('booksreadsincedate', 'mod_reader', $text);
+        } else {
+            $text = get_string('booksreadsincepromotion', 'mod_reader', $text);
+        }
+        $params = array('style' => 'margin: 6px auto; padding: 6px auto;');
+        $output = html_writer::tag('div', $text, $params).$output;
 
         // append images as bar titles
         $output .= ($prevallow < 0 ? '' : $previmg);
@@ -669,7 +626,7 @@ function reader_view_blockgraph($reader, $leveldata, $dateformat) {
         $output .= ($nextallow < 0 ? '' : $nextimg);
 
         // put output in its own DIV floated to the right of the page
-        $output = html_writer::tag('div', $output, array('style'=>'float: right; margin-right: 50px; text-align: center;'));
+        $output = html_writer::tag('div', $output, array('class' => 'promotiongraph', 'style'=>'text-align: center;'));
     }
 
     return $output;

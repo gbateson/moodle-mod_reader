@@ -17,27 +17,28 @@
         <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="timemodified" PREVIOUS="timelimit"/>
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="usecourse" PREVIOUS="timecreated"/>
         <FIELD NAME="usecourse" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="bookinstances" PREVIOUS="timemodified"/>
-        <FIELD NAME="bookinstances" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="bookcovers" PREVIOUS="usecourse"/>
-        <FIELD NAME="bookcovers" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="ignoredate" PREVIOUS="bookinstances"/>
+        <FIELD NAME="bookinstances" TYPE="int" LENGTH="2" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="bookcovers" PREVIOUS="usecourse"/>
+        <FIELD NAME="bookcovers" TYPE="int" LENGTH="2" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="ignoredate" PREVIOUS="bookinstances"/>
         <FIELD NAME="ignoredate" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="minpassgrade" PREVIOUS="bookcovers"/>
         <FIELD NAME="minpassgrade" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="60" SEQUENCE="false" NEXT="goal" PREVIOUS="ignoredate"/>
         <FIELD NAME="goal" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="maxgrade" PREVIOUS="minpassgrade"/>
-        <FIELD NAME="maxgrade" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="wordsorpoints" PREVIOUS="goal"/>
-        <FIELD NAME="wordsorpoints" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="showprogressbar" PREVIOUS="maxgrade"/>
-        <FIELD NAME="showprogressbar" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="1" SEQUENCE="false" NEXT="checkbox" PREVIOUS="wordsorpoints"/>
-        <FIELD NAME="checkbox" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="questionmark" PREVIOUS="showprogressbar"/>
-        <FIELD NAME="questionmark" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="levelcheck" PREVIOUS="checkbox"/>
-        <FIELD NAME="levelcheck" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="1" SEQUENCE="false" NEXT="thislevel" PREVIOUS="questionmark"/>
+        <FIELD NAME="maxgrade" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="showprogressbar" PREVIOUS="goal"/>
+        <FIELD NAME="showprogressbar" TYPE="int" LENGTH="2" NOTNULL="false" DEFAULT="1" SEQUENCE="false" NEXT="wordsorpoints" PREVIOUS="maxgrade"/>
+        <FIELD NAME="wordsorpoints" TYPE="int" LENGTH="2" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="showpercentgrades" PREVIOUS="showprogressbar"/>
+        <FIELD NAME="showpercentgrades" TYPE="int" LENGTH="2" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="checkbox" PREVIOUS="wordsorpoints"/>
+        <FIELD NAME="checkbox" TYPE="int" LENGTH="2" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="questionmark" PREVIOUS="showpercentgrades"/>
+        <FIELD NAME="questionmark" TYPE="int" LENGTH="2" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="levelcheck" PREVIOUS="checkbox"/>
+        <FIELD NAME="levelcheck" TYPE="int" LENGTH="2" NOTNULL="false" DEFAULT="1" SEQUENCE="false" NEXT="thislevel" PREVIOUS="questionmark"/>
         <FIELD NAME="thislevel" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="6" SEQUENCE="false" NEXT="prevlevel" PREVIOUS="levelcheck"/>
         <FIELD NAME="prevlevel" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="3" SEQUENCE="false" NEXT="nextlevel" PREVIOUS="thislevel"/>
         <FIELD NAME="nextlevel" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="1" SEQUENCE="false" NEXT="stoplevel" PREVIOUS="prevlevel"/>
         <FIELD NAME="stoplevel" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="99" SEQUENCE="false" NEXT="password" PREVIOUS="nextlevel"/>
         <FIELD NAME="password" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" NEXT="subnet" PREVIOUS="stoplevel"/>
         <FIELD NAME="subnet" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" NEXT="popup" PREVIOUS="password"/>
-        <FIELD NAME="popup" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="uniqueip" PREVIOUS="subnet"/>
-        <FIELD NAME="uniqueip" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="checkcheating" PREVIOUS="popup"/>
-        <FIELD NAME="checkcheating" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="notifycheating" PREVIOUS="uniqueip"/>
-        <FIELD NAME="notifycheating" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="1" SEQUENCE="false" NEXT="cheatedmessage" PREVIOUS="checkcheating"/>
+        <FIELD NAME="popup" TYPE="int" LENGTH="2" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="uniqueip" PREVIOUS="subnet"/>
+        <FIELD NAME="uniqueip" TYPE="int" LENGTH="2" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="checkcheating" PREVIOUS="popup"/>
+        <FIELD NAME="checkcheating" TYPE="int" LENGTH="2" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="notifycheating" PREVIOUS="uniqueip"/>
+        <FIELD NAME="notifycheating" TYPE="int" LENGTH="2" NOTNULL="false" DEFAULT="1" SEQUENCE="false" NEXT="cheatedmessage" PREVIOUS="checkcheating"/>
         <FIELD NAME="cheatedmessage" TYPE="text" NOTNULL="false" SEQUENCE="false" NEXT="clearedmessage" PREVIOUS="notifycheating"/>
         <FIELD NAME="clearedmessage" TYPE="text" NOTNULL="false" SEQUENCE="false" PREVIOUS="cheatedmessage"/>
       </FIELDS>
@@ -75,7 +76,7 @@
         <KEY NAME="readatte_uni_ix" TYPE="unique" FIELDS="uniqueid" PREVIOUS="primary"/>
       </KEYS>
       <INDEXES>
-        <INDEX NAME="readatte_rea_ix" UNIQUE="false" FIELDS="reader" NEXT="readatte_use_ix"/>
+        <INDEX NAME="readatte_rea_ix" UNIQUE="false" FIELDS="readerid" NEXT="readatte_use_ix"/>
         <INDEX NAME="readatte_use_ix" UNIQUE="false" FIELDS="userid" NEXT="readatte_boo_ix" PREVIOUS="readatte_rea_ix"/>
         <INDEX NAME="readatte_boo_ix" UNIQUE="false" FIELDS="bookid" NEXT="readatte_qui_ix" PREVIOUS="readatte_use_ix"/>
         <INDEX NAME="readatte_qui_ix" UNIQUE="false" FIELDS="quizid" NEXT="readatte_att_ix" PREVIOUS="readatte_boo_ix"/>

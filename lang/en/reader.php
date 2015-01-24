@@ -22,8 +22,9 @@ $string['reader:viewreports'] = 'View reports';
 $string['configbookcovers'] = '';
 $string['configcheatedmessage'] = '';
 $string['configcheckbox'] = '';
+$string['configcheckcheating'] = '';
 $string['configclearedmessage'] = '';
-$string['configeditingteacherrole'] = '';
+$string['configgoal'] = '';
 $string['configintro'] = 'The values you set here define the default values that are used in the settings form when you create a new Reader activity.
 
 You can also configure which reader settings are considered advanced.';
@@ -35,11 +36,12 @@ $string['confignextlevel'] = '';
 $string['confignotifycheating'] = '';
 $string['configprevlevel'] = '';
 $string['configquestionmark'] = '';
-$string['configquiztimelimit'] = '';
 $string['configserverpassword'] = '';
 $string['configserverurl'] = '';
 $string['configserverusername'] = '';
+$string['configshowpercentgrades'] = '';
 $string['configshowprogressbar'] = '';
+$string['configstoplevel'] = '';
 $string['configthislevel'] = '';
 $string['configupdate'] = '';
 $string['configusecourse'] = '';
@@ -160,12 +162,10 @@ $string['allowpromotion'] = 'Allow promotion';
 $string['allparticipants'] = 'All participants';
 $string['allterms'] = 'all terms';
 $string['alreadyclosed'] = 'Sorry, this activity is no longer available. It closed {$a}.';
-$string['andnextmore'] = ' {$a} more ';
 $string['anywhere'] = 'Anywhere';
 $string['arrange'] = 'Arrange';
 $string['assignpointsbookshavenoquizzes'] = 'Award points for books that have no quizzes';
 $string['atlevel'] = ' at Level';
-$string['atlevelbeforebeingpromoted'] = ' at level {$a} before being promoted.';
 $string['attemptedbooks'] = 'Only books that have been attempted on this site';
 $string['attempts'] = 'Attempts';
 $string['attemptscoremanagement'] = 'Attempt and score management';
@@ -223,12 +223,13 @@ $string['bookrating3'] = 'It was great';
 $string['bookratingslevel'] = 'Display student book ratings for each book level';
 $string['books'] = 'Books';
 $string['booksreadinpreviousterms'] = 'Books read in previous terms';
+$string['booksreadsincedate'] = 'Books read since {$a}';
+$string['booksreadsincepromotion'] = 'Books read since your promotion on {$a}';
 $string['booksreadthisterm'] = 'Books read this term';
 $string['bookswithoutquizzes'] = 'Books without quizzes';
 $string['bookswithquizzes'] = 'Books with quizzes';
 $string['booktitle'] = 'Book title';
 $string['bookupdated'] = 'Book updated: {$a}';
-$string['butyoumaytakequizzes'] = ' You may take quizzes on books at any level.';
 $string['cannotcreatecourse'] = 'Sorry, the download cannot proceed because you do not have permission to create a new course or edit the current course.';
 $string['cannotdownloadata'] = 'Sorry, there was a problem downloading data for the Reader module';
 $string['changeallstoplevelto'] = 'Change all maximum levels to ';
@@ -328,7 +329,6 @@ $string['downloads'] = 'Downloads';
 $string['downloadsettings'] = 'Download settings';
 $string['duration'] = 'Duration';
 $string['edit'] = 'Edit';
-$string['editingteacherrole'] = 'Use Editing Teacher role';
 $string['editquiztoreader'] = 'Delete quizzes';
 $string['error'] = 'Error: {$a}';
 $string['errorsfound'] = 'Errors found';
@@ -423,7 +423,7 @@ $string['import_reader_tables'] = 'Import reader tables';
 $string['import_reader_tablesdesc'] = 'Recreate an entire Moodle site from just the Reader database tables. This tool will create courses, users, groups, Reader activies and quizzes.';
 $string['importreadertables'] = 'Import Reader tables';
 $string['importstudentrecord'] = 'Import student record';
-$string['in1000sofwords'] = 'In 1000s of words';
+$string['in1000sofwords'] = 'in 1000s of words';
 $string['includepublishers'] = 'Search publisher names too?';
 $string['incorrect'] = ' - incorrect';
 $string['incorrect2'] = ' - Sorry, please obtain the correct password from the publisher(s). Click "Install Quizzes" to download your other selections.';
@@ -522,6 +522,7 @@ $string['print_cheatsheetdesc'] = 'Display the answers for any Reader quiz.';
 $string['private'] = 'Private';
 $string['process_addquestion'] = '<b>Add questions to quiz {$a}.</b><br />';
 $string['process_courseadded'] = '<b>Course added.</b><br />';
+$string['promotionnotallowed'] = 'Your teacher has stopped automatic promotion for you.';
 $string['promotionsettings'] = 'Promotion settings';
 $string['publisher'] = 'Publisher';
 $string['publishers'] = 'Publishers';
@@ -543,7 +544,6 @@ $string['quizname'] = 'Quiz name';
 $string['quiznotavailable'] = 'Sorry, this quiz is not currently available to you';
 $string['quizsetdelay'] = 'Set delay on Reader quizzes';
 $string['quizshowhide'] = 'Show / Hide Reader quizzes';
-$string['quiztimelimit'] = 'Quiz time limit';
 $string['quizupdate'] = 'Update Reader quizzes';
 $string['quizupdated'] = 'Quiz updated: {$a}';
 $string['quizupdateswillbeapplied'] = 'Quiz updates will be applied to all courses currently using the quiz.';
@@ -562,6 +562,7 @@ $string['readerdownload'] = 'Download Reader books (and quizzes)';
 $string['readerquizsettings'] = 'Reader quiz settings';
 $string['readerreports'] = 'Reader module reports';
 $string['readinglevel'] = 'Reading Level';
+$string['readinglevelshort'] = 'RL {$a}';
 $string['readingreportfor'] = 'Reading Report for {$a}';
 $string['redo_upgrade'] = 'Redo upgrade';
 $string['redo_upgradedesc'] = 'Redo an upgrade to the Reader module.';
@@ -587,7 +588,7 @@ $string['run_readercron'] = 'Run Reader cron';
 $string['run_readercrondesc'] = 'Run the cron job for the Reader module.';
 $string['search'] = 'Search';
 $string['search_help'] = 'To search for a particular book, enter some text contained in the title of the book and click the "Go" button';
-$string['searchforthebookthatyouwant'] = 'Search for the book that you want to take a quiz on';
+$string['searchforabook'] = 'Search for a book';
 $string['sectionname'] = 'Section name';
 $string['sectiontoseparate'] = 'add quizzes to separate sections for publisher and level, adding quizzes to existing sections when available';
 $string['sectiontothebottom'] = 'add all quizzes to the bottom of the hidden course in a new section';
@@ -601,6 +602,7 @@ $string['seedetailsbelow'] = 'see details below';
 $string['select'] = 'Select';
 $string['select_course'] = 'Select Course';
 $string['select_help'] = 'Click on the kind of items you wish to be selected in the list below';
+$string['selectabook'] = 'Select a book';
 $string['selectalreadyexist'] = 'Select already exist';
 $string['selectedbookname'] = 'Selected book name';
 $string['selectipmask'] = 'Select ip mask';
@@ -610,7 +612,6 @@ $string['selectseries'] = 'Select Series';
 $string['selectsomeattempts'] = 'Select one or more attempts';
 $string['selectsomebooks'] = 'Select one or more books';
 $string['selectsomeusers'] = 'Select one or more users';
-$string['selectthebookthatyouwant'] = 'Select the book that you want to take a quiz on';
 $string['selectthisquiz'] = 'Select this quiz';
 $string['sendmessage'] = 'Send Message';
 $string['sendmessagetext'] = 'Message text';
@@ -645,17 +646,21 @@ $string['showhidden'] = 'Show hidden books';
 $string['showhide'] = 'Show/Hide';
 $string['showhidebooks'] = 'Update the show/hide setting for selected books';
 $string['showlevel'] = 'Show Level';
+$string['showpercentgrades'] = 'Show percent grades';
+$string['showpercentgrades_help'] = '**Yes**
+: Show the grade (as a percent) for each attempt at a Reader quiz
+
+**No**
+: Do NOT show the grades for individual attempts at Reader quizzes';
 $string['showpoints'] = 'Show points only';
 $string['showpointsandwordcount'] = 'Show both points and word count';
 $string['showprogressbar'] = 'Show progress bar';
-$string['showprogressbar_help'] = '**No**
-: Do NOT show the word count progress bar on the main page for this Reader activity
+$string['showprogressbar_help'] = '**Yes**
+: Show the word count progress bar on the main page for this Reader activity
 
-**Yes**
-: Show the word count progress bar on the main page for this Reader activity';
+**No**
+: Do NOT show the word count progress bar on the main page for this Reader activity';
 $string['showwordcount'] = 'Show word count only';
-$string['sincedate'] = '(since {$a})';
-$string['sincepromotion'] = '(since promotion on {$a})';
 $string['skipline'] = 'Skip line: {$a}';
 $string['skipped'] = 'Skipped';
 $string['skipquizdownload'] = 'Quiz "{$a->quizname}" already exists in section {$a->sectionnum}, "{$a->sectionname}", of "{$a->coursename}", and has been skipped';
@@ -819,14 +824,15 @@ $string['wordsorpoints_help'] = '**Show word count only**
 
 **Show both words and points**
 : On report pages, show both the word count and the points earned for attempts.';
-$string['youcantake'] = ' You can take ';
+$string['youcannottake'] = 'You can NOT take any more quizzes at reading level {$a}';
 $string['youcantakeaquizafter'] = 'You can take your next quiz after {$a}';
 $string['youcantakeaquiznow'] = 'You can take a quiz now.';
 $string['youcantakeasmanyquizzesasyouwant'] = ' You can take as many quizzes as you want at Level {$a}. ';
+$string['youcantakeplural'] = 'You can take {$a->count} more quizzes at reading level {$a->level}. These books will count toward your reading total, but will not count toward your promotion.';
+$string['youcantakesingle'] = 'You can take ONE more quiz at reading level {$a->level}. This book will count toward your reading total, but will not count toward your promotion.';
+$string['youcantakeunlimited'] = 'You can take as many quizzes as you want at reading level {$a}';
 $string['youhavebeenpromoted'] = 'Congratulations!! You have been promoted to Level {$a}';
-$string['youmayalsotake'] = ' You can take {$a} more ';
-$string['youmusttakequiz'] = ' You can take {$a} more quiz ';
-$string['youmusttakequizzes'] = ' You can take {$a} more quizzes ';
+$string['youmustpassplural'] = 'To be promoted, you must pass {$a->count} more quizzes at reading level {$a->level}.';
+$string['youmustpasssingle'] = 'To be promoted, you must pass ONE more quiz at reading level {$a->level}.';
 $string['yourcurrentlevel'] = 'Your current level';
-$string['yourteacherhasstopped'] = ' Your teacher has stopped automatic promotion for you.';
 $string['youwerepromoted'] = 'You were promoted to RL-{$a->level} on {$a->date} at {$a->time}';

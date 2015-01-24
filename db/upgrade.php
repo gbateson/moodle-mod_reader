@@ -998,7 +998,7 @@ function xmldb_reader_upgrade($oldversion) {
 
         // remove obsolete Reader fields
         $table = new xmldb_table('reader');
-        $fields = array('reportwordspoints', 'pointreport');
+        $fields = array('reportwordspoints');
         foreach ($fields as $field) {
             $field = new xmldb_field($field);
             if ($dbman->field_exists($table, $field)) {
@@ -1064,8 +1064,7 @@ function xmldb_reader_upgrade($oldversion) {
 
         $table = new xmldb_table('reader');
         $fields = array('maxgrade' => new xmldb_field('maxgrade', XMLDB_TYPE_INTEGER, '11', null, null, null, '0', 'goal'));
-        $indexes = array();
-        reader_xmldb_update_fields($dbman, $table, $fields, $indexes);
+        reader_xmldb_update_fields($dbman, $table, $fields);
 
         $table = new xmldb_table('reader_attempts');
         $fields = array('readerid' => new xmldb_field('reader', XMLDB_TYPE_INTEGER, '11', null, null, null, '0', 'uniqueid'));
@@ -1075,6 +1074,29 @@ function xmldb_reader_upgrade($oldversion) {
         require_once($CFG->dirroot.'/mod/reader/lib.php');
         reader_update_grades(); // all Reader activities !!
 
+        upgrade_mod_savepoint(true, "$newversion", 'reader');
+    }
+
+    $newversion = 2015012144;
+    if ($oldversion < $newversion) {
+        // remove obsolete config settings
+        $configs = array('editingteacherrole', 'iptimelimit', 'update', 'update_interval');
+        foreach ($configs as $config) {
+            $reader_config = 'reader_'.$config;
+            if (isset($CFG->$reader_config)) {
+                unset_config($reader_config);
+            }
+            unset_config($config, $plugin);
+        }
+        upgrade_mod_savepoint(true, "$newversion", 'reader');
+    }
+
+    $newversion = 2015012345;
+    if ($oldversion < $newversion) {
+        // add "showpercentgrades" field to "reader" table
+        $table = new xmldb_table('reader');
+        $fields = array('showpercentgrades' => new xmldb_field('pointreport', XMLDB_TYPE_INTEGER, '2', null, null, null, '0', 'showprogressbar'));
+        reader_xmldb_update_fields($dbman, $table, $fields);
         upgrade_mod_savepoint(true, "$newversion", 'reader');
     }
 

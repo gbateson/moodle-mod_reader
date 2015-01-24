@@ -1058,9 +1058,9 @@ class reader_downloader {
                         $link = new moodle_url('/mod/quiz/view.php', array('q' => $quiz->id));
                         $link = html_writer::link($link, $strquiz, array('onclick' => 'this.target="_blank"'));
 
-                        list($cheatsheeturl, $strcheatsheet) = reader_cheatsheet_init('takequiz');
+                        list($cheatsheeturl, $strcheatsheet) = $this->output->cheatsheet_init('takequiz');
                         if ($cheatsheeturl) {
-                            $link .= ' '.reader_cheatsheet_link($cheatsheeturl, $strcheatsheet, $publisherlevel, $book);
+                            $link .= ' '.$this->output->cheatsheet_link($cheatsheeturl, $strcheatsheet, $publisherlevel, $book);
                         }
 
                         if ($book->quizid==0) {

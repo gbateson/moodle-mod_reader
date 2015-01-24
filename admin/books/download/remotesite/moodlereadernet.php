@@ -518,7 +518,7 @@ class reader_remotesite_moodlereadernet extends reader_remotesite {
 
                         if ($attempt->passed=='true') {
                             $type = 'true';
-                        } else if ($attempt->passed == 'credit') {
+                        } else if ($attempt->passed=='credit') {
                             $type = 'credit';
                         } else {
                             $type = 'false';

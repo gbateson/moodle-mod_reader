@@ -26,16 +26,142 @@
  */
 
 
+/** reader mod settings page **/
+#page-admin-setting-modsettingreader div.form-textarea {float: left;}
+
 /** reader mod edit **/
 #page-mod-reader-mod .mform .fitem .fitemtitle {min-width: 190px; margin-right: 8px;}
 #page-mod-reader-mod .mform .fitem fieldset.felement {padding-left: 0%;}
 
 /** reader view **/
-#page-mod-reader-view h2 span.readingreporttitle {
-    background-color : #ffcc66; /* gentle orange */
+#page-mod-reader-view h2.readingreporttitle {
+    background-color : #FFCC80; /* gentle orange */
     padding          : 6px 12px;
+    width            : 800px;
+    /* cross-browser rounded corners (Note: Safari and Chrome use Webkit) */
+    /* css3    */ border-top-left-radius: 8px; border-top-right-radius: 8px;
+    /* Opera   */ -o-border-top-left-radius: 8px; -o-border-top-right-radius: 8px;
+    /* Firefox */ -moz-border-top-left-radius: 8px; -moz-border-top-right-radius: 8px;
+    /* Webkit  */ -webkit-border-top-left-radius: 8px; -webkit-border-top-right-radius: 8px;
 }
+#page-mod-reader-view table.readerpromotioninfo {
+    width        : 824px;
+}
+#page-mod-reader-view table.readerpromotioninfo tr.r0 td.c0 {
+    height       : 36px;
+    font-size    : 28px;
+    font-weight  : bold;
+    padding-left : 12px;
+    padding-top  : 18px;
+}
+#page-mod-reader-view table.readerpromotioninfo tr.r0 td.lastcol {
+    width    : 124px;
+}
+#page-mod-reader-view table.readerpromotioninfo tr.r1 td.c0 li {
+    font-size    : 16px;
+    margin       : 12px 0px 6px 0px;
+    max-width    : 480px;
+}
+#page-mod-reader-view table.readerpromotioninfo div.squarebase {
+    /* http://blog.mozilla.org/webdev/2009/02/20/cross-browser-inline-block/ */
+    border-width : 1px;
+    border-style : solid;
+    display      : -moz-inline-stack;
+    display      : inline-block;
+    font-size    : 9px;
+    margin       : 1px 6px;
+    height       : 20px;
+    padding      : 0px;
+    text-align   : center;
+    vertical-align: top;
+    width        : 20px;
+    /***** IE 6+7 *****/
+    zoom         : 1;
+    *display     : inline;
+    _height      : 20px;
+}
+#page-mod-reader-view table.readerpromotioninfo div.squarelevel {
+    /*
+    background-color  : #B2F0FF;
+    border-color      : #007A99;
+    */
+    background-color  : transparent;
+    border-color      : transparent;
+}
+#page-mod-reader-view table.readerpromotioninfo div.squaredone {
+    background-color  : #009933;
+    border-color      : #336600;
+}
+#page-mod-reader-view table.readerpromotioninfo div.squarespacer {
+    background-color  : transparent;
+    border-color      : transparent;
+}
+#page-mod-reader-view table.readerpromotioninfo div.squarenotyet {
+    background-color  : #CCCCCC;
+    border-color      : #800000;
+}
+#page-mod-reader-view table.readingreportattempts {
+    width    : 824px;
+}
+#page-mod-reader-view  div.ProgressBar {
+    padding  : 0px;
+    width    : 824px;
+}
+#page-mod-reader-view  div.ProgressBarImages {
+    position : relative;
+    height   : 60px;
+    margin   : 0px;
+    padding  : 0px;
+    width    : 824px;
+    z-index  : 10;
+}
+#page-mod-reader-view div.ProgressBarImages div.BackgroundDiv {
+    position : absolute;
+    height   : 63px;
+    left     : 5px;
+    top      : 14px;
+    width    : 824px;
+    z-index  : 10;
+}
+#page-mod-reader-view div.ProgressBarImages img.grey {
+    position : absolute;
+    height   : 52px;
+    left     : 4px;
+    top      : 4px;
+    width    : 816px;
+    z-index  : 20;
+}
+#page-mod-reader-view div.ProgressBarImages img.color {
+    position : absolute;
+    height   : 52px;
+    left     : 4px;
+    top      : 4px;
+    width    : 816px;
+    z-index  : 30;
+}
+#page-mod-reader-view div.ProgressBarImages img.now {
+    position : absolute;
+    left     : 4px; /* overridden in renderer.php */
+    top      : 11px;
+    z-index  : 40;
+}
+#page-mod-reader-view div.ProgressBarImages img.goal {
+    position : absolute;
+    left     : 4px; /* overridden in renderer.php */
+    top      : -10px;
+    z-index  : 50;
+}
+#page-mod-reader-view  div.ProgressBarFootnote {
+    float       : right;
+    font-weight : bold;
+    font-size   : small;
+    padding     : 0px 12px 4px 0px;
+    text-align  : right;
+    width       : 120px;
+}
+
 #page-mod-reader-view div.tabtree { margin-bottom: 0px; }
+#page-mod-reader-view .readersearchform { max-width: 480px; }
 #page-mod-reader-view .readersearchform tr.advanced { display: none; }
 #page-mod-reader-view div span.delayoff { background-color: #ccff99; padding: 2px 6px; }
 #page-mod-reader-view div span.delayon  { background-color: #ff7373; padding: 2px 6px; }

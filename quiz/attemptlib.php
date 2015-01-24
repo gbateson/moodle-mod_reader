@@ -1176,9 +1176,108 @@ class reader_attempt {
         $DB->update_record('reader_attempts', $this->attempt);
 
         if ($this->attempt->timefinish && ! $this->is_preview()) {
-            reader_save_best_grade($this->get_reader(), $this->get_userid());
+            $this->save_best_grade();
         }
     }
+
+    /**
+     * save_best_grade
+     *
+     * @uses $DB
+     * @uses $USER
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    function save_best_grade() {
+        global $DB, $USER;
+
+        $reader = $this->get_reader();
+        $userid = $this->get_userid();
+
+        if (empty($userid)) {
+            $userid = $USER->id;
+        }
+
+        // Get all the attempts made by the user
+        if (! $attempts = reader_get_user_attempts($reader->id, $userid)) {
+            notify('Could not find any user attempts');
+            return false;
+        }
+
+        // Calculate the best grade
+        $bestgrade = $this->calculate_best_grade($attempts);
+        $bestgrade = reader_rescale_grade($bestgrade, $reader);
+
+        // Save the best grade in the database
+        if ($grade = $DB->get_record('reader_grades', array('readerid' => $reader->id, 'userid' => $userid))) {
+            $grade->grade = $bestgrade;
+            $grade->timemodified = time();
+            if (! $DB->update_record('reader_grades', $grade)) {
+                notify('Could not update best grade');
+                return false;
+            }
+        } else {
+            $grade = stdClass();
+            $grade->reader = $reader->id;
+            $grade->userid = $userid;
+            $grade->grade = $bestgrade;
+            $grade->timemodified = time();
+            if (! $DB->insert_record('reader_grades', $grade)) {
+                notify('Could not insert new best grade');
+                return false;
+            }
+        }
+
+        reader_update_grades($reader, $userid);
+        return true;
+    }
+
+    /**
+     * calculate_best_grade
+     *
+     * @param xxx $reader
+     * @param xxx $attempts
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    function calculate_best_grade($attempts) {
+
+        // check we have some attempts
+        if (empty($attempts)) {
+            return 0.0;
+        }
+
+        $reader = $this->get_reader();
+        switch ($reader->grademethod) {
+
+            case READER_ATTEMPTFIRST:
+                $attempt = reset($attempts);
+                return $attempt->sumgrades;
+
+            case READER_ATTEMPTLAST:
+                $attempt = end($attempts);
+                return $attempt->sumgrades;
+
+            case READER_GRADEAVERAGE:
+                $sum = 0;
+                $count = 0;
+                foreach ($attempts as $attempt) {
+                    $sum += $attempt->sumgrades;
+                    $count ++;
+                }
+                return (float)$sum/$count;
+
+            default:
+            case READER_GRADEHIGHEST:
+                $max = 0;
+                foreach ($attempts as $attempt) {
+                    if ($attempt->sumgrades > $max) {
+                        $max = $attempt->sumgrades;
+                    }
+                }
+                return $max;
+        }
+   }
 
     /**
      * Update the flagged state for all question_attempts in this usage, if their

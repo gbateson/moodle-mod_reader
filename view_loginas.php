@@ -26,7 +26,6 @@
 
 /** Include required files */
 require_once('../../config.php');
-require_once($CFG->dirroot.'/course/lib.php');
 require_once($CFG->dirroot.'/mod/reader/locallib.php');
 require_once($CFG->dirroot.'/mod/reader/renderer.php');
 

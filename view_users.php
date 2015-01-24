@@ -48,8 +48,13 @@ if ($id) {
 require_course_login($course, true, $cm);
 reader_add_to_log($course->id, 'reader', 'Ajax get list of users', 'view.php?id='.$cm->id, $reader->id, $cm->id);
 
+$reader = mod_reader::create($reader, $cm, $course);
+
+$output = $PAGE->get_renderer('mod_reader');
+$output->init($reader);
+
 if ($search) {
-    echo reader_search_users($id, $reader, $USER->id);
+    echo $output->search_users($id, $reader, $USER->id);
 } else {
-    echo reader_available_users($id, $reader, $USER->id);
+    echo $output->users_menu($id, $reader, $USER->id);
 }

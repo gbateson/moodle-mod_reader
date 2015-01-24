@@ -27,12 +27,12 @@
 
 /** Include required files */
 require_once('../../config.php');
-require_once($CFG->dirroot.'/mod/reader/lib.php');
+require_once($CFG->dirroot.'/mod/reader/locallib.php');
 
-$id        = optional_param('id',      0, PARAM_INT); // course module id
-$a         = optional_param('a',       0, PARAM_INT); // reader id
-$search    = optional_param('search',  0, PARAM_INT); // search requested ?
-$onlypub   = optional_param('onlypub', 0, PARAM_INT); // show only book names
+$id      = optional_param('id',      0, PARAM_INT); // course module id
+$a       = optional_param('a',       0, PARAM_INT); // reader id
+$search  = optional_param('search',  0, PARAM_INT); // search requested ?
+$onlypub = optional_param('onlypub', 0, PARAM_INT); // show only book names
 
 if ($id) {
     $cm = get_coursemodule_from_id('reader', $id, 0, false, MUST_EXIST);
@@ -49,11 +49,10 @@ if ($id) {
 require_course_login($course, true, $cm);
 reader_add_to_log($course->id, 'reader', 'Ajax get list of books', 'view.php?id='.$cm->id, $reader->id, $cm->id);
 
-if ($mode = optional_param('mode', '', PARAM_ALPHA)) {
+$reader = mod_reader::create($reader, $cm, $course);
 
-    // load mod_reader class
-    require_once($CFG->dirroot.'/mod/reader/locallib.php');
-    $reader = mod_reader::create($reader, $cm, $course);
+// get report "mode", if any
+if ($mode = optional_param('mode', '', PARAM_ALPHA)) {
 
     // create the appropriate renderer class for this report $mode
     $mode = mod_reader::get_mode('admin/reports');
@@ -62,9 +61,12 @@ if ($mode = optional_param('mode', '', PARAM_ALPHA)) {
     $output->init($reader);
 
     // send $output to browser
-    echo $output->available_items();
+    echo $output->select_items();
     exit;
 }
+
+$output = $PAGE->get_renderer('mod_reader');
+$output->init($reader);
 
 // if we are a teacher logged in as a student, then fix the $USER object
 if (isset($_SESSION['SESSION']->reader_lastuser) && $_SESSION['SESSION']->reader_lastuser > 0) {
@@ -73,9 +75,9 @@ if (isset($_SESSION['SESSION']->reader_lastuser) && $_SESSION['SESSION']->reader
 }
 
 if ($search) {
-    echo reader_search_books($id, $reader, $USER->id);
+    echo $output->search_form();
 } else {
-    echo reader_available_books($id, $reader, $USER->id);
+    echo $output->books_menu($id, $reader, $USER->id);
 }
 
 // not sure what this does ... maybe switches the student mode back to teacher mode ?
