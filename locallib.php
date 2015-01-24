@@ -775,4 +775,72 @@ class mod_reader {
         $stdclass->modname = 'reader';
         return $stdclass;
     }
+
+    /**
+     * convert_quizattempt
+     *
+     * @uses $CFG
+     * @uses $DB
+     * @param xxx $readerattempt
+     * @return integer id of new record in quiz_attempts table
+     * @todo Finish documenting this function
+     */
+    static public function convert_quizattempt($readerattempt) {
+        global $CFG, $DB;
+        require_once($CFG->dirroot.'/mod/quiz/attemptlib.php');
+
+        // clear out any attempts which may block the creation of the new quiz_attempt record
+        $DB->delete_records('quiz_attempts', array('quiz' => $readerattempt->quizid,
+                                                   'userid' => $readerattempt->userid,
+                                                   'attempt' => $readerattempt->attempt));
+        $DB->delete_records('quiz_attempts', array('uniqueid' => $readerattempt->uniqueid));
+
+        // ensure uniqueid is unique
+        //if ($DB->record_exists('quiz_attempts', array('uniqueid' => $readerattempt->uniqueid))) {
+        //    $cm = get_coursemodule_from_instance('quiz', $readerattempt->quizid);
+        //    $context = reader_get_context(CONTEXT_MODULE, $cm->id);
+        //    if ($uniqueid = reader_get_new_uniqueid($context->id, $readerattempt->quizid)) {
+        //        $readerattempt->uniqueid = $uniqueid;
+        //        $params = array('id' => $readerattempt->id);
+        //        $DB->set_field('reader_attempts', 'uniqueid', $uniqueid, $params);
+        //    }
+        //}
+
+        // determine "state" of attempt
+        // see "quiz/engines/states.php"
+        $state = '';
+        $timecheckstate = 0;
+        if ($readerattempt->timefinish) {
+            if (defined('quiz_attempt::FINISHED')) {
+                $state = quiz_attempt::FINISHED; // 'finished'
+                $timecheckstate = $readerattempt->timefinish;
+            }
+        } else {
+            if (defined('quiz_attempt::IN_PROGRESS')) {
+                $state = quiz_attempt::IN_PROGRESS; // 'inprogress'
+                $timecheckstate = $readerattempt->timemodified;
+            }
+        }
+
+        // set up new "quiz_attempt" record
+        $quizattempt = (object)array(
+            'quiz'                 => $readerattempt->quizid,
+            'userid'               => $readerattempt->userid,
+            'attempt'              => $readerattempt->attempt,
+            'uniqueid'             => $readerattempt->uniqueid,
+            'layout'               => $readerattempt->layout,
+            'currentpage'          => 0,
+            'preview'              => 0,
+            'state'                => $state,
+            'timestart'            => $readerattempt->timestart,
+            'timefinish'           => $readerattempt->timefinish,
+            'timemodified'         => $readerattempt->timemodified,
+            'timecheckstate'       => $timecheckstate,
+            'sumgrades'            => $readerattempt->sumgrades,
+            'needsupgradetonewqe'  => 0
+        );
+
+        // return id of new "quiz_attempt" record (or false)
+        return $DB->insert_record('quiz_attempts', $quizattempt);
+    }
 }

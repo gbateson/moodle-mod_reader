@@ -1936,7 +1936,47 @@ class mod_reader_renderer extends plugin_renderer_base {
         $html .= html_writer::tag('div', $text, array('class' => 'ProgressBarFootnote', 'style' => 'background-color:'.$bgcolor.';'));
 
         $html = html_writer::tag('div', $html, array('class' => 'ProgressBar'));
-        $html = html_writer::tag('div', '', array('style' => 'clear: both;'));
+        $html .= html_writer::tag('div', '', array('style' => 'clear: both; height: 1.0em; width: 1.0em;'));
         return $html;
+    }
+
+    /**
+     * Format a message from the teacher to students
+     * that will be displayed on the view.php page
+     *
+     * @uses $DB
+     * @param stdclass $message
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    function message($message) {
+        global $DB;
+        static $started_list = false;
+
+        $output = '';
+
+        if ($started_list==false) {
+            $started_list = true; // only do this once
+            $text = get_string('messagefromyourteacher', 'mod_reader');
+            $output .= html_writer::tag('h2', $text, array('class' => 'ReadingReportTitle'));
+        }
+
+        $output .= html_writer::start_tag('div', array('class' => 'readermessage'));
+        if ($message->timemodified > (time() - ( 48 * 60 * 60))) {
+        }
+        $text = format_text($message->messagetext, $message->messageformat);
+        $output .= html_writer::tag('div', $text, array('class' => 'readermessagetext'));
+
+        // add link to teacher's profile
+        if ($user = $DB->get_record('user', array('id' => $message->teacherid))) {
+            $params = array('id' => $message->teacherid, 'course' => $this->reader->course->id);
+            $params = array('href' => new moodle_url('/user/view.php', $params), 'onclick' => "this.target='_blank'");
+            $text = html_writer::tag('a', fullname($user, true), $params);
+            $output .= html_writer::tag('div', $text, array('class' => 'readermessageteacher'));
+
+        }
+
+        $output .= html_writer::end_tag('div');
+        return $output;
     }
 }

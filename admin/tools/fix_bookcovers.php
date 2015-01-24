@@ -71,10 +71,12 @@ echo $output->header();
 echo $output->tabs();
 echo $output->box_start();
 
+// get config settings for the Reader module
+$readercfg = get_config('mod_reader');
+
 $action = optional_param('action', '', PARAM_ALPHA);
 reader_print_images_form($readercfg, $action);
 
-$readercfg = get_config('mod_reader');
 $courseid  = $readercfg->usecourse;
 make_upload_directory('reader/images');
 

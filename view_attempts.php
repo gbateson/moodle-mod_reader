@@ -45,7 +45,7 @@ if ($reader->can_viewreports()) {
             if ($cm = get_coursemodule_from_instance('quiz', $quizid)) {
                 if ($attempts = $DB->get_records('reader_attempts', array('quizid' => $quizid))) {
                     foreach ($attempts as $attempt){
-                        $quizattemptid = reader_copy_to_quizattempt($attempt);
+                        $quizattemptid = mod_reader::convert_quizattempt($attempt);
                     }
                 }
                 $params = array('id' => $cm->id,
@@ -67,7 +67,7 @@ if ($reader->can_viewreports()) {
         $params = array('id' => $attemptid, 'readerid' => $reader->id);
         if ($attempt = $DB->get_record('reader_attempts', $params)) {
             if ($cm = get_coursemodule_from_instance('quiz', $attempt->quizid)) {
-                if ($quizattemptid = reader_copy_to_quizattempt($attempt)) {
+                if ($quizattemptid = mod_reader::convert_quizattempt($attempt)) {
                     $params = array('attempt' => $quizattemptid);
                     $redirect = new moodle_url('/mod/quiz/review.php', $params);
                 }
@@ -79,4 +79,3 @@ if ($reader->can_viewreports()) {
 if ($redirect) {
     redirect($redirect);
 }
-

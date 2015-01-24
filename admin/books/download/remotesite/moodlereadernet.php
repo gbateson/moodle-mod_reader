@@ -498,7 +498,7 @@ class reader_remotesite_moodlereadernet extends reader_remotesite {
                 $count = array();
                 $ratings = array();
 
-                if ($attempts = $DB->get_records('reader_attempts', array('bookid' => $book->id), 'id, passed, bookrating, reader')) {
+                if ($attempts = $DB->get_records('reader_attempts', array('bookid' => $book->id), 'id, passed, bookrating, readerid')) {
                     foreach ($attempts as $attempt) {
 
                         if (empty($usage->books[$attempt->readerid])) {

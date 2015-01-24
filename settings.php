@@ -207,23 +207,27 @@ $default = array('value' => $defaults->$name, 'adv' => false);
 $setting = new admin_setting_configselect_with_advanced("$plugin/$name", $text, $help, $default, $yesno);
 $settings->add($setting);
 
-// cheatedmessage
-$name = 'cheatedmessage';
-$text = get_string($name, $plugin);
-$help = get_string('config'.$name, $plugin);
-$default = $defaults->$name;
-$setting = new admin_setting_configtextarea("$plugin/$name", $text, $help, $default);
-$setting->set_advanced_flag_options(admin_setting_flag::ENABLED, false);
-$settings->add($setting);
+// cheatedmessage (Moodle >= 2.3)
+if (method_exists('admin_setting_configtextarea', 'set_advanced_flag_options')) {
+    $name = 'cheatedmessage';
+    $text = get_string($name, $plugin);
+    $help = get_string('config'.$name, $plugin);
+    $default = $defaults->$name;
+    $setting = new admin_setting_configtextarea("$plugin/$name", $text, $help, $default);
+    $setting->set_advanced_flag_options(admin_setting_flag::ENABLED, false);
+    $settings->add($setting);
+}
 
-// clearedmessage
-$name = 'clearedmessage';
-$text = get_string($name, $plugin);
-$help = get_string('config'.$name, $plugin);
-$default = $defaults->$name;
-$setting = new admin_setting_configtextarea("$plugin/$name", $text, $help, $default);
-$setting->set_advanced_flag_options(admin_setting_flag::ENABLED, false);
-$settings->add($setting);
+// clearedmessage (Moodle >= 2.3)
+if (method_exists('admin_setting_configtextarea', 'set_advanced_flag_options')) {
+    $name = 'clearedmessage';
+    $text = get_string($name, $plugin);
+    $help = get_string('config'.$name, $plugin);
+    $default = $defaults->$name;
+    $setting = new admin_setting_configtextarea("$plugin/$name", $text, $help, $default);
+    $setting->set_advanced_flag_options(admin_setting_flag::ENABLED, false);
+    $settings->add($setting);
+}
 
 // serverurl
 $name = 'serverurl';

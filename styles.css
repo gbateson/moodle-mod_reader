@@ -34,8 +34,12 @@
 #page-mod-reader-mod .mform .fitem fieldset.felement {padding-left: 0%;}
 
 /** reader view **/
-#page-mod-reader-view h2.readingreporttitle {
+#page-mod-reader-view h2 {
+    text-align: left;
+}
+#page-mod-reader-view h2.ReadingReportTitle {
     background-color : #FFCC80; /* gentle orange */
+    margin           : 0px;
     padding          : 6px 12px;
     width            : 800px;
     /* cross-browser rounded corners (Note: Safari and Chrome use Webkit) */
@@ -44,43 +48,57 @@
     /* Firefox */ -moz-border-top-left-radius: 8px; -moz-border-top-right-radius: 8px;
     /* Webkit  */ -webkit-border-top-left-radius: 8px; -webkit-border-top-right-radius: 8px;
 }
-#page-mod-reader-view table.readerpromotioninfo {
+#page-mod-reader-view div.returntoreports {
+    float        : right;
+    font-size    : small;
+    margin-right : 40px;
+}
+#page-mod-reader-view table.PromotionTable {
     width        : 824px;
 }
-#page-mod-reader-view table.readerpromotioninfo tr.r0 td.c0 {
+#page-mod-reader-view table.PromotionTable tr.r0 td.c0 {
     height       : 36px;
     font-size    : 28px;
     font-weight  : bold;
     padding-left : 12px;
     padding-top  : 18px;
 }
-#page-mod-reader-view table.readerpromotioninfo tr.r0 td.lastcol {
+#page-mod-reader-view table.PromotionTable tr.r0 td.lastcol {
     width    : 124px;
+    vertical-align: middle;
 }
-#page-mod-reader-view table.readerpromotioninfo tr.r1 td.c0 li {
+#page-mod-reader-view table.PromotionTable tr.r1 td.c0 li {
     font-size    : 16px;
     margin       : 12px 0px 6px 0px;
-    max-width    : 480px;
+    max-width    : 490px;
 }
-#page-mod-reader-view table.readerpromotioninfo div.squarebase {
-    /* http://blog.mozilla.org/webdev/2009/02/20/cross-browser-inline-block/ */
+#page-mod-reader-view table.PromotionTable div.PromotionGraphTitle {
+    margin       : 6px auto;
+    padding      : 6px auto;
+    text-align   : center;
+}
+#page-mod-reader-view table.PromotionTable div.PromotionGraphSquares {
+    line-height  : normal;
+    text-align   : center;
+}
+#page-mod-reader-view table.PromotionTable div.PromotionGraphSquares div.squarebase {
     border-width : 1px;
     border-style : solid;
     display      : -moz-inline-stack;
     display      : inline-block;
     font-size    : 9px;
-    margin       : 1px 6px;
+    margin       : 0px 6px 1px 6px;
     height       : 20px;
     padding      : 0px;
     text-align   : center;
     vertical-align: top;
     width        : 20px;
-    /***** IE 6+7 *****/
+    /* http://blog.mozilla.org/webdev/2009/02/20/cross-browser-inline-block/ */
     zoom         : 1;
     *display     : inline;
     _height      : 20px;
 }
-#page-mod-reader-view table.readerpromotioninfo div.squarelevel {
+#page-mod-reader-view table.PromotionTable div.PromotionGraphSquares div.squarelevel {
     /*
     background-color  : #B2F0FF;
     border-color      : #007A99;
@@ -88,19 +106,19 @@
     background-color  : transparent;
     border-color      : transparent;
 }
-#page-mod-reader-view table.readerpromotioninfo div.squaredone {
+#page-mod-reader-view table.PromotionTable div.PromotionGraphSquares div.squaredone {
     background-color  : #009933;
     border-color      : #336600;
 }
-#page-mod-reader-view table.readerpromotioninfo div.squarespacer {
+#page-mod-reader-view table.PromotionTable div.PromotionGraphSquares div.squarespacer {
     background-color  : transparent;
     border-color      : transparent;
 }
-#page-mod-reader-view table.readerpromotioninfo div.squarenotyet {
+#page-mod-reader-view table.PromotionTable div.PromotionGraphSquares div.squarenotyet {
     background-color  : #CCCCCC;
     border-color      : #800000;
 }
-#page-mod-reader-view table.readingreportattempts {
+#page-mod-reader-view table.AttemptsTable {
     width    : 824px;
 }
 #page-mod-reader-view  div.ProgressBar {
@@ -151,7 +169,7 @@
     top      : -10px;
     z-index  : 50;
 }
-#page-mod-reader-view  div.ProgressBarFootnote {
+#page-mod-reader-view div.ProgressBarFootnote {
     float       : right;
     font-weight : bold;
     font-size   : small;
@@ -160,6 +178,23 @@
     width       : 120px;
 }
 
+#page-mod-reader-view div.readermessage {
+    background-color: #FFFFFF;
+    border      : 1px #CCCCCC solid;
+    padding     : 6px 20px;
+    max-width   : 782px;
+    /* cross-browser rounded corners (Note: Safari and Chrome use Webkit) */
+    /* css3    */ border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;
+    /* Opera   */ -o-border-bottom-left-radius: 8px; -o-border-bottom-right-radius: 8px;
+    /* Firefox */ -moz-border-bottom-left-radius: 8px; -moz-border-bottom-right-radius: 8px;
+    /* Webkit  */ -webkit-border-bottom-left-radius: 8px; -webkit-border-bottom-right-radius: 8px;
+}
+#page-mod-reader-view div.readermessagetitle {
+}
+#page-mod-reader-view div.readermessageteacher {
+    text-align  : right;
+    padding-right: 20px;
+}
 #page-mod-reader-view div.tabtree { margin-bottom: 0px; }
 #page-mod-reader-view .readersearchform { max-width: 480px; }
 #page-mod-reader-view .readersearchform tr.advanced { display: none; }

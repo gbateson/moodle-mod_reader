@@ -91,7 +91,7 @@ class reader_admin_reports_groupsummary_table extends reader_admin_reports_table
                                     'sortfields'  => array());
 
     /** @var actions */
-    protected $actions = array('setreadinggoal', 'sendmessage');
+    protected $actions = array('setreadinggoal', 'setmessage');
 
     ////////////////////////////////////////////////////////////////////////////////
     // functions to extract data from $DB                                         //
@@ -504,12 +504,12 @@ class reader_admin_reports_groupsummary_table extends reader_admin_reports_table
     }
 
     /**
-     * display_action_settings_sendmessage
+     * display_action_settings_setmessage
      *
      * @param string $action
      * @return xxx
      */
-    public function display_action_settings_sendmessage($action) {
+    public function display_action_settings_setmessage($action) {
         global $CFG;
         require_once($CFG->dirroot.'/lib/form/editor.php');
 
@@ -613,12 +613,12 @@ class reader_admin_reports_groupsummary_table extends reader_admin_reports_table
     }
 
     /**
-     * execute_action_sendmessage
+     * execute_action_setmessage
      *
      * @param string $action
      * @return xxx
      */
-    public function execute_action_sendmessage($action) {
+    public function execute_action_setmessage($action) {
         global $DB, $PAGE, $USER;
 
         $time = $action.'time';

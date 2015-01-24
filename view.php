@@ -133,7 +133,7 @@ echo $output->box_start('generalbox');
 
 $plugin = $plugin;
 $table = new html_table();
-$table->attributes['class'] = 'generaltable readingreportattempts';
+$table->attributes['class'] = 'generaltable AttemptsTable';
 
 $table->head = array();
 $table->head[] = get_string('date');
@@ -323,21 +323,7 @@ if ($bookcoversinthisterm) {
     echo html_writer::tag('p', $bookcoversinthisterm);
 }
 
-echo '<table width="100%"><tr><td>';
-echo '<h2 class="readingreporttitle">'.get_string('readingreportfor', $plugin, fullname($USER))."</h2>";
-if (isset($_SESSION['SESSION']->reader_changetostudentview) && $_SESSION['SESSION']->reader_changetostudentview > 0) {
-    $params = array('a' => 'admin', 'id' => $id, 'act' => 'reports');
-    if (isset($_SESSION['SESSION']->reader_changetostudentviewlink)) {
-        // NOTE: "reader_changetostudentviewlink" is set in "admin.php" to something like this:
-        // gid={$gid}&searchtext={$searchtext}&page={$page}&sort={$sort}&orderby={$orderby}
-        parse_str($_SESSION['SESSION']->reader_changetostudentviewlink, $more_params);
-        $params = array_merge($params, $more_params);
-    }
-    $url = new moodle_url('/mod/reader/admin.php', $params);
-    echo '</td><td width="50%" align="right"><small><span style="text-align: right;">';
-    echo '<a href="'.$url.'">'.get_string('returntostudentlist', $plugin).'</a>';
-    echo '</span></small>';
-}
+echo '<h2 class="ReadingReportTitle">'.get_string('readingreportfor', $plugin, fullname($USER))."</h2>";
 if (class_exists('\core\session\manager')) {
     $is_loggedinas = \core\session\manager::is_loggedinas();
 } else {
@@ -345,12 +331,10 @@ if (class_exists('\core\session\manager')) {
 }
 if ($is_loggedinas) {
     $params = array('id' => $id, 'sesskey' => sesskey());
-    $url = new moodle_url('/mod/reader/view_loginas.php', $params);
-    echo '</td><td width="50%" align="right"><small><span style="text-align: right;">';
-    echo '<a href="'.$url.'">'.get_string('returntoreports', $plugin).'</a>';
-    echo '</span></small>';
+    $params = array('href' => new moodle_url('/mod/reader/view_loginas.php', $params));
+    $text = html_writer::tag('a', get_string('returntoreports', $plugin), $params);
+    echo html_writer::tag('div', $text, array('class' => 'returntoreports'));
 }
-echo "</td></tr></table>";
 
 if (! empty($table->data)) {
     echo html_writer::table($table);
@@ -363,10 +347,10 @@ if ($reader->showprogressbar) {
 }
 
 $table = new html_table();
-$table->attributes['class'] = 'generaltable readerpromotioninfo';
+$table->attributes['class'] = 'generaltable PromotionTable';
 
 $table->data[] = new html_table_row(array(
-    new html_table_cell(get_string('yourcurrentlevel', $plugin).': '.$leveldata['currentlevel']),
+    new html_table_cell(get_string('yourcurrentlevel', $plugin, $leveldata['currentlevel'])),
     new html_table_cell(reader_view_blockgraph($reader, $leveldata, $dateformat))
 ));
 
@@ -468,11 +452,9 @@ if ($messages = $DB->get_records_select('reader_messages', $select, $params)) {
         }
     }
 
-    $started_list = false;
     foreach ($messages as $message) {
         $groupids = explode (',', $message->groupids);
         $groupids = array_filter($groupids);
-
         if (empty($groupids)) {
             $showmessage = true; // all groups
         } else {
@@ -483,27 +465,8 @@ if ($messages = $DB->get_records_select('reader_messages', $select, $params)) {
                 }
             }
         }
-
-
-        if ($message->timemodified > ($timenow - ( 48 * 60 * 60))) {
-            $bgcolor = 'bgcolor="#CCFFCC"';
-        } else {
-            $bgcolor  = '';
-        }
-
         if ($showmessage) {
-            if ($started_list==false) {
-                $started_list = true; // only do this once
-                echo '<h3>'.get_string('messagefromyourteacher', $plugin).'</h3>';
-            }
-            echo '<table width="100%"><tr><td align="right"><table cellspacing="0" cellpadding="0" class="forumpost blogpost blog" '.$bgcolor.' width="90%">';
-            echo '<tr><td align="left"><div style="margin-left: 10px;margin-right: 10px;">'."\n";
-            echo format_text($message->messagetext, $message->messageformat);
-            echo '<div style="text-align:right"><small>';
-            $teacherdata = $DB->get_record('user', array('id' => $message->teacherid));
-            echo "<a href=\"{$CFG->wwwroot}/user/view.php?id={$message->teacherid}&amp;course={$course->id}\">".fullname($teacherdata, true)."</a>";
-            echo '</small></div>';
-            echo '</div></td></tr></table></td></tr></table>'."\n\n";
+            echo $output->message($message);
         }
     }
 }
@@ -543,6 +506,7 @@ echo $output->footer();
  * @todo Finish documenting this function
  */
 function reader_view_blockgraph($reader, $leveldata, $dateformat) {
+    $output  = '';
 
     // max attempts allowed at each difficulty level
     $prevmax = $reader->prevlevel;
@@ -559,74 +523,89 @@ function reader_view_blockgraph($reader, $leveldata, $dateformat) {
     $thisdone = ($thismax - $thisallow);
     $nextdone = ($nextmax - $nextallow);
 
-    // dots
-    $previmg = html_writer::tag('div', get_string('readinglevelshort', 'mod_reader', $leveldata['currentlevel'] - 1), array('class' => 'squarebase squarelevel'));
-    $thisimg = html_writer::tag('div', get_string('readinglevelshort', 'mod_reader', $leveldata['currentlevel'] + 0), array('class' => 'squarebase squarelevel'));
-    $nextimg = html_writer::tag('div', get_string('readinglevelshort', 'mod_reader', $leveldata['currentlevel'] + 1), array('class' => 'squarebase squarelevel'));
-    $spacer  = html_writer::tag('div', '', array('class' => 'squarebase squarespacer'));
-    $done    = html_writer::tag('div', '', array('class' => 'squarebase squaredone'));
-    $notyet  = html_writer::tag('div', '', array('class' => 'squarebase squarenotyet'));
-
-    // generate $output
-    $output  = '';
-
+    // determine maximum number of squares required
     $i_max = max($prevmax, $thismax, $nextmax);
-    for ($i = $i_max; $i > 0; $i--) {
+    if ($i_max) {
 
-        // previous level
-        if ($prevallow < 0) {
-            // this level is disabled - do nothing
-        } else if ($i > $prevdone && $i <= $prevmax) {
-            $output .= $notyet;
-        } else if ($i > $prevdone ) {
-            $output .= $spacer;
+        // determine maximum height of a square
+        if ($i_max < 8) {
+            $style = '';
+            $height = 0;
         } else {
-            $output .= $done;
+            $height = max(2, round(132/$i_max));
+            $style = 'height: '.$height.'px;';
         }
 
-        // current level
-        if ($thisallow < 0) {
-            // this level is disabled - do nothing
-        } else if ($i > $thisdone && $i <= $thismax) {
-            $output .= $notyet;
-        } else if ($i > $thisdone ) {
-            $output .= $spacer;
-        } else {
-            $output .= $done;
-        }
+        // cache html for each type of square
+        $previmg = html_writer::tag('div', get_string('readinglevelshort', 'mod_reader', $leveldata['currentlevel'] - 1), array('class' => 'squarebase squarelevel'));
+        $thisimg = html_writer::tag('div', get_string('readinglevelshort', 'mod_reader', $leveldata['currentlevel'] + 0), array('class' => 'squarebase squarelevel'));
+        $nextimg = html_writer::tag('div', get_string('readinglevelshort', 'mod_reader', $leveldata['currentlevel'] + 1), array('class' => 'squarebase squarelevel'));
+        $spacer  = html_writer::tag('div', '', array('class' => 'squarebase squarespacer', 'style' => $style));
+        $done    = html_writer::tag('div', '', array('class' => 'squarebase squaredone',   'style' => $style));
+        $notyet  = html_writer::tag('div', '', array('class' => 'squarebase squarenotyet', 'style' => $style));
 
-        // next level
-        if ($nextallow < 0) {
-            // this level is disabled - do nothing
-        } else if ($i > $nextdone && $i <= $nextmax) {
-            $output .= $notyet;
-        } else if ($i > $nextdone ) {
-            $output .= $spacer;
-        } else {
-            $output .= $done;
-        }
-
-        $output .= html_writer::empty_tag('br');
-    }
-
-    if ($output) {
-        // prepend heading
+        // heading
         $text = date($dateformat, $leveldata['promotiondate']);
         if ($leveldata['currentlevel']==0) {
             $text = get_string('booksreadsincedate', 'mod_reader', $text);
         } else {
             $text = get_string('booksreadsincepromotion', 'mod_reader', $text);
         }
-        $params = array('style' => 'margin: 6px auto; padding: 6px auto;');
-        $output = html_writer::tag('div', $text, $params).$output;
+        $output .= html_writer::tag('div', $text, array('class' => 'PromotionGraphTitle'));
 
-        // append images as bar titles
+        // start graph DIV
+        $params = array('class' => 'PromotionGraphSquares');
+        if ($height) {
+            $params['style'] = 'line-height: '.($height + 1).'px;';
+        }
+        $output .= html_writer::start_tag('div', $params);
+
+        // generate HTML for each row of squares
+        for ($i = $i_max; $i > 0; $i--) {
+
+            // previous level
+            if ($prevallow < 0) {
+                // this level is disabled - do nothing
+            } else if ($i > $prevdone && $i <= $prevmax) {
+                $output .= $notyet;
+            } else if ($i > $prevdone ) {
+                $output .= $spacer;
+            } else {
+                $output .= $done;
+            }
+
+            // current level
+            if ($thisallow < 0) {
+                // this level is disabled - do nothing
+            } else if ($i > $thisdone && $i <= $thismax) {
+                $output .= $notyet;
+            } else if ($i > $thisdone ) {
+                $output .= $spacer;
+            } else {
+                $output .= $done;
+            }
+
+            // next level
+            if ($nextallow < 0) {
+                // this level is disabled - do nothing
+            } else if ($i > $nextdone && $i <= $nextmax) {
+                $output .= $notyet;
+            } else if ($i > $nextdone ) {
+                $output .= $spacer;
+            } else {
+                $output .= $done;
+            }
+
+            $output .= html_writer::empty_tag('br');
+        }
+
+        // append row of bar titles
         $output .= ($prevallow < 0 ? '' : $previmg);
         $output .= ($thisallow < 0 ? '' : $thisimg);
         $output .= ($nextallow < 0 ? '' : $nextimg);
 
-        // put output in its own DIV floated to the right of the page
-        $output = html_writer::tag('div', $output, array('class' => 'promotiongraph', 'style'=>'text-align: center;'));
+        // end graph DIV
+        $output .= html_writer::end_tag('div');
     }
 
     return $output;

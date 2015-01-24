@@ -1114,7 +1114,7 @@ if (! $excel) {
             // new reader_menu_item($displaystring, $capability, $scriptname, $scriptparams)
             new reader_menu_item('setgoal', 'manageusers', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'setgoal')),
             new reader_menu_item('studentslevels', 'manageusers', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'studentslevels')),
-            new reader_menu_item('sendmessage', 'manageusers', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'sendmessage')),
+            new reader_menu_item('setmessage', 'manageusers', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'setmessage')),
             //new reader_menu_item('exportstudentrecords', 'manageusers', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'exportstudentrecords', 'excel'=>1)),
             //new reader_menu_item('importstudentrecord', 'manageusers', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'importstudentrecord')),
             new reader_menu_item('exportstudentrecords', 'manageusers', 'admin/users.php', array('id' => $id, 'tab' => 56, 'mode' => 'export')),
@@ -2678,7 +2678,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
     $pagingbar = new paging_bar($totalcount, $page, $perpage, "admin.php?a=admin&id={$id}&act={$act}&sort={$sort}&orderby={$orderby}&gid={$gid}&publisher={$publisher}&amp;");
     echo $output->render($pagingbar);
 
-} else if ($act == 'sendmessage' && has_capability('mod/reader:manageusers', $contextmodule)) {
+} else if ($act == 'setmessage' && has_capability('mod/reader:manageusers', $contextmodule)) {
 
     /**
      * mod_reader_message_form
@@ -2743,7 +2743,8 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
                 }
             }
 
-            $this->add_action_buttons(false, $submitlabel='Send');
+            $submitlabel = get_string('savechanges');
+            $this->add_action_buttons(false, $submitlabel);
         }
 
         /**
@@ -2763,7 +2764,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
         }
 
     }
-    $mform = new mod_reader_message_form("admin.php?a=admin&id={$id}&act=sendmessage");
+    $mform = new mod_reader_message_form("admin.php?a=admin&id={$id}&act=setmessage");
     $mform->display();
 
     $params = array('readerid' => $cm->instance, 'teacherid' => $USER->id);
@@ -2808,7 +2809,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
             }
             echo 'Added: '.date("$dateformat $timeformat", $message->timemodified).'; '; // was 'd M Y H:i'
             echo 'Group: '. $groupnames.'; ';
-            echo '<a href="admin.php?a=admin&id='.$id.'&act=sendmessage&editmessage='.$message->id.'">Edit</a> / <a href="admin.php?a=admin&id='.$id.'&act=sendmessage&deletemessage='.$message->id.'">Delete</a>';
+            echo '<a href="admin.php?a=admin&id='.$id.'&act=setmessage&editmessage='.$message->id.'">Edit</a> / <a href="admin.php?a=admin&id='.$id.'&act=setmessage&deletemessage='.$message->id.'">Delete</a>';
             echo '</small></div>';
             echo '</div></td></tr></table></td></tr></table>'."\n\n";
         }
