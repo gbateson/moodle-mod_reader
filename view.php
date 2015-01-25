@@ -147,6 +147,7 @@ if ($reader->showpercentgrades) {
     $table->head[] = get_string('grade');
     $table->align[] = 'center';
 }
+
 switch ($reader->wordsorpoints) {
     case 2:
         $table->head[] = get_string('words', $plugin);

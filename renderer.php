@@ -559,7 +559,7 @@ class mod_reader_renderer extends plugin_renderer_base {
         $js .= "        req = new ActiveXObject('Microsoft.XMLHTTP');\n";
         $js .= "    }\n";
 
-        $js .= "    if (req) {\n";
+        $js .= "    if (req && confirm('REQUEST: ' + url)) {\n";
         $js .= "        if (callback) {\n";
         $js .= "            req.onreadystatechange = eval(callback);\n";
         $js .= "        } else {\n";
@@ -950,7 +950,7 @@ class mod_reader_renderer extends plugin_renderer_base {
 
         if ($includeformtag) {
             $target_div = 'searchresultsdiv';
-            $target_url = "'view_books.php?id=".$this->reader->cm->id;
+            $target_url = "'view_books.php?id=".$this->reader->cm->id."'".
                           "+'&search=1'". // so we can detect incoming search results
                           "+'&action=$action'". // "adjustscores" or "takequiz"
                           "+'&searchpublisher='+escape(this.searchpublisher.value)".
@@ -1201,7 +1201,12 @@ class mod_reader_renderer extends plugin_renderer_base {
                 $searchresults .= html_writer::tag('p', get_string('nosearchresults', 'mod_reader'));
             }
         }
-        $output .= html_writer::tag('div', $searchresults, array('id' => 'searchresultsdiv'));
+
+        if ($search) {
+            $output .= $searchresults; // not need to wrap it in "searchresultsdiv"
+        } else {
+            $output .= html_writer::tag('div', $searchresults, array('id' => 'searchresultsdiv'));
+        }
 
         return $output;
     }

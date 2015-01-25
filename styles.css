@@ -220,6 +220,10 @@
     text-align  : right;
     padding-right: 20px;
 }
+#page-mod-reader-view div#searchresultsdiv table.generaltable {
+    width       : 824px;
+}
+
 #page-mod-reader-view div.tabtree { margin-bottom: 0px; }
 #page-mod-reader-view .readersearchform { max-width: 480px; }
 #page-mod-reader-view .readersearchform tr.advanced { display: none; }
