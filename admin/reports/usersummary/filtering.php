@@ -66,9 +66,13 @@ class reader_admin_reports_usersummary_filtering extends reader_admin_reports_fi
             case 'countfailed':
             case 'countwords':
             case 'averagegrade':
+                $label = get_string($fieldname, 'mod_reader');
+                return new reader_admin_reports_filter_number($fieldname, $label, $advanced, $fieldname, $default, 'having');
+
             case 'totalthisterm':
             case 'totalallterms':
-                $label = get_string($fieldname, 'mod_reader');
+                $label = get_string(substr($fieldname, 5), 'mod_reader');
+                $label = get_string('totalwords', 'mod_reader')." ($label)";
                 return new reader_admin_reports_filter_number($fieldname, $label, $advanced, $fieldname, $default, 'having');
 
             case 'averageduration':

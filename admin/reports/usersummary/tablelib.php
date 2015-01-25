@@ -306,7 +306,7 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
      *
      * @return xxx
      */
-    public function header_totalpoints($type='')  {
+    public function header_totalpoints()  {
         return get_string('totalpoints', 'mod_reader');
     }
 

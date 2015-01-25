@@ -25,6 +25,30 @@
  * @since      Moodle 2.0
  */
 
+/** course page (recent activity block) **/
+.block_recent_activity .reader_recent_activity ul,
+.block_recent_activity .reader_recent_activity ul li {
+    margin  : 0px;
+    padding : 0px;
+}
+.block .content .reader_recent_activity h3 {
+    padding-left: 0px;
+    margin-bottom: 0px;
+}
+.block_recent_activity .reader_recent_activity ul.readerlist {
+    list-style   : none;
+    margin-left  : 12px;
+}
+.block_recent_activity .reader_recent_activity ul.userlist {
+    list-style   : none;
+    margin-left  : 18px;
+}
+.block_recent_activity .reader_recent_activity ul.booklist {
+    margin-left  : 18px;
+}
+.block_recent_activity .reader_recent_activity ul.booklist li {
+    font-size    : smaller;
+}
 
 /** reader mod settings page **/
 #page-admin-setting-modsettingreader div.form-textarea {float: left;}
@@ -70,7 +94,7 @@
 #page-mod-reader-view table.PromotionTable tr.r1 td.c0 li {
     font-size    : 16px;
     margin       : 12px 0px 6px 0px;
-    max-width    : 490px;
+    max-width    : 520px;
 }
 #page-mod-reader-view table.PromotionTable div.PromotionGraphTitle {
     margin       : 6px auto;
@@ -181,6 +205,7 @@
 #page-mod-reader-view div.readermessage {
     background-color: #FFFFFF;
     border      : 1px #CCCCCC solid;
+    margin-bottom : 12px;
     padding     : 6px 20px;
     max-width   : 782px;
     /* cross-browser rounded corners (Note: Safari and Chrome use Webkit) */
@@ -274,6 +299,7 @@
 #page-mod-reader-admin-books form input.showbutton:hover {background-color: #cc3333; color: #eeeeee; }
 
 /** reader admin reports **/
+#page-mod-reader-admin-reports .mform .fitem .fitemtitle {white-space: nowrap;}
 #page-mod-reader-admin-reports div.tabtree { margin-bottom: 2.5em; }
 #page-mod-reader-admin-reports table.flexible th { white-space: normal; }
 #page-mod-reader-admin-reports table.flexible th span.nowrap { white-space: nowrap; }

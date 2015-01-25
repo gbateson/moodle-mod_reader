@@ -661,19 +661,164 @@ function reader_user_complete($course, $user, $mod, $reader) {
  */
 function reader_print_recent_activity($course, $viewfullnames, $timestart) {
     global $CFG, $DB, $OUTPUT;
-    $result = false;
+
+    //TODO: use timestamp in approved field instead of changing timemodified when approving in 2.0
+    if (! defined('READER_RECENT_ACTIVITY_LIMIT')) {
+        define('READER_RECENT_ACTIVITY_LIMIT', 20);
+    }
+    if (! defined('READER_RECENT_ACTIVITY_TEXTLENGTH')) {
+        define('READER_RECENT_ACTIVITY_TEXTLENGTH', 16);
+    }
+
 
     // for testing, subtract one year from the start time
-    //$timestart -= (52 * WEEKSECS);
+    $timestart -= (52 * WEEKSECS);
 
-    // the Moodle "logs" table contains the following fields:
-    //     time, userid, course, ip, module, cmid, action, url, info
+    $ids = array();
+    $modinfo = get_fast_modinfo($course);
+    foreach ($modinfo->cms as $cm) {
+        if ($cm->modname=='reader' && $cm->uservisible) {
+            $cmids[$cm->instance] = $cm->id;
+        }
+    }
+    if (empty($cmids)) {
+        return false;
+    }
 
-    // this function utilitizes the following index on the log table
-    //     log_timcoumodact_ix : time, course, module, action
+    if (class_exists('user_picture')) {
+        // Moodle >= 2.6
+        $userfields = user_picture::fields('u', null, 'useruserid');
+    } else {
+        // Moodle <= 2.5
+        $userfields ='u.firstname,u.lastname,u.picture,u.imagealt,u.email';
+    }
 
-    // log records are added by the following function in "lib/datalib.php":
-    //     add_to_log($courseid, $module, $action, $url='', $info='', $cm=0, $user=0)
+    $context = reader_get_context(CONTEXT_COURSE, $course->id);
+    if ($students = get_users_by_capability($context, 'mod/reader:viewbooks', 'u.id,u.id', 'u.id', '', '', 0, '', false)) {
+        $students = array_keys($students);
+        if ($managers = get_users_by_capability($context, 'mod/reader:viewreports', 'u.id,u.id', 'u.id', '', '', 0, '', false)) {
+            $managers = array_keys($managers);
+            $students = array_diff($students, $managers);
+        }
+    }
+    if (empty($students)) {
+        return false;
+    }
+    list($userfilter, $userparams) = $DB->get_in_or_equal($students);
+    unset($students, $managers);
+
+    $select = 'ra.*, rb.publisher, rb.level, rb.name AS bookname, '.$userfields;
+    $from   = '{reader_attempts} ra '.
+              'JOIN {reader_books} rb ON ra.bookid = rb.id '.
+              'JOIN {user} u ON ra.userid = u.id';
+    list($where, $params) = $DB->get_in_or_equal(array_keys($cmids));
+    $where  = "ra.readerid $where AND u.id $userfilter AND ra.deleted <> ? AND rb.hidden <> ?";
+    $params = array_merge($params, $userparams, array(1, 1));
+    $order  = 'ra.readerid, u.lastname, u.firstname, ra.timemodified DESC';
+
+    $attempts = $DB->get_records_sql("SELECT $select FROM $from WHERE $where ORDER BY $order", $params);
+    if (empty($attempts)) {
+        return false;
+    }
+    // start "reader_recent_activity" div
+    echo html_writer::start_tag('div', array('class' => 'reader_recent_activity'));
+
+    // heading
+    $text = get_string('newreaderattempts', 'mod_reader').':';
+    echo html_writer::tag('h3', $text);
+
+    $count = 0;
+    $currentuserid = 0;
+    $currentreaderid = 0;
+    $countattempts = count($attempts);
+    $dateformat = get_string('strftimerecent');
+
+    foreach ($attempts as $attempt) {
+        $userid = $attempt->userid;
+        $readerid = $attempt->readerid;
+
+        if ($currentreaderid==$readerid && $currentuserid==$userid) {
+            // do nothing
+        } else {
+            if ($currentuserid) {
+                echo html_writer::end_tag('ul'); // finish booklist
+                echo html_writer::end_tag('li'); // finish user
+            }
+            if ($currentreaderid != $readerid) {
+                if ($currentreaderid) {
+                    echo html_writer::end_tag('ul'); // finish userlist
+                    echo html_writer::end_tag('li'); // finish reader
+                } else {
+                    // start readerlist
+                    echo html_writer::start_tag('ul', array('class' => 'readerlist'));
+                }
+
+                // start this reader
+                echo html_writer::start_tag('li');
+
+                // link to reader
+                $cmid = $cmids[$readerid];
+                $href = new moodle_url('/mod/reader/view.php', array('id' => $cmid));
+                $text = format_string($modinfo->cms[$cmid]->name);
+                $text = html_writer::tag('a', $text, array('href' => $href));
+                $text = get_string('modulename', 'mod_reader').': '.$text;
+                echo $text;
+
+                // start userlist
+                echo html_writer::start_tag('ul', array('class' => 'userlist'));
+                $currentreaderid = $readerid;
+            }
+
+            // start user
+            echo html_writer::start_tag('li');
+
+            // link to user
+            $href = new moodle_url('/user/view.php', array('id' => $userid, 'course' => $course->id));
+            $text = fullname($attempt, $viewfullnames);
+
+            $text = html_writer::tag('a', $text, array('href' => $href));
+            echo get_string('user').': '.$text;
+
+            // start booklist
+            echo html_writer::start_tag('ul', array('class' => 'booklist'));
+            $currentuserid = $userid;
+        }
+
+        $text = $attempt->bookname;
+        if (reader_textlib('strlen', $text) > READER_RECENT_ACTIVITY_TEXTLENGTH) {
+            $text = reader_textlib('substr', $text, 0, READER_RECENT_ACTIVITY_TEXTLENGTH - 3).'...';
+        }
+        $text = userdate($attempt->timemodified, $dateformat).': '.$text;
+        echo html_writer::tag('li', $text); // a single book
+
+        $count++;
+        if ($count > READER_RECENT_ACTIVITY_LIMIT) {
+            break;
+        }
+    }
+
+    if ($currentreaderid) {
+        echo html_writer::end_tag('ul'); // finish book list
+        echo html_writer::end_tag('li'); // finish user
+        echo html_writer::end_tag('ul'); // finish user list
+        echo html_writer::end_tag('li'); // finish reader
+        echo html_writer::end_tag('ul'); // finish reader list
+    }
+
+    if ($count > READER_RECENT_ACTIVITY_LIMIT) {
+        $href = new moodle_url('/mod/reader/admin/reports.php', array('id' => $cmid));
+        $text = ($countattempts - READER_RECENT_ACTIVITY_LIMIT);
+        $text = get_string('morenewattempts', 'mod_reader', $text);
+        $text = html_writer::tag('a', $text, array('href' => $href));
+        $text = html_writer::tag('div', $text, array('class' => 'activityhead'));
+        $text = html_writer::tag('div', $text, array('class' => 'head'));
+        echo $text;
+    }
+
+    // end "reader_recent_activity" div
+    echo html_writer::end_tag('div');
+
+    return true;
 
     $select = "time > ? AND course = ? AND module = ? AND action IN (?, ?, ?, ?, ?)";
     $params = array($timestart, $course->id, 'reader', 'add', 'update', 'view', 'attempt', 'submit');
@@ -882,8 +1027,11 @@ function reader_get_recent_mod_activity(&$activities, &$index, $timestart, $cour
         $userfields ='u.firstname,u.lastname,u.picture,u.imagealt,u.email';
     }
 
-    $select = 'ra.*, (ra.timemodified - ra.timestart) AS duration, '.$userfields;
-    $from   = '{reader_attempts} ra JOIN {user} u ON ra.userid = u.id';
+    $select = 'ra.*, (ra.timemodified - ra.timestart) AS duration, '.
+              'rb.publisher, rb.level, rb.name AS bookname, rb.difficulty, '.$userfields;
+    $from   = '{reader_attempts} ra '.
+              'JOIN {user} u ON ra.userid = u.id '.
+              'JOIN {reader_books} rb ON ra.bookid = rb.id';
     list($where, $params) = $DB->get_in_or_equal(array_keys($readers));
     $where  = 'ra.readerid '.$where;
     $order  = 'ra.userid, ra.attempt';
@@ -997,20 +1145,15 @@ function reader_print_recent_mod_activity($activity, $courseid, $detail, $modnam
 
         // activity icon and link to activity
         $src = $OUTPUT->pix_url('icon', $activity->type);
-        $img = html_writer::tag('img', array('src'=>$src, 'class'=>'icon', $alt=>$activity->name));
+        $img = html_writer::empty_tag('img', array('src'=>$src, 'class'=>'icon', 'alt'=>$activity->name));
 
         // link to activity
         $href = new moodle_url('/mod/reader/view.php', array('id' => $activity->cmid));
         $link = html_writer::link($href, $activity->name);
 
         $cell = new html_table_cell("$img $link");
-        $cell->colspan = 6;
+        $cell->colspan = 9;
         $row->cells[] = $cell;
-
-        $table->data[] = new html_table_row(array(
-            new html_table_cell('&nbsp;', array('width'=>15)),
-            new html_table_cell("$img $link")
-        ));
 
         $table->data[] = $row;
     }
@@ -1032,7 +1175,7 @@ function reader_print_recent_mod_activity($activity, $courseid, $detail, $modnam
 
     $href = new moodle_url('/user/view.php', array('id'=>$activity->user->userid, 'course'=>$courseid));
     $cell = new html_table_cell(html_writer::link($href, fullname($activity->user)));
-    $cell->colspan = 5;
+    $cell->colspan = 8;
     $row->cells[] = $cell;
 
     $table->data[] = $row;
@@ -1047,17 +1190,29 @@ function reader_print_recent_mod_activity($activity, $courseid, $detail, $modnam
         $href = new moodle_url('/mod/reader/admin/report.php', array('id'=>$attempt->id));
         $link = html_writer::link($href, userdate($attempt->timemodified, $dateformat));
 
-        if (isset($attempt->passed) && $attempt->passed=='true') {
-            $passed = get_string('passed', 'mod_reader');
-            $class = 'passed';
-        } else {
-            $passed = get_string('failed', 'mod_reader');
-            $class = 'failed';
+        switch ($attempt->passed) {
+            case 'true':
+                $passed = get_string('passed', 'mod_reader');
+                $class = 'passed';
+                break;
+            case 'credit':
+                $passed = get_string('credit', 'mod_reader');
+                $class = 'passed';
+                break;
+            case 'credit':
+            default:
+                $passed = get_string('failed', 'mod_reader');
+                $class = 'failed';
         }
         $passed = html_writer::tag('span', $passed, array('class' => $class));
 
+        $readinglevel = get_string('readinglevelshort', 'mod_reader', $attempt->difficulty);
+
         $table->data[] = new html_table_row(array(
-            new html_table_cell($attempt->attempt),
+            new html_table_cell($attempt->publisher),
+            new html_table_cell($attempt->level),
+            new html_table_cell($attempt->bookname),
+            new html_table_cell($readinglevel),
             new html_table_cell($attempt->percentgrade.'%'),
             new html_table_cell($passed),
             new html_table_cell($link),
@@ -1098,49 +1253,58 @@ function reader_print_overview($courses, &$htmlarray) {
         return; // no readers
     }
 
-    // cache some lang strings
-    $str = (object)array(
-        'averagegrade' => get_string('gradeaverage', 'quiz'),
-        'dateformat'   => get_string('strftimerecentfull'),
-        'failed'       => get_string('failed', 'mod_reader'),
-        'goal'         => get_string('goal', 'mod_reader'),
-        'grade'        => get_string('grade'),
-        'passed'       => get_string('passed', 'mod_reader'),
-        'points'       => get_string('points', 'mod_reader'),
-        'reader'       => get_string('modulename', 'mod_reader'),
-        'status'       => get_string('status'),
-        'timeclose'    => get_string('availabletodate', 'data'),
-        'timeopen'     => get_string('availablefromdate', 'data'),
-        'words'        => get_string('words', 'mod_reader'),
-        'users'        => get_string('users')
-    );
-
+    $str = null;
     $now = time();
     foreach ($readers as $reader) {
 
         // check this reader is open, and is not yet closed
         if ($reader->timeopen > $now || $reader->timeclose < $now) {
-        //    continue;
+            continue;
         }
 
-        // format title
-        $text = format_string($reader->name);
-        $href = new moodle_url('/mod/reader/view.php', array('id' => $reader->coursemodule));
-        $text = html_writer::tag('a', $text, array('href'  => $href, 'title' => $str->reader, 'class' => ($reader->visible ? '' : 'dimmed')));
-        $html = html_writer::tag('div', $text, array('class' => 'name'));
+        // cache some lang strings (first time only)
+        if ($str===null) {
+            $str = (object)array(
+                'modulename'   => get_string('modulename', 'mod_reader'),
+                'countactive'  => get_string('countactive', 'mod_reader'),
+                'duedate'      => get_string('duedate', 'scorm'), // OR assign(ment)
+                'attempts'     => get_string('attempts', 'mod_reader'),
+                'averagegrade' => get_string('gradeaverage', 'quiz'),
+                'dateformat'   => get_string('strftimedaydatetime'),
+                'credit'       => get_string('credit', 'mod_reader'),
+                'failed'       => get_string('failed', 'mod_reader'),
+                'goal'         => get_string('goal', 'mod_reader'),
+                'grade'        => get_string('grade'),
+                'passed'       => get_string('passed', 'mod_reader'),
+                'points'       => get_string('points', 'mod_reader'),
+                'reader'       => get_string('modulename', 'mod_reader'),
+                'status'       => get_string('status'),
+                'timeclose'    => get_string('availabletodate', 'data'),
+                'timeopen'     => get_string('availablefromdate', 'data'),
+                'words'        => get_string('words', 'mod_reader')
+            );
+        }
 
-        // start main div
-        $html .= html_writer::start_tag('div', array('class' => 'overview'));
+        // start main div for this Reader activity
+        $html = html_writer::start_tag('div', array('class' => 'overview'));
+
+        // Reader activity name
+        $params = array('href'  => new moodle_url('/mod/reader/view.php', array('id' => $reader->coursemodule)),
+                        'title' => $str->reader,
+                        'class' => ($reader->visible ? '' : 'dimmed'));
+        $text = format_string($reader->name);
+        $text = $str->modulename.': '.html_writer::tag('a', $text, $params);
+        $html .= html_writer::tag('div', $text, array('class' => 'name'));
 
         // date/time open
-        if ($reader->timeopen) {
-            $text = $str->timeopen.': '.userdate($reader->timeopen, $str->dateformat);
-            $html .= html_writer::tag('div', $text, array('class' => 'info'));
-        }
+        //if ($reader->timeopen) {
+        //    $text = $str->timeopen.': '.userdate($reader->timeopen, $str->dateformat);
+        //    $html .= html_writer::tag('div', $text, array('class' => 'info'));
+        //}
 
         // date/time close
         if ($reader->timeclose) {
-            $text = $str->timeclose.': '.userdate($reader->timeclose, $str->dateformat);
+            $text = $str->duedate.': '.userdate($reader->timeclose, $str->dateformat);
             $html .= html_writer::tag('div', $text, array('class' => 'info'));
         }
 
@@ -1150,51 +1314,64 @@ function reader_print_overview($courses, &$htmlarray) {
             // manager: show class grades stats
             // attempted: 99, passed: 99 failed: 99
             if ($students = get_users_by_capability($modulecontext, 'mod/reader:viewbooks', 'u.id,u.id', 'u.id', '', '', 0, '', false)) {
-                $count = count($students);
                 $sumgrade = 0;
-                $countusers = 0;
+                $countactive = 0;
                 $countpassed = 0;
+                $countcredit = 0;
                 $countfailed = 0;
-                // search reader_attempts for highest status for each userid
+                $countattempts = 0;
+                $countstudents = count($students);
+                // search reader_attempts for aggregate totals for each student
                 list($where, $params) = $DB->get_in_or_equal(array_keys($students));
-                $select = 'userid, SUM(CASE WHEN passed = ? THEN 1 ELSE 0 END) AS passed, MAX(percentgrade) AS grade';
+                $select = 'userid, '.
+                          'SUM(CASE WHEN passed = ? THEN 1 ELSE 0 END) AS countpassed, '.
+                          'SUM(CASE WHEN passed = ? THEN 1 ELSE 0 END) AS countcredit, '.
+                          'SUM(CASE WHEN passed = ? THEN 1 ELSE 0 END) AS countfailed, '.
+                          'SUM(percentgrade) AS sumgrade, '.
+                          'COUNT(*) AS countattempts';
+                array_unshift($params, 'true', 'credit', 'false');
                 $from   = '{reader_attempts}';
                 $where  = 'userid '.$where.' AND readerid = ?';
-                array_unshift($params, 'true');
                 array_push($params, $reader->id);
                 if ($attempts = $DB->get_records_sql("SELECT $select FROM $from WHERE $where GROUP BY userid", $params)) {
                     $attempted = count($attempts);
                     foreach ($attempts as $attempt) {
-                        $sumgrade += $attempt->grade;
-                        if ($attempt->passed) {
-                            $countpassed++;
-                        } else {
-                            $countfailed++;
-                        }
-                        $countusers++;
+                        $countactive++;
+                        $sumgrade += $attempt->sumgrade;
+                        $countpassed += $attempt->countpassed;
+                        $countcredit += $attempt->countcredit;
+                        $countfailed += $attempt->countfailed;
+                        $countattempts += $attempt->countattempts;
                     }
                 }
                 unset($attempts);
                 unset($students);
-                if ($countusers) {
-                    $text = $str->users.': '.$countusers.'/'.$count;
+
+                if ($countactive) {
+                    $info = array();
                     if ($countpassed) {
-                        $text .= ', '.$str->passed.': '.$countpassed;
+                        $info[] = $str->passed.': '.number_format($countpassed);
+                    }
+                    if ($countcredit) {
+                        $info[] = $str->credit.': '.number_format($countcredit);
                     }
                     if ($countfailed) {
-                        $text .= ', '.$str->failed.': '.$countfailed;
+                        $info[] = $str->failed.': '.number_format($countfailed);
                     }
-                    if ($sumgrade) {
-                        $text .= ', '.$str->averagegrade.': '.round($sumgrade / $countusers, 1).'%';
-                    }
-                    $html .= html_writer::tag('div', $text, array('class' => 'info'));
+                    $info = implode(', ', $info);
+                    $info = array(
+                        $str->countactive.': '.$countactive.'/'.$countstudents,
+                        $str->attempts.': '.number_format($countattempts)." ($info)",
+                        $str->averagegrade.': '.round($sumgrade / $countattempts, 1).'%'
+                    );
+                    $info = html_writer::alist($info);
+                    $html .= html_writer::tag('div', $info, array('class' => 'info'));
                 }
             }
         } else {
             // student: show grade and status
             if ($grade = reader_get_grades($reader, $USER->id)) {
                 $grade = $grade[$USER->id];
-                $href = new moodle_url('/mod/reader/view.php', array('id' => $reader->coursemodule));
                 if ($reader->goal) {
                     $text = $str->goal.': '.number_format($reader->goal);
                     if ($reader->wordsorpoints==0) {
@@ -1207,14 +1384,14 @@ function reader_print_overview($courses, &$htmlarray) {
                 if ($reader->maxgrade) {
                     $text = round(100 * ($grade->rawgrade / $reader->maxgrade)).'%';
                 }  else {
-                    $text = number_format($reader->rawgrade);
+                    $text = number_format($grade->rawgrade);
                     if ($reader->wordsorpoints==0) {
                         $text .= ' '.$str->words;
                     } else {
                         $text .= ' '.$str->points;
                     }
                 }
-                $text = $str->grade.': '.html_writer::tag('a', $text, array('href' => $href));
+                $text = $str->grade.': '.$text;
                 $html .= html_writer::tag('div', $text, array('class' => 'info'));
             }
         }
@@ -2512,7 +2689,7 @@ function reader_get_student_attempts($userid, $reader, $allreaders = false, $boo
                 $totalgrade += $answersgrade_->grade;
             }
             //$totals['bookpercent']  = round(($attempt->sumgrades/$totalgrade) * 100, 2).'%';
-            $totals['bookpercent']  = $attempt->percentgrade.'%';
+            $totals['bookpercent']  = round($attempt->percentgrade).'%';
             $totals['bookmaxgrade'] = $totalgrade * reader_get_reader_length($reader, $attempt->bookid);
             $bookpercentmaxgrade[$attempt->bookid] = array($totals['bookpercent'], $totals['bookmaxgrade']);
         }

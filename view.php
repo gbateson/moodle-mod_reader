@@ -137,10 +137,11 @@ $table->attributes['class'] = 'generaltable AttemptsTable';
 
 $table->head = array();
 $table->head[] = get_string('date');
-$table->head[] = get_string('booktitle', $plugin);
-$table->head[] = get_string('level',     $plugin);
+$table->head[] = get_string('booktitle',       $plugin);
+$table->head[] = get_string('level',           $plugin);
+$table->head[] = get_string('difficultyshort', $plugin); // RL
 $table->head[] = get_string('status');
-$table->align = array('left', 'left', 'left', 'center');
+$table->align = array('left', 'left', 'left', 'center', 'center');
 
 if ($reader->showpercentgrades) {
     $table->head[] = get_string('grade');
@@ -201,6 +202,18 @@ if ($reader->bookcovers == 1) {
     }
 }
 
+$select = 'ra.id, ra.userid, ra.bookid, ra.quizid, ra.preview, ra.deleted, ra.passed, rb.words';
+$from   = '{reader_attempts} ra LEFT JOIN {reader_books} rb ON ra.bookid = rb.id';
+$where  = 'ra.userid = ? AND ra.preview = ? AND ra.deleted = ? AND ra.passed = ?';
+$params = array($USER->id, 0, 0, 'true');
+if ($studentattempts = $DB->get_records_sql("SELECT $select FROM $from WHERE $where", $params)) {
+    foreach ($studentattempts as $studentattempt) {
+        $totalwordsall += $studentattempt->words;
+        $totalwordscountall++;
+    }
+}
+unset($studentattempts);
+
 $bookcoversinthisterm = '';
 $lastattemptdate = 0;
 
@@ -246,7 +259,8 @@ if (count($attempts)) {
         $cells = array(
             new html_table_cell(date($dateformat, $attempt['timefinish'])),
             new html_table_cell($attempt['booktitle']),
-            new html_table_cell($attempt['booklevel'].'[RL'.$attempt['bookdiff'].']'),
+            new html_table_cell($attempt['booklevel']),
+            new html_table_cell($attempt['bookdiff']),
             new html_table_cell($attempt['statustext']),
         );
         if ($reader->showpercentgrades == 1) {
@@ -269,19 +283,10 @@ if (count($attempts)) {
     if ($promotiondate && $attempt['timefinish'] < $promotiondate) {
         reader_view_promotiondate($table, $leveldata, $promotiondate, $timeformat, $dateformat);
     }
-}
 
-$select = 'ra.id, ra.userid, ra.bookid, ra.quizid, ra.preview, ra.deleted, ra.passed, rb.words';
-$from   = '{reader_attempts} ra LEFT JOIN {reader_books} rb ON ra.bookid = rb.id';
-$where  = 'ra.userid = ? AND ra.preview = ? AND ra.deleted = ? AND ra.passed = ?';
-$params = array($USER->id, 0, 0, 'true');
-if ($studentattempts = $DB->get_records_sql("SELECT $select FROM $from WHERE $where", $params)) {
-    foreach ($studentattempts as $studentattempt) {
-        $totalwordsall += $studentattempt->words;
-        $totalwordscountall++;
-    }
+    // add row showing total words read so far
+    reader_view_readingtotals($table, $totalwords, $totalwordsall);
 }
-unset($studentattempts);
 
 if ($bookcoversinprevterm) {
     // display book covers from previous term
@@ -636,4 +641,36 @@ function reader_view_promotiondate(&$table, $leveldata, $promotiondate, $timefor
 
     // add table row containing this single cell
     $table->data[] = new html_table_row(array($cell));
+}
+
+/**
+ * reader_view_readingtotals
+ *
+ * @param xxx $table (passed by reference)
+ * @param xxx $totalwords
+ * @param xxx $totalwordsall
+ * @todo Finish documenting this function
+ */
+function reader_view_readingtotals(&$table, $totalwordsthisterm, $totalwordsallterms) {
+
+    if ($totalwordsallterms > $totalwordsthisterm) {
+
+        $names = array('totalwordsthisterm' => $totalwordsthisterm,
+                       'totalwordsallterms' => $totalwordsallterms);
+
+        foreach ($names as $name => $total) {
+
+            $name = get_string($name, 'mod_reader');
+            $name = new html_table_cell($name);
+            $name->header = true;
+            $name->colspan = (count($table->head) - 1);
+            $name->style = 'text-align: right;';
+
+            $total = number_format($total);
+            $total = new html_table_cell($total);
+            $total->style = 'text-align: center;';
+
+            $table->data[] = new html_table_row(array($name, $total));
+        }
+    }
 }

@@ -338,6 +338,12 @@ class reader_admin_reports_options extends moodleform {
     public function definition() {
         $mform = $this->_form;
 
+        // add unique CSS class name
+        // e.g. reader_admin_reports_groupsummary_options
+        $class = $mform->getAttribute('class');
+        $class .= ($class ? ' ' : '').get_class($this);
+        $mform->updateAttributes(array('class' => $class));
+
         $label = get_string('displayoptions', 'mod_reader');
         $mform->addElement('header', 'displayoptions', $label);
 
