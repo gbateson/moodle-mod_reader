@@ -1062,17 +1062,10 @@ function xmldb_reader_upgrade($oldversion) {
                          'readgrad_rea_ix' => array('reader', 'readerid'));
         reader_xmldb_update_fields($dbman, $table, $fields, $indexes);
 
-        $table = new xmldb_table('reader');
-        $fields = array('maxgrade' => new xmldb_field('maxgrade', XMLDB_TYPE_INTEGER, '11', null, null, null, '0', 'goal'));
-        reader_xmldb_update_fields($dbman, $table, $fields);
-
         $table = new xmldb_table('reader_attempts');
         $fields = array('readerid' => new xmldb_field('reader', XMLDB_TYPE_INTEGER, '11', null, null, null, '0', 'uniqueid'));
         $indexes = array('readatte_rea_ix' => array('reader', 'readerid'));
         reader_xmldb_update_fields($dbman, $table, $fields, $indexes);
-
-        require_once($CFG->dirroot.'/mod/reader/lib.php');
-        reader_update_grades(); // all Reader activities !!
 
         upgrade_mod_savepoint(true, "$newversion", 'reader');
     }
@@ -1097,6 +1090,17 @@ function xmldb_reader_upgrade($oldversion) {
         $table = new xmldb_table('reader');
         $fields = array('showpercentgrades' => new xmldb_field('pointreport', XMLDB_TYPE_INTEGER, '2', null, null, null, '0', 'showprogressbar'));
         reader_xmldb_update_fields($dbman, $table, $fields);
+        upgrade_mod_savepoint(true, "$newversion", 'reader');
+    }
+
+    $newversion = 2015012653;
+    if ($oldversion < $newversion) {
+        $table = new xmldb_table('reader');
+        $fields = array('maxgrade' => new xmldb_field('maxgrade', XMLDB_TYPE_INTEGER, '10,5', null, null, null, '0', 'goal'));
+        reader_xmldb_update_fields($dbman, $table, $fields);
+
+        require_once($CFG->dirroot.'/mod/reader/lib.php');
+        reader_update_grades(); // all Reader activities !!
         upgrade_mod_savepoint(true, "$newversion", 'reader');
     }
 

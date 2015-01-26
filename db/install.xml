@@ -22,7 +22,7 @@
         <FIELD NAME="ignoredate" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="minpassgrade" PREVIOUS="bookcovers"/>
         <FIELD NAME="minpassgrade" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="60" SEQUENCE="false" NEXT="goal" PREVIOUS="ignoredate"/>
         <FIELD NAME="goal" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="maxgrade" PREVIOUS="minpassgrade"/>
-        <FIELD NAME="maxgrade" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="showprogressbar" PREVIOUS="goal"/>
+        <FIELD NAME="maxgrade" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" DECIMALS="5" NEXT="showprogressbar" PREVIOUS="goal"/>
         <FIELD NAME="showprogressbar" TYPE="int" LENGTH="2" NOTNULL="false" DEFAULT="1" SEQUENCE="false" NEXT="wordsorpoints" PREVIOUS="maxgrade"/>
         <FIELD NAME="wordsorpoints" TYPE="int" LENGTH="2" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="showpercentgrades" PREVIOUS="showprogressbar"/>
         <FIELD NAME="showpercentgrades" TYPE="int" LENGTH="2" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="checkbox" PREVIOUS="wordsorpoints"/>

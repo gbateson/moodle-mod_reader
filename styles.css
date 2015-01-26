@@ -358,10 +358,14 @@
 #page-mod-reader-admin-tools div.tabtree { margin-bottom: 0px; }
 #page-mod-reader-admin-tools div.generalbox { }
 #page-mod-reader-admin-tools ol.readertools { min-width: 200px; max-width: 1200px; }
-#page-mod-reader-admin-tools li.readertool { float: left; margin: 12px 18px; padding: 4px;
-                                                    min-height: 110px; width: 18%; min-width: 180px; max-width: 300px;
-                                                    background-color: #efefef; border: solid 1px #ddddff;
-                                                    -webkit-border-radius: 8px; /* Safari and Chrome */
-                                                    -moz-border-radius: 8px;   /* Firefox */
-                                                    -o-border-radius: 8px;    /* Opera */
-                                                    border-radius: 8px;      /* CSS3 */}
+#page-mod-reader-admin-tools li.readertool { float: left; font-size: 12px; margin: 12px 18px; padding: 4px;
+                                             height: 150px; width: 18%; min-width: 180px; max-width: 300px;
+                                             overflow: scroll; background-color: #efefef; border: solid 1px #ddddff;
+                                             -webkit-border-radius: 8px; /* Safari and Chrome */
+                                             -moz-border-radius: 8px;   /* Firefox */
+                                             -o-border-radius: 8px;    /* Opera */
+                                             border-radius: 8px;      /* CSS3 */}
+
+#page-mod-reader-admin-tools li.readertool p { margin: 3px 0px;}
+#page-mod-reader-admin-tools li.readertool ul { margin: 3px 0px 0px 18px; }
+

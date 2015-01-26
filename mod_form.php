@@ -345,5 +345,21 @@ class mod_reader_mod_form extends moodleform_mod {
             $mform->setAdvanced($name, $config->$adv_name);
         }
     }
+
+    /**
+     * return a field value from the original record
+     * this function is useful to see if a value has changed
+     *
+     * @param string the $field name
+     * @param mixed the $default value (optional, default=null)
+     * @return mixed the field value if it exists, $default otherwise
+     */
+    public function get_originalvalue($field, $default=null) {
+        if (isset($this->current->$field)) {
+            return $this->current->$field;
+        } else {
+            return $default;
+        }
+    }
 }
 

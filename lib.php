@@ -51,10 +51,11 @@ define('READER_REVIEW_GENERALFEEDBACK', 32*0x1041);
  * @uses $DB
  * @uses $USER
  * @param xxx $reader
+ * @param xxx $mform
  * @return xxx
  * @todo Finish documenting this function
  */
-function reader_add_instance($reader) {
+function reader_add_instance(stdclass $reader, $mform) {
     global $CFG, $DB, $USER;
 
     $reader->timemodified = time();
@@ -65,6 +66,7 @@ function reader_add_instance($reader) {
     $reader->subnet = $reader->requiresubnet;
     unset($reader->requiresubnet);
 
+    // add reader record to database
     $reader->id = $DB->insert_record('reader', $reader);
 
     // update calendar events
@@ -81,12 +83,14 @@ function reader_add_instance($reader) {
  *
  * @uses $CFG
  * @uses $DB
+ * @uses $USER
  * @param xxx $reader
- * @param xxx $id
+ * @param xxx $mform
  * @return xxx
  * @todo Finish documenting this function
  */
-function reader_update_instance($reader, $id) {
+function reader_update_instance(stdclass $reader, $mform) {
+
     global $CFG, $DB;
 
     $reader->timemodified = time();
@@ -103,13 +107,23 @@ function reader_update_instance($reader, $id) {
         $DB->set_field('reader_levels', 'stoplevel', $reader->stoplevel, array('readerid' => $reader->id));
     }
 
+    // update reader record in database
     $DB->update_record('reader', $reader);
 
     // update calendar events
     reader_update_events_wrapper($reader);
 
+    // recalculate grades, if goal or maxgrade have changed
+    $goal = $mform->get_originalvalue('goal', $reader->goal);
+    $maxgrade = $mform->get_originalvalue('maxgrade', $reader->maxgrade);
+    if ($goal==$reader->goal && $maxgrade==$reader->maxgrade) {
+        $grades = null; // new or unchanged settings
+    } else {
+        $grades = reader_get_grades($reader);
+    }
+
     // update gradebook item
-    reader_grade_item_update($reader);
+    reader_grade_item_update($reader, $grades);
 
     return $reader->id;
 }
@@ -356,6 +370,10 @@ function reader_get_grades($reader, $userid=0) {
     // no reader_grade records found, so let's
     // create them by aggregating the reader_attempts
 
+    if (empty($reader->goal) || empty($reader->maxgrade)) {
+        return array();
+    }
+
     // get grade ids (so we can re-use them)
     $params = array('readerid' => $reader->id);
     if ($userid) {
@@ -375,14 +393,14 @@ function reader_get_grades($reader, $userid=0) {
     }
     $select = 'ra.userid, '.
               'ra.readerid, '.
-              'SUM('.$select.') AS rawgrade, '.
-              'MAX(timefinish) AS datesubmitted, '.
-              'MAX(timemodified) AS dategraded';
+              "($reader->maxgrade * (SUM($select) / $reader->goal)) AS rawgrade, ".
+              'MAX(timefinish) AS datesubmitted, MAX(timemodified) AS dategraded';
     $from   = '{reader_attempts} ra '.
               'JOIN {reader_books} rb ON ra.bookid = rb.id';
-    $where  = 'ra.readerid = ? AND ra.passed = ? AND ra.deleted = ? AND ra.preview = ? AND ra.timefinish >= ?';
+    $where  = 'ra.readerid = ? AND (ra.passed = ? OR ra.passed = ?) AND '.
+              'ra.deleted = ? AND ra.preview = ? AND ra.timefinish >= ?';
     $group  = 'ra.userid, ra.readerid';
-    $params = array($reader->id, 'true', 0, 0, $reader->ignoredate);
+    $params = array($reader->id, 'true', 'credit', 0, 0, $reader->ignoredate);
 
     if ($userid) {
         $where .= ' AND ra.userid = ?';
