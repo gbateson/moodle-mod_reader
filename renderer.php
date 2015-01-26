@@ -944,6 +944,7 @@ class mod_reader_renderer extends plugin_renderer_base {
         $searchdifficulty = optional_param('searchdifficulty',   -1, PARAM_INT);
         $search           = optional_param('search',              0, PARAM_INT);
         $action           = optional_param('action',        $action, PARAM_CLEAN);
+        $ajax             = optional_param('ajax',                0, PARAM_INT);
 
         // get SQL $from and $where statements to extract available books
         list($from, $where, $sqlparams) = reader_available_sql($this->reader->cm->id, $this->reader, $userid);
@@ -951,7 +952,8 @@ class mod_reader_renderer extends plugin_renderer_base {
         if ($includeformtag) {
             $target_div = 'searchresultsdiv';
             $target_url = "'view_books.php?id=".$this->reader->cm->id."'".
-                          "+'&search=1'". // so we can detect incoming search results
+                          "+'&ajax=1'". // so we can detect incoming search results
+                          "+'&search='+parseInt(this.search.value)".
                           "+'&action=$action'". // "adjustscores" or "takequiz"
                           "+'&searchpublisher='+escape(this.searchpublisher.value)".
                           "+'&searchlevel='+escape(this.searchlevel.value)".
@@ -968,6 +970,9 @@ class mod_reader_renderer extends plugin_renderer_base {
                 'onsubmit' => "request($target_url, '$target_div'); return false;"
             );
             $output .= html_writer::start_tag('form', $params);
+
+            $hidden = html_writer::empty_tag('input', array('type' => 'hidden', 'name' => 'search', 'value' => 1));
+            $output .= html_writer::tag('div', $hidden, array('style' => 'display: none;'));
 
             $table = new html_table();
             $table->align = array('right', 'left');
@@ -1202,7 +1207,7 @@ class mod_reader_renderer extends plugin_renderer_base {
             }
         }
 
-        if ($search) {
+        if ($ajax) {
             $output .= $searchresults; // not need to wrap it in "searchresultsdiv"
         } else {
             $output .= html_writer::tag('div', $searchresults, array('id' => 'searchresultsdiv'));

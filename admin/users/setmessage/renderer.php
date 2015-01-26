@@ -32,7 +32,7 @@ defined('MOODLE_INTERNAL') || die;
 require_once($CFG->dirroot.'/mod/reader/admin/users/renderer.php');
 
 /**
- * mod_reader_admin_users_sendmessage_renderer
+ * mod_reader_admin_users_setmessage_renderer
  *
  * @copyright  2013 Gordon Bateson (gordon.bateson@gmail.com)
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -40,7 +40,7 @@ require_once($CFG->dirroot.'/mod/reader/admin/users/renderer.php');
  * @package    mod
  * @subpackage reader
  */
-class mod_reader_admin_users_sendmessage_renderer extends mod_reader_admin_users_renderer {
+class mod_reader_admin_users_setmessage_renderer extends mod_reader_admin_users_renderer {
 
     /**
      * render_page
@@ -49,7 +49,7 @@ class mod_reader_admin_users_sendmessage_renderer extends mod_reader_admin_users
      */
     public function render_page() {
         global $CFG, $DB, $PAGE, $USER;
-        require_once($CFG->dirroot.'/mod/reader/admin/users/sendmessage/form.php');
+        require_once($CFG->dirroot.'/mod/reader/admin/users/setmessage/form.php');
 
         if ($cancel = optional_param('cancel', '', PARAM_ALPHA)) {
             $data = null;
@@ -120,7 +120,7 @@ class mod_reader_admin_users_sendmessage_renderer extends mod_reader_admin_users
         $url->params($params);
 
         // initialize the form
-        $mform = new mod_reader_admin_users_sendmessage_form($url->out(false));
+        $mform = new mod_reader_admin_users_setmessage_form($url->out(false));
 
         // populate the form, if necessary
         if ($messageid && $action=='editmessage') {

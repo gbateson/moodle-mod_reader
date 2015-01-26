@@ -16,7 +16,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * mod/reader/admin/users/sendmessage_form.php
+ * mod/reader/admin/users/setmessage_form.php
  *
  * @package    mod
  * @subpackage reader
@@ -32,7 +32,7 @@ defined('MOODLE_INTERNAL') || die;
 require_once($CFG->dirroot.'/lib/formslib.php');
 
 /**
- * mod_reader_admin_users_sendmessage_form
+ * mod_reader_admin_users_setmessage_form
  *
  * @copyright  2013 Gordon Bateson (gordon.bateson@gmail.com)
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -40,7 +40,7 @@ require_once($CFG->dirroot.'/lib/formslib.php');
  * @package    mod
  * @subpackage reader
  */
-class mod_reader_admin_users_sendmessage_form extends moodleform {
+class mod_reader_admin_users_setmessage_form extends moodleform {
 
     /**
      * constructor
@@ -48,7 +48,7 @@ class mod_reader_admin_users_sendmessage_form extends moodleform {
      * @param mixed $action the action attribute (=url) for the form
      * @todo Finish documenting this function
      */
-    function mod_reader_admin_users_sendmessage_form($action=null) {
+    function mod_reader_admin_users_setmessage_form($action=null) {
         parent::moodleform($action);
     }
 
@@ -74,7 +74,7 @@ class mod_reader_admin_users_sendmessage_form extends moodleform {
         $mform->setType('groupids', PARAM_INT);
 
         // timefinish
-        $mform->addElement('date_time_selector', 'timefinish', get_string('sendmessagetime', 'mod_reader'), array('optional' => true));
+        $mform->addElement('date_time_selector', 'timefinish', get_string('setmessagetime', 'mod_reader'), array('optional' => true));
         $mform->setDefault('timefinish', 0);
         $mform->setType('timefinish', PARAM_INT);
 
@@ -83,7 +83,7 @@ class mod_reader_admin_users_sendmessage_form extends moodleform {
         $mform->setType('messageid', PARAM_INT);
 
         // message
-        $mform->addElement('editor', 'message', get_string('sendmessagetext', 'mod_reader'), array('size' => 40));
+        $mform->addElement('editor', 'message', get_string('setmessagetext', 'mod_reader'), array('size' => 40));
         $mform->setDefault('message', '');
         $mform->setType('message', PARAM_RAW);
 
@@ -179,12 +179,12 @@ class mod_reader_admin_users_sendmessage_form extends moodleform {
                         $days = ' ('.$days.' days remaining)';
                     }
                     $timefinish = userdate($timefinish, $dateformat).$days;
-                    $timefinish = html_writer::tag('b', get_string('sendmessagetime', 'mod_reader')).': '.$timefinish;
+                    $timefinish = html_writer::tag('b', get_string('setmessagetime', 'mod_reader')).': '.$timefinish;
                     $item .= html_writer::tag('li', $timefinish, array('class' => 'timefinish'));
                 }
                 if ($text = $message->messagetext) {
                     $text = strip_tags(format_text($text, $message->messageformat));
-                    //$text = html_writer::tag('b', get_string('sendmessagetext', 'mod_reader')).': '.$text;
+                    //$text = html_writer::tag('b', get_string('setmessagetext', 'mod_reader')).': '.$text;
                     $item .= html_writer::tag('li', $text, array('class' => 'messagetext'));
                 }
                 if ($item) {

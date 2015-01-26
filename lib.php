@@ -412,7 +412,7 @@ function reader_get_grades($reader, $userid=0) {
     // remove unused grade ids - usually there shouldn't be any !!
     if (count($gradeids)) {
         list($select, $params) = $DB->get_in_or_equal($gradeids);
-        $DB->delete_records_select('reader_grades', $select, $params);
+        $DB->delete_records_select('reader_grades', "id $select", $params);
     }
 
     return $grades;
@@ -662,7 +662,7 @@ function reader_user_complete($course, $user, $mod, $reader) {
 function reader_print_recent_activity($course, $viewfullnames, $timestart) {
     global $CFG, $DB, $OUTPUT;
 
-    //TODO: use timestamp in approved field instead of changing timemodified when approving in 2.0
+    //TODO: use timestamp in approved field instead of these constants
     if (! defined('READER_RECENT_ACTIVITY_LIMIT')) {
         define('READER_RECENT_ACTIVITY_LIMIT', 20);
     }
@@ -670,9 +670,8 @@ function reader_print_recent_activity($course, $viewfullnames, $timestart) {
         define('READER_RECENT_ACTIVITY_TEXTLENGTH', 16);
     }
 
-
     // for testing, subtract one year from the start time
-    $timestart -= (52 * WEEKSECS);
+    //$timestart -= (52 * WEEKSECS);
 
     $ids = array();
     $modinfo = get_fast_modinfo($course);
@@ -720,6 +719,7 @@ function reader_print_recent_activity($course, $viewfullnames, $timestart) {
     if (empty($attempts)) {
         return false;
     }
+
     // start "reader_recent_activity" div
     echo html_writer::start_tag('div', array('class' => 'reader_recent_activity'));
 
@@ -738,8 +738,9 @@ function reader_print_recent_activity($course, $viewfullnames, $timestart) {
         $readerid = $attempt->readerid;
 
         if ($currentreaderid==$readerid && $currentuserid==$userid) {
-            // do nothing
+            // same reader and user - do nothing
         } else {
+            // new reader or user, so ...
             if ($currentuserid) {
                 echo html_writer::end_tag('ul'); // finish booklist
                 echo html_writer::end_tag('li'); // finish user
@@ -784,6 +785,7 @@ function reader_print_recent_activity($course, $viewfullnames, $timestart) {
             $currentuserid = $userid;
         }
 
+        // attempt date and book name
         $text = $attempt->bookname;
         if (reader_textlib('strlen', $text) > READER_RECENT_ACTIVITY_TEXTLENGTH) {
             $text = reader_textlib('substr', $text, 0, READER_RECENT_ACTIVITY_TEXTLENGTH - 3).'...';
@@ -791,8 +793,9 @@ function reader_print_recent_activity($course, $viewfullnames, $timestart) {
         $text = userdate($attempt->timemodified, $dateformat).': '.$text;
         echo html_writer::tag('li', $text); // a single book
 
+        // finish here if the LIMIT has been reached (but don't leave an orphan attempt)
         $count++;
-        if ($count > READER_RECENT_ACTIVITY_LIMIT) {
+        if ($count >= READER_RECENT_ACTIVITY_LIMIT && $countattempts > ($count + 1)) {
             break;
         }
     }
@@ -805,9 +808,9 @@ function reader_print_recent_activity($course, $viewfullnames, $timestart) {
         echo html_writer::end_tag('ul'); // finish reader list
     }
 
-    if ($count > READER_RECENT_ACTIVITY_LIMIT) {
+    if ($countattempts > $count) {
         $href = new moodle_url('/mod/reader/admin/reports.php', array('id' => $cmid));
-        $text = ($countattempts - READER_RECENT_ACTIVITY_LIMIT);
+        $text = ($countattempts - $count);
         $text = get_string('morenewattempts', 'mod_reader', $text);
         $text = html_writer::tag('a', $text, array('href' => $href));
         $text = html_writer::tag('div', $text, array('class' => 'activityhead'));
@@ -819,121 +822,6 @@ function reader_print_recent_activity($course, $viewfullnames, $timestart) {
     echo html_writer::end_tag('div');
 
     return true;
-
-    $select = "time > ? AND course = ? AND module = ? AND action IN (?, ?, ?, ?, ?)";
-    $params = array($timestart, $course->id, 'reader', 'add', 'update', 'view', 'attempt', 'submit');
-
-    if ($logs = $DB->get_records_select('log', $select, $params, 'time ASC')) {
-
-        $modinfo = get_fast_modinfo($course);
-        $cmids   = array_keys($modinfo->get_cms());
-
-        $stats = array();
-        foreach ($logs as $log) {
-            $cmid = $log->cmid;
-            if (! in_array($cmid, $cmids)) {
-                continue; // invalid $cmid - shouldn't happen !!
-            }
-            $cm = $modinfo->get_cm($cmid);
-            if (! $cm->uservisible) {
-                continue; // coursemodule is hidden from user
-            }
-            $sortorder = array_search($cmid, $cmids);
-            if (! array_key_exists($sortorder, $stats)) {
-                if (has_capability('mod/reader:reviewmyattempts', $cm->context) || has_capability('mod/reader:reviewallattempts', $cm->context)) {
-                    $viewreport = true;
-                } else {
-                    $viewreport = false;
-                }
-                $options = array('context' => $cm->context);
-                if (method_exists($cm, 'get_formatted_name')) {
-                    $name = $cm->get_formatted_name($options);
-                } else {
-                    $name = format_string($cm->name, true,  $options);
-                }
-                $stats[$sortorder] = (object)array(
-                    'name'    => $name,
-                    'cmid'    => $cmid,
-                    'add'     => 0,
-                    'update'  => 0,
-                    'view'    => 0,
-                    'attempt' => 0,
-                    'submit'  => 0,
-                    'users'   => array(),
-                    'viewreport' => $viewreport
-                );
-            }
-            $action = $log->action;
-            switch ($action) {
-                case 'add':
-                case 'update':
-                    // store most recent time
-                    $stats[$sortorder]->$action = $log->time;
-                    break;
-                case 'view':
-                case 'attempt':
-                case 'submit':
-                    // increment counter
-                    $stats[$sortorder]->$action ++;
-                    break;
-            }
-            $stats[$sortorder]->users[$log->userid] = true;
-        }
-
-        $dateformat   = get_string('strftimerecent', 'langconfig'); // strftimerecentfull
-        $strusers     = get_string('users');
-        $stradded     = get_string('added',    'mod_reader');
-        $strupdated   = get_string('updated',  'mod_reader');
-        $strviews     = get_string('views',    'mod_reader');
-        $strattempts  = get_string('attempts', 'mod_reader');
-        $strsubmits   = get_string('submits',  'mod_reader');
-
-        $print_headline = true;
-        ksort($stats);
-        foreach ($stats as $stat) {
-            $li = array();
-            if ($stat->add) {
-                $li[] = $stradded.': '.userdate($stat->add, $dateformat);
-            }
-            if ($stat->update) {
-                $li[] = $strupdated.': '.userdate($stat->update, $dateformat);
-            }
-            if ($stat->viewreport) {
-                // link to a detailed report of recent activity for this reader
-                $url = new moodle_url(
-                    '/course/recent.php',
-                    array('id'=>$course->id, 'modid'=>$stat->cmid, 'date'=>$timestart)
-                );
-                if ($count = count($stat->users)) {
-                    $li[] = $strusers.': '.html_writer::link($url, $count);
-                }
-                if ($stat->view) {
-                    $li[] = $strviews.': '.html_writer::link($url, $stat->view);
-                }
-                if ($stat->attempt) {
-                    $li[] = $strattempts.': '.html_writer::link($url, $stat->attempt);
-                }
-                if ($stat->submit) {
-                    $li[] = $strsubmits.': '.html_writer::link($url, $stat->submit);
-                }
-            }
-            if (count($li)) {
-                if ($print_headline) {
-                    $print_headline = false;
-                    echo $OUTPUT->heading(get_string('modulenameplural', 'mod_reader').':', 3);
-                }
-
-                $url = new moodle_url('/mod/reader/view.php', array('id'=>$stat->cmid));
-                $link = html_writer::link($url, format_string($stat->name));
-
-                $text = html_writer::tag('p', $link).html_writer::alist($li);
-                echo html_writer::tag('div', $text, array('class'=>'readerrecentactivity'));
-
-                $result = true;
-            }
-        }
-    }
-    return $result;
 }
 
 /**

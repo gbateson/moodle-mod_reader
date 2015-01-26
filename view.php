@@ -32,8 +32,8 @@ require_once($CFG->dirroot.'/mod/reader/locallib.php');
 require_once($CFG->dirroot.'/course/moodleform_mod.php');
 require_once($CFG->dirroot.'/question/editlib.php');
 
-$id        = optional_param('id', 0, PARAM_INT);
-$a         = optional_param('a', NULL, PARAM_CLEAN);
+$id        = optional_param('id', 0, PARAM_INT); // course module id
+$r         = optional_param('r',  0, PARAM_INT); // reader id
 $v         = optional_param('v', NULL, PARAM_CLEAN);
 $publisher = optional_param('publisher', NULL, PARAM_CLEAN);
 $level     = optional_param('level', NULL, PARAM_CLEAN);
@@ -42,13 +42,13 @@ $likebook  = optional_param('likebook', NULL, PARAM_CLEAN);
 
 if ($id) {
     $cm = get_coursemodule_from_id('reader', $id, 0, false, MUST_EXIST);
-    $course = $DB->get_record('course', array('id'=>$cm->course), '*', MUST_EXIST);
-    $reader = $DB->get_record('reader', array('id'=>$cm->instance), '*', MUST_EXIST);
-    //$a = $reader->id;
+    $course = $DB->get_record('course', array('id' => $cm->course), '*', MUST_EXIST);
+    $reader = $DB->get_record('reader', array('id' => $cm->instance), '*', MUST_EXIST);
+    $r = $reader->id;
 } else {
-    $reader = $DB->get_record('reader', array('id'=>$a), '*', MUST_EXIST);
+    $reader = $DB->get_record('reader', array('id' => $r), '*', MUST_EXIST);
     $cm = get_coursemodule_from_instance('reader', $reader->id, 0, false, MUST_EXIST);
-    $course = $DB->get_record('course', array('id'=>$cm->course), '*', MUST_EXIST);
+    $course = $DB->get_record('course', array('id' => $cm->course), '*', MUST_EXIST);
     $id = $cm->id;
 }
 
@@ -58,18 +58,18 @@ reader_add_to_log($course->id, 'reader', 'view', 'view.php?id='.$cm->id, $reader
 $contextmodule = reader_get_context(CONTEXT_MODULE, $cm->id);
 $timenow = time();
 
-if (isset($_SESSION['SESSION']->reader_lasttime) && $_SESSION['SESSION']->reader_lasttime < ($timenow - 300)) {
+if (isset($SESSION->reader_lasttime) && $SESSION->reader_lasttime < ($timenow - 300)) {
     $unset = true;
-} else if (isset($_SESSION['SESSION']->reader_page) && $_SESSION['SESSION']->reader_page == 'view') {
+} else if (isset($SESSION->reader_page) && $SESSION->reader_page == 'view') {
     $unset = true;
 } else {
     $unset = false;
 }
 if ($unset) {
-    unset ($_SESSION['SESSION']->reader_page);
-    unset ($_SESSION['SESSION']->reader_lasttime);
-    unset ($_SESSION['SESSION']->reader_lastuser);
-    unset ($_SESSION['SESSION']->reader_lastuserfrom);
+    unset ($SESSION->reader_page);
+    unset ($SESSION->reader_lasttime);
+    unset ($SESSION->reader_lastuser);
+    unset ($SESSION->reader_lastuserfrom);
 }
 
 // Initialize $PAGE, compute blocks
@@ -329,90 +329,94 @@ if ($bookcoversinthisterm) {
     echo html_writer::tag('p', $bookcoversinthisterm);
 }
 
-echo '<h2 class="ReadingReportTitle">'.get_string('readingreportfor', $plugin, fullname($USER))."</h2>";
-if (class_exists('\core\session\manager')) {
-    $is_loggedinas = \core\session\manager::is_loggedinas();
-} else {
-    $is_loggedinas = session_is_loggedinas();
-}
-if ($is_loggedinas) {
-    $params = array('id' => $id, 'sesskey' => sesskey());
-    $params = array('href' => new moodle_url('/mod/reader/view_loginas.php', $params));
-    $text = html_writer::tag('a', get_string('returntoreports', $plugin), $params);
-    echo html_writer::tag('div', $text, array('class' => 'returntoreports'));
-}
-
-if (! empty($table->data)) {
+if (count($table->data)) {
+    echo '<h2 class="ReadingReportTitle">'.get_string('readingreportfor', $plugin, fullname($USER))."</h2>";
+    if (class_exists('\core\session\manager')) {
+        $is_loggedinas = \core\session\manager::is_loggedinas();
+    } else {
+        $is_loggedinas = session_is_loggedinas();
+    }
+    if ($is_loggedinas) {
+        $params = array('id' => $id, 'sesskey' => sesskey());
+        $params = array('href' => new moodle_url('/mod/reader/view_loginas.php', $params));
+        $text = html_writer::tag('a', get_string('returntoreports', $plugin), $params);
+        echo html_writer::tag('div', $text, array('class' => 'returntoreports'));
+    }
     echo html_writer::table($table);
 } else {
     //echo '<center>'.get_string('nodata', $plugin).'</center>';
 }
 
+// show progress bar, if necessary
 if ($reader->showprogressbar) {
     echo $output->progressbar($totalwords);
 }
 
-$table = new html_table();
-$table->attributes['class'] = 'generaltable PromotionTable';
+// show promotion criteria nad reading restrictions, if necessary
+if ($reader->levelcheck) {
 
-$table->data[] = new html_table_row(array(
-    new html_table_cell(get_string('yourcurrentlevel', $plugin, $leveldata['currentlevel'])),
-    new html_table_cell(reader_view_blockgraph($reader, $leveldata, $dateformat))
-));
+    $table = new html_table();
+    $table->attributes['class'] = 'generaltable PromotionTable';
 
-// stretch blockgraph cell across two rows and align center
-$table->data[0]->cells[1]->rowspan = 2;
+    $table->data[] = new html_table_row(array(
+        new html_table_cell(get_string('yourcurrentlevel', $plugin, $leveldata['currentlevel'])),
+        new html_table_cell(reader_view_blockgraph($reader, $leveldata, $dateformat))
+    ));
 
-$list = array();
+    // stretch blockgraph cell across two rows and align center
+    $table->data[0]->cells[1]->rowspan = 2;
 
-if ($leveldata['allowpromotion']) {
+    $list = array();
 
-    // current level
-    if ($leveldata['thislevel'] > 0) {
-        $params = (object)array('count' => $leveldata['thislevel'],
-                                'level' => $leveldata['currentlevel']);
-        $type = ($leveldata['thislevel'] == 1 ? 'single' : 'plural');
-        $list[] = get_string('youmustpass'.$type, $plugin, $params);
-    } else if ($leveldata['thislevel']==0) {
-        $list[] = get_string('youcannottake', $plugin, $leveldata['currentlevel']);
+    if ($leveldata['allowpromotion']) {
+
+        // current level
+        if ($leveldata['thislevel'] > 0) {
+            $params = (object)array('count' => $leveldata['thislevel'],
+                                    'level' => $leveldata['currentlevel']);
+            $type = ($leveldata['thislevel'] == 1 ? 'single' : 'plural');
+            $list[] = get_string('youmustpass'.$type, $plugin, $params);
+        } else if ($leveldata['thislevel']==0) {
+            $list[] = get_string('youcannottake', $plugin, $leveldata['currentlevel']);
+        }
+
+        // previous level
+        if ($leveldata['prevlevel'] > 0) {
+            $params = (object)array('count' => $leveldata['prevlevel'],
+                                    'level' => $leveldata['currentlevel'] - 1);
+            $type = ($leveldata['prevlevel'] == 1 ? 'single' : 'plural');
+            $list[] = get_string('youcantake'.$type, $plugin, $params);
+        } else if ($leveldata['prevlevel']==0) {
+            $list[] = get_string('youcannottake', $plugin, $leveldata['currentlevel'] - 1);
+        }
+
+        // next level
+        if ($leveldata['nextlevel'] > 0) {
+            $params = (object)array('count' => $leveldata['nextlevel'],
+                                    'level' => $leveldata['currentlevel'] + 1);
+            $type = ($leveldata['nextlevel'] == 1 ? 'single' : 'plural');
+            $list[] = get_string('youcantake'.$type, $plugin, $params);
+        } else if ($leveldata['nextlevel']==0) {
+            $list[] = get_string('youcannottake', $plugin, $leveldata['currentlevel'] + 1);
+        }
+
+    } else if ($leveldata['currentlevel']==$leveldata['stoplevel']) {
+        // stopped automatically - "stoplevel" reached
+        $list[] = get_string('youcantakeunlimited', $plugin, $leveldata['currentlevel']);
+        $list[] = get_string('pleaseaskyourinstructor', $plugin);
+
+    } else {
+        // stopped by teacher - "allowpromote" disabled
+        $list[] = get_string('promotionnotallowed', $plugin);
+        $list[] = get_string('youcantakeunlimited', $plugin, $leveldata['currentlevel']);
     }
 
-    // previous level
-    if ($leveldata['prevlevel'] > 0) {
-        $params = (object)array('count' => $leveldata['prevlevel'],
-                                'level' => $leveldata['currentlevel'] - 1);
-        $type = ($leveldata['prevlevel'] == 1 ? 'single' : 'plural');
-        $list[] = get_string('youcantake'.$type, $plugin, $params);
-    } else if ($leveldata['prevlevel']==0) {
-        $list[] = get_string('youcannottake', $plugin, $leveldata['currentlevel'] - 1);
-    }
+    $table->data[] = new html_table_row(array(
+        new html_table_cell(html_writer::alist($list))
+    ));
 
-    // next level
-    if ($leveldata['nextlevel'] > 0) {
-        $params = (object)array('count' => $leveldata['nextlevel'],
-                                'level' => $leveldata['currentlevel'] + 1);
-        $type = ($leveldata['nextlevel'] == 1 ? 'single' : 'plural');
-        $list[] = get_string('youcantake'.$type, $plugin, $params);
-    } else if ($leveldata['nextlevel']==0) {
-        $list[] = get_string('youcannottake', $plugin, $leveldata['currentlevel'] + 1);
-    }
-
-} else if ($leveldata['currentlevel']==$leveldata['stoplevel']) {
-    // stopped automatically - "stoplevel" reached
-    $list[] = get_string('youcantakeunlimited', $plugin, $leveldata['currentlevel']);
-    $list[] = get_string('pleaseaskyourinstructor', $plugin);
-
-} else {
-    // stopped by teacher - "allowpromote" disabled
-    $list[] = get_string('promotionnotallowed', $plugin);
-    $list[] = get_string('youcantakeunlimited', $plugin, $leveldata['currentlevel']);
+    echo html_writer::table($table);
 }
-
-$table->data[] = new html_table_row(array(
-    new html_table_cell(html_writer::alist($list))
-));
-
-echo html_writer::table($table);
 
 $showform = true;
 if ($attempt = $DB->get_record('reader_attempts', array('readerid' => $cm->instance, 'userid' => $USER->id, 'timefinish' => 0))) {
@@ -422,17 +426,17 @@ if ($attempt = $DB->get_record('reader_attempts', array('readerid' => $cm->insta
         $attempt->timefinish   = $timenow;
         $attempt->passed       = 'false';
         $attempt->percentgrade = 0;
-        $attempt->sumgrades    = '0';
+        $attempt->sumgrades    = 0;
         $attempt->bookrating   = 0;
         $DB->update_record('reader_attempts', $attempt);
     } else {
         $showform = false;
         $bookname = $DB->get_field('reader_books', 'name', array('quizid' => $attempt->quizid));
         print_string('pleasecompletequiz', $plugin, $bookname);
-        if (empty($_SESSION['SESSION']->reader_lastattemptpage)) {
+        if (empty($SESSION->reader_lastattemptpage)) {
             $url = $CFG->wwwroot.'/mod/reader/quiz/attempt.php?attempt='.$attempt->id.'&page=1#q0';
         } else {
-            $url = $CFG->wwwroot.'/mod/reader/quiz/attempt.php?'.$_SESSION['SESSION']->reader_lastattemptpage;
+            $url = $CFG->wwwroot.'/mod/reader/quiz/attempt.php?'.$SESSION->reader_lastattemptpage;
         }
         echo ' <a href="'.$url.'">'.get_string('complete', $plugin).'</a>';
     }
@@ -477,12 +481,12 @@ if ($messages = $DB->get_records_select('reader_messages', $select, $params)) {
     }
 }
 
-if (isset($_SESSION['SESSION']->reader_changetostudentview)) {
-    if ($showform == false && $_SESSION['SESSION']->reader_changetostudentview > 0) {
-        echo '<br />'.get_string('thisblockunavailable', $plugin).'<br />';
-        $showform == true;
-    }
-}
+//if (isset($SESSION->reader_changetostudentview)) {
+//    if ($showform == false && $SESSION->reader_changetostudentview > 0) {
+//        echo '<br />'.get_string('thisblockunavailable', $plugin).'<br />';
+//        $showform == true;
+//    }
+//}
 
 if ($showform && has_capability('mod/reader:viewbooks', $contextmodule)) {
     echo '<h3>'.get_string('searchforabook', $plugin).':</h3>';

@@ -33,20 +33,20 @@ $tab = mod_reader_renderer::TAB_REPORTS;
 $mode = 'usersummary';
 
 $id       = optional_param('id',      0, PARAM_INT); // course module id
-$a        = optional_param('a',       0, PARAM_INT); // reader id
+$r        = optional_param('r',       0, PARAM_INT); // reader id
 $userid   = optional_param('userid',  0, PARAM_INT); // user id
 $tab      = optional_param('tab',     $tab, PARAM_INT); // navigation tab id
 $mode     = optional_param('mode',    $mode, PARAM_ALPHA); // navigation mode
 
 if ($id) {
     $cm = get_coursemodule_from_id('reader', $id, 0, false, MUST_EXIST);
-    $course = $DB->get_record('course', array('id'=>$cm->course), '*', MUST_EXIST);
-    $reader = $DB->get_record('reader', array('id'=>$cm->instance), '*', MUST_EXIST);
-    $a = $reader->id;
+    $course = $DB->get_record('course', array('id' => $cm->course), '*', MUST_EXIST);
+    $reader = $DB->get_record('reader', array('id' => $cm->instance), '*', MUST_EXIST);
+    $r = $reader->id;
 } else {
-    $reader = $DB->get_record('reader', array('id'=>$a), '*', MUST_EXIST);
+    $reader = $DB->get_record('reader', array('id' => $r), '*', MUST_EXIST);
     $cm = get_coursemodule_from_instance('reader', $reader->id, 0, false, MUST_EXIST);
-    $course = $DB->get_record('course', array('id'=>$cm->course), '*', MUST_EXIST);
+    $course = $DB->get_record('course', array('id' => $cm->course), '*', MUST_EXIST);
     $id = $cm->id;
 }
 
