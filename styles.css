@@ -51,7 +51,10 @@
 }
 
 /** reader mod settings page **/
-#page-admin-setting-modsettingreader div.form-textarea {float: left;}
+#page-admin-setting-modsettingreader div.form-textarea { float: left; }
+#page-admin-setting-modsettingreader div.form-setting { max-width: 520px; }
+#page-admin-setting-modsettingreader div#admin-cheatedmessage div.form-defaultinfo,
+#page-admin-setting-modsettingreader div#admin-clearedmessage div.form-defaultinfo { clear: both; display: block; }
 
 /** reader mod edit **/
 #page-mod-reader-mod .mform .fitem .fitemtitle {min-width: 190px; margin-right: 8px;}

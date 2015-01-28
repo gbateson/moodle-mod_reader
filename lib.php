@@ -608,8 +608,20 @@ function reader_reset_gradebook($courseid, $type='') {
     $params = array('reader', $courseid);
     if ($readers = $DB->get_records_sql("SELECT $select FROM $from WHERE $where", $params)) {
         foreach ($readers as $reader) {
-            $DB->delete_records('reader_attempts', array('readerid' => $id));
-            $DB->delete_records('reader_grades',   array('readerid' => $id));
+            if ($attempts = $DB->get_records('reader_attempts', array('readerid' => $id), 'id', 'id,readerid')) {
+                $ids = array_keys($attempts);
+                $DB->delete_records_list('reader_attempt_questions', 'attemptid', $ids);
+                $DB->delete_records_list('reader_attempts', 'id',  $ids);
+                unset($ids);
+            }
+            unset($attempts);
+            $DB->delete_records('reader_cheated_log',       array('readerid' => $id));
+            $DB->delete_records('reader_delays',            array('readerid' => $id));
+            $DB->delete_records('reader_grades',            array('readerid' => $id));
+            $DB->delete_records('reader_goals',             array('readerid' => $id));
+            $DB->delete_records('reader_levels',            array('readerid' => $id));
+            $DB->delete_records('reader_messages',          array('readerid' => $id));
+            $DB->delete_records('reader_strict_users_list', array('readerid' => $id));
             reader_grade_item_update($reader, 'reset');
         }
     }
@@ -628,7 +640,7 @@ function reader_rescale_grade($rawgrade, $reader) {
         return 0;
     } else {
         $precision = ($reader->wordsorpoints==0 ? 0 : 1);
-        return round($rawgrade * $reader->grade / $reader->sumgrades, $precision);
+        return round($reader->maxgrade * min(1, $rawgrade / $reader->goal), $precision);
     }
 }
 
@@ -667,7 +679,7 @@ function reader_user_complete($course, $user, $mod, $reader) {
 /**
  * Given a course and a time, this module should find recent activity
  * that has occurred in reader activities and print it out.
- * Return true if there was output, or false is there was none.
+ * The output appears on the course page in the "Recent activity" block
  *
  * @uses $CFG
  * @uses $DB
@@ -675,7 +687,7 @@ function reader_user_complete($course, $user, $mod, $reader) {
  * @param stdclass $course
  * @param boolean  $viewfullnames
  * @param integer  $timestart
- * @return boolean
+ * @return boolean TRUE if there was output, otherwise FALSE
  */
 function reader_print_recent_activity($course, $viewfullnames, $timestart) {
     global $CFG, $DB, $OUTPUT;
