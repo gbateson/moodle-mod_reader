@@ -3815,11 +3815,11 @@ function xmldb_reader_fix_sumgrades($dbman) {
 
             // convert slots to question ids (Moodle <= 2.6)
             if (isset($quiz->questions)) {
-                foreach ($slots as $i => $slot) {
+                foreach ($slots as $s => $slot) {
                     if (array_key_exists($slot, $quiz->questions)) {
-                        $slots[$i] = $quiz->questions[$slot];
+                        $slots[$s] = $quiz->questions[$slot];
                     } else {
-                        $slots[$i] = false;
+                        $slots[$s] = false;
                     }
                 }
                 $slots = array_filter($slots);
