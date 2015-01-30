@@ -3793,7 +3793,7 @@ function xmldb_reader_fix_sumgrades($dbman) {
             // Moodle <= 2.6
             $table_quiz_slots = 'quiz_question_instances';
             $field_quizid     = 'quiz';
-            $field_slot       = 'questionid';
+            $field_slot       = 'question';
             $field_maxmark    = 'grade';
         }
 
