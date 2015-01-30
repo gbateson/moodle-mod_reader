@@ -3783,66 +3783,93 @@ function xmldb_reader_fix_sumgrades($dbman) {
 
     if ($rs) {
 
-        if ($use_quiz_slots = $dbman->table_exists('quiz_slots')) {
-            // Moodle >= 2.7
-            $table_quiz_slots = 'quiz_slots';
-            $field_quizid     = 'quizid';
-            $field_slot       = 'slot';
-            $field_maxmark    = 'maxmark';
-        } else {
-            // Moodle <= 2.6
-            $table_quiz_slots = 'quiz_question_instances';
-            $field_quizid     = 'quiz';
-            $field_slot       = 'question';
-            $field_maxmark    = 'grade';
-        }
-
-        $readerids = array();
         if ($interactive) {
             $i = 0;
             $bar = new progress_bar('fixsumgrades', 500, true);
         }
+        $use_quiz_slots = $dbman->table_exists('quiz_slots');
         $strupdating = get_string('fixingsumgrades', 'mod_reader');
+        $sql_compare_text_layout = $DB->sql_compare_text('layout');
 
+        $quiz = null;
+        $readerids = array();
         foreach ($rs as $quizidlayout) {
             upgrade_set_timeout(); // 3 mins
 
             $quizid = $quizidlayout->quizid;
             $layout = $quizidlayout->layout;
 
+            if ($quiz===null || $quiz===false || $quiz->id != $quizid) {
+                $quiz = $DB->get_record('quiz', array('id' => $quizid));
+                if (isset($quiz->questions)) {
+                    $quiz->questions = explode(',', $quiz->questions);
+                    $quiz->questions = array_filter($quiz->questions);
+                    $quiz->questions = array_values($quiz->questions);
+                }
+            }
+
             // get slots in this quiz layout
             $slots = explode(',', $layout);
             $slots = array_filter($slots);
+            $slots = array_values($slots);
+
+            // convert slots to question ids (Moodle <= 2.6)
+            if (isset($quiz->questions)) {
+                foreach ($slots as $i => $slot) {
+                    if (array_key_exists($slot, $quiz->questions)) {
+                        $slots[$i] = $quiz->questions[$slot];
+                    } else {
+                        $slots[$i] = false;
+                    }
+                }
+                $slots = array_filter($slots);
+                $slots = array_values($slots);
+            }
 
             // sanity check on slots
             if (empty($slots)) {
-                $DB->delete_records('reader_attempts', array('quizid' => $quizid, 'layout' => $layout));
-                continue;
+                $select = 'quizid = ? AND '.$sql_compare_text_layout.' = ?';
+                $DB->delete_records_select('reader_attempts', $select, array($quizid, $layout));
+                $sumgrades = 0;
+            } else {
+                // calculate actual sumgrades value for these slots / questions
+                if ($use_quiz_slots) {
+                    // Moodle >= 2.7
+                    $table = 'quiz_slots';
+                    $field = 'SUM(maxmark)';
+                    list($select, $params) = $DB->get_in_or_equal($slots);
+                    $select = "slot $select AND quizid = ?";
+                    $params[] = $quizid;
+                } else {
+                    // Moodle <= 2.6
+                    $table = 'quiz_question_instances';
+                    $field = 'SUM(grade)';
+                    list($select, $params) = $DB->get_in_or_equal($slots);
+                    $select = "question $select AND quiz = ?";
+                    $params[] = $quizid;
+                }
+                $sumgrades = $DB->get_field_select($table, $field, $select, $params);
             }
 
-            // calculate actual sumgrades value for these slots
-            list($select, $params) = $DB->get_in_or_equal($slots);
-            $select = "$field_slot $select AND $field_quizid = ?";
-            $params[] = $quizid;
-            $sumgrades = $DB->get_field_select($table_quiz_slots, "SUM($field_maxmark)", $select, $params);
-
-            // force sumgrades value
+            // force sumgrades value (cannot be null)
+            $sumgrades = ($sumgrades ? $sumgrades : 0);
             $DB->set_field('quiz', 'sumgrades', $sumgrades, array('id' => $quizid));
 
             // sanity check on sumgrades
-            if (empty($sumgrades)) {
-                $DB->delete_records('reader_attempts', array('quizid' => $quizid, 'layout' => $layout));
-                continue;
-            }
-
-            // get attempts with incorrect sumgrades value
-            $select = 'quizid = ? AND layout = ? AND ROUND(sumgrades / percentgrade * 100) <> ?';
-            $params = array($quizid, $layout, $sumgrades);
-            if ($attempts = $DB->get_records_select('reader_attempts', $select, $params)) {
-                foreach ($attempts as $attempt) {
-                    $readerids[$attempt->readerid] = true;
-                    $percentgrade = round($attempt->sumgrades / $sumgrades * 100);
-                    $DB->set_field('reader_attempts', 'percentgrade', $percentgrade, array('id' => $attempt->id));
+            if ($sumgrades==0) {
+                echo "Remove attempts for $quiz->name (id=$quiz->id)<br />";
+                $select = 'quizid = ? AND '.$sql_compare_text_layout.' = ?';
+                $DB->delete_records_select('reader_attempts', $select, array($quizid, $layout));
+            } else {
+                // fix attempts with incorrect sumgrades
+                $select = 'quizid = ? AND '.$sql_compare_text_layout.' = ? AND ROUND(sumgrades / percentgrade * 100) <> ?';
+                $params = array($quizid, $layout, $sumgrades);
+                if ($attempts = $DB->get_records_select('reader_attempts', $select, $params)) {
+                    foreach ($attempts as $attempt) {
+                        $readerids[$attempt->readerid] = true;
+                        $percentgrade = round($attempt->sumgrades / $sumgrades * 100);
+                        $DB->set_field('reader_attempts', 'percentgrade', $percentgrade, array('id' => $attempt->id));
+                    }
                 }
             }
 
