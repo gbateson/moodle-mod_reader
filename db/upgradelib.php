@@ -3787,9 +3787,9 @@ function xmldb_reader_fix_sumgrades($dbman) {
             $i = 0;
             $bar = new progress_bar('fixsumgrades', 500, true);
         }
-        $use_quiz_slots = $dbman->table_exists('quiz_slots');
         $strupdating = get_string('fixingsumgrades', 'mod_reader');
         $sql_compare_text_layout = $DB->sql_compare_text('layout');
+        $use_quiz_slots = $dbman->table_exists('quiz_slots');
 
         $quiz = null;
         $readerids = array();
@@ -3816,8 +3816,8 @@ function xmldb_reader_fix_sumgrades($dbman) {
             // convert slots to question ids (Moodle <= 2.6)
             if (isset($quiz->questions)) {
                 foreach ($slots as $s => $slot) {
-                    if (array_key_exists($slot, $quiz->questions)) {
-                        $slots[$s] = $quiz->questions[$slot];
+                    if (isset($quiz->questions[$slot - 1])) {
+                        $slots[$s] = $quiz->questions[$slot - 1];
                     } else {
                         $slots[$s] = false;
                     }
@@ -3830,7 +3830,6 @@ function xmldb_reader_fix_sumgrades($dbman) {
             if (empty($slots)) {
                 $select = 'quizid = ? AND '.$sql_compare_text_layout.' = ?';
                 $DB->delete_records_select('reader_attempts', $select, array($quizid, $layout));
-                $sumgrades = 0;
             } else {
                 // calculate actual sumgrades value for these slots / questions
                 if ($use_quiz_slots) {
@@ -3849,25 +3848,26 @@ function xmldb_reader_fix_sumgrades($dbman) {
                     $params[] = $quizid;
                 }
                 $sumgrades = $DB->get_field_select($table, $field, $select, $params);
-            }
 
-            // force sumgrades value (cannot be null)
-            $sumgrades = ($sumgrades ? $sumgrades : 0);
-            $DB->set_field('quiz', 'sumgrades', $sumgrades, array('id' => $quizid));
+                // force sumgrades value (cannot be null)
+                $sumgrades = ($sumgrades ? $sumgrades : 0);
+                $DB->set_field('quiz', 'sumgrades', $sumgrades, array('id' => $quizid));
 
-            // sanity check on sumgrades
-            if ($sumgrades==0) {
-                $select = 'quizid = ? AND '.$sql_compare_text_layout.' = ?';
-                $DB->delete_records_select('reader_attempts', $select, array($quizid, $layout));
-            } else {
-                // fix attempts with incorrect sumgrades
-                $select = 'quizid = ? AND '.$sql_compare_text_layout.' = ? AND ROUND(sumgrades / percentgrade * 100) <> ?';
-                $params = array($quizid, $layout, $sumgrades);
-                if ($attempts = $DB->get_records_select('reader_attempts', $select, $params)) {
-                    foreach ($attempts as $attempt) {
-                        $readerids[$attempt->readerid] = true;
-                        $percentgrade = round($attempt->sumgrades / $sumgrades * 100);
-                        $DB->set_field('reader_attempts', 'percentgrade', $percentgrade, array('id' => $attempt->id));
+                // sanity check on sumgrades
+                if ($sumgrades==0) {
+                    $select = 'quizid = ? AND '.$sql_compare_text_layout.' = ?';
+                    $DB->delete_records_select('reader_attempts', $select, array($quizid, $layout));
+                } else {
+                    // fix attempts with incorrect sumgrades
+                    $select = 'quizid = ? AND '.$sql_compare_text_layout.' = ? AND ROUND(sumgrades / percentgrade * 100) <> ?';
+                    $params = array($quizid, $layout, $sumgrades);
+                    if ($attempts = $DB->get_records_select('reader_attempts', $select, $params)) {
+                        list($where, $params) = $DB->get_in_or_equal(array_keys($attempts));
+                        $percentgrade = 'percentgrade = ROUND(100 * sumgrades / '.$sumgrades.')';
+                        $DB->execute("UPDATE {reader_attempts} SET $percentgrade WHERE id ".$where, $params);
+                        foreach ($attempts as $attempt) {
+                            $readerids[$attempt->readerid] = true;
+                        }
                     }
                 }
             }
@@ -3879,6 +3879,7 @@ function xmldb_reader_fix_sumgrades($dbman) {
         }
         $rs->close();
 
+        $readerids = array_keys($readerids);
         foreach ($readerids as $readerid) {
             $reader = $DB->get_record('reader', array('id' => $readerid));
             reader_update_grades($reader);
