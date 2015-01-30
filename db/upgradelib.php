@@ -3857,7 +3857,6 @@ function xmldb_reader_fix_sumgrades($dbman) {
 
             // sanity check on sumgrades
             if ($sumgrades==0) {
-                echo "Remove attempts for $quiz->name (id=$quiz->id)<br />";
                 $select = 'quizid = ? AND '.$sql_compare_text_layout.' = ?';
                 $DB->delete_records_select('reader_attempts', $select, array($quizid, $layout));
             } else {
