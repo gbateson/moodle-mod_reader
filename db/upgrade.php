@@ -1095,12 +1095,17 @@ function xmldb_reader_upgrade($oldversion) {
 
     $newversion = 2015012653;
     if ($oldversion < $newversion) {
+        require_once($CFG->dirroot.'/mod/reader/lib.php');
         $table = new xmldb_table('reader');
         $fields = array('maxgrade' => new xmldb_field('maxgrade', XMLDB_TYPE_INTEGER, '10,5', null, null, null, '0', 'goal'));
         reader_xmldb_update_fields($dbman, $table, $fields);
-
-        require_once($CFG->dirroot.'/mod/reader/lib.php');
         reader_update_grades(); // all Reader activities !!
+        upgrade_mod_savepoint(true, "$newversion", 'reader');
+    }
+
+    $newversion = 2015012956;
+    if ($oldversion < $newversion) {
+        xmldb_reader_fix_sumgrades($dbman);
         upgrade_mod_savepoint(true, "$newversion", 'reader');
     }
 

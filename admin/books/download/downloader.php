@@ -1171,9 +1171,9 @@ class reader_downloader {
      * add_quiz
      *
      * @uses $DB
-     * @param array $item xml data for this download item (= book)
-     * @param object $book recently added/updated "reader_books" record
-     * @param integer $r (optional, default=0)
+     * @param array    $item  xml data for this download item (= book)
+     * @param object   $book  recently added/updated "reader_books" record
+     * @param integer  $r     (optional, default=0)
      * @todo Finish documenting this function
      */
     public function add_quiz($item, $book, $r=0) {
@@ -3252,23 +3252,10 @@ class reader_downloader {
     public function add_question_postprocessing(&$restoreids, $module, $quiz) {
         global $DB;
 
-        // $quiz->questions
-        if ($this->quiz_questions) {
-            if (isset($module->questions)) {
-                $questions = explode(',', $module->questions);
-                foreach (array_keys($questions) as $q) {
-                    $questions[$q] = $restoreids->get_newid('question', $questions[$q]);
-                }
-            } else {
-                $questions = array(); // shouldn't happen !!
-            }
+        // fix slots and layouts in quiz attempts
+        $this->add_question_postprocessing_attempts($restoreids, $module, $quiz);
 
-            $questions = array_filter($questions); // remove blanks
-            $questions = implode(',', $questions); // convert to string
-            $DB->set_field('quiz', 'questions', $questions, array('id' => $quiz->id));
-        }
-
-        // $quiz->sumgrades
+        // set $quiz->sumgrades
         $sumgrades = 0;
         if (isset($module->question_instances)) {
             foreach ($module->question_instances as $instance) {
@@ -3290,6 +3277,108 @@ class reader_downloader {
                 case 'truefalse'   : $this->add_question_postprocessing_truefalse($restoreids, $questionid);   break;
                 case 'shortanswer' : $this->add_question_postprocessing_shortanswer($restoreids, $questionid); break;
             }
+        }
+    }
+
+    /**
+     * add_question_postprocessing_attempts
+     *
+     * @uses $DB
+     * @param xxx $module
+     * @param xxx $quiz
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function add_question_postprocessing_attempts(&$restoreids, $module, $quiz) {
+        global $DB;
+
+        // map question slots (=positions) to ids
+        if (isset($module->questions)) {
+            $questions = explode(',', $module->questions);
+            foreach ($questions as $i => $question) {
+                $questions[$i] = $restoreids->get_newid('question', $question);
+            }
+            $questions = array_filter($questions); // remove blanks
+            $questions = array_values($questions); // number sequentially
+        } else {
+            $questions = array(); // shouldn't happen !!
+        }
+
+        $oldlayout = array();
+        $newlayout = array();
+
+        if ($this->quiz_slots) {
+            // Moodle >= 2.7
+            if ($slots = $DB->get_records('quiz_slots', array('quizid' => $quiz->id))) {
+
+                // on table "quiz_slots", index "quizslot_quislo_uix" requires unique (quizid,slot)
+                // so we must offset current "slot" values out of range before we reset anything
+                if ($slot = $DB->get_field('quiz_slots', 'MAX(slot)', array('quizid' => $quiz->id))) {
+                    $sql = 'UPDATE {quiz_slots} SET slot = (slot + ?) WHERE quizid = ?';
+                    $DB->execute($sql, array($slot, $quiz->id));
+                }
+
+                // reset slot values to match order in $questions array
+                foreach ($slots as $id => $slot) {
+                    $i = array_search($slot->questionid, $questions);
+                    if ($i===false) {
+                        $DB->delete_records('quiz_slots', array('id' => $id));
+                    } else {
+                        $DB->set_field('quiz_slots', 'slot', ($i + 1), array('id' => $id));
+                        $newlayout[] = ($i + 1);
+                        $newlayout[] = 0;
+                    }
+                    $oldlayout[] = $slot->slot;
+                    $oldlayout[] = 0;
+                }
+
+            }
+        } else {
+            // Moodle <= 2.6
+            if ($oldlayout = $DB->set_field('quiz', 'questions', $questions, array('id' => $quiz->id))) {
+                $oldlayout = explode(',', $oldlayout);
+            } else {
+                $oldlayout = array(); // shouldn't happen !!
+            }
+            $newlayout = array();
+            $oldslot = 0;
+            $newslot = 0;
+            foreach ($oldlayout as $i => $id) {
+                if ($id) {
+                    $oldlayout[$i] = ++$oldslot;
+                    $newslot = array_search($id, $questions);
+                } else if ($newslot) {
+                    $newslot = 0; // signifies "page break"
+                } else {
+                    $newslot = false; // previous slot was empty
+                }
+                if ($newslot===false) {
+                    // do nothing
+                } else {
+                    $newlayout[$i] = $newslot;
+                }
+            }
+            if ($newslot) {
+                $newlayout[] = 0;
+            }
+        }
+
+        // convert layouts to comma-separated strings
+        $newlayout = implode(',', $newlayout);
+        $oldlayout = implode(',', $oldlayout);
+
+        // adjust layout in attempts, if necessary
+        if ($newlayout != $oldlayout) {
+            $layout = $DB->sql_compare_text('layout'); // Comparisons of text column conditions are not allowed !!
+            $params = array($quiz->id, $oldlayout);
+            $DB->set_field_select('quiz_attempts', 'layout', $newlayout, "quiz = ? AND $layout = ?", $params);
+            $DB->set_field_select('reader_attempts', 'layout', $newlayout, "quizid = ? AND $layout = ?", $params);
+        }
+
+        if ($this->quiz_questions) {
+            // Moodle <= 2.6
+            $questions = implode(',', $questions); // convert to comma-separated list
+            $DB->set_field('quiz', 'questions', $questions, array('id' => $quiz->id));
         }
     }
 

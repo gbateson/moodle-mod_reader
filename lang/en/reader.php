@@ -388,6 +388,7 @@ $string['fix_slashesinnames'] = 'Fix slashes in names';
 $string['fix_slashesinnamesdesc'] = 'Remove any slashes in the names of Reader books and questions categories.';
 $string['fix_wrongattempts'] = 'Fix wrong attempts';
 $string['fix_wrongattemptsdesc'] = 'Detect and fix any attempts at Reader quizzes where the name of the quiz does not match the name of the book in the Reader log';
+$string['fixingsumgrades'] = 'Fixing grades on attempts at Reader quizzes ...';
 $string['fixmissingquizzes'] = 'Fix missing quizzes';
 $string['fixmissingquizzesinfo'] = 'The upgrade has been paused, so that you can decide whether or not you wish to download and install Reader module quizzes that are missing on this Moodle site.
 

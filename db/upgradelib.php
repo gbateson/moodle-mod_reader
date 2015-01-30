@@ -702,9 +702,13 @@ function xmldb_reader_fix_question_instances() {
             $questionfield = 'question';
         }
 
-        $i = 0; // record counter
-        $bar = new progress_bar('readerfixinstances', 500, true);
+        if (xmldb_reader_interactive()) {
+            $bar = new progress_bar('readerfixinstances', 500, true);
+        } else {
+            $bar = false;
+        }
         $strupdating = 'Checking Reader question instances'; // get_string('fixinstances', 'mod_reader');
+        $i = 0; // record counter
 
         // loop through answer records
         foreach ($rs as $reader_question_instance) {
@@ -732,7 +736,9 @@ function xmldb_reader_fix_question_instances() {
             }
 
             // update progress bar
-            $bar->update($i, $i_max, $strupdating.": ($i/$i_max)");
+            if ($bar) {
+                $bar->update($i, $i_max, $strupdating.": ($i/$i_max)");
+            }
         }
         $rs->close();
     }
@@ -2414,6 +2420,8 @@ function xmldb_reader_fix_duplicate_attempts() {
         $i = 0; // record counter
         if ($interactive) {
             $bar = new progress_bar('readerfixordering', 500, true);
+        } else {
+            $bar = false;
         }
         $strupdating = 'Fixing duplicate Reader attempts'; // get_string('fixattempts', 'mod_reader');
         $strdeleted = get_string('deleted');
@@ -2464,7 +2472,7 @@ function xmldb_reader_fix_duplicate_attempts() {
             $sametitle = $attempt->sametitle;
 
             // update progress bar
-            if ($interactive) {
+            if ($bar) {
                 $bar->update($i, $i_max, $strupdating.": ($i/$i_max) $strdeleted: $countdeleted");
             }
         }
@@ -2724,9 +2732,13 @@ function xmldb_reader_fix_multichoice_questions() {
 
     if ($rs) {
 
-        $i = 0; // record counter
-        $bar = new progress_bar('readerfixmultichoice', 500, true);
+        if ($interactive) {
+            $bar = new progress_bar('readerfixmultichoice', 500, true);
+        } else {
+            $bar = false;
+        }
         $strupdating = 'Fixing Reader multichoice questions'; // get_string('fixmultichoice', 'mod_reader');
+        $i = 0; // record counter
 
         $started_box = false;
 
@@ -2853,7 +2865,7 @@ function xmldb_reader_fix_multichoice_questions() {
             }
 
             // display $msg and update progress bar
-            if ($interactive) {
+            if ($bar) {
                 echo $msg;
                 $bar->update($i, $i_max, $strupdating.": ($i/$i_max)");
             }
@@ -3101,6 +3113,8 @@ function xmldb_reader_fix_slots_quizattempts($interactive, $quizids) {
         $i = 0; // record counter
         if ($interactive) {
             $bar = new progress_bar('readerfixquizslots', 500, true);
+        } else {
+            $bar = false;
         }
         $strupdating = 'Fixing faulty question slots in Quiz attempts'; // get_string('fixattempts', 'mod_reader');
 
@@ -3133,7 +3147,7 @@ function xmldb_reader_fix_slots_quizattempts($interactive, $quizids) {
                 }
             }
             // update progress bar
-            if ($interactive) {
+            if ($bar) {
                 $bar->update($i, $i_max, $strupdating.": ($i/$i_max)");
             }
         }
@@ -3172,11 +3186,13 @@ function xmldb_reader_fix_slots_readerattempts($interactive, $quizids) {
     }
 
     if ($rs) {
-        $i = 0; // record counter
         if ($interactive) {
             $bar = new progress_bar('readerfixquestioncategorycontexts', 500, true);
+        } else {
+            $bar = false;
         }
         $strupdating = 'Fixing faulty contexts in Quiz question categories'; // get_string('fixattempts', 'mod_reader');
+        $i = 0; // record counter
 
         $cm = null;
         $quizid = 0;
@@ -3239,7 +3255,7 @@ function xmldb_reader_fix_slots_readerattempts($interactive, $quizids) {
             }
 
             // update progress bar
-            if ($interactive) {
+            if ($bar) {
                 $bar->update($i, $i_max, $strupdating.": ($i/$i_max)");
             }
         }
@@ -3400,7 +3416,11 @@ function xmldb_reader_merge_tables(&$dbman, $oldname, $newname, $fields, $unique
 
         if ($rs) {
             $i = 0; // record counter
-            $bar = new progress_bar('readermergetable'.$oldname, 500, true);
+            if (xmldb_reader_interactive()) {
+                $bar = new progress_bar('readermergetable'.$oldname, 500, true);
+            } else {
+                $bar = false;
+            }
             $a = (object)array('new' => $newname, 'old' => $oldname);
             $strupdating = get_string('mergingtables', 'mod_reader', $a);
 
@@ -3424,7 +3444,9 @@ function xmldb_reader_merge_tables(&$dbman, $oldname, $newname, $fields, $unique
                 $DB->delete_records($oldname, array('id' => $id));
 
                 // update progress bar
-                $bar->update($i, $i_max, $strupdating.": ($i/$i_max)");
+                if ($bar) {
+                    $bar->update($i, $i_max, $strupdating.": ($i/$i_max)");
+                }
             }
             $rs->close();
         }
@@ -3740,3 +3762,101 @@ function reader_xmldb_update_fields($dbman, $table, $fields, $indexes=array()) {
     // if necessary, restore indexes on updated fields
     reader_xmldb_add_indexes($dbman, $table, $indexes);
 }
+
+/**
+ * xmldb_reader_fix_sumgrades
+ *
+ * @todo Finish documenting this function
+ */
+function xmldb_reader_fix_sumgrades($dbman) {
+    global $CFG, $DB;
+    require_once($CFG->dirroot.'/mod/reader/lib.php');
+
+    $interactive = xmldb_reader_interactive();
+
+    $sql = "SELECT quizid, layout FROM {reader_attempts} GROUP BY quizid, layout";
+    if ($count = $DB->count_records_sql("SELECT COUNT(*) FROM ($sql) temptable", array())) {
+        $rs = $DB->get_recordset_sql($sql, array());
+    } else {
+        $rs = false;
+    }
+
+    if ($rs) {
+
+        if ($use_quiz_slots = $dbman->table_exists('quiz_slots')) {
+            // Moodle >= 2.7
+            $table_quiz_slots = 'quiz_slots';
+            $field_quizid     = 'quizid';
+            $field_slot       = 'slot';
+            $field_maxmark    = 'maxmark';
+        } else {
+            // Moodle <= 2.6
+            $table_quiz_slots = 'quiz_question_instances';
+            $field_quizid     = 'quiz';
+            $field_slot       = 'questionid';
+            $field_maxmark    = 'grade';
+        }
+
+        $readerids = array();
+        if ($interactive) {
+            $i = 0;
+            $bar = new progress_bar('fixsumgrades', 500, true);
+        }
+        $strupdating = get_string('fixingsumgrades', 'mod_reader');
+
+        foreach ($rs as $quizidlayout) {
+            upgrade_set_timeout(); // 3 mins
+
+            $quizid = $quizidlayout->quizid;
+            $layout = $quizidlayout->layout;
+
+            // get slots in this quiz layout
+            $slots = explode(',', $layout);
+            $slots = array_filter($slots);
+
+            // sanity check on slots
+            if (empty($slots)) {
+                $DB->delete_records('reader_attempts', array('quizid' => $quizid, 'layout' => $layout));
+                continue;
+            }
+
+            // calculate actual sumgrades value for these slots
+            list($select, $params) = $DB->get_in_or_equal($slots);
+            $select = "$field_slot $select AND $field_quizid = ?";
+            $params[] = $quizid;
+            $sumgrades = $DB->get_field_select($table_quiz_slots, "SUM($field_maxmark)", $select, $params);
+
+            // force sumgrades value
+            $DB->set_field('quiz', 'sumgrades', $sumgrades, array('id' => $quizid));
+
+            // sanity check on sumgrades
+            if (empty($sumgrades)) {
+                $DB->delete_records('reader_attempts', array('quizid' => $quizid, 'layout' => $layout));
+                continue;
+            }
+
+            // get attempts with incorrect sumgrades value
+            $select = 'quizid = ? AND layout = ? AND ROUND(sumgrades / percentgrade * 100) <> ?';
+            $params = array($quizid, $layout, $sumgrades);
+            if ($attempts = $DB->get_records_select('reader_attempts', $select, $params)) {
+                foreach ($attempts as $attempt) {
+                    $readerids[$attempt->readerid] = true;
+                    $percentgrade = round($attempt->sumgrades / $sumgrades * 100);
+                    $DB->set_field('reader_attempts', 'percentgrade', $percentgrade, array('id' => $attempt->id));
+                }
+            }
+
+            if ($interactive) {
+                $i++;
+                $bar->update($i, $count, $strupdating.": ($i/$count)");
+            }
+        }
+        $rs->close();
+
+        foreach ($readerids as $readerid) {
+            $reader = $DB->get_record('reader', array('id' => $readerid));
+            reader_update_grades($reader);
+        }
+    }
+}
+

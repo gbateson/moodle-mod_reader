@@ -68,7 +68,7 @@ if ($reader->can_viewreports()) {
                                 'stateabandoned'  => 1);
                 $redirect = new moodle_url('/mod/quiz/report.php', $params);
             } else {
-                die('oops, no $cm for quizid: '.$quizid);
+                die('Oops, no $cm for quizid: '.$quizid);
             }
         }
     }

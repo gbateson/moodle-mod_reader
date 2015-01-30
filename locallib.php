@@ -61,7 +61,7 @@ class mod_reader {
      * Makes deep copy of all passed records properties. Replaces integer $course attribute
      * with a full database record (course should not be stored in instances table anyway).
      *
-     * The method is "protected" to prevent it being called directly. To create a new
+     * The method is "private" to prevent it being called directly. To create a new
      * instance of this class please use the self::create() method (see below).
      *
      * @param stdclass $dbrecord Reader instance data from the {reader} table
@@ -790,10 +790,21 @@ class mod_reader {
         require_once($CFG->dirroot.'/mod/quiz/attemptlib.php');
 
         // clear out any attempts which may block the creation of the new quiz_attempt record
-        $DB->delete_records('quiz_attempts', array('quiz' => $readerattempt->quizid,
-                                                   'userid' => $readerattempt->userid,
-                                                   'attempt' => $readerattempt->attempt));
-        $DB->delete_records('quiz_attempts', array('uniqueid' => $readerattempt->uniqueid));
+        // if  possible, we will reuse one of the old quiz attempt ids
+        $select = '(quiz = ? AND userid = ? AND attempt = ?) OR (uniqueid = ?)';
+        $params = array($readerattempt->quizid,
+                        $readerattempt->userid,
+                        $readerattempt->attempt,
+                        $readerattempt->uniqueid);
+        if ($ids = $DB->get_records_select('quiz_attempts', $select, $params, null, 'id,quiz,userid,attempt')) {
+            $ids = array_keys($ids);
+            $id = array_shift($ids);
+            if (count($ids)) {
+                $DB->delete_records_list('quiz_attempts', 'id', $ids);
+            }
+        } else {
+            $id = null;
+        }
 
         // ensure uniqueid is unique
         //if ($DB->record_exists('quiz_attempts', array('uniqueid' => $readerattempt->uniqueid))) {
@@ -812,18 +823,19 @@ class mod_reader {
         $timecheckstate = 0;
         if ($readerattempt->timefinish) {
             if (defined('quiz_attempt::FINISHED')) {
-                $state = quiz_attempt::FINISHED; // 'finished'
+                $state = quiz_attempt::FINISHED; // "finished"
                 $timecheckstate = $readerattempt->timefinish;
             }
         } else {
             if (defined('quiz_attempt::IN_PROGRESS')) {
-                $state = quiz_attempt::IN_PROGRESS; // 'inprogress'
+                $state = quiz_attempt::IN_PROGRESS; // "inprogress"
                 $timecheckstate = $readerattempt->timemodified;
             }
         }
 
         // set up new "quiz_attempt" record
         $quizattempt = (object)array(
+            'id'                   => $id,
             'quiz'                 => $readerattempt->quizid,
             'userid'               => $readerattempt->userid,
             'attempt'              => $readerattempt->attempt,
@@ -840,7 +852,11 @@ class mod_reader {
             'needsupgradetonewqe'  => 0
         );
 
-        // return id of new "quiz_attempt" record (or false)
-        return $DB->insert_record('quiz_attempts', $quizattempt);
+        if ($id) {
+            $DB->update_record('quiz_attempts', $quizattempt);
+        } else {
+            $id = $DB->insert_record('quiz_attempts', $quizattempt);
+        }
+        return $id;
     }
 }
