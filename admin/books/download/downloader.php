@@ -190,11 +190,13 @@ class reader_downloader {
         $this->output = $output;
 
         // set default course and category
-        if ($this->reader->usecourse) {
-            $this->defaultcourseid = $this->reader->usecourse;
-        } else {
-            $this->defaultcourseid = get_config('mod_reader', 'usecourse');
+        if (! $this->defaultcourseid = $this->reader->usecourse) {
+            if (! $this->defaultcourseid = get_config('mod_reader', 'usecourse')) {
+                $params = array('shortname' => get_string('defaultcoursename', 'mod_reader'));
+                $this->defaultcourseid = $DB->get_field('course', 'id', $params);
+            }
         }
+
         if ($this->defaultcourseid) {
             $this->defaultcategoryid = $DB->get_field('course', 'category', array('id' => $this->defaultcourseid));
         } else {
