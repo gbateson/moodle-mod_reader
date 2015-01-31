@@ -3367,10 +3367,8 @@ class reader_downloader {
 
         // update quiz->question list, if necessary (Moodle <= 2.6)
         if ($this->quiz_questions) {
-            $questions = array_filter($questions);
-            $questions = array_values($questions);
-            $questions = implode(',', $questions); // convert to comma-separated list
             $questions[] = '0';
+            $questions = implode(',', $questions); // convert to comma-separated list
             $DB->set_field('quiz', 'questions', $questions, array('id' => $quiz->id));
         }
     }
