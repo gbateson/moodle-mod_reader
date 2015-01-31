@@ -3320,12 +3320,13 @@ class reader_downloader {
 
                 // reset slot values to match order in $questions array
                 foreach ($slots as $id => $slot) {
-                    $i = array_search($slot->questionid, $questions);
-                    if ($i===false) {
+                    $newslot = array_search($slot->questionid, $questions);
+                    if ($newslot===false) {
                         $DB->delete_records('quiz_slots', array('id' => $id));
                     } else {
-                        $DB->set_field('quiz_slots', 'slot', ($i + 1), array('id' => $id));
-                        $newlayout[] = ($i + 1);
+                        $newslot++;
+                        $DB->set_field('quiz_slots', 'slot', $newslot, array('id' => $id));
+                        $newlayout[] = $newslot;
                         $newlayout[] = 0;
                     }
                     $oldlayout[] = $slot->slot;
@@ -3335,31 +3336,20 @@ class reader_downloader {
             }
         } else {
             // Moodle <= 2.6
-            if ($oldlayout = $DB->set_field('quiz', 'questions', $questions, array('id' => $quiz->id))) {
-                $oldlayout = explode(',', $oldlayout);
-            } else {
-                $oldlayout = array(); // shouldn't happen !!
-            }
-            $newlayout = array();
+            $ids = explode(',', $quiz->questions);
+            $ids = array_filter($ids);
+            $ids = array_values($ids);
             $oldslot = 0;
-            $newslot = 0;
-            foreach ($oldlayout as $i => $id) {
-                if ($id) {
-                    $oldlayout[$i] = ++$oldslot;
-                    $newslot = array_search($id, $questions);
-                } else if ($newslot) {
-                    $newslot = 0; // signifies "page break"
-                } else {
-                    $newslot = false; // previous slot was empty
-                }
+            foreach ($ids as $id) {
+                $oldlayout[] = ++$oldslot;
+                $oldlayout[] = 0;
+                $newslot = array_search($id, $questions);
                 if ($newslot===false) {
-                    // do nothing
+                    // skip deleted questions
                 } else {
-                    $newlayout[$i] = $newslot;
+                    $newlayout[] = ++$newslot;
+                    $newlayout[] = 0;
                 }
-            }
-            if ($newslot) {
-                $newlayout[] = 0;
             }
         }
 
@@ -3375,9 +3365,12 @@ class reader_downloader {
             $DB->set_field_select('reader_attempts', 'layout', $newlayout, "quizid = ? AND $layout = ?", $params);
         }
 
+        // update quiz->question list, if necessary (Moodle <= 2.6)
         if ($this->quiz_questions) {
-            // Moodle <= 2.6
             $questions = implode(',', $questions); // convert to comma-separated list
+            $questions = array_filter($questions);
+            $questions = array_values($questions);
+            $questions[] = '0';
             $DB->set_field('quiz', 'questions', $questions, array('id' => $quiz->id));
         }
     }
