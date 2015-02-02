@@ -61,7 +61,6 @@ $string['noincorrectquizzes'] = 'Usted no ha fallado ningun examen.';
 $string['off'] = 'Apagado';
 $string['passwords_list'] = 'Listado de contraseñas';
 $string['pleaseaskyourinstructor'] = ' Si es muy fácil para usted, favor de pedir a su profesor que le cambie a un nivel más alto.';
-$string['pleasecompletequiz'] = 'Favor de cumplir su examen $a.';
 $string['pleaseselectpublisher'] = 'Favor de seleccionar Editor';
 $string['pleasespecifyyourclassgroup'] = 'Favor de especificar su grupo de clase o buscar a un alumno específico.';
 $string['pleasewait'] = 'Favor de esperar';
@@ -228,6 +227,7 @@ $string['clearedmessagedefault'] = 'We are happy to inform you that your points 
 
 --The MoodleReader Module Manager';
 $string['clicktocontinue'] = 'Click here to continue';
+$string['completequizattempt'] = 'Before you can take any new quizzes, you must finish this quiz for "{$a}". Click on the link below to resume your previous attempt at this quiz.';
 $string['configbookcovers'] = '';
 $string['configcheatedmessage'] = '';
 $string['configcheckbox'] = '';
@@ -451,6 +451,7 @@ $string['fix_slashesinnames'] = 'Fix slashes in names';
 $string['fix_slashesinnamesdesc'] = 'Remove any slashes in the names of Reader books and questions categories.';
 $string['fix_wrongattempts'] = 'Fix wrong attempts';
 $string['fix_wrongattemptsdesc'] = 'Detect and fix any attempts at Reader quizzes where the name of the quiz does not match the name of the book in the Reader log';
+$string['fixingsumgrades'] = 'Fixing grades on attempts at Reader quizzes ...';
 $string['fixmissingquizzes'] = 'Fix missing quizzes';
 $string['fixmissingquizzesinfo'] = 'The upgrade has been paused, so that you can decide whether or not you wish to download and install Reader module quizzes that are missing on this Moodle site.
 
@@ -568,6 +569,7 @@ $string['questionmark_help'] = '**No**
 $string['quizadd'] = 'Add Reader quizzes';
 $string['quizadded'] = 'Quiz added: {$a}';
 $string['quizarrange'] = 'Arrange Reader quizzes';
+$string['quizattemptinprogress'] = 'Quiz attempt in progress ...';
 $string['quizdelete'] = 'Delete Reader quizzes';
 $string['quizhasnoquestions'] = 'Quiz has no questions';
 $string['quizname'] = 'Quiz name';

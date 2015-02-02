@@ -1971,9 +1971,13 @@ class mod_reader_renderer extends plugin_renderer_base {
             $output .= html_writer::tag('h2', $text, array('class' => 'ReadingReportTitle'));
         }
 
-        $output .= html_writer::start_tag('div', array('class' => 'readermessage'));
+        $params = array('class' => 'readermessage');
         if ($message->timemodified > (time() - ( 48 * 60 * 60))) {
+            // a new message (modified within the last 48 hours)
+            $params['class'] .= ' recentmessage';
         }
+        $output .= html_writer::start_tag('div', $params);
+
         $text = format_text($message->messagetext, $message->messageformat);
         $output .= html_writer::tag('div', $text, array('class' => 'readermessagetext'));
 

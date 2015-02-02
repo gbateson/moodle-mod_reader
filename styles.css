@@ -217,6 +217,9 @@
     /* Firefox */ -moz-border-bottom-left-radius: 8px; -moz-border-bottom-right-radius: 8px;
     /* Webkit  */ -webkit-border-bottom-left-radius: 8px; -webkit-border-bottom-right-radius: 8px;
 }
+#page-mod-reader-view div.readermessage.recentmessage {
+    background-color: #F0FFF0;
+}
 #page-mod-reader-view div.readermessagetitle {
 }
 #page-mod-reader-view div.readermessageteacher {

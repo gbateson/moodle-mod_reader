@@ -333,12 +333,13 @@ if (has_capability('mod/reader:manageattempts', $contextmodule) && $act == 'view
 }
 
 if (has_capability('mod/reader:addinstance', $contextmodule) && $messagetext) {
-    $message = new stdClass();
-    $message->readerid = $cm->instance;
-    $message->teacherid = $USER->id;
-    $message->groupids = implode(',', $groupids);
-    $message->messagetext = $messagetext;
-    $message->messageformat = $messageformat;
+    $message = (object)array(
+        'readerid'      => $cm->instance,
+        'teacherid'     => $USER->id,
+        'groupids'      => implode(',', $groupids),
+        'messagetext'   => $messagetext,
+        'messageformat' => $messageformat
+    );
     if ($activehours) {
         $message->timefinish = time() + ($activehours * 60 * 60);
     } else {
@@ -2702,7 +2703,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
         function definition() {
             global $CFG, $DB, $course, $editmessage;
 
-            $mform    = &$this->_form;
+            $mform = &$this->_form;
 
             $groups = self::get_all_groups($course->id);
             $hours = array('0'   => 'Indefinite',
@@ -2714,7 +2715,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
             $mform->addElement('select',   'groupids',    'Group', $groups, 'size="5" multiple');
             $mform->addElement('select',   'activehours', 'Active Time (Hours)', $hours);
             $mform->addElement('textarea', 'messagetext', 'Text', 'wrap="virtual" rows="10" cols="70"');
-            $mform->addElement('hidden',   'messageformat', FORMAT_MOODLE);
+            $mform->addElement('select',   'messageformat', 'Format', format_text_menu());
             $mform->addElement('hidden',   'editmessage',  0);
 
             $mform->setType('groupids',      PARAM_INT);
@@ -2764,6 +2765,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
         }
 
     }
+
     $mform = new mod_reader_message_form("admin.php?a=admin&id={$id}&act=setmessage");
     $mform->display();
 

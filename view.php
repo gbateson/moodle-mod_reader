@@ -418,36 +418,55 @@ if ($reader->levelcheck) {
     echo html_writer::table($table);
 }
 
-$showform = true;
-if ($attempt = $DB->get_record('reader_attempts', array('readerid' => $cm->instance, 'userid' => $USER->id, 'timefinish' => 0))) {
-    if ($reader->timelimit < ($timenow - $attempt->timestart)) {
-        $showform = true;
-        $attempt->timemodified = $timenow;
-        $attempt->timefinish   = $timenow;
-        $attempt->passed       = 'false';
-        $attempt->percentgrade = 0;
-        $attempt->sumgrades    = 0;
-        $attempt->bookrating   = 0;
-        $DB->update_record('reader_attempts', $attempt);
-    } else {
-        $showform = false;
-        $bookname = $DB->get_field('reader_books', 'name', array('quizid' => $attempt->quizid));
-        print_string('pleasecompletequiz', $plugin, $bookname);
-        if (empty($SESSION->reader_lastattemptpage)) {
-            $url = $CFG->wwwroot.'/mod/reader/quiz/attempt.php?attempt='.$attempt->id.'&page=1#q0';
-        } else {
-            $url = $CFG->wwwroot.'/mod/reader/quiz/attempt.php?'.$SESSION->reader_lastattemptpage;
+// get previously unfinished attempts by this user at quizzes in this Reader
+$params = array('readerid' => $cm->instance, 'userid' => $USER->id, 'timefinish' => 0);
+if ($attempts = $DB->get_records('reader_attempts', $params, 'timestart DESC')) {
+    foreach ($attempts as $attempt) {
+        $timefinish = ($attempt->timestart + $reader->timelimit);
+        if ($timefinish < $timenow) {
+            $attempt->timemodified = $timenow;
+            $attempt->timefinish   = $timefinish;
+            $attempt->passed       = 'false';
+            $DB->update_record('reader_attempts', $attempt);
+            unset($attempts[$attempt->id]);
         }
-        echo ' <a href="'.$url.'">'.get_string('complete', $plugin).'</a>';
     }
+    $attempt = end($attempts); // most recent unfinished attempt
+} else {
+    $attempt = false; // i.e. there are no unfinished attempts
+}
+
+$title = '';
+$msg = '';
+if ($attempt) {
+    $showform = false;
+    $title = get_string('quizattemptinprogress', $plugin);
+    $name = $DB->get_field('reader_books', 'name', array('quizid' => $attempt->quizid));
+    if (empty($SESSION->reader_lastattemptpage)) {
+        $params = array('attempt' => $attempt->id, 'page' => 1);
+        $msg = new moodle_url('/mod/reader/quiz/attempt.php', $params, 'q0');
+    } else {
+        $msg = new moodle_url('/mod/reader/quiz/attempt.php?'.$SESSION->reader_lastattemptpage);
+    }
+    $msg = html_writer::tag('a', $name, array('href' => $msg));
+    $msg = html_writer::tag('li', $msg);
+    $msg = html_writer::tag('ul', $msg);
+    $msg = get_string('completequizattempt', $plugin, $name).$msg;
 } else if ($delay = $reader->get_delay()) {
     if ($timenow < ($lastattemptdate + $delay)) {
         $showform = false;
+        $title = get_string('delayineffect', $plugin);
         $msg = userdate($lastattemptdate + $delay);
         $msg = get_string('youcantakeaquizafter', $plugin, $msg);
-        $msg = html_writer::tag('span', $msg, array('class' => 'delayon'));
-        echo html_writer::tag('div', $msg);
     }
+}
+
+if ($msg) {
+    echo html_writer::tag('h2',  $title, array('class' => 'ReadingReportTitle'));
+    echo html_writer::tag('div', $msg,   array('class' => 'readermessage'));
+    $showform = false;
+} else {
+    $showform = true;
 }
 
 $select = 'readerid = ? AND timefinish = ? OR timefinish > ?';
