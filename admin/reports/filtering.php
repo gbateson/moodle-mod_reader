@@ -311,12 +311,16 @@ class reader_admin_reports_options extends moodleform {
                 $type = PARAM_ALPHA;
             }
             if ($field=='sortfields') {
+                $tsortfield = optional_param('tsort', null, PARAM_ALPHANUM);
                 $value = optional_param_array('sortfields', $default, PARAM_INT);
                 foreach ($value as $sortfield => $sortdirection) {
-                    if ($sortdirection==0) {
+                    if ($sortdirection==0) { // remove
                         unset($SESSION->flextable[$uniqueid]->sortby[$sortfield]);
                         unset($value[$sortfield]);
                     } else {
+                        if ($tsortfield==$sortfield) { // field was selected from table header
+                            $sortdirection = $SESSION->flextable[$uniqueid]->sortby[$sortfield];
+                        }
                         $sortdirection = ($sortdirection==SORT_ASC ? SORT_ASC : SORT_DESC);
                         $SESSION->flextable[$uniqueid]->sortby[$sortfield] = $sortdirection;
                     }
@@ -407,6 +411,9 @@ class reader_admin_reports_options extends moodleform {
                         break;
                     case 'name':
                         $label = get_string('booktitle', 'mod_reader');
+                        break;
+                    case 'timefinish':
+                        $label = get_string('date');
                         break;
                     default:
                         $label = get_string($sortfield, 'mod_reader');
