@@ -559,7 +559,7 @@ class mod_reader_renderer extends plugin_renderer_base {
         $js .= "        req = new ActiveXObject('Microsoft.XMLHTTP');\n";
         $js .= "    }\n";
 
-        $js .= "    if (req && confirm('REQUEST: ' + url)) {\n";
+        $js .= "    if (req) {\n"; //  && confirm('REQUEST: ' + url)
         $js .= "        if (callback) {\n";
         $js .= "            req.onreadystatechange = eval(callback);\n";
         $js .= "        } else {\n";

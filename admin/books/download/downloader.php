@@ -2131,7 +2131,6 @@ class reader_downloader {
 
             case 'description':
                 return true;
-                break;
 
             case 'match':
                 if (empty($question->matchs)) {
@@ -2149,7 +2148,6 @@ class reader_downloader {
                     return true;
                 }
                 return false;
-                break;
 
             case 'multianswer':
                 if (empty($question->multianswers)) {
@@ -2179,7 +2177,6 @@ class reader_downloader {
                     // maybe we should remove this question ?
                 }
                 return false;
-                break;
 
             case 'multichoice':
                 if (empty($question->multichoice) || empty($question->answers)) {
@@ -2203,14 +2200,12 @@ class reader_downloader {
                     return true;
                 }
                 return false;
-                break;
 
             case 'ordering':
                 if (isset($question->answers) && count($question->answers)) {
                     return true;
                 }
                 return false;
-                break;
 
             case 'random':
                 if (isset($mainids[$question->id]) && $has_nonrandom) {
@@ -2235,7 +2230,6 @@ class reader_downloader {
                 }
                 // random question with no parent - shouldn't happen !
                 return false;
-                break;
 
             case 'numerical':
                 if (empty($question->numerical) || empty($question->answers)) {
@@ -2257,7 +2251,6 @@ class reader_downloader {
                     return true;
                 }
                 return false;
-                break;
 
             case 'shortanswer':
             case 'truefalse':
@@ -2267,7 +2260,6 @@ class reader_downloader {
                     }
                 }
                 return false;
-                break;
 
             default:
                 if (debugging('', DEBUG_DEVELOPER)) {
