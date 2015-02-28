@@ -741,8 +741,8 @@ function reader_print_recent_activity($course, $viewfullnames, $timestart) {
               'JOIN {reader_books} rb ON ra.bookid = rb.id '.
               'JOIN {user} u ON ra.userid = u.id';
     list($where, $params) = $DB->get_in_or_equal(array_keys($cmids));
-    $where  = "ra.readerid $where AND u.id $userfilter AND ra.deleted <> ? AND rb.hidden <> ?";
-    $params = array_merge($params, $userparams, array(1, 1));
+    $where  = "ra.readerid $where AND u.id $userfilter AND ra.timemodified > ? AND ra.deleted <> ? AND rb.hidden <> ?";
+    $params = array_merge($params, $userparams, array($timestart, 1, 1));
     $order  = 'ra.readerid, u.lastname, u.firstname, ra.timemodified DESC';
 
     $attempts = $DB->get_records_sql("SELECT $select FROM $from WHERE $where ORDER BY $order", $params);
@@ -965,8 +965,10 @@ function reader_get_recent_mod_activity(&$activities, &$index, $timestart, $cour
         $where .= ' AND ra.userid = ?';
         $params[] = $userid;
     }
-    $where .= ' AND ra.timemodified > ?';
-    $params[] = $timestart;
+    if ($timestart) {
+        $where .= ' AND ra.timemodified > ?';
+        $params[] = $timestart;
+    }
 
     if (! $attempts = $DB->get_records_sql("SELECT $select FROM $from WHERE $where ORDER BY $order", $params)) {
         return; // no recent attempts at these readers
