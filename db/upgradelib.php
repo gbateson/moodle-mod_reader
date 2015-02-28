@@ -689,18 +689,11 @@ function xmldb_reader_fix_question_instances() {
 
     if ($rs) {
 
-        $dbman = $DB->get_manager();
-        if ($use_quiz_slots = $dbman->table_exists('quiz_slots')) {
-            // Moodle >= 2.7
-            $quiz_question_instances = 'quiz_slots';
-            $quizfield     = 'quizid';
-            $questionfield = 'questionid';
-        } else {
-            // Moodle <= 2.6
-            $quiz_question_instances = 'quiz_question_instances';
-            $quizfield     = 'quiz';
-            $questionfield = 'question';
-        }
+        list($use_quiz_slots,
+             $quiz_question_instances,
+             $quizfield,
+             $questionfield,
+             $gradefield) = xmldb_reader_quiz_question_instances();
 
         if (xmldb_reader_interactive()) {
             $bar = new progress_bar('readerfixinstances', 500, true);
@@ -1223,7 +1216,7 @@ function xmldb_reader_fix_uniqueid(&$dbman, &$contexts, &$quizzes, &$attempt, &$
                 // let's see if any other attempts at this reader have a valid uniqueids
                 $select = 'ra.id, ra.uniqueid, qu.id AS questionusageid, qu.contextid, qu.preferredbehaviour';
                 $from   = '{reader_attempts} ra LEFT JOIN {question_usages} qu ON ra.uniqueid = qu.id';
-                $where  = 'ra.readerid = ? AND qu.id IS NOT NULL';
+                $where  = "ra.$readerid = ? AND qu.id IS NOT NULL";
                 $params = array($attempt->$readerid);
                 if ($records = $DB->get_records_sql("SELECT $select FROM $from WHERE $where", $params)) {
                     // we can get the contextid from the other "question_usage" records
@@ -1959,7 +1952,11 @@ function reader_xmldb_get_newquiz($targetcourseid, $sectionnum, $quizmodule, $qu
         'name'       => $newquiz->name,
         'userid'     => $USER->id
     );
-    events_trigger('mod_updated', $event);
+    if (function_exists('events_trigger_legacy')) {
+        events_trigger_legacy('mod_updated', $event);
+    } else {
+        events_trigger('mod_updated', $event);
+    }
 
     // re-enable warnings about rebuild_course_cache
     $CFG->upgraderunning = $upgraderunning;
@@ -1979,23 +1976,18 @@ function reader_xmldb_get_newquiz($targetcourseid, $sectionnum, $quizmodule, $qu
 function reader_xmldb_restore_questions($restore, $xml, $quizid) {
     global $DB;
 
-    $dbman = $DB->get_manager();
-    if ($use_quiz_slots = $dbman->table_exists('quiz_slots')) {
+    list($use_quiz_slots,
+         $quiz_question_instances,
+         $quizfield,
+         $questionfield,
+         $gradefield) = xmldb_reader_quiz_question_instances();
+
+    if ($use_quiz_slots) {
         // Moodle >= 2.7
-        $quiz_question_instances = 'quiz_slots';
-        $quizfield     = 'quizid';
-        $questionfield = 'questionid';
-        $gradefield    = 'maxmark';
         $page = $DB->get_field('quiz_slots', 'page', array($quizfield, $quizid));
         $sort = $DB->get_field('quiz_slots', 'sort', array($quizfield, $quizid));
         $page = ($page ? $page : 1);
         $sort = ($sort ? $sort : 0) + 1;
-    } else {
-        // Moodle <= 2.6
-        $quiz_question_instances = 'quiz_question_instances';
-        $quizfield     = 'quiz';
-        $questionfield = 'question';
-        $gradefield    = 'grade';
     }
 
     // map old question id onto new question id
@@ -2006,20 +1998,24 @@ function reader_xmldb_restore_questions($restore, $xml, $quizid) {
 
     $sumgrades = 0;
     foreach ($questionids as $oldid => $newid) {
-        $question_instance = (object)array(
+        $record = (object)array(
             $quizfield     => $quizid,
             $questionfield => $newid,
             $gradefield    => $questiongrades[$oldid],
         );
         if ($use_quiz_slots) {
-            $question_instance->page = $page;
-            $question_instance->sort = $sort++;
+            $record->page = $page;
+            $record->sort = $sort++;
         }
-        $sumgrades += $question_instance->$gradefield;
-        $DB->insert_record($quiz_question_instances, $question_instance);
+        $sumgrades += $record->$gradefield;
+        $DB->insert_record($quiz_question_instances, $record);
     }
     $DB->set_field('quiz', 'sumgrades', $sumgrades, array('id' => $quizid));
-    $DB->set_field('quiz', 'questions', implode(',', $questionids).',0', array('id' => $quizid));
+
+    if ($use_quiz_slots==false) {
+        // Moodle <= 2.6
+        $DB->set_field('quiz', 'questions', implode(',', $questionids).',0', array('id' => $quizid));
+    }
 }
 
 /**
@@ -2197,6 +2193,12 @@ function xmldb_reader_fix_question_categories() {
 
     $interactive = xmldb_reader_interactive();
 
+    list($use_quiz_slots,
+         $quiz_question_instances,
+         $quizfield,
+         $questionfield,
+         $gradefield) = xmldb_reader_quiz_question_instances();
+
     // first we tidy up the reader_question_instances table
     $select  = 'question, COUNT(*)';
     $from    = '{reader_question_instances}';
@@ -2289,8 +2291,8 @@ function xmldb_reader_fix_question_categories() {
                 list($select, $params) = $DB->get_in_or_equal(array_keys($questions));
                 if ($DB->count_records_select('reader_question_instances', 'question '.$select, $params)) {
                     // at least one questions is used in at least one reader quiz
-                } else if ($DB->count_records_select('quiz_question_instances', 'question '.$select, $params)) {
-                    // at least one questions is used in at least one non-reader quiz
+                } else if ($DB->count_records_select($quiz_question_instances, "$questionfield $select", $params)) {
+                    // at least one question is used in at least one non-reader quiz
                 } else {
                     // questions are NOT used in any quizzes
                     $DB->delete_records_select('question', 'id '.$select, $params);
@@ -2325,11 +2327,11 @@ function xmldb_reader_fix_question_categories() {
                     list($select, $params) = $DB->get_in_or_equal(array_keys($questions));
                     if ($instances = $DB->get_records_select('reader_question_instances', 'question '.$select, $params)) {
                         // these questions are used in Reader quizzes
-                    } else if ($instances = $DB->get_records_select('quiz_question_instances', 'question '.$select, $params)) {
+                    } else if ($instances = $DB->get_records_select($quiz_question_instances, "$questionfield $select", $params)) {
                         // these questions are used in Moodle quizzes
                         $quizids = array();
                         foreach ($instances as $instance) {
-                            $quizids[$instance->quiz] = true;
+                            $quizids[$instance->$quizfield] = true;
                         }
                         $quizids = array_keys($quizids);
                         if (count($quizids)==1) {
@@ -2631,8 +2633,11 @@ function xmldb_reader_fix_multichoice_questions() {
 
     $interactive = xmldb_reader_interactive();
 
-    $dbman = $DB->get_manager();
-    $use_quiz_slots = $dbman->table_exists('quiz_slots');
+    list($use_quiz_slots,
+         $quiz_question_instances,
+         $quizfield,
+         $questionfield,
+         $gradefield) = xmldb_reader_quiz_question_instances();
 
     // get categories for question used in Reader module quizzes
     if ($categories = xmldb_reader_get_question_categories()) {
@@ -2689,11 +2694,7 @@ function xmldb_reader_fix_multichoice_questions() {
                     $DB->delete_records_list('question', 'id', $ids);
                     $DB->delete_records_list('question', 'parent', $ids);
                     $DB->delete_records_list('question_multianswer', 'question', $ids);
-                    if ($use_quiz_slots) {
-                        $DB->delete_records_list('quiz_slots', 'questionid', $ids);
-                    } else {
-                        $DB->delete_records_list('quiz_question_instances', 'question', $ids);
-                    }
+                    $DB->delete_records_list($quiz_question_instances, $questionfield, $ids);
                     $DB->delete_records_list('reader_question_instances', 'question', $ids);
 
                     // print these question ids
@@ -3165,6 +3166,19 @@ function xmldb_reader_fix_slots_quizattempts($interactive, $quizids) {
 function xmldb_reader_fix_slots_readerattempts($interactive, $quizids) {
     global $DB;
 
+    $dbman = $DB->get_manager();
+    if ($use_quiz_slots = $dbman->table_exists('quiz_slots')) {
+        // Moodle >= 2.7
+        $quiz_question_instances = 'quiz_slots';
+        $quizfield     = 'quizid';
+        $questionfield = 'questionid';
+    } else {
+        // Moodle <= 2.6
+        $quiz_question_instances = 'quiz_question_instances';
+        $quizfield     = 'quiz';
+        $questionfield = 'question';
+    }
+
     // get all attempts at questions in categories with an invalid contextid
     list($where, $params) = $DB->get_in_or_equal($quizids);
     $select = 'qa.id, ra.quizid, '.
@@ -3216,10 +3230,11 @@ function xmldb_reader_fix_slots_readerattempts($interactive, $quizids) {
                     $quizcontext = reader_get_context(CONTEXT_MODULE, $cm->id);
                 }
                 if (empty($cm) || empty($quizcontext)) {
+                    // Oops, defective quiz - abort !!
                     $cm = null;
                     $quizcontext = null;
                     $DB->delete_records('reader_attempts', array('quizid' => $quizid));
-                    $DB->delete_records('quiz_question_instances', array('quiz' => $quizid));
+                    $DB->delete_records($quiz_question_instances, array($quizfield => $quizid));
                     $DB->delete_records('reader_question_instances', array('quiz' => $quizid));
                 }
             }
@@ -3242,7 +3257,7 @@ function xmldb_reader_fix_slots_readerattempts($interactive, $quizids) {
                             case 'multichoice': xmldb_reader_fix_slots_multichoice($questionid, $newquestion->id); break;
                         }
                         $DB->set_field('question_attempts', 'questionid', $newquestion->id, array('questionid' => $questionid));
-                        $DB->set_field('quiz_question_instances', 'question', $newquestion->id, array('question' => $questionid));
+                        $DB->set_field($quiz_question_instances, $questionfield, $newquestion->id, array($questionfield => $questionid));
                         $DB->set_field('reader_question_instances', 'question', $newquestion->id, array('question' => $questionid));
                     } else if ($categoryid && $categoryid==$attempt->categoryid) {
                         // same category - do nothing
@@ -3887,3 +3902,20 @@ function xmldb_reader_fix_sumgrades($dbman) {
     }
 }
 
+/**
+ * xmldb_reader_quiz_question_instances
+ *
+ * @return array  ($use_quiz_slots, $tablename, $quizfield, $questionfield, $gradefield)
+ * @todo Finish documenting this function
+ */
+function xmldb_reader_quiz_question_instances() {
+    global $DB;
+    $dbman = $DB->get_manager();
+    if ($dbman->table_exists('quiz_slots')) {
+        // Moodle >= 2.7
+        return array(true, 'quiz_slots', 'quizid', 'questionid', 'maxmark');
+    } else {
+        // Moodle <= 2.6
+        return array(false, 'quiz_question_instances', 'quiz', 'question', 'grade');
+    }
+}
