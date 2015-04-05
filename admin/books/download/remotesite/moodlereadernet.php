@@ -275,7 +275,7 @@ class reader_remotesite_moodlereadernet extends reader_remotesite {
                 $level     = trim($item['@']['level']);
                 $itemid    = trim($item['@']['id']);
                 $itemname  = trim($item['#']);
-                $time      = (empty($item['@']->time) ? 0 : intval($item['@']->time));
+                $time      = (empty($item['@']['time']) ? 0 : intval($item['@']['time']));
 
                 if ($time==0 && isset($downloaded->items[$publisher]->items[$level]->items[$itemname])) {
                     $time = $downloaded->items[$publisher]->items[$level]->items[$itemname]->time;

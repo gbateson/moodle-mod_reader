@@ -103,7 +103,7 @@ class reader_remotesite {
 
         // get the last modified dates for the "publisher" folders
         if ($this->filetimes===null) {
-            $this->filetimes = $this->get_remote_filetimes();
+            $this->filetimes = $this->get_remote_filetimes('/');
         }
 
         // if the "publisher" folder hasn't changed, return the publisher update time
