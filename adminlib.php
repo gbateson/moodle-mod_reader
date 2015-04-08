@@ -667,8 +667,8 @@ function reader_fullname_link_viewasstudent($userdata, $id, $nolink=false) {
     } else {
         $userid = $userdata->id;
     }
-    $params = array('id' => $id, 'viewasstudent' => $userid);
-    $params = array('href' => new moodle_url('/mod/reader/admin.php', $params));
+    $params = array('id' => $id, 'userid' => $userid);
+    $params = array('href' => new moodle_url('/mod/reader/view_loginas.php', $params));
     return html_writer::tag('a', $fullname, $params);
 }
 
