@@ -306,6 +306,7 @@ $string['defaultdelay'] = 'Default delay';
 $string['defaultquestioncategoryinfo'] = '{$a->category} questions for {$a->quiz}';
 $string['definelogindetails'] = 'Please define login details: {$a}';
 $string['delay'] = 'Delay';
+$string['delayineffect'] = 'Quiz delay is currently in effect';
 $string['delete'] = 'Delete';
 $string['deleteattempts'] = 'Delete seleted attempts';
 $string['deletecategories'] = 'Delete categories';
