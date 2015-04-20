@@ -998,7 +998,7 @@ if ($act == 'adjustscores' && !empty($adjustscoresupall) && !empty($adjustscores
 
 /// Print the page header
 
-if ($excel) {
+if ($excel && class_exists('XMLWriter')) {
     $workbook = new MoodleExcelWorkbook('-');
     $worksheet = $workbook->add_worksheet('report');
 
@@ -1027,6 +1027,8 @@ if ($excel) {
         $workbook->send($filename);
     }
     reader_add_to_log($course->id, 'reader', 'AA-excel', 'admin.php?id='.$cm->id, $cm->instance, $cm->id);
+} else {
+    $excel = null;
 }
 
 // Initialize $PAGE, compute blocks
@@ -1534,9 +1536,11 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
         die;
     }
 
-    echo '<table style="width:100%"><tr><td align="right">';
-    echo $output->single_button(new moodle_url('admin.php',$options), get_string('downloadexcel', 'mod_reader'), 'post', $options);
-    echo '</td></tr></table>';
+    if (class_exists('XMLWriter')) {
+        echo '<table style="width:100%"><tr><td align="right">';
+        echo $output->single_button(new moodle_url('admin.php',$options), get_string('downloadexcel', 'mod_reader'), 'post', $options);
+        echo '</td></tr></table>';
+    }
 
     reader_print_search_form();
 
