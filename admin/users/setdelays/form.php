@@ -61,8 +61,8 @@ class mod_reader_admin_users_setdelays_form extends moodleform {
      * @todo Finish documenting this function
      */
     function mod_reader_admin_users_setdelays_form($action=null, $reader=null, $method='post', $target='', $attributes=null, $editable=true) {
-        parent::moodleform($action, $reader, $method, $target, $attributes, $editable);
         $this->fetch_delays($reader);
+        parent::moodleform($action, $reader, $method, $target, $attributes, $editable);
     }
 
     /**
