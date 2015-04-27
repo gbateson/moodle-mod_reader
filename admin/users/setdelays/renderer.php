@@ -77,9 +77,9 @@ class mod_reader_admin_users_setdelays_renderer extends mod_reader_admin_users_r
                 }
             }
             if (isset($data->groupdelay['delay'])) {
-                foreach ($data->leveldelay['delay'] as $i => $delay) {
-                    if ($groupid = $data->leveldelay['groupid'][$i]) {
-                        $level = $data->leveldelay['level'][$i];
+                foreach ($data->groupdelay['delay'] as $i => $delay) {
+                    if ($groupid = $data->groupdelay['groupid'][$i]) {
+                        $level = $data->groupdelay['level'][$i];
                         $this->add_delay(array_shift($ids), $delay, $level, $groupid);
                     }
                 }
