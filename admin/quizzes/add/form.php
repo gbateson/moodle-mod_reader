@@ -70,7 +70,7 @@ class mod_reader_admin_quizzes_add_form extends moodleform {
         $this->_form->addElement('text', 'words', get_string('words', 'mod_reader'), array('size' => 40));
         $this->_form->setType('words', PARAM_INT);
 
-        $this->_form->addElement('text', 'genre', get_string('genre', 'block_readerview'), array('size' => 40));
+        $this->_form->addElement('text', 'genre', get_string('genre', 'mod_reader'), array('size' => 40));
         $this->_form->setType('genre', PARAM_TEXT);
 
         $this->_form->addElement('text', 'image', get_string('image', 'mod_reader'), array('size' => 40));

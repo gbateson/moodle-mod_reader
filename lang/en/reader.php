@@ -412,6 +412,7 @@ $string['forcedtimedelay'] = 'Set forced time delay';
 $string['fromthistime'] = 'From this time';
 $string['fullreportbybooktitle'] = 'Full Report by Book Title';
 $string['fullreportquiztoreader'] = 'Full Report by Student';
+$string['genre'] = 'Genre';
 $string['goal'] = 'Goal';
 $string['hidden'] = 'Hidden';
 $string['ifimagealreadyexists'] = 'If image already exists in images folder (name)';

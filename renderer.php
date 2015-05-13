@@ -1001,7 +1001,7 @@ class mod_reader_renderer extends plugin_renderer_base {
 
             // add the "genre" drop-down list
             $table->data[] = new html_table_row(array(
-                html_writer::tag('b', get_string('genre', 'block_readerview').':'),
+                html_writer::tag('b', get_string('genre', 'mod_reader').':'),
                 html_writer::select($genres, 'searchgenre', $searchgenre, '')
             ));
 
@@ -1148,7 +1148,7 @@ class mod_reader_renderer extends plugin_renderer_base {
                     get_string('publisher', 'mod_reader'),
                     get_string('level', 'mod_reader'),
                     get_string('booktitle', 'mod_reader')." (".count($books)." books)",
-                    get_string('genre', 'block_readerview'),
+                    get_string('genre', 'mod_reader'),
                     get_string('difficultyshort', 'mod_reader')
                 );
 
