@@ -90,6 +90,9 @@ class mod_reader_admin_users_setdelays_form extends moodleform {
         // cache duration options array
         $durationoptions = array('optional' => 1, 'defaultunit' => 3600);
 
+        $name = 'setdelays_description';
+        $mform->addElement('static', $name, '', get_string($name, $plugin));
+
         //-----------------------------------------------------------------------------
         $this->add_header($mform, $plugin, ($course->groupmode==0 ? 'alllevels' : 'allgroupsandlevels'));
         //-----------------------------------------------------------------------------

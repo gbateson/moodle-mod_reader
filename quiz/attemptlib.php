@@ -402,10 +402,17 @@ class reader_quiz {
  * @since      Moodle 2.0
  */
 class reader_attempt {
+
     // Fields initialised in the constructor.
     public $readerquiz;
     public $attempt;
     public $quba;
+
+    // Fields required for Moodle >= 2.9
+    protected $slots = null;
+    protected $sections = null;
+    protected $questionnumbers;
+    protected $questionpages;
 
     // Fields set later if that data is needed.
     public $pagelayout; // array page no => array of numbers on the page in order.
@@ -429,6 +436,15 @@ class reader_attempt {
 
         $this->readerquiz = reader_quiz::create($reader->id, $attempt->userid, $book->id);
         $this->quba = question_engine::load_questions_usage_by_activity($this->attempt->uniqueid);
+
+        $dbman = $DB->get_manager();
+        if ($dbman->table_exists('quiz_slots') && $dbman->table_exists('quiz_sections')) {
+            $params = array('quizid' => $this->get_quizid());
+            $this->slots = $DB->get_records('quiz_slots', $params, 'slot', 'slot, requireprevious, questionid');
+            $this->sections = $DB->get_records('quiz_sections', $params, 'firstslot');
+            $this->sections = array_values($this->sections);
+            $this->link_sections_and_slots();
+        }
 
         $this->determine_layout();
         $this->number_questions();
@@ -472,16 +488,11 @@ class reader_attempt {
         return self::create_helper(array('uniqueid' => $usageid));
     }
 
-    /**
-     * determine_layout
-     *
-     * @todo Finish documenting this function
-     */
-    private function determine_layout() {
+    protected function determine_layout() {
         $this->pagelayout = array();
 
         // Break up the layout string into pages.
-        $pagelayouts = explode(',0', reader_clean_layout($this->attempt->layout, true));
+        $pagelayouts = explode(',0', $this->attempt->layout);
 
         // Strip off any empty last page (normally there is one).
         if (end($pagelayouts) == '') {
@@ -490,12 +501,28 @@ class reader_attempt {
 
         // File the ids into the arrays.
         $this->pagelayout = array();
+        $sections = $this->sections;
         foreach ($pagelayouts as $page => $pagelayout) {
             $pagelayout = trim($pagelayout, ',');
             if ($pagelayout == '') {
                 continue;
             }
             $this->pagelayout[$page] = explode(',', $pagelayout);
+            if ($this->sections===null) {
+                // Moodle <= 2.8
+                $this->pagelayout[$page] = explode(',', $pagelayout);
+            } else {
+                // Moodle >= 2.9
+                foreach ($this->pagelayout[$page] as $slot) {
+                    $sectionkey = array_search($this->slots[$slot]->section, $sections);
+                    if ($sectionkey !== false) {
+                        $this->slots[$slot]->firstinsection = true;
+                        unset($sections[$sectionkey]);
+                    } else {
+                        $this->slots[$slot]->firstinsection = false;
+                    }
+                }
+            }
         }
     }
 
@@ -1394,6 +1421,58 @@ class reader_attempt {
             }
             return $url;
         }
+    }
+
+    // =========================================
+    // methods required for Moodle >= 2.9
+    // =========================================
+
+    /**
+     * Let each slot know which section it is part of.
+     */
+    protected function link_sections_and_slots() {
+        foreach ($this->sections as $i => $section) {
+            if (isset($this->sections[$i + 1])) {
+                $section->lastslot = $this->sections[$i + 1]->firstslot - 1;
+            } else {
+                $section->lastslot = count($this->slots);
+            }
+            for ($slot = $section->firstslot; $slot <= $section->lastslot; $slot += 1) {
+                $this->slots[$slot]->section = $section;
+            }
+        }
+    }
+
+    /**
+     * Checks whether the question in this slot requires the previous question to have been completed.
+     *
+     * @param int $slot the number used to identify this question within this attempt.
+     * @return bool whether the previous question must have been completed before this one can be seen.
+     */
+    public function is_blocked_by_previous_question($slot) {
+        return $slot > 1 && isset($this->slots[$slot]) && $this->slots[$slot]->requireprevious &&
+                !$this->slots[$slot]->section->shufflequestions &&
+                !$this->slots[$slot - 1]->section->shufflequestions &&
+                $this->get_navigation_method() != QUIZ_NAVMETHOD_SEQ &&
+                !$this->get_question_state($slot - 1)->is_finished() &&
+                $this->quba->can_question_finish_during_attempt($slot - 1);
+    }
+
+    /**
+     * Return the list of slot numbers for either a given page of the quiz, or for the
+     * whole quiz.
+     *
+     * @param mixed $page string 'all' or integer page number.
+     * @return array the requested list of slot numbers.
+     */
+    public function get_active_slots($page = 'all') {
+        $activeslots = array();
+        foreach ($this->get_slots($page) as $slot) {
+            if (!$this->is_blocked_by_previous_question($slot)) {
+                $activeslots[] = $slot;
+            }
+        }
+        return $activeslots;
     }
 }
 

@@ -338,6 +338,9 @@
 #page-mod-reader-admin-reports div.readerreportaction ul.levels { margin-top: 0px; margin-bottom: 0px; float: left; }
 
 /** reader admin users **/
+#page-mod-reader-admin-users fieldset div.fitem.femptylabel div.fitemtitle {display: none;}
+#page-mod-reader-admin-users fieldset div.fitem.femptylabel div.fstatic {margin-left: 40px; margin-right: 40px; text-align: justify;}
+
 #page-mod-reader-admin-users li.message { background-color: #CCFFCC;
                                           margin-top: px; margin-bottom: 6px;
                                          -webkit-border-radius: 8px; /* Safari and Chrome */

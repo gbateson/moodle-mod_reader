@@ -212,6 +212,7 @@ class reader_admin_reports_table extends table_sql {
      * @param xxx $download
      */
     public function setup_report_table($baseurl, $action, $download)  {
+        global $SESSION;
 
         // set up download, if requested
         if ($download) {
@@ -280,20 +281,15 @@ class reader_admin_reports_table extends table_sql {
         $this->set_attribute('align', 'center');
         $this->set_attribute('class', $this->output->mode);
 
+        // use persistent table settings in Moodle >= 2.9
+        if (method_exists($this, 'is_persistent')) {
+            $this->is_persistent(true);
+        }
+
         // get user preferences
         $this->get_user_preferences();
 
         parent::setup();
-
-        // add default sort columns if necessary
-        if (empty($this->sess->sortby)) {
-            $this->sess->sortby = array();
-            foreach ($this->defaultsortcolumns as $column => $sortdirection) {
-                if ($this->has_column($column)) {
-                    $this->sess->sortby[$column] = $sortdirection;
-                }
-            }
-        }
 
         // setup filter form (but don't display it yet)
         if (count($this->filterfields) && $this->output->reader->can_viewreports()) {
@@ -869,15 +865,54 @@ class reader_admin_reports_table extends table_sql {
      */
     public function get_user_preferences() {
         global $SESSION;
+
         $uniqueid = $this->uniqueid;
         if (empty($SESSION->flextable[$this->uniqueid])) {
-            if ($prefs = get_user_preferences($this->uniqueid, null)) {
-                $prefs = unserialize(base64_decode($prefs));
-                if (empty($SESSION->flextable)) {
-                    $SESSION->flextable = array();
+
+            if (method_exists($this, 'is_persistent') && $this->is_persistent()) {
+                // Moodle >= 2.9 with "persistent" table settings
+                if ($prefs = get_user_preferences('flextable_'.$uniqueid)) {
+                    $prefs = json_decode($prefs, true);
+                } else {
+                    $prefs = array(
+                        'collapse' => array(),
+                        'sortby'   => array(),
+                        'i_first'  => '',
+                        'i_last'   => '',
+                        'textsort' => array()
+                    );
                 }
-                $SESSION->flextable[$this->uniqueid] = $prefs;
+                if (empty($prefs['sortby'])) {
+                    $prefs['sortby'] = array();
+                }
+                $sortby = &$prefs['sortby'];
+            } else {
+                // Moodle <= 2.8
+                if ($prefs = get_user_preferences($this->uniqueid, null)) {
+                    $prefs = unserialize(base64_decode($prefs));
+                } else {
+                    $prefs = new stdClass();
+                }
+                if (empty($prefs->sortby)) {
+                    $prefs->sortby = array();
+                }
+                $sortby = &$prefs->sortby;
             }
+
+            if (empty($sortby)) {
+                foreach ($this->defaultsortcolumns as $column => $sortdirection) {
+                    if ($this->has_column($column)) {
+                        $sortby[$column] = $sortdirection;
+                    }
+                }
+            }
+            unset($sortby);
+
+            if (empty($SESSION->flextable)) {
+                $SESSION->flextable = array();
+            }
+
+            $SESSION->flextable[$this->uniqueid] = $prefs;
         }
     }
 
@@ -891,11 +926,20 @@ class reader_admin_reports_table extends table_sql {
         $uniqueid = $this->uniqueid;
         if (isset($SESSION->flextable[$uniqueid])) {
             $prefs = $SESSION->flextable[$uniqueid];
-            $prefs = base64_encode(serialize($prefs));
-            if ($prefs==get_user_preferences($uniqueid, null)) {
-                // do nothing
+            if (method_exists($this, 'is_persistent') && $this->is_persistent()) {
+                $prefs = json_encode($prefs);
+                if ($prefs==get_user_preferences('flextable_'.$uniqueid)) {
+                    // do nothing - $prefs have not changed
+                } else {
+                    set_user_preference('flextable_'.$this->uniqueid, $prefs);
+                }
             } else {
-                set_user_preference($uniqueid, $prefs);
+                $prefs = base64_encode(serialize($prefs));
+                if ($prefs==get_user_preferences($uniqueid, null)) {
+                    // do nothing - $prefs have not changed
+                } else {
+                    set_user_preference($uniqueid, $prefs);
+                }
             }
         }
     }

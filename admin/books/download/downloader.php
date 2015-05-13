@@ -163,6 +163,9 @@ class reader_downloader {
     /** download progress bar */
     public $bar = null;
 
+    /** if TRUE "quiz_sections" table exists, otherwise it doesn't */
+    private $quiz_sections = null;
+
     /** if TRUE use "quiz_slots" table, otherwise use "quiz_question_instances" table */
     private $quiz_slots = null;
 
@@ -255,6 +258,9 @@ class reader_downloader {
 
         // we need the DB manager to check whether certain tables and fields exist
         $dbman = $DB->get_manager();
+
+        // detect "quiz_sections" table  (Moodle >= 2.9)
+        $this->quiz_sections = $dbman->table_exists('quiz_sections');
 
         // detect "quiz_slots" table  (Moodle >= 2.7)
         $this->quiz_slots = $dbman->table_exists('quiz_slots');
@@ -1193,6 +1199,9 @@ class reader_downloader {
         // get newly created/updated quiz
         $quiz = $DB->get_record('quiz', array('id' => $cm->instance));
 
+        // create quiz_section(s) in Moodle >= 2.9
+        $this->add_quiz_section($quiz);
+
         // add questions to quiz
         $this->add_question_categories($quiz, $cm, $item, $r);
 
@@ -1920,6 +1929,35 @@ class reader_downloader {
         }
 
         // Note: course cache was rebuilt in "delete_mod_from_section()" or "course_delete_module()"
+    }
+
+    /**
+     * add_question_categories
+     *
+     * @uses $DB
+     * @param  object $quiz
+     * @return mixed  first quiz_sections record for this $quiz, or FALSE if quiz_sections record is not required or could be created
+     * @todo Finish documenting this function
+     */
+    public function add_quiz_section($quiz) {
+        global $DB;
+        if ($this->quiz_sections==false) {
+            return false; // Moodle <= 2.8
+        }
+        if ($quiz_section = $DB->get_records('quiz_sections', array('quizid' => $quiz->id))) {
+            return reset($quiz_section); // return first record
+        }
+        $quiz_section = (object)array(
+            'quizid' => $quiz->id,
+            'firstslot' => 1,
+            'heading' => '',
+            'shufflequestions' => 0
+        );
+        if ($quiz_section->id = $DB->insert_record('quiz_sections', $quiz_section)) {
+            return $quiz_section;
+        } else {
+            return false;
+        }
     }
 
     /**

@@ -1093,7 +1093,7 @@ if (! $excel) {
             new reader_menu_item('editquiztoreader', 'managequizzes', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'editquiz')),
             new reader_menu_item('setbookinstances', 'managequizzes', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'setbookinstances')),
             //new reader_menu_item('forcedtimedelay', 'managequizzes', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'forcedtimedelay')),
-            new reader_menu_item('forcedtimedelay', 'managequizzes', 'admin/users.php', array('id'=>$id, 'tab'=>52, 'mode'=>'setdelays')),
+            new reader_menu_item('forcedtimedelay', 'managequizzes', 'admin/users.php', array('id'=>$id, 'tab'=>53, 'mode'=>'setdelays')),
             new reader_menu_item('changenumberofsectionsinquiz', 'managequizzes', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'changenumberofsectionsinquiz')),
         ),
         'attemptscoremanagement' => array(

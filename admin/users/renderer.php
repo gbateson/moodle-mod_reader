@@ -47,9 +47,9 @@ class mod_reader_admin_users_renderer extends mod_reader_admin_renderer {
      *
      * @var integer
      */
-    const TAB_USERS_SETGOALS    = 51;
-    const TAB_USERS_SETDELAYS   = 52;
-    const TAB_USERS_SETLEVELS   = 53;
+    const TAB_USERS_SETLEVELS   = 51;
+    const TAB_USERS_SETGOALS    = 52;
+    const TAB_USERS_SETDELAYS   = 53;
     const TAB_USERS_SETMESSAGE  = 54;
     const TAB_USERS_IMPORT      = 55;
     const TAB_USERS_EXPORT      = 56;
@@ -70,7 +70,7 @@ class mod_reader_admin_users_renderer extends mod_reader_admin_renderer {
      * @return integer tab id
      */
     public function get_default_tab() {
-        return self::TAB_USERS_SETGOALS;
+        return self::TAB_USERS_SETLEVELS;
     }
 
     /**
@@ -99,7 +99,7 @@ class mod_reader_admin_users_renderer extends mod_reader_admin_renderer {
      * @return string HTML output to display navigation tabs
      */
     static public function get_standard_modes() {
-        return array('setgoals', 'setdelays', 'setlevels', 'setmessage', 'import', 'export');
+        return array('setlevels', 'setgoals', 'setdelays', 'setmessage', 'import', 'export');
     }
 
     /**

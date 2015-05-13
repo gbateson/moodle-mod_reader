@@ -299,11 +299,42 @@ class reader_admin_reports_options extends moodleform {
         // get and set values in $SESSION
         $uniqueid = $this->get_maintable_uniqueid();
         foreach ($optionfields as $field => $default) {
-            if (! isset($SESSION->flextable[$uniqueid]->display)) {
-                $SESSION->flextable[$uniqueid]->display = array();
+
+            if (empty($SESSION->flextable)) {
+                $SESSION->flextable = array();
             }
-            if (isset($SESSION->flextable[$uniqueid]->display[$field])) {
-                $default = $SESSION->flextable[$uniqueid]->display[$field];
+
+            // set references to $display and $sortby preferences
+            if (method_exists('flexible_table', 'is_persistent')) {
+                // Moodle >= 2.9 holds preferences in an array
+                if (empty($SESSION->flextable[$uniqueid])) {
+                    $SESSION->flextable[$uniqueid] = array();
+                }
+                if (empty($SESSION->flextable[$uniqueid]['display'])) {
+                    $SESSION->flextable[$uniqueid]['display'] = array();
+                }
+                if (empty($SESSION->flextable[$uniqueid]['sortby'])) {
+                    $SESSION->flextable[$uniqueid]['sortby'] = array();
+                }
+                $display = &$SESSION->flextable[$uniqueid]['display'];
+                $sortby  = &$SESSION->flextable[$uniqueid]['sortby'];
+            } else {
+                // Moodle <= 2.8 holds preferences in an object
+                if (empty($SESSION->flextable[$uniqueid])) {
+                    $SESSION->flextable[$uniqueid] = new stdClass();
+                }
+                if (empty($SESSION->flextable[$uniqueid]->display)) {
+                    $SESSION->flextable[$uniqueid]->display = array();
+                }
+                if (empty($SESSION->flextable[$uniqueid]->sortby)) {
+                    $SESSION->flextable[$uniqueid]->sortby = array();
+                }
+                $display = &$SESSION->flextable[$uniqueid]->display;
+                $sortby  = &$SESSION->flextable[$uniqueid]->sortby;
+            }
+
+            if (isset($display[$field])) {
+                $default = $display[$field];
             }
             if (is_array($default) || is_numeric($default)) {
                 $type = PARAM_INT;
@@ -315,20 +346,23 @@ class reader_admin_reports_options extends moodleform {
                 $value = optional_param_array('sortfields', $default, PARAM_INT);
                 foreach ($value as $sortfield => $sortdirection) {
                     if ($sortdirection==0) { // remove
-                        unset($SESSION->flextable[$uniqueid]->sortby[$sortfield]);
+                        unset($sortby[$sortfield]);
                         unset($value[$sortfield]);
                     } else {
                         if ($tsortfield==$sortfield) { // field was selected from table header
-                            $sortdirection = $SESSION->flextable[$uniqueid]->sortby[$sortfield];
+                            $sortdirection = $sortby[$sortfield];
                         }
                         $sortdirection = ($sortdirection==SORT_ASC ? SORT_ASC : SORT_DESC);
-                        $SESSION->flextable[$uniqueid]->sortby[$sortfield] = $sortdirection;
+                        $sortby[$sortfield] = $sortdirection;
                     }
                 }
             } else {
                 $value = optional_param($field, $default, $type);
             }
-            $SESSION->flextable[$uniqueid]->display[$field] = $value;
+            $display[$field] = $value;
+
+            unset($display);
+            unset($sortby);
         }
 
         $this->optionfields = $optionfields;
@@ -384,11 +418,18 @@ class reader_admin_reports_options extends moodleform {
     protected function add_field_sortfields($mform, $name, $default) {
         global $SESSION;
 
+        $sortby = array();
         $uniqueid = $this->get_maintable_uniqueid();
-        if (isset($SESSION->flextable[$uniqueid]->sortby)) {
-            $sortby = $SESSION->flextable[$uniqueid]->sortby;
+        if (method_exists('flexible_table', 'is_persistent')) {
+            // Moodle >= 2.9
+            if (isset($SESSION->flextable[$uniqueid]['sortby'])) {
+                $sortby = $SESSION->flextable[$uniqueid]['sortby'];
+            }
         } else {
-            $sortby = array();
+            // Moodle <= 2.8
+            if (isset($SESSION->flextable[$uniqueid]->sortby)) {
+                $sortby = $SESSION->flextable[$uniqueid]->sortby;
+            }
         }
 
         // onchange event handler for the <select> elements
@@ -576,11 +617,18 @@ class reader_admin_reports_options extends moodleform {
     public function get_value($name, $default=null) {
         global $SESSION;
         $uniqueid = $this->get_maintable_uniqueid();
-        if (isset($SESSION->flextable[$uniqueid]->display[$name])) {
-            return $SESSION->flextable[$uniqueid]->display[$name];
+        if (method_exists('flexible_table', 'is_persistent')) {
+            // Moodle >= 2.9
+            if (isset($SESSION->flextable[$uniqueid]['display'][$name])) {
+                return $SESSION->flextable[$uniqueid]['display'][$name];
+            }
         } else {
-            return $default; // shouldn't happen !!
+            // Moodle <= 2.8
+            if (isset($SESSION->flextable[$uniqueid]->display[$name])) {
+                return $SESSION->flextable[$uniqueid]->display[$name];
+            }
         }
+        return $default; // shouldn't happen !!
     }
 
     /**

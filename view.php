@@ -366,6 +366,14 @@ if ($reader->levelcheck) {
     // stretch blockgraph cell across two rows and align center
     $table->data[0]->cells[1]->rowspan = 2;
 
+    // make sure we get the required row classs in Moodle >= 2.9
+    if (property_exists($table, 'caption')) {
+        if (empty($table->rowclasses)) {
+            $table->rowclasses = array();
+        }
+        $table->rowclasses[0] = 'r0';
+    }
+
     $list = array();
 
     if ($leveldata['allowpromotion']) {
