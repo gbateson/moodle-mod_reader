@@ -33,9 +33,9 @@ if (empty($CFG)) {
 }
 
 if (isset($CFG->release)) {
-    $moodle_26 = (floatval($CFG->release) <= 2.6);
+    $moodle_26 = version_compare($CFG->release, '2.6.99', '<=');
 } else if (isset($CFG->yui3version)) {
-    $moodle_26 = (floatval($CFG->yui3version) <= 3.13);
+    $moodle_26 = version_compare($CFG->yui3version, '3.13.99', '<=');
 } else {
     $moodle_26 = false;
 }
