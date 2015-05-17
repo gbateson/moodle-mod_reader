@@ -705,10 +705,10 @@ class mod_reader_renderer extends plugin_renderer_base {
         // prepare level data
         $leveldata = array(
             'promotiondate' => $level->time,
-            'currentlevel'  => $level->currentlevel,                      // current level of this user
-            'prevlevel'   => $this->prevlevel - $count['prev'], // number of quizzes allowed at previous level
-            'thislevel'   => $this->thislevel         - $count['this'], // number of quizzes allowed at current level
-            'nextlevel'   => $this->nextlevel     - $count['next']  // number of quizzes allowed at next level
+            'currentlevel'  => $level->currentlevel,              // current level of this user
+            'prevlevel'     => $this->prevlevel - $count['prev'], // number of quizzes allowed at previous level
+            'thislevel'     => $this->thislevel - $count['this'], // number of quizzes allowed at current level
+            'nextlevel'     => $this->nextlevel - $count['next']  // number of quizzes allowed at next level
         );
         if ($level->currentlevel==0 || $count['prev'] == -1) {
             $leveldata['prevlevel'] = -1;
@@ -1292,7 +1292,7 @@ class mod_reader_renderer extends plugin_renderer_base {
             'te' => 'Technology & Science',
             'th' => 'Thriller',
             'yo' => 'Young life/adventure',
-            'yc' => 'Young children' 
+            'yc' => 'Young children'
         );
 
         // if no genre is requested, return whole list of valid genre codes

@@ -2263,7 +2263,7 @@ function reader_get_level_data($reader, $userid=0) {
     $select = 'ra.*, rb.difficulty, rb.id AS bookid';
     $from   = '{reader_attempts} ra JOIN {reader_books} rb ON ra.bookid = rb.id';
     $where  = 'ra.userid = ? AND ra.readerid = ? AND ra.deleted = ? AND ra.timefinish > ?';
-    $params = array($USER->id, $reader->id, 0, $reader->ignoredate);
+    $params = array($USER->id, $reader->id, 0, max($reader->ignoredate, $level->time));
 
     if ($attempts = $DB->get_records_sql("SELECT $select FROM $from WHERE $where ORDER BY ra.timemodified", $params)) {
         foreach ($attempts as $attempt) {
@@ -2352,7 +2352,7 @@ function reader_get_level_data($reader, $userid=0) {
  * @return xxx
  * @todo Finish documenting this function
  */
-function reader_get_user_attempts($readerid, $userid, $status = 'finished', $includepreviews = false) {
+function reader_get_user_attempts($readerid, $userid, $status='finished', $includepreviews=false) {
     global $DB;
 
     $select = 'readerid = ? AND userid = ?';

@@ -52,6 +52,9 @@ if ($id) {
     $id = $cm->id;
 }
 
+// Initialize $PAGE, compute blocks
+$PAGE->set_url('/mod/reader/view.php', array('id' => $cm->id));
+
 require_login($course->id, true, $cm);
 reader_add_to_log($course->id, 'reader', 'view', 'view.php?id='.$cm->id, $reader->id, $cm->id);
 
@@ -71,9 +74,6 @@ if ($unset) {
     unset ($SESSION->reader_lastuser);
     unset ($SESSION->reader_lastuserfrom);
 }
-
-// Initialize $PAGE, compute blocks
-$PAGE->set_url('/mod/reader/view.php', array('id' => $cm->id));
 
 $title = $course->shortname . ': ' . format_string($reader->name);
 $PAGE->set_title($title);
