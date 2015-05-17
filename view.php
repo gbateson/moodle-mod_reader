@@ -225,11 +225,11 @@ if (count($attempts)) {
 
         if ($promotiondate) {
             if ($lastattemptdate==0) { // first attempt
-                if ($attempt['timefinish'] > $promotiondate) {
+                if ($promotiondate < $attempt['timefinish']) {
                     reader_view_promotiondate($table, $leveldata, $promotiondate, $timeformat, $dateformat);
                 }
             } else { // not the first attempt
-                if ($lastattemptdate < $promotiondate && $attempt['timefinish'] > $promotiondate) {
+                if ($promotiondate >= $lastattemptdate && $promotiondate < $attempt['timefinish']) {
                     reader_view_promotiondate($table, $leveldata, $promotiondate, $timeformat, $dateformat);
                 }
             }
@@ -281,7 +281,9 @@ if (count($attempts)) {
         }
         $table->data[] = new html_table_row($cells);
     }
-    if ($promotiondate && $attempt['timefinish'] < $promotiondate) {
+
+    // check if student was promoted after most recent attempt
+    if ($promotiondate && $promotiondate >= $lastattemptdate) {
         reader_view_promotiondate($table, $leveldata, $promotiondate, $timeformat, $dateformat);
     }
 
