@@ -81,8 +81,9 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
                                     'sortfields'  => array());
 
     /** @var actions */
-    protected $actions = array('setstartlevel', 'setcurrentlevel', 'setstoplevel', 'setallowpromotion', 'setreadinggoal',
-                               'awardextrapoints', 'awardbookpoints');
+    protected $actions = array('setstartlevel',     'setcurrentlevel',  'setstoplevel',
+                               'setallowpromotion', 'setpromotiontime', 'setreadinggoal',
+                               'awardextrapoints',  'awardbookpoints');
 
     /**
      * Constructor
@@ -395,7 +396,7 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
      * @return xxx
      */
     public function col_stoplevel($row)  {
-        if ($row->stoplevel==99) {
+        if (is_null($row->stoplevel) || $row->stoplevel==99) {
             return get_string('unlimited');
         } else {
             return number_format($row->stoplevel);
@@ -409,7 +410,7 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
      * @return xxx
      */
     public function col_allowpromotion($row)  {
-        if ($row->allowpromotion) {
+        if (is_null($row->allowpromotion) || $row->allowpromotion) {
             $text = get_string('yes');
             $class = 'passed';
         } else {
@@ -515,6 +516,78 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
     }
 
     /**
+     * get_datetime
+     *
+     * @param string $name
+     * @param mixed $default (optional, default = null)
+     * @return xxx
+     */
+    public function get_datetime($name, $default=null) {
+
+        if ($year = optional_param($name.'year', 0, PARAM_INT)) {
+            $month     = optional_param($name.'month',   0, PARAM_INT);
+            $day       = optional_param($name.'day',     0, PARAM_INT);
+            $hours     = optional_param($name.'hours',   0, PARAM_INT);
+            $minutes   = optional_param($name.'minutes', 0, PARAM_INT);
+            $seconds   = optional_param($name.'seconds', 0, PARAM_INT);
+            $valuezone = 99; // always 99
+            $applydst  = false; // always false
+            return make_timestamp($year, $month, $day, $hours, $minutes, $seconds, $valuezone, $applydst);
+        } else {
+            return $default;
+        }
+    }
+
+    /**
+     * display_action_settings_setpromotiontime
+     *
+     * @param string $action
+     * @return xxx
+     */
+    public function display_action_settings_setpromotiontime($action) {
+
+        $days = array();
+        for ($i=1; $i<=31; $i++) {
+            $days[$i] = $i;
+        }
+        $months = array();
+        for ($i=1; $i<=12; $i++) {
+            $months[$i] = userdate(gmmktime(12,0,0, $i,15,2000), '%B');
+        }
+        $years = array();
+        for ($i=1970; $i<=2020; $i++) {
+            $years[$i] = $i;
+        }
+        $hours = array();
+        for ($i=0; $i<=23; $i++) {
+            $hours[$i] = sprintf('%02d', $i);
+        }
+        $minutes = array();
+        $seconds = array();
+        for ($i=0; $i<60; $i++) {
+            $minutes[$i] = sprintf('%02d', $i);
+            $seconds[$i] = sprintf('%02d', $i);
+        }
+
+        $name = 'promotiontime';
+        $value = $this->get_datetime($name, time());
+        $value = usergetdate($value);
+
+        $settings = '';
+        $settings .= get_string('newdate', 'mod_reader').': ';
+        $settings .= html_writer::select($years,   $name.'year',    intval($value['year']),    '').' ';
+        $settings .= html_writer::select($months,  $name.'month',   intval($value['mon']),     '').' ';
+        $settings .= html_writer::select($days,    $name.'day',     intval($value['mday']),    '').' ';
+        $settings .= html_writer::empty_tag('br');
+        $settings .= get_string('newtime', 'mod_reader').': ';
+        $settings .= html_writer::select($hours,   $name.'hours',   intval($value['hours']),   '').' ';
+        $settings .= html_writer::select($minutes, $name.'minutes', intval($value['minutes']), '').' ';
+        $settings .= html_writer::select($seconds, $name.'seconds', intval($value['seconds']), '').' ';
+
+        return $this->display_action_settings($action, $settings);
+    }
+
+    /**
      * display_action_settings_setreadinggoal
      *
      * @param string $action
@@ -583,12 +656,12 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
      *
      * @param string $action
      * @param string $field name
+     * @param integer $value
      * @return void, but may update/insert record in "reader_levels" table
      */
-    public function execute_action_setlevelfield($action, $field) {
+    public function execute_action_setlevelfield($action, $field, $value) {
         global $DB;
 
-        $value = optional_param($action, null, PARAM_INT);
         if ($value===null) {
             return; // no value specified
         }
@@ -619,7 +692,9 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
                     'time'           => $time,
                 );
             }
-            $level->time = $time;
+            if ($field=='currentlevel' && $level->$field < $value) {
+                $level->time = $time; // manual promotion
+            }
             $level->$field = $value;
             if (isset($level->id)) {
                 $DB->update_record('reader_levels', $level);
@@ -639,7 +714,9 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
      * @return xxx
      */
     public function execute_action_setstartlevel($action) {
-        $this->execute_action_setlevelfield($action, 'startlevel');
+        $field = 'startlevel';
+        $value = optional_param($action, null, PARAM_INT);
+        $this->execute_action_setlevelfield($action, $field, $value);
     }
 
     /**
@@ -649,7 +726,9 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
      * @return xxx
      */
     public function execute_action_setcurrentlevel($action) {
-        $this->execute_action_setlevelfield($action, 'currentlevel');
+        $field = 'currentlevel';
+        $value = optional_param($action, null, PARAM_INT);
+        $this->execute_action_setlevelfield($action, $field, $value);
     }
 
     /**
@@ -659,7 +738,9 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
      * @return xxx
      */
     public function execute_action_setstoplevel($action) {
-        $this->execute_action_setlevelfield($action, 'stoplevel');
+        $field = 'stoplevel';
+        $value = optional_param($action, null, PARAM_INT);
+        $this->execute_action_setlevelfield($action, $field, $value);
     }
 
     /**
@@ -669,7 +750,21 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
      * @return xxx
      */
     public function execute_action_setallowpromotion($action) {
-        $this->execute_action_setlevelfield($action, 'allowpromotion');
+        $field = 'allowpromotion';
+        $value = optional_param($action, null, PARAM_INT);
+        $this->execute_action_setlevelfield($action, $field, $value);
+    }
+
+    /**
+     * execute_action_setpromotiontime
+     *
+     * @param string $action
+     * @return xxx
+     */
+    public function execute_action_setpromotiontime($action) {
+        $field = 'time';
+        $value = $this->get_datetime('promotiontime');
+        $this->execute_action_setlevelfield($action, $field, $value);
     }
 
     /**
@@ -679,7 +774,9 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
      * @return xxx
      */
     public function execute_action_setreadinggoal($action) {
-        $this->execute_action_setlevelfield($action, 'goal');
+        $field = 'goal';
+        $value = optional_param($action, null, PARAM_INT);
+        $this->execute_action_setlevelfield($action, $field, $value);
     }
 
     /**

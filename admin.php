@@ -628,7 +628,7 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $setip) {
     }
 }
 
-if (has_capability('mod/reader:addinstance', $contextmodule) && $changeallstartlevel >= 0) {
+if (has_capability('mod/reader:addinstance', $contextmodule) && isset($changeallstartlevel)) {
     foreach ($coursestudents as $coursestudent) {
         $params = array('userid' => $coursestudent->id, 'readerid' => $reader->id);
         if ($studentlevel = $DB->get_record('reader_levels', $params)) {

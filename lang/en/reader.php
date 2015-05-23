@@ -851,3 +851,7 @@ $string['youmustpassplural'] = 'To be promoted, you must pass {$a->count} more q
 $string['youmustpasssingle'] = 'To be promoted, you must pass ONE more quiz at reading level {$a->level}.';
 $string['yourcurrentlevel'] = 'Your reading level is currently set to level {$a}';
 $string['youwerepromoted'] = 'You were promoted to reading level {$a->level} on {$a->date} at {$a->time}';
+
+$string['setpromotiontime'] = 'Change promotion date and time';
+$string['newdate'] = 'New date';
+$string['newtime'] = 'New time';
