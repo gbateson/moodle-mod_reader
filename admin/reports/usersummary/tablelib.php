@@ -823,7 +823,6 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
                         'level'     => '99',
                         'length'    => sprintf('%01.1f', $length)); // 0.5, 1.0, 2.0, ...
         if ($book = $DB->get_records('reader_books', $params)) {
-
             return reset($book);
         }
 
@@ -900,8 +899,8 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
 
             // we make the $time in the past, so it doesn't interfere with
             // the restriction on the frequency at which quizzes can be taken
-            // "delaylevel" is the minimum number of seconds between quizzes
-            $time  = time() - ($this->output->reader->get_delay($userid));
+            $time = time();
+            $time -= $this->output->reader->get_delay($userid);
 
             // get next attempt number
             $select = 'MAX(attempt)';
