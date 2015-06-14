@@ -61,7 +61,7 @@ echo '<p>'.get_string('sentemailmoodle', 'mod_reader', $user).'</p>';
 mail($user->email, $subject, $message);
 echo '<p>'.get_string('sentemailphp', 'mod_reader', $user).'</p>';
 
-echo html_writer::tag('p', 'All done');
+echo html_writer::tag('p', get_string('alldone', 'mod_reader'));
 if ($id) {
     $href = new moodle_url('/mod/reader/admin/tools.php', array('id' => $id, 'tab' => $tab));
 } else {

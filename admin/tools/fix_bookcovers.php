@@ -86,6 +86,14 @@ switch ($action) {
     case 'attempted' : reader_fetch_attempted_book_images($readercfg); break;
 }
 
+echo html_writer::tag('p', get_string('alldone', 'mod_reader'));
+if ($id) {
+    $href = new moodle_url('/mod/reader/admin/tools.php', array('id' => $id, 'tab' => $tab));
+} else {
+    $href = new moodle_url($CFG->wwwroot.'/');
+}
+echo html_writer::tag('p', html_writer::tag('a', 'Click here to continue', array('href' => $href)));
+
 echo $output->box_end();
 echo $output->footer();
 

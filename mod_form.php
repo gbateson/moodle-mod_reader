@@ -178,9 +178,14 @@ class mod_reader_mod_form extends moodleform_mod {
 
         $name = 'stoplevel';
         $label = get_string($name, $plugin);
-        $mform->addElement('text', $name, $label, $textoptions);
-        $this->set_type_default_advanced($mform, $config, $name, PARAM_INT);
-        $mform->addHelpButton($name, $name, $plugin);
+        $elements = array();
+        $elements[] = $mform->createElement('text', $name, '', $textoptions);
+        $elements[] = $mform->createElement('checkbox', $name.'force', '', get_string($name.'force', $plugin));
+        $mform->addGroup($elements, $name.'elements', $label, ' ', false);
+        //$this->set_type_default_advanced($mform, $config, $name, PARAM_INT);
+        $mform->setType($name, PARAM_INT);
+        $mform->setType($name.'force', PARAM_INT);
+        $mform->addHelpButton($name.'elements', $name, $plugin);
 
         //-----------------------------------------------------------------------------
         $mform->addElement('header', 'general', get_string('reportsettings', $plugin));

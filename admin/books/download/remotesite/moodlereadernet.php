@@ -451,9 +451,10 @@ class reader_remotesite_moodlereadernet extends reader_remotesite {
     /**
      * get_usage
      *
+     * @param boolean $include_unused_books (optional, default=FALSE) if TRUE, return details of unused books
      * @todo Finish documenting this function
      */
-    function get_usage() {
+    function get_usage($include_unused_books=false) {
         global $DB;
 
         $readercfg = get_config('mod_reader');
@@ -475,7 +476,7 @@ class reader_remotesite_moodlereadernet extends reader_remotesite {
                     'attemptsperuser' => 0,
                     'ignoredate'      => $reader->ignoredate,
                     'course'          => $reader->course,
-                    'short_name'      => $DB->get_field('course', 'shortname', array('id' => $reader->course)),
+                    'shortname'       => $DB->get_field('course', 'shortname', array('id' => $reader->course)),
                 );
 
                 $select = 'readerid = ? and timestart >= ?';
@@ -512,7 +513,7 @@ class reader_remotesite_moodlereadernet extends reader_remotesite {
                                 'time'   => $book->time,
                                 'rate'   => 0,
                                 'course' => $usage->readers[$attempt->readerid]->course,
-                                'short_name' => $usage->readers[$attempt->readerid]->short_name
+                                'shortname' => $usage->readers[$attempt->readerid]->shortname
                             );
                         }
 
@@ -537,19 +538,19 @@ class reader_remotesite_moodlereadernet extends reader_remotesite {
                             $ratings[$attempt->readerid] += $attempt->bookrating;
                         }
                     }
-                } else {
-                    // no attempts
+                } else if ($include_unused_books) {
+                    // no attempts at this book
                     if (empty($usage->books[0])) {
                         $usage->books[0] = array();
                     }
                     $usage->books[0][$book->image] = (object)array(
-                        'true'       => 0,
-                        'false'      => 0,
-                        'credit'     => 0,
-                        'time'       => $book->time,
-                        'rate'       => 0,
-                        'course'     => 0,
-                        'short_name' => 'NOTUSED'
+                        'true'      => 0,
+                        'false'     => 0,
+                        'credit'    => 0,
+                        'time'      => $book->time,
+                        'rate'      => 0,
+                        'course'    => 0,
+                        'shortname' => 'NOTUSED'
                     );
                 }
 

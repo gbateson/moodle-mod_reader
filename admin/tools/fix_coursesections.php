@@ -73,7 +73,7 @@ if (empty($courseids)) {
     }
 }
 
-echo html_writer::tag('p', 'All done');
+echo html_writer::tag('p', get_string('alldone', 'mod_reader'));
 if ($id) {
     $href = new moodle_url('/mod/reader/admin/tools.php', array('id' => $id, 'tab' => $tab));
 } else {

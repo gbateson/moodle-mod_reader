@@ -103,7 +103,7 @@ function reader_update_instance(stdclass $reader, $mform) {
     unset($reader->requiresubnet);
 
     // update "stoplevel" field in "reader_levels" table
-    if (isset($reader->stoplevel)) {
+    if ($reader->stoplevel && $reader->stoplevelforce) {
         $DB->set_field('reader_levels', 'stoplevel', $reader->stoplevel, array('readerid' => $reader->id));
     }
 
@@ -306,21 +306,21 @@ function reader_delete_instance($id) {
     $result = true;
 
     if ($reader = $DB->get_record('reader', array('id' => $id))) {
-        if ($attempts = $DB->get_records('reader_attempts', array('readerid' => $id), 'id', 'id,readerid')) {
-            $ids = array_keys($attempts);
+        if ($ids = $DB->get_records('reader_attempts', array('readerid' => $id), 'id', 'id,readerid')) {
+            $ids = array_keys($ids);
             $DB->delete_records_list('reader_attempt_questions', 'attemptid', $ids);
             $DB->delete_records_list('reader_attempts', 'id',  $ids);
             unset($ids);
         }
-        unset($attempts);
-        $DB->delete_records('reader_book_instances',    array('readerid' => $id));
-        $DB->delete_records('reader_cheated_log',       array('readerid' => $id));
-        $DB->delete_records('reader_delays',            array('readerid' => $id));
-        $DB->delete_records('reader_grades',            array('readerid' => $id));
-        $DB->delete_records('reader_goals',             array('readerid' => $id));
-        $DB->delete_records('reader_levels',            array('readerid' => $id));
-        $DB->delete_records('reader_messages',          array('readerid' => $id));
-        $DB->delete_records('reader_strict_users_list', array('readerid' => $id));
+        $params = array('readerid' => $id);
+        $DB->delete_records('reader_book_instances',    $params);
+        $DB->delete_records('reader_cheated_log',       $params);
+        $DB->delete_records('reader_delays',            $params);
+        $DB->delete_records('reader_grades',            $params);
+        $DB->delete_records('reader_goals',             $params);
+        $DB->delete_records('reader_levels',            $params);
+        $DB->delete_records('reader_messages',          $params);
+        $DB->delete_records('reader_strict_users_list', $params);
         $DB->delete_records('reader', array('id' => $id));
     }
 
@@ -1700,7 +1700,7 @@ function reader_cron() {
             //     require_once($CFG->dirroot.'/mod/reader/admin/books/download/lib.php');
             //     require_once($CFG->dirroot.'/mod/reader/admin/books/download/renderer.php');
 
-            //     $type   = reader_downloader::BOOKS_WITH_QUIZZES;
+            //     $type = reader_downloader::BOOKS_WITH_QUIZZES;
             //     foreach ($readerids as $readerid => $itemids) {
 
             //         $reader = $DB->get_record('reader', array('id' => $readerid));
@@ -2297,31 +2297,36 @@ function reader_get_level_data($reader, $userid=0) {
         }
     }
 
-    // if this is the highest allowed level, then disable the "allowpromotion" switch
-    if ($level->stoplevel > 0 && $level->stoplevel <= $level->currentlevel) {
-        $DB->set_field('reader_levels', 'allowpromotion', 0, array('readerid' => $reader->id, 'userid' => $USER->id));
-        $level->allowpromotion = 0;
+    // if this is the highest allowed level,
+    // then disable the "allowpromotion" switch
+    if ($level->allowpromotion) {
+        if ($level->stoplevel > 0 && $level->stoplevel <= $level->currentlevel) {
+            $DB->set_field('reader_levels', 'allowpromotion', 0, array('readerid' => $reader->id, 'userid' => $USER->id));
+            $level->allowpromotion = 0;
+        }
     }
 
-    if ($level->allowpromotion==0) {
-        $count['this'] = 1;
-    }
+    // promote this student, if required
+    if ($level->allowpromotion) {
+        if ($reader->thislevel > 0 && $reader->thislevel <= $count['this']) {
+            $level->currentlevel += 1;
+            $level->time = time();
+            $DB->update_record('reader_levels', $level);
 
-    // promote this student, if they have done enough quizzes at this level
-    if ($count['this'] >= $reader->thislevel) {
-        $level->currentlevel += 1;
-        $level->time = time();
-        $DB->update_record('reader_levels', $level);
+            $count['this'] = 0;
+            $count['prev'] = 0;
+            $count['next'] = 0;
 
+            echo '<script type="text/javascript">'."\n";
+            echo '//<![CDATA['."\n";
+            echo 'alert("Congratulations!! You have been promoted to Level '.$level->currentlevel.'!");'."\n";
+            echo '//]]>'."\n";
+            echo '</script>';
+        }
+    } else {
+        // if promotion is not allowed, let the student
+        // read any number of books at the current level
         $count['this'] = 0;
-        $count['prev'] = 0;
-        $count['next'] = 0;
-
-        echo '<script type="text/javascript">'."\n";
-        echo '//<![CDATA['."\n";
-        echo 'alert("Congratulations!! You have been promoted to Level '.$level->currentlevel.'!");'."\n";
-        echo '//]]>'."\n";
-        echo '</script>';
     }
 
     // prepare level data
