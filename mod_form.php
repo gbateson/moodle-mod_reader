@@ -72,7 +72,12 @@ class mod_reader_mod_form extends moodleform_mod {
         $mform->setType($name, (empty($CFG->formatstringstriptags) ? PARAM_CLEANHTML : PARAM_TEXT));
         $mform->addRule($name, null, 'required', null, 'client');
 
-        $this->add_intro_editor(false, get_string('summary'));
+        $label = get_string('summary');
+        if (method_exists($this, 'standard_intro_elements')) {
+            $this->standard_intro_elements($label); // Moodle >= 2.9
+        } else {
+            $this->add_intro_editor(false, $label); // Moodle <= 2.8
+        }
 
         //-----------------------------------------------------------------------------
         $mform->addElement('header', 'timinghdr', get_string('timing', 'form'));
