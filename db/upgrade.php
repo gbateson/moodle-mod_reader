@@ -1109,5 +1109,17 @@ function xmldb_reader_upgrade($oldversion) {
         upgrade_mod_savepoint(true, "$newversion", 'reader');
     }
 
+    $newversion = 2015062484;
+    if ($oldversion < $newversion) {
+        // in "reader" table, rename "questionmark" field to "questionscores", and add "reviewlinks" field
+        $table = new xmldb_table('reader');
+        $fields = array(
+            'questionscores' => new xmldb_field('questionmark',   XMLDB_TYPE_INTEGER, '2', XMLDB_UNSIGNED, null, null, '0', 'stoplevel'),
+            'showreviewlinks' => new xmldb_field('showreviewlinks', XMLDB_TYPE_INTEGER, '2', XMLDB_UNSIGNED, null, null, '0', 'showpercentgrades')
+        );
+        reader_xmldb_update_fields($dbman, $table, $fields);
+        upgrade_mod_savepoint(true, "$newversion", 'reader');
+    }
+
     return $result;
 }

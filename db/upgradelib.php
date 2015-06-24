@@ -3739,9 +3739,14 @@ function reader_xmldb_add_indexes($dbman, $table, $indexes) {
  * @param  object $table
  * @param  array  $fields
  * @param  array  $indexes (optional, default=array())
+ * @param  string $plugin  (optional, default="mod_reader")
  * @return void, but may add indexes
  */
 function reader_xmldb_update_fields($dbman, $table, $fields, $indexes=array()) {
+
+    // cache decision whether to update config or not
+    $update_config = ($table->getName()=='reader');
+    $plugin = 'mod_reader';
 
     // if necessary, remove indexes on fields to be updated
     reader_xmldb_drop_indexes($dbman, $table, $indexes);
@@ -3751,7 +3756,8 @@ function reader_xmldb_update_fields($dbman, $table, $fields, $indexes=array()) {
         $oldexists = $dbman->field_exists($table, $field);
         $newexists = $dbman->field_exists($table, $newname);
 
-        if ($field->getName()==$newname) {
+        $oldname = $field->getName();
+        if ($oldname==$newname) {
             // same field name - do nothing
         } else {
             // different field names
@@ -3766,12 +3772,24 @@ function reader_xmldb_update_fields($dbman, $table, $fields, $indexes=array()) {
             }
             $field->setName($newname);
         }
+
         xmldb_reader_fix_previous_field($dbman, $table, $field);
         if ($newexists) {
             $dbman->change_field_type($table, $field);
         } else {
             $dbman->add_field($table, $field);
         }
+
+        if ($update_config) {
+            $value = get_config($plugin, $oldname);
+            if ($value===false) {
+                $value = $field->getDefault();
+            } else {
+                unset_config($oldname, $plugin);
+            }
+            set_config($newname, $value, $plugin);
+        }
+
     }
 
     // if necessary, restore indexes on updated fields

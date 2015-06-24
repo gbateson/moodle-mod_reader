@@ -205,7 +205,7 @@ class mod_reader_mod_form extends moodleform_mod {
         $mform->addHelpButton($name, $name, $plugin);
         $this->set_type_default_advanced($mform, $config, $name, PARAM_INT);
 
-        $name = 'questionmark';
+        $name = 'showreviewlinks';
         $label = get_string($name, $plugin);
         $mform->addElement('selectyesno', $name, $label);
         $this->set_type_default_advanced($mform, $config, $name, PARAM_INT);
@@ -230,6 +230,12 @@ class mod_reader_mod_form extends moodleform_mod {
         }
         $mform->addElement('select', $name, $label, $options);
         $this->set_type_default_advanced($mform, $config, $name, PARAM_INT, $COURSE->id);
+        $mform->addHelpButton($name, $name, $plugin);
+
+        $name = 'questionscores';
+        $label = get_string($name, $plugin);
+        $mform->addElement('selectyesno', $name, $label);
+        $this->set_type_default_advanced($mform, $config, $name, PARAM_INT);
         $mform->addHelpButton($name, $name, $plugin);
 
         $name = 'bookinstances';

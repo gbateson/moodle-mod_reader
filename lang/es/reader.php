@@ -69,7 +69,7 @@ $string['process_addquestion'] = '<b>Agregar preguntas al examen $a.</b><br />';
 $string['process_courseadded'] = '<b>Curso agregado.</b><br />';
 $string['publisher'] = 'Editor';
 $string['publisherseries'] = 'Editor / Serie';
-$string['questionmark'] = 'Esconder valores individuales de preguntas';
+$string['questionscores'] = 'Esconder valores individuales de preguntas';
 $string['quizfordays'] = 'Exámen por días';
 $string['quizmanagement'] = 'Gestión de Examen';
 $string['quizzesadded'] = 'Exámenes Agregados';
@@ -245,7 +245,7 @@ $string['configminpassgrade'] = '';
 $string['confignextlevel'] = '';
 $string['confignotifycheating'] = '';
 $string['configprevlevel'] = '';
-$string['configquestionmark'] = '';
+$string['configquestionscores'] = '';
 $string['configserverpassword'] = '';
 $string['configserverurl'] = '';
 $string['configserverusername'] = '';
@@ -568,11 +568,13 @@ $string['private'] = 'Private';
 $string['promotionnotallowed'] = 'Your teacher has stopped automatic promotion for you.';
 $string['promotionsettings'] = 'Promotion settings';
 $string['publishers'] = 'Publishers';
-$string['questionmark_help'] = '**No**
-: Do NOT add links from the values on the report pages to quiz review pages.
+$string['questionscores_help'] = 'Show or hide the maximum scores for each question when students attempt a Reader quiz.
 
-**Yes**
-: Add links from values on the Reader report pages to quiz review pages showing exactly how each question in an attempt at a Reader quiz was answered.';
+**Show**
+: Show the maximum scores for questions in Reader quizzes.
+
+**Hide**
+: Hide the maximum scores for questions in Reader quizzes.';
 $string['quizadd'] = 'Add Reader quizzes';
 $string['quizadded'] = 'Quiz added: {$a}';
 $string['quizarrange'] = 'Arrange Reader quizzes';
@@ -626,6 +628,14 @@ $string['restoreattempts'] = 'Restore selected attempts';
 $string['restoredeletedattempt'] = 'Restore deleted attempt';
 $string['returntoreports'] = 'Return to Reports';
 $string['returntostudentlist'] = 'Return to Student List';
+$string['reviewlinks'] = 'Review links';
+$string['reviewlinks_help'] = '**No**
+: Do NOT add links from the values on the Reader report pages to quiz review pages.
+
+**Yes**
+: Add links from values on the Reader report pages to quiz review pages showing exactly how each question in an attempt at a Reader quiz was answered.
+
+This setting affects teachers only. It does affect students because they do not have access to the Reader report pages.';
 $string['rowsperpage'] = 'Rows per page';
 $string['run_readercron'] = 'Run Reader cron';
 $string['run_readercrondesc'] = 'Run the cron job for the Reader module.';

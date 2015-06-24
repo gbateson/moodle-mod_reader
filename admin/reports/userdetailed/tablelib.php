@@ -245,7 +245,11 @@ class reader_admin_reports_userdetailed_table extends reader_admin_reports_table
      * @return xxx
      */
     public function col_termwords($row)  {
-        return number_format($row->termwords);
+        if ($this->is_downloading()) {
+            return $row->termwords;
+        } else {
+            return number_format($row->termwords);
+        }
     }
 
     /**
@@ -255,6 +259,10 @@ class reader_admin_reports_userdetailed_table extends reader_admin_reports_table
      * @return xxx
      */
     public function col_termpoints($row)  {
-        return number_format($row->termpoints);
+        if ($this->is_downloading()) {
+            return $row->termpoints;
+        } else {
+            return number_format($row->termpoints);
+        }
     }
 }

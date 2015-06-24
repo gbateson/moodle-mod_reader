@@ -384,9 +384,11 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
 
         if ($goal==0) {
             return '';
-        } else {
-            return number_format($goal);
         }
+        if ($this->is_downloading()) {
+            return $goal;
+        }
+        return number_format($goal);
     }
 
     /**
@@ -398,9 +400,11 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
     public function col_stoplevel($row)  {
         if (is_null($row->stoplevel) || $row->stoplevel==99) {
             return get_string('unlimited');
-        } else {
-            return number_format($row->stoplevel);
         }
+        if ($this->is_downloading()) {
+            return $row->stoplevel;
+        }
+        return number_format($row->stoplevel);
     }
 
     /**
@@ -431,7 +435,11 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
      * @return xxx
      */
     public function col_totalwordsallterms($row) {
-        return number_format($row->totalwordsallterms);
+        if ($this->is_downloading()) {
+            return $row->totalwordsallterms;
+        } else {
+            return number_format($row->totalwordsallterms);
+        }
     }
 
     ////////////////////////////////////////////////////////////////////////////////

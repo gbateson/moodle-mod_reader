@@ -35,12 +35,13 @@ $string['configminpassgrade'] = '';
 $string['confignextlevel'] = '';
 $string['confignotifycheating'] = '';
 $string['configprevlevel'] = '';
-$string['configquestionmark'] = '';
+$string['configquestionscores'] = '';
 $string['configserverpassword'] = '';
 $string['configserverurl'] = '';
 $string['configserverusername'] = '';
 $string['configshowpercentgrades'] = '';
 $string['configshowprogressbar'] = '';
+$string['configshowreviewlinks'] = '';
 $string['configstoplevel'] = '';
 $string['configthislevel'] = '';
 $string['configupdate'] = '';
@@ -199,19 +200,19 @@ $string['best'] = 'Best';
 $string['book'] = 'Book';
 $string['bookadded'] = 'Book added: {$a}';
 $string['bookcovers'] = 'Show book covers';
-$string['bookcovers_help'] = '**No**
-: Do NOT show the book covers on the main page of this Reader activity.
+$string['bookcovers_help'] = '**Yes**
+: Show the book covers on the main page of this Reader activity.
 
-**Yes**
-: Show the book covers on the main page of this Reader activity.';
+**No**
+: Do NOT show the book covers on the main page of this Reader activity.';
 $string['bookdifficulty'] = 'Book difficulty';
 $string['bookeditdetails'] = 'Edit book details';
 $string['bookinstances'] = 'Custom book data';
-$string['bookinstances_help'] = '**No**
-: This Reader activity will use only the standard Reader book data such as word count and reading level
+$string['bookinstances_help'] = '**Yes**
+: This Reader activity will use custom values for Reader book data. Note that enabling this option will cause some extra load on your web server.
 
-**Yes**
-: This Reader activity will use custom values for Reader book data. Note that enabling this option will cause some extra load on your web server.';
+**No**
+: This Reader activity will use only the standard Reader book data such as word count and reading level';
 $string['booklevelmanagement'] = 'Book & Level Management';
 $string['booknotadded'] = 'Book NOT added: {$a}';
 $string['booknotfound'] = 'Book not found {$a}';
@@ -257,11 +258,13 @@ $string['cheatsheet'] = 'Cheat sheet';
 $string['check_email'] = 'Check email';
 $string['check_emaildesc'] = 'Send two test emails to the gueststudent user, one via Moodle mail and one via PHP mail.';
 $string['checkbox'] = 'Show checkboxes';
-$string['checkbox_help'] = '**No**
-: Do NOT show checkboxes on the teacher reports pages.
+$string['checkbox_help'] = '**Yes**
+: Show checkboxes on the teacher report pages in the Admin area.
 
-**Yes**
-: Show checkboxes on the teacher report pages.';
+**No**
+: Do NOT show checkboxes on the teacher reports pages in the Admin area.
+
+This setting will be removed at in the future, when the Admin area has been phased out.';
 $string['checkcheating'] = 'Check for cheating';
 $string['checkcheating_help'] = 'This setting specifies whether or not IP address should be checked when students attempt Reader quizzes.
 
@@ -445,11 +448,11 @@ $string['lastupdatedtime'] = 'The quizzes on this site were last updated on {$a}
 $string['lengthex11'] = 'Length (Ex. 1.1)';
 $string['level'] = 'Level';
 $string['levelcheck'] = 'Restrict reading level';
-$string['levelcheck_help'] = '**No**
-: Students will always be allowed to take Reader quizzes for books at any reading level.
+$string['levelcheck_help'] = '**Yes**
+: Students will only be allowed to take Reader quizzes for books at or near their current reading level. The number of quizzes that students are allowed to take is specified in the settings on this page for "Quizzes at current/previous/next level"
 
-**Yes**
-: Students will only be allowed to take Reader quizzes for books at or near their current reading level. The number of quizzes that students are allowed to take is specified in the settings on this page for "Quizzes at current/previous/next level"';
+**No**
+: Students will always be allowed to take Reader quizzes for books at any reading level.';
 $string['leveldelay'] = 'Level {$a} delay';
 $string['levelgoal'] = 'Level {$a} goal';
 $string['leveli'] = 'Level {$a}';
@@ -539,12 +542,14 @@ $string['promotionsettings'] = 'Promotion settings';
 $string['publisher'] = 'Publisher';
 $string['publishers'] = 'Publishers';
 $string['publisherseries'] = 'Publisher / Series';
-$string['questionmark'] = 'Add review links';
-$string['questionmark_help'] = '**No**
-: Do NOT add links from the values on the report pages to quiz review pages.
+$string['questionscores'] = 'Show question scores';
+$string['questionscores_help'] = 'Should the maximum scores for each question be shown to students when they attempt a Reader quiz?
 
 **Yes**
-: Add links from values on the Reader report pages to quiz review pages showing exactly how each question in an attempt at a Reader quiz was answered.';
+: Show the maximum scores for questions in Reader quizzes.
+
+**No**
+: Hide the maximum scores for questions in Reader quizzes.';
 $string['quizadd'] = 'Add Reader quizzes';
 $string['quizadded'] = 'Quiz added: {$a}';
 $string['quizarrange'] = 'Arrange Reader quizzes';
@@ -596,6 +601,14 @@ $string['restoredeletedattempt'] = 'Restore deleted attempt';
 $string['returntocoursepage'] = 'Return to Course Page';
 $string['returntoreports'] = 'Return to Reports';
 $string['returntostudentlist'] = 'Return to Student List';
+$string['showreviewlinks'] = 'Show review links';
+$string['showreviewlinks_help'] = '**Yes**
+: Add links from values on the Reader report pages to quiz review pages showing exactly how each question in an attempt at a Reader quiz was answered.
+
+**No**
+: Do NOT add links from the values on the Reader report pages to quiz review pages.
+
+This setting affects teachers only. It does affect students because they do not have access to the Reader report pages.';
 $string['rowsperpage'] = 'Rows per page';
 $string['run_readercron'] = 'Run Reader cron';
 $string['run_readercrondesc'] = 'Run the cron job for the Reader module.';

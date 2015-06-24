@@ -330,17 +330,55 @@ class reader_admin_reports_groupsummary_table extends reader_admin_reports_table
     ////////////////////////////////////////////////////////////////////////////////
 
     /**
+     * format_average_number
+     *
+     * @param xxx $row
+     * @param xxx $field
+     * @param xxx $value (optional, default=null)
+     * @return xxx
+     */
+    public function format_average_number($row, $field, $value=null) {
+        if (empty($row->countusers)) {
+            return '';
+        }
+        if ($value===null) {
+            $value = $row->$field;
+        }
+        $value = round($value / $row->countusers);
+        if ($this->is_downloading()) {
+            return $value;
+        } else {
+            return number_format($value);
+        }
+    }
+
+    /**
+     * format_average_percent
+     *
+     * @param xxx $row
+     * @param xxx $field
+     * @param xxx $value (optional, default=null)
+     * @param xxx $multiplier (optional, default=1)
+     * @return xxx
+     */
+    public function format_average_percent($row, $field, $value=null, $multiplier=100) {
+        if (empty($row->countusers)) {
+            return '';
+        }
+        if ($value===null) {
+            $value = $row->$field;
+        }
+        return round($value / $row->countusers * $multiplier).'%';
+    }
+
+    /**
      * col_percentactive
      *
      * @param xxx $row
      * @return xxx
      */
     public function col_percentactive($row) {
-        if (empty($row->countusers)) {
-            return '';
-        } else {
-            return round($row->countactive / $row->countusers * 100).'%';
-        }
+        return $this->format_average_percent($row, 'countactive');
     }
 
     /**
@@ -350,11 +388,7 @@ class reader_admin_reports_groupsummary_table extends reader_admin_reports_table
      * @return xxx
      */
     public function col_percentinactive($row) {
-        if (empty($row->countusers)) {
-            return '';
-        } else {
-            return round($row->countinactive / $row->countusers * 100).'%';
-        }
+        return $this->format_average_percent($row, 'countinactive');
     }
 
     /**
@@ -364,11 +398,7 @@ class reader_admin_reports_groupsummary_table extends reader_admin_reports_table
      * @return xxx
      */
     public function col_averagetaken($row) {
-        if (empty($row->countusers)) {
-            return '';
-        } else {
-            return round(($row->countpassed + $row->countfailed) / $row->countusers);
-        }
+        return $this->format_average_number($row, null, $row->countpassed + $row->countfailed);
     }
 
     /**
@@ -378,11 +408,7 @@ class reader_admin_reports_groupsummary_table extends reader_admin_reports_table
      * @return xxx
      */
     public function col_averagepassed($row) {
-        if (empty($row->countusers)) {
-            return '';
-        } else {
-            return round($row->countpassed / $row->countusers);
-        }
+        return $this->format_average_number($row, 'countpassed');
     }
 
     /**
@@ -392,11 +418,7 @@ class reader_admin_reports_groupsummary_table extends reader_admin_reports_table
      * @return xxx
      */
     public function col_averagefailed($row) {
-        if (empty($row->countusers)) {
-            return '';
-        } else {
-            return round($row->countfailed / $row->countusers);
-        }
+        return $this->format_average_number($row, 'countfailed');
     }
 
     /**
@@ -406,11 +428,7 @@ class reader_admin_reports_groupsummary_table extends reader_admin_reports_table
      * @return xxx
      */
     public function col_averagepercentgrade($row) {
-        if (empty($row->countusers)) {
-            return '';
-        } else {
-            return round($row->sumaveragegrade / $row->countusers).'%';
-        }
+        return $this->format_average_percent($row, 'sumaveragegrade', null, 1);
     }
 
     /**
@@ -420,11 +438,7 @@ class reader_admin_reports_groupsummary_table extends reader_admin_reports_table
      * @return xxx
      */
     public function col_averagewordsthisterm($row) {
-        if (empty($row->countusers)) {
-            return '';
-        } else {
-            return number_format(round($row->totalwordsthisterm / $row->countusers));
-        }
+        return $this->format_average_number($row, 'totalwordsthisterm');
     }
 
     /**
@@ -434,11 +448,7 @@ class reader_admin_reports_groupsummary_table extends reader_admin_reports_table
      * @return xxx
      */
     public function col_averagewordsallterms($row) {
-        if (empty($row->countusers)) {
-            return '';
-        } else {
-            return number_format(round($row->totalwordsthisterm / $row->countusers));
-        }
+        return $this->format_average_number($row, 'totalwordsallterms');
     }
 
     /**
@@ -448,11 +458,7 @@ class reader_admin_reports_groupsummary_table extends reader_admin_reports_table
      * @return xxx
      */
     public function col_averagepointsthisterm($row) {
-        if (empty($row->countusers)) {
-            return '';
-        } else {
-            return number_format(round($row->totalpointsthisterm / $row->countusers));
-        }
+        return $this->format_average_number($row, 'totalpointsthisterm');
     }
 
     /**
@@ -462,11 +468,7 @@ class reader_admin_reports_groupsummary_table extends reader_admin_reports_table
      * @return xxx
      */
     public function col_averagepointsallterms($row) {
-        if (empty($row->countusers)) {
-            return '';
-        } else {
-            return number_format(round($row->totalpointsthisterm / $row->countusers));
-        }
+        return $this->format_average_number($row, 'totalpointsallterms');
     }
 
     /**

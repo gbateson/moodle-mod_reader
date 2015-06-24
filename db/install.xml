@@ -25,10 +25,11 @@
         <FIELD NAME="maxgrade" TYPE="number" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" DECIMALS="5" NEXT="showprogressbar" PREVIOUS="goal"/>
         <FIELD NAME="showprogressbar" TYPE="int" LENGTH="2" NOTNULL="false" DEFAULT="1" SEQUENCE="false" NEXT="wordsorpoints" PREVIOUS="maxgrade"/>
         <FIELD NAME="wordsorpoints" TYPE="int" LENGTH="2" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="showpercentgrades" PREVIOUS="showprogressbar"/>
-        <FIELD NAME="showpercentgrades" TYPE="int" LENGTH="2" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="checkbox" PREVIOUS="wordsorpoints"/>
-        <FIELD NAME="checkbox" TYPE="int" LENGTH="2" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="questionmark" PREVIOUS="showpercentgrades"/>
-        <FIELD NAME="questionmark" TYPE="int" LENGTH="2" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="levelcheck" PREVIOUS="checkbox"/>
-        <FIELD NAME="levelcheck" TYPE="int" LENGTH="2" NOTNULL="false" DEFAULT="1" SEQUENCE="false" NEXT="thislevel" PREVIOUS="questionmark"/>
+        <FIELD NAME="showpercentgrades" TYPE="int" LENGTH="2" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="showreviewlinks" PREVIOUS="wordsorpoints"/>
+        <FIELD NAME="showreviewlinks" TYPE="int" LENGTH="2" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="checkbox" PREVIOUS="showpercentgrades"/>
+        <FIELD NAME="checkbox" TYPE="int" LENGTH="2" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="questionscores" PREVIOUS="showreviewlinks"/>
+        <FIELD NAME="questionscores" TYPE="int" LENGTH="2" NOTNULL="false" DEFAULT="0" SEQUENCE="false" NEXT="levelcheck" PREVIOUS="checkbox"/>
+        <FIELD NAME="levelcheck" TYPE="int" LENGTH="2" NOTNULL="false" DEFAULT="1" SEQUENCE="false" NEXT="thislevel" PREVIOUS="questionscores"/>
         <FIELD NAME="thislevel" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="6" SEQUENCE="false" NEXT="prevlevel" PREVIOUS="levelcheck"/>
         <FIELD NAME="prevlevel" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="3" SEQUENCE="false" NEXT="nextlevel" PREVIOUS="thislevel"/>
         <FIELD NAME="nextlevel" TYPE="int" LENGTH="4" NOTNULL="false" DEFAULT="1" SEQUENCE="false" NEXT="stoplevel" PREVIOUS="prevlevel"/>

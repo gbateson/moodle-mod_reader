@@ -1155,7 +1155,7 @@ class reader_admin_reports_table extends table_sql {
      */
     public function header_add_period($header, $period, $help='')  {
         $period = '('.get_string($period, 'mod_reader').')';
-        if ($this->is_downloading()) { // $this->download
+        if ($this->is_downloading()) {
             $header = "$header $period";
         } else {
             $header = html_writer::tag('span', $header, array('class' => 'nowrap')).
@@ -1269,7 +1269,6 @@ class reader_admin_reports_table extends table_sql {
         }
     }
 
-
     /**
      * col_selected
      *
@@ -1333,7 +1332,11 @@ class reader_admin_reports_table extends table_sql {
      */
     public function col_words($row)  {
         $row->words = intval($row->words);
-        return number_format($row->words);
+        if ($this->is_downloading()) {
+            return $row->words;
+        } else {
+            return number_format($row->words);
+        }
     }
 
     /**
@@ -1344,7 +1347,11 @@ class reader_admin_reports_table extends table_sql {
      */
     public function col_points($row)  {
         $row->points = floatval($row->points);
-        return number_format($row->points);
+        if ($this->is_downloading()) {
+            return $row->points;
+        } else {
+            return number_format($row->points);
+        }
     }
 
     /**
@@ -1356,9 +1363,9 @@ class reader_admin_reports_table extends table_sql {
     public function col_grade($row)  {
         if (isset($row->grade)) {
             $grade = round($row->grade).'%';
-            if (empty($row->layout)) {
+            if (empty($row->layout) || $this->is_downloading()) {
                 // NULL, "", or "0" means there are no questions in this attempt,
-            } else {
+            } else if ($this->output->reader->showreviewlinks) {
                 $params = array('id' => $this->output->reader->cm->id, 'attemptid' => $row->id);
                 $url = new moodle_url('/mod/reader/view_attempts.php', $params);
                 $grade = html_writer::link($url, $grade, array('onclick' => "this.target='_blank'"));
@@ -1505,21 +1512,25 @@ class reader_admin_reports_table extends table_sql {
      * @return xxx
      */
     public function col_totalwordsthisterm($row) {
-        $totalwordsthisterm = number_format($row->totalwordsthisterm);
-        switch (true) {
-            case isset($row->userid):
-                $params = array('mode' => 'userdetailed', 'userid' => $row->userid);
-                $report_url = $this->output->reader->reports_url($params);
-                break;
-            case isset($row->bookid):
-                $params = array('mode' => 'bookdetailed', 'bookid' => $row->bookid);
-                $report_url = $this->output->reader->reports_url($params);
-                break;
-            default:
-                $report_url = '';
-        }
-        if ($report_url) {
-        //    $totalwordsthisterm = html_writer::link($report_url, $totalwordsthisterm);
+        if ($this->is_downloading()) {
+            $totalwordsthisterm = $row->totalwordsthisterm;
+        } else {
+            $totalwordsthisterm = number_format($row->totalwordsthisterm);
+            switch (true) {
+                case isset($row->userid):
+                    $params = array('mode' => 'userdetailed', 'userid' => $row->userid);
+                    $report_url = $this->output->reader->reports_url($params);
+                    break;
+                case isset($row->bookid):
+                    $params = array('mode' => 'bookdetailed', 'bookid' => $row->bookid);
+                    $report_url = $this->output->reader->reports_url($params);
+                    break;
+                default:
+                    $report_url = '';
+            }
+            if ($report_url) {
+            //    $totalwordsthisterm = html_writer::link($report_url, $totalwordsthisterm);
+            }
         }
         return $totalwordsthisterm;
     }
@@ -1534,6 +1545,9 @@ class reader_admin_reports_table extends table_sql {
     public function other_cols($column, $row) {
         if (! property_exists($row, $column)) {
             return "$column not found";
+        }
+        if ($this->is_downloading()) {
+            return $row->$column;
         }
         if (in_array($column, $this->numbercolumns) && is_numeric($row->$column)) {
             return number_format($row->$column);

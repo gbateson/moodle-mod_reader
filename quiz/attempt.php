@@ -196,7 +196,7 @@ if ($readerattempt->readerquiz->reader->timelimit > 0) {
     $js .= "RDR.timer.StartTimer($totaltimertime)\n";
 }
 
-if ($readerattempt->readerquiz->reader->questionmark==0) {
+if ($readerattempt->readerquiz->reader->questionscores==0) {
     $js .= "RDR.AddCssText('#page-mod-reader-quiz-attempt div.info div.grade {display: none;}');\n";
 }
 

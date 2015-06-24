@@ -37,6 +37,7 @@ $defaults = (object)array(
     'bookcovers'         => '1',
     'showprogressbar'    => '1',
     'showpercentgrades'  => '0',
+    'showreviewlinks'    => '0',
     'wordsorpoints'      => '0',
     'minpassgrade'       => '60',
     'goal'               => '0',
@@ -47,7 +48,7 @@ $defaults = (object)array(
     'nextlevel'          => '1',
     'stoplevel'          => '0',
     'ignoredate'         => '0',
-    'questionmark'       => '0',
+    'questionscores'     => '0',
     'checkbox'           => '0',
     'usecourse'          => '0',
     'bookinstance'       => '0',
@@ -158,8 +159,8 @@ foreach ($names as $name) {
 
 // ignoredate
 
-// questionmark
-$name = 'questionmark';
+// showreviewlinks
+$name = 'showreviewlinks';
 $text = get_string($name, $plugin);
 $help = get_string('config'.$name, $plugin);
 $default = array('value' => $defaults->$name, 'adv' => false);
@@ -184,6 +185,14 @@ foreach (get_courses() as $course) {
     $options[$course->id] = $course->fullname;
 }
 $setting = new admin_setting_configselect_with_advanced("$plugin/$name", $text, $help, $default, $options);
+$settings->add($setting);
+
+// questionscores
+$name = 'questionscores';
+$text = get_string($name, $plugin);
+$help = get_string('config'.$name, $plugin);
+$default = array('value' => $defaults->$name, 'adv' => false);
+$setting = new admin_setting_configselect_with_advanced("$plugin/$name", $text, $help, $default, $yesno);
 $settings->add($setting);
 
 // bookinstances
