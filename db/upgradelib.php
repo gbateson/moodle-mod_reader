@@ -3937,3 +3937,51 @@ function xmldb_reader_quiz_question_instances() {
         return array(false, 'quiz_question_instances', 'quiz', 'question', 'grade');
     }
 }
+
+/**
+ * xmldb_reader_fix_orphan_bookattempts
+ *
+ * @todo Finish documenting this function
+ */
+function xmldb_reader_fix_orphan_bookattempts() {
+    global $DB;
+
+    $bookids = array(); // $old => $new
+    $interactive = xmldb_reader_interactive();
+
+    $select = 'ra.*';
+    $from   = '{reader_attempts} ra '.
+              'LEFT JOIN {quiz} q ON ra.quizid = q.id '.
+              'LEFT JOIN {reader_books} rb ON ra.bookid = rb.id';
+    $where  = 'q.id IS NOT NULL AND rb.id IS NULL';
+    $orderby = 'ra.id';
+    $params = array();
+
+    if ($attempts = $DB->get_records_sql("SELECT $select FROM $from WHERE $where ORDER BY $orderby", $params)) {
+        foreach ($attempts as $attempt) {
+            if (empty($bookids[$attempt->bookid])) {
+                if ($books = $DB->get_records('reader_books', array('quizid' => $attempt->quizid), 'time DESC')) {
+                    $book = reset($books); // most recent
+                    $bookids[$attempt->bookid] = $book->id;
+                }
+            }
+        }
+    }
+
+    if (count($bookids)) {
+        if ($interactive) {
+            echo html_writer::start_tag('ul');
+        }
+        foreach ($bookids as $oldid => $newid) {
+            if ($oldid && $newid) {
+                if ($interactive) {
+                    echo "<li>Fix orphan book attempt (book id $oldid =&gt; $newid)</li>";
+                }
+                $DB->set_field('reader_attempts', 'bookid', $newid, array('bookid' => $oldid));
+            }
+        }
+        if ($interactive) {
+            echo html_writer::end_tag('ul');
+        }
+    }
+}
