@@ -50,28 +50,28 @@ class reader_admin_reports_userdetailed_filtering extends reader_admin_reports_f
         $default = $this->get_default_value($fieldname);
         switch ($fieldname) {
             case 'group':
-                return new reader_admin_reports_filter_group($fieldname, $advanced, $default, 'where');
+                return new reader_admin_filter_group($fieldname, $advanced, $default, 'where');
 
             case 'currentlevel':
             case 'difficulty':
             case 'words':
             case 'points':
                 $label = get_string($fieldname, $plugin);
-                return new reader_admin_reports_filter_number($fieldname, $label, $advanced, $fieldname, $default, 'where');
+                return new reader_admin_filter_number($fieldname, $label, $advanced, $fieldname, $default, 'where');
 
             case 'name':
                 $label = get_string('booktitle', $plugin);
-                return new reader_admin_reports_filter_text($fieldname, $label, $advanced, $fieldname, $default, 'where');
+                return new reader_admin_filter_text($fieldname, $label, $advanced, $fieldname, $default, 'where');
 
             case 'timefinish':
                 $label = get_string('date');
-                return new reader_admin_reports_filter_date($fieldname, $label, $advanced, $fieldname, $default, 'where');
+                return new reader_admin_filter_date($fieldname, $label, $advanced, $fieldname, $default, 'where');
 
             case 'passed':
                 $label = get_string($fieldname, $plugin);
                 $options = array('true'  => get_string('passedshort', $plugin).' - '.get_string('passed', $plugin),
                                  'false' => get_string('failedshort', $plugin).' - '.get_string('failed', $plugin));
-                return new reader_admin_reports_filter_simpleselect($fieldname, $label, $advanced, $fieldname, $options, $default, 'where');
+                return new reader_admin_filter_simpleselect($fieldname, $label, $advanced, $fieldname, $options, $default, 'where');
 
             default:
                 // other fields (e.g. from user record)

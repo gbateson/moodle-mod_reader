@@ -178,7 +178,7 @@ class mod_reader_admin_users_import_renderer extends mod_reader_admin_users_rend
                 switch ($values['passed']) {
                     case 'true': $strpassed = get_string('passed', 'mod_reader'); break;
                     case 'false': $strpassed = get_string('failed', 'mod_reader'); break;
-                    case 'cheated': $strpassed = get_string('cheated', 'mod_reader'); break;
+                    case 'cheated': $strpassed = get_string('credit', 'mod_reader'); break;
                     default: $strpassed = $values['passed'];
                 }
                 $timefinish = userdate($values['timefinish'])." ($strpassed)";

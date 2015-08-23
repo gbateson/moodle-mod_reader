@@ -55,6 +55,8 @@ class mod_reader_admin_users_renderer extends mod_reader_admin_renderer {
     const TAB_USERS_EXPORT      = 56;
     /**#@-*/
 
+    public $tab = 'users';
+
     /**
      * get_my_tab
      *
@@ -96,44 +98,10 @@ class mod_reader_admin_users_renderer extends mod_reader_admin_renderer {
     /**
      * get_standard_modes
      *
+     * @param object $reader (optional, default=null)
      * @return string HTML output to display navigation tabs
      */
-    static public function get_standard_modes() {
+    static public function get_standard_modes($reader=null) {
         return array('setlevels', 'setgoals', 'setdelays', 'setmessage', 'import', 'export');
-    }
-
-    /**
-     * require_page_header
-     */
-    public function require_page_header() {
-        return true;
-    }
-
-    /**
-     * require_page_footer
-     */
-    public function require_page_footer() {
-        return true;
-    }
-
-    /**
-     * render_page_header
-     */
-    public function render_page_header() {
-        $output = '';
-        $output .= $this->header();
-        $output .= $this->tabs();
-        $output .= $this->box_start('generalbox', 'notice');
-        return $output;
-    }
-
-    /**
-     * render_page_footer
-     */
-    public function render_page_footer() {
-        $output = '';
-        $output .= $this->box_end();
-        $output .= $this->footer();
-        return $output;
     }
 }

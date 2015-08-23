@@ -30,6 +30,8 @@ defined('MOODLE_INTERNAL') || die;
 
 /** Include required files */
 require_once($CFG->dirroot.'/mod/reader/admin/renderer.php');
+require_once($CFG->dirroot.'/mod/reader/admin/books/tablelib.php');
+require_once($CFG->dirroot.'/mod/reader/admin/books/filtering.php');
 
 /**
  * mod_reader_admin_books_renderer
@@ -41,6 +43,8 @@ require_once($CFG->dirroot.'/mod/reader/admin/renderer.php');
  * @subpackage reader
  */
 class mod_reader_admin_books_renderer extends mod_reader_admin_renderer {
+
+    public $tab = 'books';
 
     /**#@+
      * tab ids
@@ -67,7 +71,11 @@ class mod_reader_admin_books_renderer extends mod_reader_admin_renderer {
      * @return integer tab id
      */
     public function get_default_tab() {
-        return self::TAB_BOOKS_EDIT;
+        if ($this->reader->bookinstances) {
+            return self::TAB_BOOKS_EDIT;
+        } else {
+            return self::TAB_BOOKS_DOWNLOAD_WITH;
+        }
     }
 
     /**
@@ -80,10 +88,12 @@ class mod_reader_admin_books_renderer extends mod_reader_admin_renderer {
         $cmid = $this->reader->cm->id;
         if ($this->reader->can_managebooks()) {
 
-            $tab = self::TAB_BOOKS_EDIT;
-            $params = array('id' => $cmid, 'tab' => $tab, 'mode' => 'edit');
-            $url = new moodle_url('/mod/reader/admin/books.php', $params);
-            $tabs[] = new tabobject($tab, $url, get_string('edit'));
+            if ($this->reader->bookinstances) {
+                $tab = self::TAB_BOOKS_EDIT;
+                $params = array('id' => $cmid, 'tab' => $tab, 'mode' => 'edit');
+                $url = new moodle_url('/mod/reader/admin/books.php', $params);
+                $tabs[] = new tabobject($tab, $url, get_string('edit'));
+            }
 
             $tab = self::TAB_BOOKS_DOWNLOAD_WITH;
             $type = reader_downloader::BOOKS_WITH_QUIZZES;
@@ -103,9 +113,14 @@ class mod_reader_admin_books_renderer extends mod_reader_admin_renderer {
     /**
      * get_standard_modes
      *
+     * @param object $reader (optional, default=null)
      * @return string HTML output to display navigation tabs
      */
-    static public function get_standard_modes() {
-        return array('edit', 'download');
+    static public function get_standard_modes($reader=null) {
+        if ($reader && $reader->bookinstances) {
+            return array('edit', 'download');
+        } else {
+            return array('download');
+        }
     }
 }

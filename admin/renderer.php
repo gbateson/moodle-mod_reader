@@ -30,6 +30,8 @@ defined('MOODLE_INTERNAL') || die;
 
 /** Include required files */
 require_once($CFG->dirroot.'/mod/reader/renderer.php');
+require_once($CFG->dirroot.'/mod/reader/admin/tablelib.php');
+require_once($CFG->dirroot.'/mod/reader/admin/filtering.php');
 
 /**
  * mod_reader_download_renderer
@@ -42,7 +44,187 @@ require_once($CFG->dirroot.'/mod/reader/renderer.php');
  */
 class mod_reader_admin_renderer extends mod_reader_renderer {
 
+    public $tab = '';
+    public $mode = '';
+
+    protected $pageparams = array();
+    protected $filter = null;
+
     public $actions = array();
+    protected $download = '';
+
+    /**
+     * require_page_header
+     */
+    public function require_page_header() {
+        return true;
+    }
+
+    /**
+     * require_page_footer
+     */
+    public function require_page_footer() {
+        return true;
+    }
+
+    /**
+     * render_page_header
+     */
+    public function render_page_header() {
+        $output = '';
+        $output .= $this->header();
+        $output .= $this->tabs();
+        $output .= $this->box_start('generalbox');
+        return $output;
+    }
+
+    /**
+     * render_page_footer
+     */
+    public function render_page_footer() {
+        $output = '';
+        $output .= $this->box_end();
+        $output .= $this->footer();
+        return $output;
+    }
+
+    /**
+     * baseurl for table
+     */
+    public function baseurl() {
+        $url = $this->page->url;
+        foreach ($this->pageparams as $param => $default) {
+            if (is_numeric($default)) {
+                $type = PARAM_INT;
+            } else {
+                $type = PARAM_CLEAN;
+            }
+            if ($value = optional_param($param, $default, $type)) {
+                $url->param($param, $value);
+            }
+        }
+        return $url;
+    }
+
+    /**
+     * page_report
+     */
+    public function page_report()  {
+        global $DB, $USER;
+
+        // get form values
+        $action = optional_param('action', '', PARAM_ALPHA);
+        $download = optional_param('download', '', PARAM_ALPHA);
+
+        // set baseurl for this page (used for filters and table)
+        $baseurl = $this->baseurl();
+
+        // create report table
+        $tableclass = 'reader_admin_'.$this->tab.'_'.$this->mode.'_table';
+        $uniqueid = $this->page->pagetype.'-'.$this->mode;
+        $table = new $tableclass($uniqueid, $this);
+
+        // setup the report table
+        $table->setup_report_table($baseurl, $action, $download);
+
+        // execute required $action
+        $table->execute_action($action);
+
+        // display user and attempt filters
+        $table->display_filters();
+
+        // setup sql to COUNT records
+        list($select, $from, $where, $params) = $table->count_sql();
+        $table->set_count_sql("SELECT $select FROM $from WHERE $where", $params);
+
+        // setup sql to SELECT records
+        list($select, $from, $where, $params) = $table->select_sql();
+        $table->set_sql($select, $from, $where, $params);
+
+        // extract records
+        $table->query_db($table->get_page_size());
+
+        // disable paging if it is not needed
+        if (empty($table->pagesize)) {
+            $table->use_pages = false;
+        }
+
+        // fix suppressed columns (those in which duplicate values for the same user are not repeated)
+        $this->fix_suppressed_columns_in_rawdata($table);
+
+        // display the table
+        $table->build_table();
+        $table->finish_output();
+    }
+
+    /**
+     * fix_suppressed_columns_in_rawdata
+     *
+     * @param xxx $table (passed by reference)
+     * @return xxx
+     */
+    function fix_suppressed_columns_in_rawdata(&$table)   {
+        if (empty($table->rawdata)) {
+            return false; // no records
+        }
+        if (empty($table->column_suppress)) {
+            return false; // no suppressed columns i.e. all columns are always printed
+        }
+        $showcells = array();
+        foreach ($table->column_suppress as $column => $suppress) {
+            if ($suppress && $table->has_column($column)) {
+                $this->fix_suppressed_column_in_rawdata($table, $column, $showcells);
+            }
+        }
+    }
+
+    /**
+     * fix_suppressed_column_in_rawdata
+     *
+     * @param xxx $table (passed by reference)
+     * @param xxx $column
+     * @param xxx $showcells (passed by reference)
+     * @return xxx
+     */
+    function fix_suppressed_column_in_rawdata(&$table, $column, &$showcells)   {
+        $value  = array();
+        $prefix = array();
+
+        foreach ($table->rawdata as $id => $record) {
+            if (! isset($record->$column)) {
+                continue; // shouldn't happen !!
+            }
+
+            if (! isset($showcells[$id])) {
+                $showcells[$id] = false;
+            }
+
+            if (isset($value[$column]) && $value[$column]==$record->$column) {
+                if ($showcells[$id]) {
+                    // oops, same value as previous row - we must adjust the $column value,
+                    // so that "print_row()" (lib/tablelib.php) does not suppress this value
+                    if (isset($prefix[$column]) && $prefix[$column]) {
+                        $prefix[$column] = '';
+                    } else {
+                        // add an empty span tag to make this value different from previous user's
+                        $prefix[$column] = html_writer::tag('span', '');
+                    }
+                }
+            } else {
+                // different value from previous row, so we can unset the prefix
+                $prefix[$column] = '';
+                // force the rest of the cells in this row to be shown too
+                $showcells[$id] = true;
+            }
+
+            // cache this $column value
+            $value[$column] = $record->$column;
+
+            if (isset($prefix[$column]) && $prefix[$column]) {
+                $table->rawdata[$id]->$column = $prefix[$column].$table->rawdata[$id]->$column;
+            }
+        }
+    }
 
     /**
      * heading_action

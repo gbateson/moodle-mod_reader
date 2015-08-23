@@ -54,7 +54,7 @@ class mod_reader_admin_books_download_renderer extends mod_reader_admin_books_re
     }
 
     /**
-     * mode_download
+     * render_page
      *
      * @return string HTML output to display navigation tabs
      */

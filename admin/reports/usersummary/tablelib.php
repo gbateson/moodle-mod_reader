@@ -22,7 +22,6 @@
  * @copyright 2013 Gordon Bateson <gordon.bateson@gmail.com>
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
 defined('MOODLE_INTERNAL') || die();
 
 // get parent class
@@ -445,37 +444,6 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
     ////////////////////////////////////////////////////////////////////////////////
     // functions to format, display and handle action settings                    //
     ////////////////////////////////////////////////////////////////////////////////
-
-    /**
-     * display_action_onclickchange
-     *
-     * @param string $action
-     * @param string $type "onclick" or "onchange"
-     * @param string $more (optional, default="")
-     * @return xxx
-     */
-    public function display_action_onclickchange($action, $type, $more='') {
-        return array($type => "var obj=document.getElementById('id_action_$action');if(obj)obj.checked=true;$more");
-    }
-
-    /**
-     * display_action_settings_setlevel
-     *
-     * @param string  $action
-     * @param boolean $unlimited (optional, default=false)
-     * @return xxx
-     */
-    public function display_action_settings_setlevel($action, $unlimited=false) {
-        $value = optional_param($action, 0, PARAM_INT);
-        $options = range(0, 15);
-        if ($unlimited) {
-            $options += array(99 => get_string('unlimited'));
-        }
-        $settings = '';
-        $settings .= get_string('newreadinglevel', 'mod_reader').': ';
-        $settings .= html_writer::select($options, $action, $value, '', $this->display_action_onclickchange($action, 'onchange'));
-        return $this->display_action_settings($action, $settings);
-    }
 
     /**
      * display_action_settings_setcurrentlevel

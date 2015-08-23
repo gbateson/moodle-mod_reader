@@ -31,10 +31,6 @@ require_once($CFG->dirroot.'/mod/reader/locallib.php');
 
 $id   = optional_param('id',    0, PARAM_INT);   // course module id
 $r    = optional_param('r',     0, PARAM_INT);   // reader id
-$mode = mod_reader::get_mode('admin/reports', 'filters');
-
-$action = optional_param('action', '', PARAM_ALPHA);
-$download = optional_param('download', '', PARAM_ALPHA);
 
 if ($id) {
     $cm = get_coursemodule_from_id('reader', $id, 0, false, MUST_EXIST);
@@ -53,14 +49,13 @@ require_course_login($course, true, $cm);
 $reader = mod_reader::create($reader, $cm, $course);
 $PAGE->set_url($reader->reports_url());
 
+$mode = mod_reader::get_mode('admin/reports', 'filters', '', $reader);
 $title = format_string($reader->name).': '.get_string('reports').': '.get_string('report'.$mode, 'mod_reader');
 $PAGE->set_title($title);
 $PAGE->set_heading($title);
 
 // load the appropriate renderer, table and filter class for this report $mode
 require_once($CFG->dirroot.'/mod/reader/admin/reports/'.$mode.'/renderer.php');
-require_once($CFG->dirroot.'/mod/reader/admin/reports/'.$mode.'/tablelib.php');
-require_once($CFG->dirroot.'/mod/reader/admin/reports/'.$mode.'/filtering.php');
 
 // create the renderer for this report
 $output = $PAGE->get_renderer('mod_reader', 'admin_reports_'.$mode);
@@ -69,11 +64,14 @@ $output = $PAGE->get_renderer('mod_reader', 'admin_reports_'.$mode);
 // Output starts here                                                         //
 ////////////////////////////////////////////////////////////////////////////////
 
-if ($reader->can_viewreports()) {
-    echo $output->render_report($reader, $action, $download);
-} else if (mod_reader::is_loggedinas()) {
-    echo $output->render_logout($reader);
-} else {
-    require_capability('mod/reader:viewreports', $reader->context);
+$output->init($reader);
+
+if ($output->require_page_header()) {
+    echo $output->render_page_header();
 }
 
+echo $output->render_page();
+
+if ($output->require_page_footer()) {
+    echo $output->render_page_footer();
+}

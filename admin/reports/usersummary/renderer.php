@@ -30,6 +30,8 @@ defined('MOODLE_INTERNAL') || die;
 
 /** Include required files */
 require_once($CFG->dirroot.'/mod/reader/admin/reports/renderer.php');
+require_once($CFG->dirroot.'/mod/reader/admin/reports/usersummary/tablelib.php');
+require_once($CFG->dirroot.'/mod/reader/admin/reports/usersummary/filtering.php');
 
 /**
  * mod_reader_admin_reports_usersummary_renderer

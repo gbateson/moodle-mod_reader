@@ -30,6 +30,8 @@ defined('MOODLE_INTERNAL') || die;
 
 /** Include required files */
 require_once($CFG->dirroot.'/mod/reader/admin/books/renderer.php');
+require_once($CFG->dirroot.'/mod/reader/admin/books/edit/tablelib.php');
+require_once($CFG->dirroot.'/mod/reader/admin/books/edit/filtering.php');
 
 /**
  * mod_reader_admin_books_edit_renderer
@@ -42,12 +44,14 @@ require_once($CFG->dirroot.'/mod/reader/admin/books/renderer.php');
  */
 class mod_reader_admin_books_edit_renderer extends mod_reader_admin_books_renderer {
 
+    public $mode = 'edit';
+
     /**
      * render_page
      *
      * @return string HTML output to display navigation tabs
      */
     public function render_page() {
-        echo 'mode_edit()';
+        echo $this->page_report();
     }
 }

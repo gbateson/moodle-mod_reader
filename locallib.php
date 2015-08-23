@@ -383,6 +383,13 @@ class mod_reader {
     /**
      * @return moodle_url of this reader's view page
      */
+    public function books_url($params=null, $cm=null) {
+        return $this->url('/mod/reader/admin/books.php', $params, $cm);
+    }
+
+    /**
+     * @return moodle_url of this reader's view page
+     */
     public function reports_url($params=null, $cm=null) {
         return $this->url('/mod/reader/admin/reports.php', $params, $cm);
     }
@@ -462,20 +469,27 @@ class mod_reader {
     /**
      * can
      *
-     * @return xxx
+     * @prefix string $name
+     * @prefix string $type (optional, default="")
+     * @prefix object $context (optional, default=null)
+     * @return boolean
      */
     function can($name, $type='', $context=null) {
-        $can = 'can'.$name;
-        if (! isset($this->$can)) {
-            if ($type==='') {
-                $type = 'mod/reader';
-            }
-            if ($context===null) {
-                $context = $this->context;
-            }
-            $this->$can = has_capability($type.':'.$name, $context);
+        if ($type==='') {
+            $type = 'mod/reader';
         }
-        return $this->$can;
+        if ($context===null) {
+            $context = $this->context;
+        }
+        if ($type=='mod/reader' && $context->id==$this->context->id) {
+            $can = 'can'.$name;
+            if (! isset($this->$can)) {
+                $this->$can = has_capability($type.':'.$name, $this->context);
+            }
+            return $this->$can;
+        } else {
+            return has_capability($type.':'.$name, $context);
+        }
     }
 
     /*
@@ -560,6 +574,28 @@ class mod_reader {
     }
 
     /*
+     * req(uire)
+     *
+     * @prefix string $name
+     * @prefix string $type (optional, default="")
+     * @prefix object $context (optional, default=null)
+     * @return void, but may terminate script execution
+     **/
+    function req($name, $type='', $context=null) {
+        if ($this->can($name, $type, $context)) {
+            // do nothing
+        } else {
+            if ($type==='') {
+                $type = 'mod/reader';
+            }
+            if ($context===null) {
+                $context = $this->context;
+            }
+            return require_capability($type.':'.$name, $context);
+        }
+    }
+
+    /*
      * get_delay
      *
      * @param integer $userid
@@ -636,9 +672,10 @@ class mod_reader {
      *
      * define the names and order of the standard tab-modes for this renderer
      *
-     * @return array of standard modes
+     * @param object $reader (optional, default=null)
+     * @return string HTML output to display navigation tabs
      */
-    static function get_standard_modes() {
+    static public function get_standard_modes($reader=null) {
         return array();
     }
 
@@ -647,9 +684,10 @@ class mod_reader {
      *
      * @param string $directory path to dir below "mod/reader"
      * @param string $exclude   (optional, default='') modes to exclude
+     * @param object $reader    (optional, default=null) current reader module, if any
      * @return array of report modes
      */
-    static public function get_modes($directory, $exclude='') {
+    static public function get_modes($directory, $exclude='', $reader=null) {
         global $CFG;
         static $cache = array();
 
@@ -660,8 +698,9 @@ class mod_reader {
             if (file_exists($classfile)) {
                 require_once($classfile);
                 if (method_exists($classname, 'get_standard_modes')) {
-                    $modes = call_user_func(array($classname, 'get_standard_modes'));
-                    // we use call_user_func() to prevent syntax error in PHP 5.2.x
+                    $callback = array($classname, 'get_standard_modes');
+                    $modes = call_user_func_array($callback, array($reader));
+                    // we use call_user_func_array() to prevent syntax error in PHP 5.2.x
                 }
             }
 
@@ -688,10 +727,11 @@ class mod_reader {
      * @param string $directory path to dir below "mod/reader"
      * @param string $exclude   (optional, default='') modes to exclude
      * @param string $default   (optional, default='') default mode
+     * @param object $reader    (optional, default=null) current reader module, if any
      * @return string a valid report mode
      */
-    static public function get_mode($directory, $exclude='', $default='') {
-        $modes = self::get_modes($directory, $exclude);
+    static public function get_mode($directory, $exclude='', $default='', $reader=null) {
+        $modes = self::get_modes($directory, $exclude, $reader);
         if ($mode = optional_param('mode', '', PARAM_ALPHA)) {
             if (in_array($mode, $modes)) {
                 return $mode;

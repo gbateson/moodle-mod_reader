@@ -61,64 +61,12 @@ $PAGE->set_heading($course->fullname);
 $output = $PAGE->get_renderer('mod_reader', 'admin_tools');
 $output->init($reader);
 
-echo $output->header();
-echo $output->tabs();
-echo $output->box_start('generalbox');
-
-// get string manager
-$strman = get_string_manager();
-
-// get path to this directory
-$dirname = dirname($SCRIPT).'/tools';
-$dirpath = $CFG->dirroot.$dirname;
-
-echo html_writer::start_tag('ol', array('class' => 'readertools'));
-
-$files = array();
-$items = new DirectoryIterator($dirpath);
-foreach ($items as $item) {
-    if ($item->isDot() || substr($item, 0, 1)=='.' || trim($item)=='') {
-        continue;
-    }
-    if ($item=='index.php' || $item=='lib.php' || $item=='renderer.php') {
-        continue;
-    }
-    if ($item->isFile()) {
-        $files[] = "$item"; // convert $item to string
-    }
-}
-sort($files);
-foreach ($files as $file) {
-
-    $href = new moodle_url($dirname.'/'.$file, array('id' => $id, 'tab' => $tab));
-    $text = substr($file, 0, strrpos($file, '.'));
-    $desc = '';
-    if ($strman->string_exists($text.'desc', 'reader')) {
-        $desc = get_string($text.'desc', 'mod_reader');
-        $desc = format_text($desc, FORMAT_MARKDOWN);
-    }
-    if ($strman->string_exists($text, 'reader')) {
-        $text = get_string($text, 'mod_reader');
-    }
-    $text = html_writer::tag('a', $text, array('href' => $href));
-
-    echo html_writer::start_tag('li', array('class' => 'readertool'));
-    if ($text) {
-        $params = array('class' => 'readertooltext');
-        echo html_writer::tag('span', $text);
-    }
-    if ($text && $desc) {
-        echo html_writer::empty_tag('br');
-    }
-    if ($desc) {
-        $params = array('class' => 'readertooldesc');
-        echo html_writer::tag('span', $desc, $params);
-    }
-    echo html_writer::end_tag('li');
+if ($output->require_page_header()) {
+    echo $output->render_page_header();
 }
 
-echo html_writer::end_tag('ol');
-echo html_writer::tag('div', '', array('style' => 'clear: both;'));
+echo $output->render_page();
 
-echo $output->box_end();
-echo $output->footer();
+if ($output->require_page_footer()) {
+    echo $output->render_page_footer();
+}

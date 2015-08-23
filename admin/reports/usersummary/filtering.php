@@ -49,14 +49,14 @@ class reader_admin_reports_usersummary_filtering extends reader_admin_reports_fi
         $default = $this->get_default_value($fieldname);
         switch ($fieldname) {
             case 'group':
-                return new reader_admin_reports_filter_group($fieldname, $advanced, $default, 'where');
+                return new reader_admin_filter_group($fieldname, $advanced, $default, 'where');
 
             case 'startlevel':
             case 'currentlevel':
             case 'stoplevel':
             case 'goal':
                 $label = get_string($fieldname, 'mod_reader');
-                return new reader_admin_reports_filter_number($fieldname, $label, $advanced, $fieldname, $default, 'where');
+                return new reader_admin_filter_number($fieldname, $label, $advanced, $fieldname, $default, 'where');
 
             case 'allowpromotion':
                 $label = get_string($fieldname, 'mod_reader');
@@ -67,17 +67,17 @@ class reader_admin_reports_usersummary_filtering extends reader_admin_reports_fi
             case 'countwords':
             case 'averagegrade':
                 $label = get_string($fieldname, 'mod_reader');
-                return new reader_admin_reports_filter_number($fieldname, $label, $advanced, $fieldname, $default, 'having');
+                return new reader_admin_filter_number($fieldname, $label, $advanced, $fieldname, $default, 'having');
 
             case 'totalthisterm':
             case 'totalallterms':
                 $label = get_string(substr($fieldname, 5), 'mod_reader');
                 $label = get_string('totalwords', 'mod_reader')." ($label)";
-                return new reader_admin_reports_filter_number($fieldname, $label, $advanced, $fieldname, $default, 'having');
+                return new reader_admin_filter_number($fieldname, $label, $advanced, $fieldname, $default, 'having');
 
             case 'averageduration':
                 $label = get_string($fieldname, 'mod_reader');
-                return new reader_admin_reports_filter_duration($fieldname, $label, $advanced, $fieldname, null, 'having');
+                return new reader_admin_filter_duration($fieldname, $label, $advanced, $fieldname, null, 'having');
 
             default:
                 // other fields (e.g. from user record)

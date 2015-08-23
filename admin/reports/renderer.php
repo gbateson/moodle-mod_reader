@@ -40,6 +40,8 @@ require_once($CFG->dirroot.'/mod/reader/admin/reports/filtering.php');
  */
 class mod_reader_admin_reports_renderer extends mod_reader_admin_renderer {
 
+    public $tab = 'reports';
+
     /**#@+
      * tab ids
      *
@@ -52,15 +54,7 @@ class mod_reader_admin_reports_renderer extends mod_reader_admin_renderer {
     const TAB_REPORTS_BOOKDETAILED = 25;
     /**#@-*/
 
-    protected $pageparams = array();
-
-    protected $filter = null;
-
     protected $users = null;
-
-    protected $download = '';
-
-    public $mode = '';
 
     /**
      * get_my_tab
@@ -101,30 +95,15 @@ class mod_reader_admin_reports_renderer extends mod_reader_admin_renderer {
     }
 
     /**
-     * define the names and order of the standard tab-modes for this renderer
-     *
-     * @return array of standard modes
+     * render_page
      */
-    static function get_standard_modes() {
-        return array('usersummary', 'userdetailed', 'groupsummary', 'booksummary', 'bookdetailed');
-    }
-
-    /**
-     * render_report
-     *
-     * @param object $reader
-     * @param string $action
-     * @param string $download
-     */
-    public function render_report($reader, $action, $download)  {
-        $this->init($reader);
-        if ($download=='') {
-            echo $this->header();
-            echo $this->tabs();
-        }
-        echo $this->reportcontent($action, $download);
-        if ($download=='') {
-            echo $this->footer();
+    public function render_page() {
+        if ($this->reader->can_viewreports()) {
+            echo $this->page_report();
+        } else if (mod_reader::is_loggedinas()) {
+            echo $this->render_logout();
+        } else {
+            $this->reader->req('viewreports');
         }
     }
 
@@ -134,163 +113,33 @@ class mod_reader_admin_reports_renderer extends mod_reader_admin_renderer {
      * a simple page to warn a teacher who is logged in as a student
      * that they must logout and then login as themselves to continue
      */
-    public function render_logout($reader)  {
+    public function render_logout()  {
         global $USER;
-        $this->init($reader);
 
         $msg = get_string('logoutrequired', 'mod_reader', fullname($USER));
-        $msg = format_text($msg, FORMAT_MARKDOWN, array('context' => $reader->context));
+        $msg = format_text($msg, FORMAT_MARKDOWN, array('context' => $this->reader->context));
 
         $tab = optional_param('tab', 0, PARAM_INT);
         $mode = optional_param('mode', '', PARAM_ALPHA);
-        $params = array('id' => $reader->cm->id, 'tab' => $tab, 'mode' => $mode);
+        $params = array('id' => $this->reader->cm->id, 'tab' => $tab, 'mode' => $mode);
 
         $button = new moodle_url('/mod/reader/view_loginas.php', $params);
         $button = new single_button($button, get_string('logout'));
         $button->class = 'continuebutton';
 
-        echo $this->header();
-        echo $this->box_start('generalbox', 'notice');
-        echo $this->notification($msg, 'notifyproblem');
-        echo $this->render($button);
-        echo $this->box_end();
-        echo $this->footer();
+        $output = '';
+        $output .= $this->notification($msg, 'notifyproblem');
+        $output .= $this->render($button);
+        return $output;
     }
 
     /**
-     * baseurl for table
-     */
-    public function baseurl() {
-        $url = $this->page->url;
-        foreach ($this->pageparams as $param => $default) {
-            if (is_numeric($default)) {
-                $type = PARAM_INT;
-            } else {
-                $type = PARAM_CLEAN;
-            }
-            if ($value = optional_param($param, $default, $type)) {
-                $url->param($param, $value);
-            }
-        }
-        return $url;
-    }
-
-    /**
-     * reportcontent
+     * get_standard_modes
      *
-     * @param string $action
-     * @param string $download
+     * @param object $reader (optional, default=null)
+     * @return string HTML output to display navigation tabs
      */
-    public function reportcontent($action, $download)  {
-        global $DB, $USER;
-
-        // set baseurl for this page (used for filters and table)
-        $baseurl = $this->baseurl();
-
-        // create report table
-        $tableclass = 'reader_admin_reports_'.$this->mode.'_table';
-        $uniqueid = $this->page->pagetype.'-'.$this->mode;
-        $table = new $tableclass($uniqueid, $this);
-
-        // setup the report table
-        $table->setup_report_table($baseurl, $action, $download);
-
-        // execute required $action
-        $table->execute_action($action);
-
-        // display user and attempt filters
-        $table->display_filters();
-
-        // setup sql to COUNT records
-        list($select, $from, $where, $params) = $table->count_sql();
-        $table->set_count_sql("SELECT $select FROM $from WHERE $where", $params);
-
-        // setup sql to SELECT records
-        list($select, $from, $where, $params) = $table->select_sql();
-        $table->set_sql($select, $from, $where, $params);
-
-        // extract records
-        $table->query_db($table->get_page_size());
-
-        // disable paging if it is not needed
-        if (empty($table->pagesize)) {
-            $table->use_pages = false;
-        }
-
-        // fix suppressed columns (those in which duplicate values for the same user are not repeated)
-        $this->fix_suppressed_columns_in_rawdata($table);
-
-        // display the table
-        $table->build_table();
-        $table->finish_output();
-    }
-
-    /**
-     * fix_suppressed_columns_in_rawdata
-     *
-     * @param xxx $table (passed by reference)
-     * @return xxx
-     */
-    function fix_suppressed_columns_in_rawdata(&$table)   {
-        if (empty($table->rawdata)) {
-            return false; // no records
-        }
-        if (empty($table->column_suppress)) {
-            return false; // no suppressed columns i.e. all columns are always printed
-        }
-        $showcells = array();
-        foreach ($table->column_suppress as $column => $suppress) {
-            if ($suppress && $table->has_column($column)) {
-                $this->fix_suppressed_column_in_rawdata($table, $column, $showcells);
-            }
-        }
-    }
-
-    /**
-     * fix_suppressed_column_in_rawdata
-     *
-     * @param xxx $table (passed by reference)
-     * @param xxx $column
-     * @param xxx $showcells (passed by reference)
-     * @return xxx
-     */
-    function fix_suppressed_column_in_rawdata(&$table, $column, &$showcells)   {
-        $value  = array();
-        $prefix = array();
-
-        foreach ($table->rawdata as $id => $record) {
-            if (! isset($record->$column)) {
-                continue; // shouldn't happen !!
-            }
-
-            if (! isset($showcells[$id])) {
-                $showcells[$id] = false;
-            }
-
-            if (isset($value[$column]) && $value[$column]==$record->$column) {
-                if ($showcells[$id]) {
-                    // oops, same value as previous row - we must adjust the $column value,
-                    // so that "print_row()" (lib/tablelib.php) does not suppress this value
-                    if (isset($prefix[$column]) && $prefix[$column]) {
-                        $prefix[$column] = '';
-                    } else {
-                        // add an empty span tag to make this value different from previous user's
-                        $prefix[$column] = html_writer::tag('span', '');
-                    }
-                }
-            } else {
-                // different value from previous row, so we can unset the prefix
-                $prefix[$column] = '';
-                // force the rest of the cells in this row to be shown too
-                $showcells[$id] = true;
-            }
-
-            // cache this $column value
-            $value[$column] = $record->$column;
-
-            if (isset($prefix[$column]) && $prefix[$column]) {
-                $table->rawdata[$id]->$column = $prefix[$column].$table->rawdata[$id]->$column;
-            }
-        }
+    static public function get_standard_modes($reader=null) {
+        return array('usersummary', 'userdetailed', 'groupsummary', 'booksummary', 'bookdetailed');
     }
 }

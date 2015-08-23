@@ -42,6 +42,8 @@ require_once($CFG->dirroot.'/mod/reader/admin/renderer.php');
  */
 class mod_reader_admin_quizzes_renderer extends mod_reader_admin_renderer {
 
+    public $tab = 'quizzes';
+
     /**#@+
      * tab ids
      *
@@ -94,9 +96,10 @@ class mod_reader_admin_quizzes_renderer extends mod_reader_admin_renderer {
     /**
      * get_standard_modes
      *
+     * @param object $reader (optional, default=null)
      * @return string HTML output to display navigation tabs
      */
-    static public function get_standard_modes() {
+    static public function get_standard_modes($reader=null) {
         return array('add', 'edit', 'delete', 'showhide');
     }
 }

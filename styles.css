@@ -253,6 +253,9 @@
 
 #page-mod-reader-admin div.readermenu a:hover { background-color: #eeeeee; }
 
+/** reader admin books **/
+#page-mod-reader-admin-books div.readerreportaction div.actionsettings { margin-left: 20px; }
+
 /** reader download **/
 #page-mod-reader-admin-books div.generalbox { margin-top: 15px; margin-bottom: 15px; }
 

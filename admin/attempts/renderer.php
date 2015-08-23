@@ -41,4 +41,16 @@ require_once($CFG->dirroot.'/mod/reader/admin/renderer.php');
  * @subpackage reader
  */
 class mod_reader_admin_attempts_renderer extends mod_reader_admin_renderer {
+
+    public $tab = 'attempts';
+
+    /**
+     * render_page
+     **/
+    public function render_page() {
+        $link = array('id' => $this->reader->cm->id);
+        $link = new moodle_url('/mod/reader/admin/index.php', $link);
+        $link = html_writer::link($link, get_string('continue'));
+        echo html_writer::tag('p', 'This functionality is not implemented yet. '.$link);
+    }
 }

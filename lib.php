@@ -2090,13 +2090,20 @@ function reader_add_to_log($courseid, $module, $action, $url='', $info='', $cmid
  */
 function reader_available_sql($cmid, $reader, $userid, $noquiz=false) {
 
-    if ($noquiz) {
-        return array('{reader_books} rb', 'rb.quizid = ? AND rb.hidden = ? AND rb.level <> ?', array(0, 0, 99));
-    }
-
-    // a teacher / admin can always access all the books
-    if (reader_can('addinstance', $cmid, $userid)) {
-        return array('{reader_books} rb', 'rb.quizid > ? AND rb.hidden = ? AND rb.level <> ?', array(0, 0, 99));
+    if ($noquiz || reader_can('addinstance', $cmid, $userid)) {
+        $from = '{reader_books} rb';
+        if ($noquiz) {
+            $where = 'rb.quizid = ? AND rb.hidden = ? AND rb.level <> ?';
+        } else {
+            $where = 'rb.quizid > ? AND rb.hidden = ? AND rb.level <> ?';
+        }
+        $params = array(0, 0, 99);
+        if ($reader->bookinstances) {
+            $from .= ' JOIN {reader_book_instances} rbi ON rb.id = rbi.bookid';
+            $where .= ' AND rbi.readerid = ?';
+            $params[] = $reader->id;
+        }
+        return array($from, $where, $params);
     }
 
     // we want to get a list of all books available to this user
@@ -2130,9 +2137,7 @@ function reader_available_sql($cmid, $reader, $userid, $noquiz=false) {
 
 
     $levels = array();
-    if (isset($_SESSION['SESSION']->reader_teacherview) && $_SESSION['SESSION']->reader_teacherview == 'teacherview') {
-        // do nothing - this is a teacher
-    } else if ($reader->levelcheck == 0) {
+    if ($reader->levelcheck == 0) {
         // do nothing - level checking is disabled
     } else {
         // a student with level-checking enabled

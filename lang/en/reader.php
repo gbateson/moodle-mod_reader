@@ -207,12 +207,12 @@ $string['bookcovers_help'] = '**Yes**
 : Do NOT show the book covers on the main page of this Reader activity.';
 $string['bookdifficulty'] = 'Book difficulty';
 $string['bookeditdetails'] = 'Edit book details';
-$string['bookinstances'] = 'Custom book data';
+$string['bookinstances'] = 'Use subset of quizzes';
 $string['bookinstances_help'] = '**Yes**
-: This Reader activity will use custom values for Reader book data. Note that enabling this option will cause some extra load on your web server.
+: This Reader activity will use only a subset of the quizzes available in the Reader quizzes course. Additionally, custom values for word count and book difficulty may be specified. Note that enabling this option will cause some extra load on your web server.
 
 **No**
-: This Reader activity will use only the standard Reader book data such as word count and reading level';
+: This Reader activity will use all the quizzes in the Reader quizzes course, and will use only the standard Reader book data for word count and reading level';
 $string['booklevelmanagement'] = 'Book & Level Management';
 $string['booknotadded'] = 'Book NOT added: {$a}';
 $string['booknotfound'] = 'Book not found {$a}';
@@ -225,6 +225,7 @@ $string['bookrating2'] = 'It was okay';
 $string['bookrating3'] = 'It was great';
 $string['bookratingslevel'] = 'Display student book ratings for each book level';
 $string['books'] = 'Books';
+$string['booksavailable'] = '{$a} book(s) available';
 $string['booksreadinpreviousterms'] = 'Books read in previous terms';
 $string['booksreadsincedate'] = 'Books read since {$a}';
 $string['booksreadsincepromotion'] = 'Books read since your promotion on {$a}';
@@ -253,7 +254,7 @@ $string['cheatedmessagedefault'] = 'We are sorry to say that the MoodleReader pr
 Sometimes the computer makes mistakes. If you honestly did not receive help and did not help someone else, then please inform your teacher and your points will be restored.
 
 --The MoodleReader Module Manager';
-$string['cheatedshort'] = 'C';
+$string['creditshort'] = 'C';
 $string['cheatsheet'] = 'Cheat sheet';
 $string['check_email'] = 'Check email';
 $string['check_emaildesc'] = 'Send two test emails to the gueststudent user, one via Moodle mail and one via PHP mail.';
@@ -264,7 +265,7 @@ $string['checkbox_help'] = '**Yes**
 **No**
 : Do NOT show checkboxes on the teacher reports pages in the Admin area.
 
-This setting will be removed at in the future, when the Admin area has been phased out.';
+This setting will be removed in the future, when the Admin area has been phased out.';
 $string['checkcheating'] = 'Check for cheating';
 $string['checkcheating_help'] = 'This setting specifies whether or not IP address should be checked when students attempt Reader quizzes.
 
@@ -320,7 +321,7 @@ $string['detectcheating'] = 'Detect cheating';
 $string['difficulty'] = 'Difficulty';
 $string['difficultyshort'] = 'RL';
 $string['disallowpromotion'] = 'Do NOT allow promotion';
-$string['displayoptions'] = 'Dispay options';
+$string['displayoptions'] = 'Display options';
 $string['downloadbookswithoutquizzes'] = 'Download book data (no quizzes)';
 $string['downloadbookswithquizzes'] = 'Download book data and quizzes';
 $string['downloadedbooks'] = 'Data for the following books was downloaded:';
@@ -868,3 +869,6 @@ $string['youmustpassplural'] = 'To be promoted, you must pass {$a->count} more q
 $string['youmustpasssingle'] = 'To be promoted, you must pass ONE more quiz at reading level {$a->level}.';
 $string['yourcurrentlevel'] = 'Your reading level is currently set to level {$a}';
 $string['youwerepromoted'] = 'You were promoted to reading level {$a->level} on {$a->date} at {$a->time}';
+
+$string['showhidebook'] = 'Show or hide the selected books in this Reader activity';
+$string['setreadinglevel'] = 'Set the reading level for the selected books';

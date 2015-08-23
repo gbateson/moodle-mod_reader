@@ -27,7 +27,8 @@
 
 /** Include required files */
 require_once('../../../config.php');
-require_once($CFG->dirroot.'/mod/reader/admin/attempts/renderer.php');
+require_once($CFG->dirroot.'/mod/reader/locallib.php');
+require_once($CFG->dirroot.'/mod/reader/renderer.php');
 
 $id = optional_param('id', 0, PARAM_INT); // course module id
 $r  = optional_param('r',  0, PARAM_INT); // reader id
@@ -50,7 +51,7 @@ $reader = mod_reader::create($reader, $cm, $course);
 reader_add_to_log($course->id, 'reader', 'Admin attempts', 'admin/attempts.php?id='.$cm->id, $reader->id, $cm->id);
 
 // Initialize $PAGE, compute blocks
-$PAGE->set_url('/mod/reader/admin/attempts.php', array('id' => $cm->id);
+$PAGE->set_url('/mod/reader/admin/attempts.php', array('id' => $cm->id));
 
 $title = $course->shortname . ': ' . format_string($reader->name);
 $PAGE->set_title($title);
@@ -61,13 +62,12 @@ require_once($CFG->dirroot."/mod/reader/admin/attempts/$mode/renderer.php");
 $output = $PAGE->get_renderer('mod_reader', "admin_attempts_$mode");
 $output->init($reader);
 
-echo $output->header();
-echo $output->heading(get_string($action, 'mod_reader'));
+if ($output->require_page_header()) {
+    echo $output->render_page_header();
+}
 
-echo $output->box_start('generalbox', 'notice');
-$link = new moodle_url('/mod/reader/admin/index.php', array('id' => $id));
-$link = html_writer::link($link, get_string('continue'));
-echo html_writer::tag('p', 'This functionality is not implemented yet. '.$link);
-echo $output->box_end();
+echo $output->render_page();
 
-echo $output->footer();
+if ($output->require_page_footer()) {
+    echo $output->render_page_footer();
+}

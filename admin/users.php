@@ -57,7 +57,7 @@ $title = $course->shortname . ': ' . format_string($reader->name);
 $PAGE->set_title($title);
 $PAGE->set_heading($course->fullname);
 
-$mode = mod_reader::get_mode('admin/users');
+$mode = mod_reader::get_mode('admin/users', '', '', $reader);
 require_once($CFG->dirroot."/mod/reader/admin/users/$mode/renderer.php");
 $output = $PAGE->get_renderer('mod_reader', "admin_users_$mode");
 $output->init($reader);

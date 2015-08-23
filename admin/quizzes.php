@@ -57,16 +57,17 @@ $title = $course->shortname . ': ' . format_string($reader->name);
 $PAGE->set_title($title);
 $PAGE->set_heading($course->fullname);
 
-$mode = mod_reader::get_mode('admin/quizzes');
+$mode = mod_reader::get_mode('admin/quizzes', '', '', $reader);
 require_once($CFG->dirroot."/mod/reader/admin/quizzes/$mode/renderer.php");
 $output = $PAGE->get_renderer('mod_reader', "admin_quizzes_$mode");
 $output->init($reader);
 
-echo $output->header();
-echo $output->tabs();
-echo $output->box_start('generalbox', 'notice');
+if ($output->require_page_header()) {
+    echo $output->render_page_header();
+}
 
 echo $output->render_page();
 
-echo $output->box_end();
-echo $output->footer();
+if ($output->require_page_footer()) {
+    echo $output->render_page_footer();
+}
