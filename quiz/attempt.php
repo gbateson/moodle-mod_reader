@@ -68,6 +68,7 @@ $output = $PAGE->get_renderer('mod_quiz');
 // Check the access rules.
 $accessmanager = $readerattempt->get_access_manager($readerattempt->get_readerquiz(), $timenow);
 $messages = $accessmanager->prevent_access();
+$accessmanager->do_password_check($readerattempt->is_preview_user());
 
 $logaction = 'view attempt: '.substr($readerattempt->readerquiz->book->name, 0, 26); // 40 char limit
 $loginfo   = 'readerID '.$readerattempt->get_readerid().'; reader quiz '.$readerattempt->get_quizid().'; page: '.($page + 1);

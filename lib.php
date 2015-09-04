@@ -2402,7 +2402,7 @@ function reader_get_user_attempts($readerid, $userid, $status='finished', $inclu
  * @param integer $attemptnumber
  * @param integer $bookid
  * @param boolean $adduniqueid (optional, default = false)
- * @return xxx
+ * @return stdClass record from reader_attempts
  * @todo Finish documenting this function
  */
 function reader_create_attempt($reader, $attemptnumber, $book, $adduniqueid=false, $booktable='reader_books') {

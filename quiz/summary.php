@@ -35,60 +35,58 @@ $attemptid = required_param('attempt', PARAM_INT); // The attempt to summarise.
 
 $PAGE->set_url('/mod/reader/quiz/summary.php', array('attempt' => $attemptid));
 
-$attemptobj = reader_attempt::create($attemptid);
+$readerattempt = reader_attempt::create($attemptid);
 
 // Check login.
-require_login($attemptobj->get_course(), false, $attemptobj->get_cm());
+require_login($readerattempt->get_course(), false, $readerattempt->get_cm());
 
 // If this is not our own attempt, display an error.
-if ($attemptobj->get_userid() != $USER->id) {
-    print_error('notyourattempt', 'quiz', $attemptobj->view_url());
+if ($readerattempt->get_userid() != $USER->id) {
+    print_error('notyourattempt', 'quiz', $readerattempt->view_url());
 }
 
 // If the attempt is already closed, redirect them to the review page.
-if ($attemptobj->is_finished()) {
-    redirect($attemptobj->review_url());
+if ($readerattempt->is_finished()) {
+    redirect($readerattempt->review_url());
 }
 
 // Check access.
-$accessmanager = $attemptobj->get_access_manager(time());
+$accessmanager = $readerattempt->get_access_manager(time());
 $messages = $accessmanager->prevent_access();
-$output = $PAGE->get_renderer('mod_quiz');
 
-$accessmanager->do_password_check($attemptobj->is_preview_user());
+$accessmanager->do_password_check($readerattempt->is_preview_user());
 
-$displayoptions = $attemptobj->get_display_options(false);
+$displayoptions = $readerattempt->get_display_options(false);
 
 // Print the page header
-if (empty($attemptobj->get_quiz()->showblocks)) {
+if (empty($readerattempt->get_quiz()->showblocks)) {
     $PAGE->blocks->show_only_fake_blocks();
 }
 
 $title = get_string('likebook', 'mod_reader');
-if ($accessmanager->securewindow_required($attemptobj->is_preview_user())) {
-    $accessmanager->setup_secure_page($attemptobj->get_course()->shortname . ': ' .
-            format_string($attemptobj->get_quiz_name()), '');
-} else if ($accessmanager->safebrowser_required($attemptobj->is_preview_user())) {
-    $PAGE->set_title($attemptobj->get_course()->shortname . ': ' .
-            format_string($attemptobj->get_quiz_name()));
-    $PAGE->set_heading($attemptobj->get_course()->fullname);
+if ($accessmanager->securewindow_required($readerattempt->is_preview_user())) {
+    $accessmanager->setup_secure_page($readerattempt->get_course()->shortname . ': ' . format_string($readerattempt->get_quiz_name()), '');
+} else if ($accessmanager->safebrowser_required($readerattempt->is_preview_user())) {
+    $PAGE->set_title($readerattempt->get_course()->shortname . ': ' .format_string($readerattempt->get_quiz_name()));
+    $PAGE->set_heading($readerattempt->get_course()->fullname);
     $PAGE->set_cacheable(false);
     echo $OUTPUT->header();
 } else {
     $PAGE->navbar->add($title);
-    $PAGE->set_title(format_string($attemptobj->get_reader_name()));
-    $PAGE->set_heading($attemptobj->get_course()->fullname);
+    $PAGE->set_title(format_string($readerattempt->get_reader_name()));
+    $PAGE->set_heading($readerattempt->get_course()->fullname);
     echo $OUTPUT->header();
 }
 
 // Print heading.
-echo $OUTPUT->heading(format_string($attemptobj->get_reader_name()));
+echo $OUTPUT->heading(format_string($readerattempt->get_reader_name()));
 echo $OUTPUT->heading($title, 3);
 
-//print_r ($attemptobj);
+//print_r ($readerattempt);
 //print_r ($displayoptions);
 
-//echo $output->summary_page($attemptobj, $displayoptions);
+//$output = $PAGE->get_renderer('mod_quiz');
+//echo $output->summary_page($readerattempt, $displayoptions);
 
 //echo '<form method="post" action='processattempt.php'><div><input value="Submit all and finish" id="single_button4e9bafc1437fa" type="submit"><input name="attempt" value="5" type="hidden"><input name="finishattempt" value="1" type="hidden"><input name="timeup" value="0" type="hidden"><input name="slots" value="" type="hidden"><input name="sesskey" value="OMFyfrDQMO" type="hidden"></div></form>';
 
@@ -118,5 +116,5 @@ echo '</form>';
 echo $OUTPUT->box_end();
 
 // Finish the page
-$accessmanager->show_attempt_timer_if_needed($attemptobj->get_attempt(), time());
+$accessmanager->show_attempt_timer_if_needed($readerattempt->get_attempt(), time());
 echo $OUTPUT->footer();

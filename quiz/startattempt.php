@@ -27,6 +27,7 @@
 
 /** Include required files */
 require_once('../../../config.php');
+require_once($CFG->dirroot.'/mod/reader/quiz/accessrules.php');
 require_once($CFG->dirroot.'/mod/reader/quiz/attemptlib.php');
 require_once($CFG->dirroot.'/mod/reader/lib.php');
 require_once($CFG->dirroot.'/question/engine/lib.php');
@@ -64,6 +65,26 @@ $PAGE->set_url($readerquiz->view_url());
 //require_login($readerquiz->get_courseid(), false, $readerquiz->get_cm());
 //require_sesskey();
 $PAGE->set_pagelayout('base');
+
+$accessmanager = $readerquiz->get_access_manager(time());
+$messages = $accessmanager->prevent_access();
+
+$accessmanager->do_password_check($readerquiz->is_preview_user());
+
+$title = get_string('likebook', 'mod_reader');
+if ($accessmanager->securewindow_required($readerquiz->is_preview_user())) {
+    $accessmanager->setup_secure_page($readerquiz->get_course()->shortname . ': ' . format_string($readerquiz->get_quiz_name()), '');
+} else if ($accessmanager->safebrowser_required($readerquiz->is_preview_user())) {
+    $PAGE->set_title($readerquiz->get_course()->shortname . ': ' .format_string($readerquiz->get_quiz_name()));
+    $PAGE->set_heading($readerquiz->get_course()->fullname);
+    $PAGE->set_cacheable(false);
+    echo $OUTPUT->header();
+} else {
+    $PAGE->navbar->add($title);
+    $PAGE->set_title(format_string($readerquiz->get_reader_name()));
+    $PAGE->set_heading($readerquiz->get_course()->fullname);
+    echo $OUTPUT->header();
+}
 
 // if no questions have been set up yet redirect to edit.php
 if (! $readerquiz->has_questions()) {

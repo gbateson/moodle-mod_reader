@@ -233,6 +233,16 @@ class reader_quiz {
         return $this->quiz->id;
     }
 
+    /** @return string the name of this quiz. */
+    public function get_quiz_name() {
+        return $this->quiz->name;
+    }
+
+    /** @return int the quiz id. */
+    public function get_bookid() {
+        return $this->book->id;
+    }
+
     /** @return int the reader id. */
     public function get_readerid() {
         return $this->reader->id;
@@ -452,7 +462,7 @@ class reader_attempt {
 
     /**
      * Used by {create()} and {create_from_usage_id()}.
-     * @param array $attempt_or_uniqueid passed to $DB->get_record('reader_attempts', $attemptid).
+     * @param array $attempt_or_uniqueid passed to $DB->get_record('reader_attempts', $attempt_or_uniqueid).
      */
     public static function create_helper($attempt_or_uniqueid) {
         global $DB;
@@ -706,7 +716,7 @@ class reader_attempt {
      *     in progress (false).
      */
     public function is_finished() {
-        return $this->attempt->timefinish != 0;
+        return ($this->attempt->timefinish==0 ? false : true);
     }
 
     /** @return bool whether this attempt is a preview attempt. */
@@ -806,13 +816,15 @@ class reader_attempt {
         if ($reviewing) {
             if (is_null($this->reviewoptions)) {
                 $this->reviewoptions = reader_get_review_options($this->get_reader(),
-                        $this->attempt, $this->readerquiz->get_context());
+                                                                 $this->attempt,
+                                                                 $this->readerquiz->get_context());
             }
             return $this->reviewoptions;
 
         } else {
             $options = mod_reader_display_options::make_from_reader($this->get_quiz(),
-                    mod_reader_display_options::DURING, $this->readerquiz->course->showgrades);
+                                                                    mod_reader_display_options::DURING,
+                                                                    $this->readerquiz->course->showgrades);
             $options->flags = 'question_display_options::HIDDEN';
             return $options;
         }
@@ -1093,9 +1105,9 @@ class reader_attempt {
      * @return string HTML for the question in its current state.
      */
     public function render_question($slot, $reviewing, $thispageurl = null) {
-        return $this->quba->render_question($slot,
-                $this->get_display_options_with_edit_link($reviewing, $slot, $thispageurl),
-                $this->quba->get_question($slot)->_number);
+        $options = $this->get_display_options_with_edit_link($reviewing, $slot, $thispageurl);
+        $number  = $this->quba->get_question($slot)->_number;
+        return $this->quba->render_question($slot, $options, $number);
     }
 
     /**
@@ -1109,9 +1121,9 @@ class reader_attempt {
      * @return string HTML for the question in its current state.
      */
     public function render_question_at_step($slot, $seq, $reviewing, $thispageurl = '') {
-        return $this->quba->render_question_at_step($slot, $seq,
-                $this->get_display_options($reviewing),
-                $this->quba->get_question($slot)->_number);
+        $options = $this->get_display_options($reviewing);
+        $number = $this->quba->get_question($slot)->_number;
+        return $this->quba->render_question_at_step($slot, $seq, $options, $number);
     }
 
     /**
@@ -1123,8 +1135,8 @@ class reader_attempt {
         $options = $this->get_display_options(true);
         $options->hide_all_feedback();
         $options->manualcomment = question_display_options::EDITABLE;
-        return $this->quba->render_question($slot, $options,
-                $this->quba->get_question($slot)->_number);
+        $number = $this->quba->get_question($slot)->_number;
+        return $this->quba->render_question($slot, $options, $number);
     }
 
     /**
@@ -1135,10 +1147,9 @@ class reader_attempt {
      * @param string $thispageurl the URL of the page this question is being printed on.
      * @return string HTML for the question in its current state.
      */
-    public function check_file_access($slot, $reviewing, $contextid, $component,
-            $filearea, $args, $forcedownload) {
-        return $this->quba->check_file_access($slot, $this->get_display_options($reviewing),
-                $component, $filearea, $args, $forcedownload);
+    public function check_file_access($slot, $reviewing, $contextid, $component, $filearea, $args, $forcedownload) {
+        $options = $this->get_display_options($reviewing);
+        return $this->quba->check_file_access($slot, $options, $component, $filearea, $args, $forcedownload);
     }
 
     /**
@@ -1149,10 +1160,8 @@ class reader_attempt {
      * @param $showall whether we are showing the whole reader on one page. (Used by review.php)
      * @return reader_nav_panel_base the requested object.
      */
-    public function get_navigation_panel(mod_reader_renderer $output,
-             $panelclass, $page, $showall = false) {
+    public function get_navigation_panel(mod_reader_renderer $output, $panelclass, $page, $showall = false) {
         $panel = new $panelclass($this, $this->get_display_options(true), $page, $showall);
-
         $bc = new block_contents();
         $bc->attributes['id'] = 'mod_reader_navblock';
         $bc->title = get_string('readernavigation', 'mod_reader');
