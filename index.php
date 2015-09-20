@@ -143,7 +143,7 @@ foreach ($readers as $reader) {
         $row->cells[] = new html_table_cell('0'); // max score
         $row->cells[] = new html_table_cell('&nbsp;'); // reports
     } else {
-        $href = new moodle_url('/mod/reader/admin.php', array('a' => 'admin', 'id' => $reader->coursemodule));
+        $href = new moodle_url('/mod/reader/admin/reports.php', array('id' => $reader->coursemodule, 'tab' => '3'));
         $params = array('href' => $href, 'class' => $class);
 
         $text = html_writer::tag('a', $aggregates[$reader->id]->maxscore, $params);

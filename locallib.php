@@ -310,6 +310,83 @@ class mod_reader {
     }
 
     /**
+     * get_group_userids
+     *
+     * @param integer $groupid
+     * @return array of records from mdl_user table
+     */
+    static public function get_group_userids($groupid) {
+        if ($members = groups_get_members($groupid, 'u.id,u.username', 'u.id')) {
+            return array_keys($members);
+        } else {
+            return array();
+        }
+    }
+
+    /**
+     * count_group_members
+     *
+     * @param integer $groupid
+     * @return integer number of unique members in this group
+     */
+    static public function count_group_members($groupid) {
+        global $DB;
+        if ($members = groups_get_members($groupid, 'u.id,u.username', 'u.id')) {
+            return count($members);
+        } else {
+            return 0;
+        }
+    }
+
+    /**
+     * get_grouping_userids
+     *
+     * @param integer $groupingid
+     * @return array of records from mdl_user table
+     */
+    static public function get_grouping_userids($groupingid) {
+        global $DB;
+        list($sql, $params) = self::get_grouping_members_sql($groupingid, 'u.id, u.username', 'u.id');
+        if ($members = $DB->get_records_sql($sql, $params)) {
+            return array_keys($members);
+        } else {
+            return array();
+        }
+    }
+
+    /**
+     * count_grouping_members
+     *
+     * @param integer $groupingid
+     * @return integer number of unique members in this grouping
+     */
+    static public function count_grouping_members($groupingid) {
+        global $DB;
+        list($sql, $params) = self::get_grouping_members_sql($groupingid, 'COUNT(*)', '');
+        return $DB->get_field_sql($sql, $params);
+    }
+
+    /**
+     * get_grouping_members_sql
+     *
+     * Note that the SQL used by groups_get_grouping_members() function, in "lib/grouplib.php",
+     * returns duplicate lines if a user is in more than one group within a grouping
+     *
+     * @param integer $groupingid
+     * @param string  $fields comma-separated list of fields
+     * @param string  $sort   comma-separated list of fields (can be empty)
+     * @return xxx
+     */
+    static public function get_grouping_members_sql($groupingid, $fields, $sort) {
+        $sql = 'SELECT DISTINCT gm.userid '.
+               'FROM {groups_members} gm '.
+               'JOIN {groupings_groups} gg ON gm.groupid = gg.groupid '.
+               'WHERE gg.groupingid = ?';
+        $sql = "SELECT $fields FROM {user} u WHERE u.id IN ($sql)".($sort=='' ? '' : " ORDER BY $sort");
+        return array($sql, array($groupingid));
+    }
+
+    /**
      * Returns a js module object for the Reader module
      *
      * @param array $requires

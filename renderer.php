@@ -1646,24 +1646,24 @@ class mod_reader_renderer extends plugin_renderer_base {
             }
 
             foreach ($groupings as $gid => $grouping) {
-                if ($has_groups) {
-                    $prefix = $strgrouping.': ';
-                } else {
-                    $prefix = '';
-                }
-                if ($members = groups_get_grouping_members($gid)) {
-                    $options["grouping$gid"] = $prefix.format_string($grouping->name).' ('.count($members).' users)';
+                if ($count = mod_reader::count_grouping_members($gid)) {
+                    if ($has_groups) {
+                        $prefix = $strgrouping.': ';
+                    } else {
+                        $prefix = '';
+                    }
+                    $options["grouping$gid"] = $prefix.format_string($grouping->name).' ('.$count.' users)';
                 }
             }
 
             foreach ($groups as $gid => $group) {
-                if ($members = groups_get_members($gid)) {
+                if ($count = mod_reader::count_group_members($gid)) {
                     if ($has_groupings) {
                         $prefix = $strgroup.': ';
                     } else {
                         $prefix = '';
                     }
-                    $options["group$gid"] = $prefix.format_string($group->name).' ('.count($members).' users)';
+                    $options["group$gid"] = $prefix.format_string($group->name).' ('.$count.' users)';
                 }
             }
 
@@ -1707,14 +1707,14 @@ class mod_reader_renderer extends plugin_renderer_base {
                 if (substr($gid, 5, 3)=='ing') {
                     $gids = groups_get_all_groupings($reader->course);
                     $gid = intval(substr($gid, 8));
-                    if ($gids && array_key_exists($gid, $gids) && ($members = groups_get_grouping_members($gid))) {
-                        $userids = array_keys($members);
+                    if ($gids && array_key_exists($gid, $gids)) {
+                        $userids = mod_reader::get_grouping_userids($gid);
                     }
                 } else {
                     $gids = groups_get_all_groups($reader->course);
                     $gid = intval(substr($gid, 5));
-                    if ($gids && array_key_exists($gid, $gids) && ($members = groups_get_members($gid))) {
-                        $userids = array_keys($members);
+                    if ($gids && array_key_exists($gid, $gids)) {
+                        $userids = mod_reader::get_group_userids($gid);
                     }
                 }
             } else if ($gid=='' || $gid=='all') {

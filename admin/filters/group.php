@@ -45,7 +45,7 @@ class reader_admin_filter_group extends reader_admin_filter_select {
      * @param string $type (optional, default = "")
      */
     function __construct($filtername, $advanced, $default=null, $type='') {
-        global $reader;
+        global $DB, $reader;
 
         $label = '';
         $options = array();
@@ -78,19 +78,19 @@ class reader_admin_filter_group extends reader_admin_filter_select {
             } else {
                 $prefix = '';
             }
-            if ($members = groups_get_grouping_members($gid)) {
-                $options["grouping$gid"] = $prefix.format_string($grouping->name).' ('.count($members).')';
+            if ($count = mod_reader::count_grouping_members($gid)) {
+                $options["grouping$gid"] = $prefix.format_string($grouping->name).' ('.$count.')';
             }
         }
 
         foreach ($groups as $gid => $group) {
-            if ($members = groups_get_members($gid)) {
+            if ($count = mod_reader::count_group_members($gid)) {
                 if ($has_groupings) {
                     $prefix = $strgroup.': ';
                 } else {
                     $prefix = '';
                 }
-                $options["group$gid"] = $prefix.format_string($group->name).' ('.count($members).')';
+                $options["group$gid"] = $prefix.format_string($group->name).' ('.$count.')';
             }
         }
 
@@ -128,14 +128,14 @@ class reader_admin_filter_group extends reader_admin_filter_select {
                 if (substr($value, 5, 3)=='ing') {
                     $gids = groups_get_all_groupings($reader->course->id);
                     $gid = intval(substr($value, 8));
-                    if ($gids && array_key_exists($gid, $gids) && ($members = groups_get_grouping_members($gid))) {
-                        $userids = array_keys($members);
+                    if ($gids && array_key_exists($gid, $gids)) {
+                        $userids = mod_reader::get_grouping_userids($gid);
                     }
                 } else {
                     $gids = groups_get_all_groups($reader->course->id);
                     $gid = intval(substr($value, 5));
-                    if ($gids && array_key_exists($gid, $gids) && ($members = groups_get_members($gid))) {
-                        $userids = array_keys($members);
+                    if ($gids && array_key_exists($gid, $gids)) {
+                        $userids = mod_reader::get_group_userids($gid);
                     }
                 }
             }
