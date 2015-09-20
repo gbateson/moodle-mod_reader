@@ -313,7 +313,7 @@ class mod_reader {
      * get_group_userids
      *
      * @param integer $groupid
-     * @return array of records from mdl_user table
+     * @return array of user ids table
      */
     static public function get_group_userids($groupid) {
         if ($members = groups_get_members($groupid, 'u.id,u.username', 'u.id')) {
@@ -330,7 +330,6 @@ class mod_reader {
      * @return integer number of unique members in this group
      */
     static public function count_group_members($groupid) {
-        global $DB;
         if ($members = groups_get_members($groupid, 'u.id,u.username', 'u.id')) {
             return count($members);
         } else {
@@ -342,7 +341,7 @@ class mod_reader {
      * get_grouping_userids
      *
      * @param integer $groupingid
-     * @return array of records from mdl_user table
+     * @return array of user ids
      */
     static public function get_grouping_userids($groupingid) {
         global $DB;
