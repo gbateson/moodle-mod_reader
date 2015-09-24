@@ -519,6 +519,8 @@ class mod_reader_admin_books_download_renderer extends mod_reader_admin_books_re
             $js .= "    }\n";
             $js .= "}\n";
 
+            // check this DOM node obj(ject) and all its next siblings to find a node
+            // of the required tagName, tagType, tagClassName, and DOM nodeType
             $js .= "function reader_node(obj, tagName, tagType, tagClassName, nodeType) {\n";
             $js .= "    if (obj==null) {\n";
             $js .= "        return null;\n";
@@ -667,7 +669,7 @@ class mod_reader_admin_books_download_renderer extends mod_reader_admin_books_re
             $js .= "    if (typeof(targetClassName)=='undefined') {\n";
             $js .= "       targetClassName = '';\n";
             $js .= "    }\n";
-            $js .= "    var obj = reader_node(img.nextSibling);\n";
+            $js .= "    var obj = reader_node(img.nextSibling, 'OL');\n";
             $js .= "    if (obj) {\n";
             $js .= "        var myClassName = obj.getAttribute(css_class_attribute());\n";
             $js .= "        if (targetClassName=='' || (myClassName && myClassName.match(new RegExp(targetClassName)))) {\n";

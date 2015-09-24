@@ -95,6 +95,20 @@ class mod_reader_admin_reports_renderer extends mod_reader_admin_renderer {
     }
 
     /**
+     * require_page_header
+     */
+    public function require_page_header() {
+        return empty($_POST['download']);
+    }
+
+    /**
+     * require_page_footer
+     */
+    public function require_page_footer() {
+        return empty($_POST['download']);
+    }
+
+    /**
      * render_page
      */
     public function render_page() {
