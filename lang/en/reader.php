@@ -318,9 +318,23 @@ $string['definelogindetails'] = 'Please define login details: {$a}';
 $string['delay'] = 'Delay';
 $string['delayineffect'] = 'Quiz delay is currently in effect';
 $string['delete'] = 'Delete';
+$string['deleteallattempts'] = 'Delete all attempts at Reader quizzes';
+$string['deleteallattempts_help'] = 'As a rule, you should NOT delete attempts at Reader quizzes.
+
+You should only delete attempts if you are absolutely sure that students in this course will never take Reader quizzes again on this Moodle site ever again.
+
+This is because by deleting attempts at Reader quizzes, you allow students to retake any Reader quizzes they had previously taken. This is NOT how the Reader module is supposed to work. Students should only ever get ONE chance to take a Reader quiz.
+
+Deleting attempts at Reader quizzes will also reset the reading scores for all students to zero, which is probably not what you, or the students, want.';
 $string['deleteattempts'] = 'Delete seleted attempts';
 $string['deletecategories'] = 'Delete categories';
 $string['deletecourses'] = 'Delete courses';
+$string['deletedelays'] = 'Delete delays for groups and levels';
+$string['deletedelays_help'] = 'The delays between Reader quizzes for particular groups or reading levels will be removed.';
+$string['deletegoals'] = 'Delete goals for groups and levels';
+$string['deletegoals_help'] = 'The default reading goals for particular groups or reading levels will be deleted.';
+$string['deletemessages'] = 'Delete Reader messages';
+$string['deletemessages_help'] = 'All messages that appear on the students\' main page for Reader activities in this course will be deleted.';
 $string['detectcheating'] = 'Detect cheating';
 $string['difficulty'] = 'Difficulty';
 $string['difficultyshort'] = 'RL';

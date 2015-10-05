@@ -586,47 +586,6 @@ function reader_scale_used_anywhere($scaleid) {
     return false;
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// Reset Course API
-////////////////////////////////////////////////////////////////////////////////
-
-/**
- * reader_reset_gradebook
- *
- * @param xxx $courseid
- * @param xxx $type (optional, default = "")
- * @return void
- * @todo Finish documenting this function
- */
-function reader_reset_gradebook($courseid, $type='') {
-    global $DB;
-    $select = 'q.*, cm.idnumber as cmidnumber, q.course as courseid';
-    $from   = '{modules} m '.
-              'JOIN {course_modules} cm ON m.id = cm.module '.
-              'JOIN {reader} q ON cm.instance = q.id';
-    $where  = 'm.name = ? AND cm.course = ?';
-    $params = array('reader', $courseid);
-    if ($readers = $DB->get_records_sql("SELECT $select FROM $from WHERE $where", $params)) {
-        foreach ($readers as $reader) {
-            if ($attempts = $DB->get_records('reader_attempts', array('readerid' => $id), 'id', 'id,readerid')) {
-                $ids = array_keys($attempts);
-                $DB->delete_records_list('reader_attempt_questions', 'attemptid', $ids);
-                $DB->delete_records_list('reader_attempts', 'id',  $ids);
-                unset($ids);
-            }
-            unset($attempts);
-            $DB->delete_records('reader_cheated_log',       array('readerid' => $id));
-            $DB->delete_records('reader_delays',            array('readerid' => $id));
-            $DB->delete_records('reader_grades',            array('readerid' => $id));
-            $DB->delete_records('reader_goals',             array('readerid' => $id));
-            $DB->delete_records('reader_levels',            array('readerid' => $id));
-            $DB->delete_records('reader_messages',          array('readerid' => $id));
-            $DB->delete_records('reader_strict_users_list', array('readerid' => $id));
-            reader_grade_item_update($reader, 'reset');
-        }
-    }
-}
-
 /**
  * reader_rescale_grade
  *
@@ -641,6 +600,181 @@ function reader_rescale_grade($rawgrade, $reader) {
     } else {
         $precision = ($reader->wordsorpoints==0 ? 0 : 1);
         return round($reader->maxgrade * min(1, $rawgrade / $reader->goal), $precision);
+    }
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+// Reset Course API
+////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * reader_reset_course_form_definition
+ *
+ * @param xxx $mform (passed by reference)
+ * @todo Finish documenting this function
+ */
+function reader_reset_course_form_definition(&$mform) {
+    $plugin = 'mod_reader';
+    $mform->addElement('header', 'readerheader', get_string('modulenameplural', $plugin));
+
+    $name = 'ignoredate';
+    $label = get_string($name, $plugin);
+    $elementname = 'reset_reader_'.$name;
+    $mform->addElement('checkbox', $elementname, $label);
+    $mform->addHelpButton($elementname, $name, $plugin);
+    $mform->setDefault($elementname, 1);
+
+    $name = 'deleteallattempts';
+    $label = get_string($name, $plugin);
+    $elementname = 'reset_reader_'.$name;
+    $mform->addElement('checkbox', $elementname, $label);
+    $mform->addHelpButton($elementname, $name, $plugin);
+
+    $name = 'deletedelays';
+    $label = get_string($name, $plugin);
+    $elementname = 'reset_reader_'.$name;
+    $mform->addElement('checkbox', $elementname, $label);
+    $mform->addHelpButton($elementname, $name, $plugin);
+    $mform->disabledIf($elementname, 'reset_reader_deleteallattempts', 'notchecked');
+
+    $name = 'deletegoals';
+    $label = get_string($name, $plugin);
+    $elementname = 'reset_reader_'.$name;
+    $mform->addElement('checkbox', $elementname, $label);
+    $mform->addHelpButton($elementname, $name, $plugin);
+    $mform->disabledIf($elementname, 'reset_reader_deleteallattempts', 'notchecked');
+
+    $name = 'deletemessages';
+    $label = get_string($name, $plugin);
+    $elementname = 'reset_reader_'.$name;
+    $mform->addElement('checkbox', $elementname, $label);
+    $mform->addHelpButton($elementname, $name, $plugin);
+    $mform->disabledIf($elementname, 'reset_reader_deleteallattempts', 'notchecked');
+}
+
+/**
+ * reader_reset_course_form_defaults
+ *
+ * @param xxx $course
+ * @return xxx
+ * @todo Finish documenting this function
+ */
+function reader_reset_course_form_defaults($course) {
+    return array('reset_reader_ignoredate'        => 1,
+                 'reset_reader_deleteallattempts' => 0,
+                 'reset_reader_deletedelays'      => 0,
+                 'reset_reader_deletegoals'       => 0,
+                 'reset_reader_deletemessages'    => 0);
+}
+
+/**
+ * reader_reset_userdata
+ *
+ * @uses   $DB
+ * @param  object representing reset form $data
+ * @return array $status
+ * @todo Finish documenting this function
+ */
+function reader_reset_userdata($data) {
+    global $DB;
+    $status = array();
+
+    $deleteallattempts = (empty($data->reset_reader_deleteallattempts) ? false : true);
+    $deletedelays      = (empty($data->reset_reader_deletedelays)      ? false : true);
+    $deletegoals       = (empty($data->reset_reader_deletegoals)       ? false : true);
+    $deletemessages    = (empty($data->reset_reader_deletemessages)    ? false : true);
+
+    // get date to use as "ignoredate" for Reader activities in this course
+    if (empty($data->reset_reader_ignoredate)) {
+        $ignoredate = 0;
+    } else {
+        $ignoredate = $data->reset_start_date;
+    }
+
+    if ($deleteallattempts || $deletedelays || $deletegoals || $deletemessages || $ignoredate) {
+        $readers = $DB->get_records('reader', array('course' => $data->courseid), 'id', 'id,course');
+    } else {
+        $readers = false;
+    }
+
+    if ($readers) {
+        foreach ($readers as $reader) {
+            if ($deleteallattempts) {
+                if ($ids = $DB->get_records('reader_attempts', array('readerid' => $reader->id), 'id', 'id,readerid')) {
+                    $ids = array_keys($ids);
+                    $DB->delete_records_list('reader_attempt_questions', 'attemptid', $ids);
+                    $DB->delete_records_list('reader_attempts', 'id',  $ids);
+                    unset($ids);
+                }
+            }
+            $params = array('readerid' => $reader->id);
+            if ($deleteallattempts) {
+                $DB->delete_records('reader_cheated_log',       $params);
+                $DB->delete_records('reader_grades',            $params);
+                $DB->delete_records('reader_levels',            $params);
+                $DB->delete_records('reader_strict_users_list', $params);
+            }
+            if ($deletedelays) {
+                $DB->delete_records('reader_delays', $params);
+            }
+            if ($deletegoals) {
+                $DB->delete_records('reader_goals', $params);
+            }
+            if ($deletemessages) {
+                $DB->delete_records('reader_messages', $params);
+            }
+            if ($ignoredate) {
+                $DB->set_field('reader', 'ignoredate', $ignoredate, array('id' => $reader->id));
+            }
+        }
+
+        // if grade reset was not requested via the form,
+        // it must be done here
+        if (empty($data->reset_gradebook_grades)) {
+            reader_reset_gradebook($data->courseid, 'reset');
+        }
+
+        $plugin = 'mod_reader';
+        $pluginname =  get_string('modulenameplural', $plugin);
+
+        if ($deleteallattempts) {
+            $status[] = array('component' => $pluginname, 'item' => get_string('deleteallattempts', $plugin), 'error' => false);
+        }
+        if ($deletedelays) {
+            $status[] = array('component' => $pluginname, 'item' => get_string('deletedelays', $plugin), 'error' => false);
+        }
+        if ($deletegoals) {
+            $status[] = array('component' => $pluginname, 'item' => get_string('deletegoals', $plugin), 'error' => false);
+        }
+        if ($deletemessages) {
+            $status[] = array('component' => $pluginname, 'item' => get_string('deletemessages', $plugin), 'error' => false);
+        }
+        if ($ignoredate) {
+            $status[] = array('component' => $pluginname, 'item' => get_string('ignoredate', $plugin), 'error' => false);
+        }
+    }
+
+    return $status;
+}
+
+/**
+ * Removes all grades from gradebook
+ *
+ * @global stdClass
+ * @global object
+ * @param int $courseid
+ * @param string optional type
+ */
+function reader_reset_gradebook($courseid, $type='') {
+    global $DB;
+    $sql = 'SELECT r.*, r.course as courseid, cm.idnumber as cmidnumber '.
+             'FROM {reader} r, {course_modules} cm, {modules} m '.
+            'WHERE m.name = ? AND m.id = cm.module AND cm.instance = r.id AND r.course = ?';
+    if ($readers = $DB->get_records_sql($sql, array('reader', $courseid))) {
+        foreach ($readers as $reader) {
+            reader_grade_item_update($reader, $type);
+        }
     }
 }
 
