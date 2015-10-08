@@ -2224,7 +2224,7 @@ function reader_add_to_log($courseid, $module, $action, $url='', $info='', $cmid
  */
 function reader_available_sql($cmid, $reader, $userid, $noquiz=false) {
 
-    if ($noquiz || reader_can('addinstance', $cmid, $userid)) {
+    if ($noquiz || reader_can('viewallbooks', $cmid, $userid)) {
         $from = '{reader_books} rb';
         if ($noquiz) {
             $where = 'rb.quizid = ? AND rb.hidden = ? AND rb.level <> ?';

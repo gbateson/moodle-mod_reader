@@ -15,6 +15,7 @@ $string['reader:managequizzes'] = 'Manage quizzes';
 $string['reader:manageremotesites'] = 'Manage remote sites';
 $string['reader:managetools'] = 'Manage tools';
 $string['reader:manageusers'] = 'Manage users';
+$string['reader:viewallbooks'] = 'View all books';
 $string['reader:viewbooks'] = 'View books';
 $string['reader:viewreports'] = 'View reports';
 

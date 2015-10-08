@@ -1127,5 +1127,11 @@ function xmldb_reader_upgrade($oldversion) {
         upgrade_mod_savepoint(true, "$newversion", 'reader');
     }
 
+    $newversion = 2015100994;
+    if ($oldversion < $newversion) {
+        update_capabilities('mod/reader');
+        upgrade_mod_savepoint(true, "$newversion", 'reader');
+    }
+
     return $result;
 }

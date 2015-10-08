@@ -94,6 +94,16 @@ $capabilities = array(
         )
     ),
 
+    'mod/reader:viewallbooks' => array(
+        'captype'      => 'read',
+        'contextlevel' => CONTEXT_MODULE,
+        'archetypes'   => array(
+            'teacher'        => CAP_ALLOW,
+            'editingteacher' => CAP_ALLOW,
+            'manager'        => CAP_ALLOW
+        )
+    ),
+
     'mod/reader:viewbooks' => array(
         'captype'      => 'read',
         'contextlevel' => CONTEXT_MODULE,
@@ -105,7 +115,6 @@ $capabilities = array(
         )
     ),
 
-
     'mod/reader:viewreports' => array(
         'captype'      => 'read',
         'contextlevel' => CONTEXT_MODULE,
@@ -115,5 +124,5 @@ $capabilities = array(
             'editingteacher' => CAP_ALLOW,
             'manager'        => CAP_ALLOW
         )
-    ),
+    )
 );
