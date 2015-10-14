@@ -449,7 +449,7 @@ function reader_order_object($array, $key) {
  * @todo Finish documenting this function
  */
 function reader_make_table_headers(&$table, $headers, $orderby, $sort, $params) {
-    global $CFG;
+    global $OUTPUT;
 
     if ($orderby == 'ASC') {
         $direction = 'DESC';
@@ -467,8 +467,7 @@ function reader_make_table_headers(&$table, $headers, $orderby, $sort, $params) 
 
             // append sort icon
             if ($sort == $columnname) {
-                $imgparams = array('theme' => $CFG->theme, 'image' => "t/$directionimg", 'rev' => $CFG->themerev);
-                $header .= ' '.html_writer::empty_tag('img', array('src' => new moodle_url('/theme/image.php', $imgparams), 'alt' => ''));
+                $header .= ' '.html_writer::empty_tag('img', array('src' => $OUTPUT->pix_url('t/up'), 'alt' => ''));
             }
 
             // convert $header to link

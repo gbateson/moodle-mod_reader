@@ -50,7 +50,29 @@ class reader_admin_filter_select extends user_filter_select {
      * @param string $type (optional, default = "")
      */
     function __construct($name, $label, $advanced, $field, $options, $default=null, $type='') {
+        global $SESSION;
+
+        // Ensure current value for this field is in $options.
+        // This is to prevent warnings when switching courses.
+        // For example, the current "group" maybe a group
+        // from a different course, that is not in $options
+        if (isset($SESSION->user_filtering[$name])) {
+            $values = $SESSION->user_filtering[$name];
+            $keys = array_reverse(array_keys($values));
+            foreach ($keys as $key) {
+                if (! array_key_exists('value', $values[$key])) {
+                    continue; // shouldn't happen !!
+                }
+                if (! array_key_exists($values[$key]['value'], $options)) {
+                    unset($SESSION->user_filtering[$name][$key]);
+                }
+            }
+        }
+
+        // normal setup using parent constructor
         parent::user_filter_select($name, $label, $advanced, $field, $options);
+
+        // special fields for this class
         $this->_default = $default;
         $this->_type    = $type;
     }

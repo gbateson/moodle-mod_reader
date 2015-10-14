@@ -155,7 +155,7 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
 
             case reader_admin_reports_options::USERS_ENROLLED_ALL:
                 $raa_join   = 'LEFT JOIN';
-                $raa_join_u = 'raa.userid IS NULL OR raa.userid = u.id';
+                $raa_join_u = '(raa.userid IS NULL OR raa.userid = u.id)';
                 break;
 
             case reader_admin_reports_options::USERS_ENROLLED_WITH:
@@ -182,8 +182,8 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
                   'rl.startlevel, rl.currentlevel, rl.stoplevel, rl.allowpromotion, rl.goal';
         $from   = '{user} u '.
                   "$raa_join ($attemptsql) raa ON $raa_join_u ".
-                  "LEFT JOIN {reader_levels} rl ON rl.userid IS NULL OR rl.userid = u.id";
-        $where  = "(rl.readerid IS NULL OR rl.readerid = :readerid) AND u.id $usersql";
+                  "LEFT JOIN {reader_levels} rl ON (rl.readerid = :readerid AND rl.userid = u.id)";
+        $where  = "u.id $usersql";
 
         $params = $attemptparams + array('readerid' => $this->output->reader->id) + $userparams;
 
