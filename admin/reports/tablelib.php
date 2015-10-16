@@ -56,7 +56,6 @@ class reader_admin_reports_table extends reader_admin_table {
         global $DB, $USER;
 
         parent::__construct($uniqueid, $output);
-
         // remove group filter if it is not needed
         if (isset($this->filterfields['group'])) {
 
@@ -101,6 +100,9 @@ class reader_admin_reports_table extends reader_admin_table {
 
             if ($has_groups==false) {
                 unset($this->filterfields['group']);
+                if ($i = array_search('groups', $this->tablecolumns)) {
+                    array_splice($this->tablecolumns, $i, 1);
+                }
             }
         }
     }
@@ -362,6 +364,15 @@ class reader_admin_reports_table extends reader_admin_table {
     }
 
     /**
+     * header_groups
+     *
+     * @return xxx
+     */
+    public function header_groups()  {
+        return get_string('groups');
+    }
+
+    /**
      * header_studentview
      *
      * @return xxx
@@ -488,6 +499,54 @@ class reader_admin_reports_table extends reader_admin_table {
     ////////////////////////////////////////////////////////////////////////////////
     // functions to format data cells                                             //
     ////////////////////////////////////////////////////////////////////////////////
+
+    /**
+     * col_groups
+     *
+     * @param xxx $row
+     * @return xxx
+     */
+    public function col_groups($row)  {
+        global $DB;
+
+        // We delay fetching the groups until the first time this function is called.
+        // By this time we can restrict the userids to only those that are displayed
+        // on the current page, so we can fetch all groups data with a single DB query.
+        if (! isset($row->groups)) {
+
+            $groups = '';
+            switch ($DB->get_dbfamily()) {
+                case 'mssql'    : $groups = "STUFF(SELECT ', ' + name FROM {groups} FOR XML PATH(''), 1, 1, '')"; break;
+                case 'mysql'    : $groups = "GROUP_CONCAT(g.name SEPARATOR ', ')"; break;
+                case 'oracle'   : $groups = "LISTAGG(g.name, ', ') WITHIN GROUP (ORDER BY g.name) 'groups'"; break;
+                case 'postgres' : $groups = "string_agg(g.name, ', ')"; // "array_to_string(array(g.name), ',')"; break;
+            }
+            if ($groups) {
+                $select = "u.id, $groups AS groups";
+                $from   = '{user} u '.
+                          'RIGHT JOIN {groups_members} gm ON u.id = gm.userid '.
+                          'LEFT JOIN {groups} g ON gm.groupid = g.id';
+                $params = $this->get_userids_from_rawdata();
+                list($where, $params) = $DB->get_in_or_equal($params);
+                $where  = "g.courseid = ? AND u.id $where";
+                array_unshift($params, $this->output->reader->course->id);
+                $groups = $DB->get_records_sql("SELECT $select FROM $from WHERE $where GROUP BY u.id", $params);
+            }
+            if ($groups==='' || $groups===false) {
+                $groups = array();
+            }
+            foreach (array_keys($this->rawdata) as $id) {
+                $userid = $this->rawdata[$id]->userid;
+                if (empty($groups[$userid])) {
+                    $this->rawdata[$id]->groups = '';
+                } else {
+                    $this->rawdata[$id]->groups = $groups[$userid]->groups;
+                }
+            }
+        }
+
+        return $row->groups;
+    }
 
     /**
      * col_studentview

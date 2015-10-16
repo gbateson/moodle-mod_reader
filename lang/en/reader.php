@@ -813,6 +813,7 @@ $string['totalpointsthisterm'] = 'Total points (this term)';
 $string['totalwords'] = 'Total words';
 $string['totalwordsallterms'] = 'Total words (all terms)';
 $string['totalwordsthisterm'] = 'Total words (this term)';
+$string['transferfromcourse'] = 'Transfer from course';
 $string['type'] = 'Type';
 $string['type_help'] = 'Select the type of books you want to be displayed in the list below:
 

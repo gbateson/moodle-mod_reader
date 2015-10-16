@@ -47,6 +47,14 @@ class reader_admin_table extends table_sql {
     const DEFAULT_SORTFIELDS  = ''; // i.e. no special sorting
     /**#@-*/
 
+    /**#@+
+    * special values for reading level
+    *
+    * @const integer
+    */
+    const LEVEL_TRANSFER = -1;
+    /**#@-*/
+
     /** @var is_sortable (from flexible table) */
     public $is_sortable = true;
 
@@ -188,11 +196,6 @@ class reader_admin_table extends table_sql {
         $this->define_columns($tablecolumns);
         $this->define_headers($tableheaders);
         $this->define_baseurl($baseurl);
-
-        // disable sorting on "studentview" field
-        if ($this->has_column('studentview')) {
-            $this->no_sorting('studentview');
-        }
 
         // disable sorting on "selected" field
         if ($this->has_column('selected')) {
@@ -1070,18 +1073,89 @@ class reader_admin_table extends table_sql {
      *
      * @param string  $action
      * @param boolean $unlimited (optional, default=false)
+     * @param boolean $transfer  (optional, default=false)
      * @return xxx
      */
-    public function display_action_settings_setlevel($action, $unlimited=false) {
+    public function display_action_settings_setlevel($action, $unlimited=false, $transfer=false) {
         $value = optional_param($action, 0, PARAM_INT);
         $options = range(0, 15);
         if ($unlimited) {
             $options += array(99 => get_string('unlimited'));
         }
+        if ($transfer) {
+            // Convert $transfer to an array of courses.
+            // If there are no courses to transfer from,
+            // then $transfer will be set to FALSE
+            $transfer = $this->get_transfer_courses();
+        }
+        if ($transfer) {
+            $options += array(self::LEVEL_TRANSFER => get_string('transferfromcourse', 'mod_reader'));
+        }
         $settings = '';
         $settings .= get_string('newreadinglevel', 'mod_reader').': ';
         $settings .= html_writer::select($options, $action, $value, '', $this->display_action_onclickchange($action, 'onchange'));
+        if ($transfer) {
+            $name = $action.'transfer';
+            $value = optional_param($name, 0, PARAM_INT);
+            $settings .= ' '.html_writer::select($transfer, $name, $value, '', $this->display_action_onclickchange($action, 'onchange'));
+        }
         return $this->display_action_settings($action, $settings);
+    }
+
+    /**
+     * get_userids_from_rawdata
+     *
+     * @return array of $userids
+     */
+    public function get_userids_from_rawdata() {
+        static $userids = null;
+        if ($userids===null) {
+            $userids = array();
+            foreach (array_keys($this->rawdata) as $id) {
+                $userids[$this->rawdata[$id]->userid] = true;
+            }
+            $userids = array_keys($userids);
+        }
+        return $userids;
+    }
+
+    /**
+     * get_transfer_courses
+     *
+     * @return array of courses($id => $shortname) visible to this teacher which have level info about users in this course's reader
+     */
+    public function get_transfer_courses() {
+        global $DB;
+        static $courses = null;
+        if ($courses===null) {
+            $userids = $this->get_userids_from_rawdata();
+            if (count($userids)) {
+                $select = 'c.id, c.shortname';
+                $from   = '{course} c';
+                list($where, $params) = $DB->get_in_or_equal($userids);
+                $where = 'SELECT DISTINCT r.course '.
+                         'FROM {reader_levels} rl JOIN {reader} r ON rl.readerid = r.id '.
+                         "WHERE rl.userid $where";
+                $where = "c.id IN ($where) AND c.id <> ?";
+                $params[] = $this->output->reader->course->id;
+                if ($courses = $DB->get_records_sql_menu("SELECT $select FROM $from WHERE $where ORDER BY c.shortname", $params)) {
+                    foreach (array_keys($courses) as $courseid) {
+                        $context = mod_reader::context(CONTEXT_COURSE, $courseid);
+                        if (! has_capability('mod/reader:viewreports', $context)) {
+                            unset($courses[$courseid]);
+                        }
+                    }
+                }
+                if (count($courses)) {
+                    $courses = array(0 => '') + $courses;
+                } else {
+                    $courses = false;
+                }
+            } else {
+                $courses = false;
+            }
+        }
+        return $courses;
     }
 
     /**

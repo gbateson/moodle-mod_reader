@@ -103,8 +103,10 @@ function reader_update_instance(stdclass $reader, $mform) {
     unset($reader->requiresubnet);
 
     // update "stoplevel" field in "reader_levels" table
-    if ($reader->stoplevel && $reader->stoplevelforce) {
-        $DB->set_field('reader_levels', 'stoplevel', $reader->stoplevel, array('readerid' => $reader->id));
+    if (isset($reader->stoplevel) && $reader->stoplevel) {
+        if (isset($reader->stoplevelforce) && $reader->stoplevelforce) {
+            $DB->set_field('reader_levels', 'stoplevel', $reader->stoplevel, array('readerid' => $reader->id));
+        }
     }
 
     // update reader record in database

@@ -38,7 +38,7 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
 
     /** @var columns used in this table */
     protected $tablecolumns = array(
-        'selected', 'studentview', 'username', 'fullname',
+        'selected', 'studentview', 'username', 'fullname', 'groups',
         'startlevel', 'currentlevel', 'stoplevel', 'allowpromotion', 'goal',
         'countpassed', 'countfailed', 'averageduration', 'averagegrade',
         'totalwordsthisterm', 'totalwordsallterms',
@@ -49,7 +49,7 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
     protected $suppresscolumns = array();
 
     /** @var columns in this table that are not sortable */
-    protected $nosortcolumns = array('allowpromotion');
+    protected $nosortcolumns = array('studentview', 'groups', 'allowpromotion');
 
     /** @var text columns in this table */
     protected $textcolumns = array('username', 'fullname');
@@ -452,7 +452,7 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
      * @return xxx
      */
     public function display_action_settings_setstartlevel($action) {
-        return $this->display_action_settings_setlevel($action);
+        return $this->display_action_settings_setlevel($action, false, true);
     }
 
     /**
@@ -462,7 +462,7 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
      * @return xxx
      */
     public function display_action_settings_setcurrentlevel($action) {
-        return $this->display_action_settings_setlevel($action);
+        return $this->display_action_settings_setlevel($action, false, true);
     }
 
     /**
@@ -472,7 +472,7 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
      * @return xxx
      */
     public function display_action_settings_setstoplevel($action) {
-        return $this->display_action_settings_setlevel($action, true);
+        return $this->display_action_settings_setlevel($action, true, true);
     }
 
     /**
@@ -633,9 +633,10 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
      * @param string $action
      * @param string $field name
      * @param integer $value
+     * @param integer $transfer (optional, default=FALSE)
      * @return void, but may update/insert record in "reader_levels" table
      */
-    public function execute_action_setlevelfield($action, $field, $value) {
+    public function execute_action_setlevelfield($action, $field, $value, $transfer=false) {
         global $DB;
 
         if ($value===null) {
@@ -651,9 +652,38 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
             return; // no (valid) userids selected
         }
 
+        if ($transfer && $value===self::LEVEL_TRANSFER) {
+            $name = $action.'transfer';
+            if (! $courseid = optional_param($name, 0, PARAM_INT)) {
+                return; // invalid courseid - shouldn't happen !!
+            }
+            $context = mod_reader::context(CONTEXT_COURSE, $courseid);
+            if (! has_capability('mod/reader:viewreports', $context)) {
+                return; // access denied - shouldn't happen !!
+            }
+            if (! $readerids = $DB->get_records('reader', array('course' => $courseid), 'id', 'id,course')) {
+                return; // no readers - shouldn't happen !!
+            }
+            $readerids = array_keys($readerids);
+            list($user_select, $user_params) = $DB->get_in_or_equal($userids);
+            list($reader_select, $reader_params) = $DB->get_in_or_equal($readerids);
+            $select = "userid, MAX($field) AS $field";
+            $from   = '{reader_levels}';
+            $where  = "readerid $reader_select AND userid $user_select";
+            $params = array_merge($reader_params, $user_params);
+            if (! $value = $DB->get_records_sql_menu("SELECT $select FROM $from WHERE $where GROUP BY userid", $params)) {
+                return; // no level info - shouldn't happen !!
+            }
+            unset($user_select, $user_params, $reader_select, $reader_params);
+            unset($courseid, $context, $readerids, $select, $from, $where, $params);
+        }
+
         // update selected userids to the new value
         $time = time();
         foreach ($userids as $userid) {
+            if (is_array($value) && ! array_key_exists($userid, $value)) {
+                continue;
+            }
             $params = array('userid' => $userid, 'readerid' => $this->output->reader->id);
             $level = $DB->get_record('reader_levels', $params);
             if ($level===false) {
@@ -668,10 +698,15 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
                     'time'           => $time,
                 );
             }
-            if ($field=='currentlevel' && $level->$field < $value) {
+            if (is_array($value)) {
+                $v = $value[$userid]; // transfer value from another course
+            } else {
+                $v = $value;
+            }
+            if ($field=='currentlevel' && $level->$field < $v) {
                 $level->time = $time; // manual promotion
             }
-            $level->$field = $value;
+            $level->$field = $v;
             if (isset($level->id)) {
                 $DB->update_record('reader_levels', $level);
             } else {

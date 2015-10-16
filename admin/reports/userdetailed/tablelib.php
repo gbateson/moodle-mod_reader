@@ -39,17 +39,17 @@ class reader_admin_reports_userdetailed_table extends reader_admin_reports_table
 
     /** @var columns used in this table */
     protected $tablecolumns = array(
-        'studentview', 'username', 'fullname', 'currentlevel',
+        'studentview', 'username', 'fullname', 'groups', 'currentlevel',
         'difficulty', 'words', 'points', 'name',
         'selected', 'timefinish', 'duration', 'grade', 'passed',
         'attemptwords', 'termwords', 'attemptpoints', 'termpoints'
     );
 
     /** @var suppressed columns in this table */
-    protected $suppresscolumns = array('studentview', 'username', 'fullname', 'currentlevel', 'difficulty');
+    protected $suppresscolumns = array('studentview', 'groups', 'username', 'fullname', 'currentlevel', 'difficulty');
 
     /** @var columns in this table that are not sortable */
-    protected $nosortcolumns = array('attemptwords', 'attemptpoints', 'termwords', 'termpoints');
+    protected $nosortcolumns = array('studentview', 'groups', 'attemptwords', 'attemptpoints', 'termwords', 'termpoints');
 
     /** @var text columns in this table */
     protected $textcolumns = array('username', 'fullname', 'name');
