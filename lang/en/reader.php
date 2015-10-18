@@ -449,10 +449,10 @@ $string['getstarted'] = '**Getting started**
 
 **Take an online quiz**
 
-* After you have read a book, you take an online quiz.
-* Use the search boxes on this page to find for the quiz you want. When you have found your quiz, click the button to start quiz.
+* After you have read a book, take an online quiz.
+* Use the search boxes on this page to find the quiz you want. When you have found your quiz, click the button to start quiz.
 * Each quiz has several questions about the book. The questions are different for each student.
-* If you pass the quiz, the number of words in the book will be added to you reading total. If you fail the quiz, your reading total does not change.
+* If you pass the quiz, the number of words in the book will be added to your reading total. If you fail the quiz, your reading total does not change.
 * ***You cannot retake quizzes***, so please do the quizzes carefully.';
 $string['goal'] = 'Goal';
 $string['hidden'] = 'Hidden';
