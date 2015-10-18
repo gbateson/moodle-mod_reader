@@ -331,22 +331,27 @@ if ($bookcoversinthisterm) {
     echo html_writer::tag('p', $bookcoversinthisterm);
 }
 
+$title = get_string('readingreportfor', $plugin, fullname($USER));
+if (class_exists('\core\session\manager')) {
+    $is_loggedinas = \core\session\manager::is_loggedinas();
+} else {
+    $is_loggedinas = session_is_loggedinas();
+}
+if ($is_loggedinas) {
+    $params = array('id' => $id, 'sesskey' => sesskey());
+    $params = array('href' => new moodle_url('/mod/reader/view_loginas.php', $params));
+    $text = html_writer::tag('a', get_string('returntoreports', $plugin), $params);
+    $title .= html_writer::tag('div', $text, array('class' => 'returntoreports'));
+}
+$params = array('class' => 'ReadingReportTitle');
+echo html_writer::tag('h2', $title, $params);
+
 if (count($table->data)) {
-    echo '<h2 class="ReadingReportTitle">'.get_string('readingreportfor', $plugin, fullname($USER))."</h2>";
-    if (class_exists('\core\session\manager')) {
-        $is_loggedinas = \core\session\manager::is_loggedinas();
-    } else {
-        $is_loggedinas = session_is_loggedinas();
-    }
-    if ($is_loggedinas) {
-        $params = array('id' => $id, 'sesskey' => sesskey());
-        $params = array('href' => new moodle_url('/mod/reader/view_loginas.php', $params));
-        $text = html_writer::tag('a', get_string('returntoreports', $plugin), $params);
-        echo html_writer::tag('div', $text, array('class' => 'returntoreports'));
-    }
     echo html_writer::table($table);
 } else {
-    //echo '<center>'.get_string('nodata', $plugin).'</center>';
+    $text = get_string('getstarted', $plugin);
+    $text = format_text($text, FORMAT_MARKDOWN);
+    echo html_writer::tag('div', $text, array('class' => 'getstarted'));
 }
 
 // show progress bar, if necessary

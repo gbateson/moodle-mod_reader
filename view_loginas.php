@@ -73,7 +73,7 @@ if (mod_reader::is_loggedinas()) {
 }
 
 $context = reader_get_context(CONTEXT_COURSE, $course->id);
-require_capability('moodle/user:loginas', $context);
+require_capability('mod/reader:manageusers', $context);
 
 // Login as this user and return to course home page.
 mod_reader::loginas($userid, $context);

@@ -437,6 +437,23 @@ $string['fromthistime'] = 'From this time';
 $string['fullreportbybooktitle'] = 'Full Report by Book Title';
 $string['fullreportquiztoreader'] = 'Full Report by Student';
 $string['genre'] = 'Genre';
+$string['getstarted'] = '**Getting started**
+
+* The goal of this activity is to read a lot of books and build up your reading total.
+* Your reading total is the total number of words in all the books that you have read.
+
+**Choose a book**
+
+* You should choose books that you can read easily without using a dictionary.
+* Also, choose books that you are interested in, because they are more fun to read.
+
+**Take an online quiz**
+
+* After you have read a book, you take an online quiz.
+* Use the search boxes on this page to find for the quiz you want. When you have found your quiz, click the button to start quiz.
+* Each quiz has several questions about the book. The questions are different for each student.
+* If you pass the quiz, the number of words in the book will be added to you reading total. If you fail the quiz, your reading total does not change.
+* ***You cannot retake quizzes***, so please do the quizzes carefully.';
 $string['goal'] = 'Goal';
 $string['hidden'] = 'Hidden';
 $string['ifimagealreadyexists'] = 'If image already exists in images folder (name)';
@@ -517,7 +534,6 @@ $string['no_password'] = 'No password required';
 $string['noaction'] = 'Take no action';
 $string['nobooksfound'] = 'No books found';
 $string['nobooksinlist'] = 'No books found for your reading level';
-$string['nodata'] = 'no data';
 $string['nodownloaditems'] = 'No items are available for download';
 $string['noincorrectquizzes'] = 'You have not failed any quizzes';
 $string['nomoreattempts'] = 'No more attempts are allowed';

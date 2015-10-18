@@ -279,13 +279,14 @@ class reader_admin_table extends table_sql {
         if (empty($this->actions) || $this->download || ! $this->output->reader->can_manageattempts()) {
             $removecolumns[] = 'selected';
         }
+
         if ($this->download || ! $this->output->reader->can_manageattempts()) {
             $removecolumns[] = 'studentview';
         }
 
         foreach ($removecolumns as $removecolumn) {
             $i = array_search($removecolumn, $tablecolumns);
-            if (is_numeric($i)) {
+            if ($i !== false) {
                 array_splice($tablecolumns, $i, 1);
             }
         }

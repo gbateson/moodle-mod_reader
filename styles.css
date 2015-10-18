@@ -68,7 +68,8 @@
     background-color : #FFCC80; /* gentle orange */
     margin           : 0px;
     padding          : 6px 12px;
-    width            : 800px;
+    max-width        : 800px;
+    width            : 100%;
     /* cross-browser rounded corners (Note: Safari and Chrome use Webkit) */
     /* css3    */ border-top-left-radius: 8px; border-top-right-radius: 8px;
     /* Opera   */ -o-border-top-left-radius: 8px; -o-border-top-right-radius: 8px;
@@ -78,7 +79,14 @@
 #page-mod-reader-view div.returntoreports {
     float        : right;
     font-size    : small;
+    font-weight  : normal;
     margin-right : 40px;
+}
+#page-mod-reader-view div.getstarted {
+    max-width    : 800px;
+    padding      : 12px;
+    text-align   : justify;;
+    width        : 100%;
 }
 #page-mod-reader-view table.PromotionTable {
     width        : 824px;
@@ -146,57 +154,50 @@
     border-color      : #800000;
 }
 #page-mod-reader-view table.AttemptsTable {
-    width    : 824px;
+    max-width : 824px;
+    width     : 100%;
 }
-#page-mod-reader-view  div.ProgressBar {
-    padding  : 0px;
-    width    : 824px;
+#page-mod-reader-view  div#ProgressBar {
+    padding   : 0px;
+    width     : 824px;
 }
-#page-mod-reader-view  div.ProgressBarImages {
-    position : relative;
-    height   : 60px;
-    margin   : 0px;
-    padding  : 0px;
-    width    : 824px;
-    z-index  : 10;
+#page-mod-reader-view  div#ProgressBarImages {
+    position  : relative;
+    height    : 60px;
+    margin    : 0px;
+    padding   : 0px;
+    width     : 824px;
+    z-index   : 10;
 }
-#page-mod-reader-view div.ProgressBarImages div.BackgroundDiv {
-    position : absolute;
-    height   : 63px;
-    left     : 5px;
-    top      : 14px;
-    width    : 824px;
-    z-index  : 10;
+#page-mod-reader-view div#ProgressBarImages img.grey {
+    position  : absolute;
+    height    : 52px;
+    left      : 4px;
+    top       : 4px;
+    width     : 816px;
+    z-index   : 20;
 }
-#page-mod-reader-view div.ProgressBarImages img.grey {
-    position : absolute;
-    height   : 52px;
-    left     : 4px;
-    top      : 4px;
-    width    : 816px;
-    z-index  : 20;
+#page-mod-reader-view div#ProgressBarImages img.color {
+    position  : absolute;
+    height    : 52px;
+    left      : 4px;
+    top       : 4px;
+    width     : 816px;
+    z-index   : 30;
 }
-#page-mod-reader-view div.ProgressBarImages img.color {
-    position : absolute;
-    height   : 52px;
-    left     : 4px;
-    top      : 4px;
-    width    : 816px;
-    z-index  : 30;
+#page-mod-reader-view div#ProgressBarImages img.now {
+    position  : absolute;
+    left      : 4px; /* overridden in renderer.php */
+    top       : 11px;
+    z-index   : 40;
 }
-#page-mod-reader-view div.ProgressBarImages img.now {
-    position : absolute;
-    left     : 4px; /* overridden in renderer.php */
-    top      : 11px;
-    z-index  : 40;
+#page-mod-reader-view div#ProgressBarImages img.goal {
+    position  : absolute;
+    left      : 4px; /* overridden in renderer.php */
+    top       : -10px;
+    z-index   : 50;
 }
-#page-mod-reader-view div.ProgressBarImages img.goal {
-    position : absolute;
-    left     : 4px; /* overridden in renderer.php */
-    top      : -10px;
-    z-index  : 50;
-}
-#page-mod-reader-view div.ProgressBarFootnote {
+#page-mod-reader-view div#ProgressBarFootnote {
     float       : right;
     font-weight : bold;
     font-size   : small;
