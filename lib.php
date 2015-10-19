@@ -2361,7 +2361,7 @@ function reader_get_new_uniqueid($contextid, $quizid, $defaultbehavior='deferred
 }
 
 /**
- * reader_get_student_attempts
+ * reader_get_level_data
  *
  * @uses $CFG
  * @uses $COURSE
@@ -2678,7 +2678,7 @@ function reader_repaginate($layout, $perpage=1, $shuffle=false) {
 }
 
 /**
- * reader_grade_item_update
+ * reader_get_student_attempts
  *
  * @uses $CFG
  * @param xxx $reader
@@ -2802,6 +2802,9 @@ function reader_get_student_attempts($userid, $reader, $allreaders = false, $boo
 
     // remove attempts that are not the best
     foreach (array_keys($returndata) as $attemptid) {
+        if ($returndata[$attemptid]['booklevel']==99) {
+            continue; // allow multiple "Extra points"
+        }
         if (! in_array($attemptid, $bestattemptids)) {
             unset($returndata[$attemptid]);
         }
