@@ -669,7 +669,7 @@ class mod_reader_admin_books_download_renderer extends mod_reader_admin_books_re
             $js .= "    if (typeof(targetClassName)=='undefined') {\n";
             $js .= "       targetClassName = '';\n";
             $js .= "    }\n";
-            $js .= "    var obj = reader_node(img.nextSibling, 'OL');\n";
+            $js .= "    var obj = reader_node(img.nextSibling, 'UL');\n";
             $js .= "    if (obj) {\n";
             $js .= "        var myClassName = obj.getAttribute(css_class_attribute());\n";
             $js .= "        if (targetClassName=='' || (myClassName && myClassName.match(new RegExp(targetClassName)))) {\n";
