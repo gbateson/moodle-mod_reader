@@ -317,7 +317,7 @@ function reader_delete_instance($id) {
         $params = array('readerid' => $id);
         $DB->delete_records('reader_book_instances',    $params);
         $DB->delete_records('reader_cheated_log',       $params);
-        $DB->delete_records('reader_delays',            $params);
+        $DB->delete_records('reader_rates',            $params);
         $DB->delete_records('reader_grades',            $params);
         $DB->delete_records('reader_goals',             $params);
         $DB->delete_records('reader_levels',            $params);
@@ -391,7 +391,7 @@ function reader_get_grades($reader, $userid=0) {
     if ($reader->wordsorpoints==0) {
         $select = 'rb.words';
     } else {
-        $select = 'rb.length';
+        $select = 'rb.points';
     }
     $select = 'ra.userid, '.
               'ra.readerid, '.
@@ -633,7 +633,7 @@ function reader_reset_course_form_definition(&$mform) {
     $mform->addElement('checkbox', $elementname, $label);
     $mform->addHelpButton($elementname, $name, $plugin);
 
-    $name = 'deletedelays';
+    $name = 'deleterates';
     $label = get_string($name, $plugin);
     $elementname = 'reset_reader_'.$name;
     $mform->addElement('checkbox', $elementname, $label);
@@ -665,7 +665,7 @@ function reader_reset_course_form_definition(&$mform) {
 function reader_reset_course_form_defaults($course) {
     return array('reset_reader_ignoredate'        => 1,
                  'reset_reader_deleteallattempts' => 0,
-                 'reset_reader_deletedelays'      => 0,
+                 'reset_reader_deleterates'      => 0,
                  'reset_reader_deletegoals'       => 0,
                  'reset_reader_deletemessages'    => 0);
 }
@@ -683,7 +683,7 @@ function reader_reset_userdata($data) {
     $status = array();
 
     $deleteallattempts = (empty($data->reset_reader_deleteallattempts) ? false : true);
-    $deletedelays      = (empty($data->reset_reader_deletedelays)      ? false : true);
+    $deleterates      = (empty($data->reset_reader_deleterates)      ? false : true);
     $deletegoals       = (empty($data->reset_reader_deletegoals)       ? false : true);
     $deletemessages    = (empty($data->reset_reader_deletemessages)    ? false : true);
 
@@ -694,7 +694,7 @@ function reader_reset_userdata($data) {
         $ignoredate = $data->reset_start_date;
     }
 
-    if ($deleteallattempts || $deletedelays || $deletegoals || $deletemessages || $ignoredate) {
+    if ($deleteallattempts || $deleterates || $deletegoals || $deletemessages || $ignoredate) {
         $readers = $DB->get_records('reader', array('course' => $data->courseid), 'id', 'id,course');
     } else {
         $readers = false;
@@ -717,8 +717,8 @@ function reader_reset_userdata($data) {
                 $DB->delete_records('reader_levels',            $params);
                 $DB->delete_records('reader_strict_users_list', $params);
             }
-            if ($deletedelays) {
-                $DB->delete_records('reader_delays', $params);
+            if ($deleterates) {
+                $DB->delete_records('reader_rates', $params);
             }
             if ($deletegoals) {
                 $DB->delete_records('reader_goals', $params);
@@ -743,8 +743,8 @@ function reader_reset_userdata($data) {
         if ($deleteallattempts) {
             $status[] = array('component' => $pluginname, 'item' => get_string('deleteallattempts', $plugin), 'error' => false);
         }
-        if ($deletedelays) {
-            $status[] = array('component' => $pluginname, 'item' => get_string('deletedelays', $plugin), 'error' => false);
+        if ($deleterates) {
+            $status[] = array('component' => $pluginname, 'item' => get_string('deleterates', $plugin), 'error' => false);
         }
         if ($deletegoals) {
             $status[] = array('component' => $pluginname, 'item' => get_string('deletegoals', $plugin), 'error' => false);
@@ -1578,17 +1578,27 @@ function reader_extend_settings_navigation(settings_navigation $settingsnav, nav
         $type = navigation_node::TYPE_SETTING;
 
         // books node
-        $key    = 'readerbooks';
-        $text   = get_string('books', 'mod_reader');
-        $node   = new navigation_node(array('type'=>$type, 'key'=>$key, 'text'=>$text));
+        $key = 'readerbooks';
+        $text = get_string('books', 'mod_reader');
+        $node = new navigation_node(array('type'=>$type, 'key'=>$key, 'text'=>$text));
 
-        // edit node
-        $tab = mod_reader_admin_books_renderer::TAB_BOOKS_EDIT;
-        $mode = 'edit';
+        // edit (site) node
+        $tab = mod_reader_admin_books_renderer::TAB_BOOKS_EDITSITE;
+        $mode = 'editsite';
         $params = array('id' => $PAGE->cm->id, 'tab' => $tab, 'mode' => $mode);
         $url = new moodle_url('/mod/reader/admin/books.php', $params);
-        $key = 'editbookdetails';
-        $text = get_string($mode, 'mod_reader');
+        $key = 'books'.$mode;
+        $text = get_string($key, 'mod_reader');
+        $icon = new pix_icon('t/edit', '');
+        reader_navigation_add_node($node, $type, $mode, $text, $url, $icon);
+
+        // edit (course) node
+        $tab = mod_reader_admin_books_renderer::TAB_BOOKS_EDITCOURSE;
+        $mode = 'editcourse';
+        $params = array('id' => $PAGE->cm->id, 'tab' => $tab, 'mode' => $mode);
+        $url = new moodle_url('/mod/reader/admin/books.php', $params);
+        $key = 'books'.$mode;
+        $text = get_string($key, 'mod_reader');
         $icon = new pix_icon('t/edit', '');
         reader_navigation_add_node($node, $type, $key, $text, $url, $icon);
 
@@ -1598,7 +1608,7 @@ function reader_extend_settings_navigation(settings_navigation $settingsnav, nav
         $type = reader_downloader::BOOKS_WITH_QUIZZES;
         $params = array('id' => $PAGE->cm->id, 'tab' => $tab, 'mode' => $mode, 'type' => $type);
         $url = new moodle_url('/mod/reader/admin/books.php', $params);
-        $key = 'downloadbookswithquizzes';
+        $key = $mode.'bookswithquizzes';
         $text = get_string($key, 'mod_reader');
         $icon = new pix_icon('t/download', '');
         reader_navigation_add_node($node, $type, $key, $text, $url, $icon);
@@ -1609,37 +1619,10 @@ function reader_extend_settings_navigation(settings_navigation $settingsnav, nav
         $type = reader_downloader::BOOKS_WITHOUT_QUIZZES;
         $params = array('id' => $PAGE->cm->id, 'tab' => $tab, 'mode' => $mode, 'type' => $type);
         $url = new moodle_url('/mod/reader/admin/books.php', $params);
-        $key = 'downloadbookswithoutquizzes';
+        $key = $mode.'bookswithoutquizzes';
         $text = get_string($key, 'mod_reader');
         $icon = new pix_icon('t/download', '');
         reader_navigation_add_node($node, $type, $key, $text, $url, $icon);
-
-        $nodes[] = $node;
-    }
-
-    // create quiz nodes
-    if (reader_can('managequizzes', $PAGE->cm->id, $USER->id)) {
-        require_once($CFG->dirroot.'/mod/reader/admin/quizzes/renderer.php');
-
-        //////////////////////////
-        // Quizzes sub-menu
-        //////////////////////////
-
-        $type = navigation_node::TYPE_SETTING;
-        $icon = new pix_icon('i/navigationitem', '');
-
-        $key    = 'readerquizzes';
-        $text   = get_string('modulenameplural', 'quiz');
-        $node   = new navigation_node(array('type'=>$type, 'key'=>$key, 'text'=>$text));
-
-        foreach (mod_reader_admin_quizzes_renderer::get_standard_modes() as $mode) {
-            $tab = constant('mod_reader_admin_quizzes_renderer::TAB_QUIZZES_'.strtoupper($mode));
-            $params = array('id' => $PAGE->cm->id, 'tab' => $tab, 'mode' => $mode);
-            $url = new moodle_url('/mod/reader/admin/quizzes.php', $params);
-            $key = 'quizzes'.$mode;
-            $text = get_string($mode, 'mod_reader');
-            reader_navigation_add_node($node, $type, $key, $text, $url, $icon);
-        }
 
         $nodes[] = $node;
     }
@@ -1866,8 +1849,9 @@ function reader_cron() {
  */
 function reader_supports($feature) {
     switch($feature) {
-        case FEATURE_GRADE_HAS_GRADE: return true;
-        case FEATURE_GRADE_OUTCOMES:  return true;
+        case FEATURE_GRADE_HAS_GRADE     : return true;
+        case FEATURE_GRADE_OUTCOMES      : return true;
+        case FEATURE_COMPLETION_HAS_RULES: return true;
         default: return null;
     }
 }
@@ -2058,8 +2042,8 @@ function reader_optional_param_array($name, $default, $type, $recursive=true) {
     AA-Book Deleted
     AA-Books status changed
     AA-Change difficulty individual (xxx xxx to xxx)
-    AA-Change length (xxx xxx to xxx)
-    AA-Change length individual (xxx xxx to xxx)
+    AA-Change points (xxx xxx to xxx)
+    AA-Change points individual (xxx xxx to xxx)
     AA-Change Student Goal (xxx)
     AA-changeallcurrentlevel userid: xxx, currentlevel=xxx
     AA-changeallstartlevel userid: xxx, startlevel=xxx
@@ -2067,7 +2051,7 @@ function reader_optional_param_array($name, $default, $type, $recursive=true) {
     AA-excel
     AA-goal userid: xxx, goal=xxx
     AA-Mass changes difficulty (xxx to xxx)
-    AA-Mass changes length (xxx to xxx)
+    AA-Mass changes points (xxx to xxx)
     AA-Mass changes level (xxx to xxx)
     AA-Mass changes publisher (xxx to xxx)
     AA-Message Added
@@ -2123,7 +2107,7 @@ function reader_add_to_log($courseid, $module, $action, $url='', $info='', $cmid
             case 'messagedeleted':        $eventname = 'message_deleted';       break;
             case 'messageedited':         $eventname = 'message_edited';        break;
             case 'quizadded':             $eventname = 'quiz_added';            break;
-            case 'quizdelayset':          $eventname = 'quiz_delay_set';        break;
+            case 'quizrateset':           $eventname = 'quiz_delay_set';        break;
             case 'quizdeleted':           $eventname = 'quiz_deleted';          break;
             case 'quizedited':            $eventname = 'quiz_edited';           break;
             case 'quizfinished':          $eventname = 'quiz_finished';         break;
@@ -2697,7 +2681,7 @@ function reader_get_student_attempts($userid, $reader, $allreaders = false, $boo
 
     $select = 'ra.id, ra.uniqueid, ra.readerid, ra.userid, ra.bookid, ra.quizid, ra.attempt, ra.deleted, '.
               'ra.sumgrades, ra.percentgrade, ra.passed, ra.checkbox, ra.timefinish, ra.preview, ra.bookrating, '.
-              'rb.name, rb.publisher, rb.level, rb.length, rb.image, rb.difficulty, rb.words, rb.sametitle';
+              'rb.name, rb.publisher, rb.level, rb.points, rb.image, rb.difficulty, rb.words, rb.sametitle';
     $from   = '{reader_attempts} ra LEFT JOIN {reader_books} rb ON ra.bookid = rb.id';
     $where  = 'ra.userid = :userid AND ra.deleted = :deleted AND ra.timefinish > :ignoredate AND ra.preview = :preview';
     $order  = 'ra.timefinish';
@@ -2718,6 +2702,7 @@ function reader_get_student_attempts($userid, $reader, $allreaders = false, $boo
     $returndata = array();
     $bestattemptids = array();
 
+    // these are the grand totals for ALL attempts
     $totals = array();
     $totals['correct']       = 0;
     $totals['incorrect']     = 0;
@@ -2726,13 +2711,28 @@ function reader_get_student_attempts($userid, $reader, $allreaders = false, $boo
     $totals['startlevel']    = $level->startlevel;
     $totals['currentlevel']  = $level->currentlevel;
 
+    $totals['points']        = 0; // points awarded for an individual attempt
+    $totals['bookpercent']   = 0; // percent awarded for an individual attempt
+    $totals['bookmaxgrade']  = 0; // grade awarded for an individual attempt
+
+    $bookid = null;
+    $bookpoints = 0;
+    $bookdifficulty = 0;
+
     foreach ($attempts as $attempt) {
+
+        if ($bookid || $bookid==$attempt->bookid) {
+            // same book as previous attempt - do nothing
+        } else {
+            $bookpoints = reader_get_reader_points($reader, $attempt->bookid);
+            $bookdifficulty = reader_get_reader_difficulty($reader, $attempt->bookid);
+        }
 
         $totals['countattempts']++;
         if ($attempt->passed == 'true' || $attempt->passed == 'TRUE') {
             $statustext = 'Passed';
             $status = 'correct';
-            $totals['points'] = reader_get_reader_length($reader, $attempt->bookid);
+            $totals['points'] = $bookpoints;
             $totals['correct']++;
         } else {
             if($attempt->passed=='cheated') {
@@ -2756,7 +2756,7 @@ function reader_get_student_attempts($userid, $reader, $allreaders = false, $boo
             }
             //$totals['bookpercent']  = round(($attempt->sumgrades/$totalgrade) * 100, 2).'%';
             $totals['bookpercent']  = round($attempt->percentgrade).'%';
-            $totals['bookmaxgrade'] = $totalgrade * reader_get_reader_length($reader, $attempt->bookid);
+            $totals['bookmaxgrade'] = $totalgrade * $bookpoints;
             $bookpercentmaxgrade[$attempt->bookid] = array($totals['bookpercent'], $totals['bookmaxgrade']);
         }
 
@@ -2781,10 +2781,10 @@ function reader_get_student_attempts($userid, $reader, $allreaders = false, $boo
                                           'booktitle'     => $attempt->name,
                                           'image'         => $attempt->image,
                                           'words'         => intval($attempt->words),
-                                          'booklength'    => reader_get_reader_length($reader, $attempt->bookid),
+                                          'points'        => $bookpoints,
                                           'publisher'     => $attempt->publisher,
                                           'booklevel'     => $attempt->level,
-                                          'bookdiff'      => reader_get_reader_difficulty($reader, $attempt->bookid),
+                                          'bookdiff'      => $bookdifficulty,
                                           'percentgrade'  => $attempt->percentgrade,
                                           'passed'        => $attempt->passed,
                                           'checkbox'      => $attempt->checkbox,
@@ -2891,34 +2891,104 @@ function reader_get_reader_difficulty($reader, $bookid, $difficulty=0) {
 }
 
 /**
- * reader_get_reader_length
+ * reader_get_reader_points
  *
  * @uses $DB
  * @param xxx $reader
  * @param xxx $bookid
- * @param xxx $length (optional, default=0)
+ * @param xxx $points (optional, default=0)
  * @return xxx
  * @todo Finish documenting this function
  */
-function reader_get_reader_length($reader, $bookid, $length=0) {
+function reader_get_reader_points($reader, $bookid, $points=0) {
     global $DB;
 
     // "Course-specific quiz selection" is enabled for this reader activity
     if ($reader->bookinstances) {
         if ($instance = $DB->get_record('reader_book_instances', array('readerid' => $reader->id, 'bookid' => $bookid))) {
-            return $instance->length;
+            return $instance->points;
         }
     }
 
-    // if we already know the length for this book, then use that
-    if ($length) {
-        return $length;
+    // if we already know the points for this book, then use that
+    if ($points) {
+        return $points;
     }
 
-    // get the book length from the "reader_books" table
+    // get the book points from the "reader_books" table
     if ($book = $DB->get_record('reader_books', array('id' => $bookid))) {
-        return $book->length;
+        return $book->points;
     }
 
     return 0; // shouldn't happen !!
+}
+
+/**
+ * Obtains the automatic completion state for this reader
+ * based on the conditions in reader settings.
+ *
+ * @param  object  $course record from "course" table
+ * @param  object  $cm     record from "course_modules" table
+ * @param  integer $userid id from "user" table
+ * @param  bool    $type   of comparison (or/and; used as return value if there are no conditions)
+ * @return mixed   TRUE if completed, FALSE if not, or $type if no conditions are set
+ */
+function reader_get_completion_state($course, $cm, $userid, $type) {
+    global $CFG, $DB;
+    require_once($CFG->dirroot.'/mod/reader/locallib.php');
+
+    // set default return $state
+    $state = $type;
+
+    // get the reader record
+    if ($reader = $DB->get_record('reader', array('id' => $cm->instance))) {
+
+        $fields = array('completionpass', 'completiontotalwords');
+        foreach ($fields as $field) {
+
+            if (empty($reader->$field)) {
+                continue;
+            }
+
+            switch ($field) {
+                case 'completionpass':
+                    require_once($CFG->dirroot.'/lib/gradelib.php');
+                    $params = array('courseid'     => $course->id,
+                                    'itemtype'     => 'mod',
+                                    'itemmodule'   => 'reader',
+                                    'iteminstance' => $cm->instance);
+                    $grade = false;
+                    if ($grade_item = grade_item::fetch($params)) {
+                        $grades = grade_grade::fetch_users_grades($grade_item, array($userid), false);
+                        if (isset($grades[$userid])) {
+                            $grade = $grades[$userid];
+                        }
+                    }
+                    $state = ($grade && $grade->is_passed());
+                    break;
+
+                case 'completiontotalwords':
+                    $select = 'COUNT(rb.words)';
+                    $from   = '{reader_attempts} ra LEFT JOIN {reader_books} rb ON ra.bookid = rb.id';
+                    $where  = 'readerid = ? AND deleted = ? AND passed = ? AND rb.words IS NOT NULL';
+                    $params = array($reader->id, 0, 'true');
+                    if ($count = $DB->get_field_sql("SELECT $select FROM $from WHERE $where", $params)) {
+                        $state = ($count > $reader->completiontotalwords);
+                    } else {
+                        $state = false;
+                    }
+                    break;
+            }
+
+            // finish early if possible
+            if ($type==COMPLETION_AND && $state==false) {
+                return false;
+            }
+            if ($type==COMPLETION_OR && $state) {
+                return true;
+            }
+        }
+    }
+
+    return $state;
 }

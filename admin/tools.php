@@ -52,7 +52,7 @@ $reader = mod_reader::create($reader, $cm, $course);
 reader_add_to_log($course->id, 'reader', 'Admin tools', 'admin/tools.php?id='.$cm->id, $reader->id, $cm->id);
 
 // Initialize $PAGE, compute blocks
-$PAGE->set_url('/mod/reader/admin/tools.php', array('id' => $cm->id));
+$PAGE->set_url($reader->tools_url());
 
 $title = $course->shortname . ': ' . format_string($reader->name);
 $PAGE->set_title($title);

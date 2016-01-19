@@ -484,6 +484,8 @@ if ($msg) {
     $showform = true;
 }
 
+echo $output->rates();
+
 $select = 'readerid = ? AND timefinish = ? OR timefinish > ?';
 $params = array($cm->instance, 0, $timenow);
 if ($messages = $DB->get_records_select('reader_messages', $select, $params)) {

@@ -48,7 +48,6 @@ class mod_reader_renderer extends plugin_renderer_base {
     const TAB_SETTINGS  = 2;
     const TAB_REPORTS   = 3;
     const TAB_BOOKS     = 4;
-    const TAB_QUIZZES   = 5;
     const TAB_USERS     = 6;
     const TAB_TOOLS     = 7;
     const TAB_ADMINAREA = 8;
@@ -84,7 +83,7 @@ class mod_reader_renderer extends plugin_renderer_base {
         }
 
         // a teacher / admin can always access all the books
-        if ($this->reader->can_managebooks()) {
+        if ($this->reader->can_viewallbooks()) {
             return array('{reader_books}', 'quizid > ? AND hidden = ?', array(0, 0)); // $from, $where, $params
         }
 
@@ -249,7 +248,7 @@ class mod_reader_renderer extends plugin_renderer_base {
 
         // publisher list
         if ($count==0) {
-            if ($this->reader->can_managebooks()) {
+            if ($this->reader->can_viewallbooks()) {
                 $msg = get_string('nobooksfound', 'mod_reader');
             } else {
                 $msg = get_string('nobooksinlist', 'mod_reader');
@@ -873,11 +872,6 @@ class mod_reader_renderer extends plugin_renderer_base {
                 $url = new moodle_url('/mod/reader/admin/books.php', array('id' => $cmid, 'tab' => $tab));
                 $tabs[$tab] = new tabobject($tab, $url, get_string('books', 'mod_reader'));
             }
-            if ($this->reader->can_managequizzes()) {
-                $tab = self::TAB_QUIZZES;
-                $url = new moodle_url('/mod/reader/admin/quizzes.php', array('id' => $cmid, 'tab' => $tab));
-                $tabs[$tab] = new tabobject($tab, $url, get_string('quizzes', 'mod_reader'));
-            }
             if ($this->reader->can_manageusers()) {
                 $tab = self::TAB_USERS;
                 $url = new moodle_url('/mod/reader/admin/users.php', array('id' => $cmid, 'tab' => $tab));
@@ -1173,7 +1167,7 @@ class mod_reader_renderer extends plugin_renderer_base {
                         $book->publisher,
                         (($book->level=='' || $book->level=='--') ? '' : $book->level),
                         $book->name,
-                        (empty($book->genre) ? '' : $this->valid_genres($book->genre)),
+                        (empty($book->genre) ? '' : self::valid_genres($book->genre)),
                         $book->difficulty
                     );
 
@@ -1246,7 +1240,7 @@ class mod_reader_renderer extends plugin_renderer_base {
 
             // extract only the required valid genres
             $genres = array_flip($genres);
-            $genres = array_intersect_key($this->valid_genres(), $genres);
+            $genres = array_intersect_key(self::valid_genres(), $genres);
 
             // sort the values (but maintain keys)
             asort($genres);
@@ -1258,11 +1252,12 @@ class mod_reader_renderer extends plugin_renderer_base {
     /**
      * valid_genres
      *
-     * @param string $genre (optional, default='') a comma-separated list of genre codes to be expanded
+     * @param string $genre     (optional, default='') a comma-separated list of genre codes to be expanded
+     * @param string $separator (optional, default=', ') separator to use when imploding the list of genres
      * @return xxx
      * @todo Finish documenting this function
      */
-    public function valid_genres($genre='') {
+    static public function valid_genres($genre='', $seperator=', ') {
 
         $validgenres = array(
             'all' => "All Genres",
@@ -1304,7 +1299,7 @@ class mod_reader_renderer extends plugin_renderer_base {
         $genre = explode(',', $genre);
         $genre = array_flip($genre);
         $genre = array_intersect_key($validgenres, $genre);
-        $genre = implode(', ', $genre);
+        $genre = implode($seperator, $genre);
         return $genre;
     }
 
@@ -2077,5 +2072,111 @@ class mod_reader_renderer extends plugin_renderer_base {
 
         $output .= html_writer::end_tag('div');
         return $output;
+    }
+
+    /**
+     * Format reading rates for display on the view.php page
+     *
+     * @return HTML string
+     */
+    public function rates() {
+        $output = '';
+        if ($rates = $this->reader->get_rates()) {
+            foreach ($rates as $rate) {
+                $output .= $this->rate($rate);
+            }
+        }
+        if ($output) {
+
+
+            $table = new html_table();
+            $table->attributes['class'] = 'generaltable RatesTable';
+
+            $table->data[] = new html_table_row(array(
+                new html_table_cell(get_string('recommendedreadingrates', 'mod_reader'))
+            ));
+            $table->data[] = new html_table_row(array(
+                new html_table_cell($output)
+            ));
+
+            // make sure we get the required row classs in Moodle >= 2.9
+            if (property_exists($table, 'caption')) {
+                if (empty($table->rowclasses)) {
+                    $table->rowclasses = array();
+                }
+                $table->rowclasses[0] = 'r0';
+            }
+
+            $output = html_writer::table($table);
+        }
+        return $output;
+    }
+
+    /**
+     * Format a single reading rate for display on the view.php page
+     *
+     * @param object $rate
+     * @return HTML string
+     */
+    public function rate($rate) {
+        switch ($rate->type) {
+            case mod_reader::RATE_MAX_QUIZ_ATTEMPT: $type = 'maxquizattemptrate'; break;
+            case mod_reader::RATE_MIN_QUIZ_ATTEMPT: $type = 'minquizattemptrate'; break;
+            case mod_reader::RATE_MAX_QUIZ_FAILURE: $type = 'maxquizfailurerate'; break;
+        }
+        $text = $type.'text';
+        $output = '';
+        $output .= html_writer::tag('b', get_string($type, 'mod_reader'));
+        $output .= html_writer::empty_tag('br');
+        $output .= get_string($text, 'mod_reader', $this->rate_duration($rate));
+        $output .= $this->rate_actions($rate);
+        $output = html_writer::tag('p', $output);
+        return $output;
+    }
+
+    /**
+     * Format a rate duration for display on the view.php page
+     *
+     * @param object $rate
+     * @return HTML string
+     */
+    public function rate_duration($rate) {
+        switch (true) {
+            case ($rate->attempts==1 && $rate->duration > 0): $duration = 'rateoneinduration'; break;
+            case ($rate->attempts > 1 && $rate->duration > 0): $duration = 'ratemanyinduration'; break;
+            case ($rate->attempts > 1 && $rate->duration == 0): $duration = 'ratemanyconsecutively'; break;
+            default: return ''; // shouldn't happen
+        }
+        $a = (object)array(
+            'attempts' => $rate->attempts,
+            'duration' => format_time($rate->duration)
+        );
+        return get_string($duration, 'mod_reader', $a);
+    }
+
+    /**
+     * Format a set of rate actions for display on the view.php page
+     *
+     * @param object $rate
+     * @return HTML string
+     */
+    public function rate_actions($rate) {
+        $actions = array();
+        $types = array(
+            mod_reader::ACTION_DELAY_QUIZZES => 'actiondelayquizzestext',
+            mod_reader::ACTION_BLOCK_QUIZZES => 'actionblockquizzestext',
+            mod_reader::ACTION_EMAIL_STUDENT => 'actionemailstudenttext',
+            mod_reader::ACTION_EMAIL_TEACHER => 'actionemailteachertext'
+        );
+        foreach ($types as $type => $name) {
+            if ($rate->action & $type) {
+                $actions[] = get_string($name, 'mod_reader');
+            }
+        }
+        if (count($actions)) {
+            return html_writer::alist($actions, array(), 'ul');
+        } else {
+            return '';
+        }
     }
 }

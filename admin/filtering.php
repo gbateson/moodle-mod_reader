@@ -310,7 +310,7 @@ class reader_admin_options extends moodleform {
             }
             if ($field=='sortfields') {
                 $tsortfield = optional_param('tsort', null, PARAM_ALPHANUM);
-                $value = optional_param_array('sortfields', $default, PARAM_INT);
+                $value = mod_reader::optional_param_array('sortfields', $default, PARAM_INT);
                 foreach ($value as $sortfield => $sortdirection) {
                     if ($sortdirection==0) { // remove
                         unset($sortby[$sortfield]);

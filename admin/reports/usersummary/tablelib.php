@@ -183,7 +183,11 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
         $from   = '{user} u '.
                   "$raa_join ($attemptsql) raa ON $raa_join_u ".
                   "LEFT JOIN {reader_levels} rl ON (rl.readerid = :readerid AND rl.userid = u.id)";
-        $where  = "u.id $usersql";
+        if ($usersql) {
+            $where = "u.id $usersql";
+        } else {
+            $where = '1=1'; // must keep MSSQL happy :-)
+        }
 
         $params = $attemptparams + array('readerid' => $this->output->reader->id) + $userparams;
 
@@ -221,6 +225,13 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
             default:
                 return parent::get_table_name_and_alias($fieldname);
         }
+    }
+
+    /**
+     * records_exist
+     */
+    public function records_exist() {
+        return $this->users_exist();
     }
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -452,7 +463,7 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
      * @return xxx
      */
     public function display_action_settings_setstartlevel($action) {
-        return $this->display_action_settings_setlevel($action, false, true);
+        return $this->display_action_settings_setreadinglevel($action, false, true);
     }
 
     /**
@@ -462,7 +473,7 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
      * @return xxx
      */
     public function display_action_settings_setcurrentlevel($action) {
-        return $this->display_action_settings_setlevel($action, false, true);
+        return $this->display_action_settings_setreadinglevel($action, false, true);
     }
 
     /**
@@ -472,7 +483,7 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
      * @return xxx
      */
     public function display_action_settings_setstoplevel($action) {
-        return $this->display_action_settings_setlevel($action, true, true);
+        return $this->display_action_settings_setreadinglevel($action, true, true);
     }
 
     /**
@@ -806,7 +817,7 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
 
         if (! $book = $this->get_extrapoints_book($length)) {
             $params = array('id' => $this->output->reader->cm->id,
-                            'tab' => mod_reader_admin_books_renderer::TAB_BOOKS_DOWNLOAD_WITH, // 32
+                            'tab' => mod_reader_admin_books_renderer::TAB_BOOKS_DOWNLOAD_WITH, // 33
                             'type' => reader_downloader::BOOKS_WITH_QUIZZES, // 1
                             'mode' => 'download');
             $url = new moodle_url('/mod/reader/admin/books.php', $params);

@@ -94,7 +94,7 @@ class mod_reader_admin_users_setgoals_form extends moodleform {
         $mform->addElement('static', $name, '', get_string($name, $plugin));
 
         //-----------------------------------------------------------------------------
-        $this->add_header($mform, $plugin, ($course->groupmode==0 ? 'alllevels' : 'allgroupsandlevels'));
+        $this->add_header($mform, $plugin, 'defaultgoals');
         //-----------------------------------------------------------------------------
 
         $name = 'defaultgoal';
@@ -111,7 +111,7 @@ class mod_reader_admin_users_setgoals_form extends moodleform {
         $mform->setType($name.'[enabled]', PARAM_INT);
 
         //-----------------------------------------------------------------------------
-        $this->add_header($mform, $plugin, 'specificlevels');
+        $this->add_header($mform, $plugin, 'levelgoals');
         //-----------------------------------------------------------------------------
 
         $name = 'levelgoal';
@@ -154,7 +154,7 @@ class mod_reader_admin_users_setgoals_form extends moodleform {
 
         if ($groupoptions = $this->get_group_options($course)) {
             //-----------------------------------------------------------------------------
-            $this->add_header($mform, $plugin, 'specificgroups');
+            $this->add_header($mform, $plugin, 'groupgoals');
             //-----------------------------------------------------------------------------
 
             $name = 'groupgoal';

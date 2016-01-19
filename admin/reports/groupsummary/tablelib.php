@@ -149,7 +149,7 @@ class reader_admin_reports_groupsummary_table extends reader_admin_reports_table
 
         $params = array('courseid' => $this->output->reader->course->id);
 
-        return $this->add_filter_params($select, $from, $where, 'g.id', '', '', $params + $attemptparams);
+        return $this->add_filter_params($select, $from, $where, 'g.id,g.name', '', '', $params + $attemptparams);
     }
 
     /**
@@ -178,6 +178,28 @@ class reader_admin_reports_groupsummary_table extends reader_admin_reports_table
             default:
                 return parent::get_table_name_and_alias($fieldname);
         }
+    }
+
+    /**
+     * override parent class method, because we may want to specify a default sort
+     *
+     * @return xxx
+     */
+    public function get_sql_sort()  {
+
+        if ($sort = parent::get_sql_sort()) {
+            // MSSQL does not like to sort by secondary fields
+            // so we must convert this field back to its original name
+            $sort = str_replace('groupname', 'g.name', $sort);
+        }
+        return $sort;
+    }
+
+    /**
+     * records_exist
+     */
+    public function records_exist() {
+        return $this->groups_exist();
     }
 
     ////////////////////////////////////////////////////////////////////////////////

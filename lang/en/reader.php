@@ -145,13 +145,20 @@ $string['event_users_imported_description'] = 'The user with id "{$a->userid}" i
 $string['event_users_imported_explanation'] = 'A user has just imported student data to a Reader activity';
 
 // more strings
+$string['action'] = 'Action';
+$string['actionblockquizzestext'] = 'You will be blocked from taking any more quizzes until your teacher removes the block';
+$string['actiondelayquizzestext'] = 'You will be delayed from taking any more quizzes until the waiting time has passed.';
+$string['actionemailstudenttext'] = 'An email will be sent to you.';
+$string['actionemailteachertext'] = 'An email will be sent to the teacher(s) of this course.';
 $string['activemessages'] = 'Active messages';
 $string['activityoverview'] = 'Click here to view information about your extensive reading activity';
 $string['add'] = 'Add';
 $string['add_phpdoc'] = 'Add PHP doc comments';
 $string['add_phpdocdesc'] = 'Add PHP doc comments to php, js and css files.';
-$string['addmoredelays'] = 'Add {no} more delays';
+$string['addbookinstance'] = 'Add more books to this course';
 $string['addmoregoals'] = 'Add {no} more goals';
+$string['addmorerates'] = 'Add {no} more rates';
+$string['addonemorerate'] = 'Add {no} more rate';
 $string['addquiztoreader'] = 'Add course quizzes to reader quizzes';
 $string['adjoiningcomputers'] = 'On adjoining computers';
 $string['adjustscores'] = 'Adjust scores';
@@ -159,8 +166,7 @@ $string['adminarea'] = 'Admin area';
 $string['all'] = 'All';
 $string['allbooks'] = 'All books available to the Reader module';
 $string['alldone'] = 'All done';
-$string['allgroups'] = 'All Groups';
-$string['allgroupsandlevels'] = 'All groups and levels';
+$string['allgroups'] = 'All groups';
 $string['alllevels'] = 'All levels';
 $string['allowpromotion'] = 'Allow promotion';
 $string['allparticipants'] = 'All participants';
@@ -174,6 +180,7 @@ $string['attemptedbooks'] = 'Only books that have been attempted on this site';
 $string['attempts'] = 'Attempts';
 $string['attemptsallowedn'] = 'Attempts allowed: {$a}';
 $string['attemptscoremanagement'] = 'Attempt and score management';
+$string['available'] = 'Available';
 $string['availableitems'] = 'Available items';
 $string['averageduration'] = 'Average duration';
 $string['averageduration_help'] = 'The average duration of attempts at Reader quizzes';
@@ -199,6 +206,7 @@ $string['averagewordsthisterm_help'] = 'The average number of words awarded per 
 $string['awardbookpoints'] = 'Give credit for books to selected students';
 $string['awardextrapoints'] = 'Award extra points to selected students';
 $string['best'] = 'Best';
+$string['blockquizattempts'] = 'Block further quiz attempts';
 $string['book'] = 'Book';
 $string['bookadded'] = 'Book added: {$a}';
 $string['bookcovers'] = 'Show book covers';
@@ -227,7 +235,12 @@ $string['bookrating2'] = 'It was okay';
 $string['bookrating3'] = 'It was great';
 $string['bookratingslevel'] = 'Display student book ratings for each book level';
 $string['books'] = 'Books';
+$string['booksaddbook'] = 'Add new book';
 $string['booksavailable'] = '{$a} book(s) available';
+$string['bookseditcourse'] = 'Edit books (Course)';
+$string['bookseditcourse_help'] = 'On this page you can specify which Reader books are to be made available in this course. Additionally you specify the level and word count for those books. If a level or word count value is not specified here, then the default value for that book on this Moodle site will be used.';
+$string['bookseditsite'] = 'Edit books (Site)';
+$string['bookseditsite_help'] = 'On this page you can set add, edit, and delete information about Reader books on this Modle site. Note that values set here for any book will be replaced if data for that book is downloaded again from the main Moodle Reader website. Also, the values may be overridden local on individual courses.';
 $string['booksreadinpreviousterms'] = 'Books read in previous terms';
 $string['booksreadsincedate'] = 'Books read since {$a}';
 $string['booksreadsincepromotion'] = 'Books read since your promotion on {$a}';
@@ -242,10 +255,11 @@ $string['changeallstoplevelto'] = 'Change all maximum levels to ';
 $string['changeallto'] = 'Change all to ';
 $string['changecurrentlevel'] = 'Change all current levels to ';
 $string['changedifficultyfrom'] = 'Change reading levels from';
-$string['changelengthfrom'] = 'Change length from';
 $string['changelevelfrom'] = 'Change level name from';
 $string['changenumberofsectionsinquiz'] = 'Reset number of sections in quiz repository course';
+$string['changepointsfrom'] = 'Change points from';
 $string['changepublisherfrom'] = 'Change publisher name from';
+$string['changequiz'] = 'Change quiz';
 $string['changereaderlevel'] = 'Change Reading Level, Length or Word Count';
 $string['changestartlevel'] = 'Change all start level to ';
 $string['cheated'] = 'Cheated';
@@ -288,6 +302,9 @@ $string['clearedmessagedefault'] = 'We are happy to inform you that your points 
 $string['clicktocontinue'] = 'Click here to continue';
 $string['complete'] = 'Complete';
 $string['completequizattempt'] = 'Before you can take any new quizzes, you must finish this quiz for "{$a}". Click on the link below to resume your previous attempt at this quiz.';
+$string['completionpass'] = 'Require passing grade';
+$string['completiontotalwords'] = 'Require reading total';
+$string['completiontotalwords_help'] = 'The reading total a student must achieve within this activity in order for it to be marked complete.';
 $string['confirmdeleteattempts'] = 'Do you really want to delete these attempts?';
 $string['confirmstartattemptlimit'] = 'Number of attempts allowed:  {$a}. You are about to start a new attempt.  Do you wish to proceed?';
 $string['confirmstartattempttimelimit'] = 'This quiz has a time limit and is limited to {$a} attempt(s). You are about to start a new attempt.  Do you wish to proceed?';
@@ -312,12 +329,13 @@ $string['dataalldownloaded'] = 'data for all {$a} book(s) has been downloaded';
 $string['datasomeavailable'] = 'data for {$a->new} out of {$a->all} book(s) is available';
 $string['defaultcategoryname'] = 'Reader Quizzes';
 $string['defaultcoursename'] = 'Reader Quizzes';
-$string['defaultdelay'] = 'Default delay';
 $string['defaultgoal'] = 'Default goal';
+$string['defaultgoals'] = 'Default goals';
 $string['defaultquestioncategoryinfo'] = '{$a->category} questions for {$a->quiz}';
+$string['defaultrates'] = 'Default rates';
 $string['definelogindetails'] = 'Please define login details: {$a}';
-$string['delay'] = 'Delay';
 $string['delayineffect'] = 'Quiz delay is currently in effect';
+$string['delayquizattempts'] = 'Delay further quiz attempts';
 $string['delete'] = 'Delete';
 $string['deleteallattempts'] = 'Delete all attempts at Reader quizzes';
 $string['deleteallattempts_help'] = 'As a rule, you should NOT delete attempts at Reader quizzes.
@@ -330,12 +348,12 @@ Deleting attempts at Reader quizzes will also reset the reading scores for all s
 $string['deleteattempts'] = 'Delete seleted attempts';
 $string['deletecategories'] = 'Delete categories';
 $string['deletecourses'] = 'Delete courses';
-$string['deletedelays'] = 'Delete delays for groups and levels';
-$string['deletedelays_help'] = 'The delays between Reader quizzes for particular groups or reading levels will be removed.';
 $string['deletegoals'] = 'Delete goals for groups and levels';
 $string['deletegoals_help'] = 'The default reading goals for particular groups or reading levels will be deleted.';
 $string['deletemessages'] = 'Delete Reader messages';
 $string['deletemessages_help'] = 'All messages that appear on the students\' main page for Reader activities in this course will be deleted.';
+$string['deleterates'] = 'Delete rates for groups and levels';
+$string['deleterates_help'] = 'The rates between Reader quizzes for particular groups or reading levels will be removed.';
 $string['detectcheating'] = 'Detect cheating';
 $string['difficulty'] = 'Difficulty';
 $string['difficultyshort'] = 'RL';
@@ -359,6 +377,8 @@ $string['downloadsettings'] = 'Download settings';
 $string['duration'] = 'Duration';
 $string['edit'] = 'Edit';
 $string['editquiztoreader'] = 'Delete quizzes';
+$string['err_regex_float'] = 'This setting must be a decimal number between 0.0 and 10.0';
+$string['err_regex_integer'] = 'This setting must be an integer between 0 and 100,000';
 $string['error'] = 'Error: {$a}';
 $string['errorsfound'] = 'Errors found';
 $string['export'] = 'Export';
@@ -372,6 +392,7 @@ $string['extrapoints2'] = '2 Points';
 $string['extrapoints3'] = '3 Points';
 $string['extrapoints4'] = '4 Points';
 $string['extrapoints5'] = '5 Points';
+$string['extrapoints6'] = '6 Points';
 $string['extrawords'] = '{$a} words';
 $string['failed'] = 'Failed';
 $string['failedshort'] = 'F';
@@ -432,7 +453,9 @@ $string['fixwrongquizid'] = '"{$a->name}" (book id={$a->id}) has unexpected quiz
 $string['fixwrongquizidinfo'] = 'The upgrade has been paused, so that you can decide which quiz should be associated with this book.
 
 Please review the information below and select the quiz you wish to be associated with this book.';
+$string['forcedownload'] = 'Force download';
 $string['forcedtimedelay'] = 'Set forced time delay';
+$string['forcedtimerate'] = 'Set forced reading rate';
 $string['fromthistime'] = 'From this time';
 $string['fullreportbybooktitle'] = 'Full Report by Book Title';
 $string['fullreportquiztoreader'] = 'Full Report by Student';
@@ -455,6 +478,8 @@ $string['getstarted'] = '**Getting started**
 * If you pass the quiz, the number of words in the book will be added to your reading total. If you fail the quiz, your reading total does not change.
 * ***You cannot retake quizzes***, so please do the quizzes carefully.';
 $string['goal'] = 'Goal';
+$string['groupgoals'] = 'Goals for specific groups';
+$string['grouprates'] = 'Rates for specific groups';
 $string['hidden'] = 'Hidden';
 $string['ifimagealreadyexists'] = 'If image already exists in images folder (name)';
 $string['ignoredate'] = 'Term start date';
@@ -477,13 +502,13 @@ $string['includepublishers'] = 'Search publisher names too?';
 $string['incorrect'] = ' - incorrect';
 $string['incorrect2'] = ' - Sorry, please obtain the correct password from the publisher(s). Click "Install Quizzes" to download your other selections.';
 $string['incorrectbooksreadinpreviousterms'] = 'View failed quizzes';
+$string['induration'] = 'in';
 $string['install_quizzes'] = 'Install Quizzes';
 $string['isgreaterthan'] = 'is greater than';
 $string['islessthan'] = 'is less than';
 $string['itemsdownloaded'] = '{$a} items dowloaded';
 $string['keepoldquizzes'] = 'Keep old quizzes';
 $string['lastupdatedtime'] = 'The quizzes on this site were last updated on {$a}.  Do you want to update the site now?';
-$string['lengthex11'] = 'Length (Ex. 1.1)';
 $string['level'] = 'Level';
 $string['levelcheck'] = 'Restrict reading level';
 $string['levelcheck_help'] = '**Yes**
@@ -491,15 +516,20 @@ $string['levelcheck_help'] = '**Yes**
 
 **No**
 : Students will always be allowed to take Reader quizzes for books at any reading level.';
-$string['leveldelay'] = 'Level {$a} delay';
 $string['levelgoal'] = 'Level {$a} goal';
+$string['levelgoals'] = 'Goals for specific levels';
 $string['leveli'] = 'Level {$a}';
+$string['levelrate'] = 'Level {$a} rate';
+$string['levelrates'] = 'Rates for specific levels';
 $string['levels'] = 'Levels';
 $string['likebook'] = 'How did you like this book?';
 $string['logoutrequired'] = 'You cannot continue because you are currently logged in as {$a}.
 
 To continue, please click the "Log out" button below, and then login again as yourself.';
 $string['mainpagesettings'] = 'Main page settings';
+$string['makebookavailable'] = 'Make books available';
+$string['makebookavailableproblem'] = 'Oops, could NOT make book available in this course: {$a}';
+$string['makebookavailablesuccess'] = 'Book is now available in this course: {$a}';
 $string['makenewquizzesavailable'] = 'Make new quizzes available in this course only';
 $string['makenewquizzesavailable2'] = 'Make new quizzes available in all courses on this site [default]';
 $string['massrename'] = 'Mass changes';
@@ -508,6 +538,12 @@ $string['maxgrade'] = 'Maximum grade';
 $string['maxgrade_help'] = 'The maximum grade for this Reader activity.
 
 The number of words/points read will be scaled to the maximum grade and passed to the gradebook.';
+$string['maxquizattemptrate'] = 'Maximum quiz attempt rate';
+$string['maxquizattemptrate_help'] = 'The maximum rate at which students may attempt Reader quizzes. If a student tries to attempt more than the specified number of quizzes within the specified duration, then the specified action will be taken.';
+$string['maxquizattemptratetext'] = 'Please do not take more than {$a}. If you exceed this rate, the following action will be taken:';
+$string['maxquizfailurerate'] = 'Maximum quiz failure rate';
+$string['maxquizfailurerate_help'] = 'The maximum rate at which students may fail Reader quizzes. If a student fails more than the specified number of quizzes within the specified duration, then the specified action will be taken.';
+$string['maxquizfailureratetext'] = 'If you fail more than {$a}, the following action will be taken:';
 $string['maxtimebetweenquizzes'] = 'Max time between quizzes';
 $string['menu'] = 'Menu';
 $string['mergingtables'] = 'Merging tables: {$a->old} into {$a->new}';
@@ -518,6 +554,9 @@ $string['minpassgrade'] = 'Minimum pass grade';
 $string['minpassgrade_help'] = 'The minimum pass grade, as a percentage, for quizzes in this Reader activity.
 
 Attempts with percentage grade lower than this value will be marked as failed.';
+$string['minquizattemptrate'] = 'Minimum quiz attempt rate';
+$string['minquizattemptrate_help'] = 'The minimum rate at which students may attempt Reader quizzes. If a student does not continue to attempt at least the specified number of quizzes within the specified duration, then the specified action will be taken.';
+$string['minquizattemptratetext'] = 'Please take at least {$a}. If you fall below this rate, the following action will be taken:';
 $string['morenewattempts'] = '{$a} more new attempts ...';
 $string['mybooks'] = 'Only books already installed on this site';
 $string['needdeletethisattemptstoo'] = 'Need delete this Attempts too';
@@ -539,6 +578,7 @@ $string['noincorrectquizzes'] = 'You have not failed any quizzes';
 $string['nomoreattempts'] = 'No more attempts are allowed';
 $string['noquizzesfound'] = 'No quizzes found';
 $string['noreaders'] = 'No Reader activities found in this course';
+$string['norecordsmatch'] = 'No records were selected using the current filters and display options.';
 $string['noreview'] = 'You are not allowed to review this quiz';
 $string['noreviewshort'] = 'Not permitted';
 $string['normalmode'] = 'Normal';
@@ -549,8 +589,10 @@ $string['nothavepermissioncreateinstance'] = 'Sorry you do not have permission t
 $string['notifycheating'] = 'Notify cheats';
 $string['notifycheating_help'] = 'If this settings enabled, then students that are judged to have cheated on attempts at Reader quizzes will be sent the "Cheated message" below';
 $string['notopenyet'] = 'Sorry, this activity is not available yet. It will open {$a}.';
+$string['numattempts'] = '{$a} attempts';
 $string['numberofextrapoints'] = 'Number of extra points';
 $string['off'] = 'Off';
+$string['oneattempt'] = '1 attempt';
 $string['onlybookswithmorethan'] = 'Only books with more than';
 $string['pagesettings'] = 'Page settings';
 $string['passed'] = 'Passed';
@@ -568,6 +610,7 @@ $string['pleaseselectpublisher'] = 'Please Select Publisher';
 $string['pleasespecifyyourclassgroup'] = 'Please specify your class group or search for a specific student.';
 $string['pleasewait'] = 'Please wait';
 $string['points'] = 'Points';
+$string['pointsex11'] = 'Length (Ex. 1.1)';
 $string['popup'] = 'Use "secure" window';
 $string['popup_help'] = 'If "Yes" is selected,
 
@@ -608,7 +651,7 @@ $string['quizname'] = 'Quiz name';
 $string['quiznotavailable'] = 'Sorry, this quiz is not currently available to you';
 $string['quiznotavailableuntil'] = 'The quiz will not be available until {$a}';
 $string['quizopenedon'] = 'This quiz opened at {$a}';
-$string['quizsetdelay'] = 'Set delay on Reader quizzes';
+$string['quizsetrate'] = 'Set rate of Reader quizzes';
 $string['quizshowhide'] = 'Show / Hide Reader quizzes';
 $string['quiztimelimit'] = 'Time limit: {$a}';
 $string['quizupdate'] = 'Update Reader quizzes';
@@ -621,9 +664,43 @@ $string['quizzesarrange'] = 'Arrange quizzes';
 $string['quizzesdelete'] = 'Delete quizzes';
 $string['quizzesmustbeinstalled'] = 'Quizzes must be installed in a course that is separate from the course that the students will log into when they take quizzes. This course is hidden from the students and is only used as a storage area for the quizzes, and is normally called "All Quizzes." The course that you have established for this purpose should be shown below.  If you haven\'t yet established a course, please click on "Create new course."';
 $string['quizzespassedtable'] = 'Quizzes passed at RL-{$a}';
-$string['quizzessetdelay'] = 'Set time delay';
+$string['quizzessetrate'] = 'Set reading rate';
 $string['quizzesshowhide'] = 'Show/Hide quizzes';
 $string['quizzesupdate'] = 'Update quizzes';
+$string['rate'] = 'Rate';
+$string['rate_help'] = 'The reading rate is specified as the maximum allowed number of attempts at Reader quizzes, or the minimum required number of attempts, within a specified duration.';
+$string['rateaction'] = 'Action';
+$string['rateaction_help'] = 'This is the action that will be taken if the reading rate restriction is violated. The following actions are available:
+
+**Delay further quiz attempts**
+: The student will be prevented from attempting another Reader quiz until the duration period has expired.
+
+**Block further quiz attempts**
+: The student will be blocked from attempting any more Reader quizzes until a teacher removes the block.
+
+**Send email to student**
+: An email will be sent to the student informing them of the rate violation.
+
+**Send email to teacher**
+: An email will be sent to the teacher informing them of the student\'s rate violation.';
+$string['rategroup'] = 'Group';
+$string['rategroup_help'] = 'the group to which this rate restriction applies';
+$string['ratelevel'] = 'Level';
+$string['ratelevel_help'] = 'the reading level to which this rate restriction applies';
+$string['ratemanyconsecutively'] = '{$a->attempts} quizzes consecutively';
+$string['ratemanyinduration'] = '{$a->attempts} quizzes in {$a->duration}';
+$string['rateoneinduration'] = '{$a->attempts} quiz in {$a->duration}';
+$string['ratetype'] = 'Type';
+$string['ratetype_help'] = 'The following types of reading rates can be specified:
+
+**Minimum quiz attempt rate**
+: The minimum rate at which students may attempt Reader quizzes. If a student does not continue to attempt at least the specified number of quizzes within the specified duration, then the specified action will be taken.
+
+**Maximum quiz attempt rate**
+: The maximum rate at which students may attempt Reader quizzes. If a student tries to attempt more than the specified number of quizzes within the specified duration, then the specified action will be taken.
+
+**Maximum quiz failure rate**
+: The maximum rate at which students may fail Reader quizzes. If a student fails more than the specified number of quizzes within the specified duration, then the specified action will be taken.';
 $string['ratings'] = 'ratings';
 $string['readerdownload'] = 'Download Reader books (and quizzes)';
 $string['readerquizsettings'] = 'Reader quiz settings';
@@ -631,9 +708,15 @@ $string['readerreports'] = 'Reader module reports';
 $string['readinglevel'] = 'Reading Level';
 $string['readinglevelshort'] = 'RL {$a}';
 $string['readingreportfor'] = 'Reading Report for {$a}';
+$string['recommendedreadingrates'] = 'Recommend reading rates';
 $string['redo_upgrade'] = 'Redo upgrade';
 $string['redo_upgradedesc'] = 'Redo an upgrade to the Reader module.';
 $string['remotesitenotaccessible'] = 'Remote download site is not accessible';
+$string['removebook'] = 'Remove books';
+$string['removebook_help'] = 'Books that have "live" attempts cannot be deleted. In order to delete such books, you will first need to delete their "live" attempts.';
+$string['removebookerror'] = 'Book was NOT removed: {$a}';
+$string['removebookinstance'] = 'Remove selected books from this course';
+$string['removebooksuccess'] = 'Book was removed: {$a}';
 $string['repairmode'] = 'Repair';
 $string['reportbookdetailed'] = 'Books (full)';
 $string['reportbookratings'] = 'Book ratings';
@@ -683,8 +766,11 @@ $string['selectpublisher'] = 'Select Publisher';
 $string['selectseries'] = 'Select Series';
 $string['selectsomeattempts'] = 'Select one or more attempts';
 $string['selectsomebooks'] = 'Select one or more books';
+$string['selectsomerows'] = 'Please check some of the boxes in the select column.';
 $string['selectsomeusers'] = 'Select one or more users';
 $string['selectthisquiz'] = 'Select this quiz';
+$string['sendemailtostudent'] = 'Send email to student';
+$string['sendemailtoteacher'] = 'Send email to teacher';
 $string['sentemailmoodle'] = 'An email has been sent via Moodle to: {$a->email}';
 $string['sentemailphp'] = 'An email has been sent via PHP mail to: {$a->email}';
 $string['separategroups'] = 'Separate groups';
@@ -696,24 +782,31 @@ $string['serverusername'] = 'Reader server username';
 $string['setallowpromotion'] = 'Change promotion setting for selected students';
 $string['setbookinstances'] = 'Select quizzes to make available to students';
 $string['setcurrentlevel'] = 'Change current level for selected students';
-$string['setdelays'] = 'Set delays';
-$string['setdelays_description'] = 'On this page you can set the delay between quizzes for students at specific reading levels, or in specific groups. Note that the settings for individual students on the the report pages will override the settings on this page.';
+$string['setdifficulty'] = 'Set book difficulty';
+$string['setgenre'] = 'Set genre';
 $string['setgoal'] = 'Set goal';
 $string['setgoals'] = 'Set goals';
 $string['setgoals_description'] = 'On this page you can set the reading goals for students at specific reading levels, or in specific groups. Note that the settings for individual students on the the report pages will override the settings on this page.';
+$string['setlevel'] = 'Set level';
 $string['setlevels'] = 'Set levels';
 $string['setlevels_description'] = 'On this page you can set the reading levels for groups of students. Note that these settings will overwrite the setting for individual students on the the report pages.';
-$string['setmessage'] = 'Set Message';
+$string['setmessage'] = 'Set message';
 $string['setmessagetext'] = 'Message text';
 $string['setmessagetime'] = 'Display until';
+$string['setname'] = 'Set book title';
+$string['setpoints'] = 'Set point value';
 $string['setpromotiontime'] = 'Change promotion date and time';
+$string['setpublisher'] = 'Set publisher';
+$string['setrates'] = 'Set rates';
+$string['setrates_description'] = 'On this page you can set the reading rates for students at specific reading levels, or in specific groups.';
 $string['setreadinggoal'] = 'Set reading goal';
-$string['setreadinglevel'] = 'Set the reading level for the selected books';
+$string['setreadinglevel'] = 'Set reading level';
 $string['setstartlevel'] = 'Change start level for selected students';
 $string['setstoplevel'] = 'Change maximum level for selected students';
 $string['settings'] = 'Settings';
 $string['setuniformgoalinpoints'] = 'Set uniform goal in points';
 $string['setuniformgoalinwords'] = 'Set uniform goal in words';
+$string['setwords'] = 'Set word count';
 $string['show'] = 'Show';
 $string['show_help'] = 'Click on the kind of items you wish to be shown in the list below';
 $string['showall'] = 'Show All';
@@ -721,7 +814,7 @@ $string['showattempts'] = 'Show attempts matching these conditions';
 $string['showdeleted'] = 'Show deleted attempts';
 $string['showhidden'] = 'Show hidden books';
 $string['showhide'] = 'Show/Hide';
-$string['showhidebook'] = 'Show or hide the selected books in this Reader activity';
+$string['showhidebook'] = 'Show or hide';
 $string['showhidebooks'] = 'Update the show/hide setting for selected books';
 $string['showlevel'] = 'Show Level';
 $string['showpercentgrades'] = 'Show percent grades';
@@ -753,9 +846,20 @@ $string['skipquizdownload'] = 'Quiz "{$a->quizname}" already exists in section {
 $string['sort_strings'] = 'Sort strings';
 $string['sort_stringsdesc'] = 'Sort the strings used by the Reader module.';
 $string['sortfields'] = 'Sort fields';
-$string['specificgroups'] = 'Specific groups';
-$string['specificlevels'] = 'Specific levels';
+$string['startbookdetailed'] = 'There is currently no data available for this report.';
+$string['startbooksummary'] = 'There is currently no data available for this report.';
+$string['starteditcourse'] = '**Getting started**
+
+On this page you can edit and remove Reader books that are available in this course. You can also make new books available in this course, as long as they have already been download to this Moodle site using the download pages.
+';
+$string['starteditsite'] = '**Getting started**
+
+On this page you can edit and remove Reader books on this Moodle site. In order to add new Reader books to this site, please use the download pages.
+';
+$string['startgroupsummary'] = 'There is currently no data available for this report.';
 $string['startlevel'] = 'Start level';
+$string['startuserdetailed'] = 'There is currently no data available for this report.';
+$string['startusersummary'] = 'There is currently no data available for this report.';
 $string['stoplevel'] = 'Maximum level';
 $string['stoplevel_help'] = 'Students cannot be promoted automatically beyond this level';
 $string['stoplevelforce'] = 'Apply this value to ALL current users';
@@ -899,6 +1003,7 @@ $string['userssetgoals'] = 'Set goals';
 $string['userssetlevels'] = 'Set levels';
 $string['userssetmessage'] = 'Set message';
 $string['usertype'] = 'Users to include';
+$string['valueoutofrange'] = 'This value should be between {$a->min} and {$a->max}';
 $string['viewattempts'] = 'View and Delete Attempts';
 $string['viewlogsuspiciousactivity'] = 'View log of suspicious activity';
 $string['whichbooks'] = 'Choose the books and click "Go"';

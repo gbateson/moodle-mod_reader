@@ -49,7 +49,7 @@ class mod_reader_admin_users_renderer extends mod_reader_admin_renderer {
      */
     const TAB_USERS_SETLEVELS   = 51;
     const TAB_USERS_SETGOALS    = 52;
-    const TAB_USERS_SETDELAYS   = 53;
+    const TAB_USERS_SETRATES    = 53;
     const TAB_USERS_SETMESSAGE  = 54;
     const TAB_USERS_IMPORT      = 55;
     const TAB_USERS_EXPORT      = 56;
@@ -102,6 +102,6 @@ class mod_reader_admin_users_renderer extends mod_reader_admin_renderer {
      * @return string HTML output to display navigation tabs
      */
     static public function get_standard_modes($reader=null) {
-        return array('setlevels', 'setgoals', 'setdelays', 'setmessage', 'import', 'export');
+        return array('setlevels', 'setgoals', 'setrates', 'setmessage', 'import', 'export');
     }
 }

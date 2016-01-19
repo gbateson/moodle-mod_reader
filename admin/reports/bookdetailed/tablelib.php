@@ -109,7 +109,7 @@ class reader_admin_reports_bookdetailed_table extends reader_admin_reports_table
         if ($this->output->reader->wordsorpoints==0) {
             $wordsorpoints = 'rb.words';
         } else {
-            $wordsorpoints = 'rb.length AS points';
+            $wordsorpoints = 'rb.points';
         }
 
         $duration = 'CASE WHEN (ra.timefinish IS NULL OR ra.timefinish = 0) THEN 0 ELSE (ra.timefinish - ra.timestart) END';
@@ -121,7 +121,10 @@ class reader_admin_reports_bookdetailed_table extends reader_admin_reports_table
         $from   = '{reader_attempts} ra '.
                   'LEFT JOIN {user} u ON ra.userid = u.id '.
                   'LEFT JOIN {reader_books} rb ON ra.bookid = rb.id';
-        $where  = "ra.readerid = :readerid AND ra.timefinish > :time AND u.id $usersql";
+        $where  = "ra.readerid = :readerid AND ra.timefinish > :time";
+        if ($usersql) {
+            $where .= " AND u.id $usersql";
+        }
 
         $sortby = 'rb.name, rb.publisher, u.username';
 
@@ -161,6 +164,13 @@ class reader_admin_reports_bookdetailed_table extends reader_admin_reports_table
             default:
                 return parent::get_table_name_and_alias($fieldname);
         }
+    }
+
+    /**
+     * records_exist
+     */
+    public function records_exist() {
+        return $this->books_exist();
     }
 
     ////////////////////////////////////////////////////////////////////////////////

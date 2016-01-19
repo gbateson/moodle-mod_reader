@@ -130,9 +130,6 @@ class mod_reader_admin_renderer extends mod_reader_renderer {
         // execute required $action
         $table->execute_action($action);
 
-        // display user and attempt filters
-        $table->display_filters();
-
         // setup sql to COUNT records
         list($select, $from, $where, $params) = $table->count_sql();
         $table->set_count_sql("SELECT $select FROM $from WHERE $where", $params);
@@ -152,9 +149,22 @@ class mod_reader_admin_renderer extends mod_reader_renderer {
         // fix suppressed columns (those in which duplicate values for the same user are not repeated)
         $this->fix_suppressed_columns_in_rawdata($table);
 
-        // display the table
+        // display user and attempt filters
+        $table->display_filters();
+
+        // build the table rows
         $table->build_table();
-        $table->finish_output();
+
+        // display the table if it contains any rows
+        // otherwise, display a helpful message :-)
+        if ($table->started_output) {
+            $table->finish_output();
+        } else {
+            $table->nothing_to_display($this->mode);
+        }
+
+        // save $SESSION values as user preferences
+        $table->set_user_preferences();
     }
 
     /**

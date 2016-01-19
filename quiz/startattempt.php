@@ -78,12 +78,12 @@ if ($accessmanager->securewindow_required($readerquiz->is_preview_user())) {
     $PAGE->set_title($readerquiz->get_course()->shortname . ': ' .format_string($readerquiz->get_quiz_name()));
     $PAGE->set_heading($readerquiz->get_course()->fullname);
     $PAGE->set_cacheable(false);
-    echo $OUTPUT->header();
+    //echo $OUTPUT->header();
 } else {
     $PAGE->navbar->add($title);
     $PAGE->set_title(format_string($readerquiz->get_reader_name()));
     $PAGE->set_heading($readerquiz->get_course()->fullname);
-    echo $OUTPUT->header();
+    //echo $OUTPUT->header();
 }
 
 // if no questions have been set up yet redirect to edit.php
@@ -203,4 +203,5 @@ if (function_exists('events_trigger_legacy')) {
 //$transaction->allow_commit();
 
 // Redirect to the attempt page
+
 redirect($readerquiz->attempt_url($attempt->id, $page));

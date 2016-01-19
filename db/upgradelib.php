@@ -3797,6 +3797,23 @@ function reader_xmldb_update_fields($dbman, $table, $fields, $indexes=array()) {
 }
 
 /**
+ * xmldb_reader_rename_table
+ *
+ * @todo Finish documenting this function
+ */
+function xmldb_reader_rename_table($dbman, $oldname, $newname) {
+    $oldtable = new xmldb_table($oldname);
+    $newtable = new xmldb_table($newname);
+    if ($dbman->table_exists($oldtable)) {
+        if ($dbman->table_exists($newtable)) {
+            $dbman->drop_table($oldtable);
+        } else {
+            $dbman->rename_table($oldtable, $newname);
+        }
+    }
+}
+
+/**
  * xmldb_reader_fix_sumgrades
  *
  * @todo Finish documenting this function

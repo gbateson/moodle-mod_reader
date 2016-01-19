@@ -43,6 +43,9 @@ require_once($CFG->dirroot.'/mod/reader/lib.php');
  */
 class mod_reader_mod_form extends moodleform_mod {
 
+    /** size of numeric text boxes */
+    const TEXT_NUM_SIZE = 10;
+
     /**
      * definition
      *
@@ -57,9 +60,10 @@ class mod_reader_mod_form extends moodleform_mod {
 
         $plugin = 'mod_reader';
         $config = get_config($plugin);
+        $strman = get_string_manager();
 
         $dateoptions = array('optional' => true);
-        $textoptions = array('size'=>'10');
+        $textoptions = array('size' => self::TEXT_NUM_SIZE);
 
         $mform = $this->_form;
 
@@ -86,13 +90,17 @@ class mod_reader_mod_form extends moodleform_mod {
         $name = 'timeopen';
         $label = get_string('quizopen', 'quiz');
         $mform->addElement('date_time_selector', $name, $label, $dateoptions);
-        $mform->addHelpButton($name, 'quizopenclose', 'quiz');
+        if ($strman->string_exists('quizopenclose', 'quiz')) {
+            $mform->addHelpButton($name, 'quizopenclose', 'quiz');
+        }
         $this->set_type_default_advanced($mform, $config, $name, PARAM_INT);
 
         $name = 'timeclose';
         $label = get_string('quizclose', 'quiz');
         $mform->addElement('date_time_selector', $name, $label, $dateoptions);
-        $mform->addHelpButton($name, 'quizopenclose', 'quiz');
+        if ($strman->string_exists('quizopenclose', 'quiz')) {
+            $mform->addHelpButton($name, 'quizopenclose', 'quiz');
+        }
         $this->set_type_default_advanced($mform, $config, $name, PARAM_INT);
 
         $name = 'timelimit';
@@ -375,6 +383,52 @@ class mod_reader_mod_form extends moodleform_mod {
             return $this->current->$field;
         } else {
             return $default;
+        }
+    }
+
+    /**
+     * Display module-specific activity completion rules.
+     * Part of the API defined by moodleform_mod
+     * @return array Array of string IDs of added items, empty array if none
+     */
+    public function add_completion_rules() {
+        $mform = $this->_form;
+        $plugin = 'mod_reader';
+
+        // array of elements names to be returned by this method
+        $names = array();
+
+        // add "grade passed" completion condition
+        $name = 'completionpass';
+        $label = get_string($name, $plugin);
+        $mform->addElement('checkbox', $name, '', $label);
+        $mform->setType($name, PARAM_INT);
+        $mform->setDefault($name, 0);
+        $names[] = $name;
+
+        // add "reading total" completion condition
+        $name = 'completiontotalwords';
+        $label = get_string($name, $plugin);
+        $mform->addElement('text', $name, $label, array('size' => self::TEXT_NUM_SIZE));
+        $mform->addHelpButton($name, $name, $plugin);
+        $mform->setType($name, PARAM_INT);
+        $mform->setDefault($name, 0);
+        $names[] = $name;
+
+        return $names;
+    }
+
+    /**
+     * Called during validation. Indicates whether a module-specific completion rule is selected.
+     *
+     * @param array $data Input data (not yet validated)
+     * @return bool True if one or more rules is enabled, false if none are.
+     */
+    public function completion_rule_enabled($data) {
+        if (empty($data['completionpass']) && empty($data['completiontotalwords'])) {
+            return false;
+        } else {
+            return true;
         }
     }
 }

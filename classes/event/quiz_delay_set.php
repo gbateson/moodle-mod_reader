@@ -44,7 +44,7 @@ class quiz_delay_set extends base {
      * @return array
      */
     public static function get_legacy_eventname() {
-        return 'quizdelayset';
+        return 'quizrateset';
     }
 
     /**

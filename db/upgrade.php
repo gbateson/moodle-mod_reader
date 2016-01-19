@@ -77,18 +77,9 @@ function xmldb_reader_upgrade($oldversion) {
     $newversion = 2013033104;
     if ($result && $oldversion < $newversion) {
 
-        // rename tables "reader_publisher" and "reader_individual_books"
-        $tables = array('reader_publisher'=>'reader_books', 'reader_individual_books'=>'reader_book_instances');
-        foreach ($tables as $oldname => $newname) {
-            $oldname = new xmldb_table($oldname);
-            if ($dbman->table_exists($oldname)) {
-                if ($dbman->table_exists($newname)) {
-                    $dbman->drop_table($oldname);
-                } else {
-                    $dbman->rename_table($oldname, $newname);
-                }
-            }
-        }
+        // rename tables (OLD => NEW)
+        xmldb_reader_rename_table($dbman, 'reader_publisher', 'reader_books');
+        xmldb_reader_rename_table($dbman, 'reader_individual_books', 'reader_book_instances');
 
         // rename "individualbooks" field in "reader" table
         $table = new xmldb_table('reader');
@@ -603,20 +594,11 @@ function xmldb_reader_upgrade($oldversion) {
         $tablenames = array('reader_forcedtimedelay'=>'reader_delays', 'reader_goal'=>'reader_goals');
         foreach ($tablenames as $oldtablename => $newtablename) {
 
-            $oldtable = new xmldb_table($oldtablename);
-            $newtable = new xmldb_table($newtablename);
-            if ($dbman->table_exists($oldtable)) {
-                if ($dbman->table_exists($newtable)) {
-                    $dbman->drop_table($oldtable);
-                } else {
-                    $dbman->rename_table($oldtable, $newtablename);
-                }
-            }
-            unset($oldtable, $newtable);
-
-            $table = new xmldb_table($newtablename);
+            // rename table
+            xmldb_reader_rename_table($dbman, $oldtablename, $newtablename);
 
             // rename "changedate" field to "timemodified"
+            $table = new xmldb_table($newtablename);
             $field = new xmldb_field('changedate', XMLDB_TYPE_INTEGER, '11', XMLDB_UNSIGNED);
             $newfieldname = 'timemodified';
             if ($dbman->field_exists($table, $field)) {
@@ -1130,6 +1112,103 @@ function xmldb_reader_upgrade($oldversion) {
     $newversion = 2015100994;
     if ($oldversion < $newversion) {
         update_capabilities('mod/reader');
+        upgrade_mod_savepoint(true, "$newversion", 'reader');
+    }
+
+    $newversion = 2015102103;
+    if ($oldversion < $newversion) {
+
+        // fix non-integer word counts
+        if ($DB->sql_regex_supported()) {
+            $select = 'words '.$DB->sql_regex(false).' ?'; // i.e. NOT REGEXP
+            $params = array('^[0-9]+$');
+            if ($books = $DB->get_records_select('reader_books', $select, $params, 'id', 'id,words')) {
+                foreach ($books as $book) {
+                    if ($book->words = trim($book->words)) {
+                        $book->words = intval($book->words);
+                    } else {
+                        $book->words = 0;
+                    }
+                    $DB->set_field('reader_books', 'words', $book->words, array('id' => $book->id));
+                }
+            }
+        }
+
+        // rename and convert fields
+        $tables = array(
+            'reader_books' => array(
+                'difficulty'  => new xmldb_field('difficulty', XMLDB_TYPE_INTEGER, '4',    null, null, null, '99'),
+                'points'      => new xmldb_field('length',     XMLDB_TYPE_NUMBER,  '4, 2', null, null, null, '0'),
+                'words'       => new xmldb_field('words',      XMLDB_TYPE_INTEGER, '6',    null, null, null, '0'),
+            ),
+            'reader_book_instances' => array(
+                'difficulty'  => new xmldb_field('difficulty', XMLDB_TYPE_INTEGER, '4',    null, null, null, '99'),
+                'points'      => new xmldb_field('length',     XMLDB_TYPE_NUMBER,  '4, 2', null, null, null, '0'),
+                'words'       => new xmldb_field('words',      XMLDB_TYPE_INTEGER, '6',    null, null, null, '0'),
+            ),
+        );
+
+        foreach ($tables as $table => $fields) {
+            if ($table=='reader_books') {
+                $indexes = array('readpubl_dif_ix' => array('difficulty'),
+                                 'readgrad_len_ix' => array('length'));
+            } else {
+                $indexes = array();
+            }
+            $table = new xmldb_table($table);
+            reader_xmldb_update_fields($dbman, $table, $fields, $indexes);
+        }
+        upgrade_mod_savepoint(true, "$newversion", 'reader');
+    }
+
+    $newversion = 2016011920;
+    if ($oldversion < $newversion) {
+
+        // rename table "reader_delays" to "reader_rates"
+        xmldb_reader_rename_table($dbman, 'reader_delays', 'reader_rates');
+
+        // remove old indexes on "reader_rates" table
+        $table = new xmldb_table('reader_rates');
+        $indexes = array('readforc_rea' => array('readerid'),
+                         'readforc_gro' => array('groupid'),
+                         'readforc_lev' => array('level'),
+                         'readdela_rea' => array('readerid'),
+                         'readdela_gro' => array('groupid'),
+                         'readdela_lev' => array('level'));
+        reader_xmldb_drop_indexes($dbman, $table, $indexes);
+
+        // add/rename fields in "reader_rates" table
+        $fields = array(
+            'level'    => new xmldb_field('level',    XMLDB_TYPE_INTEGER,  '4',  null, XMLDB_NOTNULL, null, '0',  'groupid'),
+            'type'     => new xmldb_field('type',     XMLDB_TYPE_INTEGER,  '4',  null, XMLDB_NOTNULL, null, '0',  'level'),
+            'attempts' => new xmldb_field('attempts', XMLDB_TYPE_INTEGER,  '6',  null, XMLDB_NOTNULL, null, '1',  'type'),
+            'duration' => new xmldb_field('delay',    XMLDB_TYPE_INTEGER, '11',  null, XMLDB_NOTNULL, null, '0',  'attempts'),
+            'action'   => new xmldb_field('action',   XMLDB_TYPE_INTEGER,  '4',  null, XMLDB_NOTNULL, null, '0',  'duration')
+        );
+        reader_xmldb_update_fields($dbman, $table, $fields);
+
+        // add new indexes on "reader_rates" table
+        $table = new xmldb_table('reader_rates');
+        $indexes = array('readrate_rea' => array('readerid'),
+                         'readrate_gro' => array('groupid'),
+                         'readrate_lev' => array('level'));
+        reader_xmldb_add_indexes($dbman, $table, $indexes);
+
+        // remove empty rates left over from delays table
+        $select = "groupid = ? AND level = ? AND duration = ?";
+        $DB->delete_records_select('reader_rates', $select, array(0, 0, 0));
+
+        // set default "action" for pre-existing "reader_rates" records
+        $DB->set_field('reader_rates', 'action', 1, array('action' => 0));
+
+        // add completion fields on "reader" table
+        $table = new xmldb_table('reader');
+        $fields = array(
+            'completionpass' =>       new xmldb_field('completionpass',       XMLDB_TYPE_INTEGER,  '1', null, XMLDB_NOTNULL, null, 0, 'clearedmessage'),
+            'completiontotalwords' => new xmldb_field('completiontotalwords', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, 0, 'completionpass')
+        );
+        reader_xmldb_update_fields($dbman, $table, $fields);
+
         upgrade_mod_savepoint(true, "$newversion", 'reader');
     }
 

@@ -43,6 +43,29 @@ require_once($CFG->dirroot.'/mod/reader/lib.php');
  */
 class mod_reader {
 
+    /**#@+
+     * constants that represent rate type
+     *
+     * @var integer
+     */
+    const RATE_MAX_QUIZ_ATTEMPT = 0;
+    const RATE_MIN_QUIZ_ATTEMPT = 1;
+    const RATE_MAX_QUIZ_FAILURE = 2;
+    /**#@-*/
+
+    /**#@+
+     * constants that represent rate actions
+     * selected values are combined with bit-AND
+     * and stored in reader_rates.action field
+     *
+     * @var integer
+     */
+    const ACTION_DELAY_QUIZZES = 0x01;
+    const ACTION_BLOCK_QUIZZES = 0x02;
+    const ACTION_EMAIL_STUDENT = 0x04;
+    const ACTION_EMAIL_TEACHER = 0x08;
+    /**#@-*/
+
     /** @var stdclass course module record */
     public $cm;
 
@@ -445,6 +468,48 @@ class mod_reader {
     }
 
     /**
+     * @return moodle_url of this reader admin attempts page
+     */
+    public function attempts_url($params=null, $cm=null) {
+        return $this->url('/mod/reader/admin/attempts.php', $params, $cm);
+    }
+
+    /**
+     * @return moodle_url of this reader admin books page
+     */
+    public function books_url($params=null, $cm=null) {
+        return $this->url('/mod/reader/admin/books.php', $params, $cm);
+    }
+
+    /**
+     * @return moodle_url of this reader admin quizzes page
+     */
+    public function quizzes_url($params=null, $cm=null) {
+        return $this->url('/mod/reader/admin/quizzes.php', $params, $cm);
+    }
+
+    /**
+     * @return moodle_url of this reader admin reports page
+     */
+    public function reports_url($params=null, $cm=null) {
+        return $this->url('/mod/reader/admin/reports.php', $params, $cm);
+    }
+
+    /**
+     * @return moodle_url of this reader admin tools page
+     */
+    public function tools_url($params=null, $cm=null) {
+        return $this->url('/mod/reader/admin/tools.php', $params, $cm);
+    }
+
+    /**
+     * @return moodle_url of this reader admin users page
+     */
+    public function users_url($params=null, $cm=null) {
+        return $this->url('/mod/reader/admin/users.php', $params, $cm);
+    }
+
+    /**
      * @return moodle_url of this reader's view page
      */
     public function view_url($cm=null) {
@@ -454,20 +519,6 @@ class mod_reader {
             $url = '/mod/'.$cm->modname.'/view.php';
         }
         return $this->url($url, $params, $cm);
-    }
-
-    /**
-     * @return moodle_url of this reader's view page
-     */
-    public function books_url($params=null, $cm=null) {
-        return $this->url('/mod/reader/admin/books.php', $params, $cm);
-    }
-
-    /**
-     * @return moodle_url of this reader's view page
-     */
-    public function reports_url($params=null, $cm=null) {
-        return $this->url('/mod/reader/admin/reports.php', $params, $cm);
     }
 
     /**
@@ -632,6 +683,15 @@ class mod_reader {
     }
 
     /*
+     * can_viewallbooks
+     *
+     * @return boolean
+     **/
+    public function can_viewallbooks() {
+        return $this->can('viewallbooks');
+    }
+
+    /*
      * can_viewbooks
      *
      * @return boolean
@@ -672,17 +732,21 @@ class mod_reader {
     }
 
     /*
-     * get_delay
+     * get_rates
      *
-     * @param integer $userid
-     * @return boolean
+     * @param integer $ratetype   (optional, default=null)
+     * @param integer $actiontype (optional, default=null)
+     * @param integer $userid     (optional, default=0)
+     * @param integer $groupid    (optional, default=0)
+     * @return mixed array of rates for the spcified user, or FALSE if no rates are found
      **/
-    public function get_delay($userid=0, $groupid=0) {
+    public function get_rates($ratetype=null, $actiontype=null, $userid=0, $groupid=0) {
         global $DB, $USER;
 
         if ($userid==0) {
             $userid = $USER->id;
         }
+
         if ($groupid==0 && $this->course->groupmode) {
             if ($groupid = groups_get_user_groups($this->course->id, $userid)) {
                 if ($groupid = reset($groupid)) { // first grouping
@@ -705,41 +769,71 @@ class mod_reader {
             $level = 0;
         }
 
-        $select = '';
-        $params = array();
+        // sub-query to extract attempt count/start
+        $from   = '{reader_attempts} ra';
+        $where  = 'ra.readerid = rr.readerid AND ra.userid = ? AND ra.deleted = ? AND ra.timestart >= (? - rr.duration)';
+        $attemptcount = "SELECT COUNT(*) FROM $from WHERE $where";
+        $attemptstart = "SELECT MIN(timestart) FROM $from WHERE $where";
+        $params = array($userid, 0, $this->time, $userid, 0, $this->time);
 
-        if (empty($this->id)) {
-            $select .= 'readerid = ?';
-            $params[] = 0;
+        // main query to extract reading rates for this Reader activity
+        $select = "rr.*, ($attemptcount) AS attemptcount, ($attemptstart) AS attemptstart";
+        $from   = '{reader_rates} rr';
+        $where  = 'rr.readerid = ?';
+        $order  = 'readerid DESC, groupid DESC, level DESC, duration ASC, attempts ASC';
+        $params[] = $this->id;
+
+        if (is_numeric($ratetype)) {
+            $where .= ' AND rr.type = ?';
+            $params[] = $ratetype;
         } else {
-            $select .= '(readerid = ? OR readerid = ?)';
-            array_push($params, 0, $this->id);
+            $order = "type ASC, $order";
+        }
+
+        if (is_numeric($actiontype)) {
+            $where .= ' AND (rr.action & ?) > 0';
+            $params[] = $actiontype;
         }
 
         if ($groupid==0) {
-            $select .= ' AND groupid = ?';
+            $where .= ' AND rr.groupid = ?';
             $params[] = 0;
         } else {
-            $select .= ' AND (groupid = ? OR groupid = ?)';
+            $where .= ' AND (rr.groupid = ? OR rr.groupid = ?)';
             array_push($params, 0, $groupid);
         }
 
         if ($level==0) {
-            $select .= ' AND level = ?';
+            $where .= ' AND rr.level = ?';
             $params[] = 0;
         } else {
-            $select .= ' AND (level = ? OR level = ?)';
+            $where .= ' AND (rr.level = ? OR rr.level = ?)';
             array_push($params, 0, $level);
         }
 
-        $sort = 'readerid DESC, groupid DESC, level DESC, delay ASC';
-        if ($delay = $DB->get_records_select('reader_delays', $select, $params, $sort)) {
-            $delay = reset($delay); // use shortest and most specific delay available
-            $delay = $delay->delay;
-        } else {
-            $delay = 0;
-        }
+        return $DB->get_records_sql("SELECT $select FROM $from WHERE $where ORDER BY $order", $params);
+}
 
+    /*
+     * get_delay
+     *
+     * @param integer $userid
+     * @return boolean
+     **/
+    public function get_delay($userid=0, $groupid=0) {
+        // no delays for admins and teachers
+        if ($this->can_viewallbooks()) {
+            return 0;
+        }
+        $delay = 0;
+        $ratetype = self::RATE_MAX_QUIZ_ATTEMPT;
+        $actiontype = self::ACTION_DELAY_QUIZZES;
+        if ($rate = $this->get_rates($ratetype, $actiontype, $userid, $groupid)) {
+            $rate = reset($rate); // use shortest and most specific delay available
+            if ($rate->attemptcount >= $rate->attempts) {
+                $delay = (($rate->attemptstart + $rate->duration) - $this->time);
+            }
+        }
         return $delay;
     }
 

@@ -33,7 +33,7 @@ require_once(dirname(__FILE__).'/lib.php');
 $id = required_param('id', PARAM_INT);   // course
 
 if (! $course = $DB->get_record('course', array('id' => $id))) {
-    throw new reader_exception('Course ID is incorrect');
+    print_error('invalidcourseid');
 }
 
 require_course_login($course);

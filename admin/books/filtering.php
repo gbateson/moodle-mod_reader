@@ -36,6 +36,42 @@ require_once($CFG->dirroot.'/mod/reader/admin/filtering.php');
  * @since     Moodle 2.0
  */
 class reader_admin_books_filtering extends reader_admin_filtering {
+    /**
+     * get_field
+     * reader version of standard function
+     *
+     * @param xxx $fieldname
+     * @param xxx $advanced
+     * @return xxx
+     */
+    function get_field($fieldname, $advanced)  {
+
+        $default = $this->get_default_value($fieldname);
+        switch ($fieldname) {
+
+            case 'publisher':
+            case 'level':
+                $label = get_string($fieldname, 'mod_reader');
+                return new reader_admin_filter_text($fieldname, $label, $advanced, $fieldname, $default, 'where');
+
+            case 'name':
+                $label = get_string('booktitle', 'mod_reader');
+                return new reader_admin_filter_text($fieldname, $label, $advanced, $fieldname, $default, 'where');
+
+            case 'difficulty':
+                $label = get_string('bookdifficulty', 'mod_reader');
+                return new reader_admin_filter_number($fieldname, $label, $advanced, $fieldname, $default, 'where');
+
+            case 'words':
+            case 'points':
+                $label = get_string($fieldname, 'mod_reader');
+                return new reader_admin_filter_number($fieldname, $label, $advanced, $fieldname, $default, 'where');
+
+            default:
+                // other fields (e.g. from user record)
+                return parent::get_field($fieldname, $advanced);
+        }
+    }
 }
 
 /**

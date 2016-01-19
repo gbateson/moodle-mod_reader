@@ -47,58 +47,33 @@ class reader_admin_reports_table extends reader_admin_table {
     const DEFAULT_SHOWHIDDEN  = 0;  // i.e. ignore hidden quizzes
     /**#@-*/
 
+    /**#@+
+    * boolean switches denoting whether or not there
+    * are any records related to this Reader activity
+    *
+    * @var boolean
+    */
+    protected $has_attempts = null;
+    protected $has_books    = null;
+    protected $has_groups   = null;
+    protected $has_users    = null;
+    /**#@-*/
+
+    /** array of users who can access this Reader activity */
+    protected $users = null;
+
     /**
      * Constructor
      *
-     * @param int $uniqueid
+     * @param integer $uniqueid
+     * @param object  $output renderer
      */
     public function __construct($uniqueid, $output) {
-        global $DB, $USER;
-
         parent::__construct($uniqueid, $output);
+
         // remove group filter if it is not needed
         if (isset($this->filterfields['group'])) {
-
-            $courseid  = $this->output->reader->course->id;
-            $groupmode = $this->output->reader->course->groupmode;
-
-            if ($groupmode==SEPARATEGROUPS) {
-                $context = reader_get_context(CONTEXT_COURSE, $courseid);
-                if (has_capability('moodle/site:accessallgroups', $context)) {
-                    $groupmode = VISIBLEGROUPS; // user can access all groups
-                }
-            }
-
-            // set $has_groups
-            switch ($groupmode) {
-
-                case VISIBLEGROUPS:
-                    $has_groups = $DB->record_exists('groups', array('courseid' => $courseid));
-                    break;
-
-                case SEPARATEGROUPS:
-                    $select = 'gm.id, gm.groupid, g.courseid';
-                    $from   = '{groups_members} gm JOIN {groups} g ON gm.groupid = g.id';
-                    $where  = 'gm.userid = ? AND g.courseid = ?';
-                    $params = array($USER->id, $courseid);
-
-                    if ($defaultgroupingid = $this->output->reader->course->defaultgroupingid) {
-                        $select .= ', gg.groupingid';
-                        $from   .= ' JOIN {groupings_groups} gg ON g.id = gg.groupid';
-                        $where  .= ' AND gg.groupingid = ?';
-                        $params[] = $defaultgroupingid;
-                    }
-
-                    $has_groups = $DB->record_exists_sql("SELECT $select FROM $from WHERE $where", $params);
-                    break;
-
-                case NOGROUPS:
-                default:
-                    $has_groups = false;
-                    break;
-            }
-
-            if ($has_groups==false) {
+            if ($this->groups_exist()==false) {
                 unset($this->filterfields['group']);
                 if ($i = array_search('groups', $this->tablecolumns)) {
                     array_splice($this->tablecolumns, $i, 1);
@@ -167,14 +142,10 @@ class reader_admin_reports_table extends reader_admin_table {
 
         if (empty($this->users)) {
             return array('', array());
-        }
-
-        if ($prefix=='') {
-            $type = SQL_PARAMS_QM;
         } else {
-            $type = SQL_PARAMS_NAMED;
+            $type = ($prefix=='' ? SQL_PARAMS_QM : SQL_PARAMS_NAMED);
+            return $DB->get_in_or_equal(array_keys($this->users), $type, $prefix);
         }
-        return $DB->get_in_or_equal(array_keys($this->users), $type, $prefix);
     }
 
     /**
@@ -189,8 +160,7 @@ class reader_admin_reports_table extends reader_admin_table {
         $select = 'DISTINCT userid';
         $from   = '{reader_attempts}';
         $where  = 'readerid = '.$this->output->reader->id.' AND deleted = 0';
-        $order  = 'userid';
-        $sql = "SELECT $select FROM $from WHERE $where ORDER BY $order";
+        $sql = "SELECT $select FROM $from WHERE $where";
         if ($alias) {
             $sql = "$join ($sql) $alias ON $alias.userid = u.id";
         }
@@ -230,7 +200,6 @@ class reader_admin_reports_table extends reader_admin_table {
         $from   = "{reader_attempts} ra ".
                   "LEFT JOIN {reader_books} rb ON ra.bookid = rb.id";
 
-        $where  = '';
         $params = array('reader1' => $this->output->reader->id,
                         'reader2' => $this->output->reader->id,
                         'reader3' => $this->output->reader->id,
@@ -246,7 +215,7 @@ class reader_admin_reports_table extends reader_admin_table {
             $totalalias = 'totalwords';
         } else {
             // points
-            $totalfield = 'rb.length';
+            $totalfield = 'rb.points';
             $totalalias = 'totalpoints';
         }
 
@@ -280,7 +249,11 @@ class reader_admin_reports_table extends reader_admin_table {
                 break;
         }
 
-        $where  .= "ra.userid $usersql";
+        if ($usersql) {
+            $where = "ra.userid $usersql";
+        } else {
+            $where = '1=1'; // must keep MSSQL happy :-)
+        }
         $params += $userparams;
 
         if (! array_key_exists('showdeleted', $this->optionfields)) {
@@ -288,16 +261,16 @@ class reader_admin_reports_table extends reader_admin_table {
             $params['ra_deleted'] = self::DEFAULT_SHOWDELETED;
         }
 
-        if (! array_key_exists('showhidden', $this->optionfields)) {
-            $where .= ' AND rb.hidden = :rb_hidden';
-            $params['rb_hidden'] = self::DEFAULT_SHOWHIDDEN;
-        }
+        //if (! array_key_exists('showhidden', $this->optionfields)) {
+        //    $where .= ' AND rb.hidden = :rb_hidden';
+        //    $params['rb_hidden'] = self::DEFAULT_SHOWHIDDEN;
+        //}
 
-        if ($this->output->reader->bookinstances) {
-            $from  .= ' LEFT JOIN {reader_book_instances} rbi ON rb.id = rbi.bookid';
-            $where .= ' AND rbi.id IS NOT NULL AND rbi.readerid = :rbireader';
-            $params['rbireader'] = $this->output->reader->id;
-        }
+        //if ($this->output->reader->bookinstances) {
+        //    $from  .= ' LEFT JOIN {reader_book_instances} rbi ON rb.id = rbi.bookid';
+        //    $where .= ' AND rbi.id IS NOT NULL AND rbi.readerid = :rbireader';
+        //    $params['rbireader'] = $this->output->reader->id;
+        //}
 
         return array("SELECT $select FROM $from WHERE $where GROUP BY ra.$groupbyfield", $params);
     }
@@ -330,6 +303,102 @@ class reader_admin_reports_table extends reader_admin_table {
             default:
                 die("What table alias for field: $fieldname");
         }
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////
+    // functions to detect whether or not records exists                          //
+    ////////////////////////////////////////////////////////////////////////////////
+
+    /**
+     * attempts_exist
+     */
+    public function attempts_exist() {
+        global $DB;
+        if ($this->has_attempts===null) {
+            $params = array('readerid' => $this->output->reader->id);
+            $this->has_attempts = $DB->record_exists('reader_attempts', $params);
+        }
+        return $this->has_attempts;
+    }
+
+    /**
+     * books_exist
+     */
+    public function books_exist() {
+        global $DB;
+        if ($this->has_books===null) {
+            if (empty($this->output->reader->bookinstances)) {
+                $this->has_books = $DB->record_exists('reader_books', array());
+            } else {
+                $params = array('readerid' => $this->output->reader->id);
+                $this->has_books = $DB->record_exists('reader_book_instances', $params);
+            }
+        }
+        return $this->has_books;
+    }
+
+    /**
+     * groups_exist
+     */
+    public function groups_exist() {
+        global $DB;
+
+        if ($this->has_groups===null) {
+            $courseid  = $this->output->reader->course->id;
+            $groupmode = $this->output->reader->course->groupmode;
+
+            if ($groupmode==SEPARATEGROUPS) {
+                $context = reader_get_context(CONTEXT_COURSE, $courseid);
+                if (has_capability('moodle/site:accessallgroups', $context)) {
+                    $groupmode = VISIBLEGROUPS; // user can access all groups
+                }
+            }
+
+            // set $has_groups
+            switch ($groupmode) {
+
+                case VISIBLEGROUPS:
+                    $this->has_groups = $DB->record_exists('groups', array('courseid' => $courseid));
+                    break;
+
+                case SEPARATEGROUPS:
+                    $select = 'gm.id, gm.groupid, g.courseid';
+                    $from   = '{groups_members} gm JOIN {groups} g ON gm.groupid = g.id';
+                    $where  = 'gm.userid = ? AND g.courseid = ?';
+                    $params = array($USER->id, $courseid);
+
+                    if ($defaultgroupingid = $this->output->reader->course->defaultgroupingid) {
+                        $select .= ', gg.groupingid';
+                        $from   .= ' JOIN {groupings_groups} gg ON g.id = gg.groupid';
+                        $where  .= ' AND gg.groupingid = ?';
+                        $params[] = $defaultgroupingid;
+                    }
+
+                    $this->has_groups = $DB->record_exists_sql("SELECT $select FROM $from WHERE $where", $params);
+                    break;
+
+                case NOGROUPS:
+                default:
+                    $this->has_groups = false;
+                    break;
+            }
+        }
+        return $this->has_groups;
+    }
+
+    /**
+     * users_exist
+     */
+    public function users_exist() {
+        if ($this->has_users===null) {
+            if ($this->users===null) {
+                list($select, $params) = $this->get_users_sql();
+                $this->has_users = ($select=='' ? false : true);
+            } else {
+                $this->has_users = true;
+            }
+        }
+        return $this->has_users;
     }
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -584,36 +653,6 @@ class reader_admin_reports_table extends reader_admin_table {
             'email'     => $row->email
         );
         return $this->output->user_picture($user, array('courseid'=>$courseid));
-    }
-
-    /**
-     * col_words
-     *
-     * @param xxx $row
-     * @return xxx
-     */
-    public function col_words($row)  {
-        $row->words = intval($row->words);
-        if ($this->is_downloading()) {
-            return $row->words;
-        } else {
-            return number_format($row->words);
-        }
-    }
-
-    /**
-     * col_points
-     *
-     * @param xxx $row
-     * @return xxx
-     */
-    public function col_points($row)  {
-        $row->points = floatval($row->points);
-        if ($this->is_downloading()) {
-            return $row->points;
-        } else {
-            return number_format($row->points);
-        }
     }
 
     /**

@@ -115,8 +115,8 @@ class reader_admin_reports_userdetailed_table extends reader_admin_reports_table
             $attemptalias = 'attemptwords';
             $termalias = 'termwords';
         } else {
-            $wordsorpointsalias = 'length AS points';
-            $wordsorpoints = 'length';
+            $wordsorpointsalias = 'points';
+            $wordsorpoints = 'points';
             $attemptalias = 'attemptpoints';
             $termalias = 'termpoints';
         }
@@ -140,7 +140,10 @@ class reader_admin_reports_userdetailed_table extends reader_admin_reports_table
                   'LEFT JOIN {user} u ON ra.userid = u.id '.
                   'LEFT JOIN {reader_levels} rl ON ra.readerid = rl.readerid AND u.id = rl.userid '.
                   'LEFT JOIN {reader_books} rb ON ra.bookid = rb.id';
-        $where  = "ra.readerid = :readerid AND ra.timefinish > :time2 AND u.id $usersql";
+        $where  = "ra.readerid = :readerid AND ra.timefinish > :time2";
+        if ($usersql) {
+            $where .= " AND u.id $usersql";
+        }
 
         $params = array('readerid' => $this->output->reader->id,
                         'time1'    => $this->output->reader->ignoredate,
@@ -149,11 +152,11 @@ class reader_admin_reports_userdetailed_table extends reader_admin_reports_table
                         'passed2'  => 'true',
                         'deleted'  => 0) + $userparams;
 
-        if ($this->output->reader->bookinstances) {
-            $from  .= ' LEFT JOIN {reader_book_instances} rbi ON rb.id = rbi.bookid';
-            $where .= ' AND rbi.id IS NOT NULL AND rbi.readerid = :rbireader';
-            $params['rbireader'] = $this->output->reader->id;
-        }
+        //if ($this->output->reader->bookinstances) {
+        //    $from  .= ' LEFT JOIN {reader_book_instances} rbi ON rb.id = rbi.bookid';
+        //    $where .= ' AND rbi.id IS NOT NULL AND rbi.readerid = :rbireader';
+        //    $params['rbireader'] = $this->output->reader->id;
+        //}
 
         return $this->add_filter_params($select, $from, $where, '', '', '', $params);
     }
@@ -173,7 +176,7 @@ class reader_admin_reports_userdetailed_table extends reader_admin_reports_table
 
             case 'name':
             case 'words':
-            case 'length':
+            case 'points':
             case 'difficulty':
                 return array('reader_levels', 'rb');
 
@@ -188,6 +191,13 @@ class reader_admin_reports_userdetailed_table extends reader_admin_reports_table
             default:
                 return parent::get_table_name_and_alias($fieldname);
         }
+    }
+
+    /**
+     * records_exist
+     */
+    public function records_exist() {
+        return $this->users_exist();
     }
 
     ////////////////////////////////////////////////////////////////////////////////

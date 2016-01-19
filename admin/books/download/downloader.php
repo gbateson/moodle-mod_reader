@@ -272,6 +272,9 @@ class reader_downloader {
     /**
      * check_type
      *
+     * check this user has the required capability for the specified $type of form field
+     * if the form field is missing or invalid, it is forcibly set to the $DEFAULT value
+     *
      * @param  array   $params       (passed by reference)
      * @param  string  $type         "category", "course" or "section"
      * @param  array   $SUBTYPES     names of valid subtypes
@@ -905,6 +908,17 @@ class reader_downloader {
                 continue;
             }
 
+            // rename deprecated fields
+            $fields = array('length' => 'points');
+            foreach ($fields as $oldname => $newname) {
+                if (isset($item['@'][$oldname])) {
+                    if (! isset($item['@'][$newname])) {
+                        $item['@'][$newname] = $item['@'][$oldname];
+                    }
+                    unset($item['@'][$oldname]);
+                }
+            }
+
             $publisher = trim($item['@']['publisher']);
             $level     = trim($item['@']['level']);
             $name      = trim($item['@']['title']);
@@ -957,16 +971,16 @@ class reader_downloader {
                     'publisher'  => $publisher,
                     'series'     => '',
                     'level'      => $level,
-                    'difficulty' => 0,
                     'name'       => $name,
-                    'words'      => 0,
-                    'genre'      => '',
-                    'fiction'    => '',
                     'image'      => '',
-                    'length'     => '',
-                    'private'    => 0,
-                    'sametitle'  => '',
+                    'genre'      => '',
+                    'difficulty' => 0,
+                    'words'      => 0,
+                    'points'     => '',
                     'hidden'     => 0,
+                    'sametitle'  => '',
+                    'fiction'    => '',
+                    'private'    => 0,
                     'maxtime'    => 0,
                 );
             }

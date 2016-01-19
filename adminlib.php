@@ -1274,7 +1274,7 @@ function reader_difficulty_menu($difficulty, $bookid, $reader) {
 }
 
 /**
- * reader_length_menu
+ * reader_points_menu
  *
  * @uses $CFG
  * @uses $COURSE
@@ -1285,13 +1285,13 @@ function reader_difficulty_menu($difficulty, $bookid, $reader) {
  * @uses $orderby
  * @uses $page
  * @uses $sort
- * @param xxx $length
+ * @param xxx $points
  * @param xxx $bookid
  * @param xxx $reader
  * @return xxx
  * @todo Finish documenting this function
  */
-function reader_length_menu($length, $bookid, $reader) {
+function reader_points_menu($points, $bookid, $reader) {
     global $CFG, $COURSE, $_SESSION, $id, $act, $gid, $sort, $orderby, $page;
 
     $values = array(
@@ -1299,7 +1299,7 @@ function reader_length_menu($length, $bookid, $reader) {
         15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100,110,120,130,140,150,160,170,175,180,190,200,225,250,275,300,350,400
     );
 
-    $name = 'length_'.$bookid.'_'.$length;
+    $name = 'points_'.$bookid.'_'.$points;
 
     $output = '';
     $output .= html_writer::start_tag('div', array('id' => 'id_'.$name));
@@ -1308,9 +1308,9 @@ function reader_length_menu($length, $bookid, $reader) {
     $output .= html_writer::start_tag('select', array('id' => 'id_select_'.$name, 'name' => 'select_'.$name, 'onchange' => $onchange));
 
     foreach ($values as $value) {
-        $params = array('a' => 'admin', 'id' => $id, 'act' => $act, 'length' => $value, 'bookid' => $bookid, 'slevel' => $length);
+        $params = array('a' => 'admin', 'id' => $id, 'act' => $act, 'points' => $value, 'bookid' => $bookid, 'slevel' => $points);
         $params = array('value' => new moodle_url('/mod/reader/admin.php', $params));
-        if ($value == $length) {
+        if ($value == $points) {
             $params['selected'] = "selected";
         }
         $output .= html_writer::tag('option', $value, $params);

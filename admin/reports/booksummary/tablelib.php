@@ -83,9 +83,7 @@ class reader_admin_reports_booksummary_table extends reader_admin_reports_table 
      * @param int $uniqueid
      */
     public function __construct($uniqueid, $output) {
-        $wordsfields = array('words');
-        $pointsfields = array('points');
-        $this->fix_words_or_points_fields($output, $wordsfields, $pointsfields);
+        $this->fix_words_or_points_fields($output, array('words'), array('points'));
         parent::__construct($uniqueid, $output);
     }
 
@@ -112,7 +110,7 @@ class reader_admin_reports_booksummary_table extends reader_admin_reports_table 
         if ($this->output->reader->wordsorpoints==0) {
             $wordsorpoints = 'rb.words';
         } else {
-            $wordsorpoints = 'rb.length AS points';
+            $wordsorpoints = 'rb.points';
         }
 
         $select = 'rb.id AS bookid, rb.publisher, rb.level, rb.name, rb.difficulty, '.$wordsorpoints.', '.
@@ -158,6 +156,13 @@ class reader_admin_reports_booksummary_table extends reader_admin_reports_table 
             default:
                 return parent::get_table_name_and_alias($fieldname);
         }
+    }
+
+    /**
+     * records_exist
+     */
+    public function records_exist() {
+        return $this->books_exist();
     }
 
     ////////////////////////////////////////////////////////////////////////////////

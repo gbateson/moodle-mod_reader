@@ -47,11 +47,11 @@ class mod_reader_admin_reports_renderer extends mod_reader_admin_renderer {
      *
      * @var integer
      */
-    const TAB_REPORTS_USERSUMMARY  = 21;
-    const TAB_REPORTS_USERDETAILED = 22;
-    const TAB_REPORTS_GROUPSUMMARY = 23;
-    const TAB_REPORTS_BOOKSUMMARY  = 24;
-    const TAB_REPORTS_BOOKDETAILED = 25;
+    const TAB_REPORTS_USERSUMMARY  = 31;
+    const TAB_REPORTS_USERDETAILED = 32;
+    const TAB_REPORTS_GROUPSUMMARY = 33;
+    const TAB_REPORTS_BOOKSUMMARY  = 34;
+    const TAB_REPORTS_BOOKDETAILED = 35;
     /**#@-*/
 
     protected $users = null;

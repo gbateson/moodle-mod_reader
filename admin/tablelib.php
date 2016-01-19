@@ -121,7 +121,8 @@ class reader_admin_table extends table_sql {
     /**
      * Constructor
      *
-     * @param int $uniqueid
+     * @param int    $uniqueid
+     * @param object $output renderer for this Reader activity
      */
     public function __construct($uniqueid, $output) {
         global $DB, $USER;
@@ -318,7 +319,7 @@ class reader_admin_table extends table_sql {
         if ($temptable=='') {
             return array('', '', '', array());
         } else {
-            return array('COUNT(*)', "($temptable) temptable", '1', $params);
+            return array('COUNT(*)', "($temptable) temptable", '1=1', $params);
         }
     }
 
@@ -460,6 +461,31 @@ class reader_admin_table extends table_sql {
     ////////////////////////////////////////////////////////////////////////////////
 
     /**
+     * records_exist
+     */
+    public function records_exist() {
+        return false;
+    }
+
+    /**
+     * nothing_to_display
+     *
+     * @param string $mode of the current page e.g. "usersummary"
+     * @return void, but will display a message explaining why there is nothing to display
+     */
+    public function nothing_to_display($mode) {
+        if ($this->records_exist()) {
+            $text = get_string('norecordsmatch', 'mod_reader');
+            $class = 'norecordsmatch';
+        } else {
+            $text = get_string('start'.$mode, 'mod_reader');
+            $class = 'getstarted';
+        }
+        $text = format_text($text, FORMAT_MARKDOWN);
+        echo html_writer::tag('div', $text, array('class' => $class));
+    }
+
+    /**
      * wrap_html_start
      */
     public function wrap_html_start() {
@@ -525,6 +551,7 @@ class reader_admin_table extends table_sql {
             // add action submit button
             echo html_writer::start_tag('div', array('class'=>'readerreportsubmit'));
             $confirm = addslashes_js(get_string('confirm'));
+            $selectsomerows = addslashes_js(get_string('selectsomerows', 'mod_reader'));
             $onclick = ''
                 ."var found = 0;"
                 ."if (this.form && this.form.elements) {"
@@ -540,7 +567,7 @@ class reader_admin_table extends table_sql {
                 ."if (found) {"
                     ."found = confirm('$confirm');"
                 ."} else {"
-                    ."alert('Please select some users');"
+                    ."alert('$selectsomerows');"
                 ."}"
                 ."if(found) {"
                     ."if(this.form.elements['confirmed']) {"
@@ -564,22 +591,14 @@ class reader_admin_table extends table_sql {
     }
 
     /**
-     * finish_html
-     *
-     * override standard method so that we can save $SESSION values as user preferences
-     */
-    public function finish_html() {
-        parent::finish_html();
-        $this->set_user_preferences();
-    }
-
-    /**
      * display_action_settings
      *
      * @param string $action
+     * @param string $settings (optional, default="")
+     * @param string $label    (optional, default="")
      * @return xxx
      */
-    public function display_action_settings($action, $settings='') {
+    public function display_action_settings($action, $settings='', $label='') {
         echo html_writer::start_tag('div', array('id' => "readerreportaction_$action", 'class'=>'readerreportaction'));
 
         $name = 'action';
@@ -590,9 +609,14 @@ class reader_admin_table extends table_sql {
         if ($action==optional_param($name, 'noaction', PARAM_ALPHA)) {
             $params['checked'] = 'checked';
         }
-
         echo html_writer::empty_tag('input', $params);
-        echo html_writer::tag('label', get_string($action, 'mod_reader'), array('for'=>$id));
+
+        if ($label) {
+            $label = get_string($label, 'mod_reader');
+        } else {
+            $label = get_string($action, 'mod_reader');
+        }
+        echo html_writer::tag('label', $label, array('for'=>$id));
 
         if ($settings) {
             echo html_writer::tag('div', $settings, array('class' => 'actionsettings'));
@@ -669,7 +693,7 @@ class reader_admin_table extends table_sql {
      * @uses $SESSION
      */
     public function set_user_preferences() {
-        global $SESSION;
+        global $DB, $SESSION;
         $uniqueid = $this->uniqueid;
         if (isset($SESSION->flextable[$uniqueid])) {
             $prefs = $SESSION->flextable[$uniqueid];
@@ -681,11 +705,16 @@ class reader_admin_table extends table_sql {
                     set_user_preference('flextable_'.$this->uniqueid, $prefs);
                 }
             } else {
-                $prefs = base64_encode(serialize($prefs));
-                if ($prefs==get_user_preferences($uniqueid, null)) {
-                    // do nothing - $prefs have not changed
-                } else {
-                    set_user_preference($uniqueid, $prefs);
+                $columns = $DB->get_columns('user_preferences');
+                if (array_key_exists('value', $columns)) {
+                    $prefs = base64_encode(serialize($prefs));
+                    if (strlen($prefs) <= $columns['value']->max_length) {
+                        if ($prefs==get_user_preferences($uniqueid, null)) {
+                            // do nothing - $prefs have not changed
+                        } else {
+                            set_user_preference($uniqueid, $prefs);
+                        }
+                    }
                 }
             }
         }
@@ -884,6 +913,36 @@ class reader_admin_table extends table_sql {
     }
 
     /**
+     * col_words
+     *
+     * @param xxx $row
+     * @return xxx
+     */
+    public function col_words($row)  {
+        $row->words = intval($row->words);
+        if ($this->is_downloading()) {
+            return $row->words;
+        } else {
+            return number_format($row->words);
+        }
+    }
+
+    /**
+     * col_points
+     *
+     * @param xxx $row
+     * @return xxx
+     */
+    public function col_points($row)  {
+        $row->points = floatval($row->points);
+        if ($this->is_downloading()) {
+            return $row->points;
+        } else {
+            return number_format($row->points, 2);
+        }
+    }
+
+    /**
      * other_cols
      *
      * @param xxx $column
@@ -1046,7 +1105,9 @@ class reader_admin_table extends table_sql {
             }
             // display the filters
             if ($this->download=='') {
-                $this->filter->display_add();
+                if (count($this->rawdata)) {
+                    $this->filter->display_add();
+                }
                 $this->filter->display_active();
                 $this->filter->display_options();
             }
@@ -1070,14 +1131,14 @@ class reader_admin_table extends table_sql {
     }
 
     /**
-     * display_action_settings_setlevel
+     * display_action_settings_setreadinglevel
      *
      * @param string  $action
      * @param boolean $unlimited (optional, default=false)
      * @param boolean $transfer  (optional, default=false)
      * @return xxx
      */
-    public function display_action_settings_setlevel($action, $unlimited=false, $transfer=false) {
+    public function display_action_settings_setreadinglevel($action, $unlimited=false, $transfer=false) {
         $value = optional_param($action, 0, PARAM_INT);
         $options = range(0, 15);
         if ($unlimited) {

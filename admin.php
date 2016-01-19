@@ -54,8 +54,8 @@ $level                  = optional_param('level', null, PARAM_CLEAN);
 $tolevel                = optional_param('tolevel', null, PARAM_CLEAN);
 $topublisher            = optional_param('topublisher', null, PARAM_CLEAN);
 $levelex                = optional_param('levelex', null, PARAM_CLEAN);
-$length                 = optional_param('length', null, PARAM_CLEAN);
-$tolength               = optional_param('tolength', null, PARAM_CLEAN);
+$points                 = optional_param('points', null, PARAM_CLEAN);
+$topoints               = optional_param('topoints', null, PARAM_CLEAN);
 $gid                    = optional_param('gid', null, PARAM_CLEAN);
 $excel                  = optional_param('excel', null, PARAM_CLEAN);
 $del                    = optional_param('del', null, PARAM_CLEAN);
@@ -291,8 +291,8 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $quizzesid) {
             $newquiz->level = $level;
         }
 
-        if ($length) {
-            $newquiz->length = $length;
+        if ($points) {
+            $newquiz->points = $points;
         }
 
         if ($newimagename) {
@@ -473,21 +473,21 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $topublisher && 
     reader_add_to_log($course->id, 'reader', substr("AA-Mass changes publisher ({$publisher} to {$topublisher})", 0, 39), 'admin.php?id='.$cm->id, $cm->instance, $cm->id);
 }
 
-if (has_capability('mod/reader:addinstance', $contextmodule) && $length && $tolength && $publisher) {
+if (has_capability('mod/reader:addinstance', $contextmodule) && $points && $topoints && $publisher) {
     if ($reader->bookinstances == 0) {
-        $DB->set_field('reader_books',  'length',  $tolength, array('length' => $length,  'publisher' => $publisher));
+        $DB->set_field('reader_books',  'points',  $topoints, array('points' => $points,  'publisher' => $publisher));
     } else {
         $data = $DB->get_records('reader_books', array('publisher' => $publisher));
         foreach ($data as $key => $value) {
-            $lengthstring .= $value->id.',';
+            $pointsstring .= $value->id.',';
         }
-        $lengthstring = substr($lengthstring, 0, -1);
-        $DB->execute('UPDATE {reader_book_instances} SET length = ? WHERE length = ? and readerid = ? and bookid IN (?)', array($tolength,$length,$reader->id,$lengthstring));
+        $pointsstring = substr($pointsstring, 0, -1);
+        $DB->execute('UPDATE {reader_book_instances} SET points = ? WHERE points = ? and readerid = ? and bookid IN (?)', array($topoints,$points,$reader->id,$pointsstring));
     }
-    reader_add_to_log($course->id, 'reader', substr("AA-Mass changes length ({$length} to {$tolength})", 0, 39), 'admin.php?id='.$cm->id, $cm->instance, $cm->id);
+    reader_add_to_log($course->id, 'reader', substr("AA-Mass changes points ({$points} to {$topoints})", 0, 39), 'admin.php?id='.$cm->id, $cm->instance, $cm->id);
 }
 
-if (has_capability('mod/reader:addinstance', $contextmodule) && $act == 'changereaderlevel' && ($difficulty || $difficulty == 0) && empty($length)) {
+if (has_capability('mod/reader:addinstance', $contextmodule) && $act == 'changereaderlevel' && ($difficulty || $difficulty == 0) && empty($points)) {
   if ($reader->bookinstances == 0) {
     $params = array('id' => $bookid);
     if ($DB->get_record('reader_books', $params)) {
@@ -507,21 +507,21 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $act == 'changer
   }
 }
 
-if (has_capability('mod/reader:addinstance', $contextmodule) && $act == 'changereaderlevel' && $length) {
+if (has_capability('mod/reader:addinstance', $contextmodule) && $act == 'changereaderlevel' && $points) {
   if ($reader->bookinstances == 0) {
     if ($DB->get_record('reader_books', array('id' => $bookid))) {
-        $DB->set_field('reader_books',  'length',  $length, array('id' => $bookid));
+        $DB->set_field('reader_books',  'points',  $points, array('id' => $bookid));
     }
-    reader_add_to_log($course->id, 'reader', substr("AA-Change length ({$bookid} {$slevel} to {$length})",0,39), 'admin.php?id='.$cm->id, $cm->instance, $cm->id);
+    reader_add_to_log($course->id, 'reader', substr("AA-Change points ({$bookid} {$slevel} to {$points})",0,39), 'admin.php?id='.$cm->id, $cm->instance, $cm->id);
   } else {
     if ($DB->get_record('reader_book_instances', array('readerid' => $reader->id, 'bookid' => $bookid))) {
-        $DB->set_field('reader_book_instances',  'length',  $length, array('readerid' => $reader->id,  'bookid' => $bookid));
+        $DB->set_field('reader_book_instances',  'points',  $points, array('readerid' => $reader->id,  'bookid' => $bookid));
     }
-    reader_add_to_log($course->id, 'reader', substr("AA-Change length individual ({$bookid} {$slevel} to {$length})",0,39), 'admin.php?id='.$cm->id, $cm->instance, $cm->id);
+    reader_add_to_log($course->id, 'reader', substr("AA-Change points individual ({$bookid} {$slevel} to {$points})",0,39), 'admin.php?id='.$cm->id, $cm->instance, $cm->id);
   }
   if ($ajax == 'true') {
       $book = $DB->get_record('reader_books', array('id' => $bookid));
-      echo reader_length_menu(reader_get_reader_length($reader, $bookid), $book->id, $reader);
+      echo reader_points_menu(reader_get_reader_points($reader, $bookid), $book->id, $reader);
       die;
   }
 }
@@ -899,14 +899,14 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $act == 'setbook
         $data->readerid = $reader->id;
         $data->bookid   = $quiz_;
         $data->difficulty   = $oldbookdata->difficulty;
-        $data->length   = $oldbookdata->length;
+        $data->points   = $oldbookdata->points;
         //print_r($data);
         $DB->insert_record('reader_book_instances', $data);
     }
 }
 
 if (has_capability('mod/reader:addinstance', $contextmodule) && $act == 'forcedtimedelay' && is_array($levelc)) {
-    $DB->delete_records('reader_delays', array('readerid' => $reader->id, 'groupid' => $separategroups));
+    $DB->delete_records('reader_rates', array('readerid' => $reader->id, 'groupid' => $separategroups));
     foreach ($levelc as $key => $value) {
       if ($value) {
         $data             = new stdClass();
@@ -915,7 +915,7 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $act == 'forcedt
         $data->level      = $key;
         $data->delay      = $value;
         $data->timemodified = time();
-        $DB->insert_record('reader_delays', $data);
+        $DB->insert_record('reader_rates', $data);
       }
     }
 }
@@ -1076,33 +1076,33 @@ if (! $excel) {
             new reader_menu_item('summaryreportbyclassgroup', 'viewreports', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'reportbyclass')),
             new reader_menu_item('summaryreportbybooktitle', 'viewreports', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'summarybookreports')),
             new reader_menu_item('fullreportbybooktitle', 'viewreports', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'fullbookreports')),
-            //new reader_menu_item('reportquiztoreader', 'viewreports', 'admin/reports.php', array('id' => $id, 'tab' => 21, 'mode' => 'usersummary')),
-            //new reader_menu_item('fullreportquiztoreader', 'viewreports','admin/reports.php', array('id' => $id, 'tab' => 22, 'mode' => 'userdetailed')),
-            //new reader_menu_item('summaryreportbyclassgroup', 'viewreports', 'admin/reports.php', array('id' => $id, 'tab' => 23, 'mode' => 'groupsummary')),
-            //new reader_menu_item('summaryreportbybooktitle', 'viewreports', 'admin/reports.php', array('id' => $id, 'tab' => 24, 'mode' => 'booksummary')),
-            //new reader_menu_item('fullreportbybooktitle', 'viewreports', 'admin/reports.php', array('id' => $id, 'tab' => 25, 'mode' => 'bookdetailed')),
+            //new reader_menu_item('reportquiztoreader', 'viewreports', 'admin/reports.php', array('id' => $id, 'tab' => 31, 'mode' => 'usersummary')),
+            //new reader_menu_item('fullreportquiztoreader', 'viewreports','admin/reports.php', array('id' => $id, 'tab' => 32, 'mode' => 'userdetailed')),
+            //new reader_menu_item('summaryreportbyclassgroup', 'viewreports', 'admin/reports.php', array('id' => $id, 'tab' => 33, 'mode' => 'groupsummary')),
+            //new reader_menu_item('summaryreportbybooktitle', 'viewreports', 'admin/reports.php', array('id' => $id, 'tab' => 34, 'mode' => 'booksummary')),
+            //new reader_menu_item('fullreportbybooktitle', 'viewreports', 'admin/reports.php', array('id' => $id, 'tab' => 35, 'mode' => 'bookdetailed')),
         ),
         'quizmanagement' => array(
             new reader_menu_item('addquiztoreader', 'managequizzes', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'addquiz')),
             //new reader_menu_item('uploadquiztoreader', 'managequizzes', 'dlquizzes.php', array('id'=>$id)),
             //new reader_menu_item('uploaddatanoquizzes', 'managequizzes', 'dlquizzesnoq.php', array('id'=>$id)),
             //new reader_menu_item('updatequizzes', 'managequizzes', 'updatecheck.php', array('id'=>$id, 'checker'=>1)),
-            new reader_menu_item('updatequizzes', 'managequizzes', 'admin/books.php', array('id'=>$id, 'tab' => 32, 'mode' => 'download', 'type' => 1)),
-            new reader_menu_item('uploadquiztoreader', 'managequizzes', 'admin/books.php', array('id'=>$id, 'tab' => 32, 'mode' => 'download', 'type' => 1)),
-            new reader_menu_item('uploaddatanoquizzes', 'managequizzes', 'admin/books.php', array('id'=>$id, 'tab' => 32, 'mode' => 'download', 'type' => 0)),
+            new reader_menu_item('updatequizzes', 'managequizzes', 'admin/books.php', array('id'=>$id, 'tab' => 43, 'mode' => 'download', 'type' => 1)),
+            new reader_menu_item('uploadquiztoreader', 'managequizzes', 'admin/books.php', array('id'=>$id, 'tab' => 43, 'mode' => 'download', 'type' => 1)),
+            new reader_menu_item('uploaddatanoquizzes', 'managequizzes', 'admin/books.php', array('id'=>$id, 'tab' => 44, 'mode' => 'download', 'type' => 0)),
             new reader_menu_item('editquiztoreader', 'managequizzes', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'editquiz')),
             new reader_menu_item('setbookinstances', 'managequizzes', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'setbookinstances')),
             //new reader_menu_item('forcedtimedelay', 'managequizzes', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'forcedtimedelay')),
-            new reader_menu_item('forcedtimedelay', 'managequizzes', 'admin/users.php', array('id'=>$id, 'tab'=>53, 'mode'=>'setdelays')),
+            new reader_menu_item('forcedtimedelay', 'managequizzes', 'admin/users.php', array('id'=>$id, 'tab'=>53, 'mode'=>'setrates')),
             new reader_menu_item('changenumberofsectionsinquiz', 'managequizzes', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'changenumberofsectionsinquiz')),
         ),
         'attemptscoremanagement' => array(
             //new reader_menu_item('viewattempts', 'manageusers', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'viewattempts')),
             //new reader_menu_item('awardextrapoints', 'manageusers', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'awardextrapoints')),
             //new reader_menu_item('assignpointsbookshavenoquizzes', 'manageusers', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'assignpointsbookshavenoquizzes')),
-            new reader_menu_item('viewattempts', 'manageusers', 'admin/reports.php', array('id' => $id, 'tab' => 22, 'mode' => 'userdetailed')),
-            new reader_menu_item('awardextrapoints', 'manageusers', 'admin/reports.php', array('id' => $id, 'tab' => 21, 'mode' => 'usersummary')),
-            new reader_menu_item('assignpointsbookshavenoquizzes', 'manageusers', 'admin/reports.php', array('id' => $id, 'tab' => 21, 'mode' => 'usersummary')),
+            new reader_menu_item('viewattempts', 'manageusers', 'admin/reports.php', array('id' => $id, 'tab' => 32, 'mode' => 'userdetailed')),
+            new reader_menu_item('awardextrapoints', 'manageusers', 'admin/reports.php', array('id' => $id, 'tab' => 31, 'mode' => 'usersummary')),
+            new reader_menu_item('assignpointsbookshavenoquizzes', 'manageusers', 'admin/reports.php', array('id' => $id, 'tab' => 31, 'mode' => 'usersummary')),
             new reader_menu_item('adjustscores', 'manageusers', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'adjustscores')),
             new reader_menu_item('checksuspiciousactivity', 'manageattempts', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'checksuspiciousactivity')),
             new reader_menu_item('viewlogsuspiciousactivity', 'manageattempts', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'viewlogsuspiciousactivity')),
@@ -1244,9 +1244,9 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
                 }
                 echo '</td></tr>';
                 echo '<tr><td>';
-                print_string('lengthex11', 'reader');
+                print_string('pointsex11', 'reader');
                 echo '</td><td>';
-                echo '<input type="text" name="length" value="1" />';
+                echo '<input type="text" name="points" value="1" />';
                 echo '</td><td>';
                 echo '</td></tr>';
                 echo '<tr><td>';
@@ -1290,7 +1290,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
     }
     $table = new html_table();
 
-    $titles = array(''=>'', 'Title'=>'title', 'Publisher'=>'publisher', 'Level'=>'level', 'Reading Level'=>'rlevel', 'Length'=>'length', 'Times Quiz Taken'=>'qtaken', 'Average Points'=>'apoints', 'Options'=>'');
+    $titles = array(''=>'', 'Title'=>'title', 'Publisher'=>'publisher', 'Level'=>'level', 'Reading Level'=>'rlevel', 'Length'=>'points', 'Times Quiz Taken'=>'qtaken', 'Average Points'=>'apoints', 'Options'=>'');
 
     $params = array('a' => 'admin', 'id' => $id, 'act' => $act);
     reader_make_table_headers($table, $titles, $orderby, $sort, $params);
@@ -1345,7 +1345,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
             $book->publisher,
             $book->level,
             reader_get_reader_difficulty($reader, $book->id),
-            reader_get_reader_length($reader, $book->id),
+            reader_get_reader_points($reader, $book->id),
             $timesoftaken,
             $averagepoints.'%',
             $deletelink
@@ -1762,7 +1762,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
                         $readerattempt['percentgrade'].'%',
                         $strpassed,
                         $readerattempt['bookpoints'],
-                        $readerattempt['booklength'],
+                        $readerattempt['points'],
                         $readerattempt['totalpoints']
                     );
                     $table->data[] = new html_table_row($cells);
@@ -1855,7 +1855,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
         $sort = 'title';
     }
     $table = new html_table();
-    $titles = array('Title'=>'title', 'Publisher'=>'publisher', 'Level'=>'level', 'Reading Level'=>'rlevel', 'Length'=>'length', 'Times Quiz Taken'=>'qtaken', 'Average Points'=>'apoints', 'Passed'=>'passed', 'Failed'=>'failed', 'Pass Rate'=>'prate');
+    $titles = array('Title'=>'title', 'Publisher'=>'publisher', 'Level'=>'level', 'Reading Level'=>'rlevel', 'Length'=>'points', 'Times Quiz Taken'=>'qtaken', 'Average Points'=>'apoints', 'Passed'=>'passed', 'Failed'=>'failed', 'Pass Rate'=>'prate');
 
     $params = array('a' => 'admin', 'id' => $id, 'act' => 'summarybookreports', 'gid' => $gid, 'searchtext' => $searchtext, 'page' => $page);
     reader_make_table_headers($table, $titles, $orderby, $sort, $params);
@@ -1918,7 +1918,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
                     $book->publisher,
                     $book->level,
                     reader_get_reader_difficulty($reader, $book->id),
-                    reader_get_reader_length($reader, $book->id),
+                    reader_get_reader_points($reader, $book->id),
                     $timesoftaken,
                     $averagepoints.'%',
                     $correctpoints,
@@ -2470,9 +2470,9 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
     $table = new html_table();
 
     if ($reader->bookinstances == 1) {
-      $titles = array('Title'=>'title', 'Publisher'=>'publisher', 'Level'=>'level', 'Reading Level'=>'readinglevel', 'Length'=>'length');
+      $titles = array('Title'=>'title', 'Publisher'=>'publisher', 'Level'=>'level', 'Reading Level'=>'readinglevel', 'Length'=>'points');
     } else {
-      $titles = array('Title'=>'title', 'Publisher'=>'publisher', 'Level'=>'level', 'Words'=>'words', 'Reading Level'=>'readinglevel', 'Length'=>'length');
+      $titles = array('Title'=>'title', 'Publisher'=>'publisher', 'Level'=>'level', 'Words'=>'words', 'Reading Level'=>'readinglevel', 'Length'=>'points');
     }
 
     $params = array('a' => 'admin', 'id' => $id, 'act' => $act, 'gid' => $gid, 'searchtext' => $searchtext, 'page' => $page, 'publisher' => $publisher);
@@ -2508,12 +2508,12 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
             $publishertitle = reader_ajax_textbox_title($has_capability, $book, 'publisher', $id, $act);
 
             $difficultyform = trim(reader_difficulty_menu(reader_get_reader_difficulty($reader, $book->id), $book->id, $reader));
-            $lengthform = trim(reader_length_menu(reader_get_reader_difficulty($reader, $book->id), $book->id, $reader));
+            $pointsform = trim(reader_points_menu(reader_get_reader_difficulty($reader, $book->id), $book->id, $reader));
 
             if ($reader->bookinstances == 1) {
-                $table->data[] = new html_table_row(array($book->name, $publishertitle, $leveltitle, $difficultyform, $lengthform));
+                $table->data[] = new html_table_row(array($book->name, $publishertitle, $leveltitle, $difficultyform, $pointsform));
             } else {
-                $table->data[] = new html_table_row(array($book->name, $publishertitle, $leveltitle, $wordstitle, $difficultyform, $lengthform));
+                $table->data[] = new html_table_row(array($book->name, $publishertitle, $leveltitle, $wordstitle, $difficultyform, $pointsform));
             }
         }
       }
@@ -2557,7 +2557,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
             if (! $level || $levels_->level == $level) {
                 $level_[$levels_->level] = $levels_->id;
                 $difficulty_[$levels_->difficulty] = $levels_->id;
-                $length_[$levels_->length] = $levels_->id;
+                $points_[$levels_->points] = $levels_->id;
             }
             $levelform[$CFG->wwwroot.'/mod/reader/admin.php?a=admin&id='.$id.'&act='.$act.'&sort='.$sort.'&orderby='.$orderby.'&publisher='.$publisher.'&level='.$levels_->level] = $levels_->level;
         }
@@ -2577,11 +2577,11 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
 
     if ($publisher) {
         if ($reader->bookinstances == 1) {
-            unset($difficulty_,$length_);
-            $data = $DB->get_records_sql('SELECT ib.difficulty as ibdifficulty,ib.length as iblength FROM {reader_books} rp INNER JOIN {reader_book_instances} ib ON ib.bookid = rp.id WHERE ib.readerid= ?  and rp.publisher = ? ', array($reader->id, $publisher));
+            unset($difficulty_,$points_);
+            $data = $DB->get_records_sql('SELECT ib.difficulty as ibdifficulty,ib.points as ibpoints FROM {reader_books} rp INNER JOIN {reader_book_instances} ib ON ib.bookid = rp.id WHERE ib.readerid= ?  and rp.publisher = ? ', array($reader->id, $publisher));
             foreach ($data as $data_) {
                 $difficulty_[$data_->ibdifficulty] = $data_->bookid;
-                $length_[$data_->iblength] = $data_->bookid;
+                $points_[$data_->ibpoints] = $data_->bookid;
             }
         }
 
@@ -2624,23 +2624,23 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
         echo '</div></form>';
 
         echo '<form action="" method="post"><div> ';
-        //$lengtharray = array(0.50,0.60,0.70,0.80,0.90,1.00,1.10,1.20,1.30,1.40,1.50,1.60,1.70,1.80,1.90,2.00);
-        $lengtharray = array(0.50,0.60,0.70,0.80,0.90,1.00,1.10,1.20,1.30,1.40,1.50,1.60,1.70,1.80,1.90,2.00,3.00,4.00,5.00,6.00,7.00,8.00,9.00,10.00,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100,110,120,130,140,150,160,170,175,180,190,200,225,250,275,300,350,400);
-        print_string('changelengthfrom', 'reader');
-        echo ' <select name="length">';
-        ksort($length_);
-        reset($length_);
-        foreach ($length_ as $key => $value) {
+        //$pointsarray = array(0.50,0.60,0.70,0.80,0.90,1.00,1.10,1.20,1.30,1.40,1.50,1.60,1.70,1.80,1.90,2.00);
+        $pointsarray = array(0.50,0.60,0.70,0.80,0.90,1.00,1.10,1.20,1.30,1.40,1.50,1.60,1.70,1.80,1.90,2.00,3.00,4.00,5.00,6.00,7.00,8.00,9.00,10.00,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100,110,120,130,140,150,160,170,175,180,190,200,225,250,275,300,350,400);
+        print_string('changepointsfrom', 'reader');
+        echo ' <select name="points">';
+        ksort($points_);
+        reset($points_);
+        foreach ($points_ as $key => $value) {
             echo '<option value="'.$key.'" ';
-            if ($length == $key) {
+            if ($points == $key) {
                 echo ' selected="selected" ';
             }
             echo '>'.$key.'</option>';
         }
         echo '</select> ';
         print_string('to', 'reader');
-        echo ' <select name="tolength">';
-        foreach ($lengtharray as $value) {
+        echo ' <select name="topoints">';
+        foreach ($pointsarray as $value) {
             echo '<option value="'.$value.'">'.$value.'</option>';
         }
         echo '</select>';
@@ -3277,7 +3277,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
                     if (strtolower($readerattempt->passed) == 'true') {
                         $data['averagepassed']++;
                         if ($bookdata = $DB->get_record('reader_books', array('quizid' => $readerattempt->quizid))) {
-                            $data['averagepoints'] += reader_get_reader_length($reader, $bookdata->id);
+                            $data['averagepoints'] += reader_get_reader_points($reader, $bookdata->id);
                             $data['averagewordsthisterm'] += $bookdata->words;
                         }
                     } else {
@@ -3440,7 +3440,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
 } else if ($act == 'forcedtimedelay' && has_capability('mod/reader:manageusers', $contextmodule)) {
 
     /**
-     * reader_delays_form
+     * reader_rates_form
      *
      * @copyright  2013 Gordon Bateson (gordon.bateson@gmail.com)
      * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -3448,7 +3448,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
      * @package    mod
      * @subpackage reader
      */
-    class reader_delays_form extends moodleform {
+    class reader_rates_form extends moodleform {
 
         /**
          * definition
@@ -3463,7 +3463,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
         function definition() {
             global $COURSE, $CFG, $DB, $course, $reader;
 
-            if ($default = $DB->get_record('reader_delays', array('readerid' => $reader->id,  'groupid' => 0, 'level' => 0))) {
+            if ($default = $DB->get_record('reader_rates', array('readerid' => $reader->id,  'groupid' => 0, 'level' => 0))) {
                 $defaultdelay = $default->delay;
             } else {
                 $defaultdelay = 0;
@@ -3486,8 +3486,8 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
             }
 
             /* SET default */
-            if ($delays = $DB->get_records("reader_delays", array('readerid' => $reader->id))) {
-                foreach ($delays as $delay) {
+            if ($rates = $DB->get_records("reader_rates", array('readerid' => $reader->id))) {
+                foreach ($rates as $delay) {
                     if ($delay->level == 99) {
                         $mform->setDefault('levelall', $delay->delay);
                     } else {
@@ -3499,7 +3499,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
             $this->add_action_buttons(false, $submitlabel="Save");
         }
     }
-    $mform = new reader_delays_form('admin.php?a='.$a.'&id='.$id.'&act='.$act);
+    $mform = new reader_rates_form('admin.php?a='.$a.'&id='.$id.'&act='.$act);
     $mform->display();
 
 } else if ($act == 'bookratingslevel' && has_capability('mod/reader:viewreports', $contextmodule)) {

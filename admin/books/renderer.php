@@ -51,9 +51,11 @@ class mod_reader_admin_books_renderer extends mod_reader_admin_renderer {
      *
      * @var integer
      */
-    const TAB_BOOKS_EDIT             = 31;
-    const TAB_BOOKS_DOWNLOAD_WITH    = 32;
-    const TAB_BOOKS_DOWNLOAD_WITHOUT = 33;
+    const TAB_BOOKS_EDITSITE         = 41;
+    const TAB_BOOKS_EDITCOURSE       = 42;
+    const TAB_BOOKS_ADDBOOK          = 49;
+    const TAB_BOOKS_DOWNLOAD_WITH    = 43;
+    const TAB_BOOKS_DOWNLOAD_WITHOUT = 44;
     /**#@-*/
 
     /**
@@ -72,9 +74,9 @@ class mod_reader_admin_books_renderer extends mod_reader_admin_renderer {
      */
     public function get_default_tab() {
         if ($this->reader->bookinstances) {
-            return self::TAB_BOOKS_EDIT;
+            return self::TAB_BOOKS_EDITCOURSE;
         } else {
-            return self::TAB_BOOKS_DOWNLOAD_WITH;
+            return self::TAB_BOOKS_EDITSITE;
         }
     }
 
@@ -86,26 +88,42 @@ class mod_reader_admin_books_renderer extends mod_reader_admin_renderer {
     public function get_tabs() {
         $tabs = array();
         $cmid = $this->reader->cm->id;
+
         if ($this->reader->can_managebooks()) {
 
+            $tab = self::TAB_BOOKS_EDITSITE;
+            $mode = 'editsite';
+            $params = array('id' => $cmid, 'tab' => $tab, 'mode' => $mode);
+            $url = new moodle_url('/mod/reader/admin/books.php', $params);
+            $tabs[] = new tabobject($tab, $url, get_string('books'.$mode, 'mod_reader'));
+
             if ($this->reader->bookinstances) {
-                $tab = self::TAB_BOOKS_EDIT;
-                $params = array('id' => $cmid, 'tab' => $tab, 'mode' => 'edit');
+                $tab = self::TAB_BOOKS_EDITCOURSE;
+                $mode = 'editcourse';
+                $params = array('id' => $cmid, 'tab' => $tab, 'mode' => $mode);
                 $url = new moodle_url('/mod/reader/admin/books.php', $params);
-                $tabs[] = new tabobject($tab, $url, get_string('edit'));
+                $tabs[] = new tabobject($tab, $url, get_string('books'.$mode, 'mod_reader'));
             }
 
-            $tab = self::TAB_BOOKS_DOWNLOAD_WITH;
-            $type = reader_downloader::BOOKS_WITH_QUIZZES;
-            $params = array('id' => $cmid, 'tab' => $tab, 'mode' => 'download', 'type' => $type);
+            $tab = self::TAB_BOOKS_ADDBOOK;
+            $mode = 'addbook';
+            $params = array('id' => $cmid, 'tab' => $tab, 'mode' => $mode);
             $url = new moodle_url('/mod/reader/admin/books.php', $params);
-            $tabs[] = new tabobject($tab, $url, get_string('downloadbookswithquizzes', 'mod_reader'));
+            $tabs[] = new tabobject($tab, $url, get_string('books'.$mode, 'mod_reader'));
+
+            $tab = self::TAB_BOOKS_DOWNLOAD_WITH;
+            $mode = 'download';
+            $type = reader_downloader::BOOKS_WITH_QUIZZES;
+            $params = array('id' => $cmid, 'tab' => $tab, 'mode' => $mode, 'type' => $type);
+            $url = new moodle_url('/mod/reader/admin/books.php', $params);
+            $tabs[] = new tabobject($tab, $url, get_string($mode.'bookswithquizzes', 'mod_reader'));
 
             $tab = self::TAB_BOOKS_DOWNLOAD_WITHOUT;
+            $mode = 'download';
             $type = reader_downloader::BOOKS_WITHOUT_QUIZZES;
-            $params = array('id' => $cmid, 'tab' => $tab, 'mode' => 'download', 'type' => $type);
+            $params = array('id' => $cmid, 'tab' => $tab, 'mode' => $mode, 'type' => $type);
             $url = new moodle_url('/mod/reader/admin/books.php', $params);
-            $tabs[] = new tabobject($tab, $url, get_string('downloadbookswithoutquizzes', 'mod_reader'));
+            $tabs[] = new tabobject($tab, $url, get_string($mode.'bookswithoutquizzes', 'mod_reader'));
         }
         return $this->attach_tabs_subtree(parent::get_tabs(), parent::TAB_BOOKS, $tabs);
     }
@@ -118,9 +136,9 @@ class mod_reader_admin_books_renderer extends mod_reader_admin_renderer {
      */
     static public function get_standard_modes($reader=null) {
         if ($reader && $reader->bookinstances) {
-            return array('edit', 'download');
+            return array('editcourse', 'editsite', 'addbook', 'download');
         } else {
-            return array('download');
+            return array('editsite', 'addbook', 'download');
         }
     }
 }
