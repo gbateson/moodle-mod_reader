@@ -347,6 +347,9 @@ img.readercredits { margin-left: auto; margin-right: auto; width: 225px; height:
 #page-mod-reader-admin-reports div#fitem_id_submitoptions + div { display: none; }
 
 #page-mod-reader-admin-reports div.readerreportaction div.actionsettings { margin-left: 20px; }
+#page-mod-reader-admin-reports div.readerreportaction div.actionsettings input,
+#page-mod-reader-admin-reports div.readerreportaction div.actionsettings select,
+#page-mod-reader-admin-reports div.readerreportaction div.actionsettings textarea { vertical-align: top; }
 
 #page-mod-reader-admin-reports .mform fieldset div.readerreportaction div#publishers { margin-top: 6px; }
 
