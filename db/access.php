@@ -124,5 +124,13 @@ $capabilities = array(
             'editingteacher' => CAP_ALLOW,
             'manager'        => CAP_ALLOW
         )
+    ),
+
+    'mod/reader:viewversion' => array(
+        'captype'      => 'read',
+        'contextlevel' => CONTEXT_MODULE,
+        'archetypes'   => array(
+            'manager'        => CAP_ALLOW
+        )
     )
 );

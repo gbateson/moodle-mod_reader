@@ -18,6 +18,7 @@ $string['reader:manageusers'] = 'Manage users';
 $string['reader:viewallbooks'] = 'View all books';
 $string['reader:viewbooks'] = 'View books';
 $string['reader:viewreports'] = 'View reports';
+$string['reader:viewversion'] = 'View version';
 
 // config strings
 $string['configbookcovers'] = '';

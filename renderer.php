@@ -68,6 +68,171 @@ class mod_reader_renderer extends plugin_renderer_base {
         $this->reader = $reader;
     }
 
+    ///////////////////////////////////////////
+    // format tabs
+    ///////////////////////////////////////////
+
+    /**
+     * tabs
+     *
+     * @return string HTML output to display navigation tabs
+     */
+    public function tabs($selected=null, $inactive=null, $activated=null) {
+
+        $tab = $this->get_tab();
+        $tabs = $this->get_tabs();
+
+        if (class_exists('tabtree')) {
+            // Moodle >= 2.6
+            return $this->tabtree($tabs, $tab);
+        } else {
+            // Moodle <= 2.5
+            $this->set_active_tabs($tabs, $tab);
+            $html = convert_tree_to_html($tabs);
+            return html_writer::tag('div', $html, array('class' => 'tabtree')).
+                   html_writer::tag('div', '',    array('class' => 'clearer'));
+        }
+
+    }
+
+    /**
+     * set_active_tabs
+     *
+     * @param array $tabs (passed by reference)
+     * @param integer currently selected $tab id
+     * @return boolean, TRUE if any tabs or child tabs were selected, FALSE otherwise
+     */
+    public function set_active_tabs(&$tabs, $tab) {
+        $result = false;
+        foreach (array_keys($tabs) as $t) {
+
+            // selected
+            if ($tabs[$t]->id==$tab) {
+                $tabs[$t]->selected = true;
+            } else {
+                $tabs[$t]->selected = false;
+            }
+
+            // active
+            if (isset($tabs[$t]->subtree) && $this->set_active_tabs($tabs[$t]->subtree, $tab)) {
+                $tabs[$t]->active = true;
+            } else {
+                $tabs[$t]->active = false;
+            }
+
+            // inactive (make sure it is set)
+            if (empty($tabs[$t]->inactive)) {
+                $tabs[$t]->inactive = false;
+            }
+
+            // result
+            $result = ($result || $tabs[$t]->selected || $tabs[$t]->active);
+        }
+        return $result;
+    }
+
+    /**
+     * get_tab
+     *
+     * @return integer tab id
+     */
+    public function get_tab() {
+        $tab = $this->get_my_tab(); // the default tab
+        $tab = optional_param('tab', $tab, PARAM_INT);
+        if ($tab==$this->get_my_tab()) {
+            $tab = $this->get_default_tab();
+        }
+        return $tab;
+    }
+
+    /**
+     * get_my_tab
+     *
+     * @return integer tab id
+     */
+    public function get_my_tab() {
+        return self::TAB_VIEW;
+    }
+
+    /**
+     * get_default_tab
+     *
+     * @return integer tab id
+     */
+    public function get_default_tab() {
+        return self::TAB_VIEW;
+    }
+
+    /**
+     * get_tabs
+     *
+     * @return string HTML output to display navigation tabs
+     */
+    public function get_tabs() {
+        $tabs = array();
+        if (isset($this->reader)) {
+            if (isset($this->reader->cm)) {
+                $cmid = $this->reader->cm->id;
+            } else {
+                $cmid = 0; // unusual !!
+            }
+            if ($this->reader->can_viewbooks()) {
+                $tab = self::TAB_VIEW;
+                $url = new moodle_url('/mod/reader/view.php', array('id' => $cmid, 'tab' => $tab));
+                $tabs[$tab] = new tabobject($tab, $url, get_string('view'));
+            }
+            if ($this->reader->can_addinstance()) {
+                $tab = self::TAB_SETTINGS;
+                $url = new moodle_url('/course/mod.php', array('update' => $cmid, 'return' => 1, 'sesskey' => sesskey()));
+                $tabs[$tab] = new tabobject($tab, $url, get_string('settings'));
+            }
+            if ($this->reader->can_viewreports()) {
+                $tab = self::TAB_REPORTS;
+                $url = new moodle_url('/mod/reader/admin/reports.php', array('id' => $cmid, 'tab' => $tab));
+                $tabs[$tab] = new tabobject($tab, $url, get_string('reports'));
+            }
+            if ($this->reader->can_managebooks()) {
+                $tab = self::TAB_BOOKS;
+                $url = new moodle_url('/mod/reader/admin/books.php', array('id' => $cmid, 'tab' => $tab));
+                $tabs[$tab] = new tabobject($tab, $url, get_string('books', 'mod_reader'));
+            }
+            if ($this->reader->can_manageusers()) {
+                $tab = self::TAB_USERS;
+                $url = new moodle_url('/mod/reader/admin/users.php', array('id' => $cmid, 'tab' => $tab));
+                $tabs[$tab] = new tabobject($tab, $url, get_string('users', 'mod_reader'));
+            }
+            if ($this->reader->can_managetools()) {
+                $tab = self::TAB_TOOLS;
+                $url = new moodle_url('/mod/reader/admin/tools.php', array('id' => $cmid, 'tab' => $tab));
+                $tabs[$tab] = new tabobject($tab, $url, get_string('tools', 'mod_reader'));
+            }
+            if ($this->reader->can_managetools()) {
+                $tab = self::TAB_ADMINAREA;
+                $url = new moodle_url('/mod/reader/admin.php', array('id' => $cmid, 'tab' => $tab, 'a' => 'admin'));
+                $tabs[$tab] = new tabobject($tab, $url, get_string('adminarea', 'mod_reader'));
+            }
+        }
+        return $tabs;
+    }
+
+    /**
+     * attach_tabs_subtree
+     *
+     * @return string HTML output to display navigation tabs
+     */
+    public function attach_tabs_subtree($tabs, $id, $subtree) {
+        foreach (array_keys($tabs) as $i) {
+            if ($tabs[$i]->id==$id) {
+                $tabs[$i]->subtree = $subtree;
+            }
+        }
+        return $tabs;
+    }
+
+    ///////////////////////////////////////////
+    // generate SQL to select available books
+    ///////////////////////////////////////////
+
     /**
      * available_sql
      * generate sql to select books that this user is currently allowed to attempt
@@ -603,8 +768,12 @@ class mod_reader_renderer extends plugin_renderer_base {
         return $js;
     }
 
+    ///////////////////////////////////////////
+    // get user level and book difficulty
+    ///////////////////////////////////////////
+
     /**
-     * reader_get_level_data
+     * get_level_data
      *
      * @uses $CFG
      * @uses $DB
@@ -748,162 +917,9 @@ class mod_reader_renderer extends plugin_renderer_base {
         return 0; // shouldn't happen !!
     }
 
-    /**
-     * tabs
-     *
-     * @return string HTML output to display navigation tabs
-     */
-    public function tabs($selected=null, $inactive=null, $activated=null) {
-
-        $tab = $this->get_tab();
-        $tabs = $this->get_tabs();
-
-        if (class_exists('tabtree')) {
-            // Moodle >= 2.6
-            return $this->tabtree($tabs, $tab);
-        } else {
-            // Moodle <= 2.5
-            $this->set_active_tabs($tabs, $tab);
-            $html = convert_tree_to_html($tabs);
-            return html_writer::tag('div', $html, array('class' => 'tabtree')).
-                   html_writer::tag('div', '',    array('class' => 'clearer'));
-        }
-
-    }
-
-    /**
-     * set_active_tabs
-     *
-     * @param array $tabs (passed by reference)
-     * @param integer currently selected $tab id
-     * @return boolean, TRUE if any tabs or child tabs were selected, FALSE otherwise
-     */
-    public function set_active_tabs(&$tabs, $tab) {
-        $result = false;
-        foreach (array_keys($tabs) as $t) {
-
-            // selected
-            if ($tabs[$t]->id==$tab) {
-                $tabs[$t]->selected = true;
-            } else {
-                $tabs[$t]->selected = false;
-            }
-
-            // active
-            if (isset($tabs[$t]->subtree) && $this->set_active_tabs($tabs[$t]->subtree, $tab)) {
-                $tabs[$t]->active = true;
-            } else {
-                $tabs[$t]->active = false;
-            }
-
-            // inactive (make sure it is set)
-            if (empty($tabs[$t]->inactive)) {
-                $tabs[$t]->inactive = false;
-            }
-
-            // result
-            $result = ($result || $tabs[$t]->selected || $tabs[$t]->active);
-        }
-        return $result;
-    }
-
-    /**
-     * get_tab
-     *
-     * @return integer tab id
-     */
-    public function get_tab() {
-        $tab = $this->get_my_tab(); // the default tab
-        $tab = optional_param('tab', $tab, PARAM_INT);
-        if ($tab==$this->get_my_tab()) {
-            $tab = $this->get_default_tab();
-        }
-        return $tab;
-    }
-
-    /**
-     * get_my_tab
-     *
-     * @return integer tab id
-     */
-    public function get_my_tab() {
-        return self::TAB_VIEW;
-    }
-
-    /**
-     * get_default_tab
-     *
-     * @return integer tab id
-     */
-    public function get_default_tab() {
-        return self::TAB_VIEW;
-    }
-
-    /**
-     * get_tabs
-     *
-     * @return string HTML output to display navigation tabs
-     */
-    public function get_tabs() {
-        $tabs = array();
-        if (isset($this->reader)) {
-            if (isset($this->reader->cm)) {
-                $cmid = $this->reader->cm->id;
-            } else {
-                $cmid = 0; // unusual !!
-            }
-            if ($this->reader->can_viewbooks()) {
-                $tab = self::TAB_VIEW;
-                $url = new moodle_url('/mod/reader/view.php', array('id' => $cmid, 'tab' => $tab));
-                $tabs[$tab] = new tabobject($tab, $url, get_string('view'));
-            }
-            if ($this->reader->can_addinstance()) {
-                $tab = self::TAB_SETTINGS;
-                $url = new moodle_url('/course/mod.php', array('update' => $cmid, 'return' => 1, 'sesskey' => sesskey()));
-                $tabs[$tab] = new tabobject($tab, $url, get_string('settings'));
-            }
-            if ($this->reader->can_viewreports()) {
-                $tab = self::TAB_REPORTS;
-                $url = new moodle_url('/mod/reader/admin/reports.php', array('id' => $cmid, 'tab' => $tab));
-                $tabs[$tab] = new tabobject($tab, $url, get_string('reports'));
-            }
-            if ($this->reader->can_managebooks()) {
-                $tab = self::TAB_BOOKS;
-                $url = new moodle_url('/mod/reader/admin/books.php', array('id' => $cmid, 'tab' => $tab));
-                $tabs[$tab] = new tabobject($tab, $url, get_string('books', 'mod_reader'));
-            }
-            if ($this->reader->can_manageusers()) {
-                $tab = self::TAB_USERS;
-                $url = new moodle_url('/mod/reader/admin/users.php', array('id' => $cmid, 'tab' => $tab));
-                $tabs[$tab] = new tabobject($tab, $url, get_string('users', 'mod_reader'));
-            }
-            if ($this->reader->can_managetools()) {
-                $tab = self::TAB_TOOLS;
-                $url = new moodle_url('/mod/reader/admin/tools.php', array('id' => $cmid, 'tab' => $tab));
-                $tabs[$tab] = new tabobject($tab, $url, get_string('tools', 'mod_reader'));
-            }
-            if ($this->reader->can_managetools()) {
-                $tab = self::TAB_ADMINAREA;
-                $url = new moodle_url('/mod/reader/admin.php', array('id' => $cmid, 'tab' => $tab, 'a' => 'admin'));
-                $tabs[$tab] = new tabobject($tab, $url, get_string('adminarea', 'mod_reader'));
-            }
-        }
-        return $tabs;
-    }
-
-    /**
-     * attach_tabs_subtree
-     *
-     * @return string HTML output to display navigation tabs
-     */
-    public function attach_tabs_subtree($tabs, $id, $subtree) {
-        foreach (array_keys($tabs) as $i) {
-            if ($tabs[$i]->id==$id) {
-                $tabs[$i]->subtree = $subtree;
-            }
-        }
-        return $tabs;
-    }
+    ///////////////////////////////////////////
+    // format search form
+    ///////////////////////////////////////////
 
     /**
      * search_form
@@ -1302,6 +1318,10 @@ class mod_reader_renderer extends plugin_renderer_base {
         $genre = implode($seperator, $genre);
         return $genre;
     }
+
+    ///////////////////////////////////////////
+    // format form to select a book
+    ///////////////////////////////////////////
 
     /**
      * publishers_menu
@@ -1821,6 +1841,10 @@ class mod_reader_renderer extends plugin_renderer_base {
         return html_writer::tag('small', html_writer::tag('a', $strcheatsheet, $params));
     }
 
+    ///////////////////////////////////////////
+    // format progress bar
+    ///////////////////////////////////////////
+
     /**
      * progressbar
      *
@@ -2052,6 +2076,10 @@ class mod_reader_renderer extends plugin_renderer_base {
         return $html;
     }
 
+    ///////////////////////////////////////////
+    // format messages from the teacher
+    ///////////////////////////////////////////
+
     /**
      * Format a message from the teacher to students
      * that will be displayed on the view.php page
@@ -2095,6 +2123,10 @@ class mod_reader_renderer extends plugin_renderer_base {
         $output .= html_writer::end_tag('div');
         return $output;
     }
+
+    ///////////////////////////////////////////
+    // format reading rates
+    ///////////////////////////////////////////
 
     /**
      * Format reading rates for display on the view.php page
@@ -2200,5 +2232,47 @@ class mod_reader_renderer extends plugin_renderer_base {
         } else {
             return '';
         }
+    }
+
+    public function footer() {
+        $output = '';
+        $output .= $this->credits();
+        $output .= parent::footer();
+        return $output;
+    }
+    ///////////////////////////////////////////
+    // format versions
+    ///////////////////////////////////////////
+
+    /**
+     * credits
+     */
+    public function credits() {
+        $params = array('src' => new moodle_url('/mod/reader/img/credit.jpg'), 'class' => 'readercredits');
+        if ($version = $this->version()) {
+            $version = json_encode($version);
+            $params['onclick'] = "alert($version);";
+        }
+        $img = html_writer::empty_tag('img', $params);
+        $img = html_writer::tag('center', $img);
+        return $img;
+    }
+
+    /**
+     * version
+     */
+    public function version() {
+        if ($this->reader->can_viewversion()) {
+            $plugin = 'mod_reader';
+            if ($version = get_config($plugin, 'version')) {
+                $moodleversion = get_config('', 'version');
+                $moodlerelease = get_config('', 'release');
+                $search = '/(\d{4})(\d{2})(\d{2})(\d{2})/';
+                $release = preg_replace($search, '$1-$2-$3 ($4)', $version);
+                return get_string('modulename', $plugin).":  ($version)  $release\n".
+                       get_string('moodleorg', 'hub').":  ($moodleversion)  $moodlerelease";
+            }
+        }
+        return '';
     }
 }

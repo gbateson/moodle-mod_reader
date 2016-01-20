@@ -539,7 +539,6 @@ if ($showform && has_capability('mod/reader:viewbooks', $contextmodule)) {
 echo html_writer::tag('div', '', array('style'=>'clear:both;'));
 
 echo $output->box_end();
-print ('<center><img src="img/credit.jpg" height="40px"></center>');
 echo $output->footer();
 
 /**

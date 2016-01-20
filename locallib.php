@@ -710,6 +710,15 @@ class mod_reader {
     }
 
     /*
+     * can_viewversion
+     *
+     * @return boolean
+     **/
+    public function can_viewversion() {
+        return $this->can('viewversion');
+    }
+
+    /*
      * req(uire)
      *
      * @prefix string $name
