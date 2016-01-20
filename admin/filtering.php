@@ -62,7 +62,11 @@ class reader_admin_filtering extends user_filtering {
             $classname = str_replace('filtering', 'options', get_class($this));
             $this->_optionsform = new $classname($optionfields, $baseurl, $filterfields);
         }
-        parent::user_filtering($filterfields, $baseurl, $params);
+        if (method_exists($this, '__construct')) { // Moodle 3.x
+            parent::__construct($filterfields, $baseurl, $params);
+        } else {
+            parent::user_filtering($filterfields, $baseurl, $params);
+        }
     }
 
     /**
