@@ -1890,25 +1890,43 @@ class mod_reader_renderer extends plugin_renderer_base {
         }
 
         switch (true) {
+            // Note: colors are the same as the
+            // colors blocks on the progress bar
+            case ($max <= 10000):
+                $max = 1;
+                $bgcolor = '#FF9900'; // orange
+                break;
+            case ($max <= 20000):
+                $max = 2;
+                $bgcolor = '#99FF66'; // light green
+                break;
+            case ($max <= 30000):
+                $max = 3;
+                $bgcolor = '#00FF00'; // green
+                break;
+            case ($max <= 40000):
+                $max = 4;
+                $bgcolor = '#99CCFF'; // soft blue
+                break;
             case ($max <= 50000):
                 $max = 5;
-                $bgcolor = '#99CCFF'; // soft blue
+                $bgcolor = '#33FFFF'; // light blue
                 break;
             case ($max <= 100000):
                 $max = 10;
-                $bgcolor = '#FF99FF'; // soft purple
+                $bgcolor = '#3399FF'; // blue
                 break;
             case ($max <= 250000):
                 $max = 25;
-                $bgcolor = '#FFFF99'; // soft yellow
+                $bgcolor = '#0000FF'; // deep blue
                 break;
             case ($max <= 500000):
                 $max = 50;
-                $bgcolor = '#99FF99'; // soft green
+                $bgcolor = '#9900FF'; // purple
                 break;
             default:
                 $max = 100;
-                $bgcolor = '#FF6666'; // soft brown
+                $bgcolor = '#FF00FF'; // pink
         }
 
         $goalpix = $goal / ($max * 10000);
@@ -1926,11 +1944,15 @@ class mod_reader_renderer extends plugin_renderer_base {
         }
         $nowpix += 8;
 
+        // convert $max to a 3-digit number
+        // padded with zeroes on the left
+        $max = sprintf('%03d', $max);
+
         $html = '';
-        $html .= html_writer::empty_tag('img', array('src'   => new moodle_url("/mod/reader/img/colorscale800px{$max}.png"),
+        $html .= html_writer::empty_tag('img', array('src'   => new moodle_url("/mod/reader/img/progressbar.$max.color.png"),
                                                      'class' => 'color',
                                                      'style' => 'clip:rect(0px '.$nowpix.'px 100px 0px);'));
-        $html .= html_writer::empty_tag('img', array('src'   => new moodle_url("/mod/reader/img/colorscale800px{$max}gs.png"),
+        $html .= html_writer::empty_tag('img', array('src'   => new moodle_url("/mod/reader/img/progressbar.$max.grey.png"),
                                                      'class' => 'grey'));
         $html .= html_writer::empty_tag('img', array('src'   => new moodle_url('/mod/reader/img/now.png'),
                                                      'class' => 'now',

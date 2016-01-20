@@ -197,13 +197,13 @@
 #page-mod-reader-view div#ProgressBarImages img.now {
     position  : absolute;
     left      : 4px; /* overridden in renderer.php */
-    top       : 11px;
+    top       : 10px;
     z-index   : 40;
 }
 #page-mod-reader-view div#ProgressBarImages img.goal {
     position  : absolute;
     left      : 4px; /* overridden in renderer.php */
-    top       : -10px;
+    top       : -12px;
     z-index   : 50;
 }
 #page-mod-reader-view div#ProgressBarFootnote {
