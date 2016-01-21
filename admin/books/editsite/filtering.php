@@ -29,13 +29,13 @@ defined('MOODLE_INTERNAL') || die();
 require_once($CFG->dirroot.'/mod/reader/admin/books/filtering.php');
 
 /**
- * reader_admin_books_edit_filtering
+ * reader_admin_books_editsite_filtering
  *
  * @copyright 2013 Gordon Bateson
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @since     Moodle 2.0
  */
-class reader_admin_books_edit_filtering extends reader_admin_books_filtering {
+class reader_admin_books_editsite_filtering extends reader_admin_books_filtering {
     /**
      * get_field
      * reader version of standard function
@@ -45,22 +45,34 @@ class reader_admin_books_edit_filtering extends reader_admin_books_filtering {
      * @return xxx
      */
     function get_field($fieldname, $advanced)  {
+        global $output;
 
         $default = $this->get_default_value($fieldname);
         switch ($fieldname) {
 
-            case 'publisher':
-            case 'level':
+            case 'hidden':
                 $label = get_string($fieldname, 'mod_reader');
-                return new reader_admin_filter_text($fieldname, $label, $advanced, $fieldname, $default, 'where');
+                $options = array(0 => get_string('show'), 1 => get_string('hide'));
+                return new reader_admin_filter_simpleselect($fieldname, $label, $advanced, $fieldname, $options, $default, 'where');
 
-            case 'name':
-                $label = get_string('booktitle', 'mod_reader');
-                return new reader_admin_filter_text($fieldname, $label, $advanced, $fieldname, $default, 'where');
+            case 'genre':
+                $label = get_string($fieldname, 'mod_reader');
+                $options = mod_reader_renderer::valid_genres();
+                return new reader_admin_filter_simpleselect($fieldname, $label, $advanced, $fieldname, $options, $default, 'where');
 
-            case 'difficulty':
-                $label = get_string('bookdifficulty', 'mod_reader');
-                return new reader_admin_filter_number($fieldname, $label, $advanced, $fieldname, $default, 'where');
+            case 'quiz':
+                $label = get_string('modulename', 'mod_quiz');
+                $options = array(0 => get_string('no'), 1 => get_string('yes'));
+                return new reader_admin_filter_simpleselect($fieldname, $label, $advanced, $fieldname, $options, $default, 'having');
+
+            case 'attempts':
+                $label = get_string($fieldname, 'mod_reader');
+                return new reader_admin_filter_number($fieldname, $label, $advanced, $fieldname, $default, 'having');
+
+            case 'available':
+                $label = get_string($fieldname, 'mod_reader');
+                $options = array(0 => get_string('no'), 1 => get_string('yes'));
+                return new reader_admin_filter_simpleselect($fieldname, $label, $advanced, $fieldname, $options, $default, 'having');
 
             default:
                 // other fields (e.g. from user record)
@@ -70,11 +82,11 @@ class reader_admin_books_edit_filtering extends reader_admin_books_filtering {
 }
 
 /**
- * reader_admin_books_edit_options
+ * reader_admin_books_editsite_options
  *
  * @copyright 2013 Gordon Bateson
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @since     Moodle 2.0
  */
-class reader_admin_books_edit_options extends reader_admin_books_options {
+class reader_admin_books_editsite_options extends reader_admin_books_options {
 }

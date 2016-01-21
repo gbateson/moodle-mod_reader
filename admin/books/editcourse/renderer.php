@@ -16,7 +16,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * mod/reader/admin/quizzes/delete/renderer.php
+ * mod/reader/admin/books/editcourse/renderer.php
  *
  * @package    mod
  * @subpackage reader
@@ -29,10 +29,12 @@
 defined('MOODLE_INTERNAL') || die;
 
 /** Include required files */
-require_once($CFG->dirroot.'/mod/reader/admin/quizzes/renderer.php');
+require_once($CFG->dirroot.'/mod/reader/admin/books/renderer.php');
+require_once($CFG->dirroot.'/mod/reader/admin/books/editcourse/tablelib.php');
+require_once($CFG->dirroot.'/mod/reader/admin/books/editcourse/filtering.php');
 
 /**
- * mod_reader_admin_quizzes_delete_renderer
+ * mod_reader_admin_books_editcourse_renderer
  *
  * @copyright  2013 Gordon Bateson (gordon.bateson@gmail.com)
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -40,7 +42,9 @@ require_once($CFG->dirroot.'/mod/reader/admin/quizzes/renderer.php');
  * @package    mod
  * @subpackage reader
  */
-class mod_reader_admin_quizzes_delete_renderer extends mod_reader_admin_quizzes_renderer {
+class mod_reader_admin_books_editcourse_renderer extends mod_reader_admin_books_renderer {
+
+    public $mode = 'editcourse';
 
     /**
      * render_page
@@ -48,21 +52,6 @@ class mod_reader_admin_quizzes_delete_renderer extends mod_reader_admin_quizzes_
      * @return string HTML output to display navigation tabs
      */
     public function render_page() {
-        global $CFG, $DB;
-        require_once($CFG->dirroot.'/mod/reader/admin/quizzes/delete/form.php');
-
-        $url = $this->page->url;
-        $params = $url->params();
-        $params['id'] = $this->reader->cm->id;
-        $params['tab'] = $this->get_tab();
-        $params['mode'] = mod_reader::get_mode('admin/quizzes');
-        $url->params($params);
-
-        $mform = new mod_reader_admin_quizzes_delete_form($url->out(false));
-
-        if ($data = $mform->get_submitted_data()) {
-        } else {
-            $mform->display();
-        }
+        echo $this->page_report();
     }
 }

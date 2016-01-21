@@ -29,17 +29,17 @@ defined('MOODLE_INTERNAL') || die();
 require_once($CFG->dirroot.'/mod/reader/admin/books/tablelib.php');
 
 /**
- * reader_admin_books_edit_table
+ * reader_admin_books_editcourse_table
  *
  * @copyright 2013 Gordon Bateson
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @since     Moodle 2.0
  */
-class reader_admin_books_edit_table extends reader_admin_books_table {
+class reader_admin_books_editcourse_table extends reader_admin_books_table {
 
     /** @var columns used in this table */
     protected $tablecolumns = array(
-        'publisher', 'level', 'selected', 'name', 'difficulty', 'points'
+        'publisher', 'level', 'selected', 'name', 'difficulty', 'words', 'points'
     );
 
     /** @var suppressed columns in this table */
@@ -62,7 +62,7 @@ class reader_admin_books_edit_table extends reader_admin_books_table {
 
     /** @var filter fields ($fieldname => $advanced) */
     protected $filterfields = array(
-        'publisher' => 0, 'level' => 1, 'name' => 0, 'difficulty' => 1
+        'publisher' => 0, 'level' => 1, 'name' => 0, 'difficulty' => 1, 'words' => 1, 'points' => 1
     );
 
     /** @var option fields */
@@ -70,7 +70,10 @@ class reader_admin_books_edit_table extends reader_admin_books_table {
                                     'sortfields'  => array());
 
     /** @var actions */
-    protected $actions = array('setreadinglevel', 'showhidebook');
+    protected $actions = array('setdifficulty', 'setwords', 'setpoints', 'removebookinstance', 'addbookinstance');
+
+    /** @var maintable */
+    protected $maintable = 'reader_book_instances';
 
     /**
      * select_sql
@@ -78,49 +81,32 @@ class reader_admin_books_edit_table extends reader_admin_books_table {
      * @return array($select, $from, $where, $params)
      */
     public function select_sql() {
-        $select = 'rb.id, rb.publisher, rb.level, rb.name, rb.quizid, '.
-                  'rbi.readerid, rbi.bookid, rbi.difficulty, rbi.length AS points, '.
-                  '(CASE WHEN (rbi.id IS NULL) THEN 0 ELSE 1 END) selected';
-        $from   = '{reader_books} rb '.
-                  'LEFT JOIN {reader_book_instances} rbi ON rb.id = rbi.bookid AND rbi.readerid = :readerid';
-        $where  = 'rb.hidden = :hidden AND rb.level <> :level'; //  ORDER BY rb.publisher, rb.level, rb.name
+        $select = "rbi.id, rbi.readerid, rbi.bookid, rbi.difficulty, rbi.words, rbi.points, ".
+                  'rb.publisher, rb.level, rb.name';
+        $from   = '{reader_book_instances} rbi '.
+                  'LEFT JOIN {reader_books} rb ON rbi.bookid = rb.id';
+        $where  = 'rbi.readerid = :readerid AND rb.hidden = :hidden AND rb.level <> :level';
+        $order  = 'rb.publisher, rb.level, rb.name';
         $params = array('readerid' => $this->output->reader->id, 'hidden' => 0, 'level' => 99);
         return $this->add_filter_params($select, $from, $where, '', '', '', $params);
     }
 
-    /**
-     * display_action_settings_setreadinglevel
-     *
-     * @param string $action
-     * @return xxx
-     */
-    public function display_action_settings_setreadinglevel($action) {
-        return $this->display_action_settings_setlevel($action);
-    }
+    ////////////////////////////////////////////////////////////////////////////////
+    // functions to format, display and handle action settings                    //
+    ////////////////////////////////////////////////////////////////////////////////
 
     /**
-     * display_action_settings_showhidebook
+     * execute_action_removebookinstance
      *
-     * @param string $action
+     * @param string  $action
      * @return xxx
      */
-    public function display_action_settings_showhidebook($action) {
-        $value = optional_param($action, 0, PARAM_INT);
-        $settings = '';
-        $settings .= get_string('newsetting', 'mod_reader').': ';
-        $options = array('0' => get_string('show'), '1' => get_string('hide'));
-        $settings .= html_writer::select($options, $action, $value, '', array());
-        return $this->display_action_settings($action, $settings);
-    }
-
-    /**
-     * execute_action_showhidebook
-     *
-     * @param string $action
-     * @return xxx
-     */
-    public function execute_action_showhidebook($action) {
-        $value = optional_param($action, 0, PARAM_INT);
-        return $this->execute_action_update('bookid', 'reader_books', 'hidden', $value);
+    public function execute_action_removebookinstance($action) {
+        global $DB;
+        $ids = $this->get_selected('id');
+        if (empty($ids)) {
+            return false; // shouldn't happen !!
+        }
+        return $DB->delete_records_list('reader_book_instances', 'id', $ids);
     }
 }

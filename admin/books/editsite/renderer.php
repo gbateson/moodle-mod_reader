@@ -30,11 +30,11 @@ defined('MOODLE_INTERNAL') || die;
 
 /** Include required files */
 require_once($CFG->dirroot.'/mod/reader/admin/books/renderer.php');
-require_once($CFG->dirroot.'/mod/reader/admin/books/edit/tablelib.php');
-require_once($CFG->dirroot.'/mod/reader/admin/books/edit/filtering.php');
+require_once($CFG->dirroot.'/mod/reader/admin/books/editsite/tablelib.php');
+require_once($CFG->dirroot.'/mod/reader/admin/books/editsite/filtering.php');
 
 /**
- * mod_reader_admin_books_edit_renderer
+ * mod_reader_admin_books_editsite_renderer
  *
  * @copyright  2013 Gordon Bateson (gordon.bateson@gmail.com)
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
@@ -42,9 +42,9 @@ require_once($CFG->dirroot.'/mod/reader/admin/books/edit/filtering.php');
  * @package    mod
  * @subpackage reader
  */
-class mod_reader_admin_books_edit_renderer extends mod_reader_admin_books_renderer {
+class mod_reader_admin_books_editsite_renderer extends mod_reader_admin_books_renderer {
 
-    public $mode = 'edit';
+    public $mode = 'editsite';
 
     /**
      * render_page
