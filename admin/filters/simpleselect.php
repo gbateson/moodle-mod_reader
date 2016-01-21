@@ -51,7 +51,11 @@ class reader_admin_filter_simpleselect extends user_filter_simpleselect {
      * @param string $type (optional, default = "")
      */
     function __construct($name, $label, $advanced, $field, $options, $default=null, $type='') {
-        parent::user_filter_simpleselect($name, $label, $advanced, $field, $options);
+        if (method_exists(get_parent_class($this), '__construct')) {
+            parent::__construct($name, $label, $advanced, $field, $options);
+        } else {
+            parent::user_filter_simpleselect($name, $label, $advanced, $field, $options);
+        }
         $this->_default = $default;
         $this->_type    = $type;
     }

@@ -62,7 +62,13 @@ class mod_reader_admin_users_setgoals_form extends moodleform {
      */
     function mod_reader_admin_users_setgoals_form($action=null, $reader=null, $method='post', $target='', $attributes=null, $editable=true) {
         $this->fetch_goals($reader);
-        parent::moodleform($action, $reader, $method, $target, $attributes, $editable);
+        if (method_exists('moodleform', '__construct')) {
+            // Moodle >= 3.1
+            parent::__construct($action, $reader, $method, $target, $attributes, $editable);
+        } else {
+            // Moodle <= 3.0
+            parent::moodleform($action, $reader, $method, $target, $attributes, $editable);
+        }
     }
 
     /**

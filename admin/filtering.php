@@ -338,7 +338,12 @@ class reader_admin_options extends moodleform {
 
         $this->optionfields = $optionfields;
         $this->sortfields  = $sortfields;
-        parent::moodleform($action);
+
+        if (method_exists('moodleform', '__construct')) {
+            parent::__construct($action);
+        } else {
+            parent::moodleform($action);
+        }
     }
 
     /**

@@ -50,7 +50,11 @@ class reader_admin_filter_date extends user_filter_date {
      * @param string $type (optional, default = "")
      */
     function __construct($name, $label, $advanced, $field, $default=null, $type='') {
-        parent::user_filter_date($name, $label, $advanced, $field);
+        if (method_exists(get_parent_class($this), '__construct')) {
+            parent::__construct($name, $label, $advanced, $field);
+        } else {
+            parent::user_filter_date($name, $label, $advanced, $field);
+        }
         $this->_default = $default;
         $this->_type    = $type;
     }

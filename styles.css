@@ -64,10 +64,13 @@
 #page-mod-reader-view h2 {
     text-align: left;
 }
+#page-mod-reader-view h2.BooksRead,
 #page-mod-reader-view h2.ReadingReportTitle {
-    background-color : #FFCC80; /* gentle orange */
     margin           : 0px;
     padding          : 6px 12px;
+}
+#page-mod-reader-view h2.ReadingReportTitle {
+    background-color : #FFCC80; /* gentle orange */
     max-width        : 800px;
     width            : 100%;
     /* cross-browser rounded corners (Note: Safari and Chrome use Webkit) */

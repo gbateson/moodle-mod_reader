@@ -45,11 +45,22 @@ class mod_reader_admin_users_setmessage_form extends moodleform {
     /**
      * constructor
      *
-     * @param mixed $action the action attribute (=url) for the form
+     * @param mixed    $action
+     * @param object   $reader a reader object
+     * @param string   $method 'get' or 'post'
+     * @param string   $target frame for form submission.
+     * @param mixed    $attributes
+     * @param boolean  $editable
      * @todo Finish documenting this function
      */
-    function mod_reader_admin_users_setmessage_form($action=null) {
-        parent::moodleform($action);
+    function mod_reader_admin_users_setmessage_form($action=null, $reader=null, $method='post', $target='', $attributes=null, $editable=true) {
+        if (method_exists('moodleform', '__construct')) {
+            // Moodle >= 3.1
+            parent::__construct($action, $reader, $method, $target, $attributes, $editable);
+        } else {
+            // Moodle <= 3.0
+            parent::moodleform($action, $reader, $method, $target, $attributes, $editable);
+        }
     }
 
     /**

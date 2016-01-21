@@ -49,7 +49,13 @@ class mod_reader_admin_users_import_form extends moodleform {
      * @todo Finish documenting this function
      */
     function mod_reader_admin_users_import_form($action=null) {
-        parent::moodleform($action);
+        if (method_exists('moodleform', '__construct')) {
+            // Moodle >= 3.1
+            parent::__construct($action);
+        } else {
+            // Moodle <= 3.0
+            parent::moodleform($action);
+        }
     }
 
     /**

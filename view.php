@@ -293,7 +293,7 @@ if (count($attempts)) {
 
 if ($bookcoversinprevterm) {
     // display book covers from previous term
-    echo $output->heading(get_string('booksreadinpreviousterms', $plugin), 2);
+    echo $output->heading(get_string('booksreadinpreviousterms', $plugin), 2, array('class' => 'BooksRead'));
     echo html_writer::tag('p', $bookcoversinprevterm);
 
     // detect incorrect quizzes from previous term
@@ -327,7 +327,7 @@ if ($bookcoversinprevterm && $bookcoversinthisterm) {
 
 if ($bookcoversinthisterm) {
     // display book covers from this term
-    echo $output->heading(get_string('booksreadthisterm', $plugin), 2);
+    echo $output->heading(get_string('booksreadthisterm', $plugin), 2, array('class' => 'BooksRead'));
     echo html_writer::tag('p', $bookcoversinthisterm);
 }
 

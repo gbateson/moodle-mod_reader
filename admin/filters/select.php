@@ -70,7 +70,11 @@ class reader_admin_filter_select extends user_filter_select {
         }
 
         // normal setup using parent constructor
-        parent::user_filter_select($name, $label, $advanced, $field, $options);
+        if (method_exists(get_parent_class($this), '__construct')) {
+            parent::__construct($name, $label, $advanced, $field, $options);
+        } else {
+            parent::user_filter_select($name, $label, $advanced, $field, $options);
+        }
 
         // special fields for this class
         $this->_default = $default;

@@ -35,7 +35,7 @@ require_once($CFG->dirroot.'/user/filters/select.php');
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @since     Moodle 2.0
  */
-class reader_admin_filter_number extends user_filter_select {
+class reader_admin_filter_number extends user_filter_type {
 
     var $_type = '';
     var $_fieldsql = '';
@@ -52,7 +52,11 @@ class reader_admin_filter_number extends user_filter_select {
      * @param string  $fieldsql (optional, default = '') sql to extract this field from the database
      */
     function __construct($name, $label, $advanced, $field, $default=null, $type='', $fieldsql='') {
-        parent::user_filter_type($name, $label, $advanced);
+        if (method_exists('user_filter_type', '__construct')) {
+            parent::__construct($name, $label, $advanced);
+        } else {
+            parent::user_filter_type($name, $label, $advanced);
+        }
 
         if ($fieldsql=='') {
             $fieldsql = $field;
