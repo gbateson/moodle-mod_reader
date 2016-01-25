@@ -583,7 +583,7 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
     public function display_action_settings_setreadinggoal($action) {
         $value = optional_param($action, 0, PARAM_INT);
 
-        $options = array_merge(range(1000, 19000, 1000),
+        $options = array_merge(range(0, 19000, 1000),
                                range(20000, 95000, 5000),
                                range(100000, 450000, 50000),
                                range(500000, 1000000, 100000));

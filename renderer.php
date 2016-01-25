@@ -1918,39 +1918,48 @@ class mod_reader_renderer extends plugin_renderer_base {
             // colors blocks on the progress bar
             case ($max <= 10000):
                 $max = 1;
-                $bgcolor = '#FF9900'; // orange
+                $bordercolor = '#FF0000'; // red
+                $backgroundcolor = '#FFE5E5';
                 break;
             case ($max <= 20000):
                 $max = 2;
-                $bgcolor = '#99FF66'; // light green
+                $bordercolor = '#FF9900'; // orange
+                $backgroundcolor = '#FFF2E5';
                 break;
             case ($max <= 30000):
                 $max = 3;
-                $bgcolor = '#00FF00'; // green
+                $bordercolor = '#E5E600'; // yellow
+                $backgroundcolor = '#FFFF99';
                 break;
             case ($max <= 40000):
                 $max = 4;
-                $bgcolor = '#99CCFF'; // soft blue
+                $bordercolor = '#CCFF66'; // light green
+                $backgroundcolor = '#EEFFCC';
                 break;
             case ($max <= 50000):
                 $max = 5;
-                $bgcolor = '#33FFFF'; // light blue
+                $bordercolor = '#33CC33'; // dark green
+                $backgroundcolor = '#D6F5D6';
                 break;
             case ($max <= 100000):
                 $max = 10;
-                $bgcolor = '#3399FF'; // blue
+                $bordercolor = '#66CCFF'; // light blue
+                $backgroundcolor = '#CCEEFF';
                 break;
             case ($max <= 250000):
                 $max = 25;
-                $bgcolor = '#0000FF'; // deep blue
+                $bordercolor = '#3333CC'; // dark blue
+                $backgroundcolor = '#D6D6F5';
                 break;
             case ($max <= 500000):
                 $max = 50;
-                $bgcolor = '#9900FF'; // purple
+                $bordercolor = '#6600CC'; // purple
+                $backgroundcolor = '#E5CCFF';
                 break;
             default:
                 $max = 100;
-                $bgcolor = '#FF00FF'; // pink
+                $bordercolor = '#FF3399'; // pink
+                $backgroundcolor = '#FFCCE5';
         }
 
         $goalpix = $goal / ($max * 10000);
@@ -1986,10 +1995,10 @@ class mod_reader_renderer extends plugin_renderer_base {
                                                          'class' => 'goal',
                                                          'style' => 'left:'.($goalpix - 6).'px;'));
         }
-        $html = html_writer::tag('div', $html, array('id' => 'ProgressBarImages', 'style' => 'background-color:'.$bgcolor.';'));
+        $html = html_writer::tag('div', $html, array('id' => 'ProgressBarImages', 'style' => 'background-color:'.$bordercolor.';'));
 
         $text = get_string('in1000sofwords', 'mod_reader');
-        $html .= html_writer::tag('div', $text, array('id' => 'ProgressBarFootnote', 'style' => 'background-color:'.$bgcolor.';'));
+        $html .= html_writer::tag('div', $text, array('id' => 'ProgressBarFootnote', 'style' => 'background-color:'.$backgroundcolor.';'));
 
         $html = html_writer::tag('div', $html, array('id' => 'ProgressBar'));
         $html .= html_writer::tag('div', '', array('style' => 'clear: both; height: 1.0em; width: 1.0em;'));
@@ -2234,15 +2243,16 @@ class mod_reader_renderer extends plugin_renderer_base {
         }
     }
 
+    ///////////////////////////////////////////
+    // format footer
+    ///////////////////////////////////////////
+
     public function footer() {
         $output = '';
         $output .= $this->credits();
         $output .= parent::footer();
         return $output;
     }
-    ///////////////////////////////////////////
-    // format versions
-    ///////////////////////////////////////////
 
     /**
      * credits
