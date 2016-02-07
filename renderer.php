@@ -2273,15 +2273,29 @@ class mod_reader_renderer extends plugin_renderer_base {
      */
     public function version() {
         if ($this->reader->can_viewversion()) {
+            $output = array();
+
+            $search = '/(\d{4})(\d{2})(\d{2})(\d{2})/';
+            $replace = '$1-$2-$3 ($4)';
+
+            if ($version = get_config('', 'version')) {
+                $release = get_config('', 'release');
+                $output[] = get_string('moodleorg', 'hub').":  ($version)  $release";
+            }
+
             $plugin = 'mod_reader';
             if ($version = get_config($plugin, 'version')) {
-                $moodleversion = get_config('', 'version');
-                $moodlerelease = get_config('', 'release');
-                $search = '/(\d{4})(\d{2})(\d{2})(\d{2})/';
-                $release = preg_replace($search, '$1-$2-$3 ($4)', $version);
-                return get_string('modulename', $plugin).":  ($version)  $release\n".
-                       get_string('moodleorg', 'hub').":  ($moodleversion)  $moodlerelease";
+                $release = preg_replace($search, $replace, $version);
+                $output[] = get_string('pluginname', $plugin).":  ($version)  $release";
             }
+
+            $plugin = 'qtype_ordering';
+            if ($version = get_config($plugin, 'version')) {
+                $release = preg_replace($search, $replace, $version);
+                $output[] = get_string('pluginname', $plugin).":  ($version)  $release";
+            }
+
+            return implode("\n", $output);
         }
         return '';
     }
