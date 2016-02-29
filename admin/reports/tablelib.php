@@ -42,9 +42,10 @@ class reader_admin_reports_table extends reader_admin_table {
     *
     * @const integer
     */
-    const DEFAULT_USERTYPE    = 0;  // i.e. enrolled users with attempts
-    const DEFAULT_SHOWDELETED = 0;  // i.e. ignore deleted attempts
-    const DEFAULT_SHOWHIDDEN  = 0;  // i.e. ignore hidden quizzes
+    const DEFAULT_USERTYPE    = 0;  // enrolled users with attempts
+    const DEFAULT_BOOKTYPE    = 0;  // available books with attempts
+    const DEFAULT_SHOWDELETED = 0;  // ignore deleted attempts
+    const DEFAULT_SHOWHIDDEN  = 0;  // ignore hidden quizzes
     /**#@-*/
 
     /**#@+
@@ -268,8 +269,8 @@ class reader_admin_reports_table extends reader_admin_table {
 
         //if ($this->output->reader->bookinstances) {
         //    $from  .= ' LEFT JOIN {reader_book_instances} rbi ON rb.id = rbi.bookid';
-        //    $where .= ' AND rbi.id IS NOT NULL AND rbi.readerid = :rbireader';
-        //    $params['rbireader'] = $this->output->reader->id;
+        //    $where .= ' AND rbi.id IS NOT NULL AND rbi.readerid = :rbi_readerid';
+        //    $params['rbi_readerid'] = $this->output->reader->id;
         //}
 
         return array("SELECT $select FROM $from WHERE $where GROUP BY ra.$groupbyfield", $params);

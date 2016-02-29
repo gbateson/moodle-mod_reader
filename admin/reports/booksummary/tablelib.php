@@ -70,7 +70,8 @@ class reader_admin_reports_booksummary_table extends reader_admin_reports_table 
     );
 
     /** @var option fields */
-    protected $optionfields = array('rowsperpage' => self::DEFAULT_ROWSPERPAGE,
+    protected $optionfields = array('booktype'    => self::DEFAULT_BOOKTYPE,
+                                    'rowsperpage' => self::DEFAULT_ROWSPERPAGE,
                                     'showhidden'  => self::DEFAULT_SHOWHIDDEN,
                                     'sortfields'  => array());
 
@@ -119,10 +120,26 @@ class reader_admin_reports_booksummary_table extends reader_admin_reports_table 
                   'raa.countrating, raa.averagerating';
         $from   = '{reader_books} rb '.
                   "LEFT JOIN ($attemptsql) raa ON raa.bookid = rb.id";
-        $where  = 'raa.bookid IS NOT NULL';
+
+        $booktype = $this->filter->get_optionvalue('booktype');
+        switch ($booktype) {
+
+            case reader_admin_reports_options::BOOKS_AVAILABLE_WITHOUT:
+                $where = 'raa.bookid IS NULL';
+                break;
+
+            case reader_admin_reports_options::BOOKS_AVAILABLE_WITH:
+            case reader_admin_reports_options::BOOKS_ALL_WITH:
+                $where = 'raa.bookid IS NOT NULL';
+                break;
+
+            case reader_admin_reports_options::BOOKS_AVAILABLE_ALL:
+            default: // shouldn't happen !!
+                $where = 'rb.id > 0';
+                break;
+        }
 
         $params = $attemptparams + array('readerid' => $this->output->reader->id) + $userparams;
-
         return $this->add_filter_params($select, $from, $where, '', '', '', $params);
     }
 

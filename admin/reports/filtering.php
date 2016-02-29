@@ -100,6 +100,17 @@ class reader_admin_reports_options extends reader_admin_options {
     const USERS_ALL_WITH         = 3;
     /**#@-*/
 
+    /**#@+
+    * values for report $booktype
+    *
+    * @const integer
+    */
+    const BOOKS_AVAILABLE_WITH    = 0;
+    const BOOKS_AVAILABLE_WITHOUT = 1;
+    const BOOKS_AVAILABLE_ALL     = 2;
+    const BOOKS_ALL_WITH          = 3;
+    /**#@-*/
+
     /**
      * add_field_usertype
      *
@@ -123,6 +134,32 @@ class reader_admin_reports_options extends reader_admin_options {
      * @param object $value
      */
     protected function get_sql_usertype($name, $value) {
+        return null;
+    }
+
+    /**
+     * add_field_booktype
+     *
+     * @param object $mform
+     * @param string $name of field i.e. "add_field_booktype"
+     * @param mixed  $default value for this $field
+     */
+    protected function add_field_booktype($mform, $name, $default) {
+        $label = get_string('booktype', 'mod_reader');
+        $options = array(self::BOOKS_AVAILABLE_WITH    => get_string('booksavailablewith',    'mod_reader'),
+                         self::BOOKS_AVAILABLE_WITHOUT => get_string('booksavailablewithout', 'mod_reader'),
+                         self::BOOKS_AVAILABLE_ALL     => get_string('booksavailableall',     'mod_reader'));
+                         // self::BOOKS_ALL_WITH       => get_string('booksallwith',          'mod_reader')
+        $this->add_select_autosubmit($mform, $name, $label, $options, $default);
+    }
+
+    /**
+     * get_sql_booktype
+     *
+     * @param string $name of field i.e. "booktype"
+     * @param object $value
+     */
+    protected function get_sql_booktype($name, $value) {
         return null;
     }
 }
