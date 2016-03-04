@@ -3528,7 +3528,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
     }
     echo '</select><br />';
     //echo 'Other ip mask <input type="text" name="ipmaskother" value="" />';
-    echo get_string('term', 'mod_reader').' <select id="booksratingterm" name="booksratingterm">';
+    echo get_string('termtype', 'mod_reader').' <select id="booksratingterm" name="booksratingterm">';
     $fromselect = array('0' => "All terms", $reader->ignoredate => "Current");
     foreach ($fromselect as $key => $value) {
         echo '<option value="'.$key.'"';

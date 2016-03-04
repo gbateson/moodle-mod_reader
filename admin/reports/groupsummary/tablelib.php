@@ -87,7 +87,8 @@ class reader_admin_reports_groupsummary_table extends reader_admin_reports_table
     );
 
     /** @var option fields */
-    protected $optionfields = array('rowsperpage' => self::DEFAULT_ROWSPERPAGE,
+    protected $optionfields = array('termtype'    => self::DEFAULT_TERMTYPE,
+                                    'rowsperpage' => self::DEFAULT_ROWSPERPAGE,
                                     'sortfields'  => array());
 
     /** @var actions */

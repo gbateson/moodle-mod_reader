@@ -858,7 +858,7 @@ function reader_check_search_text($searchtext, $coursestudent, $book=false) {
                 $publisher = strtolower($book->publisher);
             }
 
-            if (strpos($booktitle, $text)===false && strpos($booklevel, $text)==false || strpos($publisher, $text)==false) {
+            if (strpos($booktitle, $text)===false && strpos($booklevel, $text)==false && strpos($publisher, $text)==false) {
                 // do nothing
             } else {
                 return true;

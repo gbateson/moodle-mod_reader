@@ -69,7 +69,8 @@ class reader_admin_reports_bookdetailed_table extends reader_admin_reports_table
         'timefinish' => 1, 'duration'  => 1, 'grade'    => 1, 'passed' => 1, 'bookrating' => 1
     );
 
-    protected $optionfields = array('rowsperpage' => self::DEFAULT_ROWSPERPAGE,
+    protected $optionfields = array('termtype'    => self::DEFAULT_TERMTYPE,
+                                    'rowsperpage' => self::DEFAULT_ROWSPERPAGE,
                                     'showhidden'  => self::DEFAULT_SHOWHIDDEN,
                                     'showdeleted' => self::DEFAULT_SHOWDELETED,
                                     'sortfields'  => array());
@@ -112,8 +113,11 @@ class reader_admin_reports_bookdetailed_table extends reader_admin_reports_table
             $wordsorpoints = 'rb.points';
         }
 
-        $duration = 'CASE WHEN (ra.timefinish IS NULL OR ra.timefinish = 0) THEN 0 ELSE (ra.timefinish - ra.timestart) END';
-        $grade    = 'CASE WHEN (ra.percentgrade IS NULL) THEN 0 ELSE ra.percentgrade END';
+        $exclude = 'ra.timefinish IS NULL OR ra.timefinish = 0';
+        $duration = "CASE WHEN ($exclude) THEN 0 ELSE (ra.timefinish - ra.timestart) END";
+
+        $exclude = 'ra.percentgrade IS NULL';
+        $grade = "CASE WHEN ($exclude) THEN 0 ELSE ra.percentgrade END";
 
         $select = "ra.id, ra.passed, ra.bookrating, ra.timefinish, ra.layout, ($duration) AS duration, ($grade) AS grade, ".
                   $this->get_userfields('u', array('username'), 'userid').', '.
@@ -121,14 +125,20 @@ class reader_admin_reports_bookdetailed_table extends reader_admin_reports_table
         $from   = '{reader_attempts} ra '.
                   'LEFT JOIN {user} u ON ra.userid = u.id '.
                   'LEFT JOIN {reader_books} rb ON ra.bookid = rb.id';
-        $where  = "ra.readerid = :readerid AND ra.timefinish > :time";
+        $where  = 'ra.readerid = :readerid AND ra.timefinish IS NOT NULL';
+        $params = array('readerid' => $this->output->reader->id);
+
+        $termtype = $this->filter->get_optionvalue('termtype');
+        if ($termtype==reader_admin_reports_options::THIS_TERM) {
+            $where .= ' AND ra.timefinish >= :time';
+            $params['time'] = $this->output->reader->ignoredate;
+        }
+
         if ($usersql) {
             $where .= " AND u.id $usersql";
         }
 
         $sortby = 'rb.name, rb.publisher, u.username';
-
-        $params = array('readerid' => $this->output->reader->id, 'time' => $this->output->reader->ignoredate);
 
         if ($this->output->reader->bookinstances) {
             $from  .= ' LEFT JOIN {reader_book_instances} rbi ON rb.id = rbi.bookid';

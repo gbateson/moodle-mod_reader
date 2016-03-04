@@ -47,6 +47,9 @@ require_once($CFG->dirroot.'/mod/reader/admin/filters/number.php');
  */
 class reader_admin_filtering extends user_filtering {
 
+    /** @var main flexible table related to these filters */
+    var $table = null;
+
     /** @var moodleform used for display options */
     var $_optionsform = null;
 
@@ -57,10 +60,11 @@ class reader_admin_filtering extends user_filtering {
      * @param array  $params        extra page parameters
      * @param array  $optionfields  names of display option fields
      */
-    public function __construct($filterfields=null, $baseurl=null, $params=null, $optionfields=null) {
+    public function __construct($filterfields=null, $baseurl=null, $params=null, $optionfields=null, $table=null) {
+        $this->table = $table;
         if ($optionfields) {
             $classname = str_replace('filtering', 'options', get_class($this));
-            $this->_optionsform = new $classname($optionfields, $baseurl, $filterfields);
+            $this->_optionsform = new $classname($optionfields, $baseurl, $filterfields, $table);
         }
         if (method_exists($this, '__construct')) { // Moodle 3.x
             parent::__construct($filterfields, $baseurl, $params);
@@ -261,48 +265,42 @@ class reader_admin_options extends moodleform {
     /** @var list of filter/sort field names */
     protected $sortfields = null;
 
+    /** @var object main table related to these display options */
+    protected $table = null;
+
     /**
      * constructor (see "moodleform" in lib/formslib.php)
      */
-    public function __construct($optionfields, $action, $sortfields) {
+    public function __construct($optionfields, $action, $sortfields, $table) {
         global $SESSION;
 
-        // get and set values in $SESSION
+        $this->table = $table;
+
+        // get table preferences
         $uniqueid = $this->get_maintable_uniqueid();
+        $prefs = &$SESSION->flextable[$uniqueid];
+
+        if (is_array($prefs)) {
+            // Moodle >= 2.9
+            $sortby = &$prefs['sortby'];
+            $display = &$prefs['display'];
+        } else {
+            // Moodle <= 2.8
+            $sortby = &$prefs->sortby;
+            $display = &$prefs->display;
+        }
+
+        if (method_exists($this->table, 'is_persistent') && $this->table->is_persistent()) {
+            // Moodle >= 2.9 with persistent table preferences
+            $is_persistent = true;
+        } else {
+            // Moodle <= 2.8 (or Moodle >= 2.9 non-persistent table preferences)
+            $is_persistent = false;
+        }
+
+        // get and set values in $SESSION
+        $update = false;
         foreach ($optionfields as $field => $default) {
-
-            if (empty($SESSION->flextable)) {
-                $SESSION->flextable = array();
-            }
-
-            // set references to $display and $sortby preferences
-            if (method_exists('flexible_table', 'is_persistent')) {
-                // Moodle >= 2.9 holds preferences in an array
-                if (empty($SESSION->flextable[$uniqueid])) {
-                    $SESSION->flextable[$uniqueid] = array();
-                }
-                if (empty($SESSION->flextable[$uniqueid]['display'])) {
-                    $SESSION->flextable[$uniqueid]['display'] = array();
-                }
-                if (empty($SESSION->flextable[$uniqueid]['sortby'])) {
-                    $SESSION->flextable[$uniqueid]['sortby'] = array();
-                }
-                $display = &$SESSION->flextable[$uniqueid]['display'];
-                $sortby  = &$SESSION->flextable[$uniqueid]['sortby'];
-            } else {
-                // Moodle <= 2.8 holds preferences in an object
-                if (empty($SESSION->flextable[$uniqueid])) {
-                    $SESSION->flextable[$uniqueid] = new stdClass();
-                }
-                if (empty($SESSION->flextable[$uniqueid]->display)) {
-                    $SESSION->flextable[$uniqueid]->display = array();
-                }
-                if (empty($SESSION->flextable[$uniqueid]->sortby)) {
-                    $SESSION->flextable[$uniqueid]->sortby = array();
-                }
-                $display = &$SESSION->flextable[$uniqueid]->display;
-                $sortby  = &$SESSION->flextable[$uniqueid]->sortby;
-            }
 
             if (isset($display[$field])) {
                 $default = $display[$field];
@@ -318,32 +316,62 @@ class reader_admin_options extends moodleform {
                 foreach ($value as $sortfield => $sortdirection) {
                     if ($sortdirection==0) { // remove
                         unset($sortby[$sortfield]);
-                        unset($value[$sortfield]);
+                        unset($display['sortfields'][$sortfield]);
+                        $update = true;
                     } else {
-                        if ($tsortfield==$sortfield) { // field was selected from table header
-                            $sortdirection = $sortby[$sortfield];
+                        if ($tsortfield==$sortfield) {
+                            $sortdirection = ($sortdirection==SORT_ASC ? SORT_DESC : SORT_ASC); // toggle
+                            $this->reorder_sortfields($value, $sortfield, $sortdirection);
+                            $this->reorder_sortfields($display['sortfields'], $sortfield, $sortdirection);
+                            if ($is_persistent) {
+                                $this->reorder_sortfields($sortorder, $sortfield, $sortdirection);
+                            }
+                            $update = true;
+                        } else if (isset($sortby[$sortfield]) && $sortby[$sortfield]===$sortdirection) {
+                            // do nothing - value has not changed
+                        } else {
+                            $sortdirection = ($sortdirection==SORT_ASC ? SORT_ASC : SORT_DESC); // clean
+                            $this->reorder_sortfields($value, $sortfield, $sortdirection);
+                            $this->reorder_sortfields($sortby, $sortfield, $sortdirection);
+                            $this->reorder_sortfields($display['sortfields'], $sortfield, $sortdirection);
+                            $update = true;
                         }
-                        $sortdirection = ($sortdirection==SORT_ASC ? SORT_ASC : SORT_DESC);
-                        $sortby[$sortfield] = $sortdirection;
                     }
                 }
             } else {
                 $value = optional_param($field, $default, $type);
             }
-            $display[$field] = $value;
+            if (isset($display[$field]) && $display[$field]==$value) {
+                // do nothing - value has not changed
+            } else {
+                $display[$field] = $value;
+                $update = true;
+            }
+        }
+        unset($prefs, $sortby, $display);
 
-            unset($display);
-            unset($sortby);
+        if ($update && $is_persistent) {
+            $this->table->set_user_preferences();
         }
 
         $this->optionfields = $optionfields;
-        $this->sortfields  = $sortfields;
+        $this->sortfields = $sortfields;
 
         if (method_exists('moodleform', '__construct')) {
             parent::__construct($action);
         } else {
             parent::moodleform($action);
         }
+    }
+
+    /**
+     * reorder_sortfields
+     */
+    public function reorder_sortfields(&$sortfields, $sortfield, $sortdirection) {
+        if (isset($sortfields[$sortfield])) {
+            unset($sortfields[$sortfield]);
+        }
+        $sortfields = array_merge(array($sortfield => $sortdirection), $sortfields);
     }
 
     /**
@@ -394,18 +422,19 @@ class reader_admin_options extends moodleform {
     protected function add_field_sortfields($mform, $name, $default) {
         global $SESSION;
 
-        $sortby = array();
+        // get table preferences
+        // $SESSION->flextable[$uniqueid]
+        // has been setup already by $table
         $uniqueid = $this->get_maintable_uniqueid();
-        if (method_exists('flexible_table', 'is_persistent')) {
+        $prefs = &$SESSION->flextable[$uniqueid];
+        if (is_array($prefs)) {
             // Moodle >= 2.9
-            if (isset($SESSION->flextable[$uniqueid]['sortby'])) {
-                $sortby = $SESSION->flextable[$uniqueid]['sortby'];
-            }
+            $sortby = &$prefs['sortby'];
+            $display = &$prefs['display'];
         } else {
             // Moodle <= 2.8
-            if (isset($SESSION->flextable[$uniqueid]->sortby)) {
-                $sortby = $SESSION->flextable[$uniqueid]->sortby;
-            }
+            $sortby = &$prefs->sortby;
+            $display = &$prefs->display;
         }
 
         // onchange event handler for the <select> elements
@@ -452,40 +481,18 @@ class reader_admin_options extends moodleform {
         }
 
         if (count($elements)) {
+            $tsortfield = optional_param('tsort', null, PARAM_ALPHANUM);
             $label = get_string('sortby');
             $mform->addGroup($elements, $name, $label, '');
             foreach ($sortby as $sortfield => $sortdirection) {
+                if ($sortfield==$tsortfield) {
+                    $sortdirection = ($sortdirection==SORT_ASC ? SORT_DESC : SORT_ASC); // toggle
+                }
                 $mform->setType($name.'['.$sortfield.']', PARAM_INT);
                 $mform->setDefault($name.'['.$sortfield.']', $sortdirection);
             }
             $mform->setAdvanced($name);
         }
-    }
-
-    /**
-     * get_sortdirection_img
-     *
-     * @param string $sortdirection (SORT_ASC or SORT_DESC)
-     * @return string html img tag
-     */
-    protected function get_sortdirection_img($sortdirection) {
-        global $OUTPUT;
-        $type = ($sortdirection==SORT_ASC ? 'asc' : 'desc');
-        $alt = get_string($type);
-        $src = $OUTPUT->pix_url('t/sort_'.$type);
-        return html_writer::empty_tag('img', array('src' => $src, 'alt' => $alt, 'class' => 'iconsort'));
-    }
-
-    /**
-     * get_sortremove_img
-     *
-     * @return string html img tag
-     */
-    protected function get_sortremove_img() {
-        global $OUTPUT;
-        $alt = get_string('remove');
-        $src = $OUTPUT->pix_url('t/delete');
-        return html_writer::empty_tag('img', array('src' => $src, 'alt' => $alt, 'class' => 'iconsort'));
     }
 
     /**
@@ -578,12 +585,12 @@ class reader_admin_options extends moodleform {
         global $SESSION;
         $uniqueid = $this->get_maintable_uniqueid();
         if (method_exists('flexible_table', 'is_persistent')) {
-            // Moodle >= 2.9
+            // Moodle >= 2.9 (table preferences ARRAY)
             if (isset($SESSION->flextable[$uniqueid]['display'][$name])) {
                 return $SESSION->flextable[$uniqueid]['display'][$name];
             }
         } else {
-            // Moodle <= 2.8
+            // Moodle <= 2.8 (table preferences OBJECT)
             if (isset($SESSION->flextable[$uniqueid]->display[$name])) {
                 return $SESSION->flextable[$uniqueid]->display[$name];
             }
@@ -639,7 +646,6 @@ class reader_admin_options extends moodleform {
         return array("ra.deleted = :$name", array($name => $value));
     }
 
-
     /**
      * get_sql_showhidden
      *
@@ -649,5 +655,4 @@ class reader_admin_options extends moodleform {
     protected function get_sql_showhidden($name, $value) {
         return array("rb.hidden = :$name", array($name => $value));
     }
-
 }

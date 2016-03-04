@@ -125,8 +125,6 @@ class reader_admin_table extends table_sql {
      * @param object $output renderer for this Reader activity
      */
     public function __construct($uniqueid, $output) {
-        global $DB, $USER;
-
         parent::__construct($uniqueid);
         $this->output = $output;
         $this->strtimeformat = get_string($this->timeformat);
@@ -165,19 +163,25 @@ class reader_admin_table extends table_sql {
     /**
      * setup_report_table
      *
-     * @param xxx $tablecolumns
-     * @param xxx $baseurl
      * @param xxx $action
      * @param xxx $download
+     * @param xxx $persistent (optional, default=FALSE)
      */
-    public function setup_report_table($baseurl, $action, $download)  {
-        global $SESSION;
+    public function setup_report_table($action, $download, $persistent=true)  {
+
+        // fetch table preferences first
+        // as they maybe required by filters
+        $this->get_user_preferences();
+
+        $tab = $this->output->tab;
+        $mode = $this->output->mode;
+        $baseurl = $this->output->baseurl();
 
         // set up download, if requested
         if ($download) {
             $title = $this->output->reader->course->shortname;
             $title .= ' '.$this->output->reader->name;
-            $title .= ' '.get_string('report'.$this->output->mode, 'mod_reader');
+            $title .= ' '.get_string('report'.$mode, 'mod_reader');
             $title = strip_tags(format_string($title, true));
             $this->is_downloading($download, clean_filename($title), $title);
 
@@ -223,7 +227,6 @@ class reader_admin_table extends table_sql {
             }
         }
 
-
         // make the page downloadable
         $this->is_downloadable(true);
 
@@ -233,23 +236,26 @@ class reader_admin_table extends table_sql {
         // attributes in the table tag
         $this->set_attribute('id', 'attempts');
         $this->set_attribute('align', 'center');
-        $this->set_attribute('class', $this->output->mode);
+        $this->set_attribute('class', $mode);
 
         // use persistent table settings in Moodle >= 2.9
         if (method_exists($this, 'is_persistent')) {
-            $this->is_persistent(true);
+            $this->is_persistent($persistent);
+        } else {
+            $persistent = false;
         }
 
-        // get user preferences
-        $this->get_user_preferences();
+        // setup filter form, but don't display it yet
+        // this must be done BEFORE calling parent::setup()
+        if (count($this->filterfields) && $this->output->reader->can_viewreports()) {
+            $classname = 'reader_admin_'.$tab.'_'.$mode.'_filtering';
+            $this->filter = new $classname($this->filterfields, $baseurl, null, $this->optionfields, $this);
+        }
 
         parent::setup();
 
-        // setup filter form (but don't display it yet)
-        if (count($this->filterfields) && $this->output->reader->can_viewreports()) {
-            $classname = 'reader_admin_'.$this->output->tab.'_'.$this->output->mode.'_filtering';
-            $this->filter = new $classname($this->filterfields, $this->baseurl, null, $this->optionfields);
-        }
+        // save the current table preferences
+        $this->set_user_preferences();
     }
 
     /**
@@ -293,6 +299,125 @@ class reader_admin_table extends table_sql {
         }
 
         return $tablecolumns;
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////
+    // functions to get and set user preferences                                  //
+    ////////////////////////////////////////////////////////////////////////////////
+
+    /**
+     * get_user_preferences
+     *
+     * @uses $SESSION
+     */
+    public function get_user_preferences() {
+        global $SESSION;
+
+        $uniqueid = $this->uniqueid;
+        switch (true) {
+
+            case optional_param('treset', false, PARAM_BOOL):
+                $prefs = null;
+                break;
+
+            case isset($SESSION->flextable[$uniqueid]):
+                $prefs = $SESSION->flextable[$uniqueid];
+                break;
+
+            default: // fetch from user_preferences
+                if (method_exists($this, 'is_persistent') && $this->is_persistent()) {
+                    // Moodle >= 2.9 with persistent table settings
+                    if ($prefs = get_user_preferences('flextable_'.$uniqueid)) {
+                        $prefs = json_decode($prefs, true);
+                    }
+                } else {
+                    // Moodle <= 2.8 (or Moodle >= 2.9 non-persistent table settings)
+                    if ($prefs = get_user_preferences($uniqueid)) {
+                        $prefs = unserialize(base64_decode($prefs));
+                    }
+                }
+        }
+
+        if (method_exists($this, 'is_persistent')) {
+            // Moodle >= 2.9 (preferences are stored as an ARRAY)
+            if (empty($prefs)) {
+                $prefs = array(
+                    'collapse' => array(),
+                    'i_first'  => '',
+                    'i_last'   => '',
+                    'textsort' => array()
+                );
+            } else if (is_object($prefs)) {
+                $prefs = (array)$prefs;
+            }
+            if (empty($prefs['sortby'])) {
+                $prefs['sortby'] = array();
+            }
+            if (empty($prefs['display'])) {
+                $prefs['display'] = array();
+            }
+            $sortby = &$prefs['sortby'];
+            $display = &$prefs['display'];
+        } else {
+            // Moodle <= 2.8 (preferences are stored as an OBJECT)
+            if (empty($prefs)) {
+                $prefs = (object)array(
+                    'collapse' => array(),
+                    'i_first'  => '',
+                    'i_last'   => '',
+                    'textsort' => array()
+                );
+            } else if (is_array($prefs)) {
+                $prefs = (object)$prefs;
+            }
+            if (empty($prefs->sortby)) {
+                $prefs->sortby = array();
+            }
+            if (empty($prefs->display)) {
+                $prefs->display = array();
+            }
+            $sortby = &$prefs->sortby;
+            $display = &$prefs->display;
+        }
+
+        // set default sort columns, if necessary
+        if (empty($sortby)) {
+            $sortby = $this->defaultsortcolumns;
+            $display['sortfields'] = $this->defaultsortcolumns;
+        }
+        unset($sortby);
+        unset($display);
+
+        // update preferences in $SESSION object
+        if (empty($SESSION->flextable)) {
+            $SESSION->flextable = array();
+        }
+        $SESSION->flextable[$uniqueid] = $prefs;
+
+        // update settings is case they have changed
+        $this->set_user_preferences();
+    }
+
+    /**
+     * set_user_preferences
+     *
+     * @uses $SESSION
+     */
+    public function set_user_preferences() {
+        global $SESSION;
+
+        $uniqueid = $this->uniqueid;
+        if (isset($SESSION->flextable[$uniqueid])) {
+
+            $prefs = $SESSION->flextable[$uniqueid];
+            if (method_exists($this, 'is_persistent') && $this->is_persistent()) {
+                $prefs = json_encode($prefs);
+                set_user_preference('flextable_'.$uniqueid, $prefs);
+            } else {
+                $prefs = base64_encode(serialize($prefs));
+                set_user_preference($uniqueid, $prefs);
+            }
+        }
     }
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -623,101 +748,6 @@ class reader_admin_table extends table_sql {
         }
 
         echo html_writer::end_tag('div');
-    }
-
-    ////////////////////////////////////////////////////////////////////////////////
-    // functions to get and set user preferences                                  //
-    ////////////////////////////////////////////////////////////////////////////////
-
-    /**
-     * get_user_preferences
-     *
-     * @uses $SESSION
-     */
-    public function get_user_preferences() {
-        global $SESSION;
-
-        $uniqueid = $this->uniqueid;
-        if (empty($SESSION->flextable[$this->uniqueid])) {
-
-            if (method_exists($this, 'is_persistent') && $this->is_persistent()) {
-                // Moodle >= 2.9 with "persistent" table settings
-                if ($prefs = get_user_preferences('flextable_'.$uniqueid)) {
-                    $prefs = json_decode($prefs, true);
-                } else {
-                    $prefs = array(
-                        'collapse' => array(),
-                        'sortby'   => array(),
-                        'i_first'  => '',
-                        'i_last'   => '',
-                        'textsort' => array()
-                    );
-                }
-                if (empty($prefs['sortby'])) {
-                    $prefs['sortby'] = array();
-                }
-                $sortby = &$prefs['sortby'];
-            } else {
-                // Moodle <= 2.8
-                if ($prefs = get_user_preferences($this->uniqueid, null)) {
-                    $prefs = unserialize(base64_decode($prefs));
-                } else {
-                    $prefs = new stdClass();
-                }
-                if (empty($prefs->sortby)) {
-                    $prefs->sortby = array();
-                }
-                $sortby = &$prefs->sortby;
-            }
-
-            if (empty($sortby)) {
-                foreach ($this->defaultsortcolumns as $column => $sortdirection) {
-                    if ($this->has_column($column)) {
-                        $sortby[$column] = $sortdirection;
-                    }
-                }
-            }
-            unset($sortby);
-
-            if (empty($SESSION->flextable)) {
-                $SESSION->flextable = array();
-            }
-
-            $SESSION->flextable[$this->uniqueid] = $prefs;
-        }
-    }
-
-    /**
-     * set_user_preferences
-     *
-     * @uses $SESSION
-     */
-    public function set_user_preferences() {
-        global $DB, $SESSION;
-        $uniqueid = $this->uniqueid;
-        if (isset($SESSION->flextable[$uniqueid])) {
-            $prefs = $SESSION->flextable[$uniqueid];
-            if (method_exists($this, 'is_persistent') && $this->is_persistent()) {
-                $prefs = json_encode($prefs);
-                if ($prefs==get_user_preferences('flextable_'.$uniqueid)) {
-                    // do nothing - $prefs have not changed
-                } else {
-                    set_user_preference('flextable_'.$this->uniqueid, $prefs);
-                }
-            } else {
-                $columns = $DB->get_columns('user_preferences');
-                if (array_key_exists('value', $columns)) {
-                    $prefs = base64_encode(serialize($prefs));
-                    if (strlen($prefs) <= $columns['value']->max_length) {
-                        if ($prefs==get_user_preferences($uniqueid, null)) {
-                            // do nothing - $prefs have not changed
-                        } else {
-                            set_user_preference($uniqueid, $prefs);
-                        }
-                    }
-                }
-            }
-        }
     }
 
     ////////////////////////////////////////////////////////////////////////////////

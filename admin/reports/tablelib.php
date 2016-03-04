@@ -44,6 +44,7 @@ class reader_admin_reports_table extends reader_admin_table {
     */
     const DEFAULT_USERTYPE    = 0;  // enrolled users with attempts
     const DEFAULT_BOOKTYPE    = 0;  // available books with attempts
+    const DEFAULT_TERMTYPE    = 0;  // this term
     const DEFAULT_SHOWDELETED = 0;  // ignore deleted attempts
     const DEFAULT_SHOWHIDDEN  = 0;  // ignore hidden quizzes
     /**#@-*/
@@ -171,26 +172,46 @@ class reader_admin_reports_table extends reader_admin_table {
     /**
      * select_sql_attempts
      *
-     * @params string $groupbyfield "reader_attempts" field name ("userid" or "quizid")
+     * called by select_sql() in summary reports:
+     * usersummary, groupsummary, and booksummary
+     *
+     * @params string $groupbyfield "reader_attempts" field name ("userid" or "bookid")
      * @return xxx
      */
     public function select_sql_attempts($groupbyfield) {
         list($usersql, $userparams) = $this->select_sql_users();
 
-        // we ignore attempts before the "ignoredate"
-        $ignoredate = $this->output->reader->ignoredate;
-        $notfinished   = 'ra.timefinish IS NULL OR ra.timefinish = 0';
+        $termtype = $this->filter->get_optionvalue('termtype');
 
-        $sum = "SUM(CASE WHEN (ra.readerid <> :reader1 OR $notfinished) THEN 0 ELSE (ra.percentgrade) END)";
-        $count = "SUM(CASE WHEN (ra.readerid <> :reader2 OR $notfinished) THEN 0 ELSE 1 END)";
+        // average grade
+        $exclude = $this->select_sql_attempts_exclude(1, $termtype);
+        $sum = "SUM(CASE WHEN ($exclude) THEN 0 ELSE (ra.percentgrade) END)";
+        $exclude = $this->select_sql_attempts_exclude(2, $termtype);
+        $count = "SUM(CASE WHEN ($exclude) THEN 0 ELSE 1 END)";
         $averagegrade  = "ROUND($sum / $count, 0)";
 
-        $sum = "SUM(CASE WHEN (ra.readerid <> :reader3 OR $notfinished) THEN 0 ELSE (ra.timefinish - ra.timestart) END)";
-        $count = "SUM(CASE WHEN (ra.readerid <> :reader4 OR $notfinished) THEN 0 ELSE 1 END)";
+        // sum duration
+        $exclude = $this->select_sql_attempts_exclude(3, $termtype);
+        $sum = 'ra.timefinish - ra.timestart';
+        $sum = "CASE WHEN (ra.timefinish = ra.timestart) THEN :maxduration ELSE ($sum) END";
+        $sum = "SUM(CASE WHEN ($exclude) THEN 0 ELSE ($sum) END)";
+
+        // count duration
+        $exclude = $this->select_sql_attempts_exclude(4, $termtype);
+        $count = "SUM(CASE WHEN ($exclude) THEN 0 ELSE 1 END)";
+
+        // average duration
         $averageduration = "ROUND($sum / $count, 0)";
 
-        $countpassed = "SUM(CASE WHEN (ra.readerid = :reader5 AND ra.passed = :passed1 AND ra.timefinish > :time1) THEN 1 ELSE 0 END)";
-        $countfailed = "SUM(CASE WHEN (ra.readerid = :reader6 AND ra.passed <> :passed2 AND ra.timefinish > :time2) THEN 1 ELSE 0 END)";
+        // count passed
+        $include = $this->select_sql_attempts_include(5, $termtype);
+        $include = "$include AND ra.passed = :passed5";
+        $countpassed = "SUM(CASE WHEN ($include) THEN 1 ELSE 0 END)";
+
+        // count failed
+        $include = $this->select_sql_attempts_include(6, $termtype);
+        $include = "$include AND ra.passed <> :passed6";
+        $countfailed = "SUM(CASE WHEN ($include) THEN 1 ELSE 0 END)";
 
         $select = "ra.$groupbyfield,".
                   "$averagegrade AS averagegrade,".
@@ -207,8 +228,20 @@ class reader_admin_reports_table extends reader_admin_table {
                         'reader4' => $this->output->reader->id,
                         'reader5' => $this->output->reader->id,
                         'reader6' => $this->output->reader->id,
-                        'passed1' => 'true', 'time1' => $ignoredate,  // countpassed (this term)
-                        'passed2' => 'true', 'time2' => $ignoredate); // countfailed (this term)
+                        'passed5' => 'true',
+                        'passed6' => 'true',
+                        'maxduration' => $this->output->reader->timelimit);
+
+        // "ignoredate" is the start of the current term
+        $ignoredate = $this->output->reader->ignoredate;
+        if ($termtype==reader_admin_reports_options::THIS_TERM) {
+            $params['time1'] = $ignoredate;
+            $params['time2'] = $ignoredate;
+            $params['time3'] = $ignoredate;
+            $params['time4'] = $ignoredate;
+            $params['time5'] = $ignoredate;
+            $params['time6'] = $ignoredate;
+        }
 
         if ($this->output->reader->wordsorpoints==0) {
             // words
@@ -221,29 +254,42 @@ class reader_admin_reports_table extends reader_admin_table {
         }
 
         switch ($groupbyfield) {
-            case 'userid':
-                $totalthisterm = "SUM(CASE WHEN (ra.readerid = :reader7 AND ra.passed = :passed3 AND ra.timefinish > :time3) THEN $totalfield ELSE 0 END)";
-                $totalallterms = "SUM(CASE WHEN (ra.passed = :passed4 AND ra.timefinish > :time4) THEN $totalfield ELSE 0 END)";
+            case 'userid': // usersummary AND groupsummary
+
+                $include = $this->select_sql_attempts_include(7, reader_admin_reports_options::THIS_TERM);
+                $include = "$include AND ra.passed = :passed7";
+                $totalthisterm = "SUM(CASE WHEN ($include) THEN $totalfield ELSE 0 END)";
+
+                $include = $this->select_sql_attempts_include(8, reader_admin_reports_options::ALL_TERMS);
+                $include = "$include AND ra.passed = :passed8";
+                $totalallterms = "SUM(CASE WHEN ($include) THEN $totalfield ELSE 0 END)";
 
                 $select .= ",$totalthisterm AS {$totalalias}thisterm".
                            ",$totalallterms AS {$totalalias}allterms";
 
                 $params += array('reader7' => $this->output->reader->id,
-                                 'passed3' => 'true', 'time3' => $ignoredate, // totalthisterm
-                                 'passed4' => 'true', 'time4' => 0);          // totalallterms
+                                 'reader8' => $this->output->reader->id,
+                                 'passed7' => 'true', 'time7' => $ignoredate,
+                                 'passed8' => 'true', 'time8' => 0);
                 break;
 
-            case 'bookid':
-                $notrated    = "$notfinished OR ra.bookrating IS NULL";
+            case 'bookid': // booksummary
+                $notrated = 'ra.timefinish IS NULL OR ra.timefinish = 0 OR ra.bookrating IS NULL';
 
-                $countrating = "SUM(CASE WHEN (ra.readerid <> :reader7 OR $notrated) THEN 0 ELSE 1 END)";
+                $exclude = "ra.readerid <> :reader7 OR $notrated";
+                $countrating = "SUM(CASE WHEN ($exclude) THEN 0 ELSE 1 END)";
 
-                $sum = "SUM(CASE WHEN (ra.readerid <> :reader8 OR $notrated) THEN 0 ELSE ra.bookrating END)";
-                $count = "SUM(CASE WHEN (ra.readerid <> :reader9 OR $notrated) THEN 0 ELSE 1 END)";
+                $exclude = "ra.readerid <> :reader8 OR $notrated";
+                $sum = "SUM(CASE WHEN ($exclude) THEN 0 ELSE ra.bookrating END)";
+
+                $exclude = "ra.readerid <> :reader9 OR $notrated";
+                $count = "SUM(CASE WHEN ($exclude) THEN 0 ELSE 1 END)";
+
                 $averagerating = "ROUND($sum / $count, 0)";
 
                 $select     .= ",$countrating AS countrating".
                                ",$averagerating AS averagerating";
+
                 $params += array('reader7' => $this->output->reader->id,
                                  'reader8' => $this->output->reader->id,
                                  'reader9' => $this->output->reader->id);
@@ -274,6 +320,36 @@ class reader_admin_reports_table extends reader_admin_table {
         //}
 
         return array("SELECT $select FROM $from WHERE $where GROUP BY ra.$groupbyfield", $params);
+    }
+
+    /**
+     * select_sql_attempts_exclude
+     *
+     * @params integer $i
+     * @params integer $termtype (see reader_admin_reports_options::THIS_TERM/ALL_TERMS)
+     * @return string
+     */
+    protected function select_sql_attempts_exclude($i, $termtype) {
+        $sql = "ra.readerid <> :reader$i OR ra.timefinish IS NULL OR ra.timefinish = 0";
+        if ($termtype==reader_admin_reports_options::THIS_TERM) {
+            $sql .= " OR ra.timefinish < :time$i";
+        }
+        return $sql;
+    }
+
+    /**
+     * select_sql_attempts_include
+     *
+     * @params integer $i
+     * @params integer $termtype (see reader_admin_reports_options::THIS_TERM/ALL_TERMS)
+     * @return string
+     */
+    protected function select_sql_attempts_include($i, $termtype) {
+        $sql = "ra.readerid = :reader$i AND ra.timefinish IS NOT NULL AND ra.timefinish > 0";
+        if ($termtype==reader_admin_reports_options::THIS_TERM) {
+            $sql .= " AND ra.timefinish >= :time$i";
+        }
+        return $sql;
     }
 
     /**

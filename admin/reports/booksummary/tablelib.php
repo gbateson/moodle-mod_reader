@@ -71,6 +71,7 @@ class reader_admin_reports_booksummary_table extends reader_admin_reports_table 
 
     /** @var option fields */
     protected $optionfields = array('booktype'    => self::DEFAULT_BOOKTYPE,
+                                    'termtype'    => self::DEFAULT_TERMTYPE,
                                     'rowsperpage' => self::DEFAULT_ROWSPERPAGE,
                                     'showhidden'  => self::DEFAULT_SHOWHIDDEN,
                                     'sortfields'  => array());
@@ -135,7 +136,7 @@ class reader_admin_reports_booksummary_table extends reader_admin_reports_table 
 
             case reader_admin_reports_options::BOOKS_AVAILABLE_ALL:
             default: // shouldn't happen !!
-                $where = 'rb.id > 0';
+                $where = '1=1';
                 break;
         }
 

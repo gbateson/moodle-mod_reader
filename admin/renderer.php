@@ -116,16 +116,13 @@ class mod_reader_admin_renderer extends mod_reader_renderer {
         $action = optional_param('action', '', PARAM_ALPHA);
         $download = optional_param('download', '', PARAM_ALPHA);
 
-        // set baseurl for this page (used for filters and table)
-        $baseurl = $this->baseurl();
-
         // create report table
         $tableclass = 'reader_admin_'.$this->tab.'_'.$this->mode.'_table';
         $uniqueid = $this->page->pagetype.'-'.$this->mode;
         $table = new $tableclass($uniqueid, $this);
 
         // setup the report table
-        $table->setup_report_table($baseurl, $action, $download);
+        $table->setup_report_table($action, $download);
 
         // execute required $action
         $table->execute_action($action);
@@ -162,9 +159,6 @@ class mod_reader_admin_renderer extends mod_reader_renderer {
         } else {
             $table->nothing_to_display($this->mode);
         }
-
-        // save $SESSION values as user preferences
-        $table->set_user_preferences();
     }
 
     /**

@@ -111,6 +111,15 @@ class reader_admin_reports_options extends reader_admin_options {
     const BOOKS_ALL_WITH          = 3;
     /**#@-*/
 
+    /**#@+
+    * values for report $termtype
+    *
+    * @const integer
+    */
+    const THIS_TERM = 0;
+    const ALL_TERMS = 1;
+    /**#@-*/
+
     /**
      * add_field_usertype
      *
@@ -160,6 +169,30 @@ class reader_admin_reports_options extends reader_admin_options {
      * @param object $value
      */
     protected function get_sql_booktype($name, $value) {
+        return null;
+    }
+
+    /**
+     * add_field_termtype
+     *
+     * @param object $mform
+     * @param string $name of field i.e. "add_field_termtype"
+     * @param mixed  $default value for this $field
+     */
+    protected function add_field_termtype($mform, $name, $default) {
+        $label = get_string('termtype', 'mod_reader');
+        $options = array(self::THIS_TERM => get_string('thisterm', 'mod_reader'),
+                         self::ALL_TERMS => get_string('allterms', 'mod_reader'));
+        $this->add_select_autosubmit($mform, $name, $label, $options, $default);
+    }
+
+    /**
+     * get_sql_termtype
+     *
+     * @param string $name of field i.e. "termtype"
+     * @param object $value
+     */
+    protected function get_sql_termtype($name, $value) {
         return null;
     }
 }

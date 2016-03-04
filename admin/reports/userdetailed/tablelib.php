@@ -42,26 +42,26 @@ class reader_admin_reports_userdetailed_table extends reader_admin_reports_table
         'studentview', 'username', 'fullname', 'groups', 'currentlevel',
         'difficulty', 'words', 'points', 'name',
         'selected', 'timefinish', 'duration', 'grade', 'passed',
-        'attemptwords', 'termwords', 'attemptpoints', 'termpoints'
+        'attemptwords', 'totalwords', 'attemptpoints', 'totalpoints'
     );
 
     /** @var suppressed columns in this table */
     protected $suppresscolumns = array('studentview', 'groups', 'username', 'fullname', 'currentlevel', 'difficulty');
 
     /** @var columns in this table that are not sortable */
-    protected $nosortcolumns = array('studentview', 'groups', 'attemptwords', 'attemptpoints', 'termwords', 'termpoints');
+    protected $nosortcolumns = array('studentview', 'groups', 'attemptwords', 'attemptpoints', 'totalwords', 'totalpoints');
 
     /** @var text columns in this table */
     protected $textcolumns = array('username', 'fullname', 'name');
 
     /** @var number columns in this table */
-    protected $numbercolumns = array('currentlevel', 'difficulty', 'attemptwords', 'termwords', 'attemptpoints', 'termpoints');
+    protected $numbercolumns = array('currentlevel', 'difficulty', 'attemptwords', 'attemptpoints', 'totalwords', 'totalpoints');
 
     /** @var columns that are not to be center aligned */
     protected $leftaligncolumns = array('username', 'fullname', 'name');
 
     /** @var default sort columns */
-    protected $defaultsortcolumns = array('username' => SORT_ASC, 'timefinish' => SORT_DESC);
+    protected $defaultsortcolumns = array('username' => SORT_ASC, 'timefinish' => SORT_ASC);
 
     /** @var filter fields ($fieldname => $advanced) */
     protected $filterfields = array(
@@ -72,7 +72,8 @@ class reader_admin_reports_userdetailed_table extends reader_admin_reports_table
        );
 
     /** @var option fields */
-    protected $optionfields = array('rowsperpage' => self::DEFAULT_ROWSPERPAGE,
+    protected $optionfields = array('termtype'    => self::DEFAULT_TERMTYPE,
+                                    'rowsperpage' => self::DEFAULT_ROWSPERPAGE,
                                     'showhidden'  => self::DEFAULT_SHOWHIDDEN,
                                     'showdeleted' => self::DEFAULT_SHOWDELETED,
                                     'sortfields'  => array());
@@ -86,8 +87,8 @@ class reader_admin_reports_userdetailed_table extends reader_admin_reports_table
      * @param int $uniqueid
      */
     public function __construct($uniqueid, $output) {
-        $wordsfields = array('words',  'attemptwords',  'termwords');
-        $pointsfields = array('points', 'attemptpoints', 'termpoints');
+        $wordsfields = array('words',  'attemptwords',  'totalwords');
+        $pointsfields = array('points', 'attemptpoints', 'totalpoints');
         $this->fix_words_or_points_fields($output, $wordsfields, $pointsfields);
         parent::__construct($uniqueid, $output);
     }
@@ -113,12 +114,12 @@ class reader_admin_reports_userdetailed_table extends reader_admin_reports_table
             $wordsorpointsalias = 'words';
             $wordsorpoints = 'words';
             $attemptalias = 'attemptwords';
-            $termalias = 'termwords';
+            $termalias = 'totalwords';
         } else {
             $wordsorpointsalias = 'points';
             $wordsorpoints = 'points';
             $attemptalias = 'attemptpoints';
-            $termalias = 'termpoints';
+            $termalias = 'totalpoints';
         }
 
         $score    = "CASE WHEN (ra.passed = :passed1) THEN rb.$wordsorpoints ELSE 0 END";
@@ -127,7 +128,7 @@ class reader_admin_reports_userdetailed_table extends reader_admin_reports_table
 
         // total of all words/points this term up to and including this attempt
         $total    = 'rat.readerid = ra.readerid AND rat.userid = ra.userid AND '.
-                    'rat.timefinish > :time1 AND rat.timefinish <= ra.timefinish AND '.
+                    'rat.timefinish >= :time1 AND rat.timefinish <= ra.timefinish AND '.
                     'rat.passed = :passed2 AND rat.deleted = :deleted';
         $total    = "(SELECT SUM(rbt.$wordsorpoints) FROM {reader_attempts} rat LEFT JOIN {reader_books} rbt ON rat.bookid = rbt.id WHERE $total)";
 
@@ -140,17 +141,28 @@ class reader_admin_reports_userdetailed_table extends reader_admin_reports_table
                   'LEFT JOIN {user} u ON ra.userid = u.id '.
                   'LEFT JOIN {reader_levels} rl ON ra.readerid = rl.readerid AND u.id = rl.userid '.
                   'LEFT JOIN {reader_books} rb ON ra.bookid = rb.id';
-        $where  = "ra.readerid = :readerid AND ra.timefinish > :time2";
-        if ($usersql) {
-            $where .= " AND u.id $usersql";
-        }
+        $where  = 'ra.readerid = :readerid AND ra.timefinish >= :time2';
 
         $params = array('readerid' => $this->output->reader->id,
-                        'time1'    => $this->output->reader->ignoredate,
-                        'time2'    => $this->output->reader->ignoredate,
                         'passed1'  => 'true',
                         'passed2'  => 'true',
-                        'deleted'  => 0) + $userparams;
+                        'deleted'  => 0);
+
+        $termtype = $this->filter->get_optionvalue('termtype');
+        if ($termtype==reader_admin_reports_options::THIS_TERM) {
+            // this term
+            $params['time1'] = $this->output->reader->ignoredate;
+            $params['time2'] = $this->output->reader->ignoredate;
+        } else {
+            // all terms
+            $params['time1'] = 0;
+            $params['time2'] = 0;
+        }
+
+        if ($usersql) {
+            $where .= " AND u.id $usersql";
+            $params += $userparams;
+        }
 
         //if ($this->output->reader->bookinstances) {
         //    $from  .= ' LEFT JOIN {reader_book_instances} rbi ON rb.id = rbi.bookid';
@@ -180,8 +192,8 @@ class reader_admin_reports_userdetailed_table extends reader_admin_reports_table
             case 'difficulty':
                 return array('reader_levels', 'rb');
 
-            case 'termwords':
-            case 'termpoints':
+            case 'totalwords':
+            case 'totalpoints':
                 return array('', '');
 
             case 'timefinish':
@@ -225,23 +237,23 @@ class reader_admin_reports_userdetailed_table extends reader_admin_reports_table
     }
 
     /**
-     * header_termwords
+     * header_totalwords
      *
      * @return xxx
      */
-    public function header_termwords() {
+    public function header_totalwords() {
         $header = $this->header_words();
-        return $this->header_add_period($header, 'thisterm');
+        return $this->header_add_period($header, 'sofar');
     }
 
     /**
-     * header_termpoints
+     * header_totalpoints
      *
      * @return xxx
      */
-    public function header_termpoints() {
+    public function header_totalpoints() {
         $header = $this->header_points();
-        return $this->header_add_period($header, 'thisterm');
+        return $this->header_add_period($header, 'sofar');
     }
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -249,30 +261,30 @@ class reader_admin_reports_userdetailed_table extends reader_admin_reports_table
     ////////////////////////////////////////////////////////////////////////////////
 
     /**
-     * col_termwords
+     * col_totalwords
      *
      * @param xxx $row
      * @return xxx
      */
-    public function col_termwords($row)  {
+    public function col_totalwords($row)  {
         if ($this->is_downloading()) {
-            return $row->termwords;
+            return $row->totalwords;
         } else {
-            return number_format($row->termwords);
+            return number_format($row->totalwords);
         }
     }
 
     /**
-     * col_termpoints
+     * col_totalpoints
      *
      * @param xxx $row
      * @return xxx
      */
-    public function col_termpoints($row)  {
+    public function col_totalpoints($row)  {
         if ($this->is_downloading()) {
-            return $row->termpoints;
+            return $row->totalpoints;
         } else {
-            return number_format($row->termpoints);
+            return number_format($row->totalpoints);
         }
     }
 }

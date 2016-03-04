@@ -928,7 +928,7 @@ $string['targetsection_help'] = 'Specify the course section i.e. the week or top
 
 **A new section**
 : The quizzes will be added to a new section. Enter a name for the new section in the text box.';
-$string['term'] = 'Term';
+$string['termtype'] = 'Term';
 $string['therehavebeennonewquizzesorupdates'] = 'There have been no new quizzes or updates added to the MoodleReader quiz bank since the last time you checked.';
 $string['thisattempt'] = 'this attempt';
 $string['thisblockunavailable'] = 'This block is currently unavailable to this student';
