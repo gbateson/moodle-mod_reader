@@ -27,30 +27,44 @@
 
 /** Include required files */
 require_once('../../../../config.php');
-require_once($CFG->dirroot.'/mod/reader/lib.php');
+require_once($CFG->dirroot.'/mod/reader/admin/tools/lib.php');
+require_once($CFG->dirroot.'/mod/reader/admin/tools/renderer.php');
+require_once($CFG->dirroot.'/mod/reader/locallib.php');
 
 $id  = optional_param('id',  0, PARAM_INT);
 $tab = optional_param('tab', 0, PARAM_INT);
+$tool = substr(basename($SCRIPT), 0, -4);
 
 require_login(SITEID);
-if (class_exists('context_system')) {
-    $context = context_system::instance();
+require_capability('moodle/site:config', reader_get_context(CONTEXT_SYSTEM));
+
+if ($id) {
+    $cm = get_coursemodule_from_id('reader', $id, 0, false, MUST_EXIST);
+    $course = $DB->get_record('course', array('id' => $cm->course), '*', MUST_EXIST);
+    $reader = $DB->get_record('reader', array('id' => $cm->instance), '*', MUST_EXIST);
 } else {
-    $context = get_context_instance(CONTEXT_SYSTEM);
+    $cm = null;
+    $course = null;
+    $reader = null;
 }
-require_capability('moodle/site:config', $context);
+$reader = mod_reader::create($reader, $cm, $course);
 
-// $SCRIPT is set by initialise_fullme() in 'lib/setuplib.php'
-// it is the path below $CFG->wwwroot of this script
-$PAGE->set_url($CFG->wwwroot.$SCRIPT);
+// set page url
+$params = array('id' => $id, 'tab' => $tab);
+$PAGE->set_url(new moodle_url("/mod/reader/admin/tools/$tool.php", $params));
 
-$title = get_string('fix_slashesinnames', 'mod_reader');
+// set page title
+$title = get_string($tool, 'mod_reader');
 $PAGE->set_title($title);
 $PAGE->set_heading($title);
 $PAGE->set_pagelayout('admin');
 
-echo $OUTPUT->header();
-echo $OUTPUT->box_start();
+$output = $PAGE->get_renderer('mod_reader', 'admin_tools');
+$output->init($reader);
+
+echo $output->header();
+echo $output->tabs();
+echo $output->box_start();
 
 $startedlist = false;
 if ($books = $DB->get_records ('reader_books')) {
@@ -72,9 +86,10 @@ if (! $reader_usecourse = get_config('mod_reader', 'usecourse')) {
         // look for external "usecourse" in Reader activities
         $select = 'r.id, r.course, r.usecourse, c.id AS courseid, c.visible';
         $from   = '{reader} r LEFT JOIN {course} c ON r.usecourse = c.id';
-        $where  = 'r.usecourse IS NOT NULL AND r.course <> r.usecourse AND c.id IS NOT NULL AND c.visible=0';
+        $where  = 'r.usecourse IS NOT NULL AND r.course <> r.usecourse AND c.id IS NOT NULL AND c.visible = ?';
+        $params = array(0);
         $reader_usecourses = array();
-        if ($readers = $DB->get_records_sql("SELECT $select FROM $from WHERE $where")) {
+        if ($readers = $DB->get_records_sql("SELECT $select FROM $from WHERE $where", $params)) {
             $reader = reset($readers);
             $reader_usecourse = $reader->usecourse;
         }
@@ -133,12 +148,9 @@ if ($startedlist) {
 } else {
     echo "<p>no slashes found in book titles</p>\n";
 }
-if ($id) {
-    $href = new moodle_url('/mod/reader/admin/tools.php', array('id' => $id, 'tab' => $tab));
-} else {
-    $href = new moodle_url($CFG->wwwroot.'/');
-}
-echo html_writer::tag('p', html_writer::tag('a', 'Click here to continue', array('href' => $href)));
 
-echo $OUTPUT->box_end();
-echo $OUTPUT->footer();
+reader_print_all_done();
+reader_print_continue($id, $tab);
+
+echo $output->box_end();
+echo $output->footer();

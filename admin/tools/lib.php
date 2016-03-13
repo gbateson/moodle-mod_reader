@@ -313,3 +313,56 @@ function reader_curlfile($url) {
         return explode('\n', $result);
     }
 }
+
+/**
+ * reader_quizzes_courseid
+ *
+ * @param xxx $reader
+ * @return xxx
+ * @todo Finish documenting this function
+ */
+function reader_quizzes_courseid($reader) {
+    if ($reader->usecourse) {
+        return $reader->usecourse;
+    } else {
+        return get_config('mod_reader', 'usecourse');
+    }
+}
+
+/**
+ * reader_reset_timeout
+ *
+ * @param xxx $moretime (optional, default=300)
+ * @todo Finish documenting this function
+ */
+function reader_reset_timeout($moretime=300) {
+    static $timeout = 0;
+    $time = time();
+    if ($timeout < $time) {
+        $timeout = ($time + round($moretime * 0.9));
+        set_time_limit($moretime);
+    }
+}
+
+/**
+ * reader_print_all_done
+ *
+ * @todo Finish documenting this function
+ */
+function reader_print_all_done() {
+    echo html_writer::tag('p', get_string('alldone', 'mod_reader'));
+}
+
+/**
+ * reader_print_continue
+ *
+ * @todo Finish documenting this function
+ */
+function reader_print_continue($id, $tab) {
+    if ($id) {
+        $href = new moodle_url('/mod/reader/admin/tools.php', array('id' => $id, 'tab' => $tab));
+    } else {
+        $href = new moodle_url('/');
+    }
+    echo html_writer::tag('p', html_writer::tag('a', 'Click here to continue', array('href' => $href)));
+}

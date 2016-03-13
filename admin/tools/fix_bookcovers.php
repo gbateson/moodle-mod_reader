@@ -54,9 +54,9 @@ if (class_exists('context_system')) {
 }
 require_capability('moodle/site:config', $context);
 
-// $SCRIPT is set by initialise_fullme() in 'lib/setuplib.php'
-// it is the path below $CFG->wwwroot of this script
-$PAGE->set_url($CFG->wwwroot.$SCRIPT);
+// set page url
+$params = array('id' => $id, 'tab' => $tab);
+$PAGE->set_url(new moodle_url('/mod/reader/admin/tools/fix_bookcovers.php', $params));
 
 // set title
 $title = get_string('fix_bookcovers', 'mod_reader');
@@ -82,17 +82,11 @@ make_upload_directory('reader/images');
 
 switch ($action) {
     case 'all'       : reader_fetch_all_book_images($readercfg); break;
-    case 'my'        : reader_fetch_my_book_images($readercfg);  break;
     case 'attempted' : reader_fetch_attempted_book_images($readercfg); break;
+    case 'installed' : reader_fetch_installed_book_images($readercfg); break;
 }
 
-echo html_writer::tag('p', get_string('alldone', 'mod_reader'));
-if ($id) {
-    $href = new moodle_url('/mod/reader/admin/tools.php', array('id' => $id, 'tab' => $tab));
-} else {
-    $href = new moodle_url($CFG->wwwroot.'/');
-}
-echo html_writer::tag('p', html_writer::tag('a', 'Click here to continue', array('href' => $href)));
+reader_print_continue($id, $tab);
 
 echo $output->box_end();
 echo $output->footer();
@@ -164,13 +158,13 @@ function reader_fetch_all_book_images($readercfg) {
 }
 
 /**
- * reader_fetch_my_book_images
+ * reader_fetch_installed_book_images
  *
  * @uses $DB
  * @param xxx $readercfg
  * @todo Finish documenting this function
  */
-function reader_fetch_my_book_images($readercfg) {
+function reader_fetch_installed_book_images($readercfg) {
     global $DB;
 
     $select = 'publisher <> ? AND publisher <> ? AND publisher <> ? AND publisher <> ? AND level <> ?';
@@ -464,24 +458,28 @@ function reader_get_remotenames($readercfg) {
  * @todo Finish documenting this function
  */
 function reader_print_images_form($readercfg, $action) {
-    global $CFG;
+    global $CFG, $PAGE;
 
     // start form
-    $params = array('method' => 'post', 'action' => $CFG->wwwroot.'/mod/reader/admin/tools/fix_bookcovers.php');
+    $params = array('method' => 'post', 'action' => $PAGE->url);
     echo html_writer::start_tag('form', $params);
     echo html_writer::start_tag('div');
 
     // default $action
     if (empty($action)) {
-        $action = 'my';
+        if (strpos($CFG->wwwroot, 'localhost')) {
+            $action = 'attempted'; // development site
+        } else {
+            $action = 'installed'; // production site
+        }
     }
 
     // prompt
-    echo get_string('whichbooks', 'mod_reader').' ';
+    echo get_string('chooseaction', 'mod_reader').' ';
     echo html_writer::empty_tag('br');
 
     // actions
-    $actions = array('all', 'my', 'attempted');
+    $actions = array('all', 'installed', 'attempted');
     foreach ($actions as $a) {
         $params = array('type' => 'radio', 'name' => 'action', 'value' => $a);
         if ($action==$a) {
@@ -498,28 +496,4 @@ function reader_print_images_form($readercfg, $action) {
     // finish form
     echo html_writer::end_tag('div');
     echo html_writer::end_tag('form');
-}
-
-/**
- * reader_print_all_done
- *
- * @todo Finish documenting this function
- */
-function reader_print_all_done() {
-    echo html_writer::tag('p', get_string('alldone', 'mod_reader'));
-}
-
-/**
- * reader_reset_timeout
- *
- * @param xxx $moretime (optional, default=300)
- * @todo Finish documenting this function
- */
-function reader_reset_timeout($moretime=300) {
-    static $timeout = 0;
-    $time = time();
-    if ($timeout < $time) {
-        $timeout = ($time + $moretime);
-        set_time_limit($moretime);
-    }
 }

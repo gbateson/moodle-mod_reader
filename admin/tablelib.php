@@ -118,6 +118,9 @@ class reader_admin_table extends table_sql {
     /** @var date_strings */
     protected $date_strings = null;
 
+    /** @var sync_table_preferences_value */
+    protected $sync_table_preferences_value = false;
+
     /**
      * Constructor
      *
@@ -171,7 +174,7 @@ class reader_admin_table extends table_sql {
 
         // fetch table preferences first
         // as they maybe required by filters
-        $this->get_user_preferences();
+        $this->get_table_preferences();
 
         $tab = $this->output->tab;
         $mode = $this->output->mode;
@@ -254,8 +257,15 @@ class reader_admin_table extends table_sql {
 
         parent::setup();
 
-        // save the current table preferences
-        $this->set_user_preferences();
+        if ($this->has_persistent_table_preferences()) {
+            // fetch persistent preferences into $SESSION
+            // because this is not done in $this->setup()
+            // see "lib/moodlelib.php" (around line 536)
+            $this->get_persistent_table_preferences();
+        } else {
+            // save the current table preferences
+            $this->set_table_preferences();
+        }
     }
 
     /**
@@ -306,16 +316,15 @@ class reader_admin_table extends table_sql {
     ////////////////////////////////////////////////////////////////////////////////
 
     /**
-     * get_user_preferences
+     * get_table_preferences
      *
      * @uses $SESSION
      */
-    public function get_user_preferences() {
+    public function get_table_preferences() {
         global $SESSION;
 
         $uniqueid = $this->uniqueid;
         switch (true) {
-
             case optional_param('treset', false, PARAM_BOOL):
                 $prefs = null;
                 break;
@@ -324,18 +333,9 @@ class reader_admin_table extends table_sql {
                 $prefs = $SESSION->flextable[$uniqueid];
                 break;
 
-            default: // fetch from user_preferences
-                if (method_exists($this, 'is_persistent') && $this->is_persistent()) {
-                    // Moodle >= 2.9 with persistent table settings
-                    if ($prefs = get_user_preferences('flextable_'.$uniqueid)) {
-                        $prefs = json_decode($prefs, true);
-                    }
-                } else {
-                    // Moodle <= 2.8 (or Moodle >= 2.9 non-persistent table settings)
-                    if ($prefs = get_user_preferences($uniqueid)) {
-                        $prefs = unserialize(base64_decode($prefs));
-                    }
-                }
+            default:
+                $prefs = $this->get_persistent_table_preferences();
+                break;
         }
 
         if (method_exists($this, 'is_persistent')) {
@@ -392,18 +392,48 @@ class reader_admin_table extends table_sql {
         if (empty($SESSION->flextable)) {
             $SESSION->flextable = array();
         }
+
         $SESSION->flextable[$uniqueid] = $prefs;
 
         // update settings is case they have changed
-        $this->set_user_preferences();
+        $this->set_table_preferences();
     }
 
     /**
-     * set_user_preferences
+     * has_persistent_table_preferences
+     */
+    public function has_persistent_table_preferences() {
+        return (method_exists($this, 'is_persistent') && $this->is_persistent());
+    }
+
+    /**
+     * get_persistent_table_preferences
+     */
+    public function get_persistent_table_preferences() {
+        $uniqueid = $this->uniqueid;
+        if ($this->has_persistent_table_preferences()) {
+            // Moodle >= 2.9 with persistent table settings
+            if ($prefs = get_user_preferences('flextable_'.$uniqueid)) {
+                return json_decode($prefs, true);
+            } else {
+                return null;
+            }
+        } else {
+            // Moodle <= 2.8 (or Moodle >= 2.9 non-persistent table settings)
+            if ($prefs = get_user_preferences($uniqueid)) {
+                $prefs = unserialize(base64_decode($prefs));
+            } else {
+                return null;
+            }
+        }
+    }
+
+    /**
+     * set_table_preferences
      *
      * @uses $SESSION
      */
-    public function set_user_preferences() {
+    public function set_table_preferences() {
         global $SESSION;
 
         $uniqueid = $this->uniqueid;
@@ -411,9 +441,11 @@ class reader_admin_table extends table_sql {
 
             $prefs = $SESSION->flextable[$uniqueid];
             if (method_exists($this, 'is_persistent') && $this->is_persistent()) {
+                // Moodle >= 2.9
                 $prefs = json_encode($prefs);
                 set_user_preference('flextable_'.$uniqueid, $prefs);
             } else {
+                // Moodle <= 2.8
                 $prefs = base64_encode(serialize($prefs));
                 set_user_preference($uniqueid, $prefs);
             }

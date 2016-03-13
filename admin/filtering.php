@@ -290,14 +290,6 @@ class reader_admin_options extends moodleform {
             $display = &$prefs->display;
         }
 
-        if (method_exists($this->table, 'is_persistent') && $this->table->is_persistent()) {
-            // Moodle >= 2.9 with persistent table preferences
-            $is_persistent = true;
-        } else {
-            // Moodle <= 2.8 (or Moodle >= 2.9 non-persistent table preferences)
-            $is_persistent = false;
-        }
-
         // get and set values in $SESSION
         $update = false;
         foreach ($optionfields as $field => $default) {
@@ -323,9 +315,7 @@ class reader_admin_options extends moodleform {
                             $sortdirection = ($sortdirection==SORT_ASC ? SORT_DESC : SORT_ASC); // toggle
                             $this->reorder_sortfields($value, $sortfield, $sortdirection);
                             $this->reorder_sortfields($display['sortfields'], $sortfield, $sortdirection);
-                            if ($is_persistent) {
-                                $this->reorder_sortfields($sortorder, $sortfield, $sortdirection);
-                            }
+                            // updating of $sortby will be done in "lib/tablelib.php"
                             $update = true;
                         } else if (isset($sortby[$sortfield]) && $sortby[$sortfield]===$sortdirection) {
                             // do nothing - value has not changed
@@ -350,8 +340,8 @@ class reader_admin_options extends moodleform {
         }
         unset($prefs, $sortby, $display);
 
-        if ($update && $is_persistent) {
-            $this->table->set_user_preferences();
+        if ($update) {
+            $this->table->set_table_preferences();
         }
 
         $this->optionfields = $optionfields;
@@ -368,10 +358,16 @@ class reader_admin_options extends moodleform {
      * reorder_sortfields
      */
     public function reorder_sortfields(&$sortfields, $sortfield, $sortdirection) {
-        if (isset($sortfields[$sortfield])) {
-            unset($sortfields[$sortfield]);
+        if ($sortfield===null || $sortfield==='') {
+            // do nothing
+        } else if (empty($sortfields)) {
+            $sorfields = array($sortfield => $sortdirection);
+        } else if (is_array($sortfields)) {
+            if (isset($sortfields[$sortfield])) {
+                unset($sortfields[$sortfield]);
+            }
+            $sortfields = array_merge(array($sortfield => $sortdirection), $sortfields);
         }
-        $sortfields = array_merge(array($sortfield => $sortdirection), $sortfields);
     }
 
     /**

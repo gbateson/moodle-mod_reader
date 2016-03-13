@@ -27,25 +27,44 @@
 
 /** Include required files */
 require_once('../../../../config.php');
-require_once($CFG->dirroot.'/mod/reader/lib.php');
+require_once($CFG->dirroot.'/mod/reader/admin/tools/lib.php');
+require_once($CFG->dirroot.'/mod/reader/admin/tools/renderer.php');
+require_once($CFG->dirroot.'/mod/reader/locallib.php');
 
 $id  = optional_param('id',  0, PARAM_INT);
 $tab = optional_param('tab', 0, PARAM_INT);
+$tool = substr(basename($SCRIPT), 0, -4);
 
 require_login(SITEID);
 require_capability('moodle/site:config', reader_get_context(CONTEXT_SYSTEM));
 
-// $SCRIPT is set by initialise_fullme() in 'lib/setuplib.php'
-// it is the path below $CFG->wwwroot of this script
-$PAGE->set_url($CFG->wwwroot.$SCRIPT);
+if ($id) {
+    $cm = get_coursemodule_from_id('reader', $id, 0, false, MUST_EXIST);
+    $course = $DB->get_record('course', array('id' => $cm->course), '*', MUST_EXIST);
+    $reader = $DB->get_record('reader', array('id' => $cm->instance), '*', MUST_EXIST);
+} else {
+    $cm = null;
+    $course = null;
+    $reader = null;
+}
+$reader = mod_reader::create($reader, $cm, $course);
 
-$title = get_string('check_email', 'mod_reader');
+// set page url
+$params = array('id' => $id, 'tab' => $tab);
+$PAGE->set_url(new moodle_url("/mod/reader/admin/tools/$tool.php", $params));
+
+// set page title
+$title = get_string($tool, 'mod_reader');
 $PAGE->set_title($title);
 $PAGE->set_heading($title);
 $PAGE->set_pagelayout('admin');
 
-echo $OUTPUT->header();
-echo $OUTPUT->box_start();
+$output = $PAGE->get_renderer('mod_reader', 'admin_tools');
+$output->init($reader);
+
+echo $output->header();
+echo $output->tabs();
+echo $output->box_start();
 
 $admin = get_admin(); // the main admin user
 if (! $user = $DB->get_record('user', array('username' => 'gueststudent'))) {
@@ -61,13 +80,8 @@ echo '<p>'.get_string('sentemailmoodle', 'mod_reader', $user).'</p>';
 mail($user->email, $subject, $message);
 echo '<p>'.get_string('sentemailphp', 'mod_reader', $user).'</p>';
 
-echo html_writer::tag('p', get_string('alldone', 'mod_reader'));
-if ($id) {
-    $href = new moodle_url('/mod/reader/admin/tools.php', array('id' => $id, 'tab' => $tab));
-} else {
-    $href = new moodle_url($CFG->wwwroot.'/');
-}
-echo html_writer::tag('p', html_writer::tag('a', 'Click here to continue', array('href' => $href)));
+reader_print_all_done();
+reader_print_continue($id, $tab);
 
-echo $OUTPUT->box_end();
-echo $OUTPUT->footer();
+echo $output->box_end();
+echo $output->footer();

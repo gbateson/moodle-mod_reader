@@ -26,25 +26,34 @@
 
 /** Include required files */
 require_once('../../../../config.php');
-require_once($CFG->dirroot.'/mod/reader/lib.php');
+require_once($CFG->dirroot.'/mod/reader/admin/tools/lib.php');
+require_once($CFG->dirroot.'/mod/reader/admin/tools/renderer.php');
+require_once($CFG->dirroot.'/mod/reader/locallib.php');
 
 $id  = optional_param('id',  0, PARAM_INT);
 $tab = optional_param('tab', 0, PARAM_INT);
+$tool = substr(basename($SCRIPT), 0, -4);
 
 require_login(SITEID);
-if (class_exists('context_system')) {
-    $context = context_system::instance();
+require_capability('moodle/site:config', reader_get_context(CONTEXT_SYSTEM));
+
+if ($id) {
+    $cm = get_coursemodule_from_id('reader', $id, 0, false, MUST_EXIST);
+    $course = $DB->get_record('course', array('id' => $cm->course), '*', MUST_EXIST);
+    $reader = $DB->get_record('reader', array('id' => $cm->instance), '*', MUST_EXIST);
 } else {
-    $context = get_context_instance(CONTEXT_SYSTEM);
+    $cm = null;
+    $course = null;
+    $reader = null;
 }
-require_capability('moodle/site:config', $context);
+$reader = mod_reader::create($reader, $cm, $course);
 
-// $SCRIPT is set by initialise_fullme() in 'lib/setuplib.php'
-// it is the path below $CFG->wwwroot of this script
-$PAGE->set_url($CFG->wwwroot.$SCRIPT);
+// set page url
+$params = array('id' => $id, 'tab' => $tab);
+$PAGE->set_url(new moodle_url("/mod/reader/admin/tools/$tool.php", $params));
 
-// set title
-$title = get_string('export_reader_tables', 'mod_reader');
+// set page title
+$title = get_string($tool, 'mod_reader');
 $PAGE->set_title($title);
 $PAGE->set_heading($title);
 $PAGE->set_pagelayout('admin');
