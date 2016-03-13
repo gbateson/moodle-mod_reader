@@ -89,8 +89,8 @@ echo $output->footer();
  */
 function reader_get_quizzes_sql($courseid) {
     // SQL to extract Reader quizzes in the current course
-    $select = 'q.id AS quizid, q.course AS courseid, '.
-              'rb.publisher, rb.level, rb.name, '.
+    $select = 'rb.id AS bookid, rb.publisher, rb.level, rb.name, '.
+              'q.id AS quizid, q.course AS courseid, '.
               'cm.id AS cmid, '.
               'm.id AS moduleid, '.
               'ctx.id AS contextid, '.
@@ -297,6 +297,7 @@ function reader_get_section($courseid, $book) {
         'name'          => $sectionname,
         'summary'       => '',
         'summaryformat' => FORMAT_HTML,
+        'sequence'      => ''
     );
     $section->id = $DB->insert_record('course_sections', $section);
 
