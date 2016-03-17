@@ -305,7 +305,7 @@ function reader_fetch_book_image($readercfg, $itemids, $remotenames, $publisher,
         //print '<pre>'.htmlspecialchars($contents).'</pre>';
         if (! unlink($local_image_file)) {
             echo '<li><span style="color: red;">OOPS:</span> Could not delete non-image file ('.$local_image_file.')</li>';
-            continue;
+            return;
         }
         echo '<li><span style="color: red;">DELETE:</span> Non-image file: ';
         echo '<a target="_blank" href="'.$remote_image_file.'">'.$fullname.'</a></li>';
