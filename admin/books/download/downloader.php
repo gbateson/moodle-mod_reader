@@ -2776,8 +2776,10 @@ class reader_downloader {
 
         // create $options for this ordering question
         $options = (object)array(
+            'layouttype' => $question->ordering->layouttype,
             'selecttype' => $question->ordering->selecttype,
             'selectcount' => $question->ordering->selectcount,
+            'gradingtype' => $question->ordering->gradingtype,
             'correctfeedback' => $question->ordering->correctfeedback,
             'correctfeedbackformat' => FORMAT_MOODLE, // =0
             'incorrectfeedback' => $question->ordering->incorrectfeedback,

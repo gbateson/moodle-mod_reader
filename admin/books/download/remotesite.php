@@ -745,7 +745,10 @@ class reader_remotesite {
      * @todo Finish documenting this function
      */
     public function get_xml_values_ordering(&$xml) {
-        $defaults = array('selecttype' => 1, 'selectcount' => 6,
+        $defaults = array('layouttype' => 0, // VERTICAL
+                          'selecttype' => 1, // RANDOM
+                          'selectcount' => 6,
+                          'gradingtype' => 1, // RELATIVE_NEXT_EXCLUDE_LAST
                           'correctfeedback' => '', 'correctfeedbackformat' => 0,
                           'incorrectfeedback' => '', 'incorrectfeedbackformat' => 0,
                           'partiallycorrectfeedback' => '', 'partiallycorrectfeedbackformat' => 0);
