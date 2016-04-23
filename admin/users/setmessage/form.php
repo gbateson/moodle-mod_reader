@@ -53,7 +53,7 @@ class mod_reader_admin_users_setmessage_form extends moodleform {
      * @param boolean  $editable
      * @todo Finish documenting this function
      */
-    function mod_reader_admin_users_setmessage_form($action=null, $reader=null, $method='post', $target='', $attributes=null, $editable=true) {
+    function __construct($action=null, $reader=null, $method='post', $target='', $attributes=null, $editable=true) {
         if (method_exists('moodleform', '__construct')) {
             // Moodle >= 3.1
             parent::__construct($action, $reader, $method, $target, $attributes, $editable);

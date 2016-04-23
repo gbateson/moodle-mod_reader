@@ -647,15 +647,6 @@ class mod_reader {
     }
 
     /*
-     * can_managequizzes
-     *
-     * @return boolean
-     **/
-    public function can_managequizzes() {
-        return $this->can('managequizzes');
-    }
-
-    /*
      * can_manageremotesites
      *
      * @return boolean

@@ -739,7 +739,6 @@ $string['ratings'] = 'ratings';
 $string['reader:addinstance'] = 'Add a new Reader activity';
 $string['reader:manageattempts'] = 'Manage attempts';
 $string['reader:managebooks'] = 'Manage books';
-$string['reader:managequizzes'] = 'Manage quizzes';
 $string['reader:manageremotesites'] = 'Manage remote sites';
 $string['reader:managetools'] = 'Manage tools';
 $string['reader:manageusers'] = 'Manage users';

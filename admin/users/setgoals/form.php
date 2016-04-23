@@ -60,7 +60,7 @@ class mod_reader_admin_users_setgoals_form extends moodleform {
      * @param boolean  $editable
      * @todo Finish documenting this function
      */
-    function mod_reader_admin_users_setgoals_form($action=null, $reader=null, $method='post', $target='', $attributes=null, $editable=true) {
+    function __construct($action=null, $reader=null, $method='post', $target='', $attributes=null, $editable=true) {
         $this->fetch_goals($reader);
         if (method_exists('moodleform', '__construct')) {
             // Moodle >= 3.1

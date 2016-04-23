@@ -48,7 +48,7 @@ class mod_reader_admin_users_import_form extends moodleform {
      * @param mixed $action the action attribute (=url) for the form
      * @todo Finish documenting this function
      */
-    function mod_reader_admin_users_import_form($action=null) {
+    function __construct($action=null) {
         if (method_exists('moodleform', '__construct')) {
             // Moodle >= 3.1
             parent::__construct($action);

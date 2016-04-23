@@ -952,7 +952,7 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $book && is_arra
     unset($book);
 }
 
-if ((has_capability('mod/reader:managequizzes', $contextmodule)) && $numberofsections && $act == 'changenumberofsectionsinquiz') {
+if ((has_capability('mod/reader:managebooks', $contextmodule)) && $numberofsections && $act == 'changenumberofsectionsinquiz') {
     switch (true) {
         case (isset($reader->usecourse) && $reader->usecourse > 0):
             mod_reader::set_numsections($reader->usecourse, $numberofsections);
@@ -1083,18 +1083,18 @@ if (! $excel) {
             //new reader_menu_item('fullreportbybooktitle', 'viewreports', 'admin/reports.php', array('id' => $id, 'tab' => 35, 'mode' => 'bookdetailed')),
         ),
         'quizmanagement' => array(
-            new reader_menu_item('addquiztoreader', 'managequizzes', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'addquiz')),
-            //new reader_menu_item('uploadquiztoreader', 'managequizzes', 'dlquizzes.php', array('id'=>$id)),
-            //new reader_menu_item('uploaddatanoquizzes', 'managequizzes', 'dlquizzesnoq.php', array('id'=>$id)),
-            //new reader_menu_item('updatequizzes', 'managequizzes', 'updatecheck.php', array('id'=>$id, 'checker'=>1)),
-            new reader_menu_item('updatequizzes', 'managequizzes', 'admin/books.php', array('id'=>$id, 'tab' => 43, 'mode' => 'download', 'type' => 1)),
-            new reader_menu_item('uploadquiztoreader', 'managequizzes', 'admin/books.php', array('id'=>$id, 'tab' => 43, 'mode' => 'download', 'type' => 1)),
-            new reader_menu_item('uploaddatanoquizzes', 'managequizzes', 'admin/books.php', array('id'=>$id, 'tab' => 44, 'mode' => 'download', 'type' => 0)),
-            new reader_menu_item('editquiztoreader', 'managequizzes', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'editquiz')),
-            new reader_menu_item('setbookinstances', 'managequizzes', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'setbookinstances')),
-            //new reader_menu_item('forcedtimedelay', 'managequizzes', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'forcedtimedelay')),
-            new reader_menu_item('forcedtimedelay', 'managequizzes', 'admin/users.php', array('id'=>$id, 'tab'=>53, 'mode'=>'setrates')),
-            new reader_menu_item('changenumberofsectionsinquiz', 'managequizzes', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'changenumberofsectionsinquiz')),
+            new reader_menu_item('addquiztoreader', 'managebooks', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'addquiz')),
+            //new reader_menu_item('uploadquiztoreader', 'managebooks', 'dlquizzes.php', array('id'=>$id)),
+            //new reader_menu_item('uploaddatanoquizzes', 'managebooks', 'dlquizzesnoq.php', array('id'=>$id)),
+            //new reader_menu_item('updatequizzes', 'managebooks', 'updatecheck.php', array('id'=>$id, 'checker'=>1)),
+            new reader_menu_item('updatequizzes', 'managebooks', 'admin/books.php', array('id'=>$id, 'tab' => 43, 'mode' => 'download', 'type' => 1)),
+            new reader_menu_item('uploadquiztoreader', 'managebooks', 'admin/books.php', array('id'=>$id, 'tab' => 43, 'mode' => 'download', 'type' => 1)),
+            new reader_menu_item('uploaddatanoquizzes', 'managebooks', 'admin/books.php', array('id'=>$id, 'tab' => 44, 'mode' => 'download', 'type' => 0)),
+            new reader_menu_item('editquiztoreader', 'managebooks', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'editquiz')),
+            new reader_menu_item('setbookinstances', 'managebooks', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'setbookinstances')),
+            //new reader_menu_item('forcedtimedelay', 'managebooks', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'forcedtimedelay')),
+            new reader_menu_item('forcedtimedelay', 'managebooks', 'admin/users.php', array('id'=>$id, 'tab'=>53, 'mode'=>'setrates')),
+            new reader_menu_item('changenumberofsectionsinquiz', 'managebooks', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'changenumberofsectionsinquiz')),
         ),
         'attemptscoremanagement' => array(
             //new reader_menu_item('viewattempts', 'manageusers', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'viewattempts')),
@@ -1167,7 +1167,7 @@ $options = array(
     'searchtext' => $searchtext,
 );
 
-if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodule)) {
+if ($act == 'addquiz' && has_capability('mod/reader:managebooks', $contextmodule)) {
     if (! $quizzesid) {
         if ($quizdata  = get_all_instances_in_course('quiz', $DB->get_record('course', array('id' => $reader->usecourse)), null, true)) {
         //if ($quizdata  = get_records('quiz')) {
@@ -1194,7 +1194,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
 
                 echo $output->box_start('generalbox');
 
-                echo '<h2>'.get_string('prevlevel', 'mod_reader').'</h2><br />';
+                echo '<h2>'.get_string('addquiztoreader', 'mod_reader').'</h2><br />';
 
                 echo '<form action="admin.php?a=admin&id='.$id.'" method="post" enctype="multipart/form-data">';
                 echo '<table style="width:100%">';
@@ -1284,7 +1284,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
         }
     }
 
-} else if ($act == 'editquiz' && has_capability('mod/reader:managequizzes', $contextmodule)) {
+} else if ($act == 'editquiz' && has_capability('mod/reader:managebooks', $contextmodule)) {
     if ($sort == 'username') {
         $sort = 'title';
     }
@@ -2269,7 +2269,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
     $pagingbar = new paging_bar($totalcount, $page, $perpage, "admin.php?a=admin&id={$id}&act={$act}&sort={$sort}&orderby={$orderby}&gid={$gid}&amp;");
     echo $output->render($pagingbar);
 
-    if (has_capability('mod/reader:managequizzes', $contextmodule)) {
+    if (has_capability('mod/reader:managebooks', $contextmodule)) {
       echo '<form action="?a=admin&id='.$id.'&act='.$act.'&sort='.$sort.'&orderby='.$orderby.'&gid='.$gid.'" method="post"><div> ';
       echo ' <div style="margin:20px 0;font-size:16px;">'.get_string('restoredeletedattempt', 'mod_reader').'</div>';
       echo '<div style="float:left;width:200px;">'.get_string('studentuserid', 'mod_reader').'</div>';
@@ -2822,7 +2822,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
         }
     }
 
-} else if ($act == 'makepix_t' && has_capability('mod/reader:managequizzes', $contextmodule)) {
+} else if ($act == 'makepix_t' && has_capability('mod/reader:managebooks', $contextmodule)) {
     $allbooks = $DB->get_records_sql('SELECT * FROM {reader_books}  where hidden = 0 ORDER BY publisher ASC, level ASC');
     $prehtml = "<img width='110'  height='160'  border='0' src='{$CFG->wwwroot}/file.php/reader/images/";
     $posthtml = '/> ';
@@ -2856,7 +2856,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
     }
     echo "</tr></table>";
 
-} else if ($act == 'makepix_l' && has_capability('mod/reader:managequizzes', $contextmodule)) {
+} else if ($act == 'makepix_l' && has_capability('mod/reader:managebooks', $contextmodule)) {
     $allbooks = $DB->get_records_sql('SELECT * FROM {reader_books}  where hidden = 0 ORDER BY difficulty, publisher, level, name');
     $prehtml = "<img width='110'  height='160'  border='0' src='{$CFG->wwwroot}/file.php/reader/images/";
     $posthtml = '/> ';
@@ -3630,7 +3630,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managequizzes', $contextmodu
         }
     }
 
-} else if ($act == 'setbookinstances' && has_capability('mod/reader:managequizzes', $contextmodule)) {
+} else if ($act == 'setbookinstances' && has_capability('mod/reader:managebooks', $contextmodule)) {
 
         reader_setbookinstances($id, $reader);
 

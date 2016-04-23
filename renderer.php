@@ -176,6 +176,7 @@ class mod_reader_renderer extends plugin_renderer_base {
             } else {
                 $cmid = 0; // unusual !!
             }
+            $showadminarea = false;
             if ($this->reader->can_viewbooks()) {
                 $tab = self::TAB_VIEW;
                 $url = new moodle_url('/mod/reader/view.php', array('id' => $cmid, 'tab' => $tab));
@@ -190,23 +191,27 @@ class mod_reader_renderer extends plugin_renderer_base {
                 $tab = self::TAB_REPORTS;
                 $url = new moodle_url('/mod/reader/admin/reports.php', array('id' => $cmid, 'tab' => $tab));
                 $tabs[$tab] = new tabobject($tab, $url, get_string('reports'));
+                $showadminarea = true;
             }
             if ($this->reader->can_managebooks()) {
                 $tab = self::TAB_BOOKS;
                 $url = new moodle_url('/mod/reader/admin/books.php', array('id' => $cmid, 'tab' => $tab));
                 $tabs[$tab] = new tabobject($tab, $url, get_string('books', 'mod_reader'));
+                $showadminarea = true;
             }
             if ($this->reader->can_manageusers()) {
                 $tab = self::TAB_USERS;
                 $url = new moodle_url('/mod/reader/admin/users.php', array('id' => $cmid, 'tab' => $tab));
                 $tabs[$tab] = new tabobject($tab, $url, get_string('users', 'mod_reader'));
+                $showadminarea = true;
             }
             if ($this->reader->can_managetools()) {
                 $tab = self::TAB_TOOLS;
                 $url = new moodle_url('/mod/reader/admin/tools.php', array('id' => $cmid, 'tab' => $tab));
                 $tabs[$tab] = new tabobject($tab, $url, get_string('tools', 'mod_reader'));
+                $showadminarea = true;
             }
-            if ($this->reader->can_managetools()) {
+            if ($showadminarea) {
                 $tab = self::TAB_ADMINAREA;
                 $url = new moodle_url('/mod/reader/admin.php', array('id' => $cmid, 'tab' => $tab, 'a' => 'admin'));
                 $tabs[$tab] = new tabobject($tab, $url, get_string('adminarea', 'mod_reader'));

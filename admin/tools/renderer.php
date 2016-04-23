@@ -48,38 +48,18 @@ class mod_reader_admin_tools_renderer extends mod_reader_admin_renderer {
      * render_page
      */
     public function render_page() {
-        global $CFG, $SCRIPT;
-
         $id = optional_param('id', 0, PARAM_INT);
         $tab = optional_param('tab', 0, PARAM_INT);
 
         // get string manager
         $strman = get_string_manager();
 
-        // get path to this directory
-        $dirname = dirname($SCRIPT).'/tools';
-        $dirpath = $CFG->dirroot.$dirname;
-
         echo html_writer::start_tag('ol', array('class' => 'readertools'));
 
-        $files = array();
-        $items = new DirectoryIterator($dirpath);
-        foreach ($items as $item) {
-            if ($item->isDot() || substr($item, 0, 1)=='.' || trim($item)=='') {
-                continue;
-            }
-            if ($item=='index.php' || $item=='lib.php' || $item=='renderer.php') {
-                continue;
-            }
-            if ($item->isFile()) {
-                $files[] = "$item"; // convert $item to string
-            }
-        }
-        sort($files);
-        foreach ($files as $file) {
+        $files = self::get_files();
+        foreach ($files as $text => $file) {
 
-            $href = new moodle_url($dirname.'/'.$file, array('id' => $id, 'tab' => $tab));
-            $text = substr($file, 0, strrpos($file, '.'));
+            $href = new moodle_url($file, array('id' => $id, 'tab' => $tab));
             $desc = '';
             if ($strman->string_exists($text.'desc', 'reader')) {
                 $desc = get_string($text.'desc', 'mod_reader');
@@ -107,5 +87,27 @@ class mod_reader_admin_tools_renderer extends mod_reader_admin_renderer {
 
         echo html_writer::end_tag('ol');
         echo html_writer::tag('div', '', array('style' => 'clear: both;'));
+    }
+
+    static public function get_files() {
+        global $CFG;
+        $files = array();
+        $dirname = '/mod/reader/admin/tools';
+        $dirpath = $CFG->dirroot.$dirname;
+        $items = new DirectoryIterator($dirpath);
+        foreach ($items as $item) {
+            if ($item->isDot() || substr($item, 0, 1)=='.' || trim($item)=='') {
+                continue;
+            }
+            if ($item=='index.php' || $item=='lib.php' || $item=='renderer.php') {
+                continue;
+            }
+            if ($item->isFile()) {
+                $text = substr($item, 0, strrpos($item, '.'));
+                $files[$text] = "$dirname/$item"; // convert $item to string
+            }
+        }
+        ksort($files);
+        return $files;
     }
 }

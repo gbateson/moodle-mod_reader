@@ -11,7 +11,6 @@ $string['pluginname'] = 'Reader';
 $string['reader:addinstance'] = 'Add a new Reader activity';
 $string['reader:manageattempts'] = 'Manage attempts';
 $string['reader:managebooks'] = 'Manage books';
-$string['reader:managequizzes'] = 'Manage quizzes';
 $string['reader:manageremotesites'] = 'Manage remote sites';
 $string['reader:managetools'] = 'Manage tools';
 $string['reader:manageusers'] = 'Manage users';
@@ -391,7 +390,7 @@ $string['error'] = 'Error: {$a}';
 $string['errorsfound'] = 'Errors found';
 $string['export'] = 'Export';
 $string['export_reader_tables'] = 'Export reader tables';
-$string['export_reader_tablesdesc'] = 'Export Reader database tables. Note that the exported data contains no couse or user names, only ids.';
+$string['export_reader_tablesdesc'] = 'Export Reader database tables. Note that the exported data contains no course or user names, only ids.';
 $string['exportstudentrecords'] = 'Export student records';
 $string['extrapoints'] = 'Extra Points';
 $string['extrapoints0'] = '0.5 Points';
@@ -481,7 +480,7 @@ $string['getstarted'] = '**Getting started**
 **Take an online quiz**
 
 * After you have read a book, take an online quiz.
-* Use the search boxes on this page to find the quiz you want. When you have found your quiz, click the button to start quiz.
+* Use the search boxes on this page to find the quiz you want. When you have found your quiz, click the button to start the quiz.
 * Each quiz has several questions about the book. The questions are different for each student.
 * If you pass the quiz, the number of words in the book will be added to your reading total. If you fail the quiz, your reading total does not change.
 * ***You cannot retake quizzes***, so please do the quizzes carefully.';

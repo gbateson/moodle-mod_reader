@@ -1654,6 +1654,42 @@ function reader_extend_settings_navigation(settings_navigation $settingsnav, nav
         $nodes[] = $node;
     }
 
+    // create user Tools
+    if (reader_can('managetools', $PAGE->cm->id, $USER->id)) {
+        require_once($CFG->dirroot.'/mod/reader/admin/tools/renderer.php');
+
+        //////////////////////////
+        // Tools sub-menu
+        //////////////////////////
+
+        $type = navigation_node::TYPE_SETTING;
+        $icon = new pix_icon('i/navigationitem', '');
+
+        $key    = 'readertools';
+        $text   = get_string('tools', 'mod_reader');
+        $params = array('id' => $PAGE->cm->id, 'tab' => mod_reader_renderer::TAB_TOOLS);
+
+        // show ALL tools in the navigation menu
+        // (probably there are too many tools)
+        $showalltools = false;
+
+        if ($showalltools) {
+            $node = new navigation_node(array('type'=>$type, 'key'=>$key, 'text'=>$text));
+            $files = mod_reader_admin_tools_renderer::get_files();
+            foreach ($files as $text => $file) {
+                $url = new moodle_url($file, $params);
+                $key = 'tools'.$text;
+                $text = get_string($text, 'mod_reader');
+                reader_navigation_add_node($node, $type, $key, $text, $url, $icon);
+            }
+        } else {
+            $url = new moodle_url('/mod/reader/admin/tools.php', $params);
+            $node = new navigation_node(array('type'=>$type, 'key'=>$key, 'text'=>$text, 'action' => $url));
+        }
+
+        $nodes[] = $node;
+    }
+
     // add new nodes
     if (count($nodes)) {
 

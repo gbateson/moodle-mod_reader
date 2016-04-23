@@ -57,27 +57,18 @@ $capabilities = array(
         )
     ),
 
-    'mod/reader:managetools' => array(
-        'captype'      => 'write',
-        'contextlevel' => CONTEXT_SYSTEM,
-        'riskbitmask'  => RISK_DATALOSS,
-        'archetypes'   => array(
-            'manager'        => CAP_ALLOW
-        )
-    ),
-
-    'mod/reader:managequizzes' => array(
-        'captype'      => 'write',
-        'riskbitmask'  => RISK_DATALOSS,
-        'contextlevel' => CONTEXT_MODULE,
-        'archetypes'   => array(
-            'manager'        => CAP_ALLOW
-        )
-    ),
-
     'mod/reader:manageremotesites' => array(
         'captype'      => 'write',
         'contextlevel' => CONTEXT_SYSTEM,
+        'archetypes'   => array(
+            'manager'        => CAP_ALLOW
+        )
+    ),
+
+    'mod/reader:managetools' => array(
+        'captype'      => 'write',
+        'contextlevel' => CONTEXT_MODULE,
+        'riskbitmask'  => RISK_DATALOSS,
         'archetypes'   => array(
             'manager'        => CAP_ALLOW
         )
@@ -88,7 +79,6 @@ $capabilities = array(
         'contextlevel' => CONTEXT_MODULE,
         'riskbitmask'  => RISK_PERSONAL,
         'archetypes'   => array(
-            'teacher'        => CAP_ALLOW,
             'editingteacher' => CAP_ALLOW,
             'manager'        => CAP_ALLOW
         )
@@ -130,6 +120,7 @@ $capabilities = array(
         'captype'      => 'read',
         'contextlevel' => CONTEXT_MODULE,
         'archetypes'   => array(
+            'editingteacher' => CAP_ALLOW,
             'manager'        => CAP_ALLOW
         )
     )
