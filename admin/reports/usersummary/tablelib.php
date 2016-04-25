@@ -918,13 +918,13 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
      * @param decimal $length
      * @return xxx
      */
-    public function get_extrapoints_book($length) {
+    public function get_extrapoints_book($points) {
         global $DB;
 
         // try localized version of "Extra points"
         $params = array('publisher' => get_string('extrapoints', 'mod_reader'),
                         'level'     => '99',
-                        'length'    => sprintf('%01.1f', $length)); // 0.5, 1.0, 2.0, ...
+                        'points'    => sprintf('%01.2f', $points)); // 0.50, 1.00, 2.00, ...
         if ($book = $DB->get_records('reader_books', $params)) {
             return reset($book);
         }
@@ -932,7 +932,7 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
         // try downloaded version of "Extra_points"
         $params = array('publisher' => 'Extra_points',
                         'level'     => '99',
-                        'length'    => sprintf('%01.2f', $length)); // 0.50, 1.00, 2.00, ...
+                        'points'    => sprintf('%01.2f', $points)); // 0.50, 1.00, 2.00, ...
         if ($book = $DB->get_records('reader_books', $params)) {
             return reset($book);
         }
