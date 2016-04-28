@@ -49,8 +49,8 @@ $plugin->cron      = 3600;
 $plugin->component = 'mod_reader';
 $plugin->maturity  = MATURITY_BETA; // ALPHA=50, BETA=100, RC=150, STABLE=200
 $plugin->requires  = 2010112400;    // Moodle 2.0
-$plugin->version   = 2016042640;
-$plugin->release   = '2016-04-26 (40)';
+$plugin->version   = 2016042841;
+$plugin->release   = '2016-04-28 (41)';
 
 if (defined('ANY_VERSION')) {
     $plugin->dependencies = array('qtype_ordering' => ANY_VERSION);

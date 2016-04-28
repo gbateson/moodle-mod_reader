@@ -94,6 +94,12 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
         $wordsfields = array('totalwordsthisterm', 'totalwordsallterms');
         $pointsfields = array('totalpointsthisterm', 'totalpointsallterms');
         $this->fix_words_or_points_fields($output, $wordsfields, $pointsfields);
+        if (empty($output->reader->levelcheck)) { // ==='0'
+            array_splice($this->tablecolumns, array_search('startlevel',     $this->tablecolumns), 1);
+            array_splice($this->tablecolumns, array_search('currentlevel',   $this->tablecolumns), 1);
+            array_splice($this->tablecolumns, array_search('stoplevel',      $this->tablecolumns), 1);
+            array_splice($this->tablecolumns, array_search('allowpromotion', $this->tablecolumns), 1);
+        }
         parent::__construct($uniqueid, $output);
     }
 

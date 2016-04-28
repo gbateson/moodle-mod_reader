@@ -84,6 +84,22 @@ class mod_reader_admin_reports_renderer extends mod_reader_admin_renderer {
         $cmid = $this->reader->cm->id;
         if ($this->reader->can_viewreports()) {
             $modes = mod_reader::get_modes('admin/reports');
+
+            // get effective groupmode
+            if ($this->reader->course->groupmodeforce) {
+                $groupmode = $this->reader->course->groupmode;
+            } else {
+                $groupmode = $this->reader->cm->groupmode;
+            }
+
+            // remove group reports if there are no groups
+            if ($groupmode==NOGROUPS) {
+                $i = array_search('groupsummary', $modes);
+                if (is_numeric($i)) {
+                    array_splice($modes, $i, 1);
+                }
+            }
+
             foreach ($modes as $mode) {
                 $tab = constant('self::TAB_REPORTS_'.strtoupper($mode));
                 $params = array('id' => $cmid, 'tab' => $tab, 'mode' => $mode);
