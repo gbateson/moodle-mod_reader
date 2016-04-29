@@ -253,6 +253,11 @@ class reader_admin_table extends table_sql {
         if (count($this->filterfields) && $this->output->reader->can_viewreports()) {
             $classname = 'reader_admin_'.$tab.'_'.$mode.'_filtering';
             $this->filter = new $classname($this->filterfields, $baseurl, null, $this->optionfields, $this);
+
+            // set number of rows per page
+            if ($rowsperpage = $this->filter->get_optionvalue('rowsperpage')) {
+                $this->pagesize = $rowsperpage;
+            }
         }
 
         parent::setup();
@@ -693,7 +698,7 @@ class reader_admin_table extends table_sql {
             array_unshift($actions, 'noaction');
 
             // start "commands" div
-            echo html_writer::start_tag('fieldset', array('class'=>'clearfix'));
+            echo html_writer::start_tag('fieldset', array('class'=>'clearfix collapsible collapsed'));
             echo html_writer::tag('legend', get_string('actions'));
 
             foreach ($actions as $action) {
@@ -1161,10 +1166,6 @@ class reader_admin_table extends table_sql {
      */
     public function display_filters() {
         if ($this->filter) {
-            // set number of rows per page
-            if ($rowsperpage = $this->filter->get_optionvalue('rowsperpage')) {
-                $this->pagesize = $rowsperpage;
-            }
             // display the filters
             if ($this->download=='') {
                 if (count($this->rawdata)) {
