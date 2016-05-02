@@ -592,7 +592,8 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
 
         $options = array_merge(range(0, 19000, 1000),
                                range(20000, 95000, 5000),
-                               range(100000, 450000, 50000),
+                               range(100000, 290000, 25000),
+                               range(300000, 450000, 50000),
                                range(500000, 1000000, 100000));
         $options = array_combine($options, $options);
         $options = array_map('number_format', $options);
