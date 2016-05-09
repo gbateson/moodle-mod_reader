@@ -29,6 +29,7 @@ $string['configgoal'] = '';
 $string['configintro'] = 'The values you set here define the default values that are used in the settings form when you create a new Reader activity.
 
 You can also configure which reader settings are considered advanced.';
+$string['configkeeplocalbookdifficulty'] = '';
 $string['configkeepoldquizzes'] = '';
 $string['configlevelcheck'] = '';
 $string['configmaxgrade'] = '';
@@ -515,6 +516,7 @@ $string['installedbooks'] = 'Download/fix only covers for books already INSTALLE
 $string['isgreaterthan'] = 'is greater than';
 $string['islessthan'] = 'is less than';
 $string['itemsdownloaded'] = '{$a} items dowloaded';
+$string['keeplocalbookdifficulty'] = 'Keep local book difficulty settings';
 $string['keepoldquizzes'] = 'Keep old quizzes';
 $string['lastupdatedtime'] = 'The quizzes on this site were last updated on {$a}.  Do you want to update the site now?';
 $string['level'] = 'Level';

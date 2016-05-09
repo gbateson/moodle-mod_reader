@@ -881,8 +881,11 @@ class reader_downloader {
             $this->bar = reader_download_progress_bar::create($itemids, 'readerdownload');
         }
 
-        // show memory on main Reader module developer site
-        $show_memory = (file_exists($CFG->dirroot.'/mod/reader/admin/tools/print_cheatsheet.php'));
+        // should we show memory usage? (Reader module developer sites only)
+        $showmemory = (file_exists($CFG->dirroot.'/mod/reader/admin/tools/print_cheatsheet.php'));
+
+        // should we keep local modifications to book difficulty? (=reading level)
+        $keeplocalbookdifficulty = get_config('mod_reader', 'keeplocalbookdifficulty');
 
         $errors = 0;
         $output = '';
@@ -940,7 +943,7 @@ class reader_downloader {
                          html_writer::tag('span', $name, array('style' => 'white-space: nowrap'));
             $titletext = "$publisherlevel: $name";
 
-            if ($show_memory) {
+            if ($showmemory) {
                 $memory_usage = memory_get_usage();
                 $memory_usage = number_format($memory_usage/1000000).' MB';
                 $memory_peak_usage = memory_get_peak_usage();
@@ -992,6 +995,8 @@ class reader_downloader {
             foreach ($fields as $field => $defaultvalue) {
                 if ($field=='id' || $field=='publisher' || $field=='level' || $field=='name' || $field=='quizid') {
                     // $field has already been set
+                } else if ($keeplocalbookdifficulty && $field=='difficulty' && isset($book->id)) {
+                    // do not override local book difficulty settings
                 } else if (isset($item['@'][$field])) {
                     $book->$field = $item['@'][$field];
                 }

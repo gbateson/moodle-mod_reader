@@ -65,7 +65,9 @@ $defaults = (object)array(
     'serverusername'     => '',
     'serverpassword'     => '',
     'keepoldquizzes'     => '0',
-    'last_update'        => '0', // maintained by "reader_cron()" in "mod/reader/lib.php"
+    'keeplocalbookdifficulty' => '0',
+
+    'last_update'        => '0' // maintained by "reader_cron()" in "mod/reader/lib.php"
 );
 
 // cache commonly used options
@@ -264,6 +266,14 @@ $settings->add($setting);
 
 // keepoldquizzes
 $name = 'keepoldquizzes';
+$text = get_string($name, $plugin);
+$help = get_string('config'.$name, $plugin);
+$default = $defaults->$name;
+$setting = new admin_setting_configselect("$plugin/$name", $text, $help, $default, $yesno);
+$settings->add($setting);
+
+// keeplocalbookdifficulty
+$name = 'keeplocalbookdifficulty';
 $text = get_string($name, $plugin);
 $help = get_string('config'.$name, $plugin);
 $default = $defaults->$name;
