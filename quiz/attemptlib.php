@@ -441,10 +441,7 @@ class reader_attempt {
 
         $this->attempt = $attempt;
 
-        $book = $DB->get_record('reader_books', array('quizid' => $attempt->quizid), '*', MUST_EXIST);
-        $quiz = $DB->get_record('quiz',         array('id'     => $attempt->quizid), '*', MUST_EXIST);
-
-        $this->readerquiz = reader_quiz::create($reader->id, $attempt->userid, $book->id);
+        $this->readerquiz = reader_quiz::create($reader->id, $attempt->userid, $attempt->bookid);
         $this->quba = question_engine::load_questions_usage_by_activity($this->attempt->uniqueid);
 
         $dbman = $DB->get_manager();

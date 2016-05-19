@@ -663,10 +663,12 @@ class reader_admin_table extends table_sql {
         }
 
         // start form
-        $url = $this->output->tab.'_url';
+        $url = $this->output->tab.'_url'; // e.g. reports_url
         $url = $this->output->reader->$url();
-
-        $params = array('id'=>'attemptsform', 'method'=>'post', 'action'=>$url->out_omit_querystring(), 'class'=>'mform');
+        $params = array('id'     => 'attemptsform',
+                        'method' => 'post',
+                        'action' => $url->out_omit_querystring(),
+                        'class'  => 'mform');
         echo html_writer::start_tag('form', $params);
 
         // create hidden fields
