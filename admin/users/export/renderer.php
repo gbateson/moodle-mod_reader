@@ -42,19 +42,8 @@ require_once($CFG->dirroot.'/mod/reader/admin/users/renderer.php');
  */
 class mod_reader_admin_users_export_renderer extends mod_reader_admin_users_renderer {
 
-    /**
-     * require_page_header
-     */
-    public function require_page_header() {
-        return empty($_POST['filename']);
-    }
-
-    /**
-     * require_page_footer
-     */
-    public function require_page_footer() {
-        return empty($_POST['filename']);
-    }
+    /** the name of the form element that, if present, signifies content is to be downloaded */
+    protected $download_param_name = 'filename';
 
     /**
      * render_page

@@ -54,7 +54,8 @@ class mod_reader_admin_reports_renderer extends mod_reader_admin_renderer {
     const TAB_REPORTS_BOOKDETAILED = 35;
     /**#@-*/
 
-    protected $users = null;
+    /** the name of the form element that, if present, signifies content is to be downloaded */
+    protected $download_param_name = 'download';
 
     /**
      * get_my_tab
@@ -108,20 +109,6 @@ class mod_reader_admin_reports_renderer extends mod_reader_admin_renderer {
             }
         }
         return $this->attach_tabs_subtree(parent::get_tabs(), parent::TAB_REPORTS, $tabs);
-    }
-
-    /**
-     * require_page_header
-     */
-    public function require_page_header() {
-        return empty($_POST['download']);
-    }
-
-    /**
-     * require_page_footer
-     */
-    public function require_page_footer() {
-        return empty($_POST['download']);
     }
 
     /**

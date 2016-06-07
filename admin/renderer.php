@@ -48,23 +48,33 @@ class mod_reader_admin_renderer extends mod_reader_renderer {
     public $mode = '';
 
     protected $pageparams = array();
-    protected $filter = null;
 
-    public $actions = array();
-    protected $download = '';
+    /** the name of the form element that, if present, signifies content is to be downloaded */
+    protected $download_param_name = '';
+
+    /**
+     * require_download
+     */
+    protected function require_download() {
+        if ($this->download_param_name=='') {
+            return false;
+        } else {
+            return optional_param($this->download_param_name, false, PARAM_BOOL);
+        }
+    }
 
     /**
      * require_page_header
      */
     public function require_page_header() {
-        return true;
+        return ($this->require_download() ? false : true);
     }
 
     /**
      * require_page_footer
      */
     public function require_page_footer() {
-        return true;
+        return ($this->require_download() ? false : true);
     }
 
     /**
