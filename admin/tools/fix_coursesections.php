@@ -102,7 +102,7 @@ echo $output->footer();
  *
  * @param string $tablename
  * @param string $columnname
- * @param boolean $unsigned XMLDB_UNSIGNED or null
+ * @param boolean $unsigned XMLDB_UNSIGNED or null (= "signed")
  * @return xxx
  * @todo Finish documenting this function
  */
@@ -112,34 +112,49 @@ function reader_change_field_type_unsigned($tablename, $columnname, $unsigned=nu
     $columns = $DB->get_columns($tablename);
     $column = $columns[$columnname];
 
+    // in Moodle >= 3.1, there is no "unsigned" property
+    // because numeric fields in the DB are always signed
+    if (property_exists($column, 'unsigned')==false) {
+        return null;
+    }
+
+    // in Moodle <= 3.0, if the "unsigned" property is
+    // already the required value, we can stop here
     if ($column->unsigned==$unsigned) {
-        // do nothing
-    } else {
-        $dbman = $DB->get_manager();
+        return $unsigned;
+    }
 
-        $table = new xmldb_table($tablename);
-        $indexes = $DB->get_indexes($tablename);
+    // otherwise, we must change the value of the "unsigned"
+    // field for this $column, so we'll need the DB manager
+    $dbman = $DB->get_manager();
 
-        $drop = array();
-        foreach ($indexes as $indexname => $index) {
-            if (in_array($columnname, $index['columns'])) {
-                $drop[$indexname] = new xmldb_index($indexname, $index['unique'], $index['columns']);
-            }
-        }
+    // get info about this $table and its $indexes
+    $table = new xmldb_table($tablename);
+    $indexes = $DB->get_indexes($tablename);
 
-        foreach ($drop as $index) {
-            $dbman->drop_index($table, $index);
-        }
-
-        $field = new xmldb_field($column->name, XMLDB_TYPE_INTEGER, $column->max_length, $unsigned, $column->not_null, null, $column->default_value);
-        $dbman->change_field_type($table, $field);
-
-        foreach ($drop as $index) {
-            $dbman->add_index($table, $index);
+    // detect indexes that use this $column
+    $drop = array();
+    foreach ($indexes as $indexname => $index) {
+        if (in_array($columnname, $index['columns'])) {
+            $drop[$indexname] = new xmldb_index($indexname, $index['unique'], $index['columns']);
         }
     }
 
-    // return current value
+    // drop any indexes that use this $column
+    foreach ($drop as $index) {
+        $dbman->drop_index($table, $index);
+    }
+
+    // modify this $column
+    $field = new xmldb_field($column->name, XMLDB_TYPE_INTEGER, $column->max_length, $unsigned, $column->not_null, null, $column->default_value);
+    $dbman->change_field_type($table, $field);
+
+    // restore any indexes that use this column
+    foreach ($drop as $index) {
+        $dbman->add_index($table, $index);
+    }
+
+    // return old value of "unsigned" property
     return $column->unsigned;
 }
 
