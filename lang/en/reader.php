@@ -547,7 +547,9 @@ $string['max'] = 'Less than or equal to';
 $string['maxgrade'] = 'Maximum grade';
 $string['maxgrade_help'] = 'The maximum grade for this Reader activity.
 
-The number of words/points read will be scaled to the maximum grade and passed to the gradebook.';
+The number of words read, as a fraction of the reading goal, will be scaled to this maximum grade and passed to the gradebook.
+
+Usually the maximum grade will be 100, but if all students have the same reading goal, it may help students understand their grade if this setting is the same as the reading goal.';
 $string['maxquizattemptrate'] = 'Maximum quiz attempt rate';
 $string['maxquizattemptrate_help'] = 'The maximum rate at which students may attempt Reader quizzes. If a student tries to attempt more than the specified number of quizzes within the specified duration, then the specified action will be taken.';
 $string['maxquizattemptratetext'] = 'Please do not take more than {$a}. If you exceed this rate, the following action will be taken:';
@@ -560,7 +562,7 @@ $string['mergingtables'] = 'Merging tables: {$a->old} into {$a->new}';
 $string['messagefromyourteacher'] = 'Message from your teacher';
 $string['migratinglogs'] = 'Migrating Reader logs';
 $string['min'] = 'Greater than or equal to';
-$string['minpassgrade'] = 'Minimum pass grade';
+$string['minpassgrade'] = 'Quiz pass grade';
 $string['minpassgrade_help'] = 'The minimum pass grade, as a percentage, for quizzes in this Reader activity.
 
 Attempts with percentage grade lower than this value will be marked as failed.';

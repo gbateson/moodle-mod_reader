@@ -56,7 +56,7 @@ class mod_reader_mod_form extends moodleform_mod {
      */
     public function definition() {
 
-        global $COURSE, $CFG, $DB;
+        global $COURSE, $CFG, $DB, $PAGE;
 
         $plugin = 'mod_reader';
         $config = get_config($plugin);
@@ -144,19 +144,13 @@ class mod_reader_mod_form extends moodleform_mod {
         $mform->addElement('header', 'general', get_string('promotionsettings', $plugin));
         //-----------------------------------------------------------------------------
 
-        $name = 'minpassgrade';
-        $label = get_string($name, $plugin);
-        $mform->addElement('text', $name, $label, $textoptions);
-        $this->set_type_default_advanced($mform, $config, $name, PARAM_INT);
-        $mform->addHelpButton($name, $name, $plugin);
-
         $name = 'goal';
         $label = get_string('totalpointsgoal', $plugin);
         $mform->addElement('text', $name, $label, $textoptions);
         $this->set_type_default_advanced($mform, $config, $name, PARAM_INT);
         $mform->addHelpButton($name, 'totalpointsgoal', $plugin);
 
-        $name = 'maxgrade';
+        $name = 'minpassgrade';
         $label = get_string($name, $plugin);
         $mform->addElement('text', $name, $label, $textoptions);
         $this->set_type_default_advanced($mform, $config, $name, PARAM_INT);
@@ -310,6 +304,39 @@ class mod_reader_mod_form extends moodleform_mod {
         $mform->addElement('textarea', $name, $label, $options);
         $this->set_type_default_advanced($mform, $config, $name, PARAM_TEXT);
         $mform->addHelpButton($name, $name, $plugin);
+
+        //-----------------------------------------------------------------------------
+        $mform->addElement('header', 'gradeshdr', get_string('grades', 'grades'));
+        //-----------------------------------------------------------------------------
+
+        $name = 'maxgrade';
+        $label = get_string($name, $plugin);
+        $mform->addElement('text', $name, $label, $textoptions);
+        $this->set_type_default_advanced($mform, $config, $name, PARAM_INT);
+        $mform->addHelpButton($name, $name, $plugin);
+
+        // Note: the min pass grade field must be called "gradepass" so that
+        // it is recognized by edit_module_post_actions() in "course/modlib.php"
+        // Also, FEATURE_GRADE_HAS_GRADE must be enabled in "mod/reader/lib.php"
+        $name = 'gradepass';
+        $label = get_string($name, 'grades');
+        $mform->addElement('text', $name, $label, $textoptions);
+        $this->set_type_default_advanced($mform, $config, $name, PARAM_INT);
+        $mform->addHelpButton($name, $name, 'grades');
+        $mform->disabledIf($name, 'maxgrade', 'eq', '');
+        $mform->disabledIf($name, 'maxgrade', 'eq', '0');
+
+        // Note: the grade category field must be called "gradecat" so that
+        // it is recognized by edit_module_post_actions() in "course/modlib.php"
+        // Also, FEATURE_GRADE_HAS_GRADE must be enabled in "mod/reader/lib.php"
+        $name = 'gradecat';
+        $label = get_string('gradecategoryonmodform', 'grades');
+        $options = grade_get_categories_menu($PAGE->course->id);
+        $mform->addElement('select', $name, $label, $options);
+        $mform->addHelpButton($name, 'gradecategoryonmodform', 'grades');
+        $this->set_type_default_advanced($mform, $config, $name, PARAM_INT);
+        $mform->disabledIf($name, 'maxgrade', 'eq', '');
+        $mform->disabledIf($name, 'maxgrade', 'eq', '0');
 
         //-----------------------------------------------------------------------------
         // add standard elements, common to all modules
