@@ -243,78 +243,17 @@ class mod_reader_renderer extends plugin_renderer_base {
      * generate sql to select books that this user is currently allowed to attempt
      *
      * @param boolean $noquiz TRUE books that have no associated quiz, FALSE otherwise
+     * @param mixed $hasquiz (TRUE  : require quizid > 0, 
+     *                        FALSE : require quizid == 0,
+     *                        NULL  : require quizid >= 0)
      * @return array (string $from, string $where, array $params)
      */
-    public function available_sql($noquiz=false) {
+    public function available_sql($hasquiz=null) {
         global $USER;
-
-        if ($noquiz) {
-            return array('{reader_books}', 'quizid = ? AND hidden = ?', array(0, 0)); // $from, $where, $params
-        }
-
-        // a teacher / admin can always access all the books
-        if ($this->reader->can_viewallbooks()) {
-            return array('{reader_books}', 'quizid > ? AND hidden = ?', array(0, 0)); // $from, $where, $params
-        }
-
+        $reader = $this->reader;
+        $cmid = $reader->cm->id;
         $userid = $USER->id;
-
-        // we want to get a list of all books available to this user
-        // a book is available if it satisfies the following conditions:
-        // (1) the book is not hidden
-        // (2) the quiz for the book has NEVER been attempted before by this user
-        // (3) EITHER the book has an empty "sametitle" field
-        //     OR the "sametitle" field is different from that of any books whose quizzes this user has taken before
-        // (4) EITHER the reader activity's "levelcheck" field is empty
-        //     OR the level of the book is one of the levels this user is currently allowed to take in this reader
-
-        // "id" values of books whose quizzes this user has already attempted
-        $recordids  = 'SELECT ra.bookid '.
-                      'FROM {reader_attempts} ra '.
-                      'WHERE ra.userid = ? AND ra.deleted = ?';
-
-        // "sametitle" values for books whose quizzes this user has already attempted
-        $sametitles = 'SELECT DISTINCT rb.sametitle '.
-                      'FROM {reader_attempts} ra LEFT JOIN {reader_books} rb ON ra.bookid = rb.id '.
-                      'WHERE ra.userid = ? AND ra.deleted = ? AND rb.id IS NOT NULL AND rb.sametitle <> ?';
-
-        $from       = '{reader_books}';
-        $where      = "id NOT IN ($recordids) AND level <> ? AND (sametitle = ? OR sametitle NOT IN ($sametitles)) AND hidden = ?";
-        $params     = array($userid, 0, '99', '', $userid, 0, '', 0);
-
-        $levels = array();
-        if (isset($_SESSION['SESSION']->reader_teacherview) && $_SESSION['SESSION']->reader_teacherview == 'teacherview') {
-            // do nothing - this is a teacher
-        } else if ($this->reader->levelcheck == 0) {
-            // do nothing - level checking is disabled
-        } else {
-            // a student with level-checking enabled
-            $leveldata = reader_get_level_data($this->reader, $userid);
-            if ($leveldata['thislevel'] > 0 && $leveldata['currentlevel'] >= 0) {
-                $levels[] = $leveldata['currentlevel'];
-            }
-            if ($leveldata['prevlevel'] > 0 && $leveldata['currentlevel'] >= 1) {
-                $levels[] = ($leveldata['currentlevel'] - 1);
-            }
-            if ($leveldata['nextlevel'] > 0) {
-                $levels[] = ($leveldata['currentlevel'] + 1);
-            }
-            if (empty($levels)) {
-                $levels[] = 0; // user can't take any more quizzes - shouldn't happen !!
-            }
-        }
-
-        if ($levels = implode(',', $levels)) {
-            if ($this->reader->bookinstances) {
-                // we are maintaining a list of book difficulties for each course, so we must check "reader_books_instances"
-                $from  .= ' rb LEFT JOIN {reader_book_instances} rbi ON rbi.bookid = rb.id AND rbi.readerid = '.$this->reader->id;
-                $where .= " AND ((rbi.id IS NULL AND rb.difficulty IN ($levels)) OR (rbi.id IS NOT NULL AND rbi.difficulty IN ($levels)))";
-            } else {
-                $where .= " AND difficulty IN ($levels)";
-            }
-        }
-
-        return array($from, $where, $params);
+        return reader_available_sql($cmid, $reader, $userid, $hasquiz);
     }
 
     /**
@@ -325,7 +264,7 @@ class mod_reader_renderer extends plugin_renderer_base {
      * @todo Finish documenting this function
      */
     public function select_items($action='') {
-        global $CFG;
+        global $CFG, $USER;
 
         // get parameters passed from browser
         $publisher = optional_param('publisher', null, PARAM_CLEAN); // book publisher
@@ -340,8 +279,11 @@ class mod_reader_renderer extends plugin_renderer_base {
         $type = optional_param('type', $type, PARAM_INT);
 
         // get SQL $from and $where statements to extract available books
-        $noquiz = ($type==reader_downloader::BOOKS_WITHOUT_QUIZZES);
-        list($from, $where, $params) = $this->available_sql($noquiz);
+        $hasquiz = ($type==reader_downloader::BOOKS_WITH_QUIZZES);
+        list($from, $where, $params) = reader_available_sql($this->reader->cm->id, 
+                                                            $this->reader,
+                                                            $USER->id,
+                                                            $hasquiz);
 
         $output = '';
         switch (true) {
@@ -406,8 +348,8 @@ class mod_reader_renderer extends plugin_renderer_base {
         global $DB;
         $output = '';
 
-        $select = 'publisher, COUNT(*) AS countbooks';
-        if ($records = $DB->get_records_sql("SELECT $select FROM $sqlfrom WHERE $sqlwhere GROUP BY publisher ORDER BY publisher", $sqlparams)) {
+        $select = 'rb.publisher, COUNT(*) AS countbooks';
+        if ($records = $DB->get_records_sql("SELECT $select FROM $sqlfrom WHERE $sqlwhere GROUP BY rb.publisher ORDER BY rb.publisher", $sqlparams)) {
             $count = count($records);
         } else {
             $count = 0;
@@ -485,11 +427,11 @@ class mod_reader_renderer extends plugin_renderer_base {
         global $DB;
         $output = '';
 
-        $select = "level, COUNT(*) AS countbooks, ROUND(SUM(difficulty) / COUNT(*), 0) AS average_difficulty";
-        $where  = $sqlwhere.' AND publisher = ?';
+        $select = "rb.level, COUNT(*) AS countbooks, ROUND(SUM(rb.difficulty) / COUNT(*), 0) AS average_difficulty";
+        $where  = $sqlwhere.' AND rb.publisher = ?';
         $params = array_merge($sqlparams, array($publisher));
 
-        if ($records = $DB->get_records_sql("SELECT $select FROM $sqlfrom WHERE $where GROUP BY level ORDER BY average_difficulty", $params)) {
+        if ($records = $DB->get_records_sql("SELECT $select FROM $sqlfrom WHERE $where GROUP BY rb.level ORDER BY average_difficulty", $params)) {
             $count = count($records);
         } else {
             $count = 0;
@@ -570,10 +512,10 @@ class mod_reader_renderer extends plugin_renderer_base {
         $output = '';
 
         $select = '*';
-        $where  = $sqlwhere.' AND publisher = ? AND level = ?';
+        $where  = $sqlwhere.' AND rb.publisher = ? AND rb.level = ?';
         $params = array_merge($sqlparams, array($publisher, $level));
 
-        if ($records = $DB->get_records_sql("SELECT $select FROM $sqlfrom WHERE $where ORDER BY name", $params)) {
+        if ($records = $DB->get_records_sql("SELECT $select FROM $sqlfrom WHERE $where ORDER BY rb.name", $params)) {
             $count = count($records);
         } else {
             $count = 0;
@@ -648,8 +590,8 @@ class mod_reader_renderer extends plugin_renderer_base {
         global $DB;
         $output = '';
 
-        $select = 'id, publisher, level, name, words';
-        $where  = $sqlwhere.' AND publisher = ? AND level = ? AND id = ?';
+        $select = 'rb.id, rb.publisher, rb.level, rb.name, rb.words';
+        $where  = $sqlwhere.' AND rb.publisher = ? AND rb.level = ? AND rb.id = ?';
         $params = array_merge($sqlparams, array($publisher, $level, $bookid));
 
         if ($record = $DB->get_record_sql("SELECT $select FROM $sqlfrom WHERE $where", $params)) {
@@ -1148,7 +1090,7 @@ class mod_reader_renderer extends plugin_renderer_base {
             list($cheatsheeturl, $strcheatsheet) = $this->cheatsheet_init($action);
 
             // search for available books that match  the search criteria
-            $select = 'rb.id, rb.publisher, rb.level, rb.name, rb.genre';
+            $select = 'rb.id, rb.publisher, rb.level, rb.name, rb.quizid, rb.genre';
             if ($this->reader->bookinstances) {
                 $select .= ', rbi.difficulty';
             } else {
@@ -1184,7 +1126,7 @@ class mod_reader_renderer extends plugin_renderer_base {
                     $publisher = $book->publisher.(($book->level=='' | $book->level=='--') ? '' : ' - '.$book->level);
 
                     // add cells to this row of the table
-                    $row = array(
+                    $cells = array(
                         $book->publisher,
                         (($book->level=='' || $book->level=='--') ? '' : $book->level),
                         $book->name,
@@ -1192,25 +1134,39 @@ class mod_reader_renderer extends plugin_renderer_base {
                         $book->difficulty
                     );
 
-                    if ($action=='takequiz') {
-                        // construct url to start attempt at quiz
-                        $params = array('id' => $this->reader->cm->id, 'book' => $book->id);
-                        $url = new moodle_url('/mod/reader/quiz/startattempt.php', $params);
+                    if ($book->quizid==0) {
+                        if ($action=='takequiz') {
+                            $cell = get_string('awardpointsmanually', 'mod_reader');
+                            $cell = html_writer::tag('i', $cell);
+                            $cell = new html_table_cell($cell);
+                            if ($cheatsheeturl) {
+                                $cell->colspan = 2;
+                            }
+                            $cell->attributes['class'] = 'awardpointsmanually';
+                            $cells[] = $cell;
+                            $awardpointsmanually = true;
+                        }
+                    } else {
+                        if ($action=='takequiz') {
+                            // construct url to start attempt at quiz
+                            $params = array('id' => $this->reader->cm->id, 'book' => $book->id);
+                            $url = new moodle_url('/mod/reader/quiz/startattempt.php', $params);
 
-                        // construct button to start attempt at quiz
-                        $params = array('class' => 'singlebutton readerquizbutton');
-                        $button = $OUTPUT->single_button($url, get_string('takethisquiz', 'mod_reader'), 'get', $params);
+                            // construct button to start attempt at quiz
+                            $params = array('class' => 'singlebutton readerquizbutton');
+                            $button = $OUTPUT->single_button($url, get_string('takethisquiz', 'mod_reader'), 'get', $params);
 
-                        $row[] = $button;
-                    }
+                            $cells[] = $button;
+                        }
 
-                    // add cheat sheet link, if required
-                    if ($cheatsheeturl) {
-                        $row[] = $this->cheatsheet_link($cheatsheeturl, $strcheatsheet, $publisher, $book);
+                        // add cheat sheet link, if required
+                        if ($cheatsheeturl) {
+                            $cells[] = $this->cheatsheet_link($cheatsheeturl, $strcheatsheet, $publisher, $book);
+                        }
                     }
 
                     // add this row to the table
-                    $table->data[] = new html_table_row($row);
+                    $table->data[] = new html_table_row($cells);
                 }
 
                 // create the HTML for the table of search results
@@ -1534,8 +1490,15 @@ class mod_reader_renderer extends plugin_renderer_base {
         $action    = optional_param('action', $action, PARAM_CLEAN);
 
         // get SQL $from and $where statements to extract available books
-        $noquiz = ($action=='noquiz' || $action=='awardbookpoints');
-        list($from, $where, $sqlparams) = reader_available_sql($cmid, $reader, $userid, $noquiz);
+        if ($action=='') {
+            $hasquiz = null;
+        } else if ($action=='noquiz' || $action=='awardbookpoints') {
+            $hasquiz = false;
+        } else {
+            $hasquiz = true;
+        }
+        $hasquiz = null;
+        list($from, $where, $sqlparams) = reader_available_sql($cmid, $reader, $userid, $hasquiz);
 
         if ($publisher===null) {
 
@@ -1582,25 +1545,30 @@ class mod_reader_renderer extends plugin_renderer_base {
 
         if ($book===null) {
             $params = array('id' => $bookid);
-            if ($noquiz) {
+            if ($hasquiz===false) {
                 $params['quizid'] = 0;
             }
             $book = $DB->get_record('reader_books', $params);
         }
 
         if ($action=='takequiz' && $this->reader->can_viewbooks()) {
-            $params = array('id' => $cmid, 'book' => $bookid);
-            $url = new moodle_url('/mod/reader/quiz/startattempt.php', $params);
+            if (empty($book->quizid)) {
+                $params = array('class' => 'awardpointsmanually', 'style' => 'max-width: 220px;');
+                $output .= html_writer::tag('p', get_string('awardpointsmanually', 'mod_reader'), $params);
+            } else {
+                $params = array('id' => $cmid, 'book' => $bookid);
+                $url = new moodle_url('/mod/reader/quiz/startattempt.php', $params);
 
-            $params = array('class' => 'singlebutton readerquizbutton');
-            $output .= $OUTPUT->single_button($url, get_string('takequizfor', 'mod_reader', $book->name), 'get', $params);
+                $params = array('class' => 'singlebutton readerquizbutton');
+                $output .= $OUTPUT->single_button($url, get_string('takequizfor', 'mod_reader', $book->name), 'get', $params);
 
-            list($cheatsheeturl, $strcheatsheet) = $this->cheatsheet_init($action);
-            if ($cheatsheeturl) {
-                if ($level && $level != '--') {
-                    $publisher .= ' - '.$level;
+                list($cheatsheeturl, $strcheatsheet) = $this->cheatsheet_init($action);
+                if ($cheatsheeturl) {
+                    if ($level && $level != '--') {
+                        $publisher .= ' - '.$level;
+                    }
+                    $output .= $this->cheatsheet_link($cheatsheeturl, $strcheatsheet, $publisher, $book);
                 }
-                $output .= $this->cheatsheet_link($cheatsheeturl, $strcheatsheet, $publisher, $book);
             }
         }
 

@@ -206,6 +206,7 @@ $string['averagewordsthisterm'] = 'Average words (this term)';
 $string['averagewordsthisterm_help'] = 'The average number of words awarded per student this term';
 $string['awardbookpoints'] = 'Give credit for books to selected students';
 $string['awardextrapoints'] = 'Award extra points to selected students';
+$string['awardpointsmanually'] = 'There is no quiz for this book. Instead, please ask your teacher to award the words/points manually.';
 $string['best'] = 'Best';
 $string['blockquizattempts'] = 'Block further quiz attempts';
 $string['book'] = 'Book';
@@ -218,6 +219,7 @@ $string['bookcovers_help'] = '**Yes**
 : Do NOT show the book covers on the main page of this Reader activity.';
 $string['bookdifficulty'] = 'Book difficulty';
 $string['bookeditdetails'] = 'Edit book details';
+$string['bookhasnoquiz'] = 'This book has no quiz.';
 $string['bookinstances'] = 'Use subset of quizzes';
 $string['bookinstances_help'] = '**Yes**
 : This Reader activity will use only a subset of the quizzes available in the Reader quizzes course. Additionally, custom values for word count and book difficulty may be specified. Note that enabling this option will cause some extra load on your web server.

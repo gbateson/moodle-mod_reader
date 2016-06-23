@@ -2240,19 +2240,25 @@ function reader_add_to_log($courseid, $module, $action, $url='', $info='', $cmid
  * @param xxx $cmid
  * @param xxx $reader
  * @param xxx $userid
- * @param xxx $noquiz
+ * @param xxx $hasquiz (TRUE  : require quizid > 0, 
+ *                      FALSE : require quizid == 0,
+ *                      NULL  : require quizid >= 0)
  * @return array($from, $where, $params)
  * @todo Finish documenting this function
  */
-function reader_available_sql($cmid, $reader, $userid, $noquiz=false) {
+function reader_available_sql($cmid, $reader, $userid, $hasquiz=null) {
 
-    if ($noquiz || reader_can('viewallbooks', $cmid, $userid)) {
+    // we don't need any checks for teachers and admins
+    if ($reader->can_viewallbooks()) {
         $from = '{reader_books} rb';
-        if ($noquiz) {
-            $where = 'rb.quizid = ? AND rb.hidden = ? AND rb.level <> ?';
+        if ($hasquiz===true) {
+            $where = 'rb.quizid > ?';
+        } else if ($hasquiz===false) {
+            $where = 'rb.quizid = ?';
         } else {
-            $where = 'rb.quizid > ? AND rb.hidden = ? AND rb.level <> ?';
+            $where = 'rb.quizid >= ?';
         }
+        $where .= ' AND rb.hidden = ? AND rb.level <> ?';
         $params = array(0, 0, 99);
         if ($reader->bookinstances) {
             $from .= ' JOIN {reader_book_instances} rbi ON rb.id = rbi.bookid';
