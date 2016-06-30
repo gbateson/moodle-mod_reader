@@ -193,7 +193,7 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
         if ($usersql) {
             $where = "u.id $usersql";
         } else {
-            $where = 'u.id > 0'; // must keep MSSQL happy :-)
+            $where = 'u.id = 0'; // must keep MSSQL happy :-)
         }
 
         $params = $attemptparams + array('readerid' => $this->output->reader->id) + $userparams;

@@ -181,6 +181,12 @@ class reader_admin_reports_table extends reader_admin_table {
     public function select_sql_attempts($groupbyfield) {
         list($usersql, $userparams) = $this->select_sql_users();
 
+        // cache some settings for this Reader acitivity
+        // "ignoredate" is the start of the current term
+        $readerid    = $this->output->reader->id;
+        $maxduration = $this->output->reader->timelimit;
+        $ignoredate  = $this->output->reader->ignoredate;
+
         $termtype = $this->filter->get_optionvalue('termtype');
 
         // average grade
@@ -222,19 +228,17 @@ class reader_admin_reports_table extends reader_admin_table {
         $from   = "{reader_attempts} ra ".
                   "LEFT JOIN {reader_books} rb ON ra.bookid = rb.id";
 
-        $params = array('reader1' => $this->output->reader->id,
-                        'reader2' => $this->output->reader->id,
-                        'reader3' => $this->output->reader->id,
-                        'reader4' => $this->output->reader->id,
-                        'reader5' => $this->output->reader->id,
-                        'reader6' => $this->output->reader->id,
-                        'passed5' => 'true',
+        $params = array('passed5' => 'true',
                         'passed6' => 'true',
-                        'maxduration' => $this->output->reader->timelimit);
+                        'maxduration' => $maxduration);
 
-        // "ignoredate" is the start of the current term
-        $ignoredate = $this->output->reader->ignoredate;
         if ($termtype==reader_admin_reports_options::THIS_TERM) {
+            $params['reader1'] = $readerid;
+            $params['reader2'] = $readerid;
+            $params['reader3'] = $readerid;
+            $params['reader4'] = $readerid;
+            $params['reader5'] = $readerid;
+            $params['reader6'] = $readerid;
             $params['time1'] = $ignoredate;
             $params['time2'] = $ignoredate;
             $params['time3'] = $ignoredate;
@@ -299,7 +303,7 @@ class reader_admin_reports_table extends reader_admin_table {
         if ($usersql) {
             $where = "ra.userid $usersql";
         } else {
-            $where = '1=1'; // must keep MSSQL happy :-)
+            $where = '1=0'; // must keep MSSQL happy :-)
         }
         $params += $userparams;
 
@@ -330,10 +334,14 @@ class reader_admin_reports_table extends reader_admin_table {
      * @return string
      */
     protected function select_sql_attempts_exclude($i, $termtype) {
-        $sql = "ra.readerid <> :reader$i OR ra.timefinish IS NULL OR ra.timefinish = 0";
+        // restrict attempts to those that are not finished
+        $sql = "ra.timefinish IS NULL OR ra.timefinish = 0";
+
+        // if necessary, restrict attempts to those that are NOT for the current reader or the current term
         if ($termtype==reader_admin_reports_options::THIS_TERM) {
-            $sql .= " OR ra.timefinish < :time$i";
+            $sql = "ra.readerid <> :reader$i OR $sql OR ra.timefinish < :time$i";
         }
+
         return $sql;
     }
 
@@ -345,10 +353,14 @@ class reader_admin_reports_table extends reader_admin_table {
      * @return string
      */
     protected function select_sql_attempts_include($i, $termtype) {
-        $sql = "ra.readerid = :reader$i AND ra.timefinish IS NOT NULL AND ra.timefinish > 0";
+        // restrict attempts to those that are finished
+        $sql = "ra.timefinish IS NOT NULL AND ra.timefinish > 0";
+
+        // if necessary, restrict attempts to those for the current reader in the current term
         if ($termtype==reader_admin_reports_options::THIS_TERM) {
-            $sql .= " AND ra.timefinish >= :time$i";
+            $sql = "ra.readerid = :reader$i AND $sql AND ra.timefinish >= :time$i";
         }
+
         return $sql;
     }
 

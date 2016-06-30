@@ -142,6 +142,8 @@ $studentuserid          = optional_param('studentuserid', 0, PARAM_INT);
 $studentusername        = optional_param('studentusername', null, PARAM_CLEAN);
 $bookquiznumber         = optional_param('bookquiznumber', 0, PARAM_INT);
 
+$tab = optional_param('tab', 0, PARAM_INT);
+
 $readercfg = get_config('mod_reader');
 
 reader_change_to_teacherview();
@@ -1071,11 +1073,11 @@ if (! $excel) {
     $menu = array(
         'readerreports' => array(
             // new reader_menu_item($displaystring, $capability, $scriptname, $scriptparams)
-            new reader_menu_item('reportquiztoreader', 'viewreports', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'reports')),
-            new reader_menu_item('fullreportquiztoreader', 'viewreports', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'fullreports')),
-            new reader_menu_item('summaryreportbyclassgroup', 'viewreports', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'reportbyclass')),
-            new reader_menu_item('summaryreportbybooktitle', 'viewreports', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'summarybookreports')),
-            new reader_menu_item('fullreportbybooktitle', 'viewreports', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'fullbookreports')),
+            new reader_menu_item('reportquiztoreader', 'viewreports', 'admin.php', array('a' => 'admin', 'id' => $id, 'tab' => $tab, 'act' => 'reports')),
+            new reader_menu_item('fullreportquiztoreader', 'viewreports', 'admin.php', array('a' => 'admin', 'id' => $id, 'tab' => $tab, 'act' => 'fullreports')),
+            new reader_menu_item('summaryreportbyclassgroup', 'viewreports', 'admin.php', array('a' => 'admin', 'id' => $id, 'tab' => $tab, 'act' => 'reportbyclass')),
+            new reader_menu_item('summaryreportbybooktitle', 'viewreports', 'admin.php', array('a' => 'admin', 'id' => $id, 'tab' => $tab, 'act' => 'summarybookreports')),
+            new reader_menu_item('fullreportbybooktitle', 'viewreports', 'admin.php', array('a' => 'admin', 'id' => $id, 'tab' => $tab, 'act' => 'fullbookreports')),
             //new reader_menu_item('reportquiztoreader', 'viewreports', 'admin/reports.php', array('id' => $id, 'tab' => 31, 'mode' => 'usersummary')),
             //new reader_menu_item('fullreportquiztoreader', 'viewreports','admin/reports.php', array('id' => $id, 'tab' => 32, 'mode' => 'userdetailed')),
             //new reader_menu_item('summaryreportbyclassgroup', 'viewreports', 'admin/reports.php', array('id' => $id, 'tab' => 33, 'mode' => 'groupsummary')),
@@ -1083,44 +1085,44 @@ if (! $excel) {
             //new reader_menu_item('fullreportbybooktitle', 'viewreports', 'admin/reports.php', array('id' => $id, 'tab' => 35, 'mode' => 'bookdetailed')),
         ),
         'quizmanagement' => array(
-            new reader_menu_item('addquiztoreader', 'managebooks', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'addquiz')),
-            //new reader_menu_item('uploadquiztoreader', 'managebooks', 'dlquizzes.php', array('id'=>$id)),
-            //new reader_menu_item('uploaddatanoquizzes', 'managebooks', 'dlquizzesnoq.php', array('id'=>$id)),
-            //new reader_menu_item('updatequizzes', 'managebooks', 'updatecheck.php', array('id'=>$id, 'checker'=>1)),
-            new reader_menu_item('updatequizzes', 'managebooks', 'admin/books.php', array('id'=>$id, 'tab' => 43, 'mode' => 'download', 'type' => 1)),
-            new reader_menu_item('uploadquiztoreader', 'managebooks', 'admin/books.php', array('id'=>$id, 'tab' => 43, 'mode' => 'download', 'type' => 1)),
-            new reader_menu_item('uploaddatanoquizzes', 'managebooks', 'admin/books.php', array('id'=>$id, 'tab' => 44, 'mode' => 'download', 'type' => 0)),
-            new reader_menu_item('editquiztoreader', 'managebooks', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'editquiz')),
-            new reader_menu_item('setbookinstances', 'managebooks', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'setbookinstances')),
-            //new reader_menu_item('forcedtimedelay', 'managebooks', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'forcedtimedelay')),
-            new reader_menu_item('forcedtimedelay', 'managebooks', 'admin/users.php', array('id'=>$id, 'tab'=>53, 'mode'=>'setrates')),
-            new reader_menu_item('changenumberofsectionsinquiz', 'managebooks', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'changenumberofsectionsinquiz')),
+            new reader_menu_item('addquiztoreader', 'managebooks', 'admin.php', array('a' => 'admin', 'id' => $id, 'tab' => $tab, 'act' => 'addquiz')),
+            //new reader_menu_item('uploadquiztoreader', 'managebooks', 'dlquizzes.php', array('id' => $id)),
+            //new reader_menu_item('uploaddatanoquizzes', 'managebooks', 'dlquizzesnoq.php', array('id' => $id)),
+            //new reader_menu_item('updatequizzes', 'managebooks', 'updatecheck.php', array('id' => $id, 'checker' => 1)),
+            new reader_menu_item('updatequizzes', 'managebooks', 'admin/books.php', array('id' => $id, 'tab' => 43, 'mode' => 'download', 'type' => 1)),
+            new reader_menu_item('uploadquiztoreader', 'managebooks', 'admin/books.php', array('id' => $id, 'tab' => 43, 'mode' => 'download', 'type' => 1)),
+            new reader_menu_item('uploaddatanoquizzes', 'managebooks', 'admin/books.php', array('id' => $id, 'tab' => 44, 'mode' => 'download', 'type' => 0)),
+            new reader_menu_item('editquiztoreader', 'managebooks', 'admin.php', array('a' => 'admin', 'id' => $id, 'tab' => $tab, 'act' => 'editquiz')),
+            new reader_menu_item('setbookinstances', 'managebooks', 'admin.php', array('a' => 'admin', 'id' => $id, 'tab' => $tab, 'act' => 'setbookinstances')),
+            //new reader_menu_item('forcedtimedelay', 'managebooks', 'admin.php', array('a' => 'admin', 'id' => $id, 'tab' => $tab, 'act' => 'forcedtimedelay')),
+            new reader_menu_item('forcedtimedelay', 'managebooks', 'admin/users.php', array('id' => $id, 'tab' => 53, 'mode' => 'setrates')),
+            new reader_menu_item('changenumberofsectionsinquiz', 'managebooks', 'admin.php', array('a' => 'admin', 'id' => $id, 'tab' => $tab, 'act' => 'changenumberofsectionsinquiz')),
         ),
         'attemptscoremanagement' => array(
-            //new reader_menu_item('viewattempts', 'manageusers', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'viewattempts')),
-            //new reader_menu_item('awardextrapoints', 'manageusers', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'awardextrapoints')),
-            //new reader_menu_item('assignpointsbookshavenoquizzes', 'manageusers', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'assignpointsbookshavenoquizzes')),
+            //new reader_menu_item('viewattempts', 'manageusers', 'admin.php', array('a' => 'admin', 'id' => $id, 'act' => 'viewattempts')),
+            //new reader_menu_item('awardextrapoints', 'manageusers', 'admin.php', array('a' => 'admin', 'id' => $id, 'act' => 'awardextrapoints')),
+            //new reader_menu_item('assignpointsbookshavenoquizzes', 'manageusers', 'admin.php', array('a' => 'admin', 'id' => $id, 'act' => 'assignpointsbookshavenoquizzes')),
             new reader_menu_item('viewattempts', 'manageusers', 'admin/reports.php', array('id' => $id, 'tab' => 32, 'mode' => 'userdetailed')),
             new reader_menu_item('awardextrapoints', 'manageusers', 'admin/reports.php', array('id' => $id, 'tab' => 31, 'mode' => 'usersummary')),
             new reader_menu_item('assignpointsbookshavenoquizzes', 'manageusers', 'admin/reports.php', array('id' => $id, 'tab' => 31, 'mode' => 'usersummary')),
-            new reader_menu_item('adjustscores', 'manageusers', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'adjustscores')),
-            new reader_menu_item('checksuspiciousactivity', 'manageattempts', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'checksuspiciousactivity')),
-            new reader_menu_item('viewlogsuspiciousactivity', 'manageattempts', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'viewlogsuspiciousactivity')),
+            new reader_menu_item('adjustscores', 'manageusers', 'admin.php', array('a' => 'admin', 'id' => $id, 'tab' => $tab, 'act' => 'adjustscores')),
+            new reader_menu_item('checksuspiciousactivity', 'manageattempts', 'admin.php', array('a' => 'admin', 'id' => $id, 'tab' => $tab, 'act' => 'checksuspiciousactivity')),
+            new reader_menu_item('viewlogsuspiciousactivity', 'manageattempts', 'admin.php', array('a' => 'admin', 'id' => $id, 'tab' => $tab, 'act' => 'viewlogsuspiciousactivity')),
         ),
         'booklevelmanagement' => array(
             // new reader_menu_item($displaystring, $capability, $scriptname, $scriptparams)
-            new reader_menu_item('changereaderlevel', 'managebooks', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'changereaderlevel')),
-            //new reader_menu_item('createcoversets_t', 'managebooks', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'makepix_t')),
-            //new reader_menu_item('createcoversets_l', 'managebooks', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'makepix_l')),
-            new reader_menu_item('bookratingslevel', 'managebooks', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'bookratingslevel')),
+            new reader_menu_item('changereaderlevel', 'managebooks', 'admin.php', array('a' => 'admin', 'id' => $id, 'tab' => $tab, 'act' => 'changereaderlevel')),
+            //new reader_menu_item('createcoversets_t', 'managebooks', 'admin.php', array('a' => 'admin', 'id' => $id, 'tab' => $tab, 'act' => 'makepix_t')),
+            //new reader_menu_item('createcoversets_l', 'managebooks', 'admin.php', array('a' => 'admin', 'id' => $id, 'tab' => $tab, 'act' => 'makepix_l')),
+            new reader_menu_item('bookratingslevel', 'managebooks', 'admin.php', array('a' => 'admin', 'id' => $id, 'tab' => $tab, 'act' => 'bookratingslevel')),
         ),
         'studentmanagement' => array(
             // new reader_menu_item($displaystring, $capability, $scriptname, $scriptparams)
-            new reader_menu_item('setgoal', 'manageusers', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'setgoal')),
-            new reader_menu_item('studentslevels', 'manageusers', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'studentslevels')),
-            new reader_menu_item('setmessage', 'manageusers', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'setmessage')),
-            //new reader_menu_item('exportstudentrecords', 'manageusers', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'exportstudentrecords', 'excel'=>1)),
-            //new reader_menu_item('importstudentrecord', 'manageusers', 'admin.php', array('a'=>'admin', 'id'=>$id, 'act'=>'importstudentrecord')),
+            new reader_menu_item('setgoal', 'manageusers', 'admin.php', array('a' => 'admin', 'id' => $id, 'tab' => $tab, 'act' => 'setgoal')),
+            new reader_menu_item('studentslevels', 'manageusers', 'admin.php', array('a' => 'admin', 'id' => $id, 'tab' => $tab, 'act' => 'studentslevels')),
+            new reader_menu_item('setmessage', 'manageusers', 'admin.php', array('a' => 'admin', 'id' => $id, 'tab' => $tab, 'act' => 'setmessage')),
+            //new reader_menu_item('exportstudentrecords', 'manageusers', 'admin.php', array('a' => 'admin', 'id' => $id, 'tab' => $tab, 'act' => 'exportstudentrecords', 'excel' => 1)),
+            //new reader_menu_item('importstudentrecord', 'manageusers', 'admin.php', array('a' => 'admin', 'id' => $id, 'tab' => $tab, 'act' => 'importstudentrecord')),
             new reader_menu_item('exportstudentrecords', 'manageusers', 'admin/users.php', array('id' => $id, 'tab' => 56, 'mode' => 'export')),
             new reader_menu_item('importstudentrecord', 'manageusers', 'admin/users.php', array('id' => $id, 'tab' => 55, 'mode' => 'import')),
 
@@ -1290,9 +1292,17 @@ if ($act == 'addquiz' && has_capability('mod/reader:managebooks', $contextmodule
     }
     $table = new html_table();
 
-    $titles = array(''=>'', 'Title'=>'title', 'Publisher'=>'publisher', 'Level'=>'level', 'Reading Level'=>'rlevel', 'Length'=>'points', 'Times Quiz Taken'=>'qtaken', 'Average Points'=>'apoints', 'Options'=>'');
+    $titles = array(''                 => '',
+                    'Title'            => 'title',
+                    'Publisher'        => 'publisher',
+                    'Level'            => 'level',
+                    'Reading Level'    => 'rlevel',
+                    'Length'           => 'points',
+                    'Times Quiz Taken' => 'qtaken',
+                    'Average Points'   => 'apoints',
+                    'Options'          => '');
 
-    $params = array('a' => 'admin', 'id' => $id, 'act' => $act);
+    $params = array('a' => 'admin', 'id' => $id, 'act' => $act, 'tab' => $tab);
     reader_make_table_headers($table, $titles, $orderby, $sort, $params);
     $table->align = array('center', 'left', 'left', 'center', 'center', 'center', 'center', 'center', 'center');
     $table->width = '100%';
@@ -1406,21 +1416,19 @@ if ($act == 'addquiz' && has_capability('mod/reader:managebooks', $contextmodule
 } else if ($act == 'reports' && has_capability('mod/reader:viewreports', $contextmodule)) {
     $table = new html_table();
 
-    $titles = array(
-        'Image'                => '',
-        'Username'             => 'username',
-        'Fullname<br />Click to view screen' => 'fullname',
-        'Start level'          => 'startlevel',
-        'Current level'        => 'currentlevel',
-        'Taken Quizzes'        => 'tquizzes',
-        'Passed<br />Quizzes'  => 'cquizzes',
-        'Failed<br />Quizzes'  => 'iquizzes',
-        'Total Points'         => 'totalpoints',
-        'Total words<br />this term' => 'totalwordsthisterm',
-        'Total words<br />all terms' => 'totalwordsallterms'
-    );
+    $titles = array('Image'                => '',
+                    'Username'             => 'username',
+                    'Fullname<br />Click to view screen' => 'fullname',
+                    'Start level'          => 'startlevel',
+                    'Current level'        => 'currentlevel',
+                    'Taken Quizzes'        => 'tquizzes',
+                    'Passed<br />Quizzes'  => 'cquizzes',
+                    'Failed<br />Quizzes'  => 'iquizzes',
+                    'Total Points'         => 'totalpoints',
+                    'Total words<br />this term' => 'totalwordsthisterm',
+                    'Total words<br />all terms' => 'totalwordsallterms');
 
-    $params = array('a' => 'admin', 'id' => $id, 'act' => 'reports', 'gid' => $gid, 'searchtext' => $searchtext, 'page' => $page);
+    $params = array('a' => 'admin', 'id' => $id, 'act' => 'reports', 'gid' => $gid, 'searchtext' => $searchtext, 'page' => $page, 'tab' => $tab);
     reader_make_table_headers($table, $titles, $orderby, $sort, $params);
     $table->align = array('center', 'left', 'left', 'center', 'center', 'center', 'center', 'center', 'center', 'center', 'center');
     $table->width = '100%';
@@ -1601,7 +1609,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managebooks', $contextmodule
     }
 
     // '?a=admin&id='.$id.'&act=fullreports&gid='.$gid.'&searchtext='.$searchtext.'&page='.$page.'&ct='.$ct
-    $params = array('a' => 'admin', 'id' => $id, 'act' => 'fullreports', 'gid' => $gid, 'searchtext' => $searchtext, 'page' => $page, 'ct' => $ct);
+    $params = array('a' => 'admin', 'id' => $id, 'act' => 'fullreports', 'gid' => $gid, 'searchtext' => $searchtext, 'page' => $page, 'ct' => $ct, 'tab' => $tab);
     reader_make_table_headers($table, $titles, $orderby, $sort, $params);
     $table->width = '100%';
 
@@ -1855,9 +1863,18 @@ if ($act == 'addquiz' && has_capability('mod/reader:managebooks', $contextmodule
         $sort = 'title';
     }
     $table = new html_table();
-    $titles = array('Title'=>'title', 'Publisher'=>'publisher', 'Level'=>'level', 'Reading Level'=>'rlevel', 'Length'=>'points', 'Times Quiz Taken'=>'qtaken', 'Average Points'=>'apoints', 'Passed'=>'passed', 'Failed'=>'failed', 'Pass Rate'=>'prate');
+    $titles = array('Title'            => 'title',
+                    'Publisher'        => 'publisher',
+                    'Level'            => 'level',
+                    'Reading Level'    => 'rlevel',
+                    'Length'           => 'points',
+                    'Times Quiz Taken' => 'qtaken',
+                    'Average Points'   => 'apoints',
+                    'Passed'           => 'passed',
+                    'Failed'           => 'failed',
+                    'Pass Rate'        => 'prate');
 
-    $params = array('a' => 'admin', 'id' => $id, 'act' => 'summarybookreports', 'gid' => $gid, 'searchtext' => $searchtext, 'page' => $page);
+    $params = array('a' => 'admin', 'id' => $id, 'act' => 'summarybookreports', 'gid' => $gid, 'searchtext' => $searchtext, 'page' => $page, 'tab' => $tab);
     reader_make_table_headers($table, $titles, $orderby, $sort, $params);
     $table->align = array('left', 'left', 'center', 'center', 'center', 'center', 'center', 'center', 'center', 'center');
     $table->width = '100%';
@@ -1973,7 +1990,13 @@ if ($act == 'addquiz' && has_capability('mod/reader:managebooks', $contextmodule
     }
     $table = new html_table();
 
-    $titles = array('Title'=>'title', 'Publisher'=>'publisher', 'Level'=>'level', 'Reading Level'=>'rlevel', 'Student Name'=>'sname', 'Student ID'=>'studentid', 'Passed/Failed'=>'');
+    $titles = array('Title'         => 'title',
+                    'Publisher'     => 'publisher',
+                    'Level'         => 'level',
+                    'Reading Level' => 'rlevel',
+                    'Student Name'  => 'sname',
+                    'Student ID'    => 'studentid',
+                    'Passed/Failed' => '');
 
     if ($excel) {
         $worksheet->set_row(0, 24); // set row height
@@ -2001,7 +2024,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managebooks', $contextmodule
         $worksheet->write_string(2, $c++, 'Passed/Failed', $formatbold);
     }
 
-    $params = array('a' => 'admin', 'id' => $id, 'act' => 'fullbookreports', 'gid' => $gid, 'searchtext' => $searchtext, 'page' => $page);
+    $params = array('a' => 'admin', 'id' => $id, 'act' => 'fullbookreports', 'gid' => $gid, 'searchtext' => $searchtext, 'page' => $page, 'tab' => $tab);
     reader_make_table_headers($table, $titles, $orderby, $sort, $params);
     $table->align = array('left', 'left', 'center', 'center', 'left', 'left', 'center');
     $table->width = '100%';
@@ -2101,12 +2124,25 @@ if ($act == 'addquiz' && has_capability('mod/reader:managebooks', $contextmodule
     } else {
 
         if (has_capability('mod/reader:manageattempts', $contextmodule)) {
-            $titles = array('Username'=>'username', 'Fullname'=>'fullname', 'Book Name'=>'bname', 'AttemptID'=>'attemptid', 'Score'=>'score', 'P/F/C'=>'', 'Finishtime'=>'timefinish', 'Option' => '');
+            $titles = array('Username'   => 'username',
+                            'Fullname'   => 'fullname',
+                            'Book Name'  => 'bname',
+                            'AttemptID'  => 'attemptid',
+                            'Score'      => 'score',
+                            'P/F/C'      => '',
+                            'Finishtime' => 'timefinish',
+                            'Option'     => '');
         } else {
-            $titles = array('Username'=>'username', 'Fullname'=>'fullname', 'Book Name'=>'bname', 'AttemptID'=>'attemptid', 'Score'=>'score', 'P/F/C'=>'', 'Finishtime'=>'timefinish');
+            $titles = array('Username'   => 'username',
+                            'Fullname'   => 'fullname',
+                            'Book Name'  => 'bname',
+                            'AttemptID'  => 'attemptid',
+                            'Score'      => 'score',
+                            'P/F/C'      => '',
+                            'Finishtime' => 'timefinish');
         }
 
-        $params = array('a' => 'admin', 'id' => $id, 'act' => 'viewattempts', 'gid' => $gid, 'searchtext' => $searchtext, 'page' => $page);
+        $params = array('a' => 'admin', 'id' => $id, 'act' => 'viewattempts', 'gid' => $gid, 'searchtext' => $searchtext, 'page' => $page, 'tab' => $tab);
         reader_make_table_headers($table, $titles, $orderby, $sort, $params);
         $table->align = array('left', 'left', 'left', 'center', 'center', 'center', 'center', 'center');
         $table->width = '100%';
@@ -2290,13 +2326,20 @@ if ($act == 'addquiz' && has_capability('mod/reader:managebooks', $contextmodule
 
     $table = new html_table();
 
-    $titles = array('Image'=>'', 'Username'=>'username', 'Fullname<br />Click to view screen'=>'fullname', 'Start level'=>'startlevel', 'Current level'=>'currentlevel', 'AllowPromotion'=>'allowpromotion', 'Stop Promo At'=>'promotionstops', 'Goal'=>'goal');
+    $titles = array('Image'          => '',
+                    'Username'       => 'username',
+                    'Fullname<br />Click to view screen' => 'fullname',
+                    'Start level'    => 'startlevel',
+                    'Current level'  => 'currentlevel',
+                    'AllowPromotion' => 'allowpromotion',
+                    'Stop Promo At'  => 'promotionstops',
+                    'Goal'           => 'goal');
 
     if ($reader->uniqueip == 1) {
         $titles['Restrict IP'] = '';
     }
 
-    $params = array('a' => 'admin', 'id' => $id, 'act' => $act, 'gid' => $gid, 'searchtext' => $searchtext, 'page' => $page);
+    $params = array('a' => 'admin', 'id' => $id, 'act' => $act, 'gid' => $gid, 'searchtext' => $searchtext, 'page' => $page, 'tab' => $tab);
     reader_make_table_headers($table, $titles, $orderby, $sort, $params);
     $table->align = array('center', 'left', 'left', 'center', 'center', 'center', 'center', 'center', 'center');
     $table->width = '100%';
@@ -2470,12 +2513,21 @@ if ($act == 'addquiz' && has_capability('mod/reader:managebooks', $contextmodule
     $table = new html_table();
 
     if ($reader->bookinstances == 1) {
-      $titles = array('Title'=>'title', 'Publisher'=>'publisher', 'Level'=>'level', 'Reading Level'=>'readinglevel', 'Length'=>'points');
+        $titles = array('Title'         => 'title',
+                        'Publisher'     => 'publisher',
+                        'Level'         => 'level',
+                        'Reading Level' => 'readinglevel',
+                        'Length'        => 'points');
     } else {
-      $titles = array('Title'=>'title', 'Publisher'=>'publisher', 'Level'=>'level', 'Words'=>'words', 'Reading Level'=>'readinglevel', 'Length'=>'points');
+        $titles = array('Title'         => 'title',
+                        'Publisher'     => 'publisher',
+                        'Level'         => 'level',
+                        'Words'         => 'words',
+                        'Reading Level' => 'readinglevel',
+                        'Length'        => 'points');
     }
 
-    $params = array('a' => 'admin', 'id' => $id, 'act' => $act, 'gid' => $gid, 'searchtext' => $searchtext, 'page' => $page, 'publisher' => $publisher);
+    $params = array('a' => 'admin', 'id' => $id, 'act' => $act, 'gid' => $gid, 'searchtext' => $searchtext, 'page' => $page, 'publisher' => $publisher, 'tab' => $tab);
     reader_make_table_headers($table, $titles, $orderby, $sort, $params);
     if ($reader->bookinstances == 1) {
       $table->align = array('left', 'left', 'left', 'center', 'center');
@@ -2912,9 +2964,12 @@ if ($act == 'addquiz' && has_capability('mod/reader:managebooks', $contextmodule
         echo "<center><h2><font color=\"red\">Done</font></h2></center>";
       } else {
         echo '<form action="" method="post"><table width="100%"><tr><td align="right"><input type="button" value="Select all" onclick="checkall();" /> <input type="button" value="Deselect all" onclick="uncheckall();" /></td></tr></table>';
-        $titles = array('Image'=>'', 'Username'=>'username', 'Fullname'=>'fullname', 'Select Students'=>'');
+        $titles = array('Image' => '',
+                        'Username' => 'username',
+                        'Fullname' => 'fullname',
+                        'Select Students' => '');
 
-        $params = array('a' => 'admin', 'id' => $id, 'act' => 'awardextrapoints', 'gid' => $gid);
+        $params = array('a' => 'admin', 'id' => $id, 'act' => 'awardextrapoints', 'gid' => $gid, 'tab' => $tab);
         reader_make_table_headers($table, $titles, $orderby, $sort, $params);
         $table->align = array('center', 'left', 'left', 'center');
         $table->width = '100%';
@@ -3077,9 +3132,17 @@ if ($act == 'addquiz' && has_capability('mod/reader:managebooks', $contextmodule
           }
         }
 
-        $titles = array('Book'=>'book', 'Username 1'=>'username1', 'Username 2'=>'username2', 'IP 1'=>'', 'IP 2'=>'', 'Time 1'=>'time1', 'Time 2'=>'time2', 'Time period'=>'', 'Log text'=>'');
+        $titles = array('Book'        => 'book',
+                        'Username 1'  => 'username1',
+                        'Username 2'  => 'username2',
+                        'IP 1'        => '',
+                        'IP 2'        => '',
+                        'Time 1'      => 'time1',
+                        'Time 2'      => 'time2',
+                        'Time period' => '',
+                        'Log text'    => '');
 
-        $params = array('a' => 'admin', 'id' => $id, 'act' => $act);
+        $params = array('a' => 'admin', 'id' => $id, 'act' => $act, 'tab' => $tab);
         $table->head  = reader_make_table_headers($table, $titles, $orderby, $sort, $params);
         $table->align = array("left", "left", "left", "center", "center", "center", "center", "center", "left");
         $table->width = "100%";
@@ -3212,20 +3275,18 @@ if ($act == 'addquiz' && has_capability('mod/reader:managebooks', $contextmodule
 
     $table = new html_table();
 
-    $titles = array(
-        'Group name'=>'groupname',
-        'Students with<br /> no quizzes'=>'noquizzes',
-        'Students with<br /> quizzes'=>'quizzes',
-        'Percent with<br /> quizzes'=>'quizzes',
-        'Average Taken<br /> Quizzes'=>'takenquizzes',
-        'Average Passed<br /> Quizzes'=>'passedquizzes',
-        'Average Failed<br /> Quizzes'=>'failedquizzes',
-        'Average total<br /> points'=>'totalpoints',
-        'Average words<br /> this term'=>'averagewordsthisterm',
-        'Average words<br /> all terms'=>'averagewordsallterms'
-    );
+    $titles = array('Group name' => 'groupname',
+                    'Students with<br /> no quizzes' => 'noquizzes',
+                    'Students with<br /> quizzes' => 'quizzes',
+                    'Percent with<br /> quizzes' => 'quizzes',
+                    'Average Taken<br /> Quizzes' => 'takenquizzes',
+                    'Average Passed<br /> Quizzes' => 'passedquizzes',
+                    'Average Failed<br /> Quizzes' => 'failedquizzes',
+                    'Average total<br /> points' => 'totalpoints',
+                    'Average words<br /> this term' => 'averagewordsthisterm',
+                    'Average words<br /> all terms' => 'averagewordsallterms');
 
-    $params = array('a' => 'admin', 'id' => $id, 'act' => $act, 'gif' => $gid, 'searchtext' => $searchtext, 'page' => $page, 'fromtime' => $fromtime);
+    $params = array('a' => 'admin', 'id' => $id, 'act' => $act, 'gif' => $gid, 'searchtext' => $searchtext, 'page' => $page, 'fromtime' => $fromtime, 'tab' => $tab);
     reader_make_table_headers($table, $titles, $orderby, $sort, $params);
     $table->align = array("left", "center", "center", "center", "center", "center", "center", "center", "center");
     $table->width = "100%";
@@ -3404,11 +3465,11 @@ if ($act == 'addquiz' && has_capability('mod/reader:managebooks', $contextmodule
                 }
                 $mform->addElement('select', 'separategroups', get_string('separategroups', 'mod_reader'), $groups);
             }
-            $mform->addElement('text', 'levelall', get_string('all', 'mod_reader'), array('size'=>'10'));
+            $mform->addElement('text', 'levelall', get_string('all', 'mod_reader'), array('size' => '10'));
             $mform->setType('levelall', PARAM_INT);
             for($i=1; $i<=10; $i++) {
                 $name = 'levelc['.$i.']';
-                $mform->addElement('text', $name, $i, array('size'=>'10'));
+                $mform->addElement('text', $name, $i, array('size' => '10'));
                 $mform->setType($name, PARAM_INT);
             }
 
@@ -3469,7 +3530,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managebooks', $contextmodule
                 $defaultdelay = 0;
             }
 
-            $dtimes = array(0=>'Default ('.$defaultdelay.')', 1=>'Without delay', 14400=>4, 28800=>8, 43200=>12, 57600=>16, 86400=>24, 129600=>36, 172800=>48, 259200=>72, 345600=>96, 432000=>120);
+            $dtimes = array(0 => 'Default ('.$defaultdelay.')', 1 => 'Without delay', 14400 => 4, 28800 => 8, 43200 => 12, 57600 => 16, 86400 => 24, 129600 => 36, 172800 => 48, 259200 => 72, 345600 => 96, 432000 => 120);
 
             $mform    = &$this->_form;
             $mform->addElement('header', 'forcedtimedelay', get_string('forcedtimedelay', 'mod_reader')." (hours)");
@@ -3580,9 +3641,13 @@ if ($act == 'addquiz' && has_capability('mod/reader:managebooks', $contextmodule
         }
         $data = reader_order_object($data, "ratingaverage");
 
-        $titles = array('Book Title'=>'booktitle', 'Publisher'=>'publisher', 'R. Level'=>'level', 'Avg Rating'=>'avrating', 'No. of Ratings'=>'nrating');
+        $titles = array('Book Title' => 'booktitle',
+                        'Publisher'  => 'publisher',
+                        'R. Level'   => 'level',
+                        'Avg Rating' => 'avrating',
+                        'No. of Ratings' => 'nrating');
 
-        $params = array('a' => 'admin', 'id' => $id, 'act' => 'booksratingbest',
+        $params = array('a' => 'admin', 'id' => $id, 'act' => 'booksratingbest', 'tab' => $tab,
                         'booksratingshow'  => 'Go',
                         'booksratingterm'  => $booksratingterm,
                         'booksratinglevel' => $booksratinglevel,
@@ -3637,9 +3702,15 @@ if ($act == 'addquiz' && has_capability('mod/reader:managebooks', $contextmodule
 } else if ($act == 'viewlogsuspiciousactivity' && has_capability('mod/reader:viewreports', $contextmodule)) {
     $table = new html_table();
 
-    $titles = array('Image'=>'', 'By Username'=>'byusername', 'Student 1'=>'student1', 'Student 2'=>'student2', 'Quiz'=>'quiz', 'Status'=>'status', 'Date'=>'date');
+    $titles = array('Image'       => '',
+                    'By Username' => 'byusername',
+                    'Student 1'   => 'student1',
+                    'Student 2'   => 'student2',
+                    'Quiz'        => 'quiz',
+                    'Status'      => 'status',
+                    'Date'        => 'date');
 
-    $params = array('a' => 'admin', 'id' => $id, 'act' => $act, 'gid' => $gid, 'page' => $page);
+    $params = array('a' => 'admin', 'id' => $id, 'act' => $act, 'gid' => $gid, 'page' => $page, 'tab' => $tab);
     reader_make_table_headers($table, $titles, $orderby, $sort, $params);
     $table->align = array("center", "left", "left", "left", "left", "center", "center");
     $table->width = "100%";
@@ -4014,7 +4085,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managebooks', $contextmodule
             $mform    = &$this->_form;
 
             $mform->addElement('header', 'setgoal', get_string('changenumberofsectionsinquiz', 'mod_reader'));
-            $mform->addElement('text', 'numberofsections', '', array('size'=>'10'));
+            $mform->addElement('text', 'numberofsections', '', array('size' => '10'));
             $mform->setType('numberofsections', PARAM_INT);
 
             $this->add_action_buttons(false, $submitlabel="Save");
@@ -4026,9 +4097,15 @@ if ($act == 'addquiz' && has_capability('mod/reader:managebooks', $contextmodule
 } else if ($act == 'assignpointsbookshavenoquizzes' && has_capability('mod/reader:manageusers', $contextmodule)) {
     $table = new html_table();
 
-    $titles = array('<input type="button" value="Select all" onclick="checkall();" />'=>'', 'Image'=>'', 'Username'=>'username', 'Fullname<br />Click to view screen'=>'fullname', 'Current level'=>'currentlevel', 'Total words<br /> this term'=>'totalwordsthisterm', 'Total words<br /> all terms'=>'totalwordsallterms');
+    $titles = array('<input type="button" value="Select all" onclick="checkall();" />' => '',
+                    'Image' => '',
+                    'Username' => 'username',
+                    'Fullname<br />Click to view screen' => 'fullname',
+                    'Current level' => 'currentlevel',
+                    'Total words<br /> this term' => 'totalwordsthisterm',
+                    'Total words<br /> all terms' => 'totalwordsallterms');
 
-    $params = array('a' => 'admin', 'id' => $id, 'act' => $act, 'gid' => $gid, 'book' => $book, 'searchtext' => $searchtext, 'page' => $page);
+    $params = array('a' => 'admin', 'id' => $id, 'act' => $act, 'gid' => $gid, 'book' => $book, 'searchtext' => $searchtext, 'page' => $page, 'tab' => $tab);
     reader_make_table_headers($table, $titles, $orderby, $sort, $params);
     $table->align = array("center", "center", "left", "left", "center", "center", "center");
     $table->width = "100%";
@@ -4167,7 +4244,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managebooks', $contextmodule
                     'Finishtime' => 'finishtime',
                     'Option'     => '');
 
-    $params = array('a' => 'admin', 'id' => $id, 'act' => $act, 'searchtext' => $searchtext);
+    $params = array('a' => 'admin', 'id' => $id, 'act' => $act, 'searchtext' => $searchtext, 'tab' => $tab);
     reader_make_table_headers($table, $titles, $orderby, $sort, $params);
 
     $table->align = array('left', 'left', 'left', 'left', 'center', 'center', 'center', 'center', 'center', 'center', 'center');
@@ -4178,15 +4255,15 @@ if ($act == 'addquiz' && has_capability('mod/reader:managebooks', $contextmodule
 //    [book] => 435
 
     if (is_int($book) && $book >= 1) {
-        $bookdata = $DB->get_record('reader_books', array('id'=>$book));
-        $quizdata = $DB->get_record('quiz', array('id'=>$bookdata->quizid));
+        $bookdata = $DB->get_record('reader_books', array('id' => $book));
+        $quizdata = $DB->get_record('quiz', array('id' => $bookdata->quizid));
         $readerattempts = $DB->get_records('reader_attempts', array('quizid' => $bookdata->quizid, 'readerid' => $reader->id, 'deleted' => 0));
         foreach ($readerattempts as $readerattempt) {
-            $userdata = $DB->get_record('user', array('id'=>$readerattempt->userid));
+            $userdata = $DB->get_record('user', array('id' => $readerattempt->userid));
             $table->data[] = new html_table_row(array(
-                html_writer::empty_tag('input', array('type'=>'checkbox', 'name'=>'adjustscoresupbooks[]', 'value'=>$readerattempt->id)),
+                html_writer::empty_tag('input', array('type' => 'checkbox', 'name' => 'adjustscoresupbooks[]', 'value' => $readerattempt->id)),
                 fullname($userdata),
-                html_writer::link(new moodle_url('/mod/reader/admin/reports.php', array('id'=>$id, 'q'=>$bookdata->quizid, 'mode'=>'analysis', 'b'=>$bookdata->id)), $bookdata->name),
+                html_writer::link(new moodle_url('/mod/reader/admin/reports.php', array('id' => $id, 'q' => $bookdata->quizid, 'mode' => 'analysis', 'b' => $bookdata->id)), $bookdata->name),
                 $bookdata->publisher,
                 $bookdata->level,
                 reader_get_reader_difficulty($reader, $bookdata->id),
@@ -4224,40 +4301,40 @@ if ($act == 'addquiz' && has_capability('mod/reader:managebooks', $contextmodule
     }
     $select .= '</select>';
 
-    $submit = html_writer::empty_tag('input', array('type'=>'submit', 'value'=>'Select quiz'));
+    $submit = html_writer::empty_tag('input', array('type' => 'submit', 'value' => 'Select quiz'));
 
-    $alink  = new moodle_url('/mod/reader/admin.php', array('id'=>$id, 'act'=>$act, 'a'=>'admin'));
+    $alink  = new moodle_url('/mod/reader/admin.php', array('id' => $id, 'act' => $act, 'a' => 'admin', 'tab' => $tab));
 
     if (isset($adjustscorestext)) {
         echo html_writer::tag('p', $adjustscorestext);
     }
 
-    echo html_writer::start_tag('table', array('style'=>'width:100%'));
+    echo html_writer::start_tag('table', array('style' => 'width:100%'));
     echo html_writer::start_tag('tr');
-    echo html_writer::start_tag('td', array('align'=>'right'));
+    echo html_writer::start_tag('td', array('align' => 'right'));
 
-    echo html_writer::start_tag('form', array('action'=>$alink, 'method'=>'post', 'id'=>'mform1'));
+    echo html_writer::start_tag('form', array('action' => $alink, 'method' => 'post', 'id' => 'mform1'));
     echo html_writer::start_tag('center');
-    echo html_writer::start_tag('table', array('width'=>'600px'));
+    echo html_writer::start_tag('table', array('width' => '600px'));
 
     echo html_writer::start_tag('tr');
-    echo html_writer::tag('td', get_string('publisherseries', 'mod_reader'), array('width'=>'200px'));
-    echo html_writer::tag('td', '', array('width'=>'10px'));
-    echo html_writer::tag('td', '', array('width'=>'200px'));
+    echo html_writer::tag('td', get_string('publisherseries', 'mod_reader'), array('width' => '200px'));
+    echo html_writer::tag('td', '', array('width' => '10px'));
+    echo html_writer::tag('td', '', array('width' => '200px'));
     echo html_writer::end_tag('tr');
 
     echo html_writer::start_tag('tr');
-    echo html_writer::tag('td', $select, array('valign'=>'top'));
-    echo html_writer::tag('td', html_writer::tag('div', '', array('id'=>'bookleveldiv')), array('valign'=>'top'));
-    echo html_writer::tag('td', html_writer::tag('div', '', array('id'=>'bookiddiv')), array('valign'=>'top'));
+    echo html_writer::tag('td', $select, array('valign' => 'top'));
+    echo html_writer::tag('td', html_writer::tag('div', '', array('id' => 'bookleveldiv')), array('valign' => 'top'));
+    echo html_writer::tag('td', html_writer::tag('div', '', array('id' => 'bookiddiv')), array('valign' => 'top'));
     echo html_writer::end_tag('tr');
 
     echo html_writer::start_tag('tr');
-    echo html_writer::tag('td', '', array('colspan'=>3, 'align'=>'center'));
+    echo html_writer::tag('td', '', array('colspan' => 3, 'align' => 'center'));
     echo html_writer::end_tag('tr');
 
     echo html_writer::start_tag('tr');
-    echo html_writer::tag('td', html_writer::empty_tag('input', array('type'=>'submit', 'value'=>'Select quiz')), array('colspan'=>3, 'align'=>'center'));
+    echo html_writer::tag('td', html_writer::empty_tag('input', array('type' => 'submit', 'value' => 'Select quiz')), array('colspan' => 3, 'align' => 'center'));
     echo html_writer::end_tag('tr');
 
     echo html_writer::end_tag('table');
@@ -4268,41 +4345,41 @@ if ($act == 'addquiz' && has_capability('mod/reader:managebooks', $contextmodule
     echo html_writer::end_tag('tr');
     echo html_writer::end_tag('table');
 
-    $alink  = new moodle_url('/mod/reader/admin.php', array('id'=>$id, 'act'=>$act, 'book'=>$book, 'a'=>'admin'));
+    $alink  = new moodle_url('/mod/reader/admin.php', array('id' => $id, 'act' => $act, 'book' => $book, 'a' => 'admin', 'tab' => $tab));
 
-    echo html_writer::start_tag('form', array('action'=>$alink, 'method'=>'post'));
-    echo html_writer::start_tag('div', array('style'=>'20px 0;'));
+    echo html_writer::start_tag('form', array('action' => $alink, 'method' => 'post'));
+    echo html_writer::start_tag('div', array('style' => '20px 0;'));
 
     echo html_writer::start_tag('table');
     echo html_writer::start_tag('tr');
-    echo html_writer::tag('td', 'Update selected adding', array('width'=>'180px;'));
-    echo html_writer::start_tag('td', array('width'=>'60px;'));
-    echo html_writer::empty_tag('input', array('type'=>'text', 'name'=>'adjustscoresaddpoints', 'value'=>'', 'style'=>'width:60px;'));
+    echo html_writer::tag('td', 'Update selected adding', array('width' => '180px;'));
+    echo html_writer::start_tag('td', array('width' => '60px;'));
+    echo html_writer::empty_tag('input', array('type' => 'text', 'name' => 'adjustscoresaddpoints', 'value' => '', 'style' => 'width:60px;'));
     echo html_writer::end_tag('td');
-    echo html_writer::tag('td', 'points', array('width'=>'70px;'));
+    echo html_writer::tag('td', 'points', array('width' => '70px;'));
     echo html_writer::start_tag('td');
-    echo html_writer::empty_tag('input', array('type'=>'submit', 'value'=>get_string('add')));
+    echo html_writer::empty_tag('input', array('type' => 'submit', 'value' => get_string('add')));
     echo html_writer::end_tag('td');
     echo html_writer::end_tag('tr');
     echo html_writer::end_tag('table');
 
     echo html_writer::start_tag('table');
     echo html_writer::start_tag('tr');
-    echo html_writer::tag('td', 'Update all > ', array('width'=>'100px;'));
-    echo html_writer::start_tag('td', array('width'=>'60px;'));
-    echo html_writer::empty_tag('input', array('type'=>'text', 'name'=>'adjustscoresupall', 'value'=>'', 'style'=>'width:50px;'));
+    echo html_writer::tag('td', 'Update all > ', array('width' => '100px;'));
+    echo html_writer::start_tag('td', array('width' => '60px;'));
+    echo html_writer::empty_tag('input', array('type' => 'text', 'name' => 'adjustscoresupall', 'value' => '', 'style' => 'width:50px;'));
     echo html_writer::end_tag('td');
-    echo html_writer::tag('td', 'points and < ', array('width'=>'90px;'));
-    echo html_writer::start_tag('td', array('width'=>'60px;'));
-    echo html_writer::empty_tag('input', array('type'=>'text', 'name'=>'adjustscorespand', 'value'=>'', 'style'=>'width:50px;'));
+    echo html_writer::tag('td', 'points and < ', array('width' => '90px;'));
+    echo html_writer::start_tag('td', array('width' => '60px;'));
+    echo html_writer::empty_tag('input', array('type' => 'text', 'name' => 'adjustscorespand', 'value' => '', 'style' => 'width:50px;'));
     echo html_writer::end_tag('td');
-    echo html_writer::tag('td', 'points by ', array('width'=>'90px;'));
-    echo html_writer::start_tag('td', array('width'=>'60px;'));
-    echo html_writer::empty_tag('input', array('type'=>'text', 'name'=>'adjustscorespby', 'value'=>'', 'style'=>'width:50px;'));
+    echo html_writer::tag('td', 'points by ', array('width' => '90px;'));
+    echo html_writer::start_tag('td', array('width' => '60px;'));
+    echo html_writer::empty_tag('input', array('type' => 'text', 'name' => 'adjustscorespby', 'value' => '', 'style' => 'width:50px;'));
     echo html_writer::end_tag('td');
-    echo html_writer::tag('td', 'points', array('width'=>'70px;'));
+    echo html_writer::tag('td', 'points', array('width' => '70px;'));
     echo html_writer::start_tag('td');
-    echo html_writer::empty_tag('input', array('type'=>'submit', 'value'=>get_string('add')));
+    echo html_writer::empty_tag('input', array('type' => 'submit', 'value' => get_string('add')));
     echo html_writer::end_tag('td');
     echo html_writer::end_tag('tr');
     echo html_writer::end_tag('table');

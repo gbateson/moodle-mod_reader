@@ -113,6 +113,7 @@ function reader_export_db_header() {
 
     $output = '';
     $output .= "-- Dump of Moodle Reader tables\n";
+    $output .= "-- Dump started".date(' \o\n Y-m-d \a\t H:i:s')."\n";
     $output .= "--\n";
     $output .= "-- Host: $CFG->dbhost	Database: $CFG->dbname\n";
     $output .= "-- Moodle: $moodlerelease\n";
@@ -174,7 +175,7 @@ function reader_export_db_footer() {
     $output .= "/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;\n";
     $output .= "/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;\n";
     $output .= "/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;\n";
-    $output .= "-- Dump completed on ".date('Y-m-d G:i:s')."\n";
+    $output .= "-- Dump completed".date(' \o\n Y-m-d \a\t H:i:s')."\n";
     $output .= "\n";
     return $output;
 }
