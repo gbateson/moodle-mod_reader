@@ -44,7 +44,7 @@ $id                     = optional_param('id', 0, PARAM_INT);
 $r                      = optional_param('r',  0, PARAM_INT);
 $a                      = optional_param('a', null, PARAM_CLEAN);
 $act                    = optional_param('act', null, PARAM_CLEAN);
-$quizzesid              = optional_param('quizzesid', null, PARAM_CLEAN);
+$quizzesid              = reader_optional_param_array('quizzesid', null, PARAM_CLEAN);
 $publisher              = optional_param('publisher', null, PARAM_CLEAN);
 $publisherex            = optional_param('publisherex', null, PARAM_CLEAN);
 $difficulty             = optional_param('difficulty', null, PARAM_CLEAN);
@@ -239,14 +239,16 @@ $coursestudents = get_enrolled_users($context, '', $gid);
 $coursestudents = array_slice($coursestudents, 0, 400, true);
 
 if (has_capability('mod/reader:addinstance', $contextmodule) && $quizzesid) {
+    $params = array('a' => 'admin', 'id' => $id, 'act' => 'addquiz');
+    $continue_url = new moodle_url('/mod/reader/admin.php', $params);
     if (empty($publisher) && ($publisherex == '0')) {
-        error('Please choose publisher', 'admin.php?a=admin&id='.$id.'&act=addquiz');
+        print_error('choosepublisher', 'mod_reader', $continue_url);
     }
     else if (! isset($difficulty) && $difficulty != 0 && $difficultyex != 0 && ! $difficultyex) {
-        error('Please choose Reading Level', 'admin.php?a=admin&id='.$id.'&act=addquiz');
+        print_error('choosedifficulty', 'mod_reader', $continue_url);
     }
     else if (! isset($level) && ($levelex == '0')) {
-        error('Please choose level', 'admin.php?a=admin&id='.$id.'&act=addquiz');
+        print_error('chooselevel', 'mod_reader', $continue_url);
     }
 
     if ($_FILES['userimage']) {
