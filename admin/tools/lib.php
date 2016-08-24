@@ -26,7 +26,7 @@
  */
 
 /** Prevent direct access to this script */
-defined('MOODLE_INTERNAL') || die;
+defined('MOODLE_INTERNAL') || die();
 
 /**
  * reader_get_correct_answer

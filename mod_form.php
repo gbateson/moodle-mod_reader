@@ -26,7 +26,7 @@
  */
 
 /** Prevent direct access to this script */
-defined('MOODLE_INTERNAL') || die;
+defined('MOODLE_INTERNAL') || die();
 
 /** Include required files */
 require_once($CFG->dirroot.'/course/moodleform_mod.php');

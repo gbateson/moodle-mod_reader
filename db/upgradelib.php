@@ -34,7 +34,7 @@
  */
 
 /** Prevent direct access to this script */
-defined('MOODLE_INTERNAL') || die;
+defined('MOODLE_INTERNAL') || die();
 
 /**
  * xmldb_reader_add_attempts_bookid
