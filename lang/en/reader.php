@@ -450,7 +450,10 @@ $string['fix_slashesinnames'] = 'Fix slashes in names';
 $string['fix_slashesinnamesdesc'] = 'Remove any slashes in the names of Reader books and questions categories.';
 $string['fix_wrongattempts'] = 'Fix wrong attempts';
 $string['fix_wrongattemptsdesc'] = 'Detect and fix any attempts at Reader quizzes where the name of the quiz does not match the name of the book in the Reader log';
+$string['fixattempts'] = 'Fixing duplicate Reader attempts';
+$string['fixcontexts'] = 'Fixing faulty contexts in Quiz question categories';
 $string['fixingsumgrades'] = 'Fixing grades on attempts at Reader quizzes ...';
+$string['fixinstances'] = 'Checking Reader question instances';
 $string['fixmissingquizzes'] = 'Fix missing quizzes';
 $string['fixmissingquizzesinfo'] = 'The upgrade has been paused, so that you can decide whether or not you wish to download and install Reader module quizzes that are missing on this Moodle site.
 
@@ -461,6 +464,10 @@ If you select "No", any Reader books whose quiz are missing will be marked as ha
 Note that even if you choose "No", the word counts for each student in Reader activities will not be affected by this operation.
 
 Do you wish to download and install missing Reader module quizzes for books on this Moodle site?';
+$string['fixmultichoice'] = 'Fixing Reader multichoice questions';
+$string['fixordering'] = 'Updating ordering questions for Reader module';
+$string['fixquestiontext'] = 'Fix HTML tags in Reader questions';
+$string['fixquizslots'] = 'Fixing faulty question slots in Quiz attempts';
 $string['fixslashesinnames'] = 'Remove slashes in book titles';
 $string['fixwrongquizid'] = '"{$a->name}" (book id={$a->id}) has unexpected quiz id';
 $string['fixwrongquizidinfo'] = 'The upgrade has been paused, so that you can decide which quiz should be associated with this book.

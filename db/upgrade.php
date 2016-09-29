@@ -49,6 +49,8 @@ function xmldb_reader_upgrade($oldversion) {
 
     $dbman = $DB->get_manager();
 
+    $interactive = xmldb_reader_interactive();
+
     // fix config names
     if ($oldversion <= 2014070487) {
         xmldb_reader_fix_config_names();
@@ -313,8 +315,6 @@ function xmldb_reader_upgrade($oldversion) {
     $newversion = 2013052100;
     if ($result && $oldversion < $newversion) {
 
-        $strupdating = 'Updating ordering questions for Reader module'; // get_string('fixordering', $plugin);
-
         $select = 'qa.question AS questionid, COUNT(*) AS countanswers, SUM(qa.fraction) AS sumanswers';
         $from   = '{question_answers} qa LEFT JOIN {question} q ON qa.question = q.id';
         $where  = 'q.qtype = ?';
@@ -330,15 +330,20 @@ function xmldb_reader_upgrade($oldversion) {
         // $groupby = "qa.question HAVING COUNT(*) >= SUM(qa.fraction)";
 
         $sql = "SELECT $select FROM $from WHERE $where GROUP BY $groupby";
-        if ($i_max = $DB->count_records_sql("SELECT COUNT(*) FROM ($sql) unorderedquestions", $params)) {
+        if ($i_max = $DB->count_records_sql("SELECT COUNT(*) FROM ($sql) temptable", $params)) {
             $rs = $DB->get_recordset_sql($sql, $params);
         } else {
             $rs = false;
         }
 
         if ($rs) {
+            $strupdating = get_string('fixordering', $plugin);
+            if ($interactive) {
+                $bar = new progress_bar('readerfixordering', 500, true);
+            } else {
+                $bar = false;
+            }
             $i = 0; // record counter
-            $bar = new progress_bar('readerfixordering', 500, true);
 
             // loop through answer records
             foreach ($rs as $question) {
@@ -359,7 +364,9 @@ function xmldb_reader_upgrade($oldversion) {
                 }
 
                 // update progress bar
-                $bar->update($i, $i_max, $strupdating.": ($i/$i_max)");
+                if ($bar) {
+                    $bar->update($i, $i_max, $strupdating.": ($i/$i_max)");
+                }
             }
             $rs->close();
         }
@@ -1215,6 +1222,72 @@ function xmldb_reader_upgrade($oldversion) {
     $newversion = 2016041638;
     if ($result && $oldversion < $newversion) {
         update_capabilities('mod/reader');
+        upgrade_mod_savepoint(true, "$newversion", 'reader');
+    }
+
+    $newversion = 2016092954;
+    if ($result && $oldversion < $newversion) {
+
+        $i_max = 0;
+        $rs = false;
+        if ($params = xmldb_reader_get_question_categories()) {
+            list($where, $params) = $DB->get_in_or_equal(array_keys($params));
+
+            $select = 'id, category, questiontext';
+            $from   = '{question}';
+            $where  = "category $where AND (".$DB->sql_like('questiontext', '?').
+                                            ' OR '.$DB->sql_like('questiontext', '?').
+                                            ' OR '.$DB->sql_like('questiontext', '?').
+                                            ' OR '.$DB->sql_like('questiontext', '?').
+                                            ' OR '.$DB->sql_like('questiontext', '?').
+                                            ' OR '.$DB->sql_like('questiontext', '?').
+                                            ' OR '.$DB->sql_like('questiontext', '?').')';
+            array_push($params, '%<script%', '%<style%', '%<xml%',
+                                '%<link%',   '%<meta%',  '%<pre%',
+                                '%&lt;!--%');
+            $sql = "SELECT $select FROM $from WHERE $where";
+            if ($i_max = $DB->count_records_sql("SELECT COUNT(*) FROM ($sql) temptable", $params)) {
+                $rs = $DB->get_recordset_sql($sql, $params);
+            }
+        }
+
+        if ($rs) {
+            $strupdating = get_string('fixquestiontext', $plugin);
+            if ($interactive) {
+                $bar = new progress_bar('fixquestiontext', 500, true);
+            } else {
+                $bar = false;
+            }
+            $i = 0; // record counter
+
+            // regular expressions to detect unwantedtags in questions text
+            // - <script> ... </script>
+            // - <style> ... </style>
+            // - <!-- ... -->
+            // - <pre> and </pre>
+            $search = array('/\s*<(script|style|xml)\b[^>]*>.*?<\/\1>/is',
+                            '/\s*(&lt;)!--.*?--(&gt;)/s',
+                            '/\s*<\/?(link|meta|pre)\b[^>]*>/i');
+
+            // loop through answer records
+            foreach ($rs as $question) {
+                $i++; // increment record count
+
+                // apply for more script execution time (3 mins)
+                upgrade_set_timeout();
+
+                // remove unwanted tags from question text
+                $questiontext = preg_replace($search, '', $question->questiontext);
+                $DB->set_field('question', 'questiontext', $questiontext, array('id' => $question->questionid));
+
+                // update progress bar
+                if ($bar) {
+                    $bar->update($i, $i_max, $strupdating.": ($i/$i_max)");
+                }
+            }
+            $rs->close();
+        }
+
         upgrade_mod_savepoint(true, "$newversion", 'reader');
     }
 

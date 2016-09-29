@@ -688,19 +688,18 @@ function xmldb_reader_fix_question_instances() {
     }
 
     if ($rs) {
-
         list($use_quiz_slots,
              $quiz_question_instances,
              $quizfield,
              $questionfield,
              $gradefield) = xmldb_reader_quiz_question_instances();
 
+        $strupdating = get_string('fixinstances', 'mod_reader');
         if (xmldb_reader_interactive()) {
             $bar = new progress_bar('readerfixinstances', 500, true);
         } else {
             $bar = false;
         }
-        $strupdating = 'Checking Reader question instances'; // get_string('fixinstances', 'mod_reader');
         $i = 0; // record counter
 
         // loop through answer records
@@ -2419,14 +2418,14 @@ function xmldb_reader_fix_duplicate_attempts() {
     }
 
     if ($rs) {
-        $i = 0; // record counter
+        $strupdating = get_string('fixattempts', 'mod_reader');
+        $strdeleted = get_string('deleted');
         if ($interactive) {
             $bar = new progress_bar('readerfixordering', 500, true);
         } else {
             $bar = false;
         }
-        $strupdating = 'Fixing duplicate Reader attempts'; // get_string('fixattempts', 'mod_reader');
-        $strdeleted = get_string('deleted');
+        $i = 0; // record counter
 
         $started_box = false;
 
@@ -2732,13 +2731,12 @@ function xmldb_reader_fix_multichoice_questions() {
     }
 
     if ($rs) {
-
+        $strupdating = get_string('fixmultichoice', 'mod_reader');
         if ($interactive) {
             $bar = new progress_bar('readerfixmultichoice', 500, true);
         } else {
             $bar = false;
         }
-        $strupdating = 'Fixing Reader multichoice questions'; // get_string('fixmultichoice', 'mod_reader');
         $i = 0; // record counter
 
         $started_box = false;
@@ -3111,13 +3109,13 @@ function xmldb_reader_fix_slots_quizattempts($interactive, $quizids) {
     }
 
     if ($rs) {
-        $i = 0; // record counter
+        $strupdating = get_string('fixquizslots', 'mod_reader');
         if ($interactive) {
             $bar = new progress_bar('readerfixquizslots', 500, true);
         } else {
             $bar = false;
         }
-        $strupdating = 'Fixing faulty question slots in Quiz attempts'; // get_string('fixattempts', 'mod_reader');
+        $i = 0; // record counter
 
         // loop through attempts
         foreach ($rs as $attempt) {
@@ -3200,12 +3198,12 @@ function xmldb_reader_fix_slots_readerattempts($interactive, $quizids) {
     }
 
     if ($rs) {
+        $strupdating = get_string('fixcontexts', 'mod_reader');
         if ($interactive) {
             $bar = new progress_bar('readerfixquestioncategorycontexts', 500, true);
         } else {
             $bar = false;
         }
-        $strupdating = 'Fixing faulty contexts in Quiz question categories'; // get_string('fixattempts', 'mod_reader');
         $i = 0; // record counter
 
         $cm = null;
@@ -3430,14 +3428,14 @@ function xmldb_reader_merge_tables(&$dbman, $oldname, $newname, $fields, $unique
         }
 
         if ($rs) {
-            $i = 0; // record counter
+            $a = (object)array('new' => $newname, 'old' => $oldname);
+            $strupdating = get_string('mergingtables', 'mod_reader', $a);
             if (xmldb_reader_interactive()) {
                 $bar = new progress_bar('readermergetable'.$oldname, 500, true);
             } else {
                 $bar = false;
             }
-            $a = (object)array('new' => $newname, 'old' => $oldname);
-            $strupdating = get_string('mergingtables', 'mod_reader', $a);
+            $i = 0; // record counter
 
             // loop through answer records
             foreach ($rs as $record) {
@@ -3660,11 +3658,14 @@ function xmldb_reader_migrate_logs($dbman) {
             }
 
             if ($rs) {
-                if ($interactive) {
-                    $i = 0;
-                    $bar = new progress_bar('readermigratelogs', 500, true);
-                }
                 $strupdating = get_string('migratinglogs', 'mod_reader');
+                if ($interactive) {
+                    $bar = new progress_bar('readermigratelogs', 500, true);
+                } else {
+                    $bar = false;
+                }
+                $i = 0;
+
                 foreach ($rs as $log) {
                     upgrade_set_timeout(); // 3 mins
                     reader_add_to_log($log->course,
@@ -3674,10 +3675,10 @@ function xmldb_reader_migrate_logs($dbman) {
                                       $log->info,
                                       $log->cmid,
                                       $log->userid);
-                    if ($interactive) {
-                        $i++;
+                    if ($bar) {
                         $bar->update($i, $count, $strupdating.": ($i/$count)");
                     }
+                    $i++;
                 }
                 $rs->close();
             }
@@ -3832,12 +3833,14 @@ function xmldb_reader_fix_sumgrades($dbman) {
     }
 
     if ($rs) {
-
-        if ($interactive) {
-            $i = 0;
-            $bar = new progress_bar('fixsumgrades', 500, true);
-        }
         $strupdating = get_string('fixingsumgrades', 'mod_reader');
+        if ($interactive) {
+            $bar = new progress_bar('fixsumgrades', 500, true);
+        } else {
+            $bar = false;
+        }
+        $i = 0;
+
         $sql_compare_text_layout = $DB->sql_compare_text('layout');
         $use_quiz_slots = $dbman->table_exists('quiz_slots');
 
@@ -3922,10 +3925,10 @@ function xmldb_reader_fix_sumgrades($dbman) {
                 }
             }
 
-            if ($interactive) {
-                $i++;
+            if ($bar) {
                 $bar->update($i, $count, $strupdating.": ($i/$count)");
             }
+            $i++;
         }
         $rs->close();
 

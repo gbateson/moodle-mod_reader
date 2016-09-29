@@ -721,15 +721,26 @@ class reader_remotesite {
         $questions = array();
         if (isset($xml['0']['#']['QUESTION'])) {
 
+            $defaults = array('id'              => 0,  'parent'             => 0,  'name'      => '',
+                              'questiontext'    => '', 'questiontextformat' => 0,  'image'     => '',
+                              'generalfeedback' => '', 'generalfeedbackformat' => 0,
+                              'defaultgrade'    => 0,  'defaultscore'       => 0,  'penalty'   => 0, 'qtype'      => '',
+                              'length'          => '', 'stamp'              => '', 'version'   => 0, 'hidden'     => '',
+                              'timecreated'     => 0,  'timemodified'       => 0,  'createdby' => 0, 'modifiedby' => 0);
+
+            // regular expressions to detect unwantedtags in questions text
+            // - <script> ... </script>
+            // - <style> ... </style>
+            // - <!-- ... -->
+            // - <pre> and </pre>
+            $search = array('/\s*<(script|style|xml)\b[^>]*>.*?<\/\1>/is',
+                            '/\s*(&lt;)!--.*?--(&gt;)/s',
+                            '/\s*<\/?(link|meta|pre)\b[^>]*>/i');
+
             $question = $xml['0']['#']['QUESTION'];
             foreach (array_keys($question) as $q) {
-                $defaults = array('id'              => 0,  'parent'             => 0,  'name'      => '',
-                                  'questiontext'    => '', 'questiontextformat' => 0,  'image'     => '',
-                                  'generalfeedback' => '', 'generalfeedbackformat' => 0,
-                                  'defaultgrade'    => 0,  'defaultscore'       => 0,  'penalty'   => 0, 'qtype'      => '',
-                                  'length'          => '', 'stamp'              => '', 'version'   => 0, 'hidden'     => '',
-                                  'timecreated'     => 0,  'timemodified'       => 0,  'createdby' => 0, 'modifiedby' => 0);
                 $questions[$q] = $this->get_xml_values($question["$q"]['#'], $defaults);
+                $questions[$q]->questiontext = preg_replace($search, '', $questions[$q]->questiontext);
             }
             unset($question);
         }

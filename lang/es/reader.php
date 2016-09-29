@@ -152,18 +152,19 @@ $string['averagepassed'] = 'Average passed';
 $string['averagepassed_help'] = 'The average number of Reader quizzes passed per student';
 $string['averagepoints'] = 'Average points';
 $string['averagepointsallterms'] = 'Average points (all terms)';
-$string['averagepointsallterms_help'] = 'The average number of points awarded per student all terms';
+$string['averagepointsallterms_help'] = 'The average number of points earned by each student in this group considering all points that any of them have ever earned in any Reader activity on this Moodle site';
 $string['averagepointsthisterm'] = 'Average points (this term)';
-$string['averagepointsthisterm_help'] = 'The average number of points awarded per student this term';
+$string['averagepointsthisterm_help'] = 'The average number of points earned by each student in this group considering only points earned in this Reader activity during the current term';
 $string['averagerating'] = 'Average rating';
 $string['averagetaken'] = 'Average taken';
 $string['averagetaken_help'] = 'The average number of Reader quizzes taken per student';
 $string['averagewords'] = 'Average words';
 $string['averagewordsallterms'] = 'Average words (all terms)';
-$string['averagewordsallterms_help'] = 'The average number of words awarded per student all terms';
+$string['averagewordsallterms_help'] = 'The average number of words earned by each student in this group considering all words that any of them have ever earned in any Reader activity on this Moodle site';
 $string['averagewordsthisterm'] = 'Average words (this term)';
-$string['averagewordsthisterm_help'] = 'The average number of words awarded per student this term';
+$string['averagewordsthisterm_help'] = 'The average number of words earned by each student in this group considering only words earned in this Reader activity during the current term';
 $string['awardbookpoints'] = 'Give credit for books to selected students';
+$string['awardpointsmanually'] = 'There is no quiz for this book. Instead, please ask your teacher to award the words/points manually.';
 $string['best'] = 'Best';
 $string['blockquizattempts'] = 'Block further quiz attempts';
 $string['bookadded'] = 'Book added: {$a}';
@@ -174,6 +175,7 @@ $string['bookcovers_help'] = '**Yes**
 : Do NOT show the book covers on the main page of this Reader activity.';
 $string['bookdifficulty'] = 'Book difficulty';
 $string['bookeditdetails'] = 'Edit book details';
+$string['bookhasnoquiz'] = 'This book has no quiz.';
 $string['bookinstances'] = 'Use subset of quizzes';
 $string['bookinstances_help'] = '**Yes**
 : This Reader activity will use only a subset of the quizzes available in the Reader quizzes course. Additionally, custom values for word count and book difficulty may be specified. Note that enabling this option will cause some extra load on your web server.
@@ -245,6 +247,9 @@ $string['checkcheating_help'] = 'This setting specifies whether or not IP addres
 **On adjoining computers**
 : If two students start the same quiz at a similar time from a similar IP address and both pass, they will be judged by the Reader module to have cheated.';
 $string['chooseaction'] = 'Choose an action and click "Go"';
+$string['choosedifficulty'] = 'Please choose reading level';
+$string['chooselevel'] = 'Please choose level';
+$string['choosepublisher'] = 'Please choose publisher';
 $string['clearedmessage'] = 'Cleared message';
 $string['clearedmessage_help'] = 'This message is sent to students who were judged by the Reader module to have cheated but where later cleared by the teacher.';
 $string['clearedmessagedefault'] = 'We are happy to inform you that your points for the above quiz have been restored. We apologize for the mistake!
@@ -264,6 +269,7 @@ $string['configgoal'] = '';
 $string['configintro'] = 'The values you set here define the default values that are used in the settings form when you create a new Reader activity.
 
 You can also configure which reader settings are considered advanced.';
+$string['configkeeplocalbookdifficulty'] = '';
 $string['configkeepoldquizzes'] = '';
 $string['configlevelcheck'] = '';
 $string['configmaxgrade'] = '';
@@ -451,7 +457,7 @@ $string['event_users_imported_description'] = 'The user with id "{$a->userid}" i
 $string['event_users_imported_explanation'] = 'A user has just imported student data to a Reader activity';
 $string['export'] = 'Export';
 $string['export_reader_tables'] = 'Export reader tables';
-$string['export_reader_tablesdesc'] = 'Export Reader database tables. Note that the exported data contains no couse or user names, only ids.';
+$string['export_reader_tablesdesc'] = 'Export Reader database tables. Note that the exported data contains no course or user names, only ids.';
 $string['extrapoints'] = 'Extra Points';
 $string['extrapoints0'] = '0.5 Points';
 $string['extrapoints1'] = '1 Point';
@@ -504,7 +510,10 @@ $string['fix_slashesinnames'] = 'Fix slashes in names';
 $string['fix_slashesinnamesdesc'] = 'Remove any slashes in the names of Reader books and questions categories.';
 $string['fix_wrongattempts'] = 'Fix wrong attempts';
 $string['fix_wrongattemptsdesc'] = 'Detect and fix any attempts at Reader quizzes where the name of the quiz does not match the name of the book in the Reader log';
+$string['fixattempts'] = 'Fixing duplicate Reader attempts';
+$string['fixcontexts'] = 'Fixing faulty contexts in Quiz question categories';
 $string['fixingsumgrades'] = 'Fixing grades on attempts at Reader quizzes ...';
+$string['fixinstances'] = 'Checking Reader question instances';
 $string['fixmissingquizzes'] = 'Fix missing quizzes';
 $string['fixmissingquizzesinfo'] = 'The upgrade has been paused, so that you can decide whether or not you wish to download and install Reader module quizzes that are missing on this Moodle site.
 
@@ -515,6 +524,10 @@ If you select "No", any Reader books whose quiz are missing will be marked as ha
 Note that even if you choose "No", the word counts for each student in Reader activities will not be affected by this operation.
 
 Do you wish to download and install missing Reader module quizzes for books on this Moodle site?';
+$string['fixmultichoice'] = 'Fixing Reader multichoice questions';
+$string['fixordering'] = 'Updating ordering questions for Reader module';
+$string['fixquestiontext'] = 'Fix HTML tags in Reader questions';
+$string['fixquizslots'] = 'Fixing faulty question slots in Quiz attempts';
 $string['fixslashesinnames'] = 'Remove slashes in book titles';
 $string['fixwrongquizid'] = '"{$a->name}" (book id={$a->id}) has unexpected quiz id';
 $string['fixwrongquizidinfo'] = 'The upgrade has been paused, so that you can decide which quiz should be associated with this book.
@@ -536,7 +549,7 @@ $string['getstarted'] = '**Getting started**
 **Take an online quiz**
 
 * After you have read a book, take an online quiz.
-* Use the search boxes on this page to find the quiz you want. When you have found your quiz, click the button to start quiz.
+* Use the search boxes on this page to find the quiz you want. When you have found your quiz, click the button to start the quiz.
 * Each quiz has several questions about the book. The questions are different for each student.
 * If you pass the quiz, the number of words in the book will be added to your reading total. If you fail the quiz, your reading total does not change.
 * ***You cannot retake quizzes***, so please do the quizzes carefully.';
@@ -564,6 +577,7 @@ $string['installedbooks'] = 'Download/fix only covers for books already INSTALLE
 $string['isgreaterthan'] = 'is greater than';
 $string['islessthan'] = 'is less than';
 $string['itemsdownloaded'] = '{$a} items dowloaded';
+$string['keeplocalbookdifficulty'] = 'Keep local book difficulty settings';
 $string['keepoldquizzes'] = 'Keep old quizzes';
 $string['lastupdatedtime'] = 'The quizzes on this site were last updated on {$a}.  Do you want to update the site now?';
 $string['levelcheck_help'] = '**Yes**
@@ -590,7 +604,9 @@ $string['max'] = 'Less than or equal to';
 $string['maxgrade'] = 'Maximum grade';
 $string['maxgrade_help'] = 'The maximum grade for this Reader activity.
 
-The number of words/points read will be scaled to the maximum grade and passed to the gradebook.';
+The number of words read, as a fraction of the reading goal, will be scaled to this maximum grade and passed to the gradebook.
+
+Usually the maximum grade will be 100, but if all students have the same reading goal, it may help students understand their grade if this setting is the same as the reading goal.';
 $string['maxquizattemptrate'] = 'Maximum quiz attempt rate';
 $string['maxquizattemptrate_help'] = 'The maximum rate at which students may attempt Reader quizzes. If a student tries to attempt more than the specified number of quizzes within the specified duration, then the specified action will be taken.';
 $string['maxquizattemptratetext'] = 'Please do not take more than {$a}. If you exceed this rate, the following action will be taken:';
