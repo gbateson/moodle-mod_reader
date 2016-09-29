@@ -1278,7 +1278,7 @@ function xmldb_reader_upgrade($oldversion) {
 
                 // remove unwanted tags from question text
                 $questiontext = preg_replace($search, '', $question->questiontext);
-                $DB->set_field('question', 'questiontext', $questiontext, array('id' => $question->questionid));
+                $DB->set_field('question', 'questiontext', $questiontext, array('id' => $question->id));
 
                 // update progress bar
                 if ($bar) {
