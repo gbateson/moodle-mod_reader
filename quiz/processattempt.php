@@ -32,16 +32,17 @@ require_once($CFG->dirroot.'/mod/reader/quiz/accessrules.php');
 require_once($CFG->dirroot.'/mod/reader/quiz/attemptlib.php');
 
 // Remember the current time as the time any responses were submitted
-// (so as to make sure students don't get penalized for slow processing on this page)
+// (so as to make sure students don't get penalized for slow processing on this page).
 $timenow = time();
 
 // Get submitted parameters.
 $attemptid     = required_param('attempt', PARAM_INT);
-$next          = optional_param('next',          false, PARAM_BOOL);
 $thispage      = optional_param('thispage',      0,     PARAM_INT);
 $nextpage      = optional_param('nextpage',      0,     PARAM_INT);
-$finishattempt = optional_param('finishattempt', 0,     PARAM_BOOL);
-$timeup        = optional_param('timeup',        0,     PARAM_BOOL);
+$previous      = optional_param('previous',      false, PARAM_BOOL);
+$next          = optional_param('next',          false, PARAM_BOOL);
+$finishattempt = optional_param('finishattempt', false, PARAM_BOOL);
+$timeup        = optional_param('timeup',        false, PARAM_BOOL);
 $scrollpos     = optional_param('scrollpos',     '',    PARAM_RAW);
 $likebook      = optional_param('likebook',      null,  PARAM_CLEAN);
 
@@ -50,20 +51,27 @@ $attemptobj = reader_attempt::create($attemptid);
 
 // We treat automatically closed attempts just like normally closed attempts
 if ($timeup) {
-    $finishattempt = 1;
+    $finishattempt = true;
 }
 
-// Set $redirect now.
+// Set $nexturl now.
 if ($finishattempt) {
-    $redirect = $CFG->wwwroot.'/mod/reader/view.php?id='.$attemptobj->get_cmid();
+    $nexturl = $attemptobj->view_url();
 } else {
-    $page = ($next ? $nextpage : $thispage);
-    if ($page == -1) {
-        $redirect = $attemptobj->summary_url();
+    if ($next) {
+        $page = $nextpage;
     } else {
-        $redirect = $attemptobj->attempt_url(0, $page);
+        $page = $thispage;
+        if ($previous && $page > 0) {
+            $page--;
+        }
+    }
+    if ($page == -1) {
+        $nexturl = $attemptobj->summary_url();
+    } else {
+        $nexturl = $attemptobj->attempt_url(0, $page);
         if ($scrollpos !== '') {
-            $redirect->param('scrollpos', $scrollpos);
+            $nexturl->param('scrollpos', $scrollpos);
         }
     }
 }
@@ -104,4 +112,4 @@ if ($finishattempt) {
     reader_update_grades($attemptobj->get_reader(), $attemptobj->get_userid());
 }
 
-redirect($redirect);
+redirect($nexturl);
