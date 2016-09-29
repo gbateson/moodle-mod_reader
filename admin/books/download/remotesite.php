@@ -735,6 +735,7 @@ class reader_remotesite {
             // - <pre> and </pre>
             $search = array('/\s*<(script|style|xml)\b[^>]*>.*?<\/\1>/is',
                             '/\s*(&lt;)!--.*?--(&gt;)/s',
+                            '/\s*<!--.*?-->/s',
                             '/\s*<\/?(link|meta|pre)\b[^>]*>/i');
 
             $question = $xml['0']['#']['QUESTION'];

@@ -1241,10 +1241,11 @@ function xmldb_reader_upgrade($oldversion) {
                                             ' OR '.$DB->sql_like('questiontext', '?').
                                             ' OR '.$DB->sql_like('questiontext', '?').
                                             ' OR '.$DB->sql_like('questiontext', '?').
+                                            ' OR '.$DB->sql_like('questiontext', '?').
                                             ' OR '.$DB->sql_like('questiontext', '?').')';
             array_push($params, '%<script%', '%<style%', '%<xml%',
                                 '%<link%',   '%<meta%',  '%<pre%',
-                                '%&lt;!--%');
+                                '%&lt;!--%', '%<!--%');
             $sql = "SELECT $select FROM $from WHERE $where";
             if ($i_max = $DB->count_records_sql("SELECT COUNT(*) FROM ($sql) temptable", $params)) {
                 $rs = $DB->get_recordset_sql($sql, $params);
@@ -1267,6 +1268,7 @@ function xmldb_reader_upgrade($oldversion) {
             // - <pre> and </pre>
             $search = array('/\s*<(script|style|xml)\b[^>]*>.*?<\/\1>/is',
                             '/\s*(&lt;)!--.*?--(&gt;)/s',
+                            '/\s*<!--.*?-->/s',
                             '/\s*<\/?(link|meta|pre)\b[^>]*>/i');
 
             // loop through answer records
