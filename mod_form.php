@@ -201,7 +201,6 @@ class mod_reader_mod_form extends moodleform_mod {
         $name = 'ignoredate';
         $label = get_string($name, $plugin);
         $options = array('startyear' => 2002,
-                         'stopyear'  => date('Y', time()),
                          'applydst'  => true);
         $mform->addElement('date_selector', $name, $label, $options);
         $mform->addHelpButton($name, $name, $plugin);
