@@ -205,7 +205,7 @@ class mod_reader_renderer extends plugin_renderer_base {
                 $tabs[$tab] = new tabobject($tab, $url, get_string('users', 'mod_reader'));
                 $showadminarea = true;
             }
-            if ($this->reader->can_managetools()) {
+            if ($this->reader->can_managetools() || $showadminarea) {
                 $tab = self::TAB_TOOLS;
                 $url = new moodle_url('/mod/reader/admin/tools.php', array('id' => $cmid, 'tab' => $tab));
                 $tabs[$tab] = new tabobject($tab, $url, get_string('tools', 'mod_reader'));

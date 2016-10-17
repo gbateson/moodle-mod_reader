@@ -1655,7 +1655,7 @@ function reader_extend_settings_navigation(settings_navigation $settingsnav, nav
     }
 
     // create user Tools
-    if (reader_can('managetools', $PAGE->cm->id, $USER->id)) {
+    if (reader_can('managetools', $PAGE->cm->id, $USER->id) || reader_can('managebooks', $PAGE->cm->id, $USER->id)) {
         require_once($CFG->dirroot.'/mod/reader/admin/tools/renderer.php');
 
         //////////////////////////
@@ -1671,7 +1671,7 @@ function reader_extend_settings_navigation(settings_navigation $settingsnav, nav
 
         // show ALL tools in the navigation menu
         // (probably there are too many tools)
-        $showalltools = false;
+        $showalltools = true;
 
         if ($showalltools) {
             $node = new navigation_node(array('type'=>$type, 'key'=>$key, 'text'=>$text));

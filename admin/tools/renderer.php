@@ -103,11 +103,45 @@ class mod_reader_admin_tools_renderer extends mod_reader_admin_renderer {
                 continue;
             }
             if ($item->isFile()) {
-                $text = substr($item, 0, strrpos($item, '.'));
-                $files[$text] = "$dirname/$item"; // convert $item to string
+                $name = substr($item, 0, strrpos($item, '.'));
+                if (self::is_available($name)) {
+                    $files[$name] = "$dirname/$item"; // convert $item to string
+                }
             }
         }
         ksort($files);
         return $files;
+    }
+
+    static public function is_available($toolname) {
+        global $PAGE;
+        switch ($toolname) {
+            case 'check_email':
+            case 'export_reader_tables':
+            case 'move_quizzes':
+                $capability = 'managebooks'; // teacher
+                break;
+
+            case 'add_phpdoc':
+            case 'find_faultyquizzes':
+            case 'fix_bookcovers':
+            case 'fix_bookinstances':
+            case 'fix_coursesections':
+            case 'fix_installxml':
+            case 'fix_missingquizzes':
+            case 'fix_questioncategories':
+            case 'fix_slashesinnames':
+            case 'fix_wrongattempts':
+            case 'import_reader_tables':
+            case 'print_cheatsheet':
+            case 'redo_upgrade':
+            case 'run_readercron':
+            case 'sort_strings':
+            default:
+                $capability = 'managetools'; // manager
+                break;
+
+        }
+        return has_capability("mod/reader:$capability", $PAGE->context);
     }
 }
