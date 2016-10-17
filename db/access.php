@@ -61,7 +61,7 @@ $capabilities = array(
         'captype'      => 'write',
         'contextlevel' => CONTEXT_SYSTEM,
         'archetypes'   => array(
-            'manager'        => CAP_ALLOW
+            'manager'  => CAP_ALLOW
         )
     ),
 
@@ -70,14 +70,14 @@ $capabilities = array(
         'contextlevel' => CONTEXT_MODULE,
         'riskbitmask'  => RISK_DATALOSS,
         'archetypes'   => array(
-            'manager'        => CAP_ALLOW
+            'manager'  => CAP_ALLOW
         )
     ),
 
     'mod/reader:manageusers' => array(
         'captype'      => 'write',
         'contextlevel' => CONTEXT_MODULE,
-        'riskbitmask'  => RISK_PERSONAL,
+        'riskbitmask'  => RISK_DATALOSS,
         'archetypes'   => array(
             'editingteacher' => CAP_ALLOW,
             'manager'        => CAP_ALLOW

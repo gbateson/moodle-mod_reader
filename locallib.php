@@ -629,7 +629,7 @@ class mod_reader {
     }
 
     /*
-     * can_managebooks
+     * can_manageattempts
      *
      * @return boolean
      **/

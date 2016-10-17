@@ -205,7 +205,7 @@ class mod_reader_renderer extends plugin_renderer_base {
                 $tabs[$tab] = new tabobject($tab, $url, get_string('users', 'mod_reader'));
                 $showadminarea = true;
             }
-            if ($this->reader->can_managetools() || $showadminarea) {
+            if ($this->reader->can_managetools() || $this->reader->can_managebooks()) {
                 $tab = self::TAB_TOOLS;
                 $url = new moodle_url('/mod/reader/admin/tools.php', array('id' => $cmid, 'tab' => $tab));
                 $tabs[$tab] = new tabobject($tab, $url, get_string('tools', 'mod_reader'));
@@ -243,7 +243,7 @@ class mod_reader_renderer extends plugin_renderer_base {
      * generate sql to select books that this user is currently allowed to attempt
      *
      * @param boolean $noquiz TRUE books that have no associated quiz, FALSE otherwise
-     * @param mixed $hasquiz (TRUE  : require quizid > 0, 
+     * @param mixed $hasquiz (TRUE  : require quizid > 0,
      *                        FALSE : require quizid == 0,
      *                        NULL  : require quizid >= 0)
      * @return array (string $from, string $where, array $params)
@@ -280,7 +280,7 @@ class mod_reader_renderer extends plugin_renderer_base {
 
         // get SQL $from and $where statements to extract available books
         $hasquiz = ($type==reader_downloader::BOOKS_WITH_QUIZZES);
-        list($from, $where, $params) = reader_available_sql($this->reader->cm->id, 
+        list($from, $where, $params) = reader_available_sql($this->reader->cm->id,
                                                             $this->reader,
                                                             $USER->id,
                                                             $hasquiz);
