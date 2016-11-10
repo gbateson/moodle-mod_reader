@@ -237,7 +237,8 @@ class reader_download_progress_bar extends reader_download_progress_task {
      */
     static function allow_html_in_title() {
         global $CFG;
-        if (floatval($CFG->release) >= 2.8) {
+        $release = floatval($CFG->release);
+        if ($release >= 2.8 && $release <= 3.1) {
             echo '<script type="text/javascript">'."\n";
             echo "//<![CDATA[\n";
             echo "if (window.updateProgressBar) {\n";

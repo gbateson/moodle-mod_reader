@@ -887,6 +887,8 @@ class reader_downloader {
         // should we keep local modifications to book difficulty? (=reading level)
         $keeplocalbookdifficulty = get_config('mod_reader', 'keeplocalbookdifficulty');
 
+        $release = floatval($CFG->release);
+
         $errors = 0;
         $output = '';
         $time = time();
@@ -953,7 +955,12 @@ class reader_downloader {
 
             // show this book in the progress bar
             if ($this->bar) {
-                $title = ($i + 1).' / '.$i_max.' '.$titlehtml;
+                if ($release >= 3.2) {
+                    $title = $titletext;
+                } else {
+                    $title = $titlehtml;
+                }
+                $title = ($i + 1).' / '.$i_max.' '.$title;
                 $this->bar->start_item($itemid, $title);
             }
 

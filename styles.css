@@ -315,11 +315,14 @@ img.readercredits { margin-left: auto; margin-right: auto; width: 225px; height:
 #page-mod-reader-admin-books span.itemname span.matchedtext { font-weight: bold; font-size: 1.2em; text-decoration: underline; background-color: #ffffcc; }
 
 #page-mod-reader-admin-books h3.formheader { margin: 6px; }
-#page-mod-reader-admin-books div.formitem div.label { text-align: right; width: 15%; min-width: 4.5em; }
-#page-mod-reader-admin-books div.formitem div.label,
-#page-mod-reader-admin-books div.formitem div.element,
-#page-mod-reader-admin-books div.formitem div.button { float: left; margin: 4px 8px; }
-#page-mod-reader-admin-books div.formitem div.element select { margin: 0px; }
+#page-mod-reader-admin-books div.formitem { line-height: 30px; }
+#page-mod-reader-admin-books #formitemshow,
+#page-mod-reader-admin-books #formitemselect { line-height: 16px; }
+#page-mod-reader-admin-books div.formitem div.formlabel,
+#page-mod-reader-admin-books div.formitem div.formelement,
+#page-mod-reader-admin-books div.formitem div.formbutton { float: left; margin: 4px 8px; }
+#page-mod-reader-admin-books div.formitem div.formlabel { text-align: right; width: 15%; min-width: 4.5em; max-width: 8.0em; font-weight: bold; }
+#page-mod-reader-admin-books div.formitem div.formelement select { margin: 0px; }
 #page-mod-reader-admin-books form input.downloadbutton,
 #page-mod-reader-admin-books form input.showbutton {
     background : #dddddd;

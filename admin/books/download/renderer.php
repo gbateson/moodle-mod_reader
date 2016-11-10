@@ -1690,7 +1690,7 @@ class mod_reader_admin_books_download_renderer extends mod_reader_admin_books_re
      **/
     public function formitem($id, $label, $element, $action='', $onclick='') {
         if (defined('AJAX_SCRIPT') && AJAX_SCRIPT) {
-            return html_writer::tag('div', $element, array('id' => $id.'element', 'class' => 'element'));
+            return html_writer::tag('div', $element, array('id' => $id.'formelement', 'class' => 'formelement'));
         }
         $output = '';
         if ($action) {
@@ -1698,11 +1698,11 @@ class mod_reader_admin_books_download_renderer extends mod_reader_admin_books_re
         } else if ($onclick) {
             $label .= $this->help_icon($onclick, 'mod_reader');
         }
-        $output .= html_writer::tag('div', $label, array('id' => $id.'label', 'class' => 'label'));
-        $output .= html_writer::tag('div', $element, array('id' => $id.'element', 'class' => 'element'));
+        $output .= html_writer::tag('div', $label, array('id' => 'formlabel'.$id, 'class' => 'formlabel'));
+        $output .= html_writer::tag('div', $element, array('id' => 'formelement'.$id, 'class' => 'formelement'));
         if ($action) {
             $buttonid = 'button'.$id;
-            $params = array('type' => 'submit', 'name' => 'action'.$action, 'value' => get_string('go'), 'class' => 'button');
+            $params = array('type' => 'submit', 'name' => 'action'.$action, 'value' => get_string('go'), 'class' => 'formbutton');
             if ($onclick=='') {
                 $hidebutton = true;
             } else {
@@ -1710,7 +1710,7 @@ class mod_reader_admin_books_download_renderer extends mod_reader_admin_books_re
                 $params['onclick'] = $onclick; // e.g. search button
             }
             $button = html_writer::empty_tag('input', $params);
-            $output .= html_writer::tag('div', $button, array('class' => 'button', 'id' => $buttonid));
+            $output .= html_writer::tag('div', $button, array('class' => 'formbutton', 'id' => $buttonid));
             if ($hidebutton) {
                 $output .= '<script type="text/javascript">'."\n";
                 $output .= "//<![CDATA[\n";
@@ -1719,7 +1719,7 @@ class mod_reader_admin_books_download_renderer extends mod_reader_admin_books_re
                 $output .= '</script>'."\n";
             }
         }
-        $output = html_writer::tag('div', $output, array('id' => $id.'formitem', 'class' => 'formitem'));
+        $output = html_writer::tag('div', $output, array('id' => 'formitem'.$id, 'class' => 'formitem'));
         return $output.html_writer::tag('div', '', array('style' => 'clear: both;'));
     }
 }
