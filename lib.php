@@ -3010,12 +3010,12 @@ function reader_get_completion_state($course, $cm, $userid, $type) {
                     break;
 
                 case 'completiontotalwords':
-                    $select = 'COUNT(rb.words)';
+                    $select = 'SUM(rb.words)';
                     $from   = '{reader_attempts} ra LEFT JOIN {reader_books} rb ON ra.bookid = rb.id';
                     $where  = 'readerid = ? AND deleted = ? AND passed = ? AND rb.words IS NOT NULL';
                     $params = array($reader->id, 0, 'true');
-                    if ($count = $DB->get_field_sql("SELECT $select FROM $from WHERE $where", $params)) {
-                        $state = ($count > $reader->completiontotalwords);
+                    if ($sum = $DB->get_field_sql("SELECT $select FROM $from WHERE $where", $params)) {
+                        $state = ($sum > $reader->completiontotalwords);
                     } else {
                         $state = false;
                     }

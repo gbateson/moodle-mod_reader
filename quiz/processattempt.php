@@ -110,6 +110,12 @@ $transaction->allow_commit();
 if ($finishattempt) {
     // Note: we can only update_grades AFTER $transaction has been committed
     reader_update_grades($attemptobj->get_reader(), $attemptobj->get_userid());
+
+    // update completion state if necessary
+    $attemptobj->update_completion_state();
+
+    // update reader badges if necessary
+    $attemptobj->update_reader_badges();
 }
 
 redirect($nexturl);

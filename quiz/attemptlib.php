@@ -1480,6 +1480,116 @@ class reader_attempt {
         }
         return $activeslots;
     }
+
+    // =========================================
+    // After finishing a quiz attempt, update
+    // completion state and reading badges
+    // =========================================
+
+    /**
+     * update_completion_state
+     *
+     * @return void, but completion state may be updated
+     */
+    public function update_completion_state() {
+        $reader = $this->readerquiz->get_reader();
+        if ($reader->completionpass || $reader->completiontotalwords) {
+            $cm = $this->readerquiz->get_cm();
+            $course = $this->readerquiz->get_course();
+            $completion = new completion_info($course);
+            if ($completion->is_enabled($cm) && $cm->completion==COMPLETION_TRACKING_AUTOMATIC) {
+                $completion->update_state($cm);
+            }
+        }
+    }
+
+    /**
+     * update_reader_badges
+     *
+     * @return void, but badge state may be updated
+     */
+    public function update_reader_badges() {
+        global $CFG, $DB;
+
+        // we need "lib/badgeslib.php" (Moodle <= 2.5)
+        if (file_exists($CFG->dirroot.'/lib/badgeslib.php')) {
+            require_once($CFG->dirroot.'/lib/badgeslib.php');
+        }
+
+        // check that criteria for reader badges are installed
+        if (! defined('BADGE_CRITERIA_TYPE_READER')) {
+            return false;
+        }
+
+        // select all badge that include reader criteria (type=10)
+        $select = 'b.id, b.name, b.type, b.courseid, b.status';
+
+        $from   = '(SELECT DISTINCT badgeid FROM {badge_criteria} WHERE criteriatype = ?) bc '.
+                  'LEFT JOIN {badge} b ON bc.badgeid = b.id';
+
+        $where  = 'b.id IS NOT NULL '.
+                  'AND (b.status = ? OR b.status = ?) '.
+                  'AND (b.courseid IS NULL OR b.courseid = ? OR b.courseid = ?)';
+
+        $params = array(BADGE_CRITERIA_TYPE_READER,
+                        BADGE_STATUS_ACTIVE,
+                        BADGE_STATUS_ACTIVE_LOCKED,
+                        0, $this->get_courseid());
+
+        if (! $badges = $DB->get_records_sql("SELECT $select FROM $from WHERE $where", $params)) {
+            return false; // no badges use BADGE_CRITERIA_TYPE_READER
+        }
+
+        $userid = $this->get_userid();
+        foreach ($badges as $badgeid => $badge) {
+            $badge = new badge($badgeid);
+
+            if (! $badge->is_active()) {
+                continue;
+            }
+
+            if ($badge->is_issued($userid)) {
+                continue;
+            }
+
+            $completions = $badge->get_criteria_completions($userid);
+            foreach ($completions as $completion) {
+                $completions[$completion->id] = $completion->critid;
+            }
+
+            $onecompleted = false;
+            $allcompleted = $badge->has_criteria();
+
+            $type = BADGE_CRITERIA_TYPE_OVERALL;
+            $method = $badge->criteria[$type]->method;
+
+            foreach ($badge->criteria as $type => $crit) {
+                if ($type==BADGE_CRITERIA_TYPE_OVERALL) {
+                    continue;
+                }
+                if (in_array($crit->id, $completions)) {
+                    $onecompleted = true;
+                } else if ($crit->review($userid)) {
+                    $crit->mark_complete($userid);
+                    $onecompleted = true;
+                } else {
+                    $allcompleted = false;
+                }
+                if ($onecompleted && $method==BADGE_CRITERIA_AGGREGATION_ANY) {
+                    break; // finish early
+                }
+                if ($allcompleted==false && $method==BADGE_CRITERIA_AGGREGATION_ALL) {
+                    break; // finish early
+                }
+            }
+
+            // finally check the OVERALL criteria
+            if (($onecompleted && $method==BADGE_CRITERIA_AGGREGATION_ANY) ||
+                ($allcompleted && $method==BADGE_CRITERIA_AGGREGATION_ALL)) {
+                $badge->issue($userid);
+            }
+        }
+    }
 }
 
 /**
