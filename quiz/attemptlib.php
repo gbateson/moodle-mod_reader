@@ -1511,7 +1511,7 @@ class reader_attempt {
     public function update_reader_badges() {
         global $CFG, $DB;
 
-        // we need "lib/badgeslib.php" (Moodle <= 2.5)
+        // we need "lib/badgeslib.php" (Moodle >= 2.5)
         if (file_exists($CFG->dirroot.'/lib/badgeslib.php')) {
             require_once($CFG->dirroot.'/lib/badgeslib.php');
         }
@@ -1563,6 +1563,9 @@ class reader_attempt {
             $type = BADGE_CRITERIA_TYPE_OVERALL;
             $method = $badge->criteria[$type]->method;
 
+            $issue_badge = false;
+            $finish_early = false;
+
             foreach ($badge->criteria as $type => $crit) {
                 if ($type==BADGE_CRITERIA_TYPE_OVERALL) {
                     continue;
@@ -1575,17 +1578,22 @@ class reader_attempt {
                 } else {
                     $allcompleted = false;
                 }
-                if ($onecompleted && $method==BADGE_CRITERIA_AGGREGATION_ANY) {
-                    break; // finish early
+                // finish early, if possible
+                switch ($method) {
+                    case BADGE_CRITERIA_AGGREGATION_ANY: $finish_early = $onecompleted; break;
+                    case BADGE_CRITERIA_AGGREGATION_ALL: $finish_early = ($allcompleted==false); break;
                 }
-                if ($allcompleted==false && $method==BADGE_CRITERIA_AGGREGATION_ALL) {
-                    break; // finish early
+                if ($finish_early) {
+                    break;
                 }
             }
 
-            // finally check the OVERALL criteria
-            if (($onecompleted && $method==BADGE_CRITERIA_AGGREGATION_ANY) ||
-                ($allcompleted && $method==BADGE_CRITERIA_AGGREGATION_ALL)) {
+            // issue badge if criteria are met
+            switch ($method) {
+                case BADGE_CRITERIA_AGGREGATION_ANY: $issue_badge = $onecompleted; break;
+                case BADGE_CRITERIA_AGGREGATION_ALL: $issue_badge = $allcompleted; break;
+            }
+            if ($issue_badge) {
                 $badge->issue($userid);
             }
         }
