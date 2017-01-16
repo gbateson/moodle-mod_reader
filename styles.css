@@ -388,7 +388,6 @@ img.readercredits { margin-left: auto; margin-right: auto; width: 225px; height:
                                          -moz-border-radius: 6px;   /* Firefox */
                                          -o-border-radius: 6px;    /* Opera */
                                          border-radius: 6px;      /* CSS3 */}
-}
 #page-mod-reader-admin-users ul.importusers {}
 #page-mod-reader-admin-users li.importuser {}
 #page-mod-reader-admin-users span.importusername { font-size: 1.2em; }
