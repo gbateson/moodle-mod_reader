@@ -170,52 +170,76 @@
     width     : 100%;
 }
 #page-mod-reader-view  div#ProgressBar {
-    padding   : 0px;
-    width     : 824px;
+    border    : 4px solid #999999; /* overridden in renderer.php */
+    height    : 50px;
+    max-width : 808px;
+    padding   : 2px 4px;
+    width     : 100%;
 }
 #page-mod-reader-view  div#ProgressBarImages {
-    position  : relative;
-    height    : 60px;
+    border-color : #FFFFFF;
+    border-style : solid;
+    border-width : 2px 4px;
+    height    : 46px;
     margin    : 0px;
+    max-width : 800px;
     padding   : 0px;
-    width     : 824px;
+    position  : relative;
+    width     : 100%;
     z-index   : 10;
 }
 #page-mod-reader-view div#ProgressBarImages img.grey {
     position  : absolute;
-    height    : 52px;
-    left      : 4px;
-    top       : 4px;
-    width     : 816px;
+    height    : 46px;
+    left      : 0px;
+    max-width : 800px;
+    top       : 0px;
+    width     : 100%;
     z-index   : 20;
 }
 #page-mod-reader-view div#ProgressBarImages img.color {
     position  : absolute;
-    height    : 52px;
-    left      : 4px;
-    top       : 4px;
-    width     : 816px;
+    height    : 46px;
+    left      : 0px;
+    max-width : 800px;
+    top       : 0px;
+    width     : 100%;
     z-index   : 30;
 }
 #page-mod-reader-view div#ProgressBarImages img.now {
     position  : absolute;
-    left      : 4px; /* overridden in renderer.php */
-    top       : 10px;
+    left      : 0px; /* overridden in renderer.php */
+    top       : 2px;
     z-index   : 40;
 }
-#page-mod-reader-view div#ProgressBarImages img.goal {
+#page-mod-reader-view div#ProgressBarImages div.goal {
     position  : absolute;
-    left      : 4px; /* overridden in renderer.php */
-    top       : -12px;
+    left      : 0px; /* overridden in renderer.php */
+    margin    : 0px;
+    padding   : 0px;
+    top       : 0px;
     z-index   : 50;
 }
+#page-mod-reader-view div#ProgressBarImages div.goal img {
+    position  : absolute;
+    left      : -16px; /* may be overridden in renderer.php */
+    top       : -18px;
+    z-index   : 60;
+}
 #page-mod-reader-view div#ProgressBarFootnote {
-    float       : right;
-    font-weight : bold;
-    font-size   : small;
-    padding     : 0px 12px 4px 0px;
-    text-align  : right;
-    width       : 120px;
+    float        : right;
+    font-size    : small;
+    font-weight  : bold;
+    margin-right : -8px;
+    margin-top   : 6px;
+    padding      : 0px 12px 4px 0px;
+    text-align   : right;
+    width        : 120px;
+    /* cross-browser rounded corners (Note: Safari and Chrome use Webkit) */
+    /* css3    */ border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;
+    /* Opera   */ -o-border-bottom-left-radius: 8px; -o-border-bottom-right-radius: 8px;
+    /* Firefox */ -moz-border-bottom-left-radius: 8px; -moz-border-bottom-right-radius: 8px;
+    /* Webkit  */ -webkit-border-bottom-left-radius: 8px; -webkit-border-bottom-right-radius: 8px;
 }
 
 #page-mod-reader-view div.readermessage {

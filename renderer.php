@@ -1869,191 +1869,108 @@ class mod_reader_renderer extends plugin_renderer_base {
         if (! $goal) {
             $goal = $this->reader->goal;
         }
+
+        $goal = intval($goal);
         if ($goal > 1000000) {
             $goal = 1000000;
+        } else if ($goal < 0) {
+            $goal = 0;
         }
 
-        if (! $progress) {
-            $progress = 0;
-        }
+        $progress = intval($progress);
         if ($progress > 1000000) {
             $progress = 1000000;
+        } else if ($progress < 0) {
+            $progress = 0;
         }
 
-        if ($goal > $progress) {
-            $max = $goal;
-        } else {
-            $max = $progress;
-        }
-
+        $max = max($goal, $progress);
         switch (true) {
             // Note: colors are the same as the
             // colors blocks on the progress bar
             case ($max <= 10000):
-                $max = 1;
+                $max = 10000;
                 $bordercolor = '#FF0000'; // red
                 $backgroundcolor = '#FFE5E5';
                 break;
             case ($max <= 20000):
-                $max = 2;
+                $max = 20000;
                 $bordercolor = '#FF9900'; // orange
                 $backgroundcolor = '#FFF2E5';
                 break;
             case ($max <= 30000):
-                $max = 3;
+                $max = 30000;
                 $bordercolor = '#E5E600'; // yellow
                 $backgroundcolor = '#FFFF99';
                 break;
             case ($max <= 40000):
-                $max = 4;
+                $max = 40000;
                 $bordercolor = '#CCFF66'; // light green
                 $backgroundcolor = '#EEFFCC';
                 break;
             case ($max <= 50000):
-                $max = 5;
+                $max = 50000;
                 $bordercolor = '#33CC33'; // dark green
                 $backgroundcolor = '#D6F5D6';
                 break;
             case ($max <= 100000):
-                $max = 10;
+                $max = 100000;
                 $bordercolor = '#66CCFF'; // light blue
                 $backgroundcolor = '#CCEEFF';
                 break;
             case ($max <= 250000):
-                $max = 25;
+                $max = 250000;
                 $bordercolor = '#3333CC'; // dark blue
                 $backgroundcolor = '#D6D6F5';
                 break;
             case ($max <= 500000):
-                $max = 50;
+                $max = 500000;
                 $bordercolor = '#6600CC'; // purple
                 $backgroundcolor = '#E5CCFF';
                 break;
             default:
-                $max = 100;
+                $max = 1000000;
                 $bordercolor = '#FF3399'; // pink
                 $backgroundcolor = '#FFCCE5';
         }
 
-        $goalpix = $goal / ($max * 10000);
-        if ($goalpix > 1) {
-            $goalpix = 800;
-        } else {
-            $goalpix = round($goalpix * 800);
-        }
-
-        $nowpix = $progress / ($max * 10000);
-        if ($nowpix > 1) {
-            $nowpix = 800;
-        } else {
-            $nowpix = round($nowpix * 800);
-        }
-        $nowpix += 8;
+        $goalpercent = round(100 * ($goal / $max));
+        $leftpercent = round(100 * ($progress / $max));
+        $rightpercent = (100 - $leftpercent).'%';
+        $leftpercent .= '%';
 
         // convert $max to a 3-digit number
         // padded with zeroes on the left
-        $max = sprintf('%03d', $max);
+        $max = sprintf('%03d', $max / 10000);
 
         $html = '';
-        $html .= html_writer::empty_tag('img', array('src'   => new moodle_url("/mod/reader/img/progressbar.$max.color.png"),
-                                                     'class' => 'color',
-                                                     'style' => 'clip:rect(0px '.$nowpix.'px 100px 0px);'));
         $html .= html_writer::empty_tag('img', array('src'   => new moodle_url("/mod/reader/img/progressbar.$max.grey.png"),
                                                      'class' => 'grey'));
+        $html .= html_writer::empty_tag('img', array('src'   => new moodle_url("/mod/reader/img/progressbar.$max.color.png"),
+                                                     'class' => 'color',
+                                                     'style' => "clip-path: inset(0px $rightpercent 0px 0px);"));
         $html .= html_writer::empty_tag('img', array('src'   => new moodle_url('/mod/reader/img/now.png'),
                                                      'class' => 'now',
-                                                     'style' => 'left:'.($nowpix + 4).'px;'));
+                                                     'style' => "left: $leftpercent;"));
         if ($goal) {
-            $html .= html_writer::empty_tag('img', array('src'   => new moodle_url('/mod/reader/img/goal.png'),
-                                                         'class' => 'goal',
-                                                         'style' => 'left:'.($goalpix - 6).'px;'));
+            switch (true) {
+                case ($goalpercent >= 90): $leftpixel = '-20px'; break;
+                case ($goalpercent >= 80): $leftpixel = '-19px'; break;
+                case ($goalpercent >= 70): $leftpixel = '-18px'; break;
+                case ($goalpercent >= 60): $leftpixel = '-17px'; break;
+                default: $leftpixel = '-16px'; // as in styles.css
+            }
+            $leftpercent = $goalpercent.'%';
+            $text = html_writer::empty_tag('img', array('src' => new moodle_url('/mod/reader/img/goal.png'), 'style' => "left: $leftpixel;"));
+            $html .= html_writer::tag('div', $text, array('class' => 'goal', 'style' => "left: $leftpercent;"));
         }
-        $html = html_writer::tag('div', $html, array('id' => 'ProgressBarImages', 'style' => 'background-color:'.$bordercolor.';'));
+        $html = html_writer::tag('div', $html, array('id' => 'ProgressBarImages'));
 
         $text = get_string('in1000sofwords', 'mod_reader');
         $html .= html_writer::tag('div', $text, array('id' => 'ProgressBarFootnote', 'style' => 'background-color:'.$backgroundcolor.';'));
 
-        $html = html_writer::tag('div', $html, array('id' => 'ProgressBar'));
+        $html = html_writer::tag('div', $html, array('id' => 'ProgressBar', 'style' => 'border-color:'.$bordercolor.';'));
         $html .= html_writer::tag('div', '', array('style' => 'clear: both; height: 1.0em; width: 1.0em;'));
-
-        $html .= html_writer::start_tag('script', array('type' => 'text/javascript'))."\n";
-        $html .= '//<![CDATA['."\n";
-
-        $html .= 'function reader_add_event(obj, evt, fn) {'."\n";
-        $html .= '    if (obj) {'."\n";
-        $html .= '        if (obj.addEventListener) {'."\n";
-        $html .= '            obj.addEventListener(evt, fn, false);'."\n";
-        $html .= '        } else if (obj.attachEvent) {'."\n";
-        $html .= '            obj.attachEvent("on" + evt, fn);'."\n";
-        $html .= '        } else {'."\n";
-        $html .= '            obj["on"+evt] = fn;'."\n";
-        $html .= '        }'."\n";
-        $html .= '    }'."\n";
-        $html .= '};'."\n";
-
-        $html .= 'function reader_resize_ProgressBar() {'."\n";
-        $html .= '    var img = document.getElementById("ProgressBarImages");'."\n";
-        $html .= '    if (img==null) {'."\n";
-        $html .= '        return;'."\n";
-        $html .= '    }'."\n";
-        $html .= '    var ratio = (img.offsetWidth / 824);'."\n";
-        $html .= '    if (ratio==1) {'."\n";
-        $html .= '        return;'."\n";
-        $html .= '    }'."\n";
-        $html .= '    var img = img.getElementsByTagName("img");'."\n";
-        $html .= '    for (var i=0; i<img.length; i++) {'."\n";
-        $html .= '        switch (img[i].className) {'."\n";
-        $html .= '            case "color":'."\n";
-        $html .= '                img[i].style.clip = "rect(0px " + Math.round('.$nowpix.' * ratio) + "px 100px 0px)";'."\n";
-        $html .= '                break;'."\n";
-        $html .= '            case "now":'."\n";
-        $html .= '                img[i].style.left = (('.$nowpix.' * ratio) + 4) + "px";'."\n";
-        $html .= '                break;'."\n";
-        $html .= '            case "goal":'."\n";
-        $html .= '                img[i].style.left = (('.$goalpix.' * ratio) - 6) + "px";'."\n";
-        $html .= '                break;'."\n";
-        $html .= '        }'."\n";
-        $html .= '    }'."\n";
-        $html .= '}'."\n";
-
-        $html .= '// handle IE rapid-fire resize events using a timeout, with thanks to ...'."\n";
-        $html .= '// http://mbccs.blogspot.jp/2007/11/fixing-window-resize-event-in-ie.html'."\n";
-        $html .= 'function reader_resize_window(e) { '."\n";
-        $html .= '    if (window.readerResizeTimeout) {'."\n";
-        $html .= '        window.clearTimeout(window.readerResizeTimeout); '."\n";
-        $html .= '    }'."\n";
-        $html .= '    window.readerResizeTimeout = window.setTimeout(reader_resize_ProgressBar, 100); '."\n";
-        $html .= '}'."\n";
-
-        $html .= 'function reader_setup_element(obj) {'."\n";
-        $html .= '    var w = obj.offsetWidth;'."\n";
-        $html .= '    if (w) {'."\n";
-        $html .= '        obj.style.width = "100%";'."\n";
-        $html .= '        obj.style.maxWidth = w + "px";'."\n";
-        $html .= '    }'."\n";
-        $html .= '}'."\n";
-
-        $html .= 'function reader_setup_ProgressBar() {'."\n";
-        $html .= '    var obj = document.getElementById("ProgressBar");'."\n";
-        $html .= '    if (obj) {'."\n";
-        $html .= '        reader_setup_element(obj);'."\n";
-        $html .= '        var obj = document.getElementById("ProgressBarImages");'."\n";
-        $html .= '        if (obj) {'."\n";
-        $html .= '            reader_setup_element(obj);'."\n";
-        $html .= '            var obj = obj.getElementsByTagName("img");'."\n";
-        $html .= '            for (var i=0; i<obj.length; i++) {'."\n";
-        $html .= '                if (obj[i].className=="color" || obj[i].className=="grey") {'."\n";
-        $html .= '                    reader_setup_element(obj[i]);'."\n";
-        $html .= '                }'."\n";
-        $html .= '            }'."\n";
-        $html .= '            reader_add_event(window, "resize", reader_resize_window);'."\n";
-        $html .= '        }'."\n";
-        $html .= '    }'."\n";
-        $html .= '}'."\n";
-
-        $html .= 'reader_add_event(window, "load", reader_setup_ProgressBar);'."\n";
-        $html .= '//]]>'."\n";
-        $html .= html_writer::end_tag('script')."\n";
 
         return $html;
     }
