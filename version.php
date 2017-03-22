@@ -32,16 +32,16 @@ if (empty($CFG)) {
     global $CFG;
 }
 
-if (empty($CFG->branch) || $CFG->branch <= 26) {
-    $plugin = new stdClass();
+if (isset($CFG->yui3version) && version_compare($CFG->yui3version, '3.15.0') < 0) {
+    $plugin = new stdClass(); // Moodle <= 2.6
 }
 
 $plugin->cron      = 3600;
 $plugin->component = 'mod_reader';
 $plugin->maturity  = MATURITY_BETA; // ALPHA=50, BETA=100, RC=150, STABLE=200
 $plugin->requires  = 2010112400;    // Moodle 2.0
-$plugin->version   = 2017012567;
-$plugin->release   = '2017-01-25 (67)';
+$plugin->version   = 2017032668;
+$plugin->release   = '2017-03-26 (68)';
 
 if (defined('ANY_VERSION')) {
     $plugin->dependencies = array('qtype_ordering' => ANY_VERSION);
@@ -54,6 +54,6 @@ if (defined('ANY_VERSION')) {
     }
 }
 
-if (empty($CFG->branch) || $CFG->branch <= 26) {
-    $module = clone($plugin);
+if (isset($CFG->yui3version) && version_compare($CFG->yui3version, '3.15.0') < 0) {
+    $module = clone($plugin); // Moodle <= 2.6
 }
