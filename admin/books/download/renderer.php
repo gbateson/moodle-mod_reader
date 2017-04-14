@@ -1276,7 +1276,7 @@ class mod_reader_admin_books_download_renderer extends mod_reader_admin_books_re
                 $img = mod_reader::textlib('entities_to_utf8', '&#x2714;'); // Unicode tick ✔
                 $img = html_writer::tag('span', $img, array('style' => 'color: #00FF00;')).' '; // green
             } else {
-                $img = html_writer::empty_tag('img', array('src' => $this->pix_url($img), 'class' => 'icon', 'alt' => $img));
+                $img = $this->pix_icon($img, get_string('complete'));
             }
         }
         return $img;
@@ -1289,9 +1289,7 @@ class mod_reader_admin_books_download_renderer extends mod_reader_admin_books_re
      * @todo Finish documenting this function
      */
     public function available_list_img() {
-        $src = $this->pix_url('t/switch_minus');
-        $img = html_writer::empty_tag('img', array('src' => $src, 'onclick' => 'showhide_list(this)', 'alt' => 'switch_minus'));
-        return ' '.$img;
+        return ' '.$this->pix_icon('t/switch_minus' ,'', 'moodle', array('onclick' => 'showhide_list(this)'));
     }
 
     /**
@@ -1303,7 +1301,11 @@ class mod_reader_admin_books_download_renderer extends mod_reader_admin_books_re
      * @todo Finish documenting this function
      */
     public function available_new_img($updatecount=0, $updatetime=0) {
-        $src = $this->pix_url('i/new');
+        if (method_exists($this, 'image_url')) {
+            $src = $this->image_url('i/new'); // Moodle >= 3.3
+        } else {
+            $src = $this->pix_url('i/new'); // Moodle <= 3.2
+        }
         if ($updatecount) {
             $str = get_string('updatesavailable', 'mod_reader', $updatecount);
             $onclick = '';
