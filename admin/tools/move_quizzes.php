@@ -31,12 +31,11 @@ require_once($CFG->dirroot.'/mod/reader/admin/tools/lib.php');
 require_once($CFG->dirroot.'/mod/reader/admin/tools/renderer.php');
 require_once($CFG->dirroot.'/mod/reader/locallib.php');
 
+require_login(SITEID);
+
 $id  = optional_param('id',  0, PARAM_INT);
 $tab = optional_param('tab', 0, PARAM_INT);
 $tool = substr(basename($SCRIPT), 0, -4);
-
-require_login(SITEID);
-require_capability('moodle/site:config', reader_get_context(CONTEXT_SYSTEM));
 
 if ($id) {
     $cm = get_coursemodule_from_id('reader', $id, 0, false, MUST_EXIST);
@@ -47,7 +46,9 @@ if ($id) {
     $course = null;
     $reader = null;
 }
+
 $reader = mod_reader::create($reader, $cm, $course);
+$reader->req('managebooks');
 
 // set page url
 $params = array('id' => $id, 'tab' => $tab);
@@ -117,36 +118,37 @@ function reader_get_quizzes_sql($courseid) {
 function reader_move_quizzes($reader) {
     global $DB, $USER;
 
-    $newcourseid = reader_quizzes_courseid($reader);
     $oldcourseid = $reader->course->id;
-
-    $params = array('contextlevel' => CONTEXT_COURSE,
-                    'instanceid'   => $newcourseid);
-    $newcoursecontext = $DB->get_record('context', $params);
-
-    $params = array('courseid' => $newcourseid, 'depth' => 1);
-    $newgradecategoryid = $DB->get_field('grade_categories', 'id', $params);
-
-    if (empty($newgradecategoryid)) {
-        $newgradecategoryid = 0;
-        $newgradesortorder  = 0;
+    $newcourseid = $reader->quizzes_course_id();
+    $newcoursecontext = $reader->quizzes_course_context();
+    if ($reader->can('manageactivities', 'moodle/course', $newcoursecontext)) {
+        // extract Reader quizzes in the current course
+        list($select, $from, $where, $params) = reader_get_quizzes_sql($oldcourseid);
+        $records = $DB->get_records_sql("SELECT $select FROM $from WHERE $where ORDER BY publisher,level", $params);
     } else {
-        $params = array('categoryid' => $newgradecategoryid);
-        $newgradesortorder = $DB->get_field('grade_items', 'MAX(sortorder)', $params);
+        $records = false; // shouldn't happen !!
     }
-
-    if (empty($newsortorder)) {
-        $newsortorder = 1;
-    } else {
-        $newsortorder++;
-    }
-
-    // get SQL to extract Reader quizzes in the current course
-    list($select, $from, $where, $params) = reader_get_quizzes_sql($oldcourseid);
 
     // get info about Reader quizzes in the current course
     $moved = 0;
-    if ($records = $DB->get_records_sql("SELECT $select FROM $from WHERE $where ORDER BY publisher,level", $params)) {
+    if ($records) {
+
+        $params = array('courseid' => $newcourseid, 'depth' => 1);
+        $newgradecategoryid = $DB->get_field('grade_categories', 'id', $params);
+
+        if (empty($newgradecategoryid)) {
+            $newgradecategoryid = 0;
+            $newgradesortorder  = 0;
+        } else {
+            $params = array('categoryid' => $newgradecategoryid);
+            $newgradesortorder = $DB->get_field('grade_items', 'MAX(sortorder)', $params);
+        }
+
+        if (empty($newsortorder)) {
+            $newsortorder = 1;
+        } else {
+            $newsortorder++;
+        }
 
         foreach ($records as $record) {
 
@@ -322,6 +324,13 @@ function reader_print_quizzes_form($reader, $action) {
     list($select, $from, $where, $params) = reader_get_quizzes_sql($reader->course->id);
     if (! $DB->record_exists_sql("SELECT $select FROM $from WHERE $where", $params)) {
         echo html_writer::tag('p', get_string('noquizzesfound', 'mod_reader'));
+        return false;
+    }
+
+    if (! $reader->can('manageactivities', 'moodle/course', $reader->quizzes_course_context())) {
+        $str = format_string($reader->course->fullname);
+        $str = get_string('cannotaccesscourse', 'mod_reader', $str);
+        echo html_writer::tag('p', $str);
         return false;
     }
 

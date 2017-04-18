@@ -838,6 +838,34 @@ class mod_reader {
     }
 
     /**
+     * quizzes_courseid
+     *
+     * @return integer id of the Reader Quizzes course
+     * @todo Finish documenting this function
+     */
+    public function quizzes_course_id() {
+        if ($this->usecourse) {
+            return $this->usecourse;
+        } else {
+            return get_config('mod_reader', 'usecourse');
+        }
+    }
+
+    /**
+     * quizzes_course_context
+     *
+     * @return integer id of the Reader Quizzes course
+     * @todo Finish documenting this function
+     */
+    public function quizzes_course_context() {
+        if ($courseid = $this->quizzes_course_id()) {
+            self::context(COURSE_CONTEXT, $courseid);
+        } else {
+            return null;
+        }
+    }
+
+    /**
      * get_standard_modes
      *
      * define the names and order of the standard tab-modes for this renderer
@@ -959,31 +987,6 @@ class mod_reader {
             return reset($types);
         }
         return $default;
-    }
-
-    /**
-     * to_stdclass
-     *
-     * @return xxx
-     */
-    public function to_stdclass() {
-        $stdclass = new stdclass();
-        $vars = get_object_vars($this);
-        foreach ($vars as $name => $value) {
-            if (is_object($this->$name) || is_array($this->$name)) {
-                continue;
-            }
-            $stdclass->$name = $value;
-        }
-        // extra fields required for grades
-        if (isset($this->course) && is_object($this->course)) {
-            $stdclass->course = $this->course->id;
-        }
-        if (isset($this->cm) && is_object($this->cm)) {
-            $stdclass->cmidnumber = $this->cm->idnumber;
-        }
-        $stdclass->modname = 'reader';
-        return $stdclass;
     }
 
     /**

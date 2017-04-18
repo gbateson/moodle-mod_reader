@@ -114,34 +114,48 @@ class mod_reader_admin_tools_renderer extends mod_reader_admin_renderer {
     }
 
     static public function is_available($toolname) {
-        global $PAGE;
+        global $DB, $PAGE;
         switch ($toolname) {
             case 'check_email':
             case 'export_reader_tables':
             case 'move_quizzes':
-                $capability = 'managebooks'; // teacher
+            case 'print_cheatsheet':
+                $capability = 'mod/reader:managebooks'; // teacher
+                $context = $PAGE->context;
                 break;
 
-            case 'add_phpdoc':
             case 'find_faultyquizzes':
             case 'fix_bookcovers':
             case 'fix_bookinstances':
-            case 'fix_coursesections':
-            case 'fix_installxml':
             case 'fix_missingquizzes':
             case 'fix_questioncategories':
             case 'fix_slashesinnames':
             case 'fix_wrongattempts':
+                $capability = 'mod/reader:managetools'; // manager
+                $context = $PAGE->context;
+                break;
+
+            case 'fix_coursesections':
+                if ($courseid = $DB->get_field('reader', 'usecourse', array('id' => $PAGE->cm->instance))) {
+                    // use the course id specified in the Reader acitivty
+                } else {
+                    $courseid = get_config('mod_reader', 'usecourse');
+                }
+                $capability = 'moodle/course:manageactivities';
+                $context = mod_reader::context(CONTEXT_COURSE, $courseid);
+                break;
+
+            case 'add_phpdoc':
+            case 'fix_installxml':
             case 'import_reader_tables':
-            case 'print_cheatsheet':
             case 'redo_upgrade':
             case 'run_readercron':
             case 'sort_strings':
             default:
-                $capability = 'managetools'; // manager
+                $capability = 'moodle/site:config'; // administrator (developer)
+                $context = mod_reader::context(CONTEXT_COURSE, SITEID);
                 break;
-
         }
-        return has_capability("mod/reader:$capability", $PAGE->context);
+        return has_capability($capability, $context);
     }
 }

@@ -32,6 +32,8 @@ require_once($CFG->dirroot.'/mod/reader/admin/tools/renderer.php');
 require_once($CFG->dirroot.'/mod/reader/locallib.php');
 require_once($CFG->dirroot.'/lib/xmlize.php');
 
+require_login(SITEID);
+
 $id  = optional_param('id',  0, PARAM_INT);
 $tab = optional_param('tab', 0, PARAM_INT);
 
@@ -44,15 +46,9 @@ if ($id) {
     $course = null;
     $reader = null;
 }
-$reader = mod_reader::create($reader, $cm, $course);
 
-require_login(SITEID);
-if (class_exists('context_system')) {
-    $context = context_system::instance();
-} else {
-    $context = get_context_instance(CONTEXT_SYSTEM);
-}
-require_capability('moodle/site:config', $context);
+$reader = mod_reader::create($reader, $cm, $course);
+$reader->req('managetools');
 
 // set page url
 $params = array('id' => $id, 'tab' => $tab);

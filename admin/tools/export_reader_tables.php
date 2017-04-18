@@ -30,12 +30,11 @@ require_once($CFG->dirroot.'/mod/reader/admin/tools/lib.php');
 require_once($CFG->dirroot.'/mod/reader/admin/tools/renderer.php');
 require_once($CFG->dirroot.'/mod/reader/locallib.php');
 
+require_login(SITEID);
+
 $id  = optional_param('id',  0, PARAM_INT);
 $tab = optional_param('tab', 0, PARAM_INT);
 $tool = substr(basename($SCRIPT), 0, -4);
-
-require_login(SITEID);
-require_capability('moodle/site:config', reader_get_context(CONTEXT_SYSTEM));
 
 if ($id) {
     $cm = get_coursemodule_from_id('reader', $id, 0, false, MUST_EXIST);
@@ -46,7 +45,9 @@ if ($id) {
     $course = null;
     $reader = null;
 }
+
 $reader = mod_reader::create($reader, $cm, $course);
+$reader->req('managebooks');
 
 // set page url
 $params = array('id' => $id, 'tab' => $tab);

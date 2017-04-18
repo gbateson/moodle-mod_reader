@@ -1788,7 +1788,7 @@ class mod_reader_renderer extends plugin_renderer_base {
         $strcheatsheet = '';
 
         // if there is a "cheatsheet" script, make it available (for developer site admins only)
-        if ($action=='takequiz' && has_capability('moodle/site:config', reader_get_context(CONTEXT_SYSTEM))) {
+        if ($action=='takequiz' && $this->reader->can('config', 'moodle/site')) {
             if (file_exists($CFG->dirroot.'/mod/reader/admin/tools/print_cheatsheet.php')) {
                 $cheatsheeturl = $CFG->wwwroot.'/mod/reader/admin/tools/print_cheatsheet.php';
                 $strcheatsheet = get_string('cheatsheet', 'mod_reader');

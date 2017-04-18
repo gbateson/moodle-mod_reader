@@ -315,21 +315,6 @@ function reader_curlfile($url) {
 }
 
 /**
- * reader_quizzes_courseid
- *
- * @param xxx $reader
- * @return xxx
- * @todo Finish documenting this function
- */
-function reader_quizzes_courseid($reader) {
-    if ($reader->usecourse) {
-        return $reader->usecourse;
-    } else {
-        return get_config('mod_reader', 'usecourse');
-    }
-}
-
-/**
  * reader_reset_timeout
  *
  * @param xxx $moretime (optional, default=300)
