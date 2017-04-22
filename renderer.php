@@ -1934,10 +1934,29 @@ class mod_reader_renderer extends plugin_renderer_base {
                 $backgroundcolor = '#FFCCE5';
         }
 
-        $goalpercent = round(100 * ($goal / $max));
-        $leftpercent = round(100 * ($progress / $max));
-        $rightpercent = (100 - $leftpercent).'%';
-        $leftpercent .= '%';
+        // these measurements are for the "clip-path" attribute
+        // Note: The total image width is 800 px and the
+        //       left/right margins are each 3px wide
+        //       3px is (3 / 8) = 0.375% of 800px
+        $width = 100;
+        $margin = 0.375;
+        $available = ($width - (2 * $margin));
+        $goalpercent = ($available * ($goal / $max));
+        $leftpercent = ($available * ($progress / $max));
+        $rightpercent = ($available - $leftpercent);
+        $goalpercent = round($goalpercent + $margin);
+        $leftpercent = round($leftpercent + $margin).'%';
+        $rightpercent = round($rightpercent + $margin).'%';
+
+        // these measurements are for the "clip" attribute
+        // in browsers that ignore the "clip-path" attribute
+        $width = 800;
+        $margin = 3;
+        $available = ($width - (2 * $margin));
+        $leftpixel = ($available * ($progress / $max));
+        $rightpixel = ($available - $leftpixel);
+        $leftpixel = round($leftpixel + $margin + 2).'px'; // small correction required here
+        $rightpixel = round($rightpixel + $margin).'px';
 
         // convert $max to a 3-digit number
         // padded with zeroes on the left
@@ -1948,7 +1967,9 @@ class mod_reader_renderer extends plugin_renderer_base {
                                                      'class' => 'grey'));
         $html .= html_writer::empty_tag('img', array('src'   => new moodle_url("/mod/reader/img/progressbar.$max.color.png"),
                                                      'class' => 'color',
-                                                     'style' => "clip-path: inset(0px $rightpercent 0px 0px);"));
+                                                     'style' => "clip: rect(auto $leftpixel auto auto); ". // Safari, Firefox & IE
+                                                                "clip-path: inset(0px $rightpercent 0px 0px)")); // Chrome
+                                                                // https://css-tricks.com/clipping-masking-css/
         $html .= html_writer::empty_tag('img', array('src'   => new moodle_url('/mod/reader/img/now.png'),
                                                      'class' => 'now',
                                                      'style' => "left: $leftpercent;"));
