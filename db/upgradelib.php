@@ -644,8 +644,13 @@ function xmldb_reader_showhide_img() {
     global $OUTPUT;
     static $img = '';
     if ($img=='') {
-        $src = $OUTPUT->pix_url('t/switch_minus');
-        $img = html_writer::empty_tag('img', array('src' => $src, 'onclick' => 'showhide_list(this)', 'alt' => 'switch_minus'));
+        $img = 't/switch_minus';
+        if (method_exists($OUTPUT, 'image_url')) {
+            $img = $OUTPUT->image_url($img); // Moodle >= 3.3
+        } else {
+            $img = $OUTPUT->pix_url($img); // Moodle <= 3.2
+        }
+        $img = html_writer::empty_tag('img', array('src' => $img, 'onclick' => 'showhide_list(this)', 'alt' => 'switch_minus'));
     }
     return $img;
 }

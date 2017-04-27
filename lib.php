@@ -1175,7 +1175,7 @@ function reader_get_recent_mod_activity(&$activities, &$index, $timestart, $cour
  * @param integer $courseid id in the "course" table
  * @param boolean $detail
  *         true : print a link to the reader activity
- *         false : do no print a link to the reader activity
+ *         false : do not print a link to the reader activity
  * @param xxx $modnames
  * @param xxx $viewfullnames
  * @return no return value is required
@@ -1194,18 +1194,20 @@ function reader_print_recent_mod_activity($activity, $courseid, $detail, $modnam
     $table->cellspacing = 0;
 
     if ($detail) {
+        $type = $activity->type;
+        $name = $activity->name;
+
         $row = new html_table_row();
 
-        $cell = new html_table_cell('&nbsp;', array('width'=>15));
+        $cell = new html_table_cell('&nbsp;', array('width' => 15));
         $row->cells[] = $cell;
 
         // activity icon and link to activity
-        $src = $OUTPUT->pix_url('icon', $activity->type);
-        $img = html_writer::empty_tag('img', array('src'=>$src, 'class'=>'icon', 'alt'=>$activity->name));
+        $img = $OUTPUT->pix_icon('icon', $modnames[$type], $type);
 
         // link to activity
-        $href = new moodle_url('/mod/reader/view.php', array('id' => $activity->cmid));
-        $link = html_writer::link($href, $activity->name);
+        $href = new moodle_url('/mod/'.$type.'/view.php', array('id' => $activity->cmid));
+        $link = html_writer::link($href, $name);
 
         $cell = new html_table_cell("$img $link");
         $cell->colspan = 9;
@@ -1213,7 +1215,6 @@ function reader_print_recent_mod_activity($activity, $courseid, $detail, $modnam
 
         $table->data[] = $row;
     }
-
 
     $row = new html_table_row();
 

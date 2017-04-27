@@ -638,7 +638,12 @@ class mod_reader_renderer extends plugin_renderer_base {
         $done = true;
 
         global $PAGE;
-        $src = $PAGE->theme->pix_url('i/ajaxloader', 'core')->out();
+        if (method_exists($PAGE->theme, 'image_url')) {
+            $image_url = 'image_url'; // Moodle >= 3.3
+        } else {
+            $image_url = 'pix_url'; // Moodle <= 3.2
+        }
+        $src = $PAGE->theme->$image_url('i/ajaxloader', 'core')->out();
 
         $js = '';
 

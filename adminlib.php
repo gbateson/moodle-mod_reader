@@ -467,7 +467,7 @@ function reader_make_table_headers(&$table, $headers, $orderby, $sort, $params) 
 
             // append sort icon
             if ($sort == $columnname) {
-                $header .= ' '.html_writer::empty_tag('img', array('src' => $OUTPUT->pix_url('t/up'), 'alt' => ''));
+                $header .= ' '.$OUTPUT->pix_icon('t/up', get_string('sort'));
             }
 
             // convert $header to link

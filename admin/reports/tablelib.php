@@ -882,10 +882,15 @@ class reader_admin_reports_table extends reader_admin_table {
         $rating = intval($rating);
         if ($rating >= 1 && $rating <= 3) {
             if ($img===null) {
-                if (file_exists($CFG->dirroot.'/pix/t/approve.png')) {
-                    $src = $this->output->pix_url('t/approve'); // Moodle >= 2.4
+                if (method_exists($this->output, 'image_url')) {
+                    $image_url = 'image_url'; // Moodle >= 3.3
                 } else {
-                    $src = $this->output->pix_url('t/clear'); // Moodle >= 2.0
+                    $image_url = 'pix_url'; // Moodle >= 3.2
+                }
+                if (file_exists($CFG->dirroot.'/pix/t/approve.png')) {
+                    $src = $this->output->$image_url('t/approve'); // Moodle >= 2.4
+                } else {
+                    $src = $this->output->$image_url('t/clear'); // Moodle >= 2.0
                 }
                 $img = html_writer::empty_tag('img', array('src' => $src, 'alt' => get_string('bookrating', 'mod_reader')));
             }
