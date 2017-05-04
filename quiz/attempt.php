@@ -40,6 +40,7 @@ $id = optional_param('id', 0, PARAM_INT);
 $readerattempt = reader_attempt::create($attemptid);
 $timenow = time();
 
+$page = $readerattempt->force_page_number_into_range($page);
 $PAGE->set_url($readerattempt->attempt_url(0, $page));
 
 // Check login.
@@ -81,6 +82,12 @@ $slots = $readerattempt->get_slots($page);
 if (empty($slots)) {
     throw new moodle_reader_exception($readerattempt->get_readerquiz(), 'noquestionsfound');
 }
+
+// Update attempt page, redirecting the user if $page is not valid.
+if (! $readerattempt->set_currentpage($page)) {
+    redirect($readerattempt->attempt_url(null, $readerattempt->get_currentpage()));
+}
+
 
 // Initialise the JavaScript.
 $headtags = $readerattempt->get_html_head_contributions($page);

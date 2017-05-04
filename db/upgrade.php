@@ -1293,9 +1293,61 @@ function xmldb_reader_upgrade($oldversion) {
         upgrade_mod_savepoint(true, "$newversion", 'reader');
     }
 
-    $newversion = 2016101759;
+    $newversion = 2017042874;
     if ($result && $oldversion < $newversion) {
-        update_capabilities('mod/reader');
+        update_capabilities('mod/reader'); // skipped in 2017041870
+        if ($ids = $DB->get_records_select_menu('reader_books', 'quizid > ?', array(0), 'quizid', 'id,quizid')) {
+            list($select, $params) = $DB->get_in_or_equal(array_unique($ids));
+            $table = 'quiz';
+            // these field values are also set in:
+            // "mod/reader/quiz/attemptlib.php" and
+            // "mod/reader/admin/books/download/downloader.php"
+            $fields = array('graceperiod'      => 0,
+                            'overduehandling'  => 'autosubmit',
+                            'questionsperpage' => 1,
+                            'navmethod'        => 'sequential');
+            foreach ($fields as $field => $value) {
+                if ($dbman->field_exists($table, $field)) {
+                    $DB->set_field_select($table, $field, $value, "id $select", $params);
+                }
+            }
+        }
+        upgrade_mod_savepoint(true, "$newversion", 'reader');
+    }
+
+    $newversion = 2017050475;
+    if ($result && $oldversion < $newversion) {
+
+        // add new fields to "reader_attempts" table
+        $table = new xmldb_table('reader_attempts');
+        $fields = array(
+            new xmldb_field('currentpage', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0',          'layout'),
+            new xmldb_field('state',       XMLDB_TYPE_CHAR,    '16', null, XMLDB_NOTNULL, null, 'inprogress', 'preview')
+        );
+        foreach ($fields as $field) {
+            xmldb_reader_fix_previous_field($dbman, $table, $field);
+            if ($dbman->field_exists($table, $field)) {
+                $dbman->change_field_type($table, $field);
+            } else {
+                $dbman->add_field($table, $field);
+            }
+        }
+
+        // Set the "state" value for completed attempts to "finished"
+        $select = 'timefinish > ?';
+        $DB->set_field_select('reader_attempts', 'state', 'finished', $select, array(0));
+
+        // Set the earliest possible time for an "inprogress" attempt
+        $timestart = (time() - (15 * MINSECS));
+
+        // Set the "state" value for unfinished attempts that started BEFORE $timestart to "abandoned"
+        $select = 'timefinish <= ? AND timestart < ?';
+        $DB->set_field_select('reader_attempts', 'state', 'abandoned', $select, array(0, $timestart));
+
+        // Set the "state" value for unfinished attempts that started AFTER $timestart to "inprogress"
+        $select = 'timefinish <= ? AND timestart >= ?';
+        $DB->set_field_select('reader_attempts', 'state', 'inprogress', $select, array(0, $timestart));
+
         upgrade_mod_savepoint(true, "$newversion", 'reader');
     }
 

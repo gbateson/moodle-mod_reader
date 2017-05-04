@@ -1798,6 +1798,8 @@ class reader_downloader {
             'introformat'     => FORMAT_HTML, // =1
             'timeopen'        => 0,
             'timeclose'       => 0,
+            'graceperiod'     => 0,
+            'overduehandling' => 'autosubmit',
             'preferredbehaviour' => 'deferredfeedback',
             'attempts'        => 0,
             'attemptonlast'   => 1,
@@ -1810,7 +1812,8 @@ class reader_downloader {
             'reviewgeneralfeedback'  => 0,
             'reviewrightanswer'      => 0,
             'reviewoverallfeedback'  => 0,
-            'questionsperpage' => 0,
+            'questionsperpage' => 1,
+            'navmethod'        => 'sequential',
             'shufflequestions' => 0,
             'shuffleanswers'  => 1,
             'questions'       => '0,',

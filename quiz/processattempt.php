@@ -47,7 +47,7 @@ $scrollpos     = optional_param('scrollpos',     '',    PARAM_RAW);
 $likebook      = optional_param('likebook',      null,  PARAM_CLEAN);
 
 $transaction = $DB->start_delegated_transaction();
-$attemptobj = reader_attempt::create($attemptid);
+$readerattempt = reader_attempt::create($attemptid);
 
 // We treat automatically closed attempts just like normally closed attempts
 if ($timeup) {
@@ -56,7 +56,7 @@ if ($timeup) {
 
 // Set $nexturl now.
 if ($finishattempt) {
-    $nexturl = $attemptobj->view_url();
+    $nexturl = $readerattempt->view_url();
 } else {
     if ($next) {
         $page = $nextpage;
@@ -67,9 +67,9 @@ if ($finishattempt) {
         }
     }
     if ($page == -1) {
-        $nexturl = $attemptobj->summary_url();
+        $nexturl = $readerattempt->summary_url();
     } else {
-        $nexturl = $attemptobj->attempt_url(0, $page);
+        $nexturl = $readerattempt->attempt_url(0, $page);
         if ($scrollpos !== '') {
             $nexturl->param('scrollpos', $scrollpos);
         }
@@ -77,31 +77,32 @@ if ($finishattempt) {
 }
 
 // Check login.
-require_login($attemptobj->get_course(), false, $attemptobj->get_cm());
+require_login($readerattempt->get_course(), false, $readerattempt->get_cm());
 require_sesskey();
 
 // Check that this attempt belongs to this user.
-if ($attemptobj->get_userid() != $USER->id) {
-    throw new moodle_reader_exception($attemptobj->get_reader(), 'notyourattempt');
+if ($readerattempt->get_userid() != $USER->id) {
+    throw new moodle_reader_exception($readerattempt->get_reader(), 'notyourattempt');
 }
 
 if (isset($likebook)) {
-    $attemptobj->set_rating($likebook);
+    $readerattempt->set_rating($likebook);
 }
 
 // If the attempt is already closed, send them to the review page.
-if ($attemptobj->is_finished()) {
-//    throw new moodle_reader_exception($attemptobj->get_reader(), 'attemptalreadyclosed', null, $attemptobj->review_url());
+if ($readerattempt->is_finished()) {
+//    throw new moodle_reader_exception($readerattempt->get_reader(), 'attemptalreadyclosed', null, $readerattempt->review_url());
 }
 
 if ($finishattempt) {
-    $attemptobj->finish_attempt($timenow);
+    $readerattempt->finish_attempt($timenow);
 } else {
     // process the responses for this page
     try {
-        $attemptobj->process_all_actions($timenow);
+        $readerattempt->process_all_actions($timenow);
     } catch (question_out_of_sequence_exception $e) {
-        print_error('submissionoutofsequencefriendlymessage', 'question', $attemptobj->attempt_url(0, $thispage));
+        $url = $readerattempt->attempt_url($attemptid, $thispage);
+        print_error('submissionoutofsequencefriendlymessage', 'question', $url);
     }
 }
 
@@ -109,13 +110,13 @@ $transaction->allow_commit();
 
 if ($finishattempt) {
     // Note: we can only update_grades AFTER $transaction has been committed
-    reader_update_grades($attemptobj->get_reader(), $attemptobj->get_userid());
+    reader_update_grades($readerattempt->get_reader(), $readerattempt->get_userid());
 
     // update completion state if necessary
-    $attemptobj->update_completion_state();
+    $readerattempt->update_completion_state();
 
     // update reader badges if necessary
-    $attemptobj->update_reader_badges();
+    $readerattempt->update_reader_badges();
 }
 
 redirect($nexturl);

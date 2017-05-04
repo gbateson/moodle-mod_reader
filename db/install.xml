@@ -69,9 +69,11 @@
         <FIELD NAME="timestart" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" NEXT="timefinish" PREVIOUS="checkbox"/>
         <FIELD NAME="timefinish" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" NEXT="timemodified" PREVIOUS="timestart"/>
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" NEXT="layout" PREVIOUS="timefinish"/>
-        <FIELD NAME="layout" TYPE="text" NOTNULL="false" SEQUENCE="false" NEXT="preview" PREVIOUS="timemodified"/>
-        <FIELD NAME="preview" TYPE="int" LENGTH="3" NOTNULL="true" DEFAULT="0" SEQUENCE="false" NEXT="bookrating" PREVIOUS="layout"/>
-        <FIELD NAME="bookrating" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="0" SEQUENCE="false" NEXT="ip" PREVIOUS="preview"/>
+        <FIELD NAME="layout" TYPE="text" NOTNULL="false" SEQUENCE="false" NEXT="currentpage" PREVIOUS="timemodified"/>
+        <FIELD NAME="currentpage" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" NEXT="preview" PREVIOUS="layout"/>
+        <FIELD NAME="preview" TYPE="int" LENGTH="3" NOTNULL="true" DEFAULT="0" SEQUENCE="false" NEXT="state" PREVIOUS="currentpage"/>
+        <FIELD NAME="state" TYPE="char" LENGTH="16" NOTNULL="true" DEFAULT="inprogress" SEQUENCE="false" NEXT="bookrating" PREVIOUS="preview" COMMENT="The current state of the attempt. 'inprogress', 'overdue', 'finished' or 'abandoned'."/>
+        <FIELD NAME="bookrating" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="0" SEQUENCE="false" NEXT="ip" PREVIOUS="state"/>
         <FIELD NAME="ip" TYPE="char" LENGTH="40" NOTNULL="false" SEQUENCE="false" PREVIOUS="bookrating"/>
       </FIELDS>
       <KEYS>
@@ -187,7 +189,7 @@
         <FIELD NAME="type" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="0" SEQUENCE="false" NEXT="attempts" PREVIOUS="level"/>
         <FIELD NAME="attempts" TYPE="int" LENGTH="6" NOTNULL="true" DEFAULT="1" SEQUENCE="false" NEXT="duration" PREVIOUS="type"/>
         <FIELD NAME="duration" TYPE="int" LENGTH="11" NOTNULL="true" DEFAULT="0" SEQUENCE="false" NEXT="action" PREVIOUS="attempts"/>
-        <FIELD NAME="action" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="0" SEQUENCE="false" NEXT="timemodified" PREVIOUS="attempts"/>
+        <FIELD NAME="action" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="0" SEQUENCE="false" NEXT="timemodified" PREVIOUS="duration"/>
         <FIELD NAME="timemodified" TYPE="int" LENGTH="11" NOTNULL="true" DEFAULT="0" SEQUENCE="false" PREVIOUS="action"/>
       </FIELDS>
       <KEYS>

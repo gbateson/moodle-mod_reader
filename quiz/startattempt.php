@@ -33,7 +33,7 @@ require_once($CFG->dirroot.'/mod/reader/lib.php');
 require_once($CFG->dirroot.'/question/engine/lib.php');
 
 // Get submitted parameters.
-$id   = required_param('id', PARAM_INT); // "course_modules" id
+$id = required_param('id', PARAM_INT); // "course_modules" id
 $book = required_param('book', PARAM_INT); // "reader_books" id
 $page = optional_param('page', 0, PARAM_INT); // Page to jump to in the attempt.
 
@@ -96,7 +96,7 @@ $attempts = reader_get_user_attempts($reader->id, $USER->id, 'all');
 $lastattempt = end($attempts);
 
 // If an in-progress attempt exists, check password then redirect to it.
-if ($lastattempt && !$lastattempt->timefinish) {
+if ($lastattempt && ! $lastattempt->timefinish) {
     redirect($readerquiz->attempt_url($lastattempt->id, $page));
 }
 

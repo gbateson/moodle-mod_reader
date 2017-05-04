@@ -146,14 +146,20 @@ class reader_quiz {
         $book = $DB->get_record('reader_books', array('id' => $bookid), '*', MUST_EXIST);
         $quiz = $DB->get_record('quiz', array('id' => $book->quizid),   '*', MUST_EXIST);
 
-        $quiz->timeopen          = $reader->timeopen;
-        $quiz->timeclose         = $reader->timeclose;
-        $quiz->timelimit         = $reader->timelimit;
-        $quiz->attempts          = 1;
-        $quiz->questionsperpage  = 1;
-        $quiz->shuffleanswers    = 1;
-        $quiz->password          = $reader->password;
-        $quiz->subnet            = $reader->subnet;
+        $quiz->timeopen           = $reader->timeopen;
+        $quiz->timeclose          = $reader->timeclose;
+        $quiz->timelimit          = $reader->timelimit;
+        $quiz->attempts           = 1;
+        $quiz->questionsperpage   = 1;
+        $quiz->shuffleanswers     = 1;
+        $quiz->preferredbehaviour = 'deferredfeedback';
+        $quiz->password           = $reader->password;
+        $quiz->subnet             = $reader->subnet;
+
+        // settings for Moodle >= 2.3
+        $quiz->navmethod          = 'sequential';
+        $quiz->overduehandling    = 'autosubmit';
+        $quiz->graceperiod        = 0;
 
         // Update reader with override information
         //$reader = reader_update_effective_access($reader, $userid);
@@ -192,6 +198,12 @@ class reader_quiz {
         }
         get_question_options($questionstoprocess);
     }
+
+    /** @return int the quiz navigation method. */
+    public function get_navigation_method() {
+        return $this->quiz->navmethod;
+    }
+
 
     /** @return object the module context for this reader. */
     public function get_context() {
@@ -273,7 +285,7 @@ class reader_quiz {
      * @return whether any questions have been added to this reader.
      */
     public function has_questions() {
-        return !empty($this->questionids);
+        return (empty($this->questionids) ? false : true);
     }
 
     /**
@@ -281,11 +293,7 @@ class reader_quiz {
      * @return object the question object with that id.
      */
     public function get_question($id) {
-        if (empty($this->questions[$id])) {
-            return null;
-        } else {
-            return $this->questions[$id];
-        }
+        return (empty($this->questions[$id]) ? null : $this->questions[$id]);
     }
 
     /**
@@ -336,16 +344,16 @@ class reader_quiz {
      * @return string the URL of this reader's view page.
      */
     public function view_url() {
-        global $CFG;
-        return $CFG->wwwroot.'/mod/reader/view.php?id=' . $this->cm->id;
+        $url = '/mod/reader/view.php';
+        $params = array('id' => $this->get_cmid());
+        return new moodle_url($url, $params);
     }
 
     /**
      * @return string the URL of this reader's edit page.
      */
     public function edit_url() {
-        global $CFG;
-        return $CFG->wwwroot.'/mod/reader/view.php?id=' . $this->cm->id;
+        return $this->view_url();
     }
 
     /**
@@ -354,23 +362,29 @@ class reader_quiz {
      * @return string the URL of that attempt.
      */
     public function attempt_url($attemptid, $page=0) {
-        global $CFG;
-        $url = $CFG->wwwroot.'/mod/reader/quiz/attempt.php?attempt=' . $attemptid;
+        $url = '/mod/reader/quiz/attempt.php';
+        $params = array('id' => $this->get_cmid(),
+                        'book' => $this->get_bookid(),
+                        'attempt' => $attemptid,
+                        'sesskey' => sesskey());
         if ($page) {
-            $url .= '&page=' . $page;
+            $params['page'] = $page;
         }
-        return $url;
+        return new moodle_url($url, $params);
     }
 
     /**
      * @return string the URL of this reader's edit page. Needs to be POSTed to with a cmid parameter.
      */
     public function start_attempt_url($page=0) {
-        $params = array('cmid' => $this->cm->id, 'sesskey' => sesskey());
+        $url = '/mod/reader/quiz/startattempt.php';
+        $params = array('id' => $this->get_cmid(),
+                        'book' => $this->get_bookid(),
+                        'sesskey' => sesskey());
         if ($page) {
             $params['page'] = $page;
         }
-        return new moodle_url('/mod/reader/quiz/startattempt.php', $params);
+        return new moodle_url($url, $params);
     }
 
     /**
@@ -378,7 +392,9 @@ class reader_quiz {
      * @return string the URL of the review of that attempt.
      */
     public function review_url($attemptid) {
-        return new moodle_url('/mod/reader/review.php', array('attempt' => $attemptid));
+        $url = '/mod/reader/review.php';
+        $params = array('attempt' => $attemptid);
+        return new moodle_url($url, $params);
     }
 
     /**
@@ -557,14 +573,12 @@ class reader_attempt {
     /**
      * set_rating
      *
-     * @uses $DB
-     * @uses $USER
-     * @param xxx $likebook
+     * @param xxx $rating
      * @todo Finish documenting this function
      */
-    public function set_rating($likebook) {
-        $this->attempt->bookrating = $likebook;
-        $this->attempt->ip         = $this->ip();
+    public function set_rating($rating) {
+        $this->attempt->bookrating = $rating;
+        $this->attempt->ip = $this->ip();
     }
 
     /**
@@ -589,6 +603,16 @@ class reader_attempt {
             }
         }
         return ''; // shouldn't happen !!
+    }
+
+    /**
+     * If the given page number is out of range (before the first page, or after
+     * the last page, chnage it to be within range).
+     * @param int $page the requested page number.
+     * @return int a safe page number to use.
+     */
+    public function force_page_number_into_range($page) {
+        return min(max($page, 0), count($this->pagelayout) - 1);
     }
 
     /**
@@ -706,6 +730,11 @@ class reader_attempt {
     /** @return int the id of the user this attempt belongs to. */
     public function get_userid() {
         return $this->attempt->userid;
+    }
+
+    /** @return int the current page of the attempt. */
+    public function get_currentpage() {
+        return $this->attempt->currentpage;
     }
 
     /**
@@ -978,8 +1007,8 @@ class reader_attempt {
      * @param int $slot the number used to identify this question within this attempt.
      * @return string the formatted grade, to the number of decimal places specified by the reader.
      */
-    public function get_question_mark($slot) {
-        return reader_format_question_grade($this->get_reader(), $this->quba->get_question_mark($slot));
+    public function get_question_mark($slot, $decimalplaces=2) {
+        return format_float($this->quba->get_question_mark($slot), $decimalplaces);
     }
 
     /**
@@ -1028,7 +1057,9 @@ class reader_attempt {
      * @return string the URL of this reader's summary page.
      */
     public function summary_url() {
-        return new moodle_url('/mod/reader/quiz/summary.php', array('attempt' => $this->attempt->id));
+        $url = '/mod/reader/quiz/summary.php';
+        $params = array('attempt' => $this->attempt->id);
+        return new moodle_url($url, $params);
     }
 
     /**
@@ -1391,7 +1422,7 @@ class reader_attempt {
     public function page_and_question_url($script, $slot, $page, $showall, $thispage) {
         // Fix up $page
         if ($page == -1) {
-            if (! is_null($slot) && !$showall) {
+            if (! is_null($slot) && ! $showall) {
                 $page = $this->quba->get_question($slot)->_page;
             } else {
                 $page = 0;
@@ -1418,8 +1449,8 @@ class reader_attempt {
             return new moodle_url($fragment);
 
         } else {
-            $url = new moodle_url('/mod/reader/quiz/' . $script . '.php' . $fragment,
-                    array('attempt' => $this->attempt->id));
+            $url = '/mod/reader/quiz/'.$script.'.php'.$fragment;
+            $url = new moodle_url($url, array('attempt' => $this->attempt->id));
             if ($showall) {
                 $url->param('showall', 1);
             } else if ($page > 0) {
@@ -1479,6 +1510,43 @@ class reader_attempt {
             }
         }
         return $activeslots;
+    }
+
+    /** @return int the quiz navigation method. */
+    public function get_navigation_method() {
+        return $this->readerquiz->get_navigation_method();
+    }
+
+    /**
+     * Check a page access to see if is an out of sequence access.
+     *
+     * @param  int $page page number
+     * @return boolean false is is an out of sequence access, true otherwise.
+     * @since Moodle 3.1
+     */
+    public function check_page_access($page) {
+        if ($this->get_navigation_method() == 'sequential' && $page < $this->get_currentpage()) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    /**
+     * Update attempt page.
+     *
+     * @param  int $page page number
+     * @return boolean true if everything was ok, false otherwise (out of sequence access).
+     * @since Moodle 3.1
+     */
+    public function set_currentpage($page) {
+        global $DB;
+        if ($this->check_page_access($page)) {
+            $DB->set_field('reader_attempts', 'currentpage', $page, array('id' => $this->get_attemptid()));
+            return true;
+        } else {
+            return false; // $page is out of seqence (i.e. BEFORE current page)
+        }
     }
 
     // =========================================
