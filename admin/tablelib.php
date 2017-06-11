@@ -747,7 +747,7 @@ class reader_admin_table extends table_sql {
             echo html_writer::end_tag('div'); // readerreportsubmit DIV
 
             // finish "readerreportactions" fieldset
-            echo html_writer::end_tag('fieldset'); // clearfix FIEDLSET
+            echo html_writer::end_tag('fieldset');
         }
 
         // finish the form

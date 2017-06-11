@@ -754,7 +754,7 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $act == 'awardex
 
             $select = 'MAX(attempt)';
             $from   = '{reader_attempts}';
-            $where  = 'readerid = ? AND userid = ? AND timefinish > ? AND preview <> ?';
+            $where  = 'readerid = ? AND userid = ? AND timefinish > ? AND credit <> ?';
             $params = array($reader->id, $s, 0, 1);
 
             if($attemptnumber = $DB->get_field_sql("SELECT $select FROM $from WHERE $where", $params)) {
@@ -780,7 +780,10 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $act == 'awardex
 
             $attempt->sumgrades    = $totalgrade;
             $attempt->percentgrade = 100;
-            $attempt->passed       = 'true';
+            $attempt->passed       = 1;
+            $attempt->credit       = 0;
+            $attempt->cheated      = 0;
+            $attempt->deleted      = 0;
 
             $time = time() - $reader->get_delay($s->id);
             $attempt->timefinish   = $time;
@@ -796,8 +799,8 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $act == 'awardex
 
 if (has_capability('mod/reader:addinstance', $contextmodule) && $cheated) {
     list($cheated1, $cheated2) = explode('_', $cheated);
-    $DB->set_field('reader_attempts',  'passed',  'cheated', array('id' => $cheated1));
-    $DB->set_field('reader_attempts',  'passed',  'cheated', array('id' => $cheated2));
+    $DB->set_field('reader_attempts',  'cheated',  1, array('id' => $cheated1));
+    $DB->set_field('reader_attempts',  'cheated',  1, array('id' => $cheated2));
     reader_add_to_log($course->id, 'reader', 'AA-cheated', 'admin.php?id='.$cm->id, $cm->instance, $cm->id);
 
     $userid1 = $DB->get_record('reader_attempts', array('id' => $cheated1));
@@ -829,8 +832,8 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $cheated) {
 
 if (has_capability('mod/reader:addinstance', $contextmodule) && $uncheated) {
     list($cheated1, $cheated2) = explode('_', $uncheated);
-    $DB->set_field('reader_attempts',  'passed',  'true', array('id' => $cheated1));
-    $DB->set_field('reader_attempts',  'passed',  'true', array('id' => $cheated2));
+    $DB->set_field('reader_attempts',  'cheated',  0, array('id' => $cheated1));
+    $DB->set_field('reader_attempts',  'cheated',  0, array('id' => $cheated2));
     reader_add_to_log($course->id, 'reader', "AA-set passed (uncheated)", 'admin.php?id='.$cm->id, $cm->instance, $cm->id);
 
     $userid1 = $DB->get_record('reader_attempts', array('id' => $cheated1));
@@ -938,13 +941,15 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $book && is_arra
                     'attempt'      => 1,
                     'deleted'      => 0,
                     'sumgrades'    => 1,
-                    'passed'       => 'true',
+                    'passed'       => 1,
+                    'credit'       => 1,
+                    'cheated'      => 0,
+                    'deleted'      => 0,
                     'percentgrade' => 100,
                     'timestart'    => time(),
                     'timefinish'   => time(),
                     'timemodified' => time(),
                     'layout'       => '0,',
-                    'preview'      => 1,
                     'bookrating'   => 1,
                     'ip'           => $_SERVER['REMOTE_ADDR'],
                 );
@@ -968,32 +973,25 @@ if ((has_capability('mod/reader:managebooks', $contextmodule)) && $numberofsecti
 }
 
 if ($act == 'adjustscores' && !empty($adjustscoresaddpoints) && !empty($adjustscoresupbooks)) {
-    foreach ($adjustscoresupbooks as $key => $value) {
-        $data = $DB->get_record('reader_attempts', array('id' => $value));
-        $newpoint = $data->percentgrade + $adjustscoresaddpoints;
-        $passed = (($newpoint >= $reader->minpassgrade) ? 'true' : 'false');
-        $attempt = new stdClass();
-        $attempt->id           = $value;
-        $attempt->passed       = $passed;
-        $attempt->percentgrade = $newpoint;
-        $DB->update_record('reader_attempts', $attempt);
+    foreach ($adjustscoresupbooks as $attemptid) {
+        $params = array('id' => $attemptid);
+        if ($attempt = $DB->get_record('reader_attempts', $params)) {
+            $percentgrade = ($attempt->percentgrade + $adjustscoresaddpoints);
+            $DB->set_field('reader_attempts', 'percentgrade', $percentgrade, $params);
+            $passed = (($percentgrade < $reader->minpassgrade) ? 0 : 1);
+            $DB->set_field('reader_attempts', 'passed', $passed, $params);
+        }
     }
-
     $adjustscorestext = 'Done';
 }
 
 if ($act == 'adjustscores' && !empty($adjustscoresupall) && !empty($adjustscorespand) && !empty($adjustscorespby)) {
     $select = 'percentgrade < ? AND percentgrade > ? AND quizid = ? AND deleted = ?';
     $params = array($adjustscorespand, $adjustscoresupall, $book, 0);
-    if ($dataarr = $DB->get_records_sql('reader_attempts', $select, $params)) {
-        foreach ($dataarr as $ida) {
-            $data = $DB->get_record('reader_attempts', array('id' => $ida->id));
-            $newpoint = $data->percentgrade + $adjustscorespby;
-            $passed = (($newpoint >= $reader->minpassgrade) ? 'true' : 'false');
-            $attempt = new stdClass();
-            $attempt->id = $ida->id;
-            $attempt->passed  = $passed;
-            $attempt->percentgrade = $newpoint;
+    if ($attempts = $DB->get_records_sql('reader_attempts', $select, $params)) {
+        foreach ($attempts as $attempt) {
+            $attempt->percentgrade = ($attempt->percentgrade + $adjustscorespby);
+            $attempt->passed = (($attempt->percentgrade < $reader->minpassgrade) ? 0 : 1);
             $DB->update_record('reader_attempts', $attempt);
         }
     }
@@ -1480,7 +1478,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managebooks', $contextmodule
                                 'allterms' => 0);
             if ($readerattempts = $DB->get_records('reader_attempts', array('userid' => $coursestudent->id, 'deleted' => 0))) {
                 foreach ($readerattempts as $readerattempt) {
-                    if (strtolower($readerattempt->passed) == 'true') {
+                    if ($readerattempt->passed) {
                         if ($books = $DB->get_records('reader_books', array('id' => $readerattempt->bookid))) {
                             if ($book = array_shift($books)) {
                                 $totalwords['allterms'] += $book->words;
@@ -1694,13 +1692,13 @@ if ($act == 'addquiz' && has_capability('mod/reader:managebooks', $contextmodule
                 $showuser = false;
             }
 
-            $strpassed = reader_format_passed($readerattempt['passed']);
-
             if ($reader->wordsorpoints == 0) {
                 if (reader_check_search_text($searchtext, $coursestudent, $readerattempt)) {
 
-                    if ($strpassed=='P') { // passed
-                        $totalwords +=  $readerattempt['words'];
+                    if ($readerattempt['deleted']==0 && $readerattempt['cheated']==0) {
+                        if ($readerattempt['passed'] || $readerattempt['credit']) {
+                            $totalwords +=  $readerattempt['words'];
+                        }
                     }
 
                     if ($showuser) {
@@ -1733,7 +1731,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managebooks', $contextmodule
                         $readerattempt['bookdiff'],
                         $readerattempt['booktitle'],
                         $readerattempt['percentgrade'].'%',
-                        $strpassed,
+                        $readerattempt['statustext'],
                         (is_numeric($readerattempt['words']) ? number_format($readerattempt['words']) : $readerattempt['words']),
                         (is_numeric($totalwords) ? number_format($totalwords) : $totalwords)
                     );
@@ -1770,7 +1768,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managebooks', $contextmodule
                         $readerattempt['bookdiff'],
                         $readerattempt['booktitle'],
                         $readerattempt['percentgrade'].'%',
-                        $strpassed,
+                        $readerattempt['statustext'],
                         $readerattempt['bookpoints'],
                         $readerattempt['points'],
                         $readerattempt['totalpoints']
@@ -1916,7 +1914,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managebooks', $contextmodule
                     foreach ($readerattempts as $readerattempt) {
                         $i++;
                         $totalpointsaverage += $readerattempt->percentgrade;
-                        if (strtolower($readerattempt->passed) == 'true') {
+                        if ($readerattempt->passed) {
                             $correctpoints += 1;
                         }
                     }
@@ -2167,9 +2165,10 @@ if ($act == 'addquiz' && has_capability('mod/reader:managebooks', $contextmodule
             $worksheet->write_string(2, $c++, 'P/F/C', $formatbold);
         }
 
-        $select = 'ra.id,ra.timefinish,ra.userid,ra.attempt,ra.percentgrade,ra.passed,'.
-                  'rb.name,rb.publisher,rb.level,'.
-                  'u.username,u.firstname,u.lastname';
+        $select = 'ra.id, ra.userid, ra.attempt, ra.percentgrade, '.
+                  'ra.passed, ra.credit, ra.cheated, ra.deleted, ra.timefinish, '.
+                  'rb.name, rb.publisher, rb.level, '.
+                  'u.username ,u.firstname, u.lastname';
         $from   = '{reader_attempts} ra '.
                   'LEFT JOIN {user} u ON ra.userid = u.id '.
                   'LEFT JOIN {reader_books} rb ON ra.bookid = rb.id';
@@ -2238,14 +2237,13 @@ if ($act == 'addquiz' && has_capability('mod/reader:managebooks', $contextmodule
         $can_deleteattempts = has_capability('mod/reader:manageattempts', $contextmodule);
 
         foreach ($readerattempts as $readerattempt) {
-            $strpassed = reader_format_passed($readerattempt->passed);
             $cells = array(
                 reader_username_link($readerattempt, $course->id, $excel),
                 reader_fullname_link($readerattempt, $course->id, $excel),
                 $readerattempt->name,
                 $readerattempt->attempt,
                 $readerattempt->percentgrade.'%',
-                $strpassed,
+                $readerattempt->statustext,
                 $readerattempt->timefinish
             );
             if ($can_deleteattempts) {
@@ -3024,11 +3022,19 @@ if ($act == 'addquiz' && has_capability('mod/reader:managebooks', $contextmodule
     //echo 'Other ip mask <input type="text" name="ipmaskother" value="" />';
     echo get_string('fromthistime', 'mod_reader').' <select id="from_time" name="fromtime">';
 //change by Tom 28 June 2010
-    $fromtimeselect = array('86400' => '1 day',
-                            '604800' => '1 week',
-                            '2419200' => '1 month',
-                            '5270400' => '2 months',
-                            '7862400' => '3 months');
+    $fromtimeselect = array(DAYSECS        => '1 day',
+                           (DAYSECS * 2)   => '2 days',
+                           (DAYSECS * 3)   => '3 days',
+                           (DAYSECS * 4)   => '4 days',
+                           (WEEKSECS)      => '1 week',
+                           (WEEKSECS * 2)  => '2 weeks',
+                           (WEEKSECS * 4)  => '1 month',
+                           (WEEKSECS * 8)  => '2 months',
+                           (WEEKSECS * 13) => '3 months',
+                           (WEEKSECS * 26) => '6 months',
+                           (YEARSECS)      => '1 year',
+                           (YEARSECS * 2)  => '2 years',
+                           (YEARSECS * 3)  => '3 years');
     foreach ($fromtimeselect as $key => $value) {
         echo '<option value="'.$key.'"';
         if ($key == $fromtime) {
@@ -3058,80 +3064,78 @@ if ($act == 'addquiz' && has_capability('mod/reader:managebooks', $contextmodule
     echo '</form>';
 
     if ($findcheated) {
-        $allips = array();
+        $quizids = array();
 
         $order='l.time DESC';
 
+        $where  = "module = 'reader' AND info LIKE 'readerID%; reader quiz%; %/%'";
         if ($useonlythiscourse) {
-            $usecoursesql = "course = '{$course->id}' AND";
+            $where .= " AND course = '$course->id'";
         }
         if ($fromtime) {
-            $fromtimesql = "time > '".(time() - $fromtime)."' AND";
+            $where .= " AND time > '".(time() - $fromtime)."'";
         }
-
-        $select = " {$usecoursesql} {$fromtimesql} module = 'reader' and info LIKE 'readerID%; reader quiz%; %/%' ";
-        $countsql = (strlen($select) > 0) ? ' WHERE '. $select : '';
-        $totalcount = $DB->count_records_sql("SELECT COUNT(*) FROM {log} l $countsql");
-        if ($logtext = $DB->get_records_sql("SELECT * FROM {log} l $countsql")) {
-            foreach ($logtext as $logtext_) {
-                if (preg_match("!reader quiz (.*?); !si",$logtext_->info,$quizid)) {
-                    $quizid=$quizid[1];
-                }
-                if ($quizid) {
-                    $allips[$quizid][$logtext_->id] = $logtext_->ip;
+        if ($logs = $DB->get_records_sql("SELECT * FROM {log} WHERE $where")) {
+            foreach ($logs as $logid => $log) {
+                if (preg_match('/reader quiz ([0-9]+); /si', $log->info, $quizid)) {
+                    $quizid = $quizid[1];
+                    if (empty($quizids[$quizid])) {
+                        $quizids[$quizid] = array();
+                    }
+                    $quizids[$quizid][$logid] = $log->ip;
                 }
             }
         }
 
-        //print_r($allips);
+        $comparequizids = array();
+        foreach ($quizids as $quizid => $logids) {
 
-        $comparearr = array();
-        foreach ($allips as $quize => $val) {
-            $checkerarray = $val;
-            foreach ($val as $resultid => $resultip) {
-                unset($checkerarray[$resultid]);
-                //echo "$quize, $resultid, $resultip<br /><br />";
-                list($ip1,$ip2,$ip3,$ip4) = explode('.',$resultip);
+            // $logids holds the ids of all attempts at this quiz
+            // within the given time frame
+
+            $comparelogids = $logids;
+            foreach ($logids as $logid => $ip) {
+
+                // remove this log from the comparison array
+                unset($comparelogids[$logid]);
+
+                list($ip1, $ip2, $ip3, $ip4) = explode('.',$ip);
                 if ($ipmask == 2) {
-                    $ipmaskcheck = '$ip1.$ip2';
+                    $compareipmask = "$ip1.$ip2";
                 } else {
-                    $ipmaskcheck = '$ip1.$ip2.$ip3';
+                    $compareipmask = "$ip1.$ip2.$ip3";
                 }
-                while (list($rid, $rip) = each($checkerarray)) {
-                    if (address_in_subnet($rip, $ipmaskcheck)) {
-                        $comparearr[$quize][$resultid] = $resultip;
-                        $comparearr[$quize][$rid]      = $resultip;
+
+                foreach ($comparelogids as $comparelogid => $compareip) {
+                    if (address_in_subnet($compareip, $compareipmask)) {
+                        if (empty($comparequizids[$quizid])) {
+                            $comparequizids[$quizid] = array();
+                        }
+                        $comparequizids[$quizid][$logid] = $ip;
+                        $comparequizids[$quizid][$comparelogid] = $ip;
                     }
                 }
-                reset($checkerarray);
-            }
-        }
-
-        foreach ($comparearr as $key => $value) {
-            if (count($value) <= 1) {
-                unset($comparearr[$key]);
             }
         }
 
         $compare = array();
-        foreach ($comparearr as $key => $value) {
-          $f = 0;
-          $countofarray = count($value);
-          foreach ($value as $key1 => $value1) {
-            if ($f > 0) {
-              $compare[$key][$fkey]['ip2']       = $value1;
-              $compare[$key][$fkey]['id2']       = $key1;
-
-              if ($f < $countofarray - 1) {
-                $compare[$key][$key1]['ip']        = $value1;
-                $fkey = $key1;
-              }
-            } else {
-              $compare[$key][$key1]['ip']        = $value1;
-              $fkey = $key1;
+        foreach ($comparequizids as $quizid => $logids) {
+            if (count($logids) >= 2) {
+                $prevlogid = 0;
+                $compare[$quizid] = array();
+                foreach ($logids as $logid => $ip) {
+                    if ($prevlogid) {
+                        $compare[$quizid][$prevlogid]['ip2'] = $ip;
+                        $compare[$quizid][$prevlogid]['id2'] = $logid;
+                    }
+                    $prevlogid = $logid;
+                    $compare[$quizid][$prevlogid] = array();
+                    $compare[$quizid][$prevlogid]['ip'] = $ip;
+                }
+                if ($prevlogid) {
+                    unset($compare[$quizid][$prevlogid]);
+                }
             }
-            $f++;
-          }
         }
 
         $titles = array('Book'        => 'book',
@@ -3149,25 +3153,30 @@ if ($act == 'addquiz' && has_capability('mod/reader:managebooks', $contextmodule
         $table->align = array("left", "left", "left", "center", "center", "center", "center", "center", "left");
         $table->width = "100%";
 
-        foreach ($compare as $bookid => $result) {
-          foreach ($result as $key => $data) {
-            if ($logtext[$key]->userid != $logtext[$data['id2']]->userid) {
-              $diff = $logtext[$key]->time - $logtext[$data['id2']]->time;
+        foreach ($compare as $quizid => $logids) {
+          foreach ($logids as $logid => $data) {
+            if (! array_key_exists('id2', $data)) {
+                print_object($data);
+                die;
+            }
+            $logid2 = $data['id2'];
+            if ($logs[$logid]->userid != $logs[$logid2]->userid) {
+              $diff = $logs[$logid]->time - $logs[$logid2]->time;
               if ($diff < 0) {
-                $diff = (int)substr($diff, 1);
+                  $diff = (int)substr($diff, 1);
               }
               if ($maxtime > $diff || $withoutdayfilter == 'yes') {
-                $bookdata  = $DB->get_record('reader_books', array('id' => $bookid));
-                $user1dta  = $DB->get_record('user', array('id' => $logtext[$key]->userid));
-                $user2data = $DB->get_record('user', array('id' => $logtext[$data['id2']]->userid));
+                $bookdata  = $DB->get_record('reader_books', array('id' => $quizid));
+                $user1dta  = $DB->get_record('user', array('id' => $logs[$logid]->userid));
+                $user2data = $DB->get_record('user', array('id' => $logs[$data['id2']]->userid));
                 if ($diff < 3600) {
                     $diffstring = round($diff/60)." minutes";
                 } else {
                     $diffstring = round($diff/3600)." hours";
                 }
 
-                $raid1 = (int)str_replace("view.php?id=", "", $logtext[$key]->url);
-                $raid2 = (int)str_replace("view.php?id=", "", $logtext[$data['id2']]->url);
+                $raid1 = (int)str_replace("view.php?id=", "", $logs[$logid]->url);
+                $raid2 = (int)str_replace("view.php?id=", "", $logs[$data['id2']]->url);
 
                 $readerattempt[1] = $DB->get_record('reader_attempts', array('id' => $raid1));
                 $readerattempt[2] = $DB->get_record('reader_attempts', array('id' => $raid2));
@@ -3196,8 +3205,8 @@ if ($act == 'addquiz' && has_capability('mod/reader:managebooks', $contextmodule
 
                     //echo $cheatedstring ;
 
-                    if ($readerattempt[1]->passed != "cheated") {
-                        if (strstr(strtolower($logtext[$key]->info), 'passed')) {
+                    if ($readerattempt[1]->cheated==0) {
+                        if (strstr(strtolower($logs[$logid]->info), 'passed')) {
                             $logstatus[1] = 'passed';
                         } else {
    //change by Tom 28 June 2010
@@ -3227,8 +3236,8 @@ if ($act == 'addquiz' && has_capability('mod/reader:managebooks', $contextmodule
                         $cheatedstring .= '</div>'."\n";
                     }
 
-                    if ($readerattempt[1]->passed != "cheated") {
-                        if (strstr(strtolower($logtext[$data['id2']]->info), 'passed')) {
+                    if ($readerattempt[1]->cheated==0) {
+                        if (strstr(strtolower($logs[$data['id2']]->info), 'passed')) {
                             $logstatus[2] = 'passed';
                         } else {
     //change by Tom 28 June 2010
@@ -3248,14 +3257,14 @@ if ($act == 'addquiz' && has_capability('mod/reader:managebooks', $contextmodule
                     $groupsuser2 = groups_get_group_name($usergroups[0][0]);
 
                     $table->data[] = new html_table_row(array($bookdata->name."<br />".$cheatedstring,
-                                                            "<a href=\"{$CFG->wwwroot}/user/view.php?id={$logtext[$key]->userid}&course={$course->id}\">{$user1dta->username} ({$user1dta->firstname} {$user1dta->lastname}; group: {$groupsuser1})</a><br />".$logstatus[1],
-                    "<a href=\"{$CFG->wwwroot}/user/view.php?id={$logtext[$data['id2']]->userid}&course={$course->id}\">{$user2data->username} ({$user2data->firstname} {$user2data->lastname}; group: {$groupsuser2})</a><br />".$logstatus[2],
-                    link_to_popup_window("{$CFG->wwwroot}/iplookup/index.php?ip={$data['ip']}&amp;user={$logtext[$key]->userid}", $data['ip'], 440, 700, null, null, true),
-                    link_to_popup_window("{$CFG->wwwroot}/iplookup/index.php?ip={$data['ip2']}&amp;user={$logtext[$data['id2']]->userid}", $data['ip2'], 440, 700, null, null, true),
-                    $logtext[$key]->time,          // time1
-                    $logtext[$data['id2']]->time,  // time2
+                                                            "<a href=\"{$CFG->wwwroot}/user/view.php?id={$logs[$logid]->userid}&course={$course->id}\">{$user1dta->username} ({$user1dta->firstname} {$user1dta->lastname}; group: {$groupsuser1})</a><br />".$logstatus[1],
+                    "<a href=\"{$CFG->wwwroot}/user/view.php?id={$logs[$data['id2']]->userid}&course={$course->id}\">{$user2data->username} ({$user2data->firstname} {$user2data->lastname}; group: {$groupsuser2})</a><br />".$logstatus[2],
+                    link_to_popup_window("{$CFG->wwwroot}/iplookup/index.php?ip={$data['ip']}&amp;user={$logs[$logid]->userid}", $data['ip'], 440, 700, null, null, true),
+                    link_to_popup_window("{$CFG->wwwroot}/iplookup/index.php?ip={$data['ip2']}&amp;user={$logs[$data['id2']]->userid}", $data['ip2'], 440, 700, null, null, true),
+                    $logs[$logid]->time,          // time1
+                    $logs[$data['id2']]->time,  // time2
                     $diffstring,
-                    $logtext[$key]->info."<br />".$logtext[$data['id2']]->info));
+                    $logs[$logid]->info."<br />".$logs[$data['id2']]->info));
                 }
               }
             }
@@ -3337,7 +3346,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managebooks', $contextmodule
                 $data['averagetaken'] += count($readerattempts);
                 foreach ($readerattempts as $readerattempt) {
 
-                    if (strtolower($readerattempt->passed) == 'true') {
+                    if ($readerattempt->passed) {
                         $data['averagepassed']++;
                         if ($bookdata = $DB->get_record('reader_books', array('quizid' => $readerattempt->quizid))) {
                             $data['averagepoints'] += reader_get_reader_points($reader, $bookdata->id);
@@ -3356,7 +3365,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managebooks', $contextmodule
             $params = array($coursestudent->id, 0);
             if ($readerattempts = $DB->get_records_select('reader_attempts', $select, $params)) {
                 foreach ($readerattempts as $readerattempt) {
-                    if (strtolower($readerattempt->passed) == 'true') {
+                    if ($readerattempt->passed) {
                         if ($books = $DB->get_records('reader_books', array('quizid' => $readerattempt->quizid))) {
                             if ($book = array_shift($books)) {
                                 $data['averagewordsallterms'] += $book->words;
@@ -4005,7 +4014,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managebooks', $contextmodule
 
             echo html_writer::start_tag('li'); // start attempt
 
-            $strpassed = reader_format_passed($values['passed'], true);
+            $strpassed = reader_format_passed($values, true);
             $timefinish = userdate($values['timefinish'])." ($strpassed)";
             echo html_writer::tag('span', $timefinish, array('class' => 'importattempttime')).' ';
 
@@ -4026,7 +4035,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managebooks', $contextmodule
                 'timefinish'    => $values['timefinish'],
                 'timemodified'  => $values['timefinish'],
                 'layout'        => 0, // $values['layout']
-                'preview'       => 0,
+                'credit'        => 0,
                 'bookrating'    => $values['bookrating'],
                 'ip'            => $values['ip'],
             );
@@ -4271,7 +4280,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managebooks', $contextmodule
                 reader_get_reader_difficulty($reader, $bookdata->id),
                 $bookdata->difficulty,
                 round($readerattempt->percentgrade).'%',
-                reader_format_passed($readerattempt->passed),
+                reader_format_passed($readerattempt),
                 $readerattempt->timemodified,
                 '' // deleted
             ));

@@ -192,21 +192,26 @@ class mod_reader_admin_users_import_renderer extends mod_reader_admin_users_rend
                     'bookid'        => $books[$image]->id,
                     'quizid'        => $books[$image]->quizid,
                     'attempt'       => $values['attempt'],
-                    'deleted'       => 0,
+                    'layout'        => 0, // $values['layout']
+                    'state'         => ($values['timefinish'] ? 'finished' ? 'inprogress'),
+                    'currentpage'   => 0,
                     'sumgrades'     => $values['sumgrades'],
                     'percentgrade'  => $values['percentgrade'],
-                    'passed'        => $values['passed'],
-                    'checkbox'      => 0,
-                    'timestart'     => $values['timefinish'],
+                    'passed'        => ($values['passed']=='true' ? 1 : 0),
+                    'cheated'       => ($values['passed']=='cheated' ? 1 : 0),
+                    'credit'        => ($values['preview']=='1' ? 1 : 0),
+                    'deleted'       => 0, // because we only export live attempts
+                    'timestart'     => $values['timestart'],
                     'timefinish'    => $values['timefinish'],
-                    'timemodified'  => $values['timefinish'],
-                    'layout'        => 0, // $values['layout']
-                    'preview'       => 0,
+                    'timemodified'  => $values['timemodified'],
                     'bookrating'    => $values['bookrating'],
                     'ip'            => $values['ip'],
                 );
 
-                $params = array('userid' => $users[$username]->id, 'quizid' => $books[$image]->quizid, 'timefinish' => $values['timefinish'], 'deleted' => 0);
+                $params = array('userid' => $users[$username]->id,
+                                'quizid' => $books[$image]->quizid,
+                                'timefinish' => $values['timefinish'],
+                                'deleted' => 0);
                 if ($DB->record_exists('reader_attempts', $params)) {
                     echo html_writer::tag('span', $str->skipped, array('class' => 'importskipped'));
                 } else if ($DB->insert_record('reader_attempts', $attempt)) {

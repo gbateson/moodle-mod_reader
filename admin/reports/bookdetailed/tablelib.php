@@ -66,7 +66,8 @@ class reader_admin_reports_bookdetailed_table extends reader_admin_reports_table
         // 'group'   => 0,
         'publisher'  => 0, 'level'     => 1, 'name'     => 0, 'difficulty' => 1,
         'username'   => 1, 'firstname' => 1, 'lastname' => 1,
-        'timefinish' => 1, 'duration'  => 1, 'grade'    => 1, 'passed' => 1, 'bookrating' => 1
+        'timefinish' => 1, 'duration'  => 1, 'grade'    => 1,
+        'passed'     => 1, 'cheated'   => 1, 'credit'   => 1, 'bookrating' => 1
     );
 
     protected $optionfields = array('termtype'    => self::DEFAULT_TERMTYPE,
@@ -76,7 +77,7 @@ class reader_admin_reports_bookdetailed_table extends reader_admin_reports_table
                                     'sortfields'  => array());
 
     /** @var actions */
-    protected $actions = array('deleteattempts', 'restoreattempts', 'passfailattempts');
+    protected $actions = array('deleteattempts', 'restoreattempts', 'updatepassed', 'updatecheated');
 
     ////////////////////////////////////////////////////////////////////////////////
     // functions to extract data from $DB                                         //
@@ -119,7 +120,8 @@ class reader_admin_reports_bookdetailed_table extends reader_admin_reports_table
         $exclude = 'ra.percentgrade IS NULL';
         $grade = "CASE WHEN ($exclude) THEN 0 ELSE ra.percentgrade END";
 
-        $select = "ra.id, ra.passed, ra.bookrating, ra.timefinish, ra.layout, ($duration) AS duration, ($grade) AS grade, ".
+        $select = 'ra.id, ra.passed, ra.cheated, ra.timefinish, ra.layout, '.
+                  "($duration) AS duration, ($grade) AS grade, ra.bookrating, ".
                   $this->get_userfields('u', array('username'), 'userid').', '.
                   'rb.publisher, rb.level, rb.name, rb.difficulty, '.$wordsorpoints;
         $from   = '{reader_attempts} ra '.
@@ -168,6 +170,7 @@ class reader_admin_reports_bookdetailed_table extends reader_admin_reports_table
 
             // "reader_attempts" aggregate fields
             case 'passed':
+            case 'cheated':
             case 'bookrating':
                 return array('reader_attempts', 'ra');
 

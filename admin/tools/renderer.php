@@ -61,8 +61,8 @@ class mod_reader_admin_tools_renderer extends mod_reader_admin_renderer {
 
             $href = new moodle_url($file, array('id' => $id, 'tab' => $tab));
             $desc = '';
-            if ($strman->string_exists($text.'desc', 'reader')) {
-                $desc = get_string($text.'desc', 'mod_reader');
+            if ($strman->string_exists($text.'_desc', 'reader')) {
+                $desc = get_string($text.'_desc', 'mod_reader');
                 $desc = format_text($desc, FORMAT_MARKDOWN);
             }
             if ($strman->string_exists($text, 'reader')) {

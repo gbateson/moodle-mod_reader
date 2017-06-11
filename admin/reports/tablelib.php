@@ -228,8 +228,8 @@ class reader_admin_reports_table extends reader_admin_table {
         $from   = "{reader_attempts} ra ".
                   "LEFT JOIN {reader_books} rb ON ra.bookid = rb.id";
 
-        $params = array('passed5' => 'true',
-                        'passed6' => 'true',
+        $params = array('passed5' => 1,
+                        'passed6' => 1,
                         'maxduration' => $maxduration);
 
         if ($termtype==reader_admin_reports_options::THIS_TERM) {
@@ -273,8 +273,8 @@ class reader_admin_reports_table extends reader_admin_table {
 
                 $params += array('reader7' => $this->output->reader->id,
                                  'reader8' => $this->output->reader->id,
-                                 'passed7' => 'true', 'time7' => $ignoredate,
-                                 'passed8' => 'true', 'time8' => 0);
+                                 'passed7' => 1, 'time7' => $ignoredate,
+                                 'passed8' => 1, 'time8' => 0);
                 break;
 
             case 'bookid': // booksummary
@@ -651,7 +651,7 @@ class reader_admin_reports_table extends reader_admin_table {
     public function header_passed() {
         return implode('/', array(get_string('passedshort', 'mod_reader'),
                                   get_string('failedshort', 'mod_reader'),
-                                  get_string('creditshort', 'mod_reader')));
+                                  get_string('cheatedshort', 'mod_reader')));
     }
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -856,17 +856,16 @@ class reader_admin_reports_table extends reader_admin_table {
      * @return xxx
      */
     public function col_passed($row)  {
-        if (isset($row->passed) && $row->passed=='true') {
-            $text = get_string('passedshort', 'mod_reader');
-            $class = 'passed';
+        if ($row->cheated) {
+            $type = 'cheated';
         } else {
-            $text = get_string('failedshort', 'mod_reader');
-            $class = 'failed';
+            $type = ($row->passed ? 'passed' : 'failed');
         }
+        $text = get_string($type.'short', 'mod_reader');
         if ($this->download) {
             return $text;
         } else {
-            return html_writer::tag('span', $text, array('class' => $class));
+            return html_writer::tag('span', $text, array('class' => $type));
         }
     }
 
@@ -959,18 +958,33 @@ class reader_admin_reports_table extends reader_admin_table {
     }
 
     /**
-     * display_action_settings_passfailattempts
+     * display_action_settings_updatepassed
      *
      * @param string $action
      * @return xxx
      */
-    public function display_action_settings_passfailattempts($action) {
+    public function display_action_settings_updatepassed($action) {
         $value = optional_param($action, 0, PARAM_INT);
         $settings = '';
         $settings .= get_string('newsetting', 'mod_reader').': ';
-        $options = array('true'    => get_string('passedshort', 'mod_reader').' - '.get_string('passed', 'mod_reader'),
-                         'false'   => get_string('failedshort', 'mod_reader').' - '.get_string('failed', 'mod_reader'),
-                         'cheated' => get_string('creditshort', 'mod_reader').' - '.get_string('credit', 'mod_reader'));
+        $options = array(0 => get_string('failedshort', 'mod_reader').' - '.get_string('failed', 'mod_reader'),
+                         1 => get_string('passedshort', 'mod_reader').' - '.get_string('passed', 'mod_reader'));
+        $settings .= html_writer::select($options, $action, $value, '', array());
+        return $this->display_action_settings($action, $settings);
+    }
+
+    /**
+     * display_action_settings_updatecheated
+     *
+     * @param string $action
+     * @return xxx
+     */
+    public function display_action_settings_updatecheated($action) {
+        $value = optional_param($action, 0, PARAM_INT);
+        $settings = '';
+        $settings .= get_string('newsetting', 'mod_reader').': ';
+        $options = array(0 => get_string('no'),
+                         1 => get_string('yes').' - '.get_string('cheated', 'mod_reader'));
         $settings .= html_writer::select($options, $action, $value, '', array());
         return $this->display_action_settings($action, $settings);
     }
@@ -996,14 +1010,25 @@ class reader_admin_reports_table extends reader_admin_table {
     }
 
     /**
-     * execute_action_passfailattempts
+     * execute_action_updatepassed
      *
      * @param string $action
      * @return xxx
      */
-    public function execute_action_passfailattempts($action) {
-        $value = optional_param($action, '', PARAM_ALPHA);
+    public function execute_action_updatepassed($action) {
+        $value = optional_param($action, '', PARAM_INT);
         return $this->execute_action_updateattempts('passed', $value);
+    }
+
+    /**
+     * execute_action_updatecheated
+     *
+     * @param string $action
+     * @return xxx
+     */
+    public function execute_action_updatecheated($action) {
+        $value = optional_param($action, '', PARAM_INT);
+        return $this->execute_action_updateattempts('cheated', $value);
     }
 
     /**

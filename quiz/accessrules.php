@@ -644,11 +644,22 @@ class inter_attempt_delay_access_rule extends readerquiz_access_rule_base {
  */
 class ipaddress_access_rule extends readerquiz_access_rule_base {
     public function prevent_access() {
-        if (address_in_subnet(getremoteaddr(), $this->reader->subnet)) {
-            return false;
+        if (empty($this->reader->subnet)) {
+            $subnetwrong = false; // no subnet restriction
+        } else if (address_in_subnet(getremoteaddr(), $this->reader->subnet)) {
+            $subnetwrong = false; // subnet restriction passed
+        } else if (empty($this->reader->individualstrictip)) {
+            $subnetwrong = true; // subnet restriction failed
         } else {
-            return get_string('subnetwrong', 'reader');
+            // check if this user is explicitly banned from using external ip-addresses
+            // this allows certain users, such as teachers, to access from anywhere
+            $params = array('readerid' => $this->reader->id, 'userid' => $USER->id);
+            $subnetwrong = $DB->record_exists('reader_strict_users_list', $params);
         }
+        if ($subnetwrong) {
+            $subnetwrong = get_string('subnetwrong', 'reader');
+        }
+        return $subnetwrong;
     }
 }
 

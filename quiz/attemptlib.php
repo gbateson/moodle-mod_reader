@@ -747,7 +747,7 @@ class reader_attempt {
 
     /** @return bool whether this attempt is a preview attempt. */
     public function is_preview() {
-        return $this->attempt->preview;
+        return (empty($this->attempt->preview) ? false : true);
     }
 
     /**
@@ -1373,13 +1373,17 @@ class reader_attempt {
         $this->attempt->sumgrades    = $this->quba->get_total_mark();
         $this->attempt->percentgrade = round($this->quba->get_total_mark() / $this->readerquiz->quiz->sumgrades * 100);
 
-        if ($this->readerquiz->reader->minpassgrade <= $this->attempt->percentgrade) {
-            $this->attempt->passed = 'true';
+        if ($this->attempt->percentgrade >= $this->readerquiz->reader->minpassgrade) {
+            $this->attempt->passed = 1;
             $passedlog = 'Passed';
         } else {
-            $this->attempt->passed = 'false';
+            $this->attempt->passed = 0;
             $passedlog = 'Failed';
         }
+        $this->attempt->credit = 0;
+        $this->attempt->cheated = 0;
+        $this->attempt->deleted = 0;
+        $this->attempt->state   = 'finished';
 
         $logaction = 'finish attempt: '.substr($this->readerquiz->book->name, 0, 26); // 40 char limit
         $loginfo   = 'readerID '.$this->get_readerid().'; reader quiz '.$this->get_quizid().'; '.$this->attempt->percentgrade.'%/'.$passedlog;

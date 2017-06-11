@@ -781,7 +781,7 @@ class mod_reader_renderer extends plugin_renderer_base {
                         break;
 
                     case ($difficulty == $level->currentlevel):
-                        if (strtolower($attempt->passed)=='true') {
+                        if ($attempt->passed) {
                             $count['this'] += 1;
                         }
                         break;

@@ -1001,7 +1001,7 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
             $params = array('readerid' => $readerid,
                             'userid'   => $userid,
                             'bookid'   => $book->id,
-                            'preview'  => 0);
+                            'credit'   => 0);
             if ($allowmultiple==false && $DB->record_exists('reader_attempts', $params)) {
                 echo 'User (id='.$userid.') has already been awarded points for the selected book<br />';
                 continue;
@@ -1015,7 +1015,7 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
             // get next attempt number
             $select = 'MAX(attempt)';
             $from   = '{reader_attempts}';
-            $where  = 'readerid = ? AND userid = ? AND timefinish > ? AND preview = ?';
+            $where  = 'readerid = ? AND userid = ? AND timefinish > ? AND credit = ?';
             $params = array($readerid, $userid, 0, 0);
 
             if($attemptnumber = $DB->get_field_sql("SELECT $select FROM $from WHERE $where", $params)) {
@@ -1033,14 +1033,16 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
                 'attempt'      => $attemptnumber,
                 'sumgrades'    => 100.0,
                 'percentgrade' => 100.0,
-                'passed'       => 'true',
-                'checkbox'     => 0,
+                'passed'       => 1,
+                'credit'       => 1,
+                'cheated'      => 0,
+                'deleted'      => 0,
                 'timestart'    => $time,
                 'timefinish'   => $time,
                 'timecreated'  => $time,
                 'timemodified' => $time,
                 'layout'       => '0',
-                'preview'      => 0,
+                'credit'       => 0,
                 'bookrating'   => 0,
                 'ip'           => getremoteaddr(),
             );

@@ -155,7 +155,7 @@ $string['activemessages'] = 'Active messages';
 $string['activityoverview'] = 'Click here to view information about your extensive reading activity';
 $string['add'] = 'Add';
 $string['add_phpdoc'] = 'Add PHP doc comments';
-$string['add_phpdocdesc'] = 'Add PHP doc comments to php, js and css files.';
+$string['add_phpdoc_desc'] = 'Add PHP doc comments to php, js and css files.';
 $string['addbookinstance'] = 'Add more books to this course';
 $string['addmoregoals'] = 'Add {no} more goals';
 $string['addmorerates'] = 'Add {no} more rates';
@@ -273,6 +273,7 @@ $string['changequiz'] = 'Change quiz';
 $string['changereaderlevel'] = 'Change Reading Level, Length or Word Count';
 $string['changestartlevel'] = 'Change all start level to ';
 $string['cheated'] = 'Cheated';
+$string['cheatedshort'] = 'C';
 $string['cheatedmessage'] = 'Cheated message';
 $string['cheatedmessage_help'] = 'This message wil be sent to students who are judged by the Reader module to have cheated.';
 $string['cheatedmessagedefault'] = 'We are sorry to say that the MoodleReader program has discovered that you have probably cheated when you took the above quiz. "Cheating" means that you either helped another person to take the quiz or that you received help from someone else to take the quiz. Both people have been marked "cheated".
@@ -282,7 +283,7 @@ Sometimes the computer makes mistakes. If you honestly did not receive help and 
 --The MoodleReader Module Manager';
 $string['cheatsheet'] = 'Cheat sheet';
 $string['check_email'] = 'Check email';
-$string['check_emaildesc'] = 'Send two test emails to the gueststudent user, one via Moodle mail and one via PHP mail.';
+$string['check_email_desc'] = 'Send two test emails to the gueststudent user, one via Moodle mail and one via PHP mail.';
 $string['checkbox'] = 'Show checkboxes';
 $string['checkbox_help'] = '**Yes**
 : Show checkboxes on the teacher report pages in the Admin area.
@@ -333,8 +334,8 @@ $string['countrating'] = 'Number of ratings';
 $string['coursespecificquizselection'] = 'Course-specific quiz selection" to "Yes" in the module set-up screen.';
 $string['createcoversets_l'] = 'Create Cover Sets by Level & Publisher';
 $string['createcoversets_t'] = 'Create Cover Sets by Publisher &amp; Level';
-$string['credit'] = 'Credit';
-$string['creditshort'] = 'C';
+$string['credit'] = 'Extra credit';
+$string['creditshort'] = 'X';
 $string['curlerror'] = 'CURL error: {$a}';
 $string['current'] = 'Current';
 $string['currentlevel'] = 'Current level';
@@ -362,13 +363,16 @@ Deleting attempts at Reader quizzes will also reset the reading scores for all s
 $string['deleteattempts'] = 'Delete seleted attempts';
 $string['deletecategories'] = 'Delete categories';
 $string['deletecourses'] = 'Delete courses';
+$string['deleted'] = 'Deleted';
+$string['deletedshort'] = 'D';
 $string['deletegoals'] = 'Delete goals for groups and levels';
 $string['deletegoals_help'] = 'The default reading goals for particular groups or reading levels will be deleted.';
 $string['deletemessages'] = 'Delete Reader messages';
 $string['deletemessages_help'] = 'All messages that appear on the students\' main page for Reader activities in this course will be deleted.';
 $string['deleterates'] = 'Delete rates for groups and levels';
 $string['deleterates_help'] = 'The rates between Reader quizzes for particular groups or reading levels will be removed.';
-$string['detectcheating'] = 'Detect cheating';
+$string['detect_cheating_desc'] = 'Scan the attempt logs and report suspicious activity that might indicate cheating.';
+$string['detect_cheating'] = 'Detect cheating';
 $string['difficulty'] = 'Difficulty';
 $string['difficultyshort'] = 'RL';
 $string['disallowpromotion'] = 'Do NOT allow promotion';
@@ -397,7 +401,7 @@ $string['error'] = 'Error: {$a}';
 $string['errorsfound'] = 'Errors found';
 $string['export'] = 'Export';
 $string['export_reader_tables'] = 'Export reader tables';
-$string['export_reader_tablesdesc'] = 'Export Reader database tables. Note that the exported data contains no course or user names, only ids.';
+$string['export_reader_tables_desc'] = 'Export Reader database tables. Note that the exported data contains no course or user names, only ids.';
 $string['exportstudentrecords'] = 'Export student records';
 $string['extrapoints'] = 'Extra Points';
 $string['extrapoints0'] = '0.5 Points';
@@ -413,14 +417,14 @@ $string['failedshort'] = 'F';
 $string['filename'] = 'File name';
 $string['fileuploaded'] = 'File was uploaded';
 $string['find_faultyquizzes'] = 'Find faulty quizzes';
-$string['find_faultyquizzesdesc'] = 'Find quizzes that have questions with no correct answer, or questions that have become orphaned.';
+$string['find_faultyquizzes_desc'] = 'Find quizzes that have questions with no correct answer, or questions that have become orphaned.';
 $string['finishreview'] = 'Finish review';
 $string['fix_bookcovers'] = 'Fix book covers';
-$string['fix_bookcoversdesc'] = 'Detect books that are missing a book-cover image, and attempt to download the book-cover image.';
+$string['fix_bookcovers_desc'] = 'Detect books that are missing a book-cover image, and attempt to download the book-cover image.';
 $string['fix_bookinstances'] = 'Fix book instances';
-$string['fix_bookinstancesdesc'] = 'Ensure that all books have a associated record in the reader_book_instances table.';
+$string['fix_bookinstances_desc'] = 'Ensure that all books have a associated record in the reader_book_instances table.';
 $string['fix_coursesections'] = 'Fix course sections';
-$string['fix_coursesectionsdesc'] = 'Tidy up the main page of courses containing Reader quizzes.
+$string['fix_coursesections_desc'] = 'Tidy up the main page of courses containing Reader quizzes.
 
 * order sections by publisher name and level difficulty
 * ensure each section contains only books from one publisher
@@ -428,19 +432,19 @@ $string['fix_coursesectionsdesc'] = 'Tidy up the main page of courses containing
 * remove empty sections
 * reset number of course sections';
 $string['fix_installxml'] = 'Fix db/install.xml';
-$string['fix_installxmldesc'] = 'Make XML tags in db/install.xml compatible with Moodle <= 2.5
+$string['fix_installxml_desc'] = 'Make XML tags in db/install.xml compatible with Moodle <= 2.5
 
 * add NEXT and PREVIOUS attributes to TABLE, FIELD, KEY and INDEX tags
 * add SEQUENCE attributes to FIELD tags with TYPE="int"';
 $string['fix_missingquizzes'] = 'Fix missing quizzes';
-$string['fix_missingquizzesdesc'] = 'Unify duplicate Reader books and quizzes.
+$string['fix_missingquizzes_desc'] = 'Unify duplicate Reader books and quizzes.
 
 * merge duplicate books
 * fix books which share the same quiz
 * merge duplicate quizzes
 * fix books and attempts for which the quiz is missing';
 $string['fix_questioncategories'] = 'Fix question categories';
-$string['fix_questioncategoriesdesc'] = 'Tidy up Reader questions and question categories.
+$string['fix_questioncategories_desc'] = 'Tidy up Reader questions and question categories.
 
 * unset all invalid parent question ids
 * delete Reader questions not used in any Reader quizzes
@@ -448,9 +452,9 @@ $string['fix_questioncategoriesdesc'] = 'Tidy up Reader questions and question c
 * remove slashes from category names and descriptions
 * standardize names of Ordering categories';
 $string['fix_slashesinnames'] = 'Fix slashes in names';
-$string['fix_slashesinnamesdesc'] = 'Remove any slashes in the names of Reader books and questions categories.';
+$string['fix_slashesinnames_desc'] = 'Remove any slashes in the names of Reader books and questions categories.';
 $string['fix_wrongattempts'] = 'Fix wrong attempts';
-$string['fix_wrongattemptsdesc'] = 'Detect and fix any attempts at Reader quizzes where the name of the quiz does not match the name of the book in the Reader log';
+$string['fix_wrongattempts_desc'] = 'Detect and fix any attempts at Reader quizzes where the name of the quiz does not match the name of the book in the Reader log';
 $string['fixattempts'] = 'Fixing duplicate Reader attempts';
 $string['fixcontexts'] = 'Fixing faulty contexts in Quiz question categories';
 $string['fixingsumgrades'] = 'Fixing grades on attempts at Reader quizzes ...';
@@ -515,7 +519,7 @@ $string['image'] = 'Image';
 $string['imageadded'] = 'Image added: {$a}';
 $string['import'] = 'Import';
 $string['import_reader_tables'] = 'Import reader tables';
-$string['import_reader_tablesdesc'] = 'Recreate an entire Moodle site from just the Reader database tables. This tool will create courses, users, groups, Reader activies and quizzes.';
+$string['import_reader_tables_desc'] = 'Recreate an entire Moodle site from just the Reader database tables. This tool will create courses, users, groups, Reader activies and quizzes.';
 $string['importreadertables'] = 'Import Reader tables';
 $string['importstudentrecord'] = 'Import student record';
 $string['in1000sofwords'] = 'in 1000s of words';
@@ -584,7 +588,7 @@ $string['minquizattemptrate_help'] = 'The minimum rate at which students may att
 $string['minquizattemptratetext'] = 'Please take at least {$a}. If you fall below this rate, the following action will be taken:';
 $string['morenewattempts'] = '{$a} more new attempts ...';
 $string['move_quizzes'] = 'Move quizzes';
-$string['move_quizzesdesc'] = 'Move Reader quizzes from the current course to the main course for Reader quizzes.';
+$string['move_quizzes_desc'] = 'Move Reader quizzes from the current course to the main course for Reader quizzes.';
 $string['movedquizzes'] = '{$a} quizzes moved successfully';
 $string['needdeletethisattemptstoo'] = 'Need delete this Attempts too';
 $string['needtocheckupdates'] = 'This site has not checked for quiz updates in ({$a} days). Check now?';
@@ -625,7 +629,7 @@ $string['onlybookswithmorethan'] = 'Only books with more than';
 $string['pagesettings'] = 'Page settings';
 $string['passed'] = 'Passed';
 $string['passedshort'] = 'P';
-$string['passfailattempts'] = 'Update the pass/fail setting for selected attempts';
+$string['updatepassed'] = 'Update the pass/fail setting for selected attempts';
 $string['passworderror'] = 'The password entered was incorrect';
 $string['passwords_list'] = 'Passwords list';
 $string['percentactive'] = 'Active percent';
@@ -648,7 +652,7 @@ $string['popup_help'] = 'If "Yes" is selected,
 $string['prevlevel'] = 'Quizzes at previous level';
 $string['prevlevel_help'] = 'The number of quizzes that a student may take from the previous reading level, i.e. the reading level that is just below their current reading level. Note that these quizzes do NOT count toward promotion.';
 $string['print_cheatsheet'] = 'Print cheatsheet';
-$string['print_cheatsheetdesc'] = 'Display the answers for any Reader quiz.';
+$string['print_cheatsheet_desc'] = 'Display the answers for any Reader quiz.';
 $string['private'] = 'Private';
 $string['process_addquestion'] = '<b>Add questions to quiz {$a}.</b><br />';
 $string['process_courseadded'] = '<b>Course added.</b><br />';
@@ -738,7 +742,7 @@ $string['readinglevelshort'] = 'RL {$a}';
 $string['readingreportfor'] = 'Reading Report for {$a}';
 $string['recommendedreadingrates'] = 'Recommend reading rates';
 $string['redo_upgrade'] = 'Redo upgrade';
-$string['redo_upgradedesc'] = 'Redo an upgrade to the Reader module.';
+$string['redo_upgrade_desc'] = 'Redo an upgrade to the Reader module.';
 $string['remotesitenotaccessible'] = 'Remote download site is not accessible';
 $string['removebook'] = 'Remove books';
 $string['removebook_help'] = 'Books that have "live" attempts cannot be deleted. In order to delete such books, you will first need to delete their "live" attempts.';
@@ -766,7 +770,7 @@ $string['review'] = 'Review';
 $string['reviewthisattempt'] = 'Review your responses to this attempt';
 $string['rowsperpage'] = 'Rows per page';
 $string['run_readercron'] = 'Run Reader cron';
-$string['run_readercrondesc'] = 'Run the cron job for the Reader module.';
+$string['run_readercron_desc'] = 'Run the cron job for the Reader module.';
 $string['safebrowsererror'] = 'This quiz has been set up so that it may only be attempted using the Safe Exam Browser. You cannot attempt it form this web browser.';
 $string['safebrowsernotice'] = 'This quiz has been configured so that students may only attempt it using the Safe Exam Browser.';
 $string['search'] = 'Search';
@@ -875,7 +879,7 @@ $string['skipped'] = 'Skipped';
 $string['skipquizdownload'] = 'Quiz "{$a->quizname}" already exists in section {$a->sectionnum}, "{$a->sectionname}", of "{$a->coursename}", and has been skipped';
 $string['sofar'] = 'so far';
 $string['sort_strings'] = 'Sort strings';
-$string['sort_stringsdesc'] = 'Sort the strings used by the Reader module.';
+$string['sort_strings_desc'] = 'Sort the strings used by the Reader module.';
 $string['sortfields'] = 'Sort fields';
 $string['startbookdetailed'] = 'There is currently no data available for this report.';
 $string['startbooksummary'] = 'There is currently no data available for this report.';
@@ -1064,3 +1068,26 @@ $string['youmustpasssingle'] = 'To be promoted, you must pass ONE more quiz at r
 $string['youmustwait'] = 'You must wait before you may re-attempt this quiz. You will be allowed to start another attempt after {$a}.';
 $string['yourcurrentlevel'] = 'Your reading level is currently set to level {$a}';
 $string['youwerepromoted'] = 'You were promoted to reading level {$a->level} on {$a->date} at {$a->time}';
+
+$string['allcourses'] = 'All courses';
+$string['anytime'] = 'Any time';
+$string['atttemptsgroupedbybook'] = 'Attempts grouped by book';
+$string['atttemptsgroupedbyuser'] = 'Attempts grouped by user';
+$string['courseid'] = 'Course ID';
+$string['currentcourse'] = 'Current course';
+$string['ipaddress'] = 'IP address';
+$string['minimumdelay'] = 'Maximum delay';
+$string['outputformat'] = 'Output format';
+$string['readerid'] = 'Reader ID';
+$string['scanningattempts'] = 'Scanning attempts at Reader quizzes';
+$string['setcheated'] = 'Flag selected attempts as cheated';
+$string['startdate'] = 'Start date';
+$string['startscan'] = 'Start scan';
+$string['strfdateshort'] = '%Y %b %d (%a)';
+$string['strfdatetimeshort'] = '%Y %b %d (%a) %H:%M';
+$string['strftimeshort'] = '%H:%M';
+$string['subnetlength'] = 'IP mask';
+$string['unsetcheated'] = 'Unflag selected attempts as cheated';
+
+$string['updatecheated'] = 'Update the cheated setting for selected attempts';
+$string['attemptsupdated'] = '{$a} attempts were updated';

@@ -1351,5 +1351,73 @@ function xmldb_reader_upgrade($oldversion) {
         upgrade_mod_savepoint(true, "$newversion", 'reader');
     }
 
+    $newversion = 2017052182;
+    if ($result && $oldversion < $newversion) {
+
+        // add new fields to "reader_attempts" table
+        $table = new xmldb_table('reader_attempts');
+
+        // remove the old "deleted" index
+        $index = new xmldb_index('readatte_del_ix', XMLDB_INDEX_NOTUNIQUE, array('deleted'));
+        if ($dbman->index_exists($table, $index)) {
+            $dbman->drop_index($table, $index);
+        }
+
+        // remove the new "deleted" index because we cannot modify
+        // the "passed", "cheated" and "deleted" fields while this index exists
+        $index = new xmldb_index('readatte_paschedel_ix', XMLDB_INDEX_NOTUNIQUE, array('passed', 'cheated', 'deleted'));
+        if ($dbman->index_exists($table, $index)) {
+            $dbman->drop_index($table, $index);
+        }
+
+        // remove "checkbox"
+        $field = new xmldb_field('checkbox');
+        if ($dbman->field_exists($table, $field)) {
+            $dbman->drop_field($table, $field);
+        }
+
+        // add "cheated"
+        $field = new xmldb_field('cheated', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0', 'passed');
+        xmldb_reader_fix_previous_field($dbman, $table, $field);
+        if ($dbman->field_exists($table, $field)) {
+            $dbman->change_field_type($table, $field);
+        } else {
+            $dbman->add_field($table, $field);
+            $DB->set_field_select('reader_attempts', 'cheated', 1, 'passed = ?', array('cheated'));
+            $DB->set_field_select('reader_attempts', 'passed',  0, 'passed = ?', array('cheated'));
+            $DB->set_field_select('reader_attempts', 'passed',  0, 'passed = ?', array('false'));
+            $DB->set_field_select('reader_attempts', 'passed',  1, 'passed = ?', array('true'));
+        }
+
+        // convert "passed" to a boolean field
+        $field = new xmldb_field('passed', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0', 'percentgrade');
+        xmldb_reader_fix_previous_field($dbman, $table, $field);
+        if ($dbman->field_exists($table, $field)) {
+            $dbman->change_field_type($table, $field);
+        }
+
+        // rename "preview" field to "credit"
+        $field = new xmldb_field('preview', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0', 'passed');
+        xmldb_reader_fix_previous_field($dbman, $table, $field);
+        if ($dbman->field_exists($table, $field)) {
+            $dbman->change_field_type($table, $field);
+            $dbman->rename_field($table, $field, 'credit');
+        }
+
+        // ensure "deleted" is not null
+        $field = new xmldb_field('deleted', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0', 'cheated');
+        xmldb_reader_fix_previous_field($dbman, $table, $field);
+        if ($dbman->field_exists($table, $field)) {
+            $DB->set_field_select('reader_attempts', 'deleted', 0, 'deleted IS NULL', array());
+            $dbman->change_field_type($table, $field);
+        }
+
+        // add new "deleted" index on "reader_attempts" table
+        if (! $dbman->index_exists($table, $index)) {
+            $dbman->add_index($table, $index);
+        }
+        upgrade_mod_savepoint(true, "$newversion", 'reader');
+    }
+
     return $result;
 }

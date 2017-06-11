@@ -494,12 +494,19 @@ class reader_remotesite_moodlereadernet extends reader_remotesite {
         }
 
         if ($books = $DB->get_records_select('reader_books', 'hidden <> ?', array(1))) {
+
+            // specify fixed parameters for extracting attempts
+            $sort   = 'readerid, timefinished';
+            $fields = 'id, bookid, readerid, passed, credit, bookrating';
+
             foreach ($books as $book) {
 
                 $count = array();
                 $ratings = array();
 
-                if ($attempts = $DB->get_records('reader_attempts', array('bookid' => $book->id), 'id, passed, bookrating, readerid')) {
+                $select = 'bookid = ? AND deleted = ? AND cheated = ? AND timefinished > ?';
+                $params = array($book->id, 0, 0, 0);
+                if ($attempts = $DB->get_records_select('reader_attempts', $select, $params, $sort, $fields)) {
                     foreach ($attempts as $attempt) {
 
                         if (empty($usage->books[$attempt->readerid])) {
@@ -517,12 +524,10 @@ class reader_remotesite_moodlereadernet extends reader_remotesite {
                             );
                         }
 
-                        if ($attempt->passed=='true') {
-                            $type = 'true';
-                        } else if ($attempt->passed=='credit') {
+                        if ($attempt->credit) {
                             $type = 'credit';
                         } else {
-                            $type = 'false';
+                            $type = ($attempt->passed ? 'true' : 'false');
                         }
                         $usage->books[$attempt->readerid][$book->image]->$type++;
 

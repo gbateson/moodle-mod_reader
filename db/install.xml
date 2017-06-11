@@ -60,20 +60,20 @@
         <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" NEXT="bookid" PREVIOUS="readerid"/>
         <FIELD NAME="bookid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" NEXT="quizid" PREVIOUS="userid"/>
         <FIELD NAME="quizid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" NEXT="attempt" PREVIOUS="bookid"/>
-        <FIELD NAME="attempt" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" NEXT="deleted" PREVIOUS="quizid"/>
-        <FIELD NAME="deleted" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false" NEXT="sumgrades" PREVIOUS="attempt"/>
-        <FIELD NAME="sumgrades" TYPE="float" NOTNULL="true" DEFAULT="0" SEQUENCE="false" NEXT="percentgrade" PREVIOUS="deleted"/>
+        <FIELD NAME="attempt" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" NEXT="layout" PREVIOUS="quizid"/>
+        <FIELD NAME="layout" TYPE="text" NOTNULL="false" SEQUENCE="false" NEXT="state" PREVIOUS="attempt"/>
+        <FIELD NAME="state" TYPE="char" LENGTH="16" NOTNULL="true" DEFAULT="inprogress" SEQUENCE="false" COMMENT="The current state of the attempt. 'inprogress', 'overdue', 'finished' or 'abandoned'." NEXT="currentpage" PREVIOUS="layout"/>
+        <FIELD NAME="currentpage" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" NEXT="sumgrades" PREVIOUS="state"/>
+        <FIELD NAME="sumgrades" TYPE="float" NOTNULL="true" DEFAULT="0" SEQUENCE="false" NEXT="percentgrade" PREVIOUS="currentpage"/>
         <FIELD NAME="percentgrade" TYPE="number" LENGTH="6" DECIMALS="2" NOTNULL="true" DEFAULT="0" SEQUENCE="false" NEXT="passed" PREVIOUS="sumgrades"/>
-        <FIELD NAME="passed" TYPE="char" LENGTH="10" NOTNULL="true" DEFAULT="false" SEQUENCE="false" NEXT="checkbox" PREVIOUS="percentgrade"/>
-        <FIELD NAME="checkbox" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" NEXT="timestart" PREVIOUS="passed"/>
-        <FIELD NAME="timestart" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" NEXT="timefinish" PREVIOUS="checkbox"/>
+        <FIELD NAME="passed" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false" NEXT="credit" PREVIOUS="percentgrade"/>
+        <FIELD NAME="credit" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false" NEXT="cheated" PREVIOUS="passed"/>
+        <FIELD NAME="cheated" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false" NEXT="deleted" PREVIOUS="credit"/>
+        <FIELD NAME="deleted" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false" NEXT="timestart" PREVIOUS="cheated"/>
+        <FIELD NAME="timestart" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" NEXT="timefinish" PREVIOUS="deleted"/>
         <FIELD NAME="timefinish" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" NEXT="timemodified" PREVIOUS="timestart"/>
-        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" NEXT="layout" PREVIOUS="timefinish"/>
-        <FIELD NAME="layout" TYPE="text" NOTNULL="false" SEQUENCE="false" NEXT="currentpage" PREVIOUS="timemodified"/>
-        <FIELD NAME="currentpage" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" NEXT="preview" PREVIOUS="layout"/>
-        <FIELD NAME="preview" TYPE="int" LENGTH="3" NOTNULL="true" DEFAULT="0" SEQUENCE="false" NEXT="state" PREVIOUS="currentpage"/>
-        <FIELD NAME="state" TYPE="char" LENGTH="16" NOTNULL="true" DEFAULT="inprogress" SEQUENCE="false" NEXT="bookrating" PREVIOUS="preview" COMMENT="The current state of the attempt. 'inprogress', 'overdue', 'finished' or 'abandoned'."/>
-        <FIELD NAME="bookrating" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="0" SEQUENCE="false" NEXT="ip" PREVIOUS="state"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" NEXT="bookrating" PREVIOUS="timefinish"/>
+        <FIELD NAME="bookrating" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="0" SEQUENCE="false" NEXT="ip" PREVIOUS="timemodified"/>
         <FIELD NAME="ip" TYPE="char" LENGTH="40" NOTNULL="false" SEQUENCE="false" PREVIOUS="bookrating"/>
       </FIELDS>
       <KEYS>
@@ -85,9 +85,9 @@
         <INDEX NAME="readatte_use_ix" UNIQUE="false" FIELDS="userid" NEXT="readatte_boo_ix" PREVIOUS="readatte_rea_ix"/>
         <INDEX NAME="readatte_boo_ix" UNIQUE="false" FIELDS="bookid" NEXT="readatte_qui_ix" PREVIOUS="readatte_use_ix"/>
         <INDEX NAME="readatte_qui_ix" UNIQUE="false" FIELDS="quizid" NEXT="readatte_att_ix" PREVIOUS="readatte_boo_ix"/>
-        <INDEX NAME="readatte_att_ix" UNIQUE="false" FIELDS="attempt" NEXT="readatte_del_ix" PREVIOUS="readatte_qui_ix"/>
-        <INDEX NAME="readatte_del_ix" UNIQUE="false" FIELDS="deleted" NEXT="readatte_tim_ix" PREVIOUS="readatte_att_ix"/>
-        <INDEX NAME="readatte_tim_ix" UNIQUE="false" FIELDS="timefinish" PREVIOUS="readatte_del_ix"/>
+        <INDEX NAME="readatte_att_ix" UNIQUE="false" FIELDS="attempt" NEXT="readatte_tim_ix" PREVIOUS="readatte_qui_ix"/>
+        <INDEX NAME="readatte_tim_ix" UNIQUE="false" FIELDS="timefinish" NEXT="readatte_paschedel_ix" PREVIOUS="readatte_att_ix"/>
+        <INDEX NAME="readatte_paschedel_ix" UNIQUE="false" FIELDS="passed,cheated,deleted" PREVIOUS="readatte_tim_ix"/>
       </INDEXES>
     </TABLE>
     <TABLE NAME="reader_attempt_questions" COMMENT="reader_attempt_questions table" NEXT="reader_books" PREVIOUS="reader_attempts">

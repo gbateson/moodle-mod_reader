@@ -399,10 +399,10 @@ function reader_get_grades($reader, $userid=0) {
               'MAX(timefinish) AS datesubmitted, MAX(timemodified) AS dategraded';
     $from   = '{reader_attempts} ra '.
               'JOIN {reader_books} rb ON ra.bookid = rb.id';
-    $where  = 'ra.readerid = ? AND (ra.passed = ? OR ra.passed = ?) AND '.
-              'ra.deleted = ? AND ra.preview = ? AND ra.timefinish >= ?';
+    $where  = 'ra.readerid = ? AND (ra.passed = ? OR ra.credit = ?) AND '.
+              'ra.deleted = ? AND ra.cheated = ? AND ra.timefinish >= ?';
     $group  = 'ra.userid, ra.readerid';
-    $params = array($reader->id, 'true', 'credit', 0, 0, $reader->ignoredate);
+    $params = array($reader->id, 1, 1, 0, 0, $reader->ignoredate);
 
     if ($userid) {
         $where .= ' AND ra.userid = ?';
@@ -1247,16 +1247,23 @@ function reader_print_recent_mod_activity($activity, $courseid, $detail, $modnam
         $href = new moodle_url('/mod/reader/admin/report.php', array('id'=>$attempt->id));
         $link = html_writer::link($href, userdate($attempt->timemodified, $dateformat));
 
-        switch ($attempt->passed) {
-            case 'true':
-                $passed = get_string('passed', 'mod_reader');
-                $class = 'passed';
+        switch (true) {
+            case $attempt->deleted:
+                $passed = get_string('deleted', 'mod_reader');
+                $class = 'failed';
                 break;
-            case 'credit':
+            case $attempt->credit:
                 $passed = get_string('credit', 'mod_reader');
                 $class = 'passed';
                 break;
-            case 'credit':
+            case $attempt->cheated:
+                $passed = get_string('cheated', 'mod_reader');
+                $class = 'failed';
+                break;
+            case $attempt->passed:
+                $passed = get_string('passed', 'mod_reader');
+                $class = 'passed';
+                break;
             default:
                 $passed = get_string('failed', 'mod_reader');
                 $class = 'failed';
@@ -1328,11 +1335,13 @@ function reader_print_overview($courses, &$htmlarray) {
                 'attempts'     => get_string('attempts', 'mod_reader'),
                 'averagegrade' => get_string('gradeaverage', 'quiz'),
                 'dateformat'   => get_string('strftimedaydatetime'),
-                'credit'       => get_string('credit', 'mod_reader'),
-                'failed'       => get_string('failed', 'mod_reader'),
                 'goal'         => get_string('goal', 'mod_reader'),
                 'grade'        => get_string('grade'),
+                'deleted'      => get_string('deleted', 'mod_reader'),
+                'cheated'      => get_string('cheated', 'mod_reader'),
+                'credit'       => get_string('credit', 'mod_reader'),
                 'passed'       => get_string('passed', 'mod_reader'),
+                'failed'       => get_string('failed', 'mod_reader'),
                 'points'       => get_string('points', 'mod_reader'),
                 'reader'       => get_string('modulename', 'mod_reader'),
                 'status'       => get_string('status'),
@@ -1372,21 +1381,29 @@ function reader_print_overview($courses, &$htmlarray) {
             // attempted: 99, passed: 99 failed: 99
             if ($students = get_users_by_capability($modulecontext, 'mod/reader:viewbooks', 'u.id,u.id', 'u.id', '', '', 0, '', false)) {
                 $sumgrade = 0;
-                $countactive = 0;
-                $countpassed = 0;
-                $countcredit = 0;
-                $countfailed = 0;
+                $countdeleted  = 0;
+                $countcheated  = 0;
+                $countcredit   = 0;
+                $countpassed   = 0;
+                $countfailed   = 0;
+                $countactive   = 0;
                 $countattempts = 0;
                 $countstudents = count($students);
                 // search reader_attempts for aggregate totals for each student
                 list($where, $params) = $DB->get_in_or_equal(array_keys($students));
                 $select = 'userid, '.
-                          'SUM(CASE WHEN passed = ? THEN 1 ELSE 0 END) AS countpassed, '.
-                          'SUM(CASE WHEN passed = ? THEN 1 ELSE 0 END) AS countcredit, '.
-                          'SUM(CASE WHEN passed = ? THEN 1 ELSE 0 END) AS countfailed, '.
+                          'SUM(CASE WHEN (deleted = ?) THEN 1 ELSE 0 END) AS countdeleted, '.
+                          'SUM(CASE WHEN (deleted = ? AND cheated = ?) THEN 1 ELSE 0 END) AS countcheated, '.
+                          'SUM(CASE WHEN (deleted = ? AND cheated = ? AND credit = ?) THEN 1 ELSE 0 END) AS countcredit, '.
+                          'SUM(CASE WHEN (deleted = ? AND cheated = ? AND credit = ? AND passed = ?) THEN 1 ELSE 0 END) AS countpassed, '.
+                          'SUM(CASE WHEN (deleted = ? AND cheated = ? AND credit = ? AND passed = ?) THEN 1 ELSE 0 END) AS countfailed, '.
                           'SUM(percentgrade) AS sumgrade, '.
                           'COUNT(*) AS countattempts';
-                array_unshift($params, 'true', 'credit', 'false');
+                array_unshift($params, 1,
+                                       0, 1,
+                                       0, 0, 1,
+                                       0, 0, 0, 1,
+                                       0, 0, 0, 0);
                 $from   = '{reader_attempts}';
                 $where  = 'userid '.$where.' AND readerid = ?';
                 array_push($params, $reader->id);
@@ -1394,10 +1411,12 @@ function reader_print_overview($courses, &$htmlarray) {
                     $attempted = count($attempts);
                     foreach ($attempts as $attempt) {
                         $countactive++;
-                        $sumgrade += $attempt->sumgrade;
-                        $countpassed += $attempt->countpassed;
-                        $countcredit += $attempt->countcredit;
-                        $countfailed += $attempt->countfailed;
+                        $sumgrade      += $attempt->sumgrade;
+                        $countdeleted  += $attempt->countdeleted;
+                        $countcheated  += $attempt->countcheated;
+                        $countcredit   += $attempt->countcredit;
+                        $countpassed   += $attempt->countpassed;
+                        $countfailed   += $attempt->countfailed;
                         $countattempts += $attempt->countattempts;
                     }
                 }
@@ -1406,11 +1425,17 @@ function reader_print_overview($courses, &$htmlarray) {
 
                 if ($countactive) {
                     $info = array();
-                    if ($countpassed) {
-                        $info[] = $str->passed.': '.number_format($countpassed);
+                    if ($countdeleted) {
+                        $info[] = $str->deleted.': '.number_format($countdeleted);
+                    }
+                    if ($countcheated) {
+                        $info[] = $str->cheated.': '.number_format($countcheated);
                     }
                     if ($countcredit) {
                         $info[] = $str->credit.': '.number_format($countcredit);
+                    }
+                    if ($countpassed) {
+                        $info[] = $str->passed.': '.number_format($countpassed);
                     }
                     if ($countfailed) {
                         $info[] = $str->failed.': '.number_format($countfailed);
@@ -1532,6 +1557,8 @@ function reader_extend_navigation(navigation_node $readernode, stdclass $course,
 
     if (reader_can('manageattempts', $cm->id, $USER->id)) {
         require_once($CFG->dirroot.'/mod/reader/locallib.php');
+        require_once($CFG->dirroot.'/mod/reader/renderer.php');
+        require_once($CFG->dirroot.'/mod/reader/admin/reports/renderer.php');
 
         //////////////////////////
         // Attempts sub-menu
@@ -1543,13 +1570,29 @@ function reader_extend_navigation(navigation_node $readernode, stdclass $course,
         $label = get_string('attempts', 'mod_reader');
         $node = $readernode->add($label, null, $type, null, null, $icon);
 
-        $actions = array('deleteattempts', 'awardextrapoints', 'detectcheating');
-        foreach ($actions as $action) {
-            $params = array('id' => $cm->id, 'action' => $action);
-            $url = new moodle_url('/mod/reader/admin/attempts.php', $params);
-            $label = get_string($action, 'mod_reader');
-            $node->add($label, $url, $type, null, null, $icon);
-        }
+        // award extra points
+        $action = 'awardextrapoints';
+        $tab = mod_reader_admin_reports_renderer::TAB_REPORTS_USERSUMMARY;
+        $params = array('id' => $cm->id, 'tab' => $tab, 'mode' => 'usersummary');
+        $url = new moodle_url('/mod/reader/admin/reports.php', $params);
+        $label = get_string($action, 'mod_reader');
+        $node->add($label, $url, $type, null, null, $icon);
+
+        // delete attempts
+        $action = 'deleteattempts';
+        $tab = mod_reader_admin_reports_renderer::TAB_REPORTS_USERDETAILED;
+        $params = array('id' => $cm->id, 'tab' => $tab, 'mode' => 'userdetailed');
+        $url = new moodle_url('/mod/reader/admin/reports.php', $params);
+        $label = get_string($action, 'mod_reader');
+        $node->add($label, $url, $type, null, null, $icon);
+
+        // detect cheating
+        $action = 'detect_cheating';
+        $tab = mod_reader_renderer::TAB_TOOLS;
+        $params = array('id' => $cm->id, 'tab' => 7);
+        $url = new moodle_url("/mod/reader/admin/tools/$action.php", $params);
+        $label = get_string($action, 'mod_reader');
+        $node->add($label, $url, $type, null, null, $icon);
     }
 }
 
@@ -2450,7 +2493,7 @@ function reader_get_level_data($reader, $userid=0) {
 
                 case ($difficulty == $level->currentlevel):
                     // current level
-                    if (strtolower($attempt->passed)=='true') {
+                    if ($attempt->passed) {
                         $count['this'] += 1;
                     }
                     break;
@@ -2544,7 +2587,7 @@ function reader_get_user_attempts($readerid, $userid, $status='finished', $inclu
     }
 
     if ($includepreviews==false) {
-        $select .= ' AND preview = ?';
+        $select .= ' AND credit = ?';
         $params[] = 0;
     }
 
@@ -2609,7 +2652,7 @@ function reader_create_attempt($reader, $attemptnumber, $book, $adduniqueid=fals
             'userid'   => $USER->id,
             'bookid'   => $book->id,
             'quizid'   => $book->quizid,
-            'preview'  => 0,
+            'credit'   => 0,
             'layout'   => reader_repaginate($reader->questions)
         );
     }
@@ -2722,13 +2765,14 @@ function reader_get_student_attempts($userid, $reader, $allreaders = false, $boo
         $ignoredate = $reader->ignoredate;
     }
 
-    $select = 'ra.id, ra.uniqueid, ra.readerid, ra.userid, ra.bookid, ra.quizid, ra.attempt, ra.deleted, '.
-              'ra.sumgrades, ra.percentgrade, ra.passed, ra.checkbox, ra.timefinish, ra.preview, ra.bookrating, '.
-              'rb.name, rb.publisher, rb.level, rb.points, rb.image, rb.difficulty, rb.words, rb.sametitle';
+    $select = 'ra.id, ra.uniqueid, ra.readerid, ra.userid, ra.bookid, ra.quizid, ra.attempt, '.
+              'ra.sumgrades, ra.percentgrade, ra.passed, ra.credit, ra.cheated, ra.deleted, '.
+              'ra.timefinish, ra.state, ra.bookrating, rb.name, rb.publisher, rb.level, '.
+              'rb.points, rb.image, rb.difficulty, rb.words, rb.sametitle';
     $from   = '{reader_attempts} ra LEFT JOIN {reader_books} rb ON ra.bookid = rb.id';
-    $where  = 'ra.userid = :userid AND ra.deleted = :deleted AND ra.timefinish > :ignoredate AND ra.preview = :preview';
+    $where  = 'ra.userid = :userid AND ra.deleted = :deleted AND ra.timefinish > :ignoredate';
     $order  = 'ra.timefinish';
-    $params = array('userid'=>$userid, 'deleted' => 0, 'ignoredate'=>$ignoredate, 'preview' => 0);
+    $params = array('userid' => $userid, 'deleted' => 0, 'ignoredate' => $ignoredate);
     if (! $allreaders) {
         $where .= ' AND ra.readerid = :readerid';
         $params['readerid'] = $reader->id;
@@ -2772,18 +2816,27 @@ function reader_get_student_attempts($userid, $reader, $allreaders = false, $boo
         }
 
         $totals['countattempts']++;
-        if ($attempt->passed == 'true' || $attempt->passed == 'TRUE') {
-            $statustext = 'Passed';
-            $status = 'correct';
+        if ($attempt->deleted) {
+            $status = 'deleted';
+            $statustext = get_string($status, 'mod_reader');
+        } else if ($attempt->credit) {
+            $status = 'credit';
+            $statustext = get_string($status, 'mod_reader');
+            $totals['points'] = $bookpoints;
+            $totals['correct']++;
+        } else if ($attempt->cheated) {
+            $status = 'cheated';
+            $statustext = get_string($status, 'mod_reader');
+            $totals['points'] = 0;
+            $totals['incorrect']++;
+        } else if ($attempt->passed) {
+            $status = 'passed';
+            $statustext = get_string($status, 'mod_reader');
             $totals['points'] = $bookpoints;
             $totals['correct']++;
         } else {
-            if($attempt->passed=='cheated') {
-                $statustext = html_writer::tag('span', 'Cheated', array('style' => 'color:red'));
-            } else {
-                $statustext = 'Not Passed';
-            }
-            $status = 'incorrect';
+            $status = 'failed';
+            $statustext = get_string($status, 'mod_reader');
             $totals['points'] = 0;
             $totals['incorrect']++;
         }
@@ -2803,7 +2856,7 @@ function reader_get_student_attempts($userid, $reader, $allreaders = false, $boo
             $bookpercentmaxgrade[$attempt->bookid] = array($totals['bookpercent'], $totals['bookmaxgrade']);
         }
 
-        if ($attempt->preview == 1) {
+        if ($attempt->credit == 1) {
             $statustext = 'Credit';
         }
 
@@ -2830,7 +2883,9 @@ function reader_get_student_attempts($userid, $reader, $allreaders = false, $boo
                                           'bookdiff'      => $bookdifficulty,
                                           'percentgrade'  => $attempt->percentgrade,
                                           'passed'        => $attempt->passed,
-                                          'checkbox'      => $attempt->checkbox,
+                                          'credit'        => $attempt->credit,
+                                          'cheated'       => $attempt->cheated,
+                                          'deleted'       => $attempt->deleted,
                                           'sametitle'     => $attempt->sametitle,
                                           'userlevel'     => $level->currentlevel,
                                           'status'        => $status,
@@ -3013,8 +3068,8 @@ function reader_get_completion_state($course, $cm, $userid, $type) {
                 case 'completiontotalwords':
                     $select = 'SUM(rb.words)';
                     $from   = '{reader_attempts} ra LEFT JOIN {reader_books} rb ON ra.bookid = rb.id';
-                    $where  = 'readerid = ? AND deleted = ? AND passed = ? AND rb.words IS NOT NULL';
-                    $params = array($reader->id, 0, 'true');
+                    $where  = 'ra.readerid = ? AND ra.deleted = ? AND ra.cheated = ? AND ra.passed = ? AND rb.words IS NOT NULL';
+                    $params = array($reader->id, 0, 0, 1);
                     if ($sum = $DB->get_field_sql("SELECT $select FROM $from WHERE $where", $params)) {
                         $state = ($sum > $reader->completiontotalwords);
                     } else {

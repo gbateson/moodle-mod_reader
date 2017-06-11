@@ -1055,7 +1055,7 @@ class mod_reader {
             'uniqueid'             => $readerattempt->uniqueid,
             'layout'               => $readerattempt->layout,
             'currentpage'          => 0,
-            'preview'              => 0,
+            'credit'               => 0,
             'state'                => $state,
             'timestart'            => $readerattempt->timestart,
             'timefinish'           => $readerattempt->timefinish,

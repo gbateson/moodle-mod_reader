@@ -67,12 +67,6 @@ class reader_admin_reports_userdetailed_filtering extends reader_admin_reports_f
                 $label = get_string('date');
                 return new reader_admin_filter_date($fieldname, $label, $advanced, $fieldname, $default, 'where');
 
-            case 'passed':
-                $label = get_string($fieldname, $plugin);
-                $options = array('true'  => get_string('passedshort', $plugin).' - '.get_string('passed', $plugin),
-                                 'false' => get_string('failedshort', $plugin).' - '.get_string('failed', $plugin));
-                return new reader_admin_filter_simpleselect($fieldname, $label, $advanced, $fieldname, $options, $default, 'where');
-
             default:
                 // other fields (e.g. from user record)
                 return parent::get_field($fieldname, $advanced);

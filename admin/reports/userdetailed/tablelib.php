@@ -65,10 +65,12 @@ class reader_admin_reports_userdetailed_table extends reader_admin_reports_table
 
     /** @var filter fields ($fieldname => $advanced) */
     protected $filterfields = array(
-        'group'      => 0, 'username'     => 1, 'realname'     => 0,
-        'lastname'   => 1, 'firstname'    => 1, 'currentlevel' => 1,
-        'difficulty' => 1, 'words'        => 1, 'points'       => 1, 'name'   => 1,
-        'timefinish' => 1, 'duration'     => 1, 'grade'        => 1, 'passed' => 1
+        'group'      => 0, 'username'   => 1, 'realname'     => 0,
+        'lastname'   => 1, 'firstname'  => 1, 'currentlevel' => 1,
+        'name'       => 1, // book name
+        'difficulty' => 1, 'words'      => 1, 'points'       => 1,
+        'timefinish' => 1, 'duration'   => 1, 'grade'        => 1,
+        'passed'     => 1, 'cheated'    => 1, 'credit'       => 1
        );
 
     /** @var option fields */
@@ -79,7 +81,7 @@ class reader_admin_reports_userdetailed_table extends reader_admin_reports_table
                                     'sortfields'  => array());
 
     /** @var actions */
-    protected $actions = array('deleteattempts', 'restoreattempts', 'passfailattempts');
+    protected $actions = array('deleteattempts', 'restoreattempts', 'updatepassed', 'updatecheated');
 
     /**
      * Constructor
@@ -122,18 +124,21 @@ class reader_admin_reports_userdetailed_table extends reader_admin_reports_table
             $termalias = 'totalpoints';
         }
 
-        $score    = "CASE WHEN (ra.passed = :passed1) THEN rb.$wordsorpoints ELSE 0 END";
+        $score    = '(ra.credit = :credit1 OR ra.passed = :passed1)';
+        $score    = "ra.deleted = :deleted1 AND ra.cheated = :cheated1 && $score";
+        $score    = "CASE WHEN ($score) THEN rb.$wordsorpoints ELSE 0 END";
         $grade    = 'CASE WHEN (ra.percentgrade IS NULL) THEN 0 ELSE ra.percentgrade END';
         $duration = 'CASE WHEN (ra.timefinish IS NULL OR ra.timefinish = 0) THEN 0 ELSE (ra.timefinish - ra.timestart) END';
 
         // total of all words/points this term up to and including this attempt
+        $total    = '(rat.credit = :credit2 OR rat.passed = :passed2)';
+        $total    = "rat.deleted = :deleted2 AND rat.cheated = :cheated2 AND $total";
         $total    = 'rat.readerid = ra.readerid AND rat.userid = ra.userid AND '.
-                    'rat.timefinish >= :time1 AND rat.timefinish <= ra.timefinish AND '.
-                    'rat.passed = :passed2 AND rat.deleted = :deleted';
+                    "rat.timefinish >= :time1 AND rat.timefinish <= ra.timefinish AND $total";
         $total    = "(SELECT SUM(rbt.$wordsorpoints) FROM {reader_attempts} rat LEFT JOIN {reader_books} rbt ON rat.bookid = rbt.id WHERE $total)";
 
-        $select = "ra.id, ra.timefinish, ra.layout, ".
-                  "($duration) as duration, ($grade) as grade, ra.passed, ".
+        $select = "ra.id, ra.passed, ra.credit, ra.cheated, ra.deleted, ra.layout, ra.timefinish, ".
+                  "($duration) as duration, ($grade) as grade, ".
                   "($score) AS $attemptalias, $total AS $termalias, ".
                   $this->get_userfields('u', array('username'), 'userid').', '.
                   "rl.currentlevel, rb.difficulty, rb.$wordsorpointsalias, rb.name";
@@ -144,9 +149,14 @@ class reader_admin_reports_userdetailed_table extends reader_admin_reports_table
         $where  = 'ra.readerid = :readerid AND ra.timefinish >= :time2';
 
         $params = array('readerid' => $this->output->reader->id,
-                        'passed1'  => 'true',
-                        'passed2'  => 'true',
-                        'deleted'  => 0);
+                        'deleted1' => 0,
+                        'cheated1' => 0,
+                        'credit1'  => 1,
+                        'passed1'  => 1,
+                        'deleted2' => 0,
+                        'cheated2' => 0,
+                        'credit2'  => 1,
+                        'passed2'  => 1);
 
         $termtype = $this->filter->get_optionvalue('termtype');
         if ($termtype==reader_admin_reports_options::THIS_TERM) {
@@ -198,6 +208,7 @@ class reader_admin_reports_userdetailed_table extends reader_admin_reports_table
 
             case 'timefinish':
             case 'passed':
+            case 'cheated':
                 return array('reader_attempts', 'ra');
 
             default:

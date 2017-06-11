@@ -101,6 +101,11 @@ class mod_reader_admin_users_export_renderer extends mod_reader_admin_users_rend
                     // remove trailing zeroes and periods from percent grade
                     $attempt->percentgrade = preg_replace('/(\.0)?0$/', '', $attempt->percentgrade);
 
+                    // set "preview" from "credit" field
+                    // and convert "passed" to a string
+                    $attempt->preview = ($attempt->credit ? '1' : '0');
+                    $attempt->passed = ($attempt->cheated ? 'cheated' : ($attempt->passed ? 'true' : 'false'));
+
                     echo $attempt->username.','.
                          $attempt->uniqueid.','.
                          $attempt->attempt.','.

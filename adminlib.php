@@ -37,13 +37,17 @@ function reader_format_delay($seconds) {
  * @return string
  * @todo Finish documenting this function
  */
-function reader_format_passed($passed, $fulltext=false) {
-    $passed = strtolower($passed);
-    switch ($passed) {
-        case 'true': $name = 'passed'; break;
-        case 'false': $name = 'failed'; break;
-        case 'cheated': $name = 'cheated'; break;
-        default: return $passed;
+function reader_format_passed($attempt, $fulltext=false) {
+    if ($attempt->deleted) {
+        $name = 'deleted';
+    } else if ($attempt->credit) {
+        $name = 'credit';
+    } else if ($attempt->cheated) {
+        $name = 'cheated';
+    } else if ($attempt->passed) {
+        $name = 'passed';
+    } else {
+        $name = 'failed';
     }
     if ($fulltext==false) {
         $name .= 'short';

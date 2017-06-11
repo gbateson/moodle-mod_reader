@@ -72,6 +72,24 @@ class reader_admin_reports_filtering extends reader_admin_filtering {
                 $label = get_string($fieldname);
                 return new reader_admin_filter_number($fieldname, $label, $advanced, $fieldname, $default, 'having');
 
+            case 'passed':
+                $label = get_string($fieldname, 'mod_reader');
+                $options = array(0 => get_string('failedshort', 'mod_reader').' - '.get_string('failed', 'mod_reader'),
+                                 1 => get_string('passedshort', 'mod_reader').' - '.get_string('passed', 'mod_reader'));
+                return new reader_admin_filter_simpleselect($fieldname, $label, $advanced, $fieldname, $options, $default, 'where');
+
+            case 'cheated':
+                $label = get_string($fieldname, 'mod_reader');
+                $options = array(0 => get_string('no'),
+                                 1 => get_string('yes').' - '.get_string('cheated', 'mod_reader'));
+                return new reader_admin_filter_simpleselect($fieldname, $label, $advanced, $fieldname, $options, $default, 'where');
+
+            case 'credit':
+                $label = get_string($fieldname, 'mod_reader');
+                $options = array(0 => get_string('no'),
+                                 1 => get_string('yes').' - '.get_string('credit', 'mod_reader'));
+                return new reader_admin_filter_simpleselect($fieldname, $label, $advanced, $fieldname, $options, $default, 'where');
+
             default:
                 // other fields (e.g. from user record)
                 die("Unknown filter field: $fieldname");

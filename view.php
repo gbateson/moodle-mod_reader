@@ -190,7 +190,7 @@ if ($reader->bookcovers == 1) {
             if (empty($attempt->bookimage)) {
                 continue; // shouldn't happen !!
             }
-            if ($attempt->passed == 'true' || $attempt->passed == 'TRUE') {
+            if ($attempt->passed) {
                 if ($CFG->slasharguments) {
                     $src = new moodle_url('/mod/reader/images.php/reader/images/'.$attempt->bookimage);
                 } else {
@@ -203,10 +203,10 @@ if ($reader->bookcovers == 1) {
     }
 }
 
-$select = 'ra.id, ra.userid, ra.bookid, ra.quizid, ra.preview, ra.deleted, ra.passed, rb.words';
+$select = 'ra.id, ra.userid, ra.bookid, ra.quizid, ra.passed, ra.credit, ra.cheated, ra.deleted, rb.words';
 $from   = '{reader_attempts} ra LEFT JOIN {reader_books} rb ON ra.bookid = rb.id';
-$where  = 'ra.userid = ? AND ra.preview = ? AND ra.deleted = ? AND ra.passed = ?';
-$params = array($USER->id, 0, 0, 'true');
+$where  = 'ra.userid = ? AND ra.deleted = ? AND ra.cheated = ? AND (ra.credit = ? OR ra.passed = ?)';
+$params = array($USER->id, 0, 0, 1, 1);
 if ($studentattempts = $DB->get_records_sql("SELECT $select FROM $from WHERE $where", $params)) {
     foreach ($studentattempts as $studentattempt) {
         $totalwordsall += $studentattempt->words;
@@ -238,7 +238,7 @@ if (count($attempts)) {
         $lastattemptdate = $attempt['timefinish'];
         $alreadyansweredbooksid[] = $attempt['quizid'];
 
-        if ($reader->bookcovers == 1 && $attempt['status'] == 'correct') {
+        if ($reader->bookcovers == 1 && $attempt['passed']) {
             if ($CFG->slasharguments) {
                 $src = new moodle_url('/mod/reader/images.php/reader/images/'.$attempt['image']);
             } else {
@@ -249,12 +249,12 @@ if (count($attempts)) {
             $bookcoversinthisterm .= html_writer::empty_tag('img', $params).' ';
         }
 
-        if ($attempt['passed'] == 'true'){
+        if ($attempt['deleted'] || $attempt['cheated'] || ($attempt['credit']==0 && $attempt['passed']==0)) {
+            $attempt['bookwords'] = '';
+        } else {
             $totalwordscount++;
             $totalwords += $attempt['words'];
             $attempt['bookwords'] = number_format($attempt['words']);
-        } else {
-            $attempt['bookwords'] = '';
         }
 
         $cells = array(
@@ -299,8 +299,8 @@ if ($bookcoversinprevterm) {
     // detect incorrect quizzes from previous term
     $select = 'ra.id AS attemptid, ra.quizid AS quizid, ra.timefinish, rb.name AS bookname';
     $from   = '{reader_attempts} ra LEFT JOIN {reader_books} rb ON ra.bookid = rb.id';
-    $where  = 'ra.userid = ? AND ra.preview = ? AND ra.deleted = ? AND ra.passed <> ? AND ra.timefinish <= ?';
-    $params = array(0, 0, $USER->id, 'true', $reader->ignoredate);
+    $where  = 'ra.userid = ? AND ra.deleted = ? AND cheated = ? AND ra.credit = ? AND ra.passed = ? AND ra.timefinish <= ?';
+    $params = array(0, 0, $USER->id, 0, 0, 0, 0, $reader->ignoredate);
     if ($attempts = $DB->get_records_sql("SELECT $select FROM $from WHERE $where ORDER BY timefinish", $params)) {
         $text = get_string('incorrectbooksreadinpreviousterms', $plugin);
         $onclick = "var obj = document.getElementById('readerfailedbooklist');".
@@ -441,7 +441,7 @@ if ($attempts = $DB->get_records('reader_attempts', $params, 'timestart DESC')) 
         if ($timefinish < $timenow) {
             $attempt->timemodified = $timenow;
             $attempt->timefinish   = $timefinish;
-            $attempt->passed       = 'false';
+            $attempt->passed       = 0; // timed out
             $DB->update_record('reader_attempts', $attempt);
             unset($attempts[$attempt->id]);
         }

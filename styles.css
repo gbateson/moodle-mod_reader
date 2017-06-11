@@ -370,7 +370,7 @@ img.readercredits { margin-left: auto; margin-right: auto; width: 225px; height:
 #page-mod-reader-admin-reports table.flexible th span.nowrap { white-space: nowrap; }
 #page-mod-reader-admin-reports table.flexible td span.passed { color: #00CC00; }
 #page-mod-reader-admin-reports table.flexible td span.failed { color: #CC0000; }
-#page-mod-reader-admin-reports table.flexible td span.cheated { color: #0000CC; }
+#page-mod-reader-admin-reports table.flexible td span.cheated { color: #FF6600; }
 #page-mod-reader-admin-reports table.flexible tr.emptyrow { display: none; }
 
 /* hide the javascript static just after this (hidden) submit button in the display options */
@@ -504,4 +504,50 @@ img.readercredits { margin-left: auto; margin-right: auto; width: 225px; height:
 
 #page-mod-reader-admin-tools li.readertool p { margin: 3px 0px;}
 #page-mod-reader-admin-tools li.readertool ul { margin: 3px 0px 0px 18px; }
+
+#page-mod-reader-admin-tools-detect_cheating div.fitemtitle { display: inline-block;
+                                                              max-width: 240px;
+                                                              padding: 6px 12px;
+                                                              text-align: right;
+                                                              vertical-align: top;
+                                                              width: 20%; }
+
+#page-mod-reader-admin-tools-detect_cheating input[type="checkbox"] { margin: 0px; }
+
+#page-mod-reader-admin-tools-detect_cheating th { vertical-align: bottom; }
+#page-mod-reader-admin-tools-detect_cheating td { vertical-align: top; }
+
+#page-mod-reader-admin-tools-detect_cheating td.odd { background-color: #e4ecfc; } /* light matt blue */
+#page-mod-reader-admin-tools-detect_cheating td.even { background-color: #fce4ec; } /* light matt red */
+
+#page-mod-reader-admin-tools-detect_cheating #attempts td { border-left: 1px dotted #999999; }
+#page-mod-reader-admin-tools-detect_cheating #attempts .book { border-left: 4px solid #999999; }
+#page-mod-reader-admin-tools-detect_cheating #attempts .checkbox { border-left: 2px solid #999999; text-align: center;}
+#page-mod-reader-admin-tools-detect_cheating #attempts .date { border-left: 1px solid #999999; text-align: center;}
+
+#page-mod-reader-admin-tools-detect_cheating #attempts .book { border-top: 4px solid #999999; }
+#page-mod-reader-admin-tools-detect_cheating #attempts .attempt1 { border-top: 2px solid #999999; }
+#page-mod-reader-admin-tools-detect_cheating #attempts .attempt2 { border-top: 1px dotted #999999; }
+
+#page-mod-reader-admin-tools-detect_cheating #users .user1 { border-top: 4px solid #999999; }
+#page-mod-reader-admin-tools-detect_cheating #users .user2 { border-top: 2px solid #999999; }
+#page-mod-reader-admin-tools-detect_cheating #users .attempt1 { border-top: 2px solid #999999; }
+#page-mod-reader-admin-tools-detect_cheating #users .attempt2 { border-top: 1px dotted #999999; }
+
+#page-mod-reader-admin-tools-detect_cheating #users .user1 { border-top: 4px solid #999999; }
+#page-mod-reader-admin-tools-detect_cheating #users .user2 { border-top: 2px solid #999999; }
+#page-mod-reader-admin-tools-detect_cheating #users .attempt1 { border-top: 2px solid #999999; }
+#page-mod-reader-admin-tools-detect_cheating #users .attempt2 { border-top: 1px dotted #999999; }
+
+#page-mod-reader-admin-tools-detect_cheating #users td { border-left: 1px dotted #999999; }
+#page-mod-reader-admin-tools-detect_cheating #users .userlink1 { border-left: 4px solid #999999; }
+#page-mod-reader-admin-tools-detect_cheating #users .userlink2 { border-left: 3px solid #999999; }
+#page-mod-reader-admin-tools-detect_cheating #users .checkbox { border-left: 2px solid #999999; text-align: center;}
+#page-mod-reader-admin-tools-detect_cheating #users .time1 { border-left: 1px solid #999999; text-align: center;}
+#page-mod-reader-admin-tools-detect_cheating #users .time2 { border-left: 1px solid #999999; text-align: center;}
+
+#page-mod-reader-admin-tools-detect_cheating div.actionsettings { margin-left: 20px; }
+#page-mod-reader-admin-tools-detect_cheating div.actionsettings input,
+#page-mod-reader-admin-tools-detect_cheating div.actionsettings select,
+#page-mod-reader-admin-tools-detect_cheating div.actionsettings textarea { vertical-align: top; }
 
