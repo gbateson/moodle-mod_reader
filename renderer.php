@@ -2252,7 +2252,7 @@ class mod_reader_renderer extends plugin_renderer_base {
         }
 
         if ($msg) {
-            $url = new moodle_url('/course/view.php', array('id' => $course->id));
+            $url = new moodle_url('/course/view.php', array('id' => $this->reader->course->id));
             $msg .= html_writer::tag('p', $this->continue_button($url));
             $msg = $this->box($msg, 'generalbox', 'notice');
         }
@@ -2269,14 +2269,18 @@ class mod_reader_renderer extends plugin_renderer_base {
         if ($this->reader->readonly==false) {
             return '';
         }
-        if ($this->reader->readonlyuntil && $this->reader->readonlyuntil > $this->reader->time) {
-            $msg = userdate($this->reader->readonlyuntil);
-            $msg = html_writer::tag('p', get_string('readonlyuntiluserdate', $plugin, $msg));
-        } else if ($this->reader->readonlyfrom && $this->reader->readonlyfrom < $this->reader->time) {
-            $msg = userdate($this->reader->readonlyfrom);
-            $msg = html_writer::tag('p', get_string('readonlyfromuserdate', $plugin, $msg));
-        } else {
-            $msg = '';
+        $msg = '';
+        switch (true) {
+            case ($this->reader->readonlyuntil && $this->reader->readonlyuntil > $this->reader->time):
+                $msg = userdate($this->reader->readonlyuntil);
+                $msg = get_string('readonlyuntildate', $plugin, $msg);
+                $msg = html_writer::tag('p', $msg);
+                break;
+            case ($this->reader->readonlyfrom && $this->reader->readonlyfrom < $this->reader->time):
+                $msg = userdate($this->reader->readonlyfrom);
+                $msg = get_string('readonlysincedate', $plugin, $msg);
+                $msg = html_writer::tag('p', $msg);
+                break;
         }
         $title = get_string('readonlymode', $plugin);
         $msg = html_writer::tag('p', get_string('readonlymode_desc', $plugin)).$msg;

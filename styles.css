@@ -140,10 +140,20 @@
     text-align   : center;
     vertical-align: top;
     width        : 20px;
-    /* http://blog.mozilla.org/webdev/2009/02/20/cross-browser-inline-block/ */
+    /*********************
+    The following lines were originally intended to mimic inline blocks on IE6 and IE7.
+    (see http://blog.mozilla.org/webdev/2009/02/20/cross-browser-inline-block/)
+
+    However, they have been disabled because they were identified
+    as a possible cause of problems with Boost them in Moodle >=3.2
+    (see https://moodle.org/mod/forum/discuss.php?d=343884#p1427254)
+
+    Anyway, IE8 has been the minimum required IE browser since Moodle 2.3
+
     zoom         : 1;
     *display     : inline;
     _height      : 20px;
+    *********************/
 }
 #page-mod-reader-view table.PromotionTable div.PromotionGraphSquares div.squarelevel {
     /*

@@ -45,6 +45,7 @@ require_once($CFG->dirroot.'/mod/reader/admin/books/filtering.php');
 class mod_reader_admin_books_renderer extends mod_reader_admin_renderer {
 
     public $tab = 'books';
+    public $mode = '';
 
     /**#@+
      * tab ids

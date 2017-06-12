@@ -43,6 +43,17 @@ require_once($CFG->dirroot.'/mod/reader/admin/books/download/downloader.php');
  */
 class mod_reader_admin_books_download_renderer extends mod_reader_admin_books_renderer {
 
+    public $mode = 'download';
+
+    /**
+     * get_tab
+     *
+     * @return integer tab id
+     */
+    public function get_tab() {
+        return self::TAB_BOOKS_DOWNLOAD;
+    }
+
     /**
      * get_standard_types
      *

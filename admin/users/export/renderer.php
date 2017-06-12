@@ -45,6 +45,17 @@ class mod_reader_admin_users_export_renderer extends mod_reader_admin_users_rend
     /** the name of the form element that, if present, signifies content is to be downloaded */
     protected $download_param_name = 'filename';
 
+    public $mode = 'export';
+
+    /**
+     * get_tab
+     *
+     * @return integer tab id
+     */
+    public function get_tab() {
+        return self::TAB_USERS_EXPORT;
+    }
+
     /**
      * render_page
      *

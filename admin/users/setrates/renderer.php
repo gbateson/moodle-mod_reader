@@ -43,6 +43,17 @@ require_once($CFG->dirroot.'/mod/reader/admin/users/renderer.php');
  */
 class mod_reader_admin_users_setrates_renderer extends mod_reader_admin_users_renderer {
 
+    public $mode = 'setrates';
+
+    /**
+     * get_tab
+     *
+     * @return integer tab id
+     */
+    public function get_tab() {
+        return self::TAB_USERS_SETRATES;
+    }
+
     /**
      * render_page
      *

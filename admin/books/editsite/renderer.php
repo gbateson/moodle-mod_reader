@@ -47,6 +47,15 @@ class mod_reader_admin_books_editsite_renderer extends mod_reader_admin_books_re
     public $mode = 'editsite';
 
     /**
+     * get_tab
+     *
+     * @return integer tab id
+     */
+    public function get_tab() {
+        return self::TAB_BOOKS_EDITSITE;
+    }
+
+    /**
      * render_page
      *
      * @return string HTML output to display navigation tabs
