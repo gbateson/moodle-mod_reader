@@ -198,8 +198,8 @@ function reader_update_events(&$reader, &$eventids, $delete) {
     if ($can_manage_events) {
 
         // set duration
-        if ($reader->timeclose && $reader->timeopen) {
-            $duration = max(0, $reader->timeclose - $reader->timeopen);
+        if ($reader->availableuntil && $reader->availablefrom) {
+            $duration = max(0, $reader->availableuntil - $reader->availablefrom);
         } else {
             $duration = 0;
         }
@@ -209,13 +209,13 @@ function reader_update_events(&$reader, &$eventids, $delete) {
             $events[] = (object)array(
                 'name' => $reader->name.' ('.$stropens.')',
                 'eventtype' => 'open',
-                'timestart' => $reader->timeopen,
+                'timestart' => $reader->availablefrom,
                 'timeduration' => 0
             );
             $events[] = (object)array(
                 'name' => $reader->name.' ('.$strcloses.')',
                 'eventtype' => 'close',
-                'timestart' => $reader->timeclose,
+                'timestart' => $reader->availableuntil,
                 'timeduration' => 0
             );
         } else if ($duration) {
@@ -234,25 +234,25 @@ function reader_update_events(&$reader, &$eventids, $delete) {
                 $fmt = get_string('strftimerecentfull');
             }
             $events[] = (object)array(
-                'name' => $reader->name.' ('.userdate($reader->timeopen, $fmt).' - '.userdate($reader->timeclose, $fmt).')',
+                'name' => $reader->name.' ('.userdate($reader->availablefrom, $fmt).' - '.userdate($reader->availableuntil, $fmt).')',
                 'eventtype' => 'open',
-                'timestart' => $reader->timeopen,
+                'timestart' => $reader->availablefrom,
                 'timeduration' => $duration,
             );
-        } else if ($reader->timeopen) {
+        } else if ($reader->availablefrom) {
             // only an open date
             $events[] = (object)array(
                 'name' => $reader->name.' ('.$stropens.')',
                 'eventtype' => 'open',
-                'timestart' => $reader->timeopen,
+                'timestart' => $reader->availablefrom,
                 'timeduration' => 0,
             );
-        } else if ($reader->timeclose) {
+        } else if ($reader->availableuntil) {
             // only a closing date
             $events[] = (object)array(
                 'name' => $reader->name.' ('.$strcloses.')',
                 'eventtype' => 'close',
-                'timestart' => $reader->timeclose,
+                'timestart' => $reader->availableuntil,
                 'timeduration' => 0,
             );
         }
@@ -1322,7 +1322,7 @@ function reader_print_overview($courses, &$htmlarray) {
     foreach ($readers as $reader) {
 
         // check this reader is open, and is not yet closed
-        if ($reader->timeopen > $now || $reader->timeclose < $now) {
+        if ($reader->availablefrom > $now || $reader->availableuntil < $now) {
             continue;
         }
 
@@ -1345,8 +1345,8 @@ function reader_print_overview($courses, &$htmlarray) {
                 'points'       => get_string('points', 'mod_reader'),
                 'reader'       => get_string('modulename', 'mod_reader'),
                 'status'       => get_string('status'),
-                'timeclose'    => get_string('availabletodate', 'data'),
-                'timeopen'     => get_string('availablefromdate', 'data'),
+                'availableuntil'    => get_string('availabletodate', 'data'),
+                'availablefrom'     => get_string('availablefromdate', 'data'),
                 'words'        => get_string('words', 'mod_reader')
             );
         }
@@ -1363,14 +1363,14 @@ function reader_print_overview($courses, &$htmlarray) {
         $html .= html_writer::tag('div', $text, array('class' => 'name'));
 
         // date/time open
-        //if ($reader->timeopen) {
-        //    $text = $str->timeopen.': '.userdate($reader->timeopen, $str->dateformat);
+        //if ($reader->availablefrom) {
+        //    $text = $str->availablefrom.': '.userdate($reader->availablefrom, $str->dateformat);
         //    $html .= html_writer::tag('div', $text, array('class' => 'info'));
         //}
 
         // date/time close
-        if ($reader->timeclose) {
-            $text = $str->duedate.': '.userdate($reader->timeclose, $str->dateformat);
+        if ($reader->availableuntil) {
+            $text = $str->duedate.': '.userdate($reader->availableuntil, $str->dateformat);
             $html .= html_writer::tag('div', $text, array('class' => 'info'));
         }
 

@@ -146,8 +146,8 @@ class reader_quiz {
         $book = $DB->get_record('reader_books', array('id' => $bookid), '*', MUST_EXIST);
         $quiz = $DB->get_record('quiz', array('id' => $book->quizid),   '*', MUST_EXIST);
 
-        $quiz->timeopen           = $reader->timeopen;
-        $quiz->timeclose          = $reader->timeclose;
+        $quiz->timeopen           = $reader->availablefrom;
+        $quiz->timeclose          = $reader->availableuntil;
         $quiz->timelimit          = $reader->timelimit;
         $quiz->attempts           = 1;
         $quiz->questionsperpage   = 1;

@@ -62,4 +62,13 @@ class mod_reader_admin_reports_usersummary_renderer extends mod_reader_admin_rep
         }
         return $options;
     }
+
+    /**
+     * get_tab
+     *
+     * @return integer tab id
+     */
+    public function get_tab() {
+        return self::TAB_REPORTS_USERSUMMARY;
+    }
 }

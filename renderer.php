@@ -2215,4 +2215,73 @@ class mod_reader_renderer extends plugin_renderer_base {
         }
         return '';
     }
+
+    /**
+     * notavailable
+     *
+     * @param string $plugin name
+     */
+    public function notavailable($plugin) {
+        switch (true) {
+
+            case ($this->reader->available):
+                $msg = '';
+                break;
+
+            case ($this->reader->can_viewbooks()==false):
+                $msg = get_string('reader:viewbooks', $plugin);
+                $msg = get_string('nopermissions', 'error', $msg);
+                break;
+
+            case ($this->reader->subnet && ! address_in_subnet(getremoteaddr(), $this->reader->subnet)):
+                $msg = get_string('subneterror', 'quiz');
+                break;
+
+            case ($this->reader->availablefrom && $this->reader->availablefrom > $this->reader->time):
+                $msg = userdate($this->reader->availablefrom);
+                $msg = get_string('availablenotyet', $plugin, $msg);
+                break;
+
+            case ($this->reader->availableuntil && $this->reader->availableuntil < $this->reader->time):
+                $msg = userdate($this->reader->availableuntil);
+                $msg = get_string('availablenolonger', $plugin, $msg);
+                break;
+
+            default:
+                $msg = ''; // reader is open and not closed, and user can view books
+        }
+
+        if ($msg) {
+            $url = new moodle_url('/course/view.php', array('id' => $course->id));
+            $msg .= html_writer::tag('p', $this->continue_button($url));
+            $msg = $this->box($msg, 'generalbox', 'notice');
+        }
+
+        return $msg;
+    }
+
+    /**
+     * readonly
+     *
+     * @param string $plugin
+     */
+    public function readonly($plugin) {
+        if ($this->reader->readonly==false) {
+            return '';
+        }
+        if ($this->reader->readonlyuntil && $this->reader->readonlyuntil > $this->reader->time) {
+            $msg = userdate($this->reader->readonlyuntil);
+            $msg = html_writer::tag('p', get_string('readonlyuntiluserdate', $plugin, $msg));
+        } else if ($this->reader->readonlyfrom && $this->reader->readonlyfrom < $this->reader->time) {
+            $msg = userdate($this->reader->readonlyfrom);
+            $msg = html_writer::tag('p', get_string('readonlyfromuserdate', $plugin, $msg));
+        } else {
+            $msg = '';
+        }
+        $title = get_string('readonlymode', $plugin);
+        $msg = html_writer::tag('p', get_string('readonlymode_desc', $plugin)).$msg;
+        return html_writer::tag('h2',  $title, array('class' => 'ReadingReportTitle')).
+               html_writer::tag('div', $msg,   array('class' => 'readermessage'));
+    }
 }
+

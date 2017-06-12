@@ -31,8 +31,10 @@ defined('MOODLE_INTERNAL') || die();
 $plugin = 'mod_reader';
 $defaults = (object)array(
     // default settings for Reader activities in courses
-    'timeopen'           => '0',
-    'timeclose'          => '0',
+    'availablefrom'      => '0',
+    'availableuntil'     => '0',
+    'readonlyfrom'       => '0',
+    'readonlyuntil'      => '0',
     'timelimit'          => '900', // 900 secs = 15 mins
     'bookcovers'         => '1',
     'showprogressbar'    => '1',
@@ -81,7 +83,7 @@ $name = 'configintro';
 $setting = new admin_setting_heading($name, '', get_string($name, $plugin));
 $settings->add($setting);
 
-// quiztimelimit
+// timelimit for Reader quizzes
 $name = 'timelimit';
 $text = get_string($name, 'quiz');
 $help = get_string('config'.$name, 'quiz');

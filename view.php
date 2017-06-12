@@ -94,27 +94,14 @@ $timeformat = 'h:i A';  // 1:45 PM
 $dateformat = 'jS M Y'; // 2nd Jun 2013
 
 //Check access restrictions (permissions, IP, time open/close)
-if (has_capability('mod/reader:viewreports', $contextmodule)) {
-    echo $output->tabs();
-    $msg = ''; // teacher can always view this page
-} else if (! has_capability('mod/reader:viewbooks', $contextmodule)) {
-    $msg = get_string('nopermissions', 'error', get_string('reader:viewreports', $plugin));
-} else if (! empty($reader->subnet) && ! address_in_subnet(getremoteaddr(), $reader->subnet)) {
-    $msg = get_string('subneterror', 'quiz');
-} else if (! empty($reader->timeopen) && $reader->timeopen > $timenow) {
-    $msg = get_string('notopenyet', $plugin, userdate($reader->timeopen));
-} else if (! empty($reader->timeclose) && $reader->timeclose < $timenow) {
-    $msg = get_string('alreadyclosed', $plugin, userdate($reader->timeclose));
-} else {
-    $msg = ''; // reader is open and not closed, and user can view books
-}
-
-if ($msg) {
-    $url = new moodle_url('/course/view.php', array('id' => $course->id));
-    $msg .= html_writer::tag('p', $output->continue_button($url));
-    echo $output->box($msg, 'generalbox', 'notice');
+if ($reader->available==false) {
+    echo $output->notavailable($plugin);
     echo $output->footer();
     exit;
+}
+
+if ($reader->can_viewreports()) {
+    echo $output->tabs();
 }
 
 $url = new moodle_url('/mod/reader/js/ajax.js');
@@ -433,58 +420,62 @@ if ($reader->levelcheck) {
     echo html_writer::table($table);
 }
 
-// get previously unfinished attempts by this user at quizzes in this Reader
-$params = array('readerid' => $cm->instance, 'userid' => $USER->id, 'timefinish' => 0);
-if ($attempts = $DB->get_records('reader_attempts', $params, 'timestart DESC')) {
-    foreach ($attempts as $attempt) {
-        $timefinish = ($attempt->timestart + $reader->timelimit);
-        if ($timefinish < $timenow) {
-            $attempt->timemodified = $timenow;
-            $attempt->timefinish   = $timefinish;
-            $attempt->passed       = 0; // timed out
-            $DB->update_record('reader_attempts', $attempt);
-            unset($attempts[$attempt->id]);
+if ($reader->readonly) {
+    echo $output->readonly($plugin);
+    $showform = false;
+} else {
+    // get previously unfinished attempts by this user at quizzes in this Reader
+    $params = array('readerid' => $cm->instance, 'userid' => $USER->id, 'timefinish' => 0);
+    if ($attempts = $DB->get_records('reader_attempts', $params, 'timestart DESC')) {
+        foreach ($attempts as $attempt) {
+            $timefinish = ($attempt->timestart + $reader->timelimit);
+            if ($timefinish < $timenow) {
+                $attempt->timemodified = $timenow;
+                $attempt->timefinish   = $timefinish;
+                $attempt->passed       = 0; // timed out
+                $DB->update_record('reader_attempts', $attempt);
+                unset($attempts[$attempt->id]);
+            }
+        }
+        $attempt = end($attempts); // most recent unfinished attempt
+    } else {
+        $attempt = false; // i.e. there are no unfinished attempts
+    }
+
+    $title = '';
+    $msg = '';
+    if ($attempt) {
+        $title = get_string('quizattemptinprogress', $plugin);
+        $name = $DB->get_field('reader_books', 'name', array('quizid' => $attempt->quizid));
+        if (empty($SESSION->reader_lastattemptpage)) {
+            $params = array('attempt' => $attempt->id, 'page' => 1);
+            $msg = new moodle_url('/mod/reader/quiz/attempt.php', $params, 'q0');
+        } else {
+            $msg = new moodle_url('/mod/reader/quiz/attempt.php?'.$SESSION->reader_lastattemptpage);
+        }
+        $msg = html_writer::tag('a', $name, array('href' => $msg));
+        $msg = html_writer::tag('li', $msg);
+        $msg = html_writer::tag('ul', $msg);
+        $msg = get_string('completequizattempt', $plugin, $name).$msg;
+    } else if ($delay = $reader->get_delay()) {
+        if ($timenow < ($lastattemptdate + $delay)) {
+            $title = get_string('delayineffect', $plugin);
+            $msg = userdate($lastattemptdate + $delay);
+            $msg = get_string('youcantakeaquizafter', $plugin, $msg);
         }
     }
-    $attempt = end($attempts); // most recent unfinished attempt
-} else {
-    $attempt = false; // i.e. there are no unfinished attempts
-}
 
-$title = '';
-$msg = '';
-if ($attempt) {
-    $showform = false;
-    $title = get_string('quizattemptinprogress', $plugin);
-    $name = $DB->get_field('reader_books', 'name', array('quizid' => $attempt->quizid));
-    if (empty($SESSION->reader_lastattemptpage)) {
-        $params = array('attempt' => $attempt->id, 'page' => 1);
-        $msg = new moodle_url('/mod/reader/quiz/attempt.php', $params, 'q0');
-    } else {
-        $msg = new moodle_url('/mod/reader/quiz/attempt.php?'.$SESSION->reader_lastattemptpage);
-    }
-    $msg = html_writer::tag('a', $name, array('href' => $msg));
-    $msg = html_writer::tag('li', $msg);
-    $msg = html_writer::tag('ul', $msg);
-    $msg = get_string('completequizattempt', $plugin, $name).$msg;
-} else if ($delay = $reader->get_delay()) {
-    if ($timenow < ($lastattemptdate + $delay)) {
+    if ($msg) {
+        echo html_writer::tag('h2',  $title, array('class' => 'ReadingReportTitle'));
+        echo html_writer::tag('div', $msg,   array('class' => 'readermessage'));
         $showform = false;
-        $title = get_string('delayineffect', $plugin);
-        $msg = userdate($lastattemptdate + $delay);
-        $msg = get_string('youcantakeaquizafter', $plugin, $msg);
+    } else {
+        $showform = true;
     }
+
+    echo $output->rates();
 }
 
-if ($msg) {
-    echo html_writer::tag('h2',  $title, array('class' => 'ReadingReportTitle'));
-    echo html_writer::tag('div', $msg,   array('class' => 'readermessage'));
-    $showform = false;
-} else {
-    $showform = true;
-}
-
-echo $output->rates();
 
 $select = 'readerid = ? AND timefinish = ? OR timefinish > ?';
 $params = array($cm->instance, 0, $timenow);

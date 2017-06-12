@@ -44,4 +44,13 @@ require_once($CFG->dirroot.'/mod/reader/admin/reports/userdetailed/filtering.php
  */
 class mod_reader_admin_reports_userdetailed_renderer extends mod_reader_admin_reports_renderer {
     public $mode = 'userdetailed';
+
+    /**
+     * get_tab
+     *
+     * @return integer tab id
+     */
+    public function get_tab() {
+        return self::TAB_REPORTS_USERDETAILED;
+    }
 }

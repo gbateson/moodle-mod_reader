@@ -664,7 +664,10 @@ class reader_admin_table extends table_sql {
 
         // start form
         $url = $this->output->tab.'_url'; // e.g. reports_url
-        $url = $this->output->reader->$url();
+        $params = array('tab' => $this->output->get_tab(),
+                        'mode' => $this->output->mode);
+        $url = $this->output->reader->$url($params);
+
         $params = array('id'     => 'attemptsform',
                         'method' => 'post',
                         'action' => $url->out_omit_querystring(),

@@ -87,20 +87,28 @@ class mod_reader_mod_form extends moodleform_mod {
         $mform->addElement('header', 'timinghdr', get_string('timing', 'form'));
         //-----------------------------------------------------------------------------
 
-        $name = 'timeopen';
-        $label = get_string('quizopen', 'quiz');
+        $name = 'availablefrom';
+        $label = get_string($name, $plugin);
         $mform->addElement('date_time_selector', $name, $label, $dateoptions);
-        if ($strman->string_exists('quizopenclose', 'quiz')) {
-            $mform->addHelpButton($name, 'quizopenclose', 'quiz');
-        }
+        $mform->addHelpButton($name, $name, $plugin);
         $this->set_type_default_advanced($mform, $config, $name, PARAM_INT);
 
-        $name = 'timeclose';
-        $label = get_string('quizclose', 'quiz');
+        $name = 'availableuntil';
+        $label = get_string($name, $plugin);
         $mform->addElement('date_time_selector', $name, $label, $dateoptions);
-        if ($strman->string_exists('quizopenclose', 'quiz')) {
-            $mform->addHelpButton($name, 'quizopenclose', 'quiz');
-        }
+        $mform->addHelpButton($name, $name, $plugin);
+        $this->set_type_default_advanced($mform, $config, $name, PARAM_INT);
+
+        $name = 'readonlyuntil';
+        $label = get_string($name, $plugin);
+        $mform->addElement('date_time_selector', $name, $label, $dateoptions);
+        $mform->addHelpButton($name, $name, $plugin);
+        $this->set_type_default_advanced($mform, $config, $name, PARAM_INT);
+
+        $name = 'readonlyfrom';
+        $label = get_string($name, $plugin);
+        $mform->addElement('date_time_selector', $name, $label, $dateoptions);
+        $mform->addHelpButton($name, $name, $plugin);
         $this->set_type_default_advanced($mform, $config, $name, PARAM_INT);
 
         $name = 'timelimit';

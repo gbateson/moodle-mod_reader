@@ -1419,5 +1419,19 @@ function xmldb_reader_upgrade($oldversion) {
         upgrade_mod_savepoint(true, "$newversion", 'reader');
     }
 
+    $newversion = 2017061286;
+    if ($result && $oldversion < $newversion) {
+        $table = new xmldb_table('reader');
+        $fields = array(
+            // $newname => $oldfield
+            'availablefrom'  => new xmldb_field('timeopen',      XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'introformat'),
+            'availableuntil' => new xmldb_field('timeclose',     XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'availablefrom'),
+            'readonlyuntil'  => new xmldb_field('timeviewuntil', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'availableuntil'),
+            'readonlyfrom'   => new xmldb_field('timeviewfrom',  XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'readonlyuntil')
+        );
+        reader_xmldb_update_fields($dbman, $table, $fields);
+        upgrade_mod_savepoint(true, "$newversion", 'reader');
+    }
+
     return $result;
 }

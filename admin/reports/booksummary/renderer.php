@@ -52,4 +52,13 @@ class mod_reader_admin_reports_booksummary_renderer extends mod_reader_admin_rep
         //'startlevel' => 1, 'currentlevel' => 1, 'allowpromotion' => 1,
         //'countpassed' => 1, 'countfailed' => 1, 'countwords' => 1
     );
+
+    /**
+     * get_tab
+     *
+     * @return integer tab id
+     */
+    public function get_tab() {
+        return self::TAB_REPORTS_BOOKSUMMARY;
+    }
 }

@@ -540,40 +540,40 @@ class num_attempts_access_rule extends readerquiz_access_rule_base {
 class open_close_date_access_rule extends readerquiz_access_rule_base {
     public function description() {
         $result = array();
-        if ($this->_timenow < $this->reader->timeopen) {
-            $result[] = get_string('quiznotavailableuntil', 'reader', userdate($this->reader->timeopen));
-        } else if ($this->reader->timeclose && $this->_timenow > $this->reader->timeclose) {
-            $result[] = get_string('quizclosed', 'reader', userdate($this->reader->timeclose));
+        if ($this->_timenow < $this->reader->availablefrom) {
+            $result[] = get_string('quiznotavailableuntil', 'reader', userdate($this->reader->availablefrom));
+        } else if ($this->reader->availableuntil && $this->_timenow > $this->reader->availableuntil) {
+            $result[] = get_string('quizclosed', 'reader', userdate($this->reader->availableuntil));
         } else {
-            if ($this->reader->timeopen) {
-                $result[] = get_string('quizopenedon', 'reader', userdate($this->reader->timeopen));
+            if ($this->reader->availablefrom) {
+                $result[] = get_string('quizopenedon', 'reader', userdate($this->reader->availablefrom));
             }
-            if ($this->reader->timeclose) {
-                $result[] = get_string('quizcloseson', 'reader', userdate($this->reader->timeclose));
+            if ($this->reader->availableuntil) {
+                $result[] = get_string('quizcloseson', 'reader', userdate($this->reader->availableuntil));
             }
         }
         return $result;
     }
     public function prevent_access() {
-        if ($this->_timenow < $this->reader->timeopen || ($this->reader->timeclose && $this->_timenow > $this->reader->timeclose)) {
+        if ($this->_timenow < $this->reader->availablefrom || ($this->reader->availableuntil && $this->_timenow > $this->reader->availableuntil)) {
             return get_string('notavailable', 'reader');
         }
         return false;
     }
     public function is_finished($numprevattempts, $lastattempt) {
-        return $this->reader->timeclose && $this->_timenow > $this->reader->timeclose;
+        return $this->reader->availableuntil && $this->_timenow > $this->reader->availableuntil;
     }
     public function time_left($attempt, $timenow) {
         // If this is a teacher preview after the close date, do not show
         // the time.
-        if ($attempt->preview && $timenow > $this->reader->timeclose) {
+        if ($attempt->preview && $timenow > $this->reader->availableuntil) {
             return false;
         }
 
         // Otherwise, return to the time left until the close date, providing
         // that is less than QUIZ_SHOW_TIME_BEFORE_DEADLINE
-        if ($this->reader->timeclose) {
-            $timeleft = $this->reader->timeclose - $timenow;
+        if ($this->reader->availableuntil) {
+            $timeleft = $this->reader->availableuntil - $timenow;
             if ($timeleft < QUIZ_SHOW_TIME_BEFORE_DEADLINE) {
                 return $timeleft;
             }
@@ -591,13 +591,13 @@ class inter_attempt_delay_access_rule extends readerquiz_access_rule_base {
         /// No more attempts allowed anyway.
             return false;
         }
-        if ($this->reader->timeclose != 0 && $this->_timenow > $this->reader->timeclose) {
+        if ($this->reader->availableuntil != 0 && $this->_timenow > $this->reader->availableuntil) {
         /// No more attempts allowed anyway.
             return false;
         }
         $nextstarttime = $this->compute_next_start_time($numprevattempts, $lastattempt);
         if ($this->_timenow < $nextstarttime) {
-            if ($this->reader->timeclose == 0 || $nextstarttime <= $this->reader->timeclose) {
+            if ($this->reader->availableuntil == 0 || $nextstarttime <= $this->reader->availableuntil) {
                 return get_string('youmustwait', 'reader', userdate($nextstarttime));
             } else {
                 return get_string('youcannotwait', 'reader');
@@ -635,7 +635,7 @@ class inter_attempt_delay_access_rule extends readerquiz_access_rule_base {
     public function is_finished($numprevattempts, $lastattempt) {
         $nextstarttime = $this->compute_next_start_time($numprevattempts, $lastattempt);
         return $this->_timenow <= $nextstarttime &&
-                $this->reader->timeclose != 0 && $nextstarttime >= $this->reader->timeclose;
+                $this->reader->availableuntil != 0 && $nextstarttime >= $this->reader->availableuntil;
     }
 }
 

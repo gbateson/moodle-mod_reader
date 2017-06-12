@@ -91,7 +91,7 @@ if (isset($likebook)) {
 
 // If the attempt is already closed, send them to the review page.
 if ($readerattempt->is_finished()) {
-//    throw new moodle_reader_exception($readerattempt->get_reader(), 'attemptalreadyclosed', null, $readerattempt->review_url());
+//    throw new moodle_reader_exception($readerattempt->get_reader(), 'attemptavailablenolonger', null, $readerattempt->review_url());
 }
 
 if ($finishattempt) {

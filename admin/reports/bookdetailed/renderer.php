@@ -51,4 +51,13 @@ class mod_reader_admin_reports_bookdetailed_renderer extends mod_reader_admin_re
         //'currentlevel' => 1, 'difficulty' => 1, 'name'  => 1,
         //'percentgrade' => 1, 'passed'     => 1, 'words' => 1
     );
+
+    /**
+     * get_tab
+     *
+     * @return integer tab id
+     */
+    public function get_tab() {
+        return self::TAB_REPORTS_BOOKDETAILED;
+    }
 }

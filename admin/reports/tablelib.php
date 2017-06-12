@@ -969,7 +969,7 @@ class reader_admin_reports_table extends reader_admin_table {
         $settings .= get_string('newsetting', 'mod_reader').': ';
         $options = array(0 => get_string('failedshort', 'mod_reader').' - '.get_string('failed', 'mod_reader'),
                          1 => get_string('passedshort', 'mod_reader').' - '.get_string('passed', 'mod_reader'));
-        $settings .= html_writer::select($options, $action, $value, '', array());
+        $settings .= html_writer::select($options, $action, $value, '', $this->display_action_onclickchange($action, 'onchange'));
         return $this->display_action_settings($action, $settings);
     }
 
@@ -985,7 +985,7 @@ class reader_admin_reports_table extends reader_admin_table {
         $settings .= get_string('newsetting', 'mod_reader').': ';
         $options = array(0 => get_string('no'),
                          1 => get_string('yes').' - '.get_string('cheated', 'mod_reader'));
-        $settings .= html_writer::select($options, $action, $value, '', array());
+        $settings .= html_writer::select($options, $action, $value, '', $this->display_action_onclickchange($action, 'onchange'));
         return $this->display_action_settings($action, $settings);
     }
 

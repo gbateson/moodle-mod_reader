@@ -44,4 +44,13 @@ require_once($CFG->dirroot.'/mod/reader/admin/reports/groupsummary/filtering.php
  */
 class mod_reader_admin_reports_groupsummary_renderer extends mod_reader_admin_reports_renderer {
     public $mode = 'groupsummary';
+
+    /**
+     * get_tab
+     *
+     * @return integer tab id
+     */
+    public function get_tab() {
+        return self::TAB_REPORTS_GROUPSUMMARY;
+    }
 }

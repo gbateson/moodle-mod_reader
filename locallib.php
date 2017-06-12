@@ -78,6 +78,12 @@ class mod_reader {
     /** @var array of attempts */
     public $attempts;
 
+    /** @var is the activity currently available */
+    public $available = true;
+
+    /** @var is the activity currently read-only */
+    public $readonly = false;
+
     /**
      * Initializes the reader API instance using the data from DB
      *
@@ -125,6 +131,26 @@ class mod_reader {
         }
 
         $this->time = time();
+
+        if ($this->can_viewreports()) {
+            $this->available = true;
+        } else if ($this->availableuntil && $this->availableuntil < $this->time) {
+            $this->available = false;
+        } else if ($this->availablefrom && $this->availablefrom > $this->time) {
+            $this->available = false;
+        } else {
+            $this->available = true;
+        }
+
+        if ($this->can_viewreports()) {
+            $this->readonly = false;
+        } else if ($this->readonlyuntil && $this->readonlyuntil > $this->time) {
+            $this->readonly = true;
+        } else if ($this->readonlyfrom && $this->readonlyfrom < $this->time) {
+            $this->readonly = true;
+        } else {
+            $this->readonly = false;
+        }
     }
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -601,7 +627,7 @@ class mod_reader {
      * @prefix object $context (optional, default=null)
      * @return boolean
      */
-    function can($name, $type='', $context=null) {
+    public function can($name, $type='', $context=null) {
         if ($type==='') {
             $type = 'mod/reader';
         }
@@ -717,7 +743,7 @@ class mod_reader {
      * @prefix object $context (optional, default=null)
      * @return void, but may terminate script execution
      **/
-    function req($name, $type='', $context=null) {
+    public function req($name, $type='', $context=null) {
         if ($this->can($name, $type, $context)) {
             // do nothing
         } else {

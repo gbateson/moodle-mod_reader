@@ -390,13 +390,41 @@ function reader_get_info($plugin, &$attempts, &$userids) {
             continue; // shouldn't happen !!
         }
 
-        list($ip1, $ip2, $ip3, $ip4) = explode('.', $attempts[$attemptid1]->ip);
-        switch ($subnetlength) {
-            case 4: $subnet = "$ip1.$ip2.$ip3.$ip4"; break;
-            case 3: $subnet = "$ip1.$ip2.$ip3"; break;
-            case 2: $subnet = "$ip1.$ip2"; break;
-            case 1: $subnet = "$ip1"; break;
-            default: $subnet = '';
+        // skip loopback (=locahost) IP addresses
+        switch (true) {
+            case $attempts[$attemptid1]->ip=='::1':
+            case $attempts[$attemptid1]->ip=='127.0.0.1':
+            case $attempts[$attemptid1]->ip=='0:0:0:0:0:0:0:1':
+                continue;
+        }
+
+        if (substr_count($attempts[$attemptid1]->ip, '.')==3) {
+            list($ip1, $ip2, $ip3, $ip4) = explode('.', $attempts[$attemptid1]->ip);
+            switch ($subnetlength) {
+                case 4: $subnet = "$ip1.$ip2.$ip3.$ip4"; break;
+                case 3: $subnet = "$ip1.$ip2.$ip3"; break;
+                case 2: $subnet = "$ip1.$ip2"; break;
+                case 1: $subnet = "$ip1"; break;
+                default: $subnet = '';
+            }
+        } else if (substr_count($attempts[$attemptid1]->ip, ':')==7) {
+            list($ip1, $ip2, $ip3, $ip4, $ip5, $ip6, $ip7) = explode(':', $attempts[$attemptid1]->ip);
+            switch ($subnetlength) {
+                case 7: $subnet = "$ip1:$ip2:$ip3:$ip4:$ip5:$ip6:$ip7"; break;
+                case 6: $subnet = "$ip1:$ip2:$ip3:$ip4:$ip5:$ip6"; break;
+                case 5: $subnet = "$ip1:$ip2:$ip3:$ip4:$ip5"; break;
+                case 4: $subnet = "$ip1:$ip2:$ip3:$ip4"; break;
+                case 3: $subnet = "$ip1:$ip2:$ip3"; break;
+                case 2: $subnet = "$ip1:$ip2"; break;
+                case 1: $subnet = "$ip1"; break;
+                default: $subnet = '';
+            }
+        } else {
+            $subnet = ''; // unrecognised IP address format
+        }
+
+        if ($subnet=='') {
+            continue;
         }
 
         $mintime = $attempts[$attemptid1]->timefinish;

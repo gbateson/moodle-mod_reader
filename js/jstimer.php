@@ -27,7 +27,7 @@ defined('MOODLE_INTERNAL') || die();
 <script type="text/javascript">
 //<![CDATA[
 var timesup = "<?php print_string('timesup', 'reader'); ?>";
-var quizclose = <?php echo ($reader->timeclose - time()) - $timerstartvalue; ?>; // in seconds
+var quizclose = <?php echo ($reader->availableuntil - time()) - $timerstartvalue; ?>; // in seconds
 var quizTimerValue = <?php echo $timerstartvalue; ?>; // in seconds
 parseInt(quizTimerValue);
 
