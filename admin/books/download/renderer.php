@@ -51,7 +51,7 @@ class mod_reader_admin_books_download_renderer extends mod_reader_admin_books_re
      * @return integer tab id
      */
     public function get_tab() {
-        return self::TAB_BOOKS_DOWNLOAD;
+        return self::TAB_BOOKS_DOWNLOAD_WITH;
     }
 
     /**
