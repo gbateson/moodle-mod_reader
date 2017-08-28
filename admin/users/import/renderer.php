@@ -204,7 +204,7 @@ class mod_reader_admin_users_import_renderer extends mod_reader_admin_users_rend
                     'quizid'        => $books[$image]->quizid,
                     'attempt'       => $values['attempt'],
                     'layout'        => 0, // $values['layout']
-                    'state'         => ($values['timefinish'] ? 'finished' ? 'inprogress'),
+                    'state'         => ($values['timefinish'] ? 'finished' : 'inprogress'),
                     'currentpage'   => 0,
                     'sumgrades'     => $values['sumgrades'],
                     'percentgrade'  => $values['percentgrade'],
