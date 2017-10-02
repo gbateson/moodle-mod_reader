@@ -441,7 +441,7 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && ($changelevel ||
             'readerid'       => $reader->id,
             'allowpromotion' => 1,
             'stoplevel'      => 99,
-            'goal'           => null,
+            'goal'           => 0,
             'time'           => time()
         );
         $studentlevel->id = $DB->insert_record('reader_levels', $studentlevel);
@@ -575,7 +575,7 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && isset($allowprom
             'readerid'       => $reader->id,
             'allowpromotion' => $allowpromotion,
             'stoplevel'      => 99,
-            'goal'           => null,
+            'goal'           => 0,
             'time'           => time()
         );
         $studentlevel->id = $DB->insert_record('reader_levels', $studentlevel);
@@ -600,7 +600,7 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && isset($stoplevel
             'readerid'       => $reader->id,
             'allowpromotion' => 1,
             'stoplevel'      => $stoplevel,
-            'goal'           => null,
+            'goal'           => 0,
             'time'           => time()
         );
         $studentlevel->id = $DB->insert_record('reader_levels', $level);
@@ -669,7 +669,7 @@ if (has_capability('mod/reader:addinstance', $contextmodule) &&  isset($changeal
                 'currentlevel'   => $changeallcurrentlevel,
                 'stoplevel'      => 99,
                 'allowpromotion' => 1,
-                'goal'           => $reader->id,
+                'goal'           => $reader->goal,
                 'time'           => time()
             );
             $studentlevel->id = $DB->insert_record('reader_levels', $studentlevel);
@@ -715,7 +715,7 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && isset($changeall
                 'readerid'       => $reader->id,
                 'allowpromotion' => 1,
                 'stoplevel'      => $changeallstoplevel,
-                'goal'           => null,
+                'goal'           => 0,
                 'time'           => time()
             );
             $studentlevel->id = $DB->insert_record('reader_levels', $studentlevel);
@@ -2363,7 +2363,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managebooks', $contextmodule
                     'currentlevel'   => 0,
                     'allowpromotion' => 1,
                     'stoplevel'      => 99,
-                    'goal'           => null,
+                    'goal'           => 0,
                     'time'           => time()
                 );
                 $studentlevel->id = $DB->insert_record('reader_levels', $studentlevel);
