@@ -494,7 +494,7 @@ function reader_get_info($plugin, &$attempts, &$userids) {
  * @return void, but may update $attempts and $attemptsprinted
  */
 function reader_print_info_books($plugin, $id, $tab, $quizid, &$attempts, &$attemptsprinted) {
-    global $DB;
+    global $DB, $PAGE;
 
     static $readers = array(),
            $courses = array(),
@@ -553,19 +553,39 @@ function reader_print_info_books($plugin, $id, $tab, $quizid, &$attempts, &$atte
 
                 $selectall = get_string('selectall', 'quiz');
                 $selectnone = get_string('selectnone', 'quiz');
-                $onclick = "if (this.checked) {".
-                               "select_all_in('TABLE',null,'attempts');".
-                               "this.title = '".addslashes_js($selectnone)."';".
-                           "} else {".
-                               "deselect_all_in('TABLE',null,'attempts');".
-                               "this.title = '".addslashes_js($selectall)."';".
-                           "}";
                 $checkbox = array('type' => 'checkbox',
-                                  'name' => 'selected[0]',
+                                  'name' => 'selectattempts',
                                   'value' => '1',
-                                  'title' => $selectall,
-                                  'onclick' => $onclick);
-                $checkbox = html_writer::empty_tag('input', $checkbox).'</th>';
+                                  'title' => $selectall);
+
+                if ( method_exists($PAGE->requires, 'js_amd_inline')) {
+                    // Moodle >= 3.3
+                    $checkbox['id'] = 'id_'.$checkbox['name'];
+                    $PAGE->requires->js_amd_inline(
+                        'require(["jquery"], function($) {'.
+                            '$("#'.$checkbox['id'].'").click(function(e) {'.
+                                'var checkboxes = $("#attempts").find("input:checkbox");'.
+                                'checkboxes.not(this).prop("checked", this.checked);'.
+                                'if (this.checked) {'.
+                                    'this.title = "'.addslashes_js($selectnone).'";'.
+                                '} else {'.
+                                    'this.title = "'.addslashes_js($selectall).'";'.
+                                '}'.
+                            '});'.
+                        '});'
+                    );
+                } else {
+                    // Moodle <= 3.2
+                    $onclick = 'if (this.checked) {'.
+                                   'select_all_in("TABLE",null,"attempts");'.
+                                   'this.title = "'.addslashes_js($selectnone).'";'.
+                               '} else {'.
+                                   'deselect_all_in("TABLE",null,"attempts");'.
+                                   'this.title = "'.addslashes_js($selectall).'";'.
+                               '}';
+                    $checkbox['onclick'] = $onclick;
+                }
+                $checkbox = html_writer::empty_tag('input', $checkbox);
 
                 echo '<table cellspacing="4" cellpadding="4" border="1" id="attempts"><tbody>'."\n";
                 echo '<tr>';
@@ -680,7 +700,7 @@ function reader_print_info_books($plugin, $id, $tab, $quizid, &$attempts, &$atte
  * @return void, but may update $usersprinted
  */
 function reader_print_info_users($plugin, $id, $tab, $userids1, &$usersprinted) {
-    global $DB;
+    global $DB, $PAGE;
 
     static $readers = array(),
            $courses = array(),
@@ -750,19 +770,39 @@ function reader_print_info_users($plugin, $id, $tab, $userids1, &$usersprinted) 
 
                     $selectall = get_string('selectall', 'quiz');
                     $selectnone = get_string('selectnone', 'quiz');
-                    $onclick = "if (this.checked) {".
-                                   "select_all_in('TABLE',null,'users');".
-                                   "this.title = '".addslashes_js($selectnone)."';".
-                               "} else {".
-                                   "deselect_all_in('TABLE',null,'users');".
-                                   "this.title = '".addslashes_js($selectall)."';".
-                               "}";
                     $checkbox = array('type' => 'checkbox',
-                                      'name' => 'selected[0]',
+                                      'name' => 'selectusers',
                                       'value' => '1',
-                                      'title' => $selectall,
-                                      'onclick' => $onclick);
-                    $checkbox = html_writer::empty_tag('input', $checkbox).'</th>';
+                                      'title' => $selectall);
+
+                    if ( method_exists($PAGE->requires, 'js_amd_inline')) {
+                        // Moodle >= 3.3
+                        $checkbox['id'] = 'id_'.$checkbox['name'];
+                        $PAGE->requires->js_amd_inline(
+                            'require(["jquery"], function($) {'.
+                                '$("#'.$checkbox['id'].'").click(function(e) {'.
+                                    'var checkboxes = $("#users").find("input:checkbox");'.
+                                    'checkboxes.not(this).prop("checked", this.checked);'.
+                                    'if (this.checked) {'.
+                                        'this.title = "'.addslashes_js($selectnone).'";'.
+                                    '} else {'.
+                                        'this.title = "'.addslashes_js($selectall).'";'.
+                                    '}'.
+                                '});'.
+                            '});'
+                        );
+                    } else {
+                        // Moodle <= 3.2
+                        $onclick = 'if (this.checked) {'.
+                                       'select_all_in("TABLE",null,"users");'.
+                                       'this.title = "'.addslashes_js($selectnone).'";'.
+                                   '} else {'.
+                                       'deselect_all_in("TABLE",null,"users");'.
+                                       'this.title = "'.addslashes_js($selectall).'";'.
+                                   '}';
+                        $checkbox['onclick'] = $onclick;
+                    }
+                    $checkbox = html_writer::empty_tag('input', $checkbox);
 
                     echo '<table cellspacing="4" cellpadding="4" border="1" id="users"><tbody>'."\n";
                     echo '<tr>';

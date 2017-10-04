@@ -855,17 +855,46 @@ class reader_admin_table extends table_sql {
      * @return xxx
      */
     public function header_selected()  {
+        global $PAGE;
+
         $selectall = get_string('selectall', 'quiz');
         $selectnone = get_string('selectnone', 'quiz');
-        $onclick = "if (this.checked) {".
-                       "select_all_in('TABLE',null,'attempts');".
-                       "this.title = '".addslashes_js($selectnone)."';".
-                   "} else {".
-                       "deselect_all_in('TABLE',null,'attempts');".
-                       "this.title = '".addslashes_js($selectall)."';".
-                   "}";
-        return get_string('select').html_writer::empty_tag('br').
-               html_writer::empty_tag('input', array('type' => 'checkbox', 'name' => 'selected[0]', 'title' => $selectall, 'onclick' => $onclick));
+
+        $header = get_string('select').html_writer::empty_tag('br');
+        $params = array('type'  => 'checkbox',
+                        'name'  => 'selected[0]',
+                        'title' => $selectall);
+
+        if (method_exists($PAGE->requires, 'js_amd_inline')) {
+            // Moodle >= 3.3
+            $params['id'] = 'selectattempts';
+            $header .= html_writer::empty_tag('input', $params);
+            $PAGE->requires->js_amd_inline(
+                'require(["jquery"], function($) {'.
+                    '$("#'.$params['id'].'").click(function(e) {'.
+                        'var checkboxes = $("#attempts").find("input:checkbox");'.
+                        'checkboxes.not(this).prop("checked", this.checked);'.
+                        'if (this.checked) {'.
+                            'this.title = "'.addslashes_js($selectnone).'";'.
+                        '} else {'.
+                            'this.title = "'.addslashes_js($selectall).'";'.
+                        '}'.
+                    '});'.
+                '});'
+            );
+        } else {
+            // Moodle <= 3.2
+            $onclick = 'if (this.checked) {'.
+                           'select_all_in("TABLE",null,"attempts");'.
+                           'this.title = "'.addslashes_js($selectnone).'";'.
+                       '} else {'.
+                           'deselect_all_in("TABLE",null,"attempts");'.
+                           'this.title = "'.addslashes_js($selectall).'";'.
+                       '}';
+            $params['onclick'] = $onclick;
+            $header .= html_writer::empty_tag('input', $params);
+        }
+        return $header;
     }
 
     /**
