@@ -1421,7 +1421,8 @@ class reader_downloader {
 
             // get first valid category $categoryid (e.g. Miscellaneous)
             reset($category_list);
-            list($categoryid, $category_name) = each($category_list);
+            $categoryid = key($category_list);
+            $category_name = current($category_list);
         }
 
         // allow system admin to create courses anywhere

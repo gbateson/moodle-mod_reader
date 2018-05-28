@@ -1665,7 +1665,8 @@ class mod_reader_renderer extends plugin_renderer_base {
             if ($count==1) {
                 $gid = 0;
             } else if ($count==1) {
-                list($gid, $option) = each($options);
+                $gid = key($options);
+                $option = current($options);
                 $output .= html_writer::tag('p', $label.': '.$option);
 
             } else if ($count > 1) {
