@@ -88,7 +88,6 @@ if (! $readerattempt->set_currentpage($page)) {
     redirect($readerattempt->attempt_url(null, $readerattempt->get_currentpage()));
 }
 
-
 // Initialise the JavaScript.
 $headtags = $readerattempt->get_html_head_contributions($page);
 $PAGE->requires->js_init_call('M.mod_quiz.init_attempt_form', null, false, reader_get_js_module());

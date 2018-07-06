@@ -508,6 +508,13 @@ class mod_reader {
     }
 
     /**
+     * @return moodle_url of this reader mreader return page
+     */
+    public function mreader_return_url($params=null, $cm=null) {
+        return $this->url('/mod/reader/mreader/return.php', $params, $cm);
+    }
+
+    /**
      * @return moodle_url of this reader admin quizzes page
      */
     public function quizzes_url($params=null, $cm=null) {
@@ -538,7 +545,7 @@ class mod_reader {
     /**
      * @return moodle_url of this reader's view page
      */
-    public function view_url($cm=null) {
+    public function view_url($params=null, $cm=null) {
         if ($cm===null) {
             $url = '/mod/reader/view.php';
         } else {
@@ -1062,11 +1069,13 @@ class mod_reader {
         $timecheckstate = 0;
         if ($readerattempt->timefinish) {
             if (defined('quiz_attempt::FINISHED')) {
+                // Moodle >= 2.3
                 $state = quiz_attempt::FINISHED; // "finished"
                 $timecheckstate = $readerattempt->timefinish;
             }
         } else {
             if (defined('quiz_attempt::IN_PROGRESS')) {
+                // Moodle >= 2.3
                 $state = quiz_attempt::IN_PROGRESS; // "inprogress"
                 $timecheckstate = $readerattempt->timemodified;
             }

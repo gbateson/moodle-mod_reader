@@ -63,11 +63,18 @@ $defaults = (object)array(
     'clearedmessage'     => get_string('clearedmessagedefault', 'mod_reader'),
 
     // site wide settings (i.e. all courses use the same settings)
+
+    // settings to download from quiz bank on MoodleReader.net
     'serverurl'          => 'http://moodlereader.net/quizbank',
     'serverusername'     => '',
     'serverpassword'     => '',
     'keepoldquizzes'     => '0',
     'keeplocalbookdifficulty' => '0',
+
+    // settings to access API and take quizzes online at mReader.org
+    'mreaderurl'         => 'https://mreader.org',
+    'mreadersiteid'      => '',
+    'mreadersitekey'     => '',
 
     'last_update'        => '0' // maintained by "reader_cron()" in "mod/reader/lib.php"
 );
@@ -242,6 +249,42 @@ if (method_exists('admin_setting_configtextarea', 'set_advanced_flag_options')) 
     $settings->add($setting);
 }
 
+$name = 'mreadersettings';
+$text = get_string($name, $plugin);
+$help = get_string('config'.$name, $plugin);
+$setting = new admin_setting_heading("$plugin/$name", $text, $help);
+$settings->add($setting);
+
+// mReader API url
+$name = 'mreaderurl';
+$text = get_string($name, $plugin);
+$help = get_string('config'.$name, $plugin);
+$default = $defaults->$name;
+$setting = new admin_setting_configtext("$plugin/$name", $text, $help, $default, PARAM_TEXT);
+$settings->add($setting);
+
+// mReader API site id
+$name = 'mreadersiteid';
+$text = get_string($name, $plugin);
+$help = get_string('config'.$name, $plugin);
+$default = $defaults->$name;
+$setting = new admin_setting_configtext("$plugin/$name", $text, $help, $default, PARAM_TEXT);
+$settings->add($setting);
+
+// mReader API site key
+$name = 'mreadersitekey';
+$text = get_string($name, $plugin);
+$help = get_string('config'.$name, $plugin);
+$default = $defaults->$name;
+$setting = new admin_setting_configpasswordunmask("$plugin/$name", $text, $help, $default, PARAM_TEXT);
+$settings->add($setting);
+
+$name = 'serversettings';
+$text = get_string($name, $plugin);
+$help = get_string('config'.$name, $plugin);
+$setting = new admin_setting_heading("$plugin/$name", $text, $help);
+$settings->add($setting);
+
 // serverurl
 $name = 'serverurl';
 $text = get_string($name, $plugin);
@@ -263,7 +306,7 @@ $name = 'serverpassword';
 $text = get_string($name, $plugin);
 $help = get_string('config'.$name, $plugin);
 $default = $defaults->$name;
-$setting = new admin_setting_configtext("$plugin/$name", $text, $help, $default, PARAM_TEXT);
+$setting = new admin_setting_configpasswordunmask("$plugin/$name", $text, $help, $default, PARAM_TEXT);
 $settings->add($setting);
 
 // keepoldquizzes

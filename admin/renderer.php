@@ -34,7 +34,7 @@ require_once($CFG->dirroot.'/mod/reader/admin/tablelib.php');
 require_once($CFG->dirroot.'/mod/reader/admin/filtering.php');
 
 /**
- * mod_reader_download_renderer
+ * mod_reader_admin_renderer
  *
  * @copyright  2013 Gordon Bateson (gordon.bateson@gmail.com)
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later

@@ -32,6 +32,11 @@ require_once($CFG->dirroot.'/mod/reader/locallib.php');
 require_once($CFG->dirroot.'/course/moodleform_mod.php');
 require_once($CFG->dirroot.'/question/editlib.php');
 
+// load mreader library, if needed
+if ($mreadersiteid = get_config('mod_reader', 'mreadersiteid')) {
+    require_once($CFG->dirroot.'/mod/reader/quiz/mreaderlib.php');
+}
+
 $id        = optional_param('id', 0, PARAM_INT); // course module id
 $r         = optional_param('r',  0, PARAM_INT); // reader id
 $v         = optional_param('v', NULL, PARAM_CLEAN);
@@ -447,7 +452,10 @@ if ($reader->readonly) {
     if ($attempt) {
         $title = get_string('quizattemptinprogress', $plugin);
         $name = $DB->get_field('reader_books', 'name', array('quizid' => $attempt->quizid));
-        if (empty($SESSION->reader_lastattemptpage)) {
+        if ($mreadersiteid) {
+            $mreader = new reader_site_mreader($attempt);
+            $msg = $mreader->start_url();
+        } else if (empty($SESSION->reader_lastattemptpage)) {
             $params = array('attempt' => $attempt->id, 'page' => 1);
             $msg = new moodle_url('/mod/reader/quiz/attempt.php', $params, 'q0');
         } else {

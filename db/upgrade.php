@@ -544,13 +544,13 @@ function xmldb_reader_upgrade($oldversion) {
 
     $newversion = 2013121107;
     if ($result && $oldversion < $newversion) {
-        $readercfg = get_config($plugin);
-        $vars = get_object_vars($readercfg);
-        foreach ($vars as $oldname => $value) {
+        $config = get_config($plugin);
+        $names = get_object_vars($config);
+        foreach ($names as $oldname => $value) {
             if (substr($oldname, 0, 7)=='reader_') {
                 unset_config($oldname, $plugin);
                 $newname = substr($oldname, 7);
-                if (isset($readercfg->$newname)) {
+                if (isset($config->$newname)) {
                     // do nothing
                 } else {
                     set_config($newname, $value, $plugin);
@@ -953,8 +953,8 @@ function xmldb_reader_upgrade($oldversion) {
         }
 
         // rename Reader config settings
-        $readercfg = get_config($plugin);
-        $configs = array(
+        $config = get_config($plugin);
+        $names = array(
             'individualstrictip'  => 'uniqueip',
             'percentforreading'   => 'minpassgrade',
             'nextlevel'           => 'thislevel',
@@ -970,13 +970,13 @@ function xmldb_reader_upgrade($oldversion) {
             'serverlink'          => 'serverurl',
             'serverlogin'         => 'serverusername',
         );
-        foreach ($configs as $oldname => $newname) {
-            if (isset($readercfg->$oldname)) {
-                if (isset($readercfg->$newname)) {
+        foreach ($names as $oldname => $newname) {
+            if (isset($config->$oldname)) {
+                if (isset($config->$newname)) {
                     // do nothing
                 } else {
                     unset_config($oldname, $plugin);
-                    $value = $readercfg->$oldname;
+                    $value = $config->$oldname;
                     set_config($newname, $value, $plugin);
                 }
             }
@@ -1062,13 +1062,13 @@ function xmldb_reader_upgrade($oldversion) {
     $newversion = 2015012144;
     if ($oldversion < $newversion) {
         // remove obsolete config settings
-        $configs = array('editingteacherrole', 'iptimelimit', 'update', 'update_interval');
-        foreach ($configs as $config) {
-            $reader_config = 'reader_'.$config;
+        $names = array('editingteacherrole', 'iptimelimit', 'update', 'update_interval');
+        foreach ($names as $name) {
+            $reader_config = 'reader_'.$name;
             if (isset($CFG->$reader_config)) {
                 unset_config($reader_config);
             }
-            unset_config($config, $plugin);
+            unset_config($name, $plugin);
         }
         upgrade_mod_savepoint(true, "$newversion", 'reader');
     }
@@ -1430,6 +1430,53 @@ function xmldb_reader_upgrade($oldversion) {
             'readonlyfrom'   => new xmldb_field('timeviewfrom',  XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'readonlyuntil')
         );
         reader_xmldb_update_fields($dbman, $table, $fields);
+        upgrade_mod_savepoint(true, "$newversion", 'reader');
+    }
+
+    $newversion = 2018070494;
+    if ($result && $oldversion < $newversion) {
+
+        // Define table reader_users to be created.
+        $table = new xmldb_table('reader_users');
+
+        // Adding fields to table reader_users.
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('userid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('uniqueid', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('uniquename', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, null);
+
+        // Adding keys to table reader_users.
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, array('id'));
+        $table->add_key('readuser_use_ix', XMLDB_KEY_FOREIGN, array('userid'), 'user', array('id'));
+
+        // Adding indexes to table reader_users.
+        $table->add_index('readuser_uni_uix', XMLDB_INDEX_UNIQUE, array('uniqueid'));
+
+        // Conditionally launch create table for reader_users.
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        // Reader savepoint reached.
+        upgrade_mod_savepoint(true, "$newversion", 'reader');
+    }
+
+    $newversion = 2018070695;
+    if ($result && $oldversion < $newversion) {
+
+        $config = get_config($plugin);
+        $names = array('mreaderid' => 'mreadersiteid',
+                       'mreaderkey' => 'mreadersitekey');
+        foreach ($names as $oldname => $newname) {
+            if (isset($config->$oldname)) {
+                if (empty($config->$newname)) {
+                    set_config($newname, $config->$oldname, $plugin);
+                }
+                unset_config($oldname, $plugin);
+            }
+        }
+
+        // Reader savepoint reached.
         upgrade_mod_savepoint(true, "$newversion", 'reader');
     }
 

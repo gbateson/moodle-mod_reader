@@ -45,9 +45,9 @@ if ($readerattempt->get_userid() != $USER->id) {
     print_error('notyourattempt', 'quiz', $readerattempt->view_url());
 }
 
-// If the attempt is already closed, redirect them to the review page.
+// If the attempt is already closed, redirect them to the view page.
 if ($readerattempt->is_finished()) {
-    redirect($readerattempt->review_url());
+    redirect($readerattempt->view_url());
 }
 
 // Check access.

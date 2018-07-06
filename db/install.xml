@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="mod/reader/db" VERSION="20150128" COMMENT="Reader Module tables"
+<XMLDB PATH="mod/reader/db" VERSION="20180704" COMMENT="Reader Module tables"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
 >
@@ -24,7 +24,7 @@
         <FIELD NAME="ignoredate" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" NEXT="minpassgrade" PREVIOUS="bookcovers"/>
         <FIELD NAME="minpassgrade" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="60" SEQUENCE="false" NEXT="goal" PREVIOUS="ignoredate"/>
         <FIELD NAME="goal" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" NEXT="maxgrade" PREVIOUS="minpassgrade"/>
-        <FIELD NAME="maxgrade" TYPE="number" LENGTH="10" DECIMALS="5" NOTNULL="true" DEFAULT="0" SEQUENCE="false" NEXT="showprogressbar" PREVIOUS="goal"/>
+        <FIELD NAME="maxgrade" TYPE="number" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" DECIMALS="5" NEXT="showprogressbar" PREVIOUS="goal"/>
         <FIELD NAME="showprogressbar" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="1" SEQUENCE="false" NEXT="wordsorpoints" PREVIOUS="maxgrade"/>
         <FIELD NAME="wordsorpoints" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="0" SEQUENCE="false" NEXT="showpercentgrades" PREVIOUS="showprogressbar"/>
         <FIELD NAME="showpercentgrades" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="0" SEQUENCE="false" NEXT="showreviewlinks" PREVIOUS="wordsorpoints"/>
@@ -67,7 +67,7 @@
         <FIELD NAME="state" TYPE="char" LENGTH="16" NOTNULL="true" DEFAULT="inprogress" SEQUENCE="false" COMMENT="The current state of the attempt. 'inprogress', 'overdue', 'finished' or 'abandoned'." NEXT="currentpage" PREVIOUS="layout"/>
         <FIELD NAME="currentpage" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" NEXT="sumgrades" PREVIOUS="state"/>
         <FIELD NAME="sumgrades" TYPE="float" NOTNULL="true" DEFAULT="0" SEQUENCE="false" NEXT="percentgrade" PREVIOUS="currentpage"/>
-        <FIELD NAME="percentgrade" TYPE="number" LENGTH="6" DECIMALS="2" NOTNULL="true" DEFAULT="0" SEQUENCE="false" NEXT="passed" PREVIOUS="sumgrades"/>
+        <FIELD NAME="percentgrade" TYPE="number" LENGTH="6" NOTNULL="true" DEFAULT="0" SEQUENCE="false" DECIMALS="2" NEXT="passed" PREVIOUS="sumgrades"/>
         <FIELD NAME="passed" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false" NEXT="credit" PREVIOUS="percentgrade"/>
         <FIELD NAME="credit" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false" NEXT="cheated" PREVIOUS="passed"/>
         <FIELD NAME="cheated" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false" NEXT="deleted" PREVIOUS="credit"/>
@@ -89,7 +89,7 @@
         <INDEX NAME="readatte_qui_ix" UNIQUE="false" FIELDS="quizid" NEXT="readatte_att_ix" PREVIOUS="readatte_boo_ix"/>
         <INDEX NAME="readatte_att_ix" UNIQUE="false" FIELDS="attempt" NEXT="readatte_tim_ix" PREVIOUS="readatte_qui_ix"/>
         <INDEX NAME="readatte_tim_ix" UNIQUE="false" FIELDS="timefinish" NEXT="readatte_paschedel_ix" PREVIOUS="readatte_att_ix"/>
-        <INDEX NAME="readatte_paschedel_ix" UNIQUE="false" FIELDS="passed,cheated,deleted" PREVIOUS="readatte_tim_ix"/>
+        <INDEX NAME="readatte_paschedel_ix" UNIQUE="false" FIELDS="passed, cheated, deleted" PREVIOUS="readatte_tim_ix"/>
       </INDEXES>
     </TABLE>
     <TABLE NAME="reader_attempt_questions" COMMENT="reader_attempt_questions table" NEXT="reader_books" PREVIOUS="reader_attempts">
@@ -123,7 +123,7 @@
         <FIELD NAME="fiction" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" NEXT="quizid" PREVIOUS="genre"/>
         <FIELD NAME="quizid" TYPE="int" LENGTH="11" NOTNULL="true" DEFAULT="0" SEQUENCE="false" NEXT="image" PREVIOUS="fiction"/>
         <FIELD NAME="image" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" NEXT="points" PREVIOUS="quizid"/>
-        <FIELD NAME="points" TYPE="number" LENGTH="4" DECIMALS="2" NOTNULL="true" DEFAULT="1" SEQUENCE="false" NEXT="private" PREVIOUS="image"/>
+        <FIELD NAME="points" TYPE="number" LENGTH="4" NOTNULL="true" DEFAULT="1" SEQUENCE="false" DECIMALS="2" NEXT="private" PREVIOUS="image"/>
         <FIELD NAME="private" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="0" SEQUENCE="false" NEXT="sametitle" PREVIOUS="points"/>
         <FIELD NAME="sametitle" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" NEXT="hidden" PREVIOUS="private"/>
         <FIELD NAME="hidden" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="0" SEQUENCE="false" NEXT="maxtime" PREVIOUS="sametitle"/>
@@ -152,7 +152,7 @@
         <FIELD NAME="bookid" TYPE="int" LENGTH="11" NOTNULL="true" DEFAULT="0" SEQUENCE="false" NEXT="difficulty" PREVIOUS="readerid"/>
         <FIELD NAME="difficulty" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="0" SEQUENCE="false" NEXT="words" PREVIOUS="bookid"/>
         <FIELD NAME="words" TYPE="int" LENGTH="6" NOTNULL="true" DEFAULT="1" SEQUENCE="false" NEXT="points" PREVIOUS="difficulty"/>
-        <FIELD NAME="points" TYPE="number" LENGTH="4" DECIMALS="2" NOTNULL="true" DEFAULT="1" SEQUENCE="false" PREVIOUS="words"/>
+        <FIELD NAME="points" TYPE="number" LENGTH="4" NOTNULL="true" DEFAULT="1" SEQUENCE="false" DECIMALS="2" PREVIOUS="words"/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
@@ -292,7 +292,7 @@
         <INDEX NAME="readquesinst_que_ix" UNIQUE="false" FIELDS="question" PREVIOUS="readquesinst_qui_ix"/>
       </INDEXES>
     </TABLE>
-    <TABLE NAME="reader_strict_users_list" COMMENT="reader_strict_users_list table" PREVIOUS="reader_question_instances">
+    <TABLE NAME="reader_strict_users_list" COMMENT="reader_strict_users_list table" NEXT="reader_users" PREVIOUS="reader_question_instances">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="11" NOTNULL="true" SEQUENCE="true" NEXT="readerid"/>
         <FIELD NAME="readerid" TYPE="int" LENGTH="11" NOTNULL="true" DEFAULT="0" SEQUENCE="false" NEXT="userid" PREVIOUS="id"/>
@@ -304,6 +304,21 @@
       </KEYS>
       <INDEXES>
         <INDEX NAME="readstriuserlist_use_ix" UNIQUE="false" FIELDS="userid"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="reader_users" COMMENT="Map userid to anonymized user id and fullname for access to external quiz site" PREVIOUS="reader_strict_users_list">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true" NEXT="userid"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="real Moodle userid of the current user" NEXT="uniqueid" PREVIOUS="id"/>
+        <FIELD NAME="uniqueid" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" COMMENT="Unique string for this user that is used as the username on external quiz sites" NEXT="uniquename" PREVIOUS="userid"/>
+        <FIELD NAME="uniquename" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" COMMENT="Random full name that is used as the name of user on external quiz sites" PREVIOUS="uniqueid"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id" NEXT="readuser_use_ix"/>
+        <KEY NAME="readuser_use_ix" TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id" COMMENT="id in user table" PREVIOUS="primary"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="readuser_uni_uix" UNIQUE="true" FIELDS="uniqueid" COMMENT="Index on uniqueid field"/>
       </INDEXES>
     </TABLE>
   </TABLES>

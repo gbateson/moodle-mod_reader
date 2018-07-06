@@ -2632,7 +2632,10 @@ function reader_create_attempt($reader, $attemptnumber, $book, $adduniqueid=fals
         // we are not building on last attempt so create a new attempt
 
         // save the list of question ids (for use in quiz/attemptlib.php)
-        if ($use_quiz_slots) {
+        if (get_config('mod_reader', 'mreadersiteid')) {
+            // questions will be shown on mreader.org
+            $reader->questions = false;
+        } else if ($use_quiz_slots) {
             // Moodle >= 2.7
             if ($reader->questions = $DB->get_records_menu('quiz_slots', array('quizid' => $book->quizid), 'page,slot', 'id,questionid')) {
                 $reader->questions = array_values($reader->questions);
@@ -2644,9 +2647,10 @@ function reader_create_attempt($reader, $attemptnumber, $book, $adduniqueid=fals
             $reader->questions = $DB->get_field('quiz', 'questions', array('id' => $book->quizid));
         }
         if ($reader->questions===false) {
-            $reader->questions = ''; // shouldn't happen !!
+            $reader->questions = '';
         }
 
+        // initialize new attempt
         $attempt = (object)array(
             'readerid' => $reader->id,
             'userid'   => $USER->id,

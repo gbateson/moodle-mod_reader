@@ -54,9 +54,9 @@ if ($timeup) {
     $finishattempt = true;
 }
 
-// Set $nexturl now.
+// Set $redirect now.
 if ($finishattempt) {
-    $nexturl = $readerattempt->view_url();
+    $redirect = $readerattempt->view_url();
 } else {
     if ($next) {
         $page = $nextpage;
@@ -67,11 +67,11 @@ if ($finishattempt) {
         }
     }
     if ($page == -1) {
-        $nexturl = $readerattempt->summary_url();
+        $redirect = $readerattempt->summary_url();
     } else {
-        $nexturl = $readerattempt->attempt_url(0, $page);
+        $redirect = $readerattempt->attempt_url(0, $page);
         if ($scrollpos !== '') {
-            $nexturl->param('scrollpos', $scrollpos);
+            $redirect->param('scrollpos', $scrollpos);
         }
     }
 }
@@ -91,12 +91,12 @@ if (isset($likebook)) {
 
 // If the attempt is already closed, send them to the review page.
 if ($readerattempt->is_finished()) {
-//    throw new moodle_reader_exception($readerattempt->get_reader(), 'attemptavailablenolonger', null, $readerattempt->review_url());
+    redirect($readerattempt->view_url());
 }
 
 if ($finishattempt) {
     $readerattempt->finish_attempt($timenow);
-} else {
+} else if ($readerattempt->attempt->layout) {
     // process the responses for this page
     try {
         $readerattempt->process_all_actions($timenow);
@@ -119,4 +119,4 @@ if ($finishattempt) {
     $readerattempt->update_reader_badges();
 }
 
-redirect($nexturl);
+redirect($redirect);

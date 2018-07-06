@@ -2197,7 +2197,7 @@ class mod_reader_renderer extends plugin_renderer_base {
 
             if ($version = get_config('', 'version')) {
                 $release = get_config('', 'release');
-                $output[] = get_string('moodleorg', 'hub').":  ($version)  $release";
+                $output[] = "Moodle:  ($version)  $release";
             }
 
             $plugin = 'mod_reader';
