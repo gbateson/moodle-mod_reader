@@ -82,7 +82,7 @@ $reader->req('viewbooks');
 
 reader_add_to_log($course->id, 'reader', 'mReader', 'quiz/mreader.php?id='.$cm->id, $reader->id, $cm->id);
 
-if ($customid && $attempt) {
+if ($customid) {
     $url = new moodle_url($FULLME);
     $token = $url->get_param('token');
     $url->remove_params(array('token'));
@@ -115,21 +115,23 @@ if ($customid && $attempt) {
         $DB->update_record('reader_attempts', $attempt);
         redirect($mreader->processattempt_url());
     }
-}
-
-if ($attemptid && $attempt) {
-    $mreader = new reader_site_mreader($attempt);
-    $url = $mreader->start_url();
+} else if ($attemptid) {
+    // set page title
     $title = $DB->get_field('reader_books', 'name', array('id' => $attempt->bookid));
     $title = get_string('takequizfor', 'mod_reader', $title);
-    $clicktoopen = html_writer::link($url, get_string('download'));
-    $mimetype = resourcelib_guess_url_mimetype($url);
-    $iframe = resourcelib_embed_general($url, $title, $clicktoopen, $mimetype);
 
     // Initialize $PAGE, compute blocks
     $PAGE->set_title($title);
     $PAGE->set_heading($course->fullname);
+    $PAGE->set_pagelayout('popup');
     $PAGE->set_url('/mod/reader/quiz/mreader.php', array('id' => $cm->id, 'attempt' => $attemptid));
+
+    // setup IFRAME
+    $mreader = new reader_site_mreader($attempt);
+    $url = $mreader->start_url();
+    $clicktoopen = html_writer::link($url, $title);
+    $mimetype = resourcelib_guess_url_mimetype($url);
+    $iframe = resourcelib_embed_general($url, $title, $clicktoopen, $mimetype);
 
     echo $OUTPUT->header($reader, $cm);
     echo $OUTPUT->heading($title, '3');
