@@ -508,13 +508,6 @@ class mod_reader {
     }
 
     /**
-     * @return moodle_url of this reader mreader return page
-     */
-    public function mreader_return_url($params=null, $cm=null) {
-        return $this->url('/mod/reader/mreader/return.php', $params, $cm);
-    }
-
-    /**
      * @return moodle_url of this reader admin quizzes page
      */
     public function quizzes_url($params=null, $cm=null) {
@@ -563,6 +556,19 @@ class mod_reader {
             $params['framename'] = $framename;
         }
         return $this->url('/mod/reader/attempt.php', $params, $cm);
+    }
+
+    /**
+     * @param int $attemptid the id of an attempt.
+     * @param int $page optional page number to go to in the attempt.
+     * @return string the URL of that attempt.
+     */
+    public function mreader_attempt_url($attemptid, $cm=null) {
+        $params = array();
+        if ($attemptid) {
+            $params['attempt'] = $attemptid;
+        }
+        return $this->url('/mod/reader/quiz/mreader.php', $params, $cm);
     }
 
     /**

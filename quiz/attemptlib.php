@@ -395,6 +395,18 @@ class reader_quiz {
 
     /**
      * @param int $attemptid the id of an attempt.
+     * @param int $page optional page number to go to in the attempt.
+     * @return string the URL of that attempt.
+     */
+    public function mreader_attempt_url($attemptid) {
+        $url = '/mod/reader/quiz/mreader.php';
+        $params = array('id' => $this->get_cmid(),
+                        'attempt' => $attemptid);
+        return new moodle_url($url, $params);
+    }
+
+    /**
+     * @param int $attemptid the id of an attempt.
      * @return string the URL of the review of that attempt.
      */
     public function review_url($attemptid) {

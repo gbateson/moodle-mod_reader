@@ -32,10 +32,8 @@ require_once($CFG->dirroot.'/mod/reader/quiz/attemptlib.php');
 require_once($CFG->dirroot.'/mod/reader/lib.php');
 require_once($CFG->dirroot.'/question/engine/lib.php');
 
-// load mreader library, if needed
-if ($mreadersiteid = get_config('mod_reader', 'mreadersiteid')) {
-    require_once($CFG->dirroot.'/mod/reader/quiz/mreaderlib.php');
-}
+// get main config setting for mReader site
+$mreadersiteid = get_config('mod_reader', 'mreadersiteid');
 
 // Get submitted parameters.
 $id = required_param('id', PARAM_INT); // "course_modules" id
@@ -223,8 +221,7 @@ if (function_exists('events_trigger_legacy')) {
 
 // Redirect to the attempt page
 if ($mreadersiteid) {
-    $mreader = new reader_site_mreader($attempt);
-    redirect($mreader->start_url());
+    redirect($readerquiz->mreader_attempt_url($attempt->id));
 } else {
     redirect($readerquiz->attempt_url($attempt->id, $page));
 }
