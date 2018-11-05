@@ -113,9 +113,8 @@
     <TABLE NAME="reader_books" COMMENT="details about individual books" NEXT="reader_book_instances" PREVIOUS="reader_attempt_questions">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="11" NOTNULL="true" SEQUENCE="true" NEXT="publisher"/>
-        <FIELD NAME="publisher" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" NEXT="series" PREVIOUS="id"/>
-        <FIELD NAME="series" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" NEXT="level" PREVIOUS="publisher"/>
-        <FIELD NAME="level" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" NEXT="difficulty" PREVIOUS="series"/>
+        <FIELD NAME="publisher" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" NEXT="level" PREVIOUS="id"/>
+        <FIELD NAME="level" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" NEXT="difficulty" PREVIOUS="publisher"/>
         <FIELD NAME="difficulty" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="0" SEQUENCE="false" NEXT="name" PREVIOUS="level"/>
         <FIELD NAME="name" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" NEXT="words" PREVIOUS="difficulty"/>
         <FIELD NAME="words" TYPE="int" LENGTH="6" NOTNULL="true" DEFAULT="0" SEQUENCE="false" NEXT="genre" PREVIOUS="name"/>

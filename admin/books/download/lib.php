@@ -34,6 +34,7 @@ require_once($CFG->dirroot.'/mod/reader/admin/books/download/downloader.php');
 require_once($CFG->dirroot.'/mod/reader/admin/books/download/progress.php');
 require_once($CFG->dirroot.'/mod/reader/admin/books/download/remotesite.php');
 require_once($CFG->dirroot.'/mod/reader/admin/books/download/remotesite/moodlereadernet.php');
+require_once($CFG->dirroot.'/mod/reader/admin/books/download/remotesite/mreaderorg.php');
 
 /**
  * reader_download_item
@@ -89,9 +90,6 @@ class reader_download_items extends reader_items {
 
     /** the number of items which have updates available */
     public $updatecount = 0;
-
-    /** the password ,if any, that is required to access these items */
-    public $needpassword = false;
 }
 
 /**

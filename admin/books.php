@@ -25,6 +25,9 @@
  * @since      Moodle 2.0
  */
 
+// progress_bar requires NO_OUTPUT_BUFFERING
+define('NO_OUTPUT_BUFFERING', true);
+
 /** Include required files */
 require_once('../../../config.php');
 require_once($CFG->dirroot.'/mod/reader/locallib.php');

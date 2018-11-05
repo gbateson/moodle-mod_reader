@@ -86,7 +86,6 @@ $needip                 = optional_param('needip', null, PARAM_CLEAN);
 $setip                  = optional_param('setip', null, PARAM_CLEAN);
 $allowpromotion         = optional_param('allowpromotion', null, PARAM_CLEAN);
 $stoplevel              = optional_param('stoplevel', null, PARAM_CLEAN);
-$private                = optional_param('private', 0, PARAM_INT);
 $ajax                   = optional_param('ajax', null, PARAM_CLEAN);
 $changeallstartlevel    = optional_param('changeallstartlevel', null, PARAM_INT);
 $changeallcurrentlevel  = optional_param('changeallcurrentlevel', null, PARAM_INT);
@@ -312,7 +311,6 @@ if (has_capability('mod/reader:addinstance', $contextmodule) && $quizzesid) {
         $newquiz->name = $quizdata->name;
 
         $newquiz->quizid = $quizzesid_;
-        $newquiz->private = $private;
 
         $DB->insert_record('reader_books', $newquiz);
     }
@@ -1266,14 +1264,6 @@ if ($act == 'addquiz' && has_capability('mod/reader:managebooks', $contextmodule
                 echo '</td><td colspan="2">';
                 echo '<input type="text" name="wordscount" value="" />';
                 echo '</td></tr>';
-                echo '<tr><td>';
-                print_string('private', 'reader');
-                echo '</td><td colspan="2">';
-                echo '<select name="private">';
-                echo '<option value="0">No</option>';
-                echo '<option value="'.$reader->id.'">Yes</option>';
-                echo '</select>';
-                echo '</td></tr>';
                 echo '<tr align="center"><td colspan="4" height="60px"><input type="submit" name="submit" value="Add" /></td></tr>';
                 echo '</table>';
                 echo '</form>';
@@ -1900,8 +1890,8 @@ if ($act == 'addquiz' && has_capability('mod/reader:managebooks', $contextmodule
         $worksheet->write_string(2, $c++, 'Pass Rate', $formatbold);
     }
 
-    $select = 'hidden = ? AND private IN (0, ?)';
-    $params = array(0, $reader->id);
+    $select = 'hidden = ?';
+    $params = array(0);
     if ($books = $DB->get_records_select('reader_books', $select, $params)) {
         foreach ($books as $book) {
             if (reader_check_search_text($searchtext, '', $book)) {
@@ -4329,7 +4319,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managebooks', $contextmodule
     echo html_writer::start_tag('table', array('width' => '600px'));
 
     echo html_writer::start_tag('tr');
-    echo html_writer::tag('td', get_string('publisherseries', 'mod_reader'), array('width' => '200px'));
+    echo html_writer::tag('td', get_string('publisher', 'mod_reader'), array('width' => '200px'));
     echo html_writer::tag('td', '', array('width' => '10px'));
     echo html_writer::tag('td', '', array('width' => '200px'));
     echo html_writer::end_tag('tr');

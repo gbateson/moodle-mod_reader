@@ -43,7 +43,7 @@ class reader_admin_books_editsite_table extends reader_admin_books_table {
         // 'image', how do we display/update this field?
         // 'maxtime' is this the time limit for a quiz?
         // the following fields can probably be deleted:
-        // 'series', 'fiction', 'private',
+        // 'fiction'
     );
 
     /** @var suppressed columns in this table */

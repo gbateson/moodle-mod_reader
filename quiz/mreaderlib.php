@@ -43,6 +43,8 @@ class reader_site {
      *
      * @var string
      */
+    const REMOTE_API_SCRIPT      = '';
+    const REMOTE_SITEID_SCRIPT   = '';
     const REMOTE_START_SCRIPT    = '';
     const REMOTE_CONTINUE_SCRIPT = '';
     const REMOTE_FINISH_SCRIPT   = '';
@@ -86,7 +88,7 @@ class reader_site {
      * @param xxx $key (optional, default='')
      * @todo Finish documenting this function
      */
-    public function __construct($attempt, $baseurl='', $siteid=0, $sitekey='') {
+    public function __construct($attempt=null, $baseurl='', $siteid=0, $sitekey='') {
         $this->attempt = $attempt;
         $this->baseurl = $baseurl;
         $this->siteid  = $siteid;
@@ -159,17 +161,26 @@ class reader_site {
     }
 
     /**
+     * tokenized_url
+     *
+     * @todo Finish documenting this function
+     */
+    public function tokenized_url($baseurl, $params) {
+        $url = new moodle_url($baseurl, $params);
+        if ($token = $this->generate_token($url)) {
+        	$url->param('token', $token);
+        }
+        return $url;
+    }
+
+    /**
      * start_url
      *
      * @todo Finish documenting this function
      */
     public function start_url() {
     	$url = $this->baseurl.$this::REMOTE_START_SCRIPT;
-        $url = new moodle_url($url, $this->start_params());
-        if ($token = $this->generate_token($url)) {
-        	$url->param('token', $token);
-        }
-        return $url;
+    	return $this->tokenized_url($url, $this->start_params());
     }
 
     /**
@@ -178,6 +189,82 @@ class reader_site {
      * @todo Finish documenting this function
      */
     public function start_params() {
+        return array();
+    }
+
+    /**
+     * get_items_url
+     *
+     * @todo Finish documenting this function
+     */
+    public function get_items_url($type) {
+    	$url = $this->baseurl.$this::REMOTE_API_SCRIPT;
+    	return $this->tokenized_url($url, $this->get_items_params($type));
+    }
+
+    /**
+     * get_items_params
+     *
+     * @todo Finish documenting this function
+     */
+    public function get_items_params($type) {
+        return array();
+    }
+
+    /**
+     * get_image_url
+     *
+     * @todo Finish documenting this function
+     */
+    public function get_image_url($type) {
+    	$url = $this->baseurl.$this::REMOTE_API_SCRIPT;
+    	return $this->tokenized_url($url, $this->get_image_params($type));
+    }
+
+    /**
+     * get_image_params
+     *
+     * @todo Finish documenting this function
+     */
+    public function get_image_params($type) {
+        return array();
+    }
+
+    /**
+     * get_attempts_url
+     *
+     * @todo Finish documenting this function
+     */
+    public function get_attempts_url() {
+    	$url = $this->baseurl.$this::REMOTE_API_SCRIPT;
+    	return $this->tokenized_url($url, $this->get_attempts_params());
+    }
+
+    /**
+     * get_attempts_params
+     *
+     * @todo Finish documenting this function
+     */
+    public function get_attempts_params() {
+        return array();
+    }
+
+    /**
+     * get_removeattempts_url
+     *
+     * @todo Finish documenting this function
+     */
+    public function get_removeattempts_url() {
+    	$url = $this->baseurl.$this::REMOTE_API_SCRIPT;
+    	return $this->tokenized_url($url, $this->get_removeattempts_params());
+    }
+
+    /**
+     * get_removeattempts_params
+     *
+     * @todo Finish documenting this function
+     */
+    public function get_removeattempts_params() {
         return array();
     }
 
@@ -221,6 +308,16 @@ class reader_site {
     	$params = array('attempt' => $this->attempt->id);
         return new moodle_url('/mod/reader/quiz/summary.php', $params);
     }
+
+    /**
+     * siteid_url
+      *
+     * @todo Finish documenting this function
+     */
+    public function siteid_url($url, $username, $password) {
+    	$params = array('url' => $url, 'u' => $username, 'p' => $password);
+        return new moodle_url($this->baseurl.$this::REMOTE_SITEID_SCRIPT, $params);
+    }
 }
 
 /**
@@ -239,6 +336,8 @@ class reader_site_mreader extends reader_site {
      *
      * @var string
      */
+    const REMOTE_API_SCRIPT      = '/api.php';
+    const REMOTE_SITEID_SCRIPT   = '/api_get_siteid.php';
     const REMOTE_START_SCRIPT    = '/api_takequiz.php';
     const REMOTE_CONTINUE_SCRIPT = '/api_quizzes.php';
     const REMOTE_FINISH_SCRIPT   = '/api_completequiz.php';
@@ -251,7 +350,7 @@ class reader_site_mreader extends reader_site {
      * @param xxx $key (optional, default='')
      * @todo Finish documenting this function
      */
-    public function __construct($attempt, $baseurl='', $siteid=0, $sitekey='') {
+    public function __construct($attempt=null, $baseurl='', $siteid=0, $sitekey='') {
         $config = get_config('mod_reader');
         parent::__construct($attempt, 
         					$baseurl ? $baseurl : (empty($config->mreaderurl) ? '' : $config->mreaderurl),
@@ -273,6 +372,70 @@ class reader_site_mreader extends reader_site {
         	'uname' => $this->get_user_uniqueid(), // a fake, but unique, username
         	'sname' => $this->get_user_uniquename(), // a fake first and last name
         	'custom_id' => $this->attempt->id
+        );
+    }
+
+    /**
+     * get_items_params
+     *
+     * @todo Finish documenting this function
+     */
+    public function get_items_params($type) {
+        if ($type==reader_downloader::BOOKS_WITH_QUIZZES) {
+            $action = 'bookswithquizzes';
+        } else {
+            $action = 'bookswithoutquizzes';
+        }
+        return array(
+        	'a' => $action,
+        	't' => $this->time,
+        	'sid' => get_config('mod_reader', 'mreadersiteid')
+        );
+    }
+
+    /**
+     * get_image_params
+     *
+     * @todo Finish documenting this function
+     */
+    public function get_image_params($type) {
+        if ($type==reader_downloader::BOOKS_WITH_QUIZZES) {
+            $action = 'imagewithquiz';
+        } else {
+            $action = 'imagewithoutquiz';
+        }
+        return array(
+        	'a' => $action,
+        	't' => $this->time,
+        	'sid' => get_config('mod_reader', 'mreadersiteid')
+        );
+    }
+
+    /**
+     * get_items_params
+     *
+     * @todo Finish documenting this function
+     */
+    public function get_attempts_params() {
+        return array(
+        	'a' => 'studentquizzes',
+        	't' => $this->time,
+        	'sid' => get_config('mod_reader', 'mreadersiteid'),
+        	'uname' => $this->get_user_uniqueid(), // a fake, but unique, username
+        );
+    }
+
+    /**
+     * get_removeattempts_params
+     *
+     * @todo Finish documenting this function
+     */
+    public function get_removeattempts_params() {
+        return array(
+        	'a' => 'removeattempts',
+        	't' => $this->time,
+        	'sid' => get_config('mod_reader', 'mreadersiteid'),
+        	'uname' => $this->get_user_uniqueid(), // a fake, but unique, username
         );
     }
 

@@ -110,14 +110,16 @@ class reader_quiz {
             $this->context = reader_get_context(CONTEXT_MODULE, $cm->id);
         }
 
-        $dbman = $DB->get_manager();
-        if ($dbman->table_exists('quiz_slots')) { // Moodle >= 2.7
-            if ($quiz->questions = $DB->get_records_menu('quiz_slots', array('quizid' => $quiz->id), 'page,slot', 'id,questionid')) {
-                $quiz->questions = array_values($quiz->questions);
-                $quiz->questions = array_filter($quiz->questions);
-                $quiz->questions = implode(',', $quiz->questions);
-            } else {
-                $quiz->questions = '';
+        if ($quiz->id > 0) {
+            $dbman = $DB->get_manager();
+            if ($dbman->table_exists('quiz_slots')) { // Moodle >= 2.7
+                if ($quiz->questions = $DB->get_records_menu('quiz_slots', array('quizid' => $quiz->id), 'page,slot', 'id,questionid')) {
+                    $quiz->questions = array_values($quiz->questions);
+                    $quiz->questions = array_filter($quiz->questions);
+                    $quiz->questions = implode(',', $quiz->questions);
+                } else {
+                    $quiz->questions = '';
+                }
             }
         }
 
@@ -142,9 +144,16 @@ class reader_quiz {
         $reader = $DB->get_record('reader', array('id' => $readerid), '*', MUST_EXIST);
         $course = $DB->get_record('course', array('id' => $reader->course), '*', MUST_EXIST);
         $cm = get_coursemodule_from_instance('reader', $reader->id, $course->id, false, MUST_EXIST);
-
         $book = $DB->get_record('reader_books', array('id' => $bookid), '*', MUST_EXIST);
-        $quiz = $DB->get_record('quiz', array('id' => $book->quizid),   '*', MUST_EXIST);
+
+        if ($book->quizid > 0) {
+            $quiz = $DB->get_record('quiz', array('id' => $book->quizid), '*', MUST_EXIST);
+        } else {
+            $quiz = (object)array(
+                'id' => $book->quizid,
+                'questions' => ''
+            );
+        }
 
         $quiz->timeopen           = $reader->availablefrom;
         $quiz->timeclose          = $reader->availableuntil;
@@ -2048,6 +2057,11 @@ class mod_reader_display_options extends question_display_options {
      */
     public static function make_from_reader($quiz, $when, $mark) {
         $options = new self();
+
+        if ($quiz->id < 0) {
+            $options->marks = $mark;
+            return $options;
+        }
 
         $options->attempt = self::extract($quiz->reviewattempt, $when, true, false);
         $options->correctness = self::extract($quiz->reviewcorrectness, $when);

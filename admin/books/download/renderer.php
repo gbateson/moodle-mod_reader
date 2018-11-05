@@ -54,9 +54,11 @@ class mod_reader_admin_books_download_renderer extends mod_reader_admin_books_re
         $type = mod_reader::get_type('admin/books/download');
         if ($type==reader_downloader::BOOKS_WITH_QUIZZES) {
             return self::TAB_BOOKS_DOWNLOAD_WITH;
-        } else {
+        }
+        if ($type==reader_downloader::BOOKS_WITHOUT_QUIZZES) {
             return self::TAB_BOOKS_DOWNLOAD_WITHOUT;
         }
+        return 0;
     }
 
     /**
@@ -78,6 +80,9 @@ class mod_reader_admin_books_download_renderer extends mod_reader_admin_books_re
         global $CFG;
         require_once($CFG->dirroot.'/mod/reader/admin/books/download/lib.php');
 
+        // cache the plugin name
+        $plugin = 'mod_reader';
+
         $selectedpublishers = reader_optional_param_array('publishers', array(), PARAM_CLEAN);
         $selectedlevels     = reader_optional_param_array('levels',     array(), PARAM_CLEAN);
         $selecteditemids    = reader_optional_param_array('itemids',    array(), PARAM_CLEAN);
@@ -89,22 +94,73 @@ class mod_reader_admin_books_download_renderer extends mod_reader_admin_books_re
         $mode = mod_reader::get_mode('admin/books');
         $type = mod_reader::get_type('admin/books/download');
 
+        $str = '';
         switch ($type) {
-            case reader_downloader::BOOKS_WITH_QUIZZES: $str = 'uploadquiztoreader'; break;
+            case reader_downloader::BOOKS_WITH_QUIZZES:    $str = 'uploadquiztoreader';  break;
             case reader_downloader::BOOKS_WITHOUT_QUIZZES: $str = 'uploaddatanoquizzes'; break;
         }
-        echo $this->heading(get_string($str, 'mod_reader'));
-
-        // create an object to represent main download site (moodlereader.net)
-        $remotesite = new reader_remotesite_moodlereadernet(get_config('mod_reader', 'serverurl'),
-                                                            get_config('mod_reader', 'serverusername'),
-                                                            get_config('mod_reader', 'serverpassword'));
+        if ($str) {
+            echo $this->heading(get_string($str, $plugin));
+        }
 
         // create an object to handle the downloading of data from remote sites
         $downloader = new reader_downloader($this);
 
-        // register the known remote sites with the downloader
-        $downloader->add_remotesite($remotesite);
+        $enable_mreader = false;
+        if ($enable_mreader == false) {
+            $mreaderurl     = '';
+            $mreadersiteid  = '';
+            $mreadersitekey = '';
+            $serverurl      = get_config($plugin, 'serverurl');
+            $serverusername = get_config($plugin, 'serverusername');
+            $serverpassword = get_config($plugin, 'serverpassword');
+        } else {
+
+            $mreaderurl     = get_config($plugin, 'mreaderurl');
+            $mreadersiteid  = get_config($plugin, 'mreadersiteid');
+            $mreadersitekey = get_config($plugin, 'mreadersitekey');
+
+            if ($mreaderurl && $mreadersiteid && $mreadersitekey) {
+                // ignore old server settings (because we can access new server)
+                $serverurl      = '';
+                $serverusername = '';
+                $serverpassword = '';
+            } else {
+                // get old server settings (maybe we can use them to access new server)
+                $serverurl      = get_config($plugin, 'serverurl');
+                $serverusername = get_config($plugin, 'serverusername');
+                $serverpassword = get_config($plugin, 'serverpassword');
+
+                if ($config = reader_remotesite_mreaderorg::get_config($serverusername, $serverpassword)) {
+                    $mreaderurl = $config->url;
+                    $mreadersiteid = $config->siteid;
+                    $mreadersitekey = $config->sitekey;
+                }
+                if ($mreaderurl && $mreadersiteid && $mreadersitekey) {
+                    // add new settings
+                    set_config('mreaderurl',     $mreaderurl,     $plugin);
+                    set_config('mreadersiteid',  $mreadersiteid,  $plugin);
+                    set_config('mreadersitekey', $mreadersitekey, $plugin);
+                    // remove old settings
+                    $serverurl      = '';
+                    $serverusername = '';
+                    $serverpassword = '';
+                    //set_config('serverurl',      $serverurl,      $plugin);
+                    //set_config('serverusername', $serverusername, $plugin);
+                    //set_config('serverpassword', $serverpassword, $plugin);
+                }
+            }
+        }
+
+        // create an object to represent new download site (mreader.org)
+        if ($mreaderurl && $mreadersiteid && $mreadersitekey) {
+            $downloader->add_remotesite(new reader_remotesite_mreaderorg($mreaderurl, $mreadersiteid, $mreadersitekey));
+        }
+
+        // create an object to represent old download site (moodlereader.net)
+        if ($serverurl && $serverusername && $serverpassword) {
+            $downloader->add_remotesite(new reader_remotesite_moodlereadernet($serverurl, $serverusername, $serverpassword));
+        }
 
         // get a list of items that have already been downloaded
         // from the remote site and are stored in the Moodle DB
@@ -132,18 +188,18 @@ class mod_reader_admin_books_download_renderer extends mod_reader_admin_books_re
 
             $output .= $this->form_start($tab, $mode, $type);
 
-            //$output .= $this->formheader(get_string('pagesettings', 'mod_reader'));
+            //$output .= $this->formheader(get_string('pagesettings', $plugin));
             $output .= $this->downloadmode_menu($downloadmode); // "normal" or "repair"
             $output .= $this->downloadtype_menu($type); // "with" or "without" quizzes
             $output .= $this->search_box();
             $output .= $this->showhide_menu($count, $updatecount);
             $output .= $this->select_menu($newcount, $updatecount);
 
-            //$output .= $this->formheader(get_string('availableitems', 'mod_reader'));
+            //$output .= $this->formheader(get_string('availableitems', $plugin));
             $output .= $this->available_lists($downloader);
 
             if ($type==reader_downloader::BOOKS_WITH_QUIZZES) {
-                //$output .= $this->formheader(get_string('downloadsettings', 'mod_reader'));
+                //$output .= $this->formheader(get_string('downloadsettings', $plugin));
                 $output .= $this->category_list($downloader);
                 $output .= $this->course_list($downloader);
                 $output .= $this->section_list($downloader);
@@ -151,18 +207,18 @@ class mod_reader_admin_books_download_renderer extends mod_reader_admin_books_re
 
             $output .= $this->form_end();
 
-        } else if (get_config('mod_reader', 'serverurl') && get_config('mod_reader', 'serverusername')) {
+        } else if (get_config($plugin, 'serverurl') && get_config($plugin, 'serverusername')) {
 
             // no items to download - probably internet connection has been lost
-            $output .= $this->heading(get_string('nodownloaditems', 'mod_reader'), '3');
+            $output .= $this->heading(get_string('nodownloaditems', $plugin), '3');
 
         } else {
 
             // no items to download - probably because remote settings have not been set up
             $link = new moodle_url('/admin/settings.php', array('section' => 'modsettingreader'));
             $link = html_writer::link($link, get_string('settings'));
-            $output .= html_writer::tag('p', get_string('remotesitenotaccessible', 'mod_reader'));
-            $output .= html_writer::tag('p', get_string('definelogindetails', 'mod_reader', $link));
+            $output .= html_writer::tag('p', get_string('remotesitenotaccessible', $plugin));
+            $output .= html_writer::tag('p', get_string('definelogindetails', $plugin, $link));
         }
 
         return $output;

@@ -2284,7 +2284,7 @@ function reader_add_to_log($courseid, $module, $action, $url='', $info='', $cmid
  * @param xxx $cmid
  * @param xxx $reader
  * @param xxx $userid
- * @param xxx $hasquiz (TRUE  : require quizid > 0,
+ * @param xxx $hasquiz (TRUE  : require quizid <> 0,
  *                      FALSE : require quizid == 0,
  *                      NULL  : require quizid >= 0)
  * @return array($from, $where, $params)
@@ -2296,11 +2296,11 @@ function reader_available_sql($cmid, $reader, $userid, $hasquiz=null) {
     if (reader_can('viewallbooks', $cmid, $userid)) {
         $from = '{reader_books} rb';
         if ($hasquiz===true) {
-            $where = 'rb.quizid > ?';
+            $where = 'rb.quizid <> ?';
         } else if ($hasquiz===false) {
             $where = 'rb.quizid = ?';
         } else {
-            $where = 'rb.quizid >= ?';
+            $where = 'ABS(rb.quizid) >= ?';
         }
         $where .= ' AND rb.hidden = ? AND rb.level <> ?';
         $params = array(0, 0, 99);
@@ -2324,7 +2324,7 @@ function reader_available_sql($cmid, $reader, $userid, $hasquiz=null) {
     // "id" values of books whose quizzes this user has already attempted
     $recordids  = 'SELECT rb.id '.
                   'FROM {reader_attempts} ra LEFT JOIN {reader_books} rb ON ra.bookid = rb.id '.
-                  'WHERE ra.userid = ? AND ra.deleted <> ? AND rb.id IS NOT NULL AND rb.quizid > ?';
+                  'WHERE ra.userid = ? AND ra.deleted <> ? AND rb.id IS NOT NULL AND rb.quizid <> ?';
 
     // "sametitle" values for books whose quizzes this user has already attempted
     $sametitles = 'SELECT DISTINCT rb.sametitle '.

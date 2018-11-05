@@ -1480,5 +1480,22 @@ function xmldb_reader_upgrade($oldversion) {
         upgrade_mod_savepoint(true, "$newversion", 'reader');
     }
 
+    $newversion = 2018091498;
+    if ($result && $oldversion < $newversion) {
+
+        // remove "series" field from "reader_books" table
+        $table = new xmldb_table('reader_books');
+        $fields = array('series', 'private');
+        foreach ($fields as $field) {
+            $field = new xmldb_field($field);
+            if ($dbman->field_exists($table, $field)) {
+                $dbman->drop_field($table, $field);
+            }
+        }
+
+        // Reader savepoint reached.
+        upgrade_mod_savepoint(true, "$newversion", 'reader');
+    }
+
     return $result;
 }

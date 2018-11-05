@@ -249,7 +249,7 @@ function reader_print_info($plugin, $reader, $id, $tab) {
             $params[] = $startdate;
         }
 
-        array_push($where, 'quizid > ?',
+        array_push($where, 'quizid <> ?',
                            'layout <> ?',
                            'ip IS NOT NULL',
                            'ip <> ?');

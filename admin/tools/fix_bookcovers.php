@@ -390,7 +390,6 @@ function reader_get_itemids($readercfg) {
             $publisher = $xml['myxml']['#']['item'][$i]['@']['publisher'];
             $level     = $xml['myxml']['#']['item'][$i]['@']['level'];
             $itemid    = $xml['myxml']['#']['item'][$i]['@']['id'];
-            $needpass  = $xml['myxml']['#']['item'][$i]['@']['needpass'];
             $itemname  = $xml['myxml']['#']['item'][$i]['#'];
             $i++;
 

@@ -677,7 +677,7 @@ class reader_downloader {
         $isrepairmode = ($downloadmode==reader_downloader::REPAIR_MODE);
 
         if ($type==self::BOOKS_WITH_QUIZZES) {
-            $select = 'quizid > ?';
+            $select = 'quizid <> ?'; // not equal to (ANSI standard)
         } else {
             $select = 'quizid = ?';
         }
@@ -711,7 +711,9 @@ class reader_downloader {
                 $this->downloaded[$r]->items[$publisher]->items[$level]->items[$itemname] = new reader_download_item($record->id, $time);
             }
         }
-        $this->remotesites[$r]->clear_filetimes();
+        if (array_key_exists($r, $this->remotesites)) {
+            $this->remotesites[$r]->clear_filetimes();
+        }
     }
 
     /**
@@ -872,8 +874,9 @@ class reader_downloader {
         }
 
         $remotesite = $this->remotesites[$r];
-        $xml = $remotesite->download_quizzes($type, $itemids);
-        if (empty($xml) || empty($xml['myxml']) || empty($xml['myxml']['#'])) {
+        $items = $remotesite->download_quizzes($type, $itemids);
+
+        if (empty($items)) {
             return false; // shouldn't happen !!
         }
 
@@ -896,43 +899,14 @@ class reader_downloader {
         $starttime = microtime();
         $strquiz = get_string('modulename', 'quiz');
 
-        $i_max = count($xml['myxml']['#']['item']);
-        foreach ($xml['myxml']['#']['item'] as $i => $item) {
+        $i_max = count($items);
+        foreach ($items as $i => $item) {
 
-            // sanity checks on $item fields
-            if (! isset($item['@']['publisher'])) {
-                continue;
-            }
-            if (! isset($item['@']['level'])) {
-                continue;
-            }
-            if (! isset($item['@']['title'])) {
-                continue;
-            }
-            if (! isset($item['@']['id'])) {
-                continue;
-            }
-
-            // rename deprecated fields
-            $fields = array('length' => 'points');
-            foreach ($fields as $oldname => $newname) {
-                if (isset($item['@'][$oldname])) {
-                    if (! isset($item['@'][$newname])) {
-                        $item['@'][$newname] = $item['@'][$oldname];
-                    }
-                    unset($item['@'][$oldname]);
-                }
-            }
-
-            $publisher = trim($item['@']['publisher']);
-            $level     = trim($item['@']['level']);
-            $name      = trim($item['@']['title']);
-            $itemid    = trim($item['@']['id']);
-            $itemtime  = trim($item['@']['time']);
-
-            if ($publisher=='' || $name=='' || $itemid=='') { // $level can be empty
-                continue;
-            }
+            $publisher = $item->publisher;
+            $level     = $item->level;
+            $name      = $item->title;
+            $itemid    = $item->id;
+            $itemtime  = $item->time;
 
             $publisherlevel = $publisher;
             if ($level=='' || $level=='--' || $level=='No Level') {
@@ -967,7 +941,7 @@ class reader_downloader {
             // set $params to select $book
             $select = 'publisher = ? AND level = ? AND name = ?';
             if ($type==self::BOOKS_WITH_QUIZZES) {
-                $select .= ' AND quizid > ?';
+                $select .= ' AND quizid <> ?'; // not equal to (ANSI standard)
             } else {
                 $select .= ' AND quizid = ?';
             }
@@ -979,7 +953,6 @@ class reader_downloader {
                 // set up default values for a new $book
                 $book = (object)array(
                     'publisher'  => $publisher,
-                    'series'     => '',
                     'level'      => $level,
                     'name'       => $name,
                     'image'      => '',
@@ -990,7 +963,6 @@ class reader_downloader {
                     'hidden'     => 0,
                     'sametitle'  => '',
                     'fiction'    => '',
-                    'private'    => 0,
                     'maxtime'    => 0,
                 );
             }
@@ -1004,14 +976,17 @@ class reader_downloader {
                     // $field has already been set
                 } else if ($keeplocalbookdifficulty && $field=='difficulty' && isset($book->id)) {
                     // do not override local book difficulty settings
-                } else if (isset($item['@'][$field])) {
-                    $book->$field = $item['@'][$field];
+                } else if (isset($item->$field)) {
+                    $book->$field = $item->$field;
                 }
             }
 
             // update or add the $book
             $error = 0;
             if (isset($book->id)) {
+                if ($remotesite::HAS_QUIZ_API) {
+                    $book->quizid = -1; // remote quiz
+                }
                 if ($DB->update_record('reader_books', $book)) {
                     $msg = get_string('bookupdated', 'mod_reader', $titletext);
                 } else {
@@ -1019,7 +994,11 @@ class reader_downloader {
                     $error = 1;
                 }
             } else {
-                $book->quizid = 0;
+                if ($remotesite::HAS_QUIZ_API) {
+                    $book->quizid = -1; // remote quiz
+                } else {
+                    $book->quizid = 0; // no quiz (yet)
+                }
                 if ($book->id = $DB->insert_record('reader_books', $book)) {
                     $msg = get_string('bookadded', 'mod_reader', $titletext);
                 } else {
@@ -1081,56 +1060,56 @@ class reader_downloader {
             $this->downloaded[$r]->items[$book->publisher]->items[$book->level]->items[$book->name] = new reader_download_item($itemid, $time);
 
             // add quiz if necessary
-            if ($error==0 && $type==reader_downloader::BOOKS_WITH_QUIZZES) {
-                if ($quiz = $this->add_quiz($item, $book, $r)) {
-                    if ($this->quiz_slots) {
-                        $questions_exist = $DB->record_exists('quiz_slots', array('quizid' => $quiz->id));
-                    } else {
-                        $questions_exist = $DB->record_exists('quiz_question_instances', array('quiz' => $quiz->id));
+            if ($remotesite::HAS_QUIZ_API || $type==self::BOOKS_WITHOUT_QUIZZES || $error) {
+                // do nothing
+            } else if ($quiz = $this->add_quiz($item, $book, $r)) {
+                if ($this->quiz_slots) {
+                    $questions_exist = $DB->record_exists('quiz_slots', array('quizid' => $quiz->id));
+                } else {
+                    $questions_exist = $DB->record_exists('quiz_question_instances', array('quiz' => $quiz->id));
+                }
+                if ($questions_exist) {
+                    $link = new moodle_url('/mod/quiz/view.php', array('q' => $quiz->id));
+                    $link = html_writer::link($link, $strquiz, array('onclick' => 'this.target="_blank"'));
+
+                    list($cheatsheeturl, $strcheatsheet) = $this->output->cheatsheet_init('takequiz');
+                    if ($cheatsheeturl) {
+                        $link .= ' '.$this->output->cheatsheet_link($cheatsheeturl, $strcheatsheet, $publisherlevel, $book);
                     }
-                    if ($questions_exist) {
-                        $link = new moodle_url('/mod/quiz/view.php', array('q' => $quiz->id));
-                        $link = html_writer::link($link, $strquiz, array('onclick' => 'this.target="_blank"'));
 
-                        list($cheatsheeturl, $strcheatsheet) = $this->output->cheatsheet_init('takequiz');
-                        if ($cheatsheeturl) {
-                            $link .= ' '.$this->output->cheatsheet_link($cheatsheeturl, $strcheatsheet, $publisherlevel, $book);
-                        }
-
-                        if ($book->quizid==0) {
-                            $msg .= html_writer::empty_tag('br').get_string('quizadded', 'mod_reader', $link);
-                        } else {
-                            $msg .= html_writer::empty_tag('br').get_string('quizupdated', 'mod_reader', $link);
-                        }
-
-                        if ($book->id==0 || $book->quizid != $quiz->id) {
-                            $book->quizid = $quiz->id;
-                            $DB->set_field('reader_books', 'quizid', $book->quizid, array('id' => $book->id));
-                        }
+                    if ($book->quizid==0) {
+                        $msg .= html_writer::empty_tag('br').get_string('quizadded', 'mod_reader', $link);
                     } else {
-                        // delete quiz
-                        $msg .= html_writer::empty_tag('br');
-                        $msg .= html_writer::tag('span', get_string('error').': ', array('class' => 'notifyproblem'));
-                        $msg .= get_string('quizhasnoquestions', 'mod_reader');
-                        $this->remove_coursemodule($quiz->id, 'quiz');
-
-                        // mark $book in "reader_books" table as having no quiz
-                        $book->quizid = 0;
-                        if ($book->id) {
-                            $DB->update_record('reader_books', $book);
-                        } else {
-                            unset($book->id);
-                            $book->id = $DB->insert_record('reader_books', $book);
-                        }
-                        $msg .= html_writer::empty_tag('br').'Book moved to "books without quizzes" list';
-
-                        // remove from list of downloaded books and available counters
-                        unset($this->downloaded[$r]->items[$book->publisher]->items[$book->level]->items[$book->name]);
-                        $this->available[$r]->items[$book->publisher]->items[$book->level]->newcount++;
-                        $this->available[$r]->items[$book->publisher]->newcount++;
-                        $this->available[$r]->newcount++;
-                        $error = 1;
+                        $msg .= html_writer::empty_tag('br').get_string('quizupdated', 'mod_reader', $link);
                     }
+
+                    if ($book->id==0 || $book->quizid != $quiz->id) {
+                        $book->quizid = $quiz->id;
+                        $DB->set_field('reader_books', 'quizid', $book->quizid, array('id' => $book->id));
+                    }
+                } else {
+                    // delete quiz
+                    $msg .= html_writer::empty_tag('br');
+                    $msg .= html_writer::tag('span', get_string('error').': ', array('class' => 'notifyproblem'));
+                    $msg .= get_string('quizhasnoquestions', 'mod_reader');
+                    $this->remove_coursemodule($quiz->id, 'quiz');
+
+                    // mark $book in "reader_books" table as having no quiz
+                    $book->quizid = 0;
+                    if ($book->id) {
+                        $DB->update_record('reader_books', $book);
+                    } else {
+                        unset($book->id);
+                        $book->id = $DB->insert_record('reader_books', $book);
+                    }
+                    $msg .= html_writer::empty_tag('br').'Book moved to "books without quizzes" list';
+
+                    // remove from list of downloaded books and available counters
+                    unset($this->downloaded[$r]->items[$book->publisher]->items[$book->level]->items[$book->name]);
+                    $this->available[$r]->items[$book->publisher]->items[$book->level]->newcount++;
+                    $this->available[$r]->items[$book->publisher]->newcount++;
+                    $this->available[$r]->newcount++;
+                    $error = 1;
                 }
             }
 
@@ -1143,9 +1122,6 @@ class reader_downloader {
             if ($this->bar) {
                 $this->bar->finish_item();
             }
-
-            // reclaim a bit of memory
-            unset($xml['myxml']['#']['item']);
 
             // keep track of how many errors were found
             $errors += $error;
@@ -1190,7 +1166,6 @@ class reader_downloader {
         $remotesite = $this->remotesites[$r];
         $url = $remotesite->get_image_url($type, $itemid);
         $post = $remotesite->get_image_post($type, $itemid);
-
         if ($image = download_file_content($url, null, $post)) {
             if ($fp = @fopen($CFG->dataroot.'/reader/images/'.$filename, 'w+')) {
                 @fwrite($fp, $image);
@@ -1962,7 +1937,7 @@ class reader_downloader {
     }
 
     /**
-     * add_question_categories
+     * add_quiz_section
      *
      * @uses $DB
      * @param  object $quiz
@@ -2003,7 +1978,7 @@ class reader_downloader {
      */
     public function add_question_categories($quiz, $cm, $item, $r=0) {
         // extract $itemid
-        $itemid = $item['@']['id'];
+        $itemid = $item->id;
 
         // select $remotesite
         $remotesite = $this->remotesites[$r];

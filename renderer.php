@@ -1485,7 +1485,7 @@ class mod_reader_renderer extends plugin_renderer_base {
      * @todo Finish documenting this function
      */
     public function books_menu($cmid, $reader, $userid, $action='') {
-        global $DB, $OUTPUT;
+        global $CFG, $DB, $OUTPUT;
         $output = '';
 
         // get parameters passed from browser
@@ -1555,11 +1555,14 @@ class mod_reader_renderer extends plugin_renderer_base {
             }
             $book = $DB->get_record('reader_books', $params);
         }
-
         if ($action=='takequiz' && $this->reader->can_viewbooks()) {
             if (empty($book->quizid)) {
                 $params = array('class' => 'awardpointsmanually', 'style' => 'max-width: 220px;');
                 $output .= html_writer::tag('p', get_string('awardpointsmanually', 'mod_reader'), $params);
+            } else if ($book->quizid < 0 && strpos($CFG->wwwroot, '/localhost/')) {
+                $url = str_replace('localhost', php_uname('n'), $_SERVER['HTTP_REFERER']);
+                $params = array('class' => 'restrictlocalhost', 'style' => 'max-width: 220px;');
+                $output .= html_writer::tag('p', get_string('restrictlocalhost', 'mod_reader', $url), $params);
             } else {
                 $params = array('id' => $cmid, 'book' => $bookid);
                 $url = new moodle_url('/mod/reader/quiz/startattempt.php', $params);

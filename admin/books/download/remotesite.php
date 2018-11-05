@@ -53,6 +53,9 @@ class reader_remotesite {
     const SERVER_IIS    = 2;
     const SERVER_NGINX  = 3;
 
+    /** does this remote site have an API for taking quizzes remotely */
+    const HAS_QUIZ_API = false;
+
     /** the basic connection parameters */
     public $baseurl = '';
     public $username = '';
@@ -400,9 +403,7 @@ class reader_remotesite {
      * @todo Finish documenting this function
      */
     public function download_publishers($type, $itemids) {
-        $url = $this->get_publishers_url($type, $itemids);
-        $post = $this->get_publishers_post($type, $itemids);
-        return $this->download_xml($url, $post);
+        return null;
     }
 
     /**
@@ -450,9 +451,7 @@ class reader_remotesite {
      * @todo Finish documenting this function
      */
     public function download_items($type, $itemids) {
-        $url = $this->get_items_url($type, $itemids);
-        $post = $this->get_items_post($type, $itemids);
-        return $this->download_xml($url, $post);
+        return null;
     }
 
     /**
@@ -500,9 +499,7 @@ class reader_remotesite {
      * @todo Finish documenting this function
      */
     public function download_quizzes($type, $itemids) {
-        $url = $this->get_quizzes_url($type, $itemids);
-        $post = $this->get_quizzes_post($type, $itemids);
-        return $this->download_xml($url, $post);
+        return null;
     }
 
     /**
@@ -549,9 +546,7 @@ class reader_remotesite {
      * @todo Finish documenting this function
      */
     public function download_questions($itemid) {
-        $url = $this->get_questions_url($itemid);
-        $post = $this->get_questions_post($itemid);
-        return $this->download_xml($url, $post);
+        return null;
     }
 
     /**
@@ -631,37 +626,175 @@ class reader_remotesite {
      * @todo Finish documenting this function
      */
     public function get_questions($itemid) {
+        return array('', array());
+    }
 
-        $url = $this->get_questions_url($itemid);
-        $post = $this->get_questions_post($itemid);
-        $xml = $this->download_xml($url, $post);
+    /**
+     * get_available_items
+     *
+     * @param xxx $type
+     * @param xxx $itemids
+     * @param xxx $downloaded
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function get_available_items($type, $itemids, $downloaded) {
+        $available = new reader_download_items();
 
-        // the data from a Moodle 1.x backup has the following structure:
-        // MOODLE_BACKUP -> INFO
-        // - MOODLE_VERSION, MOODLE_RELEASE, DATE, ORIGINAL_WWWROOT, ZIP_METHOD, DETAILS
-        // MOODLE_BACKUP -> ROLES
-        // - ROLE
-        // MOODLE_BACKUP -> COURSE
-        // - HEADER, BLOCKS, SECTIONS, QUESTION_CATEGORIES, GROUPS, GRADEBOOK, MODULES, FORMDATA
+        $items = $this->download_items($type, $itemids);
+        foreach ($items as $item) {
 
-        $modules = array();
-        $categories = array();
+            $publisher = $item->publisher;
+            $level     = $item->level;
+            $itemid    = $item->id;
+            $itemname  = $item->title;
+            $time      = $item->time;
 
-        if (is_array($xml)) {
-            if (isset($xml['MOODLE_BACKUP']['#']['COURSE'])) {
-                $course = &$xml['MOODLE_BACKUP']['#']['COURSE'];
-                if (isset($course['0']['#']['MODULES'])) {
-                    $modules = $this->get_xml_values_mods($course['0']['#']['MODULES']);
-                }
-                if (isset($course['0']['#']['QUESTION_CATEGORIES'])) {
-                    $categories = $this->get_xml_values_categories($course['0']['#']['QUESTION_CATEGORIES']);
-                }
-                unset($course);
+            if ($time==0 && isset($downloaded->items[$publisher]->items[$level]->items[$itemname])) {
+                $time = $downloaded->items[$publisher]->items[$level]->items[$itemname]->time;
+                $time = $this->get_remote_filetime($publisher, $level, $itemname, $time);
+            }
+
+            if ($publisher=='testing' || $publisher=='_testing_only') {
+                continue; // ignore these publisher categories
+            }
+
+            if (! isset($available->items[$publisher])) {
+                $available->items[$publisher] = new reader_download_items();
+            }
+            if (! isset($available->items[$publisher]->items[$level])) {
+                $available->items[$publisher]->items[$level] = new reader_download_items();
+            }
+
+            $available->count++;
+            $available->items[$publisher]->count++;
+            $available->items[$publisher]->items[$level]->count++;
+
+            if (! isset($downloaded->items[$publisher]->items[$level]->items[$itemname])) {
+                // this item has never been downloaded
+                $available->newcount++;
+                $available->items[$publisher]->newcount++;
+                $available->items[$publisher]->items[$level]->newcount++;
+            } else if ($downloaded->items[$publisher]->items[$level]->items[$itemname]->time < $time) {
+                // an update for this item is available
+                $available->updatecount++;
+                $available->items[$publisher]->updatecount++;
+                $available->items[$publisher]->items[$level]->updatecount++;
+            }
+
+            // flag this item as available
+            $available->items[$publisher]->items[$level]->items[$itemname] = new reader_download_item($itemid, $time);
+        }
+
+        // define callback for sorting levels by name
+        $sort_level_by_name = array($this, 'sort_level_by_name');
+
+        // sort items by name
+        ksort($available->items);
+        $publishers = array_keys($available->items);
+        foreach ($publishers as $publisher) {
+            uksort($available->items[$publisher]->items, $sort_level_by_name);
+            $levels = array_keys($available->items[$publisher]->items);
+            foreach ($levels as $level) {
+                ksort($available->items[$publisher]->items[$level]->items);
             }
         }
 
-        $module = reset($modules);
-        return array($module, $categories);
+        return $available;
+    }
+
+    /**
+     * sort_level_by_name
+     *
+     * @param xxx $a
+     * @param xxx $b
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function sort_level_by_name($a, $b) {
+
+        // search and replace strings
+        $search1 = array('/^-+$/', '/\bLadder\s+([0-9]+)$/', '/\bLevel\s+([0-9]+)$/', '/\bStage\s+([0-9]+)$/', '/^Extra_Points|testing|_testing_only$/', '/Booksworms/');
+        $replace1 = array('', '100$1', '200$1', '300$1', 9999, 'Bookworms');
+
+        $search2 = '/\b(Pre|Low|Upper|High)?[ -]*(EasyStarts?|Quick Start|Starter|Beginner|Beginning|Elementary|Intermediate|Advanced)$/';
+        $replace2 = array($this, 'convert_level_to_number');
+
+        $split = '/^(.*?)([0-9]+)$/';
+
+        // get filtered name (a)
+        $aname = preg_replace_callback($search2, $replace2, preg_replace($search1, $replace1, $a));
+        if (preg_match($split, $aname, $matches)) {
+            $aname = trim($matches[1]);
+            $anum = intval($matches[2]);
+        } else {
+            $anum = 0;
+        }
+
+        // get filtered name (b)
+        $bname = preg_replace_callback($search2, $replace2, preg_replace($search1, $replace1, $b));
+        if (preg_match($split, $bname, $matches)) {
+            $bname = trim($matches[1]);
+            $bnum = intval($matches[2]);
+        } else {
+            $bnum = 0;
+        }
+
+        // empty names always go last
+        if ($aname || $bname) {
+            if ($aname=='') {
+                return -1;
+            }
+            if ($bname=='') {
+                return 1;
+            }
+            if ($aname < $bname) {
+                return -1;
+            }
+            if ($aname > $bname) {
+                return 1;
+            }
+        }
+
+        // compare level/stage/word numbers
+        if ($anum < $bnum) {
+            return -1;
+        }
+        if ($anum > $bnum) {
+            return 1;
+        }
+
+        // same name && same level/stage/word number
+        return 0;
+    }
+
+    /**
+     * convert_level_to_number
+     *
+     * @param xxx $matches 1=Pre|Low|Upper|High, 2=Beginner|Elementary|Intermediate|Advanced ...
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function convert_level_to_number($matches) {
+        $num = 0;
+        switch ($matches[1]) {
+            case 'Pre':   $num -= 10; break;
+            case 'Low':   $num += 20; break;
+            case 'Upper': $num += 30; break;
+            case 'High':  $num += 40; break;
+        }
+        switch ($matches[2]) {
+            case 'Quick Start':  break; // 0
+            case 'EasyStart':
+            case 'EasyStarts':
+            case 'Starter':      $num += 100; break;
+            case 'Beginner':
+            case 'Beginning':    $num += 200; break;
+            case 'Elementary':   $num += 300; break;
+            case 'Intermediate': $num += 400; break;
+            case 'Advanced':     $num += 500; break;
+        }
+        return $num;
     }
 
     /*
@@ -1091,7 +1224,7 @@ class reader_remotesite {
     /**
      * download_json
      *
-     * @uses $CFG
+     * @uses $OUTPUT
      * @param xxx $url
      * @param xxx $post (optional, default=null)
      * @param xxx $headers (optional, default=null)
@@ -1107,22 +1240,38 @@ class reader_remotesite {
         // get "full response" from CURL so that we can handle errors
         $response = download_file_content($url, $headers, $post, true);
 
-        // check for errors
+        // check for $error
         if (empty($response->results)) {
+            if (empty($response->error)) {
+                $error = ' '; // a single space to trigger error report
+            } else {
+                $error = get_string('curlerror', 'mod_reader', $response->error);
+            }
+        } else {
+            if (substr($response->results, 0, 1)=='{' && substr($response->results, -1)=='}') {
+                $error = ''; // this is a JSON-encoded response - yay!
+            } else {
+                $error = get_string('servererror', 'mod_reader', $response->results);
+            }
+        }
+
+        // report $error (and quit), if necessary
+        if ($error) {
+            $output = '';
+            $output .= html_writer::tag('h3', get_string('cannotdownloadata', 'mod_reader'));
+            if ($error = trim($error)) {
+                $output .= html_writer::tag('p', $error);
+            }
+            if ($this->debugdeveloper()) {
+                $output .= html_writer::tag('p', "URL: $url");
+            }
+            $output = $OUTPUT->notification($output);
+            echo $OUTPUT->box($output, 'generalbox', 'notice');
             return false;
         }
 
         $results = json_decode($response->results);
-        if (function_exists('json_last_error')) {
-            // PHP >= 5.3
-            $ok = (json_last_error()==JSON_ERROR_NONE);
-        } else {
-            // PHP <= 5.2
-            // (note this check is specific to the string we are expecting)
-            $ok = (substr($results, 0, 1)=='{' && substr($results, -1)=='}');
-        }
-
-        if ($ok) {
+        if (json_last_error()==JSON_ERROR_NONE) {
             return $results;
         } else {
             return false;
@@ -1167,6 +1316,15 @@ class reader_remotesite {
      * @return array
      */
     public function get_usage_post($usage) {
+        return null;
+    }
+
+    /*
+     * get_config
+     *
+     * @return array
+     */
+    static public function get_config($username, $password) {
         return null;
     }
 }

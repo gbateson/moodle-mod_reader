@@ -40,7 +40,6 @@ $r         = optional_param('r',  0, PARAM_INT); // reader id
 $v         = optional_param('v', NULL, PARAM_CLEAN);
 $publisher = optional_param('publisher', NULL, PARAM_CLEAN);
 $level     = optional_param('level', NULL, PARAM_CLEAN);
-$series    = optional_param('series', NULL, PARAM_CLEAN);
 $likebook  = optional_param('likebook', NULL, PARAM_CLEAN);
 
 if ($id) {
@@ -463,9 +462,11 @@ if ($reader->readonly) {
         $msg = html_writer::tag('ul', $msg);
         $msg = get_string('completequizattempt', $plugin, $name).$msg;
     } else if ($delay = $reader->get_delay()) {
-        $title = get_string('delayineffect', $plugin);
-        $msg = userdate($timenow + $delay);
-        $msg = get_string('youcantakeaquizafter', $plugin, $msg);
+        if ($timenow < ($lastattemptdate + $delay)) {
+            $title = get_string('delayineffect', $plugin);
+            $msg = userdate($lastattemptdate + $delay);
+            $msg = get_string('youcantakeaquizafter', $plugin, $msg);
+        }
     }
 
     if ($msg) {
