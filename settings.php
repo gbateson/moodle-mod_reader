@@ -72,6 +72,7 @@ $defaults = (object)array(
     'keeplocalbookdifficulty' => '0',
 
     // settings to access API and take quizzes online at mReader.org
+    'mreaderenable'      => '0',
     'mreaderurl'         => 'https://mreader.org',
     'mreadersiteid'      => '',
     'mreadersitekey'     => '',
@@ -253,6 +254,14 @@ $name = 'mreadersettings';
 $text = get_string($name, $plugin);
 $help = get_string('config'.$name, $plugin);
 $setting = new admin_setting_heading("$plugin/$name", $text, $help);
+$settings->add($setting);
+
+// enable mReader access
+$name = 'mreaderenable';
+$text = get_string($name, $plugin);
+$help = get_string('config'.$name, $plugin);
+$default = $defaults->$name;
+$setting = new admin_setting_configselect("$plugin/$name", $text, $help, $default, $yesno);
 $settings->add($setting);
 
 // mReader API url

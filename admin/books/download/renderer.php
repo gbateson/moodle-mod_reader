@@ -106,16 +106,7 @@ class mod_reader_admin_books_download_renderer extends mod_reader_admin_books_re
         // create an object to handle the downloading of data from remote sites
         $downloader = new reader_downloader($this);
 
-        $enable_mreader = false;
-        if ($enable_mreader == false) {
-            $mreaderurl     = '';
-            $mreadersiteid  = '';
-            $mreadersitekey = '';
-            $serverurl      = get_config($plugin, 'serverurl');
-            $serverusername = get_config($plugin, 'serverusername');
-            $serverpassword = get_config($plugin, 'serverpassword');
-        } else {
-
+        if ($enable_mreader = get_config($plugin, 'mreaderenable')) {
             $mreaderurl     = get_config($plugin, 'mreaderurl');
             $mreadersiteid  = get_config($plugin, 'mreadersiteid');
             $mreadersitekey = get_config($plugin, 'mreadersitekey');
@@ -150,6 +141,16 @@ class mod_reader_admin_books_download_renderer extends mod_reader_admin_books_re
                     //set_config('serverpassword', $serverpassword, $plugin);
                 }
             }
+        } else {
+            // mReader settings are NOT enabled, so use OLD settings
+            // NOTE: quizzes on the OLD server have not been updated
+            //       since April 2018, so they're becoming obsolete
+            $mreaderurl     = '';
+            $mreadersiteid  = '';
+            $mreadersitekey = '';
+            $serverurl      = get_config($plugin, 'serverurl');
+            $serverusername = get_config($plugin, 'serverusername');
+            $serverpassword = get_config($plugin, 'serverpassword');
         }
 
         // create an object to represent new download site (mreader.org)

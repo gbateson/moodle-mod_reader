@@ -462,11 +462,9 @@ if ($reader->readonly) {
         $msg = html_writer::tag('ul', $msg);
         $msg = get_string('completequizattempt', $plugin, $name).$msg;
     } else if ($delay = $reader->get_delay()) {
-        if ($timenow < ($lastattemptdate + $delay)) {
-            $title = get_string('delayineffect', $plugin);
-            $msg = userdate($lastattemptdate + $delay);
-            $msg = get_string('youcantakeaquizafter', $plugin, $msg);
-        }
+        $title = get_string('delayineffect', $plugin);
+        $msg = userdate($timenow + $delay);
+        $msg = get_string('youcantakeaquizafter', $plugin, $msg);
     }
 
     if ($msg) {

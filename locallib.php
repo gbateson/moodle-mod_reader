@@ -856,8 +856,11 @@ class mod_reader {
     /*
      * get_delay
      *
-     * @param integer $userid
-     * @return boolean
+     * calculate the remaining delay (in seconds) until the next quiz can be taken
+     *
+     * @param integer $userid (optional, default = 0)
+     * @param integer $groupid (optional, default = 0)
+     * @return integer the delay (in seconds) until the next quiz can be taken
      **/
     public function get_delay($userid=0, $groupid=0) {
         // no delays for admins and teachers
