@@ -1972,7 +1972,7 @@ class mod_reader_renderer extends plugin_renderer_base {
         $max = sprintf('%03d', $max / 10000);
 
         $html = '';
-        $html .= html_writer::empty_tag('img', array('src'   => new moodle_url("/mod/reader/img/progressbar.$max.grey.png"),
+/*        $html .= html_writer::empty_tag('img', array('src'   => new moodle_url("/mod/reader/img/progressbar.$max.grey.png"),
                                                      'class' => 'grey'));
         $html .= html_writer::empty_tag('img', array('src'   => new moodle_url("/mod/reader/img/progressbar.$max.color.png"),
                                                      'class' => 'color',
@@ -2001,6 +2001,117 @@ class mod_reader_renderer extends plugin_renderer_base {
 
         $html = html_writer::tag('div', $html, array('id' => 'ProgressBar', 'style' => 'border-color:'.$bordercolor.';'));
         $html .= html_writer::tag('div', '', array('style' => 'clear: both; height: 1.0em; width: 1.0em;'));
+*/
+
+    ///////////////////////////////////////////
+    // new progress bar using Bootstrap CSS
+    ///////////////////////////////////////////
+
+    /**
+     * progressbar
+     *
+     * @uses $CFG
+     * @uses $DB
+     * @uses $USER
+     * @param xxx $progress
+     * @param xxx $goal
+     * @param xxx $reader
+     * @todo Finish documenting this function
+     */
+// START ADDED CODE
+// First avoid dividing by zero
+        $npggoal = ($goal + 1);
+        switch (true) {
+            case ($npggoal <= 1):
+                $npggoal = 30000;
+                break;
+            case ($npggoal > 1):
+                $npggoal = ($goal);
+                break;
+        }
+
+
+// Get value for $npgbarprog as an integer between 0 and 100 % of goal reached -- will be width of progress-bar
+        $npgbarprog = ($progress / $npggoal);
+
+        switch (true) {
+            case ($npgbarprog >= 1):
+		$npgextrafactor = intval($npgbarprog); // Set factor for multiplication of Additional words read bar
+		$npgextragoal = ($npggoal * $npgextrafactor); // Set goal (100%) for the Additional words read bar
+                $npgbarprog = 100;
+		$npgextrawords = ($progress - $npggoal);
+		$npgextraprog = ($npgextrawords / $npgextragoal); // Prepare percent for second progress bar
+                break;
+            case ($npgbarprog < 1):
+                $npgbarprog = ($npgbarprog * 100);
+                $npgbarprog = intval($npgbarprog);
+                break;
+            default:
+                $npgbarprog = 0;
+        }
+
+       switch (true) {
+            case ($npgbarprog <= 25):
+                $npgcolor = '#d9534f'; // red
+                break;
+            case ($npgbarprog <= 50):
+                $npgcolor = '#fa4f00'; // orange
+                break;
+            case ($npgbarprog <= 75):
+                $npgcolor = '#ed9c2c'; // yellow
+                break;
+            case ($npgbarprog < 100):
+                $npgcolor = '#5cb85c'; // green
+                break;
+            case ($npgbarprog >= 100):
+                $npgcolor = '#1177d1'; // blue
+                break;
+            default:
+                $npgcolor = '#5cb85c'; // green
+        }
+
+
+	$npgquartergoal = intval($npggoal / 4);
+	$npghalfgoal = intval($npggoal / 2);
+	$npgthreequartergoal = ($npghalfgoal + $npgquartergoal);
+
+	$npgnums = '<div>0</div><div>'.$npgquartergoal.' words</div><div>'.$npghalfgoal.' words</div><div>'.$npgthreequartergoal.' words</div><div>'.$npggoal.' words</div>';
+
+
+// First progress bar -- Always visible
+        $npgtitle = 'Progress'; // To Do: Replace this with get_string
+        $html .= html_writer::tag('h3', $npgtitle, array('class' => 'progtitle')); // Add title for extra progressbar
+        $npgpercent = $npgbarprog.'%';
+        $npgcapn = $npgpercent.' Complete!';
+        $npgbar = html_writer::tag('div', $npgcapn, array('class' => 'progress-bar', 'style' => 'background-color:'.$npgcolor.'; width:'.$npgpercent.';')); // Add the coloured bit
+        $html .= html_writer::tag('div', $npgbar, array('class' => 'progress')); // Embed the coloured bit of the progress bar in its container and add it to $html
+        $html .= html_writer::tag('div', $npgnums, array('class' => 'prognums')); // Add numbers to the bottom of the progressbar
+        $html .= html_writer::tag('div', '', array('style' => 'clear: both; height: 1.0em; width: 1.0em;')); // Added to the end to make a space before the rest of the page
+
+// Start Second BAR (ONLY VISIBLE when goal exceeded. Extra words -- up to 2x Goal)
+        if ($npgextraprog > 0) {
+		// Multiply quarterly goals by $npgextrafactor for second bar
+		$npgquartergoal = ($npggoal + ($npgquartergoal * $npgextrafactor));
+		$npghalfgoal = ($npggoal + ($npghalfgoal * $npgextrafactor));
+		$npgthreequartergoal =  ($npggoal + ($npgthreequartergoal * $npgextrafactor));
+                $npgxgoal =  ($npggoal + ($npggoal * $npgextrafactor));
+	        $npgnums = '<div>'.$npggoal.' words</div><div>'.$npgquartergoal.' words</div><div>'.$npghalfgoal.' words</div><div>'.$npgthreequartergoal.' words</div><div>'.$npgxgoal.' words</div>';
+                $npgextratitle = 'Additional Words Read:'; // To Do: Replace this with get_string
+                $html .= html_writer::tag('h3', $npgextratitle, array('class' => 'progtitle')); // Add title for extra progressbar
+                $npgpercent = intval($npgextraprog * 100).'%'; // Calculate progress bar percentage for extra words
+                $npgcapn = $npgextrawords.' Extra words read!';
+                $npgbar = html_writer::tag('div', $npgcapn, array('class' => 'progress-bar', 'style' => 'background-color:'.$npgcolor.'; width:'.$npgpercent.';')); // Add the coloured bit
+                $html .= html_writer::tag('div', $npgbar, array('class' => 'progress')); // Embed the coloured bit of the progress bar in its container and add it to $html
+                $html .= html_writer::tag('div', $npgnums, array('class' => 'prognums')); // Add numbers to the bottom of the progressbar
+                $html .= html_writer::tag('div', '', array('style' => 'clear: both; height: 1.0em; width: 1.0em;')); // Added to the end to make a space before the rest of the page
+        }
+
+
+
+// END New progress bar
+
+
+
 
         return $html;
     }
