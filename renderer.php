@@ -2075,7 +2075,7 @@ class mod_reader_renderer extends plugin_renderer_base {
 	$npghalfgoal = intval($npggoal / 2);
 	$npgthreequartergoal = ($npghalfgoal + $npgquartergoal);
 
-        $npgnums = '<div>0 words</div><div>'.$npgquartergoal.' words</div><div>'.$npghalfgoal.' words</div><div>'.$npgthreequartergoal.' words</div><div>'.$npggoal.' words</div>';
+        $npgnums = '<div>0 words　　</div><div>'.$npgquartergoal.' words</div><div>'.$npghalfgoal.' words</div><div>'.$npgthreequartergoal.' words</div><div>'.$npggoal.' words</div>';
         $npgdivs = '<div>|</div><div>|</div><div>|</div><div>|</div><div>|</div>';
 
 // First progress bar -- Always visible

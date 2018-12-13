@@ -288,6 +288,7 @@
 #page-mod-reader-view div.prognums {width: 100%; text-align: center; display: flex; flex-flow: row nowrap; justify-content: space-between; border: none;}
 #page-mod-reader-view div.progress {height: 3em; margin-bottom: 0px; border: 1px #c4c4c4 solid; font-weight: bold;}
 #page-mod-reader-view div.npgdivs {margin-top: -0.3em; font-size: 0.5em;}
+#page-mod-reader-view div.progress-bar {height: 3em; line-height: 3em; color: white; text-align: center;} /* Fixes coloured bit height and alignment in themes other than boost*/
 
 
 #page-mod-reader-quiz-mreader body { padding: 0px; }
