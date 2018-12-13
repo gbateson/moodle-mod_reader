@@ -2075,8 +2075,8 @@ class mod_reader_renderer extends plugin_renderer_base {
 	$npghalfgoal = intval($npggoal / 2);
 	$npgthreequartergoal = ($npghalfgoal + $npgquartergoal);
 
-	$npgnums = '<div>0</div><div>'.$npgquartergoal.' words</div><div>'.$npghalfgoal.' words</div><div>'.$npgthreequartergoal.' words</div><div>'.$npggoal.' words</div>';
-
+        $npgnums = '<div>0 words</div><div>'.$npgquartergoal.' words</div><div>'.$npghalfgoal.' words</div><div>'.$npgthreequartergoal.' words</div><div>'.$npggoal.' words</div>';
+        $npgdivs = '<div>|</div><div>|</div><div>|</div><div>|</div><div>|</div>';
 
 // First progress bar -- Always visible
         $npgtitle = 'Progress'; // To Do: Replace this with get_string
@@ -2085,26 +2085,30 @@ class mod_reader_renderer extends plugin_renderer_base {
         $npgcapn = $npgpercent.' Complete!';
         $npgbar = html_writer::tag('div', $npgcapn, array('class' => 'progress-bar', 'style' => 'background-color:'.$npgcolor.'; width:'.$npgpercent.';')); // Add the coloured bit
         $html .= html_writer::tag('div', $npgbar, array('class' => 'progress')); // Embed the coloured bit of the progress bar in its container and add it to $html
+        $html .= html_writer::tag('div', $npgdivs, array('class' => 'prognums npgdivs')); // Add dividers to the bottom of the progressbar
         $html .= html_writer::tag('div', $npgnums, array('class' => 'prognums')); // Add numbers to the bottom of the progressbar
         $html .= html_writer::tag('div', '', array('style' => 'clear: both; height: 1.0em; width: 1.0em;')); // Added to the end to make a space before the rest of the page
 
 // Start Second BAR (ONLY VISIBLE when goal exceeded. Extra words -- up to 2x Goal)
         if ($npgextraprog > 0) {
-		// Multiply quarterly goals by $npgextrafactor for second bar
-		$npgquartergoal = ($npggoal + ($npgquartergoal * $npgextrafactor));
-		$npghalfgoal = ($npggoal + ($npghalfgoal * $npgextrafactor));
-		$npgthreequartergoal =  ($npggoal + ($npgthreequartergoal * $npgextrafactor));
+                // Multiply quarterly goals by $npgextrafactor for second bar
+                $npgquartergoal = ($npggoal + ($npgquartergoal * $npgextrafactor));
+                $npghalfgoal = ($npggoal + ($npghalfgoal * $npgextrafactor));
+                $npgthreequartergoal =  ($npggoal + ($npgthreequartergoal * $npgextrafactor));
                 $npgxgoal =  ($npggoal + ($npggoal * $npgextrafactor));
-	        $npgnums = '<div>'.$npggoal.' words</div><div>'.$npgquartergoal.' words</div><div>'.$npghalfgoal.' words</div><div>'.$npgthreequartergoal.' words</div><div>'.$npgxgoal.' words</div>';
+                $npgnums = '<div>'.$npggoal.' words</div><div>'.$npgquartergoal.' words</div><div>'.$npghalfgoal.' words</div><div>'.$npgthreequartergoal.' words</div><div>'.$npgxgoal.' words</div>';
                 $npgextratitle = 'Additional Words Read:'; // To Do: Replace this with get_string
                 $html .= html_writer::tag('h3', $npgextratitle, array('class' => 'progtitle')); // Add title for extra progressbar
                 $npgpercent = intval($npgextraprog * 100).'%'; // Calculate progress bar percentage for extra words
                 $npgcapn = $npgextrawords.' Extra words read!';
                 $npgbar = html_writer::tag('div', $npgcapn, array('class' => 'progress-bar', 'style' => 'background-color:'.$npgcolor.'; width:'.$npgpercent.';')); // Add the coloured bit
                 $html .= html_writer::tag('div', $npgbar, array('class' => 'progress')); // Embed the coloured bit of the progress bar in its container and add it to $html
+                $html .= html_writer::tag('div', $npgdivs, array('class' => 'prognums npgdivs')); // Add dividers to the bottom of the progressbar
                 $html .= html_writer::tag('div', $npgnums, array('class' => 'prognums')); // Add numbers to the bottom of the progressbar
                 $html .= html_writer::tag('div', '', array('style' => 'clear: both; height: 1.0em; width: 1.0em;')); // Added to the end to make a space before the rest of the page
         }
+
+
 
 
 
