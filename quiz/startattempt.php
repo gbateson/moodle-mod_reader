@@ -200,24 +200,8 @@ if ($mreadersiteid) {
 $attempt->uniqueid = $quba->get_id(); // a new id in the "question_usages" table
 $attempt->id = $DB->insert_record('reader_attempts', $attempt);
 
-// Log the new attempt.
+// Log the new attempt (using Moodle events API, if available).
 reader_add_to_log($course->id, 'reader', 'attempt', 'review.php?attempt='.$attempt->id, $reader->id, $cm->id);
-
-// Trigger event
-$event = (object)array(
-    'component' => 'mod_reader',
-    'attemptid' => $attempt->id,
-    'timestart' => $attempt->timestart,
-    'userid'    => $attempt->userid,
-    'readerid'  => $reader->id,
-    'cmid'      => $cm->id,
-    'courseid'  => $course->id,
-);
-if (function_exists('events_trigger_legacy')) {
-    events_trigger_legacy('reader_attempt_started', $event);
-} else {
-    events_trigger('reader_attempt_started', $event);
-}
 
 // Redirect to the attempt page
 if ($mreadersiteid) {

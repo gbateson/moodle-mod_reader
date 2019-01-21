@@ -1859,20 +1859,24 @@ class reader_downloader {
         }
         set_coursemodule_visible($newquiz->coursemodule, $newquiz->visible);
 
-        // Trigger mod_updated event with information about this module.
-        $event = (object)array(
-            'courseid'   => $newquiz->course,
-            'cmid'       => $newquiz->coursemodule,
-            'modulename' => $newquiz->modulename,
-            'name'       => $newquiz->name,
-            'userid'     => $USER->id
-        );
-        if (function_exists('events_trigger_legacy')) {
-            events_trigger_legacy('mod_updated', $event);
+        // Trigger mod_created event with information about this module.
+        if (class_exists('\\core\\event\\course_module_created')) {
+            \core\event\course_module_created::create_from_cm($newquiz)->trigger();
         } else {
-            events_trigger('mod_updated', $event);
+            $event = (object)array(
+                'courseid'   => $newquiz->course,
+                'cmid'       => $newquiz->coursemodule,
+                'modulename' => $newquiz->modulename,
+                'name'       => $newquiz->name,
+                'userid'     => $USER->id
+            );
+            if (function_exists('events_trigger_legacy')) {
+                events_trigger_legacy('mod_created', $event);
+            } else {
+                events_trigger('mod_created', $event);
+            }
         }
-
+    
         // rebuild_course_cache (needed for Moodle 2.0)
         rebuild_course_cache($courseid, true);
 

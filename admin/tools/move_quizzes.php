@@ -212,18 +212,27 @@ function reader_move_quizzes($reader) {
                 $DB->update_record('course_sections', $newsection);
             }
 
-            // Trigger mod_updated event with information about this module.
-            $event = (object)array(
-                'courseid'   => $newcourseid,
-                'cmid'       => $record->cmid,
-                'modulename' => 'quiz',
-                'name'       => $record->name,
-                'userid'     => $USER->id
-            );
-            if (function_exists('events_trigger_legacy')) {
-                events_trigger_legacy('mod_updated', $event);
+            if (class_exists('\\core\\event\\course_module_created')) {
+                \core\event\course_module_created::create_from_cm((object)array(
+                    'id'       => $record->cmid,
+                    'modname'  => 'quiz',
+                    'instance' => $record->quizid,
+                    'name'     => $record->name,
+                ))->trigger();
             } else {
-                events_trigger('mod_updated', $event);
+                // Trigger mod_created event with information about this module.
+                $event = (object)array(
+                    'courseid'   => $newcourseid,
+                    'cmid'       => $record->cmid,
+                    'modulename' => 'quiz',
+                    'name'       => $record->name,
+                    'userid'     => $USER->id
+                );
+                if (function_exists('events_trigger_legacy')) {
+                    events_trigger_legacy('mod_created', $event);
+                } else {
+                    events_trigger('mod_created', $event);
+                }
             }
 
             $moved ++;
