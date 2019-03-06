@@ -1823,6 +1823,7 @@ class reader_downloader {
             'course'        => $courseid,
             'section'       => $sectionnum,
             'module'        => $quizmoduleid,
+            'modname'       => 'quiz',
             'modulename'    => 'quiz',
             'add'           => 'quiz',
             'update'        => 0,

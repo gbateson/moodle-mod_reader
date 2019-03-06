@@ -116,8 +116,9 @@ class reader_remotesite_mreaderorg extends reader_remotesite {
      * @todo Finish documenting this function
      */
     public function get_image_url($type, $itemid) {
-        $mreader = new reader_site_mreader();
-        return $mreader->get_image_url($type);
+        $mreader = new reader_site_mreader(); 
+        $url = $mreader->get_image_url($type);
+        return $url->out(false); // convert &amp; to &
     }
 
     /**
