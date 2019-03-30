@@ -1912,6 +1912,7 @@ function reader_xmldb_get_newquiz($targetcourseid, $sectionnum, $quizmodule, $qu
         'course'        => $targetcourseid,
         'section'       => $sectionnum,
         'module'        => $quizmodule->id,
+        'modname'       => 'quiz',
         'modulename'    => 'quiz',
         'add'           => 'quiz',
         'update'        => 0,
