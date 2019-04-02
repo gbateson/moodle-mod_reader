@@ -182,8 +182,11 @@ class reader_downloader {
     public function __construct($output) {
         global $CFG, $DB;
 
-        // get course category PHP library (Moodle >= 2.6)
-        if (file_exists($CFG->dirroot.'/lib/coursecatlib.php')) {
+        // get course category PHP library, if required
+        if (class_exists('core_course_category')) {
+            // Moodle >= 3.6 autoloads class "core_course_category"
+        } else if (file_exists($CFG->dirroot.'/lib/coursecatlib.php')) {
+            // Moodle >= 2.5 requires manual loading of class "coursecat"
             require_once($CFG->dirroot.'/lib/coursecatlib.php');
         }
 
@@ -1362,9 +1365,14 @@ class reader_downloader {
 
             // get list of course categories
             $requiredcapability = 'moodle/course:create';
-            if (class_exists('coursecat')) {
+            if (class_exists('core_course_category')) {
+                // Moodle >= 3.6
+                $category_list = core_course_category::make_categories_list($requiredcapability);
+            } else if (class_exists('coursecat')) {
+                // Moodle >= 2.5
                 $category_list = coursecat::make_categories_list($requiredcapability);
-            } else { // Moodle <= 2.4
+            } else {
+                // Moodle <= 2.4
                 $category_list = array();
                 $category_parents = array();
                 make_categories_list($category_list, $category_parents, $requiredcapability);
@@ -1425,7 +1433,10 @@ class reader_downloader {
                 'theme'         => '',
             );
 
-            if (class_exists('coursecat')) {
+            if (class_exists('core_course_category')) {
+                // Moodle >= 3.6
+                $category = core_course_category::create($category);
+            } else if (class_exists('coursecat')) {
                 // Moodle >= 2.5
                 $category = coursecat::create($category);
             } else {
@@ -2339,8 +2350,9 @@ class reader_downloader {
         }
 
         // initialize the default id object
+        // The "top" category was introduced in Moodle 3.5
         if ($default===null) {
-            $default = (object)array('course' => null, 'module' => null);
+            $default = (object)array('course' => null, 'top' => null, 'module' => null);
         }
 
         // update default course info, if necessary
@@ -2364,7 +2376,13 @@ class reader_downloader {
             $category->info = get_string('defaultquestioncategoryinfo', 'mod_reader', $a);
         }
 
-        $category->parent = 0;
+        // create/get TOP category (Moodle >= 3.5)
+        if (function_exists('question_get_top_category')) {
+            $category->parent = question_get_top_category($default->module->context->id, true)->id;
+        } else {
+            $category->parent = 0;
+        }
+
         if ($this->is_default_category($category)) {
             if ($category->context->level=='course') {
                 $category->contextid = $default->course->context->id;
@@ -2374,6 +2392,9 @@ class reader_downloader {
                 $categoryid = $default->module->questioncategory->id;
             }
         } else {
+            if ($category->parent==0) {
+                $category->parent = $default->module->questioncategory->id;
+            }
             $category->contextid = $default->module->context->id;
             $categoryid = $this->get_categoryid($category);
         }

@@ -218,8 +218,16 @@ class reader_remotesite_moodlereadernet extends reader_remotesite {
                     continue;
                 }
 
-                // transfer "title" field
-                $item['@']['title'] = $item['#'];
+                // convert main value from "path" to "title"
+                if ($pos = strrpos($item['#'], '/')) {
+                    $item['#'] = substr($item['#'], $pos + 1);
+                    $item['#'] = strtr($item['#'], array('_' => ' ', '.xml.gz' => ''));
+                }
+
+                // populate "title" field, if necessary
+                if (empty($item['@']['title'])) {
+                    $item['@']['title'] = $item['#'];
+                }
 
                 // rename deprecated fields
                 $fields = array('length' => 'points');
