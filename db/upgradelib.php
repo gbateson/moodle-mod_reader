@@ -1951,6 +1951,7 @@ function reader_xmldb_get_newquiz($targetcourseid, $sectionnum, $quizmodule, $qu
 
     // Trigger mod_created event with information about this module.
     if (class_exists('\\core\\event\\course_module_created')) {
+        // Moodle >= 2.6
         \core\event\course_module_created::create_from_cm($newquiz)->trigger();
     } else {
         $event = (object)array(
@@ -1961,8 +1962,10 @@ function reader_xmldb_get_newquiz($targetcourseid, $sectionnum, $quizmodule, $qu
             'userid'     => $USER->id
         );
         if (function_exists('events_trigger_legacy')) {
+            // Moodle 2.6 - 3.0 ... so not used here anymore
             events_trigger_legacy('mod_created', $event);
         } else {
+            // Moodle <= 2.5
             events_trigger('mod_created', $event);
         }
     }

@@ -1873,6 +1873,7 @@ class reader_downloader {
 
         // Trigger mod_created event with information about this module.
         if (class_exists('\\core\\event\\course_module_created')) {
+            // Moodle >= 2.6
             \core\event\course_module_created::create_from_cm($newquiz)->trigger();
         } else {
             $event = (object)array(
@@ -1883,12 +1884,14 @@ class reader_downloader {
                 'userid'     => $USER->id
             );
             if (function_exists('events_trigger_legacy')) {
+                // Moodle 2.6 - 3.0 ... so not used here anymore
                 events_trigger_legacy('mod_created', $event);
             } else {
+                // Moodle <= 2.5
                 events_trigger('mod_created', $event);
             }
         }
-    
+
         // rebuild_course_cache (needed for Moodle 2.0)
         rebuild_course_cache($courseid, true);
 
@@ -2349,13 +2352,12 @@ class reader_downloader {
             return false; // skip empty categories
         }
 
-        // initialize the default id object
-        // The "top" category was introduced in Moodle 3.5
+        // initialize the default course/module objects
         if ($default===null) {
-            $default = (object)array('course' => null, 'top' => null, 'module' => null);
+            $default = (object)array('course' => null, 'module' => null);
         }
 
-        // update default course info, if necessary
+        // set default course info, if necessary
         if ($default->course===null || $default->course->id != $cm->course) {
             $default->course = new stdClass();
             $default->course->id = $cm->course;
@@ -2363,7 +2365,7 @@ class reader_downloader {
             $default->course->questioncategory = question_make_default_categories(array($default->course->context));
         }
 
-        // update default module info, if necessary
+        // set default module info, if necessary
         if ($default->module===null || $default->module->id != $cm->id) {
             $default->module = new stdClass();
             $default->module->id = $cm->id;

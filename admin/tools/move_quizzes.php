@@ -213,6 +213,7 @@ function reader_move_quizzes($reader) {
             }
 
             if (class_exists('\\core\\event\\course_module_created')) {
+                // Moodle >= 2.6
                 \core\event\course_module_created::create_from_cm((object)array(
                     'id'       => $record->cmid,
                     'modname'  => 'quiz',
@@ -229,8 +230,10 @@ function reader_move_quizzes($reader) {
                     'userid'     => $USER->id
                 );
                 if (function_exists('events_trigger_legacy')) {
+                    // Moodle 2.6 - 3.0 ... so not used here anymore
                     events_trigger_legacy('mod_created', $event);
                 } else {
+                    // Moodle <= 2.5
                     events_trigger('mod_created', $event);
                 }
             }

@@ -115,6 +115,8 @@ class mod_reader_admin_tools_renderer extends mod_reader_admin_renderer {
 
     static public function is_available($toolname) {
         global $DB, $PAGE;
+        $capability = '';
+        $context = false;
         switch ($toolname) {
             case 'check_email':
             case 'export_reader_tables':
@@ -137,12 +139,22 @@ class mod_reader_admin_tools_renderer extends mod_reader_admin_renderer {
 
             case 'fix_coursesections':
                 if ($courseid = $DB->get_field('reader', 'usecourse', array('id' => $PAGE->cm->instance))) {
-                    // use the course id specified in the Reader acitivty
-                } else {
-                    $courseid = get_config('mod_reader', 'usecourse');
+                    // check course id specified in the Reader actiivty
+                    if (! $DB->record_exists('course', array('id' => $courseid))) {
+                        $DB->set_field('reader', 'usecourse', 0, array('id' => $PAGE->cm->instance));
+                        $courseid = 0;
+                    }
+                } else if ($courseid = get_config('mod_reader', 'usecourse')) {
+                    // check course id specified in the Reader config
+                    if (! $DB->record_exists('course', array('id' => $courseid))) {
+                        set_config('mod_reader', 'usecourse', 0);
+                        $courseid = 0;
+                    }
                 }
-                $capability = 'moodle/course:manageactivities';
-                $context = mod_reader::context(CONTEXT_COURSE, $courseid);
+                if ($courseid) {
+                    $capability = 'moodle/course:manageactivities';
+                    $context = mod_reader::context(CONTEXT_COURSE, $courseid);
+                }
                 break;
 
             case 'add_phpdoc':
@@ -156,6 +168,10 @@ class mod_reader_admin_tools_renderer extends mod_reader_admin_renderer {
                 $context = mod_reader::context(CONTEXT_COURSE, SITEID);
                 break;
         }
-        return has_capability($capability, $context);
+        if (empty($context) || $capability=='') {
+            return false; // shouldn't happen
+        } else {
+            return has_capability($capability, $context);
+        }
     }
 }
