@@ -116,7 +116,7 @@ class reader_remotesite_mreaderorg extends reader_remotesite {
      * @todo Finish documenting this function
      */
     public function get_image_url($type, $itemid) {
-        $mreader = new reader_site_mreader(); 
+        $mreader = new reader_site_mreader();
         $url = $mreader->get_image_url($type);
         return $url->out(false); // convert &amp; to &
     }
@@ -133,6 +133,35 @@ class reader_remotesite_mreaderorg extends reader_remotesite {
         return array('imageid' => $itemid);
     }
 
+    /**
+     * download_bookcovers
+     *
+     * @param xxx $itemids
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function download_bookcovers($itemids) {
+        $mreader = new reader_site_mreader();
+        $url = $mreader->get_bookcovers_url();
+        if ($itemids) {
+            $params = array('ids' => $itemids);
+        } else {
+            $params = null;
+        }
+        if ($results = $this->download_json($url, $params, self::curl_options())) {
+            return $results;
+        }
+        return array();
+    }
+
+    /**
+     * download_items
+     *
+     * @param xxx $type
+     * @param xxx $itemids
+     * @return xxx
+     * @todo Finish documenting this function
+     */
     public function download_items($type, $itemids) {
         $items = array();
         $mreader = new reader_site_mreader();
@@ -145,9 +174,9 @@ class reader_remotesite_mreaderorg extends reader_remotesite {
         if ($results = $this->download_json($url, $params, self::curl_options())) {
             foreach ($results as $result) {
                 $items[] = (object)array(
+                    'id'        => $result->id,
                     'publisher' => $result->publisher,
                     'level'     => $result->level,
-                    'id'        => $result->id,
                     'title'     => $result->title,
                     'time'      => $result->time
                 );

@@ -107,6 +107,42 @@ class reader_remotesite_moodlereadernet extends reader_remotesite {
     }
 
     /**
+     * download_bookcovers
+     *
+     * @param xxx $itemids
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function download_bookcovers($itemids) {
+        $items = array();
+        $params = array('a' => 'quizzes',
+                        'login' => $this->username,
+                        'password' => $this->password);
+        $xml_file = new moodle_url($this->baseurl.'/index.php', $params);
+
+        $params = array('password' => $this->password,
+                        'quiz' => $itemids,
+                        'upload' => 'true');
+        $xml = reader_file($xml_file, $params);
+
+        $xml = xmlize($xml);
+        if (isset($xml['myxml']['#']['item'])) {
+            $item = &$xml['myxml']['#']['item'];
+            $i = 0;
+            while (isset($item["$i"])) {
+                if (isset($item["$i"]['@']['id']) && isset($item["$i"]['@']['image'])) {
+                    $items[] = (object)array(
+                        'id' => $item["$i"]['@']['id'],
+                        'image' => $item["$i"]['@']['image']
+                    );
+                }
+                $i++;
+            }
+        }
+        return $items;
+    }
+
+    /**
      * download_items
      *
      * @param xxx $type

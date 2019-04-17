@@ -231,6 +231,25 @@ class reader_site {
     }
 
     /**
+     * get_bookcovers_url
+     *
+     * @todo Finish documenting this function
+     */
+    public function get_bookcovers_url() {
+    	$url = $this->baseurl.$this::REMOTE_API_SCRIPT;
+    	return $this->tokenized_url($url, $this->get_bookcovers_params());
+    }
+
+    /**
+     * get_bookcovers_params
+     *
+     * @todo Finish documenting this function
+     */
+    public function get_bookcovers_params() {
+        return array();
+    }
+
+    /**
      * get_attempts_url
      *
      * @todo Finish documenting this function
@@ -412,7 +431,20 @@ class reader_site_mreader extends reader_site {
     }
 
     /**
-     * get_items_params
+     * get_bookcovers_params
+     *
+     * @todo Finish documenting this function
+     */
+    public function get_bookcovers_params() {
+        return array(
+        	'a' => 'bookcovers',
+        	't' => $this->time,
+        	'sid' => get_config('mod_reader', 'mreadersiteid')
+        );
+    }
+
+    /**
+     * get_attempts_params
      *
      * @todo Finish documenting this function
      */
@@ -438,6 +470,7 @@ class reader_site_mreader extends reader_site {
         	'uname' => $this->get_user_uniqueid(), // a fake, but unique, username
         );
     }
+
 
     /**
      * generate_token

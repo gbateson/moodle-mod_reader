@@ -443,6 +443,17 @@ class reader_remotesite {
     }
 
     /**
+     * download_bookcovers
+     *
+     * @param xxx $itemids
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function download_bookcovers($itemids) {
+        return null;
+    }
+
+    /**
      * download_items
      *
      * @param xxx $type
@@ -1249,7 +1260,9 @@ class reader_remotesite {
             }
         } else {
             if (substr($response->results, 0, 1)=='{' && substr($response->results, -1)=='}') {
-                $error = ''; // this is a JSON-encoded response - yay!
+                $error = ''; // this is a JSON-encoded object
+            } else if (substr($response->results, 0, 1)=='[' && substr($response->results, -1)==']') {
+                $error = ''; // this is a JSON-encoded array
             } else {
                 $error = get_string('servererror', 'mod_reader', $response->results);
             }

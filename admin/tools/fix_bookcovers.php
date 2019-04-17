@@ -27,6 +27,10 @@
 
 /** Include required files */
 require_once('../../../../config.php');
+require_once($CFG->dirroot.'/mod/reader/admin/books/download/downloader.php');
+require_once($CFG->dirroot.'/mod/reader/admin/books/download/remotesite.php');
+require_once($CFG->dirroot.'/mod/reader/admin/books/download/remotesite/moodlereadernet.php');
+require_once($CFG->dirroot.'/mod/reader/admin/books/download/remotesite/mreaderorg.php');
 require_once($CFG->dirroot.'/mod/reader/admin/tools/lib.php');
 require_once($CFG->dirroot.'/mod/reader/admin/tools/renderer.php');
 require_once($CFG->dirroot.'/mod/reader/locallib.php');
@@ -76,10 +80,20 @@ reader_print_images_form($readercfg, $action);
 $courseid  = $readercfg->usecourse;
 make_upload_directory('reader/images');
 
-switch ($action) {
-    case 'all'       : reader_fetch_all_book_images($readercfg); break;
-    case 'attempted' : reader_fetch_attempted_book_images($readercfg); break;
-    case 'installed' : reader_fetch_installed_book_images($readercfg); break;
+if ($action) {
+    if ($enable_mreader = $readercfg->mreaderenable) {
+        $remotesite = new reader_remotesite_mreaderorg();
+    } else {
+        $server   = $readercfg->serverurl;
+        $login    = $readercfg->serverusername;
+        $password = $readercfg->serverpassword;
+        $remotesite = new reader_remotesite_moodlereadernet($server, $login, $password);
+    }
+    switch ($action) {
+        case 'all'       : reader_fetch_all_book_images($readercfg, $remotesite); break;
+        case 'attempted' : reader_fetch_attempted_book_images($readercfg, $remotesite); break;
+        case 'installed' : reader_fetch_installed_book_images($readercfg, $remotesite); break;
+    }
 }
 
 reader_print_continue($id, $tab);
@@ -93,14 +107,9 @@ echo $output->footer();
  * @param xxx $readercfg
  * @todo Finish documenting this function
  */
-function reader_fetch_all_book_images($readercfg) {
+function reader_fetch_all_book_images($readercfg, $remotesite) {
 
-    $server    = $readercfg->serverurl;
-    $login     = $readercfg->serverusername;
-    $password  = $readercfg->serverpassword;
-    $courseid  = $readercfg->usecourse;
-
-    if (! $itemids = reader_get_itemids($readercfg)) {
+    if (! $itemids = reader_get_itemids($readercfg, $remotesite)) {
         return false;
     }
     $remotenames = reader_get_remotenames($readercfg);
@@ -115,27 +124,15 @@ function reader_fetch_all_book_images($readercfg) {
     }
 
     $images = array();
-    while (($quizids = array_splice($ids, 0, 100)) && count($quizids)) {
-        $params = array('a' => 'quizzes', 'login' => $login, 'password' => $password);
-        $xml_file = new moodle_url($server.'/index.php', $params);
-
-        $params = array('password' => $password, 'quiz' => $quizids, 'upload' => 'true');
-        $xml = reader_file($xml_file, $params);
-
-        $xml = xmlize($xml);
-        if (isset($xml['myxml']['#']['item'])) {
-            $item = &$xml['myxml']['#']['item'];
-            $i = 0;
-            while (isset($item["$i"])) {
-                if (isset($item["$i"]['@']['id']) && isset($item["$i"]['@']['image'])) {
-                    $itemid = $item["$i"]['@']['id'];
-                    $images[$itemid] = $item["$i"]['@']['image'];
-                }
-                $i++;
+    while (($quizids = array_splice($ids, 0, 10)) && count($quizids)) {
+        $types = array(reader_downloader::BOOKS_WITH_QUIZZES,
+                       reader_downloader::BOOKS_WITHOUT_QUIZZES);
+        foreach ($types as $type) {
+            $items = $remotesite->download_bookcovers($quizids);
+            foreach ($items as $item) {
+                $images[$item->id] = $item->image;
             }
-            unset($item, $itemid);
         }
-        unset($xml_file, $xml, $params);
     }
 
     echo '<ul>';
@@ -143,7 +140,7 @@ function reader_fetch_all_book_images($readercfg) {
         foreach ($levels as $level => $itemnames) {
             foreach ($itemnames as $itemname => $itemid) {
                 if (isset($images[$itemid])) {
-                    reader_fetch_book_image($readercfg, $itemids, $remotenames, $publisher, $level, $itemname, $images[$itemid]);
+                    reader_fetch_book_image($readercfg, $remotesite, $itemids, $remotenames, $publisher, $level, $itemname, $images[$itemid]);
                 }
             }
         }
@@ -160,7 +157,7 @@ function reader_fetch_all_book_images($readercfg) {
  * @param xxx $readercfg
  * @todo Finish documenting this function
  */
-function reader_fetch_installed_book_images($readercfg) {
+function reader_fetch_installed_book_images($readercfg, $remotesite) {
     global $DB;
 
     $select = 'publisher <> ? AND publisher <> ? AND publisher <> ? AND publisher <> ? AND level <> ?';
@@ -170,7 +167,7 @@ function reader_fetch_installed_book_images($readercfg) {
         return false;
     }
 
-    if (! $itemids = reader_get_itemids($readercfg)) {
+    if (! $itemids = reader_get_itemids($readercfg, $remotesite)) {
         return false;
     }
     $remotenames = reader_get_remotenames($readercfg);
@@ -180,7 +177,7 @@ function reader_fetch_installed_book_images($readercfg) {
         if (empty($book->image)) {
             continue; // no image - unexpected !!
         }
-        reader_fetch_book_image($readercfg, $itemids, $remotenames, $book->publisher, $book->level, $book->name, $book->image);
+        reader_fetch_book_image($readercfg, $remotesite, $itemids, $remotenames, $book->publisher, $book->level, $book->name, $book->image);
     }
     echo '</ul>';
 
@@ -194,7 +191,7 @@ function reader_fetch_installed_book_images($readercfg) {
  * @param xxx $readercfg
  * @todo Finish documenting this function
  */
-function reader_fetch_attempted_book_images($readercfg) {
+function reader_fetch_attempted_book_images($readercfg, $remotesite) {
     global $DB;
 
     // get all books that have been attempted
@@ -212,7 +209,7 @@ function reader_fetch_attempted_book_images($readercfg) {
         return false;
     }
 
-    if (! $itemids = reader_get_itemids($readercfg)) {
+    if (! $itemids = reader_get_itemids($readercfg, $remotesite)) {
         return false;
     }
     $remotenames = reader_get_remotenames($readercfg);
@@ -222,7 +219,7 @@ function reader_fetch_attempted_book_images($readercfg) {
         if (empty($book->image)) {
             continue; // no image - unexpected !!
         }
-        reader_fetch_book_image($readercfg, $itemids, $remotenames, $book->publisher, $book->level, $book->name, $book->image);
+        reader_fetch_book_image($readercfg, $remotesite, $itemids, $remotenames, $book->publisher, $book->level, $book->name, $book->image);
     }
     echo '</ul>';
 
@@ -243,13 +240,8 @@ function reader_fetch_attempted_book_images($readercfg) {
  * @param xxx $imagefile
  * @todo Finish documenting this function
  */
-function reader_fetch_book_image($readercfg, $itemids, $remotenames, $publisher, $level, $itemname, $imagefile) {
+function reader_fetch_book_image($readercfg, $remotesite, $itemids, $remotenames, $publisher, $level, $itemname, $imagefile) {
     global $CFG, $DB;
-
-    $server    = $readercfg->serverurl;
-    $login     = $readercfg->serverusername;
-    $password  = $readercfg->serverpassword;
-    $courseid  = $readercfg->usecourse;
 
     if (empty($remotenames[$publisher][$level][$itemname])) {
         $remotename = $itemname; // local name == remote name
@@ -266,7 +258,15 @@ function reader_fetch_book_image($readercfg, $itemids, $remotenames, $publisher,
     }
     $itemid = $itemids[$publisher][$level][$remotename];
 
-    $remote_image_file = new moodle_url($server.'/getfile.php', array('imageid' => $itemid));
+    $select = 'publisher = ? AND level = ? AND name = ? AND quizid <> ?';
+    $params = array($publisher, $level, $itemname, 0);
+    if ($DB->record_exists_select('reader_books', $select, $params)) {
+        $type = reader_downloader::BOOKS_WITH_QUIZZES;
+    } else {
+        $type = reader_downloader::BOOKS_WITHOUT_QUIZZES;
+    }
+    $remote_image_url = $remotesite->get_image_url($type, $itemid);
+    $remote_image_post = $remotesite->get_image_post($type, $itemid);
     $local_image_file = $CFG->dataroot."/reader/images/$imagefile";
 
     $local_file_exists = file_exists($local_image_file);
@@ -286,9 +286,9 @@ function reader_fetch_book_image($readercfg, $itemids, $remotenames, $publisher,
         return; // book cover already exists
     }
 
-    if (! $contents = file_get_contents($remote_image_file)) {
+    if (! $contents = download_file_content($remote_image_url, null, $remote_image_post)) {
         echo '<li><span style="color: red;">OOPS:</span> remote image missing ('.$imagefile.'): ';
-        echo '<a target="_blank" href="'.$remote_image_file.'">'.$fullname.'</a></li>';
+        echo '<a target="_blank" href="'.$remote_image_url.'">'.$fullname.'</a></li>';
         return;
     }
 
@@ -304,7 +304,7 @@ function reader_fetch_book_image($readercfg, $itemids, $remotenames, $publisher,
             return;
         }
         echo '<li><span style="color: red;">DELETE:</span> Non-image file: ';
-        echo '<a target="_blank" href="'.$remote_image_file.'">'.$fullname.'</a></li>';
+        echo '<a target="_blank" href="'.$remote_image_url.'">'.$fullname.'</a></li>';
         return;
     }
 
@@ -349,8 +349,7 @@ function reader_is_image_file($file) {
  * @return xxx
  * @todo Finish documenting this function
  */
-function reader_get_itemids($readercfg) {
-
+function reader_get_itemids($readercfg, $remotesite) {
     static $done = false;
     if ($done) {
         echo 'Oops, reader_get_itemids has been called twice !!';
@@ -360,43 +359,18 @@ function reader_get_itemids($readercfg) {
 
     $itemids = array();
 
-    $server    = $readercfg->serverurl;
-    $login     = $readercfg->serverusername;
-    $password  = $readercfg->serverpassword;
-
-    $params = array('a' => 'publishers', 'login' => $login, 'password' => $password);
-    $index_files  = array('index.php', 'index-noq.php');
-
-    foreach ($index_files as $index_file) {
-        $xml_file = new moodle_url($server.'/'.$index_file, $params);
-
-        if (! $xml = reader_curlfile($xml_file)) {
-            echo 'Oops - no images found ('.$index_file.')';
-            return false;
-        }
-
-        if (! $xml = xmlize(implode('', $xml))) {
-            echo 'Oops - could not create xml for images ('.$index_file.')';
-            return false;
-        }
-
-        if (! isset($xml['myxml']['#']['item'])) {
-            echo 'Oops - no item tag in images xml ('.$index_file.')';
-            return false;
-        }
-
-        $i = 0;
-        while (isset($xml['myxml']['#']['item'][$i])) {
-            $publisher = $xml['myxml']['#']['item'][$i]['@']['publisher'];
-            $level     = $xml['myxml']['#']['item'][$i]['@']['level'];
-            $itemid    = $xml['myxml']['#']['item'][$i]['@']['id'];
-            $itemname  = $xml['myxml']['#']['item'][$i]['#'];
-            $i++;
-
+    $types = array(reader_downloader::BOOKS_WITH_QUIZZES,
+                   reader_downloader::BOOKS_WITHOUT_QUIZZES);
+    foreach ($types as $type) {
+        $items = $remotesite->download_items($type, false);
+        foreach ($items as $item) {
+            $publisher = $item->publisher;
+            $level     = $item->level;
+            $itemid    = $item->id;
+            $itemname  = $item->title;
             if ($publisher=='Extra points' || $publisher=='Extra_Points' || $publisher=='testing' || $publisher=='_testing_only') {
                 continue;
             }
-
             if (empty($itemids[$publisher])) {
                 $itemids[$publisher] = array();
             }
