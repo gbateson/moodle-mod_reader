@@ -34,14 +34,10 @@
  * @since      Moodle 2.6
  */
 
-/** Prevent direct access to this script */
-defined('MOODLE_INTERNAL') || die();
-
-
-
 namespace mod_reader\event;
 
-/** prevent direct access to this script */
+/** Prevent direct access to this script */
+defined('MOODLE_INTERNAL') || die();
 
 /**
  * The attempt_submitted event class.

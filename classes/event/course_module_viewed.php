@@ -33,14 +33,10 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-/** Prevent direct access to this script */
-defined('MOODLE_INTERNAL') || die();
-
-
-
 namespace mod_reader\event;
 
-/** prevent direct access to this script */
+/** Prevent direct access to this script */
+defined('MOODLE_INTERNAL') || die();
 
 /**
  * Event for when a reader activity is viewed.
