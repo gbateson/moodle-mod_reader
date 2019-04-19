@@ -1068,6 +1068,13 @@ class reader_remotesite {
         return $this->convert_to_assoc_array($mods, 'id');
     }
 
+    /**
+     * get_xml_values_mod_defaults
+     *
+     * @param xxx $xml (passed by reference)
+     * @return xxx
+     * @todo Finish documenting this function
+     */
     public function get_xml_values_mod_defaults(&$xml) {
         $modtype = $xml['MODTYPE']['0']['#'];
         if ($modtype=='quiz') {

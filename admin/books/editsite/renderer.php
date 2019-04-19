@@ -16,7 +16,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * mod/reader/admin/books/renderer.php
+ * mod/reader/admin/books/editsite/renderer.php
  *
  * @package    mod
  * @subpackage reader

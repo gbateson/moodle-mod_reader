@@ -29,7 +29,6 @@
 require_once('../../../config.php');
 require_once($CFG->dirroot.'/mod/reader/locallib.php');
 require_once($CFG->dirroot.'/mod/reader/renderer.php');
-
 require_once($CFG->dirroot.'/lib/resourcelib.php');
 
 // load Quiz module library, if available (Moodle >= 2.3)

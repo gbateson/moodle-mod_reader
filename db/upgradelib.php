@@ -33,6 +33,15 @@
  * @return void, but may pause the update if stale files are found
  */
 
+/**
+ * xmldb_reader_add_attempts_bookid
+ *
+ * @uses $DB
+ * @param $dbman
+ * @param $fixquizid
+ * @todo Finish documenting this function
+ */
+
 /** Prevent direct access to this script */
 defined('MOODLE_INTERNAL') || die();
 
@@ -40,8 +49,8 @@ defined('MOODLE_INTERNAL') || die();
  * xmldb_reader_add_attempts_bookid
  *
  * @uses $DB
- * @param $dbman
- * @param $fixquizid
+ * @param xxx $dbman
+ * @param xxx $fixquizid (optional, default=false)
  * @todo Finish documenting this function
  */
 function xmldb_reader_add_attempts_bookid($dbman, $fixquizid=false) {

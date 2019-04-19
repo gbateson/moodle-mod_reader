@@ -28,6 +28,8 @@
 /** Prevent direct access to this script */
 defined('MOODLE_INTERNAL') || die();
 
+
+
 define('READER_GRADEHIGHEST', '1');
 define('READER_GRADEAVERAGE', '2');
 define('READER_ATTEMPTFIRST', '3');

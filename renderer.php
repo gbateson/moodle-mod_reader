@@ -2162,11 +2162,16 @@ class mod_reader_renderer extends plugin_renderer_base {
             return '';
         }
     }
-
-    ///////////////////////////////////////////
+///////////////////////////////////////////
     // format footer
     ///////////////////////////////////////////
 
+    /**
+     * footer
+     *
+     * @return xxx
+     * @todo Finish documenting this function
+     */
     public function footer() {
         $output = '';
         $output .= $this->credits();

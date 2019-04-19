@@ -17,7 +17,6 @@
 
 /**
  * mod/reader/index.php
- * Display a list of Reader activities with links to Reader reports.
  *
  * @package    mod
  * @subpackage reader

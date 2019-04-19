@@ -1,4 +1,5 @@
 <?php
+
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -17,16 +18,30 @@
 /**
  * mod/reader/classes/event/user_level_set.php
  *
+ * @package    mod
+ * @subpackage reader
+ * @copyright  2013 Gordon Bateson (gordon.bateson@gmail.com)
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @since      Moodle 2.0
+ */
+
+/**
+ * mod/reader/classes/event/user_level_set.php
+ *
  * @package    mod_reader
  * @copyright  2014 Gordon Bateson (gordon.bateson@gmail.com)
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @since      Moodle 2.6
  */
 
+/** Prevent direct access to this script */
+defined('MOODLE_INTERNAL') || die();
+
+
+
 namespace mod_reader\event;
 
 /** prevent direct access to this script */
-defined('MOODLE_INTERNAL') || die();
 
 /**
  * The user_level_set event class.

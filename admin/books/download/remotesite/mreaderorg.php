@@ -25,10 +25,12 @@
  * @since      Moodle 2.0
  */
 
+/** get required libraries */
+
 /** Prevent direct access to this script */
 defined('MOODLE_INTERNAL') || die();
 
-/** get required libraries */
+/** Include required files */
 require_once($CFG->dirroot.'/mod/reader/quiz/mreaderlib.php');
 
 /**

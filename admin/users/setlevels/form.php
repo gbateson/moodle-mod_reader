@@ -16,7 +16,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * mod/reader/admin/users/setlevels_form.php
+ * mod/reader/admin/users/setlevels/form.php
  *
  * @package    mod
  * @subpackage reader

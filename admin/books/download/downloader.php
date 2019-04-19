@@ -3222,6 +3222,16 @@ class reader_downloader {
         return $mins[$length];
     }
 
+    /**
+     * add_question_answer
+     *
+     * @uses $DB
+     * @param xxx $restoreids (passed by reference)
+     * @param xxx $bestanswerids
+     * @param xxx $xmlanswer
+     * @param xxx $answer
+     * @todo Finish documenting this function
+     */
     public function add_question_answer(&$restoreids, $bestanswerids, $xmlanswer, $answer) {
         global $DB;
         if ($this->bar) {

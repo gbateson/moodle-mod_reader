@@ -1,4 +1,5 @@
 <?php
+
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -23,6 +24,9 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @since      Moodle 2.0
  */
+
+/** Prevent direct access to this script */
+defined('MOODLE_INTERNAL') || die();
 
 /** Include required files */
 require_once('../../config.php');

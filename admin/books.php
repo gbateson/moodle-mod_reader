@@ -25,7 +25,7 @@
  * @since      Moodle 2.0
  */
 
-// progress_bar requires NO_OUTPUT_BUFFERING
+// progress_bar requires NO_OUTPUT_BUFFERING (Moodle >= 3.2)
 define('NO_OUTPUT_BUFFERING', true);
 
 /** Include required files */

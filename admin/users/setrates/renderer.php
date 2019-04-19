@@ -136,6 +136,16 @@ class mod_reader_admin_users_setrates_renderer extends mod_reader_admin_users_re
         $form->display();
     }
 
+    /**
+     * add_rate
+     *
+     * @uses $DB
+     * @param xxx $ids (passed by reference)
+     * @param xxx $rates
+     * @param xxx $i
+     * @param xxx $actiontypes
+     * @todo Finish documenting this function
+     */
     function add_rate(&$ids, $rates, $i, $actiontypes) {
         global $DB;
 

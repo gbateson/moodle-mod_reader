@@ -94,6 +94,15 @@ class mod_reader_admin_users_setlevels_renderer extends mod_reader_admin_users_r
         $form->display();
     }
 
+    /**
+     * get_group_userids
+     *
+     * @uses $DB
+     * @uses $USER
+     * @param xxx $data
+     * @return xxx
+     * @todo Finish documenting this function
+     */
     function get_group_userids($data) {
         global $DB, $USER;
 
@@ -131,6 +140,17 @@ class mod_reader_admin_users_setlevels_renderer extends mod_reader_admin_users_r
         return array_values($users);
     }
 
+    /**
+     * set_level_field
+     *
+     * @uses $DB
+     * @param xxx $userids
+     * @param xxx $data
+     * @param xxx $fieldname
+     * @param xxx $subfieldname
+     * @return xxx
+     * @todo Finish documenting this function
+     */
     function set_level_field($userids, $data, $fieldname, $subfieldname) {
         global $DB;
 

@@ -16,15 +16,29 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
+ * mod/reader/admin/reports/usersummary/tablelib.php
+ *
+ * @package    mod
+ * @subpackage reader
+ * @copyright  2013 Gordon Bateson (gordon.bateson@gmail.com)
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @since      Moodle 2.0
+ */
+
+/**
  * Create a table to display attempts at a Reader activity
  *
  * @package   mod-reader
  * @copyright 2013 Gordon Bateson <gordon.bateson@gmail.com>
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-defined('MOODLE_INTERNAL') || die();
 
 // get parent class
+
+/** Prevent direct access to this script */
+defined('MOODLE_INTERNAL') || die();
+
+/** Include required files */
 require_once($CFG->dirroot.'/mod/reader/admin/reports/tablelib.php');
 
 /**

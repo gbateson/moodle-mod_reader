@@ -16,7 +16,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * mod/reader/admin/users/setgoals_form.php
+ * mod/reader/admin/users/setgoals/form.php
  *
  * @package    mod
  * @subpackage reader
