@@ -2537,7 +2537,13 @@ function xmldb_reader_fix_duplicate_questions(&$dbman) {
                 break;
 
             // table does not exist - shouldn't happen !!
-            default: continue;
+            default:
+                $questiontable = '';
+                $questionfield = '';
+        }
+
+        if ($questiontable=='' || $questionfield=='') {
+            continue;
         }
 
         $select  = $questionfield.', COUNT(*) AS countrecords';
