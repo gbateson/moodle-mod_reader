@@ -25,9 +25,6 @@
  * @since      Moodle 2.0
  */
 
-/** Prevent direct access to this script */
-defined('MOODLE_INTERNAL') || die();
-
 /** Include required files */
 require_once('../../config.php');
 require_once($CFG->dirroot.'/mod/reader/locallib.php');
