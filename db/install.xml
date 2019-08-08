@@ -123,7 +123,6 @@
         <FIELD NAME="quizid" TYPE="int" LENGTH="11" NOTNULL="true" DEFAULT="0" SEQUENCE="false" NEXT="image" PREVIOUS="fiction"/>
         <FIELD NAME="image" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" NEXT="points" PREVIOUS="quizid"/>
         <FIELD NAME="points" TYPE="number" LENGTH="4" NOTNULL="true" DEFAULT="1" SEQUENCE="false" DECIMALS="2" NEXT="private" PREVIOUS="image"/>
-        <FIELD NAME="private" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="0" SEQUENCE="false" NEXT="sametitle" PREVIOUS="points"/>
         <FIELD NAME="sametitle" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" NEXT="hidden" PREVIOUS="private"/>
         <FIELD NAME="hidden" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="0" SEQUENCE="false" NEXT="maxtime" PREVIOUS="sametitle"/>
         <FIELD NAME="maxtime" TYPE="int" LENGTH="3" NOTNULL="true" DEFAULT="0" SEQUENCE="false" NEXT="time" PREVIOUS="hidden"/>

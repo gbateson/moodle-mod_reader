@@ -1483,7 +1483,7 @@ function xmldb_reader_upgrade($oldversion) {
     $newversion = 2018091498;
     if ($result && $oldversion < $newversion) {
 
-        // remove "series" field from "reader_books" table
+        // remove "series" and "private" fields from "reader_books" table
         $table = new xmldb_table('reader_books');
         $fields = array('series', 'private');
         foreach ($fields as $field) {
