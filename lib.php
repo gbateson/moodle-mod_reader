@@ -2870,7 +2870,7 @@ function reader_get_student_attempts($userid, $reader, $allreaders = false, $boo
             }
             if (is_numeric($attempt->percentgrade)) {
                 $totals['bookpercent']  = round($attempt->percentgrade).'%';
-            } else if (is_numeric($attempt->sumgrade) && $totalgrade) {
+            } else if (is_numeric($attempt->sumgrades) && $totalgrade) {
                 $totals['bookpercent']  = round(($attempt->sumgrades/$totalgrade) * 100, 2).'%';
             } else {
                 $totals['bookpercent']  = '0%';
