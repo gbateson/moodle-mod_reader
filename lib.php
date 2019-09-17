@@ -2860,21 +2860,24 @@ function reader_get_student_attempts($userid, $reader, $allreaders = false, $boo
         } else {
             if ($attempt->quizid > 0) {
                 $totalgrade = 0;
-                $answersgrade = $DB->get_records ('reader_question_instances', array('quiz' => $attempt->quizid)); // Count Grades (TotalGrade)
-                foreach ($answersgrade as $answersgrade_) {
-                    $totalgrade += $answersgrade_->grade;
+                if ($instances = $DB->get_records ('reader_question_instances', array('quiz' => $attempt->quizid))) {
+                    foreach ($instances as $instance) {
+                        $totalgrade += $instance->grade;
+                    }
                 }
             } else {
                 $totalgrade = intval($attempt->percentgrade);
             }
-            //$totals['bookpercent']  = round(($attempt->sumgrades/$totalgrade) * 100, 2).'%';
-            $totals['bookpercent']  = round($attempt->percentgrade).'%';
-if (empty($attempt->percentgrade)) {
-    print_object($attempt);
-    die;
-}
+            if (is_numeric($attempt->percentgrade)) {
+                $totals['bookpercent']  = round($attempt->percentgrade).'%';
+            } else if (is_numeric($attempt->sumgrade) && $totalgrade) {
+                $totals['bookpercent']  = round(($attempt->sumgrades/$totalgrade) * 100, 2).'%';
+            } else {
+                $totals['bookpercent']  = '0%';
+            }
             $totals['bookmaxgrade'] = $totalgrade * $bookpoints;
-            $bookpercentmaxgrade[$attempt->bookid] = array($totals['bookpercent'], $totals['bookmaxgrade']);
+            $bookpercentmaxgrade[$attempt->bookid] = array($totals['bookpercent'],
+                                                           $totals['bookmaxgrade']);
         }
 
         if ($attempt->credit == 1) {
