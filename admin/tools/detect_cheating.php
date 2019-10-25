@@ -235,7 +235,7 @@ function reader_print_info($plugin, $reader, $id, $tab) {
         $select = '*';
         $from   = '{reader_attempts}';
         $where  = array();
-        $order  = 'quizid, timefinish';
+        $order  = 'bookid, timefinish';
         $params = array();
 
         if ($targetcourse) {
@@ -252,7 +252,7 @@ function reader_print_info($plugin, $reader, $id, $tab) {
             $params[] = $startdate;
         }
 
-        array_push($where, 'quizid <> ?',
+        array_push($where, 'bookid <> ?',
                            'layout <> ?',
                            'ip IS NOT NULL',
                            'ip <> ?');
@@ -321,24 +321,24 @@ function reader_print_info($plugin, $reader, $id, $tab) {
             $i = 0; // record counter
 
             // loop through attempts
-            $quizid = 0;
+            $bookid = 0;
             foreach ($rs as $record) {
                 $i++; // increment record count
 
-                if ($quizid && $quizid==$record->quizid) {
+                if ($bookid && $bookid==$record->bookid) {
                     // same quiz as previous attempt
                 } else {
                     // new quiz
-                    if ($quizid) {
+                    if ($bookid) {
                         reader_get_info($plugin, $attempts, $userids);
                         if ($outputformat==1) {
-                            reader_print_info_books($plugin, $id, $tab, $quizid, $attempts, $attemptsprinted);
+                            reader_print_info_books($plugin, $id, $tab, $bookid, $attempts, $attemptsprinted);
                         }
                     }
                     $attempts = array();
                 }
 
-                $quizid = $record->quizid;
+                $bookid = $record->bookid;
                 $attempts[$record->id] = $record;
                 $attempts[$record->id]->suspects = array();
 
@@ -491,12 +491,12 @@ function reader_get_info($plugin, &$attempts, &$userids) {
  * @param string  $plugin
  * @param integer $id
  * @param integer $tab
- * @param integer $quizid
+ * @param integer $bookid
  * @param array   $attempts (passed by reference)
  * @param boolean $attemptsprinted (passed by reference)
  * @return void, but may update $attempts and $attemptsprinted
  */
-function reader_print_info_books($plugin, $id, $tab, $quizid, &$attempts, &$attemptsprinted) {
+function reader_print_info_books($plugin, $id, $tab, $bookid, &$attempts, &$attemptsprinted) {
     global $DB, $PAGE;
 
     static $readers = array(),

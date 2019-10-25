@@ -2,6 +2,9 @@
 Change log for mod_reader
 ========================================
 
+2019-10-25 (19)
+ - modify tool to fix book covers so that it can identify books uniquely on sites using mReader.org API
+
 2019-09-17 (17)
  -  remove leftover debugging code and deal with 'abandoned' attempts more robustly when displaying main page with view.php 
 

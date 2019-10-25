@@ -253,7 +253,7 @@ function reader_fetch_book_image($readercfg, $remotesite, $itemids, $remotenames
     $fullname = $publisher.' ('.$level.'): '.$itemname;
 
     if (empty($itemids[$publisher][$level][$remotename])) {
-        echo '<li><span style="color: red;">OOPS:</span> Image ID not specified: '.$fullname.'</li>';
+        echo '<li><span style="color: red;">OOPS:</span> Image ID not specified: '.$fullname." ($imagefile)</li>";
         return;
     }
     $itemid = $itemids[$publisher][$level][$remotename];
