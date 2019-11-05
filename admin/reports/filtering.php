@@ -59,14 +59,32 @@ class reader_admin_reports_filtering extends reader_admin_filtering {
      * @return xxx
      */
     public function get_field($fieldname, $advanced)  {
-        global $DB;
+        global $CFG, $DB, $PAGE;
 
         $default = $this->get_default_value($fieldname);
         switch ($fieldname) {
 
             case 'realname':
                 $label = get_string('fullname');
-                return new reader_admin_filter_text($fieldname, $label, $advanced, $DB->sql_fullname(), $default, 'where');
+                if (has_capability('moodle/site:viewfullnames', $PAGE->context)) {
+                    // Admin always sees "firstname lastname" in fullname column.
+                    $sql_fullname = $DB->sql_fullname();
+                } else {
+                    $names = get_all_user_name_fields();
+                    if (empty($CFG->fullnamedisplay) || $CFG->fullnamedisplay == 'language') {
+                        $template = get_string('fullnamedisplay', null, $names);
+                    } else {
+                        $template = $CFG->fullnamedisplay;
+                    }
+                    foreach ($names as $name) {
+                        if (strpos($template, $name) === false) {
+                            unset($names[$name]);
+                        }
+                    }
+                    $sql_fullname = explode(',', implode('," ",', $names));
+                    $sql_fullname = call_user_func_array(array($DB, 'sql_concat'), $sql_fullname);
+                }
+                return new reader_admin_filter_text($fieldname, $label, $advanced, $sql_fullname, $default, 'where');
                 break;
 
             case 'lastname':

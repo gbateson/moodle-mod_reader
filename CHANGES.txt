@@ -2,6 +2,9 @@
 Change log for mod_reader
 ========================================
 
+2019-11-05 (20)
+ - include all relevant name fields from profile when filtering report results by 'Full name'
+
 2019-10-25 (19)
  - modify tool to fix book covers so that it can identify books uniquely on sites using mReader.org API
 
