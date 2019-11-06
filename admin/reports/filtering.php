@@ -59,32 +59,47 @@ class reader_admin_reports_filtering extends reader_admin_filtering {
      * @return xxx
      */
     public function get_field($fieldname, $advanced)  {
-        global $CFG, $DB, $PAGE;
+        global $CFG, $DB, $PAGE, $SESSION;
 
         $default = $this->get_default_value($fieldname);
         switch ($fieldname) {
 
             case 'realname':
-                $label = get_string('fullname');
-                if (has_capability('moodle/site:viewfullnames', $PAGE->context)) {
-                    // Admin always sees "firstname lastname" in fullname column.
-                    $sql_fullname = $DB->sql_fullname();
-                } else {
-                    $names = get_all_user_name_fields();
-                    if (empty($CFG->fullnamedisplay) || $CFG->fullnamedisplay == 'language') {
-                        $template = get_string('fullnamedisplay', null, $names);
-                    } else {
-                        $template = $CFG->fullnamedisplay;
-                    }
-                    foreach ($names as $name) {
-                        if (strpos($template, $name) === false) {
-                            unset($names[$name]);
-                        }
-                    }
-                    $sql_fullname = explode(',', implode('," ",', $names));
-                    $sql_fullname = call_user_func_array(array($DB, 'sql_concat'), $sql_fullname);
+
+                $template = '';
+                if (! empty($CFG->fullnamedisplay)) {
+                    // The template used to display names to students.
+                    $template .= $CFG->fullnamedisplay.' ';
                 }
-                return new reader_admin_filter_text($fieldname, $label, $advanced, $sql_fullname, $default, 'where');
+                if (! empty($CFG->alternativefullnameformat)) {
+                    // The template used to display names to managers and teachers.
+                    $template .= $CFG->alternativefullnameformat.' ';
+                }
+
+                $names = get_all_user_name_fields();
+                if (empty($template) || is_numeric(strpos($template, 'language'))) {
+                    // The default template for the current language.
+                    $template .= get_string('fullnamedisplay', null, $names);
+                }
+
+                // Remove non-alphabetic chars from $template.
+                $template = str_replace('language', '', $template);
+                $template = preg_replace('/[^a-z]+/', ' ', $template);
+
+                // Convert $template to array.
+                $template = explode(' ', $template);
+                $template = array_filter($template);
+                $template = array_unique($template);
+
+                // Filter out names that are not used in the template.
+                $names = array_intersect($template, array_keys($names));
+
+                // Get SQL for concatenating names.
+                $names = explode(',', implode('," ",', $names));
+                $names = call_user_func_array(array($DB, 'sql_concat'), $names);
+
+                $label = get_string('fullname');
+                return new reader_admin_filter_text($fieldname, $label, $advanced, $names, $default, 'where');
                 break;
 
             case 'lastname':
