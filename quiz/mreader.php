@@ -100,6 +100,27 @@ if ($customid) {
         // invalid uniqueid
         die('Invalid uniqueid');
     }
+
+    // If the mreader site has a new file name for this book's image, then update the DB and datadir.
+    if ($image = $url->get_param('image')) {
+        $oldimage = $DB->get_field('reader_books', 'image', array('id' => $attempt->bookid));
+        if ($image != $oldimage) {
+            $DB->set_field('reader_books', 'image', $image, array('id' => $attempt->bookid));
+            $imagefile = $CFG->dataroot."/reader/images/$image";
+            $oldimagefile = $CFG->dataroot."/reader/images/$oldimage";
+            if (file_exists($oldimagefile)) {
+                // Copy the book image, to it's new location
+                if (! file_exists($imagefile)) {
+                    copy($oldimagefile, $imagefile);
+                }
+                // Remove the old book image, if it is no longer needed
+                if (! $DB->record_exists('reader_books', array('image' => $oldimage))) {
+                    unlink($oldimagefile);
+                }
+            }
+        }
+    }
+
     $inprogress = true;
     if (defined('quiz_attempt::IN_PROGRESS') && $attempt->state == quiz_attempt::IN_PROGRESS) {
         // Moodle >= 2.3

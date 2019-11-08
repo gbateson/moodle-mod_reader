@@ -2,1808 +2,1574 @@
 Change log for mod_reader
 ========================================
 
-2019-11-05 (20)
- - include all relevant name fields from profile when filtering report results by 'Full name'
+2019-11-08 (22)
+ - when receiving quiz score from mraeader API, update the image file name if necessary
+
+2019-11-06 (21)
+ -  include all relevant name fields from profile when filtering report results by 'Full name'
 
 2019-10-25 (19)
- - modify tool to fix book covers so that it can identify books uniquely on sites using mReader.org API
+ -  modify tool to fix book covers so that it can identify books uniquely on sites using mReader.org API
 
 2019-09-17 (17)
- -  remove leftover debugging code and deal with 'abandoned' attempts more robustly when displaying main page with view.php 
-
-2019-09-17 (16)
- -  remove leftover debugging code and deal with 'abandoned' attempts more robustly when displaying main page with view.php 
+ -  remove leftover debugging code and deal with 'abandoned' attempts more robustly when displaying main page with view.php
 
 2019-08-08 (15)
- -  rename fields in install.xml: timeopen -> availablefrom, timeclose -> availableuntil, and remove private field from install.xml 
-
-2019-08-08 (14)
- -  rename fields in install.xml: timeopen -> availablefrom, timeclose -> availableuntil 
+ -  rename fields in install.xml: timeopen -> availablefrom, timeclose -> availableuntil, and remove private field from install.xml
 
 2019-06-23 (13)
- -  fix display of teacher grades when there are multiple attempts at a book 
+ -  fix display of teacher grades when there are multiple attempts at a book
 
 2019-05-30 (12)
- -  fix display of teacher grades when there are multiple attempts at a book 
-
-2019-05-30 (12)
- -  remove 'continue' statement inside SWITCH block 
+ -  remove 'continue' statement inside SWITCH block
 
 2019-04-19 (11)
- -  fix 'Namespace declaration statement has to be the very first statement' errors when including event objects for 
+ -  fix 'Namespace declaration statement has to be the very first statement' errors when including event objects for
 
 2019-04-19 (10)
- -  various small fixes to admin tools running on site where mReader API is enabled 
+ -  various small fixes to admin tools running on site where mReader API is enabled
 
 2019-04-17 (09)
- -  set maturity to STABLE 
+ -  set maturity to STABLE
 
 2019-04-17 (08)
- -  modify the fix_bookcovers tool so that it works with the mreader.api 
+ -  modify the fix_bookcovers tool so that it works with the mreader.api
 
 2019-04-10 (07)
- -  various adjustments to allow for removal of Reader Quizzes course 
+ -  various adjustments to allow for removal of Reader Quizzes course
 
 2019-04-05 (06)
- -  remove unused 'top' property of default object when fetching quizzes from moodle.reader.net 
+ -  remove unused 'top' property of default object when fetching quizzes from moodle.reader.net
 
 2019-04-02 (05)
- -  add 'Top for' question category in Moodle >= 3.5, and extract book name from new format used in XML coming from moodlereader.net 
+ -  add 'Top for' question category in Moodle >= 3.5, and extract book name from new format used in XML coming from moodlereader.net
 
 2019-03-30 (04)
- -  ensure 'modname' is defined when creating new activities in Moodle >= 3.5 
+ -  ensure 'modname' is defined when creating new activities in Moodle >= 3.5
 
 2019-03-06 (03)
- -  fix downloading of images from mreader.org 
+ -  fix downloading of images from mreader.org
 
 2019-01-21 (02)
- -  remove use of 'events_trigger' for compatability with Moodle 3.6 
+ -  remove use of 'events_trigger' for compatability with Moodle 3.6
 
 2018-12-05 (01)
- -  mod/reader add mreaderorg class to fetch SiteID and Key from mReader.org 
+ -  add mreaderorg class to fetch SiteID and Key from mReader.org
 
 2018-11-22 (00)
- -  mod/reader add new setting to switch on use of quizzes on mReader.org 
+ -  add new setting to switch on use of quizzes on mReader.org
 
 2018-09-18 (99)
- -  mod/reader add preliminary functions to remove attempts from mreader.org 
+ -  add preliminary functions to remove attempts from mreader.org
 
 2018-09-18 (99)
- -  mod/reader fix error using $this in static function when retrieving siteid from mreader.org 
+ -  fix error using $this in static function when retrieving siteid from mreader.org
 
 2018-09-18 (99)
- -  mod/reader: disable downloading of quizzes from  mReader.org 
+ -  disable downloading of quizzes from  mReader.org
 
 2018-09-14 (98)
- -  mod/reader preliminary version to use mreader.org quizzes instead of locally cached quizzes 
+ -  preliminary version to use mreader.org quizzes instead of locally cached quizzes
 
 2018-07-19 (97)
- -  mod/reader take quizzes on mreader.org is the mreadersiteid config setting is set 
-
-2018-07-18 (96)
- -  mod/reader take quizzes on mreader.org is the mreadersiteid config setting is set 
+ -  take quizzes on mreader.org is the mreadersiteid config setting is set
 
 2018-07-06 (95)
- -  mod/reader add functionality to allow quizzes to be taken on the mreader.org 
+ -  add functionality to allow quizzes to be taken on the mreader.org
 
 2018-07-04 (94)
- -  mod/reader begin new PHP class to handle communication with mreader.org 
+ -  begin new PHP class to handle communication with mreader.org
 
 2018-06-28 (93)
- -  mod/reader add new mreader settings as first step to taking quizzes via mReader API 
+ -  add new mreader settings as first step to taking quizzes via mReader API
 
 2018-05-29 (92)
- -  mod/reader add quiz/mreader.php to handle quiz-taking on mReader.org 
+ -  add quiz/mreader.php to handle quiz-taking on mReader.org
 
 2018-05-29 (92)
- -  mod/reader replace 'each()' with 'foreach()' for compatability with PHP 7.2 
+ -  replace 'each()' with 'foreach()' for compatability with PHP 7.2
 
 2017-10-04 (91)
- -  mod/reader replace 'each()' with 'foreach()' for compatability with PHP 7.2 
-
-2017-10-04 (91)
- -  compatability with Moodle >= 3.3: replace use of deprecated JS (de)select_all_in 
-
-2017-10-04 (91)
- -  compatability with Moodle >= 3.3: replace use of deprecated JS (de)select_all_in 
+ -  compatability with Moodle >= 3.3: replace use of deprecated JS (de)select_all_in
 
 2017-10-02 (90)
- -  ensure 'goal' field is not set to null when creating new records in reader_levels table 
+ -  ensure 'goal' field is not set to null when creating new records in reader_levels table
 
 2017-08-28 (89)
- -  fix (1) syntax bug that prevented display of import page; fix setting of 'type' in URL so that the Users -> Download book data (no quizzes) tab becomes active when it is clicked. (Thanks to Brian Nielsen for reporting these issues) 
+ -  fix (1) syntax bug that prevented display of import page; fix setting of 'type' in URL so that the Users -> Download book data (no quizzes) tab becomes active when it is clicked. (Thanks to Brian Nielsen for reporting these issues)
 
 2017-06-16 (88)
- -  mod/reader fix typo introduced in previous commit 
+ -  fix typo introduced in previous commit
 
 2017-06-12 (87)
- -  remove IE6/7 specific CSS from styles.css because it may interfere with Boost theme in Moodle 
+ -  remove IE6/7 specific CSS from styles.css because it may interfere with Boost theme in Moodle
 
 2017-06-12 (86)
- -  add new fields to specify read-only until/from dates 
+ -  add new fields to specify read-only until/from dates
 
 2017-06-11 (85)
- -  (1) fix references to passed, credit, cheated and deleted fields; (2) add actions to detect_cheating tool; (3) add filters for cheated to user/book detailed report 
+ -  (1) fix references to passed, credit, cheated and deleted fields; (2) add actions to detect_cheating tool; (3) add filters for cheated to user/book detailed report
 
 2017-05-22 (84)
- -  reintroduce code to use reader_strict_users_list table 
+ -  reintroduce code to use reader_strict_users_list table
 
 2017-05-22 (84)
- -  add 'status' column to output from tool to detect cheating 
-
-2017-05-22 (84)
- -  add 'status' column to output from tool to detect cheating 
+ -  add 'status' column to output from tool to detect cheating
 
 2017-05-21 (83)
- -  rename all uses of the 'preview' field to use the 'credit' field 
+ -  rename all uses of the 'preview' field to use the 'credit' field
 
 2017-05-21 (83)
- -  add new index to reader_attempts field to speed up selection of valid passing attempts 
+ -  add new index to reader_attempts field to speed up selection of valid passing attempts
 
 2017-05-21 (82)
- -  remove 'checkbox' field from reader_attempts table, and rename 'preview' field to 'credit' 
+ -  remove 'checkbox' field from reader_attempts table, and rename 'preview' field to 'credit'
 
 2017-05-21 (81)
- -  add new 'outputformat' setting to show either 'attempts grouped by user' or 'attempt grouped by book' 
+ -  add new 'outputformat' setting to show either 'attempts grouped by user' or 'attempt grouped by book'
 
 2017-05-19 (80)
- -  add actions to detect_cheating page 
+ -  add actions to detect_cheating page
 
 2017-05-19 (79)
- -  shprten date used on output from tool to detect cheating 
+ -  shprten date used on output from tool to detect cheating
 
 2017-05-18 (78)
- -  add book details (word length, difficulty) and attempt details (duration) to tool for detecting cheating 
+ -  add book details (word length, difficulty) and attempt details (duration) to tool for detecting cheating
 
 2017-05-18 (78)
- -  add selectable checkboxes to tool for detecting cheating 
+ -  add selectable checkboxes to tool for detecting cheating
 
 2017-05-18 (77)
- -  display results of detect_cheating tool as an HTML table 
+ -  display results of detect_cheating tool as an HTML table
 
 2017-05-16 (76)
- -  preliminary version of tool to scna reader logs and detect suspicious behavior 
+ -  preliminary version of tool to scna reader logs and detect suspicious behavior
 
 2017-05-04 (75)
- -  force 'sequential' navigation through reader quiz questions and redirect errant or sneaky access to out-of-sequence pages back to correct page sequence 
+ -  force 'sequential' navigation through reader quiz questions and redirect errant or sneaky access to out-of-sequence pages back to correct page sequence
 
 2017-04-28 (74)
- -  force 'sequential' navigation in Moodle >= 3.1 to prevent display of 'Previous page' button 
+ -  force 'sequential' navigation in Moodle >= 3.1 to prevent display of 'Previous page' button
 
 2017-04-27 (73)
- -  replace use of pix_url for compatability with Moodle >= 3.3 
+ -  replace use of pix_url for compatability with Moodle >= 3.3
 
 2017-04-25 (72)
- -  improve borders on 'now.png' graphic 
-
-2017-04-25 (72)
- -  improve borders on 'now.png' graphic 
+ -  improve borders on 'now.png' graphic
 
 2017-04-22 (71)
- -  fix display of progress bar on Safari, Firefox, IE 
+ -  fix display of progress bar on Safari, Firefox, IE
 
 2017-04-18 (70)
- -  preliminary fix for clipping of progress bar in Safari, Firefox and IE 
+ -  preliminary fix for clipping of progress bar in Safari, Firefox and IE
 
 2017-04-18 (70)
- -  fix teacher access to tools page 
+ -  fix teacher access to tools page
 
 2017-04-14 (69)
- -  use pix_icon instead of pix_url for compatability with Moodle 3.3 
+ -  use pix_icon instead of pix_url for compatability with Moodle 3.3
 
 2017-03-26 (68)
- -  fix 'Unsupported $module syntax' warning during installation via CLI 
+ -  fix 'Unsupported $module syntax' warning during installation via CLI
 
 2017-01-25 (67)
- -  replace progress bar images and css so that the bar is fully visible on small screens (e.g. smartphones) 
+ -  replace progress bar images and css so that the bar is fully visible on small screens (e.g. smartphones)
 
 2017-01-16 (66)
- -  remove superfluous closing curly bracket from styles.css that was breaking CSS parser in Moodle >= 3.2 
+ -  remove superfluous closing curly bracket from styles.css that was breaking CSS parser in Moodle >= 3.2
 
 2017-01-06 (63)
- -  small improvement to the logic that issues Reader badges after a Reader quiz attempt 
+ -  small improvement to the logic that issues Reader badges after a Reader quiz attempt
 
 2017-01-02 (62)
- -  small fix to typo in comment 
+ -  small fix to typo in comment
 
 2017-01-02 (62)
- -  fix detection of completion conditions in lib.php, and trigger completion update and badges update when finishing an attempt at a Reader quiz in quiz/processattempt.php and quiz/attemptlib.php 
+ -  fix detection of completion conditions in lib.php, and trigger completion update and badges update when finishing an attempt at a Reader quiz in quiz/processattempt.php and quiz/attemptlib.php
 
 2016-11-09 (61)
- -  use unformatted text in download progress bar messages for Moodle >= 3.2 
+ -  use unformatted text in download progress bar messages for Moodle >= 3.2
 
 2016-10-20 (60)
- -  improve the instructions in the README file 
+ -  improve the instructions in the README file
 
 2016-10-17 (59)
- -  fix display of 'Tools' tab to non-editing teacher 
+ -  fix display of 'Tools' tab to non-editing teacher
 
 2016-10-17 (58)
- -  allow teachers access to some tools 
+ -  allow teachers access to some tools
 
 2016-09-30 (57)
- -  allow new term dates starting beyond current year 
+ -  allow new term dates starting beyond current year
 
 2016-09-29 (56)
- -  fix handling of "Previous page" in Moodle >= 3.1 
+ -  fix handling of "Previous page" in Moodle >= 3.1
 
 2016-09-29 (55)
- -  remove unwanted HTML tags from Reader questions 
+ -  remove unwanted HTML tags from Reader questions
 
 2016-09-29 (54)
- -  remove unwanted HTML tags from Reader questions 
-
-2016-09-29 (54)
- -  remove unwanted HTML tags from Reader questions 
-
-2016-09-29 (54)
- -  remove unwanted HTML tags from Reader questions 
-
-2016-09-29 (54)
- -  remove unwanted script, style, and pre tags from question text 
+ -  remove unwanted script, style, and pre tags from question text
 
 2016-08-20 (53)
- -  standardize 'die;' to 'die();' 
+ -  standardize 'die;' to 'die();'
 
 2016-08-20 (53)
- -  remove use of deprecated 'error' function 
+ -  remove use of deprecated 'error' function
 
 2016-07-16 (52)
- -  mod/reader Moodle coding standards compatability: remove all usage of 'print' and 'create_function' in PHP code 
+ -  Moodle coding standards compatability: remove all usage of 'print' and 'create_function' in PHP code
 
 2016-06-30 (51)
- -  mod/reader on Students (summary) report, fix display of words read in All Terms 
+ -  on Students (summary) report, fix display of words read in All Terms
 
 2016-06-23 (50)
- -  mod/reader on Students (summary) report, fix display of words read in All Terms 
+ -  add start time/date in tool to export Reader tables
 
 2016-06-23 (50)
- -  mod/reader add start time/date in tool to export Reader tables 
-
-2016-06-23 (50)
- -  mod/reader fix display of links to quizzes for books that have no quizzes 
+ -  fix display of links to quizzes for books that have no quizzes
 
 2016-06-13 (49)
- -  add grade settings to the mod_form.php page 
+ -  add grade settings to the mod_form.php page
 
 2016-06-13 (48)
- -  mod/reader fix detection of unsigned DB fields in Moodle >= 3.1 when running tool to fix course page in hidden Reader Quizzes course 
+ -  fix detection of unsigned DB fields in Moodle >= 3.1 when running tool to fix course page in hidden Reader Quizzes course
 
 2016-06-09 (47)
- -  use $CFG->branch to detect Moodle's major version in version.php 
+ -  use $CFG->branch to detect Moodle's major version in version.php
 
 2016-06-07 (46)
- -  mod/reader fix download of report data in Moodle >= 3.1 
+ -  fix download of report data in Moodle >= 3.1
 
 2016-05-19 (45)
- -  mod/reader fix 'duplicate record found' error when attempting book that shares a quiz with another book 
+ -  fix 'duplicate record found' error when attempting book that shares a quiz with another book
 
 2016-05-09 (44)
- -  mod/reader add new site-side setting to allow local modifications to book difficulty (=reading level) to be maintained when book data is downloaded 
+ -  add new site-side setting to allow local modifications to book difficulty (=reading level) to be maintained when book data is downloaded
 
 2016-05-02 (43)
- -  allow new reader goals in steps of 25,000 between 100,000 and 300,000 
+ -  allow new reader goals in steps of 25,000 between 100,000 and 300,000
 
 2016-04-29 (42)
- -  mod/reader fix setting of rows-per-page on reports 
+ -  fix setting of rows-per-page on reports
 
 2016-04-28 (41)
- -  remove levels columns from Student (summary) report if levels are not being used; remove Groups (Summary) report if groups are not being used 
+ -  remove levels columns from Student (summary) report if levels are not being used; remove Groups (Summary) report if groups are not being used
 
 2016-04-26 (40)
- -  fix setting of extra points doe to incorrect right padding of float numbers 
+ -  fix setting of extra points doe to incorrect right padding of float numbers
 
 2016-04-23 (39)
- -  mod/reader replace all remaining uses of capability managequizzes by managebooks; allow teacher access to 'Admin area', but not to 'Tools' tab 
+ -  replace all remaining uses of capability managequizzes by managebooks; allow teacher access to 'Admin area', but not to 'Tools' tab
 
 2016-03-29 (37)
- -  mod/reader ensure layouttype and grading type are set for newly downloaded Reader quizzes 
+ -  ensure layouttype and grading type are set for newly downloaded Reader quizzes
 
 2016-03-17 (36)
- -  mod/reader fix required PHP libraries in mod/reader/admin/tools 
+ -  add new progress bars for 10,000 - 40,000
 
 2016-03-16 (35)
- -  mod/reader fix required PHP libraries in mod/reader/admin/tools 
-
-2016-03-16 (35)
- -  mod/reader remove unnecessary CONCAT statement from fix_missingquizzes tool 
+ -  remove unnecessary CONCAT statement from fix_missingquizzes tool
 
 2016-03-14 (34)
- -  mod/reader remove unnecessary CONCAT statement from fix_missingquizzes tool 
-
-2016-03-14 (34)
- -  mod/reader add empty sequence field when adding new section 
+ -  add empty sequence field when adding new section
 
 2016-03-13 (33)
- -  mod/reader standardize tabs and return link in admin/tools, and add new tool to move quizzes form current course to main Reader quizzes course 
+ -  standardize tabs and return link in admin/tools, and add new tool to move quizzes form current course to main Reader quizzes course
 
 2016-03-04 (32)
- -  mod/reader fix sorting of fields on reports 
+ -  fix sorting of fields on reports
 
 2016-02-27 (31)
- -  mod/reader allow filtering of booktype on Books (summary) report 
+ -  allow filtering of booktype on Books (summary) report
 
 2016-02-07 (30)
- -  include Ordering question info in popup box containing version details 
+ -  include Ordering question info in popup box containing version details
 
 2016-01-25 (29)
- -  mod/reader add svg versions of all ProgressBars and adjust ProgressBar background color for readability 
-
-2016-01-25 (29)
- -  mod/reader add svg versions of all ProgressBars and adjust ProgressBar background color for readability 
+ -  add svg versions of all ProgressBars and adjust ProgressBar background color for readability
 
 2016-01-21 (28)
- -  mod/reader fix folder structure for tabs in public release 
+ -  fix folder structure for tabs in public release
 
 2016-01-21 (27)
- -  mod/reader fix deprecated use of class name as contructor for moodleforms in Moodle >= 3.1 
-
-2016-01-21 (27)
- -  mod/reader fix deprecated use of class name as contructor for moodleforms in Moodle >= 3.1 
+ -  fix deprecated use of class name as contructor for moodleforms in Moodle >= 3.1
 
 2016-01-20 (26)
- -  mod/reader allow emails to be sent from Student (summary) report 
+ -  allow emails to be sent from Student (summary) report
 
 2016-01-20 (25)
- -  mod/reader fix renamed contructor method for user_filtering class on Moodle >= 3.0 
+ -  fix renamed contructor method for user_filtering class on Moodle >= 3.0
 
 2016-01-20 (24)
- -  mod/reader add new capability to allow teachers to check Reader/Moodle version 
+ -  add new capability to allow teachers to check Reader/Moodle version
 
 2016-01-20 (22)
- -  mod/reader add new progress bars for 10,000 - 40,000 
-
-2016-01-20 (22)
- -  mod/reader add new progress bars for 10,000 - 40,000 
+ -  add new progress bars for 10,000 - 40,000
 
 2016-01-19 (21)
- -  mod/reader fix SQL for reports when there are no users enrolled in a course 
+ -  fix SQL for reports when there are no users enrolled in a course
 
 2016-01-19 (20)
- -  mod/reader remove empty rates records left over from delays table 
+ -  remove empty rates records left over from delays table
 
 2016-01-19 (19)
- -  mod/reader reinstate mistakenly deleted string forcedtimedelay 
+ -  reinstate mistakenly deleted string forcedtimedelay
 
 2016-01-19 (18)
- -  mod/reader redo SQL query to correct ly select rates even when no attempts have been made 
+ -  redo SQL query to correct ly select rates even when no attempts have been made
 
 2016-01-18 (17)
- -  mod/reader add information about reading rates to the main view page 
+ -  add information about reading rates to the main view page
 
 2016-01-18 (17)
- -  mod/reader fix SQL to select rates on MSSQL 
+ -  fix SQL to select rates on MSSQL
 
 2016-01-18 (16)
- -  mod/reader optimize SQL to select rate restrictions from the DB 
+ -  optimize SQL to select rate restrictions from the DB
 
 2016-01-18 (16)
- -  mod/reader fix initialization of  array when no rates have yet been defined 
+ -  fix initialization of  array when no rates have yet been defined
 
 2016-01-18 (16)
- -  mod/reader modify get_delay() to use reading rates to calculate delay 
+ -  modify get_delay() to use reading rates to calculate delay
 
 2016-01-15 (15)
- -  mod/reader fix setting and display of reading rates 
+ -  fix setting and display of reading rates
 
 2016-01-15 (15)
- -  mod/reader display existing rates in rates page 
+ -  display existing rates in rates page
 
 2016-01-15 (15)
- -  mod/reader modularize code to generate level and group rates 
+ -  modularize code to generate level and group rates
 
 2016-01-15 (15)
- -  mod/reader rename indexes on reader_rats table 
+ -  rename indexes on reader_rats table
 
 2016-01-15 (15)
- -  mod/reader rename inxes on reader_rats table 
+ -  rename inxes on reader_rats table
 
 2016-01-14 (14)
- -  mod/reader improve colors on reading rates page to isolate settings for each reading rate 
+ -  improve colors on reading rates page to isolate settings for each reading rate
 
 2016-01-14 (14)
- -  mod/reader add background color to LEVEL and GROUP fitems on user reading rates page 
+ -  add background color to LEVEL and GROUP fitems on user reading rates page
 
 2016-01-13 (13)
- -  finalize format of page ot specify Reading Rates 
+ -  finalize format of page ot specify Reading Rates
 
 2016-01-06 (12)
- -  mod/reader add levels and groups to Reading Rates form 
+ -  add levels and groups to Reading Rates form
 
 2015-11-15 (10)
- -  mod/reader fix warning caused by printing header in startattempt.php before redirect 
+ -  fix warning caused by printing header in startattempt.php before redirect
 
 2015-11-13 (09)
- -  mod/reader small fixes for Moodle 2.0 
+ -  small fixes for Moodle 2.0
 
 2015-11-09 (08)
- -  mod/reader fix call to missing function get_optional_param 
+ -  fix call to missing function get_optional_param
 
 2015-11-09 (08)
- -  mod/reader remove illegal MSSQL use of ORDER BY from join_users_with_attempts() in admin/reports/tablelib.php 
+ -  remove illegal MSSQL use of ORDER BY from join_users_with_attempts() in admin/reports/tablelib.php
 
 2015-10-26 (07)
- -  mod/reader small improvement in CSS to standardize CSS height on book form actions 
+ -  small improvement in CSS to standardize CSS height on book form actions
 
 2015-10-26 (07)
- -  mod/reader allow books to be made available from the Books tab, and remove the Quizzes tab completely 
+ -  allow books to be made available from the Books tab, and remove the Quizzes tab completely
 
 2015-10-26 (07)
- -  mod/reader add action to force the removal of a book (and all quiz attempts connected to that book 
+ -  add action to force the removal of a book (and all quiz attempts connected to that book
 
 2015-10-24 (06)
- -  mod/reader add functionality to remove books that have no live attempts 
-
-2015-10-24 (06)
- -  mod/reader add functionality to remove books that have no live attempts 
+ -  add functionality to remove books that have no live attempts
 
 2015-10-21 (05)
- -  mod/reader create new subtab to add a book, and remove Quizzes tab 
+ -  create new subtab to add a book, and remove Quizzes tab
 
 2015-10-21 (05)
- -  mod/reader fix display of empty genre on Books -> Edit (Site) page 
+ -  fix display of empty genre on Books -> Edit (Site) page
 
 2015-10-21 (04)
- -  mod/reader improve readability of settings on Books -> Edit pages 
+ -  improve readability of settings on Books -> Edit pages
 
 2015-10-21 (03)
- -  mod/reader rename 'length' fields to 'points' 
+ -  rename 'length' fields to 'points'
 
 2015-10-20 (02)
- -  mod/reader fix expand/collapse functionality on list of books available for download 
+ -  fix expand/collapse functionality on list of books available for download
 
 2015-10-19 (01)
- -  mod/reader allow multiple 'Extra points' attempts on a student's main view page for a Reader activity 
+ -  allow multiple 'Extra points' attempts on a student's main view page for a Reader activity
 
 2015-10-19 (00)
- -  mod/reader fix faulty version number 
+ -  fix faulty version number
 
 2015-10-18 (00)
- -  mod/reader fix typos in explanation of how to use the reader for new users 
+ -  fix typos in explanation of how to use the reader for new users
 
 2015-10-18 (99)
- -  mod/reader add javascript to allow progress bar to fit on screens/windows smaller than 800px wide 
+ -  add javascript to allow progress bar to fit on screens/windows smaller than 800px wide
 
 2015-10-17 (98)
- -  mod/reader add initial explanation of how to use reader for new students; allow teachers to switch to student view of Reader view page 
+ -  add initial explanation of how to use reader for new students; allow teachers to switch to student view of Reader view page
 
 2015-10-16 (97)
- -  mod/reader add initial explanation of how to use reader for new students; allow teachers to switch to student view of Reader view page 
-
-2015-10-16 (97)
- -  mod/reader allow level info to be transferred from another course 
+ -  allow level info to be transferred from another course
 
 2015-10-16 (96)
- -  mod/reader add groups column to usersummary and userdetailed reports 
+ -  add groups column to usersummary and userdetailed reports
 
 2015-10-14 (95)
- -  mod/reader fix SQL to select students for reports even when they have no level set 
+ -  fix SQL to select students for reports even when they have no level set
 
 2015-10-09 (94)
- -  mod/reader allow non-editing teachres to see books outside their reading level on the main View page 
+ -  allow non-editing teachres to see books outside their reading level on the main View page
 
 2015-10-05 (93)
- -  mod/reader add functions to implement course reset 
+ -  add functions to implement course reset
 
 2015-10-05 (93)
- -  mod/reader add functions to implement course rest 
+ -  add functions to implement course rest
 
 2015-09-24 (92)
- -  mod/reader fix "headers already sent" message when downloading from Reader reports page 
+ -  fix "headers already sent" message when downloading from Reader reports page
 
 2015-09-20 (91)
- -  mod/reader improve efficiency of fetching group/grouping user ids and counts 
-
-2015-09-20 (91)
- -  mod/reader improve efficiency of fetching group/grouping user ids and counts 
+ -  improve efficiency of fetching group/grouping user ids and counts
 
 2015-09-11 (90)
- -  mod/reader fixed download URLs and added explanation on how to download quizzes to the readme file 
+ -  fixed download URLs and added explanation on how to download quizzes to the readme file
 
 2015-09-04 (89)
- -  mod/reader fix access restrictions: password, subnet 
+ -  fix access restrictions: password, subnet
 
 2015-08-27 (88)
- -  mod/reader move "admin/report/filters" to "admin/filters" 
+ -  move "admin/report/filters" to "admin/filters"
 
 2015-08-23 (87)
- -  mod/reader fix default mode on 'books' tab 
+ -  fix default mode on 'books' tab
 
 2015-08-23 (87)
- -  mod/reader fix for two small typos in lang file 
+ -  fix for two small typos in lang file
 
 2015-06-30 (86)
- -  mod/reader preliminary implementation of books edit page 
+ -  preliminary implementation of books edit page
 
 2015-06-30 (86)
- -  mod/reader preliminary implementation of books edit page 
+ -  allow course-specific quizzes
 
 2015-06-30 (86)
- -  mod/reader preliminary implementation of books edit page 
-
-2015-06-30 (86)
- -  mod/reader allow course-specific quizzes 
-
-2015-06-30 (86)
- -  mod/reader allow course-specific quizzes 
-
-2015-06-30 (86)
- -  mod/reader fix attempts whose bookid is that of a missing books 
+ -  fix attempts whose bookid is that of a missing books
 
 2015-06-25 (85)
- -  mod/reader remove formatting from numbers and lnks from text when downloading reports 
+ -  remove formatting from numbers and lnks from text when downloading reports
 
 2015-06-24 (84)
- -  mod/reader rename field: questionmark -> questionscores, add new field: showreviewlinks 
+ -  rename field: questionmark -> questionscores, add new field: showreviewlinks
 
 2015-06-23 (83)
- -  mod/reader use new 'standard_intro_elements' when creating settings form in Moodle >= 2.9 
+ -  use new 'standard_intro_elements' when creating settings form in Moodle >= 2.9
 
 2015-06-14 (82)
- -  mod/reader do not send usage data on unused quizzes 
+ -  do not send usage data on unused quizzes
 
 2015-05-25 (81)
- -  mod/reader improve tools to detect and fix attempts at missing books 
+ -  improve tools to detect and fix attempts at missing books
 
 2015-05-25 (81)
- -  mod/reader improve detection and fixing of attempts missing quizzes and books 
+ -  improve detection and fixing of attempts missing quizzes and books
 
 2015-05-25 (81)
- -  mod/reader small improvements to white space and logic in usersummary report 
+ -  small improvements to white space and logic in usersummary report
 
 2015-05-25 (81)
- -  mod/reader add missing forms for admin/users/setlevels + setgoals 
+ -  add missing forms for admin/users/setlevels + setgoals
 
 2015-05-23 (80)
- -  mod/reader allow setting of promotion date from summary report 
+ -  allow setting of promotion date from summary report
 
 2015-05-17 (79)
- -  mod/reader display 'You were promoted on ...' message on student's view page even when student was promoted after most recent attempt 
+ -  display 'You were promoted on ...' message on student's view page even when student was promoted after most recent attempt
 
 2015-05-17 (78)
- -  mod/reader fix selection of attempts to display in block graph showing books read since last promotion 
+ -  fix selection of attempts to display in block graph showing books read since last promotion
 
 2015-05-13 (77)
- -  mod/reader expand list of available genres 
+ -  expand list of available genres
 
 2015-05-13 (76)
- -  mod/reader improve Moodle version detection using compare_version 
+ -  improve Moodle version detection using compare_version
 
 2015-05-13 (76)
- -  mod/reader allow detection of Moodle version from $CFG->yui3version, if $CFG->release is not available, for example when installing from the CLI using PHPunit 
+ -  allow detection of Moodle version from $CFG->yui3version, if $CFG->release is not available, for example when installing from the CLI using PHPunit
 
 2015-05-13 (75)
- -  mod/reader remove references to strings in readerview block 
+ -  remove references to strings in readerview block
 
 2015-05-13 (74)
- -  mod/reader fix reports on Moodle >= 2.9 
+ -  fix reports on Moodle >= 2.9
 
 2015-05-13 (74)
- -  mod/reader fix quiz downloads and attempts on Moodle >= 2.9 
+ -  fix quiz downloads and attempts on Moodle >= 2.9
 
 2015-05-13 (74)
- -  mod/reader fix setting of table r0 class in Moodle >= 29 
+ -  fix setting of table r0 class in Moodle >= 29
 
 2015-04-28 (73)
- -  mod/reader preliminary version of setlevels 
+ -  preliminary version of setlevels
 
 2015-04-28 (73)
- -  mod/reader preliminary version of setgoals 
+ -  preliminary version of setgoals
 
 2015-04-28 (73)
- -  mod/reader fix display of previously set delays on Users -> Set delays 
-
-2015-04-28 (72)
- -  mod/reader fix display of previously set delays on Users -> Set delays 
+ -  fix display of previously set delays on Users -> Set delays
 
 2015-04-27 (72)
- -  mod/reader fix syntax error in users import script 
+ -  fix syntax error in users import script
 
 2015-04-20 (71)
- -  mod/reader do not show download Excel button is XMLwriter class is not available on the server, because it will cause a confusing error later on 
+ -  do not show download Excel button is XMLwriter class is not available on the server, because it will cause a confusing error later on
 
 2015-04-09 (70)
- -  mod/reader use standard login-as functionality from admin area reports 
+ -  use standard login-as functionality from admin area reports
 
 2015-04-08 (69)
- -  mod/reader add missing language string: delayineffect 
+ -  add missing language string: delayineffect
 
 2015-03-22 (68)
- -  mod/reader fix issue whereby some books always appear as UPDATE AVAILABLE on download page; fix error about undefined function 'events_trigger' when importing student data 
+ -  fix issue whereby some books always appear as UPDATE AVAILABLE on download page; fix error about undefined function 'events_trigger' when importing student data
 
 2015-02-28 (67)
- -  mod/reader restrict recent activity block report to attempts since $timestart 
+ -  restrict recent activity block report to attempts since $timestart
 
 2015-02-28 (66)
- -  mod/reader fix update from 2013060800 to 2015022866 
+ -  fix update from 2013060800 to 2015022866
 
 2015-02-25 (65)
- -  mod/reader remove debugging message when switching from WITH TO WITHOUT on usersummary report 
+ -  remove debugging message when switching from WITH TO WITHOUT on usersummary report
 
 2015-02-08 (64)
- -  mod/reader remove redundant "break;" statements in downloader.php 
+ -  remove redundant "break;" statements in downloader.php
 
 2015-02-08 (64)
- -  mod/reader: fix sorting by clicking by column header when "Display options" sort fields are also set 
+ -  fix sorting by clicking by column header when "Display options" sort fields are also set
 
 2015-02-02 (63)
- -  mod/reader improve layout of message requiring students to complete an unfinshed quiz attempt 
+ -  improve layout of message requiring students to complete an unfinshed quiz attempt
 
 2015-02-01 (62)
- -  mod/reader force quiz attempt to be submitted when timer reaches zero 
+ -  force quiz attempt to be submitted when timer reaches zero
 
 2015-01-31 (61)
- -  mod/reader improve selection of default Reader Quizzes course on download page 
+ -  improve selection of default Reader Quizzes course on download page
 
 2015-01-30 (60)
- -  mod/reader improve updating of attempts "layout" field when downloading quizzes with a changed question order 
-
-2015-01-30 (60)
- -  mod/reader improve updating of attempts "layout" field when downloading quizzes with a changed question order 
-
-2015-01-30 (60)
- -  mod/reader improve updating of attempts "layout" field when downloading quizzes with a changed question order 
+ -  improve updating of attempts "layout" field when downloading quizzes with a changed question order
 
 2015-01-29 (59)
- -  mod/reader fix upgrading on Moodle <= 2.6 
-
-2015-01-29 (58)
- -  mod/reader fix upgrading on Moodle <= 2.6 
-
-2015-01-29 (58)
- -  mod/reader fix upgrading on Moodle <= 2.6 
-
-2015-01-29 (57)
- -  mod/reader fix upgrading on Moodle <= 2.6 
+ -  fix upgrading on Moodle <= 2.6
 
 2015-01-29 (56)
- -  mod/reader fix upgrade error: Unknown column "questionid" 
+ -  fix upgrade error: Unknown column "questionid"
 
 2015-01-29 (56)
- -  mod/reader fix downloading of quizzes with modified or deleted questions 
+ -  fix downloading of quizzes with modified or deleted questions
 
 2015-01-28 (55)
- -  mod/reader fix install bug in install.xml: field maxgrade, Incorrect DECIMALS attribute for non-number field 
+ -  fix install bug in install.xml: field maxgrade, Incorrect DECIMALS attribute for non-number field
 
 2015-01-26 (54)
- -  mod/reader small improvements to code layout in lib.php 
+ -  small improvements to code layout in lib.php
 
 2015-01-26 (54)
- -  mod/reader fix calculation of grades 
+ -  fix calculation of grades
 
 2015-01-26 (54)
- -  mod/hotpot fix calculation of grades 
+ -  mod/hotpot fix calculation of grades
 
 2015-01-25 (52)
- -  mod/reader fix 'SQL syntax error' when upgrading Reader grades 
+ -  fix 'SQL syntax error' when upgrading Reader grades
 
 2015-01-25 (51)
- -  mod/reader fix 'SQL syntax error' when upgrading Reader grades 
-
-2015-01-25 (51)
- -  mod/reader fix 'SQL syntax error' when upgrading Reader grades 
-
-2015-01-25 (51)
- -  mod/reader fix broken search form on view.php page 
+ -  fix broken search form on view.php page
 
 2015-01-24 (50)
- -  mod/reader initial version of print_recent_activty() function for Reader module 
+ -  initial version of print_recent_activty() function for Reader module
 
 2015-01-24 (49)
- -  mod/reader improve messages and layout on My Moodle page 
+ -  improve messages and layout on My Moodle page
 
 2015-01-24 (48)
- -  mod/reader improve layout of "total words" data on attempts summary table 
+ -  improve layout of "total words" data on attempts summary table
 
 2015-01-24 (48)
- -  mod/reader shrink height of prommotion graph squares of there are more than 8 squares required 
+ -  shrink height of prommotion graph squares of there are more than 8 squares required
 
 2015-01-24 (47)
- -  mod/reader fix error in cron: Unknown column 'reader' in order clause 
+ -  fix error in cron: Unknown column 'reader' in order clause
 
 2015-01-24 (46)
- -  mod/reader improve formatting of messages on main view.php page 
+ -  improve formatting of messages on main view.php page
 
 2015-01-23 (45)
- -  mod/reader fix error message in settings.php: undefined method admin_setting_configtextarea::set_advanced_flag_options() 
+ -  fix error message in settings.php: undefined method admin_setting_configtextarea::set_advanced_flag_options()
 
 2015-01-23 (45)
- -  mod/reader improve layout of main view page 
-
-2015-01-23 (45)
- -  mod/reader improve layout of main view page 
+ -  improve layout of main view page
 
 2015-01-23 (44)
- -  mod/reader remove unused functions from lib.php 
-
-2015-01-23 (44)
- -  mod/reader remove unused functions from lib.php 
+ -  remove unused functions from lib.php
 
 2015-01-21 (44)
- -  mod/reader remove superflous function "reader_get_config_details()" from lib.php 
+ -  remove superflous function "reader_get_config_details()" from lib.php
 
 2015-01-18 (43)
- -  mod/reader fix index on reader_attempts and start standard function reader_print_recent_activity 
+ -  fix index on reader_attempts and start standard function reader_print_recent_activity
 
 2015-01-18 (43)
- -  mod/reader fix Reader activities on My Moodle page 
+ -  fix Reader activities on My Moodle page
 
 2015-01-18 (43)
- -  mod/reader fix get/print_recent_mod_activity 
+ -  fix get/print_recent_mod_activity
 
 2015-01-18 (42)
- -  mod/reader ensure 'reader' field is renamed to 'readerid' before recalculating grades in update script 
+ -  ensure 'reader' field is renamed to 'readerid' before recalculating grades in update script
 
 2015-01-17 (41)
- -  mod/reader add readerid field in install.xml; rename qtype/ordering fields 'logical' and 'studentsee' 
+ -  add readerid field in install.xml; rename qtype/ordering fields 'logical' and 'studentsee'
 
 2015-01-13 (40)
- -  mod/reader rationalize order of functions in lib.php 
+ -  rationalize order of functions in lib.php
 
 2015-01-09 (39)
- -  mod/reader do not use add_to_log when deleting course module in Moodle >= 2.6 
+ -  do not use add_to_log when deleting course module in Moodle >= 2.6
 
 2015-01-09 (39)
- -  mod/reader rename attempt field to attemptid in 'reader_attempts' table 
+ -  rename attempt field to attemptid in 'reader_attempts' table
 
 2015-01-07 (38)
- -  mod/reader fix 'undefined method html_writer::img' on Moodle <= 2.6 
+ -  fix 'undefined method html_writer::img' on Moodle <= 2.6
 
 2014-12-31 (37)
- -  mod/reader add reading  progress bar for the range 0-25000 
+ -  add reading  progress bar for the range 0-25000
 
 2014-12-31 (37)
- -  mod/reader fix use of back button to return from student view to teacher reports page 
+ -  fix use of back button to return from student view to teacher reports page
 
 2014-12-29 (36)
- -  mod/reader fix 'undefined index' error caused by 'goal' column on 'Students (detailed)' report 
+ -  fix 'undefined index' error caused by 'goal' column on 'Students (detailed)' report
 
 2014-12-27 (35)
- -  mod/reader activate reader_grades table to store total words/points awarded and create grade_items for new and modified Reader actvities 
+ -  activate reader_grades table to store total words/points awarded and create grade_items for new and modified Reader actvities
 
 2014-12-26 (34)
- -  mod/reader mod/reader add code to collect usage statistics 
+ -  mod/reader add code to collect usage statistics
 
 2014-12-26 (34)
- -  mod/reader set usage statistics once a month using cron 
+ -  set usage statistics once a month using cron
 
 2014-12-20 (33)
- -  mod/reader move sending of usage stats into remotesite class 
+ -  move sending of usage stats into remotesite class
 
 2014-12-20 (33)
- -  mod/reader add code to collect usage statistics 
+ -  add code to collect usage statistics
 
 2014-12-20 (33)
- -  mod/reader on User (detailed) report, move computation of Words (this term) to MySQL server 
-
-2014-12-20 (33)
- -  mod/reader on User (detailed) report, move computation of Words (this term) to MySQL server 
+ -  on User (detailed) report, move computation of Words (this term) to MySQL server
 
 2014-12-20 (32)
- -  mod/reader fix lang strings for events; improve multiline headings on reports 
+ -  fix lang strings for events; improve multiline headings on reports
 
 2014-12-17 (31)
- -  mod/reader fix help popups on Group summary report; fix filtering by computed fields on Group summary report 
+ -  fix help popups on Group summary report; fix filtering by computed fields on Group summary report
 
 2014-12-16 (30)
- -  mod/reader fix error adding and updating logs for Reader 'view all' event 
+ -  fix error adding and updating logs for Reader 'view all' event
 
 2014-12-15 (29)
- -  mod/reader use standard loginas; rename 'nopromote' field to 'allowpromotion'; fix several calls to get_string() to use 'mod_reader' instead of 'reader' 
+ -  use standard loginas; rename 'nopromote' field to 'allowpromotion'; fix several calls to get_string() to use 'mod_reader' instead of 'reader'
 
 2014-12-13 (28)
- -  mod/reader fix selection of users without attempts in User Summary report 
+ -  fix selection of users without attempts in User Summary report
 
 2014-12-12 (28)
- -  mod/reader add new view_loginas.php script 
+ -  add new view_loginas.php script
 
 2014-12-12 (28)
- -  mod/reader always report cmid when loging events 
+ -  always report cmid when loging events
 
 2014-12-11 (27)
- -  mod/reader optimize classes/events using base class 
+ -  optimize classes/events using base class
 
 2014-12-05 (26)
- -  mod/reader migrate logs to Moodle new logging system 
+ -  migrate logs to Moodle new logging system
 
 2014-12-03 (25)
- -  mod/reader add setting to include all enrolled users in reports 
+ -  add setting to include all enrolled users in reports
 
 2014-12-01 (24)
- -  mod/reader add setting to include all enrolled users in reports 
-
-2014-12-01 (24)
- -  mod/reader remove calls to init() in classes/event/*.php files 
+ -  remove calls to init() in classes/event/*.php files
 
 2014-11-30 (23)
- -  mod/reader fix error: Cannot call abstract method core\event\base::init() 
+ -  fix error: Cannot call abstract method core\event\base::init()
 
 2014-11-28 (22)
- -  mod/reader prepare reader_add_to_log for new log action/event names 
-
-2014-11-28 (22)
- -  mod/reader prepare reader_add_to_log for new log action/event names 
+ -  prepare reader_add_to_log for new log action/event names
 
 2014-11-26 (21)
- -  mod/reader allow HTML in title of download progress in Moodle >= 2.8 
+ -  allow HTML in title of download progress in Moodle >= 2.8
 
 2014-11-02 (20)
- -  mod/reader rename fields in Reader table 
+ -  rename fields in Reader table
 
 2014-11-01 (20)
- -  mod/reader rename fields in Reader table 
-
-2014-11-01 (20)
- -  mod/reader rename long field names in Reader table 
-
-2014-11-01 (20)
- -  mod/reader rename long field names in Reader table 
+ -  rename long field names in Reader table
 
 2014-10-31 (19)
- -  mod/reader improve wording of current/previous/next quizzes allowed on Reader module settings page 
+ -  improve wording of current/previous/next quizzes allowed on Reader module settings page
 
 2014-10-19 (18)
- -  mod/reader restore quiz timer functionality and hide total possible marks for each question is 'questionmark' is zero 
+ -  restore quiz timer functionality and hide total possible marks for each question is 'questionmark' is zero
 
 2014-10-18 (17)
- -  mod/reader fix undefined variable $bar in upgradelib.php when upgrading via CLI 
-
-2014-10-18 (17)
- -  mod/reader fix undefined variable $bar in upgradelib.php when upgrading via CLI 
+ -  fix undefined variable $bar in upgradelib.php when upgrading via CLI
 
 2014-10-17 (16)
- -  mod/reader ensure admin/users/setdelay has been replaced by admin/users/setdelays 
+ -  ensure admin/users/setdelay has been replaced by admin/users/setdelays
 
 2014-10-14 (15)
- -  mod/reader fix missing method 'set_advanced_flag_options' in Reader settings file 
+ -  fix missing method 'set_advanced_flag_options' in Reader settings file
 
 2014-10-14 (14)
- -  mod/reader fix unknown field 'timefrom' when updating 
+ -  fix unknown field 'timefrom' when updating
 
 2014-10-12 (13)
- -  mod/reader fix update error on wordsorpoints field; fix error when resetting number of section in main Reader quizzes course 
+ -  fix update error on wordsorpoints field; fix error when resetting number of section in main Reader quizzes course
 
 2014-10-10 (02)
- -  mod/reader export student data as a file instead of text displayed in the browser 
+ -  export student data as a file instead of text displayed in the browser
 
 2014-10-10 (01)
- -  mod/reader fix import of reader attempts that have been deleted 
+ -  fix import of reader attempts that have been deleted
 
 2014-10-10 (00)
- -  mod/reader fix import of reader attempts that have been deleted 
-
-2014-10-10 (00)
- -  mod/reader fix detection and enforcement of delays between quizzes 
+ -  fix detection and enforcement of delays between quizzes
 
 2014-09-20 (99)
- -  mod/reader remove HTML from download message in Moodle >= 2.7 
+ -  remove HTML from download message in Moodle >= 2.7
 
 2014-09-20 (99)
- -  mod/reader remove group filter from group and book reports 
+ -  remove group filter from group and book reports
 
 2014-09-20 (99)
- -  mod/reader add 'errors found' message to download page 
+ -  add 'errors found' message to download page
 
 2014-09-19 (98)
- -  mod/reader fix 'version value is missing from version.php 
+ -  fix 'version value is missing from version.php
 
 2014-09-19 (97)
- -  mod/reader fix missing field questionusageid on Moodle 2.0-2.1 
+ -  fix missing field questionusageid on Moodle 2.0-2.1
 
 2014-09-19 (97)
- -  mod/hotpot fix 'Undefined variable  version.php' 
+ -  mod/hotpot fix 'Undefined variable  version.php'
 
 2014-09-06 (96)
- -  mod/reader fix 'Missing version value in version.php' in Moodle 2.4 - 2.5 
+ -  fix 'Missing version value in version.php' in Moodle 2.4 - 2.5
 
 2014-09-06 (96)
- -  mod/reader rationalize fields on mod_form.php 
+ -  rationalize fields on mod_form.php
 
 2014-08-05 (93)
- -  mod/reader add sortby display optione to reports 
+ -  add sortby display optione to reports
 
 2014-08-05 (93)
- -  mod/reader small improvement to import_reader_tables tool so that newly created courses have useful blocks instead of the 'standard' blocks 
+ -  small improvement to import_reader_tables tool so that newly created courses have useful blocks instead of the 'standard' blocks
 
 2014-08-05 (93)
- -  mod/reader fix multianswer questions in question categories with a missing contextid 
-
-2014-08-05 (93)
- -  mod/reader fix multianswer questions in question categories with a missing contextid 
+ -  fix multianswer questions in question categories with a missing contextid
 
 2014-07-28 (92)
- -  mod/reader improve fixing of multianswer step data 
+ -  improve fixing of multianswer step data
 
 2014-07-28 (92)
- -  mod/reader fix multianswer questions in question categories with an invalid contextid 
+ -  fix multianswer questions in question categories with an invalid contextid
 
 2014-07-28 (92)
- -  mod/reader fix function that should be a method in admin reports: get_table_names_and_aliases 
+ -  fix function that should be a method in admin reports: get_table_names_and_aliases
 
 2014-07-28 (92)
- -  mod/reader small fix for upgrade script on sites which have do not yet have reader config settings 
+ -  small fix for upgrade script on sites which have do not yet have reader config settings
 
 2014-07-28 (92)
- -  mod/reader fix faulty slots in Quiz attempts and Reader attempts 
+ -  fix faulty slots in Quiz attempts and Reader attempts
 
 2014-07-26 (91)
- -  mod/reader fix display of attempts where question categories refer to non-existant contexts 
-
-2014-07-26 (91)
- -  mod/reader fix display of attempts where question categories refer to non-existant contexts 
+ -  fix display of attempts where question categories refer to non-existant contexts
 
 2014-07-12 (90)
- -  mod/reader ensure default category is set on downloading page 
+ -  ensure default category is set on downloading page
 
 2014-07-12 (90)
- -  mod/reader fix missing lib in fix_bookcovers.php 
+ -  fix missing lib in fix_bookcovers.php
 
 2014-07-12 (90)
- -  mod/reader half fix for delays and cheating 
+ -  half fix for delays and cheating
 
 2014-07-06 (88)
- -  mod/reader use repeat_elements on setdelays form 
+ -  use repeat_elements on setdelays form
 
 2014-07-06 (88)
- -  mod/reader use repeat_elements on user/setdelays/form.php 
+ -  use repeat_elements on user/setdelays/form.php
 
 2014-07-06 (88)
- -  mod/reader move admin/quizzes/delay to admin/users/setdelay 
+ -  move admin/quizzes/delay to admin/users/setdelay
 
 2014-07-04 (87)
- -  mod/reader use CSS class instead of inline style to format title on view.php 
+ -  use CSS class instead of inline style to format title on view.php
 
 2014-07-04 (87)
- -  mod/reader fix progress bar title in Moodle 2.8 
+ -  fix progress bar title in Moodle 2.8
 
 2014-07-04 (87)
- -  mod/reader fix all config settings and calls to get_string() to use the full 'mod_reader' plugin name, instead of just 'reader' 
+ -  fix all config settings and calls to get_string() to use the full 'mod_reader' plugin name, instead of just 'reader'
 
 2014-06-17 (85)
- -  mod/reader ensure uniqueid is unique when creating quiz_attempt from reader_attempt 
+ -  ensure uniqueid is unique when creating quiz_attempt from reader_attempt
 
 2014-06-17 (85)
- -  mod/reader add links from reader reports to quiz attempt reports 
+ -  add links from reader reports to quiz attempt reports
 
 2014-06-17 (85)
- -  mod/reader new script to allow teacher to view individual quiz attempts 
+ -  new script to allow teacher to view individual quiz attempts
 
 2014-06-17 (85)
- -  mod/reader small fix for display of noquiz books on user summary report after submitting data 
+ -  small fix for display of noquiz books on user summary report after submitting data
 
 2014-06-17 (85)
- -  mod/reader fix 'Call to undefined function reader_add_to_log' error in upgradelib.php 
+ -  fix 'Call to undefined function reader_add_to_log' error in upgradelib.php
 
 2014-06-09 (84)
- -  mod/reader in settings.php, use configtext if configduration is not available 
+ -  in settings.php, use configtext if configduration is not available
 
 2014-06-09 (84)
- -  mod/reader fix drop_field requires instance of xmldb_field when updating 
+ -  fix drop_field requires instance of xmldb_field when updating
 
 2014-06-09 (84)
- -  mod/reader add new delaylevel fields 
+ -  add new delaylevel fields
 
 2014-06-05 (83)
- -  mod/reader allow for faulty cm's in admin/tools/fix_coursesections.php 
+ -  allow for faulty cm's in admin/tools/fix_coursesections.php
 
 2014-06-05 (83)
- -  mod/reader use standard html_writer to generate drop-down menus in admin area 
-
-2014-06-05 (83)
- -  mod/reader use standard html_writer to generate drop-down menus in admin area 
+ -  use standard html_writer to generate drop-down menus in admin area
 
 2014-06-04 (82)
- -  mod/reader use named constants DEFAULT_SHOWDELETED and DEFAULT_SHOWHIDDEN instead of 0 
+ -  use named constants DEFAULT_SHOWDELETED and DEFAULT_SHOWHIDDEN instead of 0
 
 2014-06-04 (82)
- -  mod/reader exclude 'Extra points' books (level=99) from list of available books 
+ -  exclude 'Extra points' books (level=99) from list of available books
 
 2014-06-04 (81)
- -  mod/reader fix totals and setting of levels goals on Student (summary) report 
+ -  fix totals and setting of levels goals on Student (summary) report
 
 2014-06-04 (80)
- -  mod/reader add 'classes' and rename 'admin/utilities' to 'admin/tools' 
+ -  add 'classes' and rename 'admin/utilities' to 'admin/tools'
 
 2014-05-30 (79)
- -  mod/reader begin compatability with DBs other than MySQL 
+ -  begin compatability with DBs other than MySQL
 
 2014-05-30 (79)
- -  mod/reader fix use of undefined FEATURE_xxx constants in Moodle 2.0 
+ -  fix use of undefined FEATURE_xxx constants in Moodle 2.0
 
 2014-05-30 (78)
- -  mod/reader begin compatability with DBs other than MySQL 
+ -  begin compatability with DBs other than MySQL
 
 2014-05-29 (77)
- -  mod/reader only set attempt bookid if there is a quizid 
+ -  only set attempt bookid if there is a quizid
 
 2014-05-29 (77)
- -  mod/reader fix setting of bookid in attempts table during update to 2014032045 
+ -  fix setting of bookid in attempts table during update to 2014032045
 
 2014-05-28 (76)
- -  mod/reader rename admin/utilities to admin/tools 
+ -  rename admin/utilities to admin/tools
 
 2014-05-28 (75)
- -  mod/reader allow extra points to be added from old or new Extra_points publisher 
+ -  allow extra points to be added from old or new Extra_points publisher
 
 2014-05-27 (74)
- -  mod/reader allow for local and downloaded versions of 'Extra points' quiz 
+ -  allow for local and downloaded versions of 'Extra points' quiz
 
 2014-05-27 (74)
- -  mod/reader require extra points quizzes when awarding extra quizzes; exclude deleted attempts from reading level graph 
+ -  require extra points quizzes when awarding extra quizzes; exclude deleted attempts from reading level graph
 
 2014-05-21 (72)
- -  mod/reader add numerical question types 
+ -  add numerical question types
 
 2014-05-21 (72)
- -  mod/reader add new event classes for Moodle >= 2.6 
+ -  add new event classes for Moodle >= 2.6
 
 2014-05-20 (71)
- -  mod/reader allow students to retake a quiz when their previous attempt at the quiz has been deleted 
+ -  allow students to retake a quiz when their previous attempt at the quiz has been deleted
 
 2014-05-18 (70)
- -  mod/reader fix reference to undefined method delete_record 
+ -  fix reference to undefined method delete_record
 
 2014-05-17 (69)
- -  mod/reader fix Duplicate entry for key mdl_readatte_uni_uix during upgrade 
+ -  fix Duplicate entry for key mdl_readatte_uni_uix during upgrade
 
 2014-05-08 (68)
- -  mod/reader fix undefined $course in reader_delays_check() function in mod/reader/lib.php 
+ -  fix undefined $course in reader_delays_check() function in mod/reader/lib.php
 
 2014-05-08 (67)
- -  mod/reader improve export_reader_tables utility to set Reader module version 
+ -  improve export_reader_tables utility to set Reader module version
 
 2014-05-03 (66)
- -  mod/reader fix Undefined variable: book when upgrading from Moodle1 
+ -  fix Undefined variable: book when upgrading from Moodle1
 
 2014-05-03 (66)
- -  mod/reader fix Undefined variable: book when upgrading from Moodle1 
-
-2014-05-03 (66)
- -  mod/reader fix Undefined variable: parentquestionid when upgrading from Moodle1 
+ -  fix Undefined variable: parentquestionid when upgrading from Moodle1
 
 2014-04-27 (65)
- -  mod/reader remove excel from download menu if XMLWrite class is not available 
+ -  remove excel from download menu if XMLWrite class is not available
 
 2014-04-27 (64)
- -  mod/reader reword version.php to pass moodle.org repository validation checks 
-
-2014-04-26 (63)
- -  mod/reader reword version.php to pass moodle.org repository validation checks 
-
-2014-04-26 (63)
- -  mod/reader reword version.php to pass moodle.org repository validation checks 
-
-2014-04-26 (62)
- -  mod/reader reword version.php to pass moodle.org repository validation checks 
-
-2014-04-26 (62)
- -  mod/reader reword version.php to pass moodle.org repository validation checks 
- -  mod/reader reword version.php to pass moodle.org repository validation checks 
- -  mod/reader reword version.php to pass moodle.org repository validation checks 
-
-2014-04-26 (62)
- -  mod/reader reword version.php to pass moodle.org repository validation checks 
-
-2014-04-26 (62)
-2014-04-26 (62)
- -  mod/reader reword version.php to pass moodle.org repository validation checks 
-
-2014-04-26 (62)
-2014-04-26 (62)
- -  mod/reader reword version.php to pass moodle.org repository validation checks 
- -  mod/reader reword version.php to pass moodle.org repository validation checks 
- -  mod/reader reword version.php to pass moodle.org repository validation checks 
-
-2014-04-26 (62)
- -  mod/reader reword version.php to pass moodle.org repository validation checks 
- -  mod/reader reword version.php to pass moodle.org repository validation checks 
- -  mod/reader reword version.php to pass moodle.org repository validation checks 
- -  mod/reader reword version.php to pass moodle.org repository validation checks 
- -  mod/reader reword version.php to pass moodle.org repository validation checks 
- -  mod/reader rephrase version.php to pass verification checks on moodle.org 
-
-2014-04-26 (62)
- -  mod/reader rephrase version.php to pass verification checks on moodle.org 
-
-2014-04-26 (62)
- -  mod/reader rationalize install.xml and reword version.php to pass moodle.org repository validation checks 
- -  mod/reader rationalize install.xml and reword version.php to pass moodle.org repository validation checks 
+ -  reword version.php to pass moodle.org repository validation checks
 
 2014-04-25 (61)
- -  mod/reader fix events_trigger in admin utility: import_reader_tables 
+ -  fix events_trigger in admin utility: import_reader_tables
 
 2014-04-25 (61)
- -  mod/reader add Moodle release and Reader release to export_reader_tables 
+ -  add Moodle release and Reader release to export_reader_tables
 
 2014-04-25 (60)
- -  mod/reader add new admin utility: export_reader_tables 
+ -  add new admin utility: export_reader_tables
 
 2014-04-22 (59)
- -  mod/reader add new admin utility: export_reader_tables 
-
-2014-04-22 (59)
- -  mod/reader add new admin utility: export_reader_tables 
-
-2014-04-22 (59)
- -  mod/reader fix missing '$' typo in db/upgradelib.php 
+ -  fix missing '$' typo in db/upgradelib.php
 
 2014-04-22 (58)
- -  mod/reader add compatability with Moodle 2.7 
-
-2014-04-22 (58)
- -  mod/reader add compatability with Moodle 2.7 
+ -  add compatability with Moodle 2.7
 
 2014-04-19 (57)
- -  mod/reader fix course-specific quizzes 
+ -  fix course-specific quizzes
 
 2014-04-19 (56)
- -  mod/reader remove all references to reader_deleted_attempts table 
+ -  remove all references to reader_deleted_attempts table
 
 2014-04-14 (55)
- -  mod/reader increase IP field length to 45 chars 
+ -  increase IP field length to 45 chars
 
 2014-04-10 (54)
- -  mod/reader increase length of IP field to 40 so that it can handle ipv6 addresses 
+ -  increase length of IP field to 40 so that it can handle ipv6 addresses
 
 2014-04-08 (53)
- -  mod/reader make install.xml compatible with Moodle <= 2.5 
+ -  make install.xml compatible with Moodle <= 2.5
 
 2014-04-04 (52)
- -  mod/reader add reading goals to groups report 
+ -  add reading goals to groups report
 
 2014-04-03 (51)
- -  mod/reader preliminary version of send message form 
+ -  preliminary version of send message form
 
 2014-04-02 (50)
- -  mod/reader add send message forms to group report page and Users - Send message 
-
-2014-04-02 (50)
- -  mod/reader add send message forms to group report page and Users - Send message 
+ -  add send message forms to group report page and Users - Send message
 
 2014-04-01 (49)
- -  mod/reader fix missing string 'update' 
+ -  fix missing string 'update'
 
 2014-03-30 (48)
- -  add display options to reports 
+ -  add display options to reports
 
 2014-03-30 (48)
- -  mod/reader add addmin quizzes form 
+ -  add addmin quizzes form
 
 2014-03-30 (48)
- -  mod/reader store display options in $SESSION variable 
+ -  store display options in $SESSION variable
 
 2014-03-30 (48)
- -  mod/reader remove obsolete admin/books/download.php 
+ -  remove obsolete admin/books/download.php
 
 2014-03-26 (46)
- -  mod/reader add display options to admin reports 
+ -  add display options to admin reports
 
 2014-03-26 (46)
- -  mod/reader add report actions to show/hide attempts and books 
+ -  add report actions to show/hide attempts and books
 
 2014-03-26 (46)
- -  mod/reader display questions in cheatsheet in the same order as the real quiz 
+ -  display questions in cheatsheet in the same order as the real quiz
 
 2014-03-26 (46)
- -  mod/reader rename forcedtimedelays and goal tables 
+ -  rename forcedtimedelays and goal tables
 
 2014-03-20 (45)
- -  mod/reader reorganize admin folder and implement user import/export 
+ -  reorganize admin folder and implement user import/export
 
 2014-03-20 (45)
- -  mod/reader move download functionality into download/renderer.php 
+ -  move download functionality into download/renderer.php
 
 2014-03-20 (45)
- -  mod/reader move reader folder into admin/nooks folder 
+ -  move reader folder into admin/nooks folder
 
 2014-03-20 (45)
- -  mod/reader fix (1) display of Total-words-all-terms, and (2) awarding of points for books that have no quizzes 
+ -  fix (1) display of Total-words-all-terms, and (2) awarding of points for books that have no quizzes
 
 2014-03-20 (45)
- -  mod/reader merge tables: noquiz+books, attempts+deleted_attempts 
+ -  merge tables: noquiz+books, attempts+deleted_attempts
 
 2014-03-20 (43)
- -  mod/reader remove forgotten debugging code that disabled the conversion of quizid field in reader_attempts table 
+ -  remove forgotten debugging code that disabled the conversion of quizid field in reader_attempts table
 
 2014-03-19 (42)
- -  mod/reader improve user verification with moodlereader.org server 
+ -  improve user verification with moodlereader.org server
 
 2014-03-18 (41)
- -  mod/reader fix unwanted number formating of username field on Reader reports 
+ -  fix unwanted number formating of username field on Reader reports
 
 2014-03-14 (40)
- -  mod/reader remove unnecessary static var  from tablelib.php 
+ -  remove unnecessary static var  from tablelib.php
 
 2014-03-14 (40)
- -  mod/reader use new core_text class instead of textlib in Moodle >= 2.6 
+ -  use new core_text class instead of textlib in Moodle >= 2.6
 
 2014-03-11 (39)
- -  mod/reader force list items on download page to be left-aligned 
+ -  force list items on download page to be left-aligned
 
 2014-03-07 (38)
- -  mod/reader remove HTML tags from 'passed' field in student reports 
+ -  remove HTML tags from 'passed' field in student reports
 
 2014-03-07 (37)
- -  mod/reader rearrange items on admin utilities screen 
+ -  rearrange items on admin utilities screen
 
 2014-03-05 (36)
- -  mod/reader add student view icon to user reports 
+ -  add student view icon to user reports
 
 2014-03-04 (35)
- -  mod/reader replace 'Show incorrect quizzes' with show/hide list 
+ -  replace 'Show incorrect quizzes' with show/hide list
 
 2014-03-03 (34)
- -  mod/reader improve styles and layout of admin area 
+ -  improve styles and layout of admin area
 
 2014-02-25 (33)
- -  mod/reader fix default mode for tabs 
+ -  fix default mode for tabs
 
 2014-02-25 (33)
- -  mod/reader fix deteection of tabtree in Moodle <= 2.5 
+ -  fix deteection of tabtree in Moodle <= 2.5
 
 2014-02-17 (32)
- -  mod/reader replace tabs.php with output->tabs 
+ -  replace tabs.php with output->tabs
 
 2014-02-17 (32)
- -  mod/reader add tabs to admin pages 
+ -  add tabs to admin pages
 
 2014-02-15 (31)
- -  mod/reader add separate forms to import and export users 
+ -  add separate forms to import and export users
 
 2014-02-15 (31)
- -  mod/reader first attempt at user admin page including export users 
+ -  first attempt at user admin page including export users
 
 2014-02-10 (30)
- -  mod/reader small optimizations to code and fixing typos in comments 
+ -  small optimizations to code and fixing typos in comments
 
 2014-02-05 (29)
- -  mod/reader small optimizations to code and fixing typos in comments 
-
-2014-02-05 (29)
- -  mod/reader improve rubostness of downlaod script against questions with no correct answer 
+ -  improve rubostness of downlaod script against questions with no correct answer
 
 2014-02-03 (28)
- -  mod/reader add check for correct answer in shortanswer questions when downloading quizzes 
+ -  add check for correct answer in shortanswer questions when downloading quizzes
 
 2014-02-03 (27)
- -  mod/reader do not import downloaded questions that have no correct answers 
+ -  do not import downloaded questions that have no correct answers
 
 2014-01-31 (26)
- -  mod/reader add utilities lib.php to hold common utilities functions 
+ -  add utilities lib.php to hold common utilities functions
 
 2014-01-28 (25)
- -  mod/reader add utilities/lib.php to share common functions 
+ -  add utilities/lib.php to share common functions
 
 2014-01-28 (25)
- -  mod/reader add utilities/lib.php to share common functions 
-
-2014-01-28 (25)
- -  mod/reader fix adding of questions answers for newly added answers 
+ -  fix adding of questions answers for newly added answers
 
 2014-01-27 (24)
- -  mod/reader small optimization of logic to calculate minimum levenshtein difference of strings 
+ -  small optimization of logic to calculate minimum levenshtein difference of strings
 
 2014-01-27 (24)
- -  mod/reader new parameter to restrict fix_bookcovers utility to only books that have been attempted 
+ -  new parameter to restrict fix_bookcovers utility to only books that have been attempted
 
 2014-01-17 (23)
- -  mod/reader new parameter to restrict fix_bookcovers utility to only books that have been attempted 
-
-2014-01-17 (23)
- -  mod/reader do not print upgrade message when upgrading via CLI 
+ -  do not print upgrade message when upgrading via CLI
 
 2014-01-17 (22)
- -  mod/reader fix illegal use of footer() during CLI upgrade 
+ -  fix illegal use of footer() during CLI upgrade
 
 2014-01-14 (21)
- -  mod/reader fix numsections in import_reader_tables utility 
+ -  fix numsections in import_reader_tables utility
 
 2014-01-14 (21)
- -  mod/reader fix numsections in import_reader_tables utility 
+ -  small optimazation of logic in import_reader_tables utility
 
 2014-01-14 (21)
- -  mod/reader small optimazation of logic in import_reader_tables utility 
-
-2014-01-14 (21)
- -  mod/reader make utilities compatible with Moodle 2.6 
-
-2014-01-14 (21)
- -  mod/reader make utilities compatible with Moodle 2.6 
+ -  make utilities compatible with Moodle 2.6
 
 2014-01-13 (20)
- -  mod/reader compact list of newly added uniqueids in import_reader_tables utility 
+ -  compact list of newly added uniqueids in import_reader_tables utility
 
 2014-01-13 (20)
- -  mod/reader fix Unknown column 'version' in 'where clause' when upgrading in Moodle 2.6 
+ -  fix Unknown column 'version' in 'where clause' when upgrading in Moodle 2.6
 
 2014-01-11 (19)
- -  mod/reader hide group filter on report page when groups are not available 
+ -  hide group filter on report page when groups are not available
 
 2014-01-10 (18)
- -  mod/reader add uniqueid in import_reader_tables utility 
+ -  add uniqueid in import_reader_tables utility
 
 2014-01-10 (18)
- -  mod/reader fix approval image in Reader reports for Moodle 2.0 
+ -  fix approval image in Reader reports for Moodle 2.0
 
 2014-01-07 (17)
- -  mod/reader fix approve image on book report for Moodle 2.0 - 2.3 
+ -  fix approve image on book report for Moodle 2.0 - 2.3
 
 2014-01-07 (17)
- -  mod/reader fix coursesections utility on Moodle 2.0 - 2.2 
+ -  fix coursesections utility on Moodle 2.0 - 2.2
 
 2014-01-07 (17)
- -  mod/reader fix coursesections utility on Moodle 2.0 - 2.2 
+ -  remove supurfluous numeric checks on numeric report filters
 
 2014-01-07 (17)
- -  mod/reader remove supurfluous numeric checks on numeric report filters 
-
-2014-01-07 (17)
- -  mod/reader prevent display of empty numeric filters on report.php pages 
+ -  prevent display of empty numeric filters on report.php pages
 
 2014-01-07 (16)
- -  mod/reader fix undeclared variable dataofuserlevels in lib.php 
+ -  fix undeclared variable dataofuserlevels in lib.php
 
 2014-01-07 (16)
- -  mod/reader fix undefined usernam in import_reader_tables utility 
+ -  fix undefined usernam in import_reader_tables utility
 
 2014-01-07 (16)
- -  mod/reader fix undefined usernam in import_reader_tables utility 
+ -  fix undefined quizzes id in db/updatelib.php in import_reader_tables utility
 
 2014-01-07 (16)
- -  mod/reader fix undefined quizzes id in db/updatelib.php in import_reader_tables utility 
+ -  fix a couple of silly typos in import_reader_tables utility
 
 2014-01-07 (16)
- -  mod/reader fix a couple of silly typos in import_reader_tables utility 
+ -  fix use of course_get_format function in Moodle 2.0 in import_reader_tables utility
 
 2014-01-07 (16)
- -  mod/reader fix use of course_get_format function in Moodle 2.0 in import_reader_tables utility 
+ -  fix user enrolment in import_reader_tables utility
 
 2014-01-07 (16)
- -  mod/reader fix user enrolment in import_reader_tables utility 
-
-2014-01-07 (16)
- -  mod/reader fix removal of duplicate quizzes in upgradelib 
+ -  fix removal of duplicate quizzes in upgradelib
 
 2014-01-06 (15)
- -  mod/reader use insert_record_raw when required in import_reader_tables utility 
+ -  use insert_record_raw when required in import_reader_tables utility
 
 2014-01-06 (15)
- -  mod/reader fix undeclared CFG variable in db/upgradelib.php 
+ -  fix undeclared CFG variable in db/upgradelib.php
 
 2014-01-06 (15)
- -  mod/reader add new utility import reader tables 
+ -  add new utility import reader tables
 
 2014-01-06 (15)
- -  mod/reader fix names of newly created sections in Reader Quizzes course 
+ -  fix names of newly created sections in Reader Quizzes course
 
 2014-01-02 (14)
- -  mod/reader allow creation of new course category on download page 
+ -  allow creation of new course category on download page
 
 2013-12-30 (13)
- -  mod/reader fix creation of new course on download page 
+ -  fix creation of new course on download page
 
 2013-12-27 (12)
- -  mod/reader remove old download files 
+ -  remove old download files
 
 2013-12-27 (11)
- -  mod/reader remove old download files 
-
-2013-12-27 (11)
- -  mod/reader category list as a tree on book download page 
-
-2013-12-27 (11)
- -  mod/reader category list as a tree on book download page 
+ -  category list as a tree on book download page
 
 2013-12-15 (10)
- -  mod/reader add DB-specific SQL statements for UPDATE with JOIN in updtae script 
+ -  add DB-specific SQL statements for UPDATE with JOIN in updtae script
 
 2013-12-15 (10)
- -  mod/reader improve ajax setting of category/course type 
+ -  improve ajax setting of category/course type
 
 2013-12-15 (10)
- -  mod/reader improve ajax setting of category/course type 
+ -  improve AJAX to select category/course/section on download page
 
 2013-12-15 (10)
- -  mod/reader improve AJAX to select category/course/section on download page 
+ -  fix category name ORDER to Ordering
 
 2013-12-15 (10)
- -  mod/reader improve AJAX to select category/course/section on download page 
+ -  improve javascript to receive and distribute AJAX results
 
 2013-12-15 (10)
- -  mod/reader fix category name ORDER to Ordering 
+ -  skip empty answers in multichoice questions
 
 2013-12-15 (10)
- -  mod/reader improve javascript to receive and distribute AJAX results 
+ -  check consistency of parrameters in download form
 
 2013-12-15 (10)
- -  mod/reader skip empty answers in multichoice questions 
+ -  use JSON to update download page dynamically with Ajax
 
 2013-12-15 (10)
- -  mod/reader check consistency of parrameters in download form 
-
-2013-12-15 (10)
- -  mod/reader use JSON to update download page dynamically with Ajax 
-
-2013-12-15 (10)
- -  mod/reader fix dowloadeder to skip faulty multichoice and multianswer questions 
+ -  fix dowloadeder to skip faulty multichoice and multianswer questions
 
 2013-12-12 (08)
- -  mod/reader add Quiz link to cheatsheet utility script 
+ -  add Quiz link to cheatsheet utility script
 
 2013-12-12 (08)
- -  mod/reader improve resilience of download to multichoice questions without answers 
+ -  improve resilience of download to multichoice questions without answers
 
 2013-12-12 (08)
- -  mod/reader improve resilience of download to multianswer questions without answers 
+ -  improve resilience of download to multianswer questions without answers
 
 2013-12-12 (08)
- -  mod/reader do not show target category/course/section when downloading books without quizzes 
+ -  do not show target category/course/section when downloading books without quizzes
 
 2013-12-12 (08)
- -  mod/reader replace use of moodle_rm with reader_xmldb_rm in update script 
+ -  replace use of moodle_rm with reader_xmldb_rm in update script
 
 2013-12-12 (08)
- -  mod/reader fix use of course_delete_module in Moodle >= 2.5 
+ -  fix use of course_delete_module in Moodle >= 2.5
 
 2013-12-12 (08)
- -  mod/reader add category type to download form 
+ -  add category type to download form
 
 2013-12-12 (08)
- -  mod/reader add preliminary JSON functionality to download page 
+ -  add preliminary JSON functionality to download page
 
 2013-12-12 (08)
- -  mod/reader remove old download scripts scripts: dl*.php 
+ -  remove old download scripts scripts: dl*.php
 
 2013-12-11 (08)
- -  mod/reader make admin tabs available to non-editing teachers so they can see the reports 
+ -  make admin tabs available to non-editing teachers so they can see the reports
 
 2013-12-11 (07)
- -  mod/reader make admin tabs available to non-editing teachers so they can see the reports 
-
-2013-12-11 (07)
- -  mod/reader add reasonable defaultsin form to add/edit new Reader activities 
+ -  add reasonable defaultsin form to add/edit new Reader activities
 
 2013-11-30 (06)
- -  mod/reader use course_delete_module instead of delete_course_module in Moodle >= 2.5 
+ -  use course_delete_module instead of delete_course_module in Moodle >= 2.5
 
 2013-11-30 (06)
- -  mod/reader use course_delete_module instead of delete_course_module in Moodle >= 2.5 
+ -  fix downloading of shortanswer questions in Moodle >= 2.5
 
 2013-11-30 (06)
- -  mod/reader fix downloading of shortanswer questions in Moodle >= 2.5 
+ -  improve utility to fix slashes to correct question category name and info too
 
 2013-11-30 (06)
- -  mod/reader improve utility to fix slashes to correct question category name and info too 
+ -  fix matching questions in cheatsheet on Moodle >= 2.5
 
 2013-11-30 (06)
- -  mod/reader fix matching questions in cheatsheet on Moodle >= 2.5 
+ -  reword some of the help messages for items on the download page
 
 2013-11-30 (06)
- -  mod/reader reword some of the help messages for items on the download page 
+ -  enable repair mode on download page
 
 2013-11-30 (06)
- -  mod/reader enable repair mode on download page 
+ -  standadize formatting and help links on item in download form page
 
 2013-11-30 (06)
- -  mod/reader standadize formatting and help links on item in download form page 
+ -  fix green tick on download page on Moodle 2.7
 
 2013-11-30 (06)
- -  mod/reader fix green tick on download page on Moodle 2.7 
+ -  fix link to cheatsheet in download page
 
 2013-11-30 (06)
- -  mod/reader fix link to cheatsheet in download page 
-
-2013-11-30 (06)
- -  mod/reader require Ordering question type in Moodle 2.0 and 2.1 
-
-2013-11-30 (06)
- -  mod/reader require Ordering question type in Moodle 2.0 and 2.1 
+ -  require Ordering question type in Moodle 2.0 and 2.1
 
 2013-11-19 (05)
- -  mod/reader fix quizid field in pre-April 2013 versions of Reader for Moodle 2.x 
+ -  fix quizid field in pre-April 2013 versions of Reader for Moodle 2.x
 
 2013-11-19 (05)
- -  mod/reader improve list styles on download page for compatability with Moodle 2.0 
+ -  improve list styles on download page for compatability with Moodle 2.0
 
 2013-11-19 (05)
- -  mod/reader improve list styles on download page for compatability with Moodle 2.0 
+ -  allow specification of target course and section when downloading quizzes
 
 2013-11-19 (05)
- -  mod/reader allow specification of target course and section when downloading quizzes 
+ -  allow selection of target course and section when downloading quizes
 
 2013-11-19 (05)
- -  mod/reader allow selection of target course and section when downloading quizes 
-
-2013-11-19 (05)
- -  mod/reader specified ordering question type in dependencies in version.php 
+ -  specified ordering question type in dependencies in version.php
 
 2013-11-19 (04)
- -  mod/reader Moodle 2.6 compatability: no need to add 'answers' field to qtype_multichoice_options when importing 
+ -  Moodle 2.6 compatability: no need to add 'answers' field to qtype_multichoice_options when importing
 
 2013-10-31 (03)
- -  mod/reader Moodle 2.6 compatability: no need to add 'answers' field to qtype_multichoice_options when importing 
+ -  fix undefined timeformat\dateformat errors for users that have been promoted
 
 2013-10-31 (03)
- -  mod/reader fix undefined timeformat\dateformat errors for users that have been promoted 
-
-2013-10-31 (03)
- -  mod/reader allow zero in value for number filters 
+ -  allow zero in value for number filters
 
 2013-10-20 (02)
- -  mod/reader micro-increment version 
+ -  micro-increment version
 
 2013-10-20 (01)
- -  mod/reader use standard Moodle tick in Moodle >= 2.6 
+ -  use standard Moodle tick in Moodle >= 2.6
 
 2013-10-20 (01)
- -  mod/reader don't pass event object explicitly to reader_checkbox_onmousedown() in download lists 
+ -  don't pass event object explicitly to reader_checkbox_onmousedown() in download lists
 
 2013-10-20 (01)
- -  mod/reader check for interactive upgrade before terminating Reader upgrade to ask a question 
+ -  check for interactive upgrade before terminating Reader upgrade to ask a question
 
 2013-10-20 (01)
- -  standardize exclusion of Extra_Points, testing and _testing_only pseudo-books 
+ -  standardize exclusion of Extra_Points, testing and _testing_only pseudo-books
 
 2013-10-20 (01)
- -  add stubs for admin attempts actions 
+ -  add stubs for admin attempts actions
 
 2013-10-19.00
- -  add stubs for admin attempts actions 
-
-2013-10-19.00
- -  standardize version.php 
- -  add readme.txt 
- -  add stubs for admin books/quizzes/users actions 
- -  add stubs for admin books/quizzes/users actions 
- -  add key to Reader navigation items for compatability with Moodle 2.0 
- -  add compatability with additional name fields in Moodle 2.6 
- -  small change to logic of JS code to create XMLHttpRequest 
- -  always display 'Admin area 2.x' 
- -  fix count of failed quizzes in Reader reports 
- -  fix renderer class name erro in Moodle 2.6 
- -  ensure 'Extar points' section and quizzes exist in 'Reader quizzes' course 
- -  add coures section and quizzes for 'Extra points' 
- -  small changes to comments 
- -  small changes to comments 
- -  add preliminary versions of awardextrapoints and awardbookpoints to usersummary report actions 
- -  first attempt to implement 'setreadinglevel' and 'setreadinggoal' actions on usersummary report 
- -  improve selection of books without quizzes for 'Who Was' publisher in usersummary report 
- -  improve selection of books without quizzes in usersummary report 
- -  add menu to select book with no quiz on usersummary report action 
- -  make reports compatible with Moodle 2.0 - 2.1 
- -  fix reports download 
- -  fix text fields in report forms 
- -  ensure report SQL params have unique names 
- -  add filters to bookdetailed/summary reports 
- -  add/remove report filters 
- -  add filters for 'userdetailed' report 
- -  improve filters for attempt aggregate fields in usersummary report 
- -  small improvement to layout of download items in Admin area 2.x 
- -  first effort to implement report filters 
- -  add new report filter for 'passed' field 
- -  remove use of 'mdl_' db prefix 
- -  move filter display to filtering.php for individual reports 
- -  move table header and col formatting to tabellib.php for individual reports 
- -  add report filters 
- -  improve supression of columns in reports 
- -  move count_sql and select_sql from report renderer.php to tablelib.php 
- -  add filtering.php and tablelib.php for each report 
- -  display rating on book reports 
- -  add individual tablelib.php for each report 
- -  remove bookratings report 
- -  add ratings to booksummary report 
- -  add new booksummary report 
- -  add new booksummary report 
- -  add new booksummary report 
- -  increment version number to make new strings avavilable 
- -  add help icons to columns in groupsummary report 
- -  add group report 
- -  add admin/index.php 
- -  Moodle.wx mod/reader remove duplication of usernames from userdetailed report 
- -  hide 'goal' column on userdetailed report if it is not needed 
- -  fix paging on userdetailed report 
- -  simplify logic to determine whether or not to display initialsbar in reports 
- -  add report folder 
- -  add new locallib.php 
- -  sort reader strings 
- -  first attempt at user summary report 
- -  replace __DIR__ with dirname(__FILE__) for compatability with PHP 5.2 
- -  first attempt to restore functionality of 'Award points for books that have no quizzes' 
- -  move download nav items into 'books' menu 
- -  fix admin downlaod class names 
- -  reorganize files in admin dir 
- -  add skeleton for Moodle 2.x navigation and settings menus 
- -  add type to various fields in mod_form.php 
- -  fix a couple of issues regarding compatability with Moodle 2.0 
- -  fix a couple of issues regarding compatability with Moodle 2.0 
- -  fix a couple of issues regarding compatability with Moodle 2.0 
- -  show memory usage when downloading files to main Reader module developer site 
- -  add 'time' field to 'reader_noquiz' table to record time of most recent update 
- -  allow easy selection of all updated items 
- -  sort question in cheatsheet by questiontext 
- -  use downloaded item time (when available) to determine whether updates are available 
- -  fix downloading of missing images in fix_bookcovers utility 
- -  fix reusing of question_answer and question_match_subquestions records when updating 
- -  fix error: Undefined index: admin/lib.php on line 2265 
- -  add detection of updated book data to download script 
- -  improve granularity of download progress bar 
- -  improve shift-click selection of items on download menu 
- -  make download script aware of new qtype_match_subquestions table in Moodle 2.6 
- -  force question categories to be within quiz context when downloading new quizzes 
- -  reduce memory usage in the admin/download.php script 
- -  improve stability of download functionality and improve reporting of download progress 
- -  add reports and downloads to navigation/settings menus 
- -  add progress bar to download screen 
- -  fix new restore of match questions in Reader quizzes 
- -  add methods to restore questions and answers when downloading new quizzes 
- -  add options for ordering, truefalse and random questions downloaded in quizzes for books 
- -  microincrement version number to cache new lang strings 
- -  remove legacy lang/en/help folder 
- -  first attempt at fuzzy import of new quizzes and questions 
- -  fix small issue with undeclared counrsecontext in upgrade script 
- -  redo download quiz to use bespoke restore functions to allow more granualar updating of individual questions 
- -  preliminary effort to install downloaded quizzes and questions using standard Moodle restore API 
- -  preliminary effort to install downloaded quizzes and questions using standard Moodle restore API 
- -  refine the code to detect and remove faulty embedded questions in Reader quizzes 
- -  refine the code to detect and remove faulty embedded questions in Reader quizzes 
- -  refine the code to detect and remove faulty embedded questions in Reader quizzes 
- -  fix sorting of dates in full student report 
- -  fix sorting of dates in admin reports 
- -  locate and remove multianswer questions that have at least one gap that has no valid answer 
- -  add phpdoc to recently added files 
- -  add renderer.php 
- -  add new 'admin' folder containing separate scripts for each admin action 
- -  repair hide.js 
- -  restore dlquizzesnoq.php to flul functionality, including new selection menu and search facility 
- -  fix small typo in upgrade script for Moodle 2.0 
- -  fix upgrade script to run on Moodle 2.0 
- -  fix error in upgrade script: undefined property questionid in db/upgradelib.php on line 2201 
- -  fix upgrade error in Moodle >= 2.5: Table 'mdl_question_match' doesn't exist 
- -  remove remnant debug line from student import code 
- -  restore basic functionality of 'Adjust scores' admin action 
- -  fix setting of uniqueid during student data import 
- -  add login check to report.php and rename 'idh' parameter to 'id' 
- -  improve reporting of sections containing quizzes/books for multiple publishers and levels 
- -  prevent 'moodle_database::get_in_or_equal() does not accept empty arrays' during upgrade 
- -  refine SQL statements used to find duplicates quiz during upgrade 
- -  remove debug message about renaming of Reader config settings 
- -  remove 'reader_' prefix from the names of all reader config settings 
- -  imrpove upgrade script to allow manual selection of quizzes for books which have unexpected quizid 
- -  add view_users.php to repository 
- -  first attempt to fix 'Adjust scores' functionality 
- -  fix row numbesr when generating Excel downloads of Reader admin reports 
- -  don't use the phrase 'since promotion' in the message to students on RL-0 
- -  add messge to show promotion date in list of attempts 
- -  add promotion date info to attempt list of progress graph on view.php 
- -  BIG cleanup of questions and question categories in Reader quizzes 
- -  improve function and format of view.php page 
- -  use REGEXP if available when matching genre in search 
- -  fix typos: avaiable -> available 
- -  exclude NULL and empty genres when extracting values from database 
- -  add genre to search form on view.php page 
- -  remove 'no data' and 'Message from your teacher' from view.php page if they are not needed 
- -  add 'sametitle' index to reader_books table, and adjust precision of 'percentgrade' field in reader_attempts table to (6,2) 
- -  fix setting of RL search parameter when search for available books/quizzes 
- -  speed up slow SQL queries in utilities/print_cheatsheet.php 
- -  add style.css and improve checking whether a student can access quiz 
- -  tidy up Reader question categories 
- -  improve detection and fixing of duplicate quizzes and books 
- -  improve SQL to detect books with wrong quizids 
- -  fix books pointing to wrong quiz 
- -  don't use deprecated get_all_sections in Moodle >= 2.3 
- -  fix books with blank names 
- -  fix fraction field value on ordering questions as they are downloaded 
- -  fix bug restoring/downloading ordering questions 
- -  fix warning about undefined admin setting reader_keepoldquizzes 
- -  first attempt to reintroduce download data for books with no quizzes 
- -  fix references to quiz field in reader_question_instances 
- -  improve fix for duplicate books and quizzes 
- -  improve fix for duplicate books and quizzes 
- -  fix duplicate books and quizzes and add new admin setting 'reader_keepoldquizzes' 
- -  fix duplicates and duplicate quizzes 
- -  fix error in new attempts: There is no question_attempt number 2 in this attempt 
- -  fix ordering of items in Reader module ordering questions already downlaoded 
- -  improve fix_missingquizzes utility to choose most recent visible quiz as main quiz for a book 
- -  fix a couple of warnings in lib.php 
- -  small improvement to css in print_cheatsheet utility 
- -  add $module->component to version.php so that Moodle checks correct install location 
- -  fix undefined index in Change Students Levels, Promotion Policy and Goals 
- -  fix reporting of results for individual groups in Summary Report by Class Group 
- -  fix undefined quizid error in Suurmary Rerport by class 
- -  fix non-object error on student summary report 
- -  use md5 instead of fraction field as id in ordering questions 
- -  fix SQL to extract logs of suspicious activity 
- -  improve robustness of export/import code 
- -  improve robustness of import/export scripts 
- -  add pix/progress images 
- -  restore reading level block graph 
- -  add phpdoc to new reader_fixcoursesections function 
- -  improve fix_cursesections utility to detect all courses used to store Reader quizzes 
- -  tidy up Reader quizzes courses other than the specified in the site admin settings 
- -  limit number of users in a course to 400 
- -  fix display of book covers on Moodle sites requiring slasharguments OFF 
- -  small fix for  variable in admin.php 
- -  fix 'Array' being displayed in form to change user levels 
- -  fix display of 'array' in username and fullname columns in students reports 
- -  convert percentgrade to floating point field; fix deleting of books/quizzes in admin.lib 
- -  Moodle.2x detect ad fix questions imported with missing parent question id 
- -  Moodle.2x detect ad fix questions imported with missing parent question id 
- -  Moodle.2x detect ad fix questions imported with missing parent question id 
- -  rename ignordate to ignoredate in new Moodle 2.4 installations and increment version 
- -  fix syntax error in lib.php 
- -  fix 'Trying to get property of non-object' in lib.php (2583) 
- -  fix undefined variable 'lastattemptdate' in view.php 
- -  pepare reader_get_stlevel_data() to receive specific  
- -  small improvements to upgrade.php comments and dlquizzes.proecss.php code layout 
- -  force fix_missingquizzes to continue if it finds a book with no quiz 
- -  replace use of deprecated backup_ids table with new reader_backup_ids 
- -  tidy up quizzes in section 0 of Reader Quizzes course with fix_coursesections utility 
- -  fix for error 'Duplicate value 0 found in column timefinish' when viewing a Reader activity 
- -  rename wrongly named variable, , to  to prevent error 'Creating default object from empty value' 
- -  remove trailing ';' on download quizzes page 
- -  fix date part of message displayed when reader activity has already closed 
- -  when downloading quizzes, reuse empty sections in Reader Quizzes course, if possible 
- -  improve detection and reporting of access before timeopen or after time close 
- -  fix error 'Incorrect number of query parameters. Expected 3, got 2' when downloading quizzes 
- -  fix errors 'undefined variable ' and 'Duplicate entry for key 'mdl_coursect_cousec_uix'' when downloading quizzes 
- -  use standard location for Reader images in moodledata, and small fixes to get quiz downloads working 
- -  move script.txt to moodledata 
- -  force upgrade on old Reader mod sites 
- -  refactor code to handle 'setbookinstances' action in admin area 
- -  add new utility fix_bookinstances 
- -  fix a couple of small warnings when adding downloading a new quiz 
- -  redo upgrade to convert persent field to percentgrade 
- -  don't distinguish upper and lower case when sorting activity names in fiax_coursesections utility 
- -  enhance fix_coursesections utility to sort activites by name within each section 
- -  allow several old field names when renaming persent/percent field to percentgrade 
- -  fix Missing argument 2 for reader_fullname_link_viewasstudent() 
- -  fix divide by zero in lib.php line 1960, and select only best attempt in reader_get_student_attempts() function 
- -  allow empty search string to match ALL students when selecting users for a report 
- -  fix view.php error about reader_lastattemptpage 
- -  add new utility to chcek question categories; fix creation of quizzes when starting a new attempt 
- -  tidy up dlquizzes_proccess.php and rename to dlquizzes_process.php 
- -  remove multiline echo statements 
- -  tidy up code to download quizzes, add utility to fix quizids in attempts 
- -  fix typo in update script 'ignoredate' -> 'ignordate' 
- -  fix typo in update script 'ignoredate' -> 'ignordate' 
- -  rename ignordate to ignoredate, and percent to attemptgrade 
- -  redo index.php in standard coding style 
- -  put 'SELECT  ...' into double quotes 
- -  never get reader_books records using id=quizid 
- -  improve fix_missingquizzes utility to detect and fix attempts with bad quiz id 
- -  join 'books' and 'attempts' tables using quizid instead of books.id 
- -  fix reference to undefined ['reader'] when viewing student reports 
- -  use 'echo' statements to produce javascript instead of bare js code 
- -  tidy up code in admin.php 
- -  add phpdocs utility, and add phpdocs to all php files 
- -  re-add admin menu option to change student level 
- -  add utilities index.php 
- -  detect and delete book covers that are empty or not image files 
- -  add new utilities: fix_coursesections and fix_bookcovers 
- -  new utility to fix dulicate books and missing quizzes 
- -  Moodle2.x mod/reader re-add several more strings used in print_string() 
- -  Moodle2.x mod/reader re-add missing string ['needtocheckupdates'] = 'This site has not checked for quiz updates in ({} days). Check now?'; 
- -  re-add 5 missing strings 
- -  use standard function to check for previous field when adding 'introformat' field 
- -  reset readerview version number 
- -  check for stale files (files from previous versions of reader module) 
- -  put unsed lang strings in separate files 
- -  standard use of {} around code blocks 
- -  Moodle 2.x mod/reader remove supurfluous white lines 
- -  Moodle 2.x mod/reader remove CVS  marker and final closing php tag 
- -  rename 'reader_publisher' and 'reader_individual_books' tables, and rename 'individualbooks' field in 'reader' table 
- -  move js, pix and utilities files to their respective subfolders 
- -  Moodle 2.x mod/reader add lang string for 'reader:addinstance' capability 
- -  Moodle 2.x mod/reader fix undeclared  array message when download quizzes 
- -  moodle.2x mod/reader fix syntax error on line 391 
- -  fix section name menu when adding new quizzes 
- -  fix a few further warnings related to publishers 
- -  fix a few warnings related to publishers 
- -  force recreation of backup_ids table if it was deleted after upgrading to Moodle 2.3 
- -  moodle.2x mod/reader fix error message related to installing new quizzes 
- -  moodle.2x mod/reader fix error message related to installing new quizzes 
- -  fix cvs/git/svn ignore files 
- -  fix cvs/git/svn ignore files 
- -  add cvs/git/svn ignore files 
- -  fix non-object errors in mod/reader/lib.php (1261, 1283, 1385) and mod/reader/admin.php 2529, 2537, 2573-77 
- -  add reader module for Moodle 2.x 
+ -  standardize version.php
+ -  add readme.txt
+ -  add stubs for admin books/quizzes/users actions
+ -  add stubs for admin books/quizzes/users actions
+ -  add key to Reader navigation items for compatability with Moodle 2.0
+ -  add compatability with additional name fields in Moodle 2.6
+ -  small change to logic of JS code to create XMLHttpRequest
+ -  always display 'Admin area 2.x'
+ -  fix count of failed quizzes in Reader reports
+ -  fix renderer class name erro in Moodle 2.6
+ -  ensure 'Extar points' section and quizzes exist in 'Reader quizzes' course
+ -  add coures section and quizzes for 'Extra points'
+ -  small changes to comments
+ -  small changes to comments
+ -  add preliminary versions of awardextrapoints and awardbookpoints to usersummary report actions
+ -  first attempt to implement 'setreadinglevel' and 'setreadinggoal' actions on usersummary report
+ -  improve selection of books without quizzes for 'Who Was' publisher in usersummary report
+ -  improve selection of books without quizzes in usersummary report
+ -  add menu to select book with no quiz on usersummary report action
+ -  make reports compatible with Moodle 2.0 - 2.1
+ -  fix reports download
+ -  fix text fields in report forms
+ -  ensure report SQL params have unique names
+ -  add filters to bookdetailed/summary reports
+ -  add/remove report filters
+ -  add filters for 'userdetailed' report
+ -  improve filters for attempt aggregate fields in usersummary report
+ -  small improvement to layout of download items in Admin area 2.x
+ -  first effort to implement report filters
+ -  add new report filter for 'passed' field
+ -  remove use of 'mdl_' db prefix
+ -  move filter display to filtering.php for individual reports
+ -  move table header and col formatting to tabellib.php for individual reports
+ -  add report filters
+ -  improve supression of columns in reports
+ -  move count_sql and select_sql from report renderer.php to tablelib.php
+ -  add filtering.php and tablelib.php for each report
+ -  display rating on book reports
+ -  add individual tablelib.php for each report
+ -  remove bookratings report
+ -  add ratings to booksummary report
+ -  add new booksummary report
+ -  add new booksummary report
+ -  add new booksummary report
+ -  increment version number to make new strings avavilable
+ -  add help icons to columns in groupsummary report
+ -  add group report
+ -  add admin/index.php
+ -  Moodle.wx mod/reader remove duplication of usernames from userdetailed report
+ -  hide 'goal' column on userdetailed report if it is not needed
+ -  fix paging on userdetailed report
+ -  simplify logic to determine whether or not to display initialsbar in reports
+ -  add report folder
+ -  add new locallib.php
+ -  sort reader strings
+ -  first attempt at user summary report
+ -  replace __DIR__ with dirname(__FILE__) for compatability with PHP 5.2
+ -  first attempt to restore functionality of 'Award points for books that have no quizzes'
+ -  move download nav items into 'books' menu
+ -  fix admin downlaod class names
+ -  reorganize files in admin dir
+ -  add skeleton for Moodle 2.x navigation and settings menus
+ -  add type to various fields in mod_form.php
+ -  fix a couple of issues regarding compatability with Moodle 2.0
+ -  fix a couple of issues regarding compatability with Moodle 2.0
+ -  fix a couple of issues regarding compatability with Moodle 2.0
+ -  show memory usage when downloading files to main Reader module developer site
+ -  add 'time' field to 'reader_noquiz' table to record time of most recent update
+ -  allow easy selection of all updated items
+ -  sort question in cheatsheet by questiontext
+ -  use downloaded item time (when available) to determine whether updates are available
+ -  fix downloading of missing images in fix_bookcovers utility
+ -  fix reusing of question_answer and question_match_subquestions records when updating
+ -  fix error: Undefined index: admin/lib.php on line 2265
+ -  add detection of updated book data to download script
+ -  improve granularity of download progress bar
+ -  improve shift-click selection of items on download menu
+ -  make download script aware of new qtype_match_subquestions table in Moodle 2.6
+ -  force question categories to be within quiz context when downloading new quizzes
+ -  reduce memory usage in the admin/download.php script
+ -  improve stability of download functionality and improve reporting of download progress
+ -  add reports and downloads to navigation/settings menus
+ -  add progress bar to download screen
+ -  fix new restore of match questions in Reader quizzes
+ -  add methods to restore questions and answers when downloading new quizzes
+ -  add options for ordering, truefalse and random questions downloaded in quizzes for books
+ -  microincrement version number to cache new lang strings
+ -  remove legacy lang/en/help folder
+ -  first attempt at fuzzy import of new quizzes and questions
+ -  fix small issue with undeclared counrsecontext in upgrade script
+ -  redo download quiz to use bespoke restore functions to allow more granualar updating of individual questions
+ -  preliminary effort to install downloaded quizzes and questions using standard Moodle restore API
+ -  preliminary effort to install downloaded quizzes and questions using standard Moodle restore API
+ -  refine the code to detect and remove faulty embedded questions in Reader quizzes
+ -  refine the code to detect and remove faulty embedded questions in Reader quizzes
+ -  refine the code to detect and remove faulty embedded questions in Reader quizzes
+ -  fix sorting of dates in full student report
+ -  fix sorting of dates in admin reports
+ -  locate and remove multianswer questions that have at least one gap that has no valid answer
+ -  add phpdoc to recently added files
+ -  add renderer.php
+ -  add new 'admin' folder containing separate scripts for each admin action
+ -  repair hide.js
+ -  restore dlquizzesnoq.php to flul functionality, including new selection menu and search facility
+ -  fix small typo in upgrade script for Moodle 2.0
+ -  fix upgrade script to run on Moodle 2.0
+ -  fix error in upgrade script: undefined property questionid in db/upgradelib.php on line 2201
+ -  fix upgrade error in Moodle >= 2.5: Table 'mdl_question_match' doesn't exist
+ -  remove remnant debug line from student import code
+ -  restore basic functionality of 'Adjust scores' admin action
+ -  fix setting of uniqueid during student data import
+ -  add login check to report.php and rename 'idh' parameter to 'id'
+ -  improve reporting of sections containing quizzes/books for multiple publishers and levels
+ -  prevent 'moodle_database::get_in_or_equal() does not accept empty arrays' during upgrade
+ -  refine SQL statements used to find duplicates quiz during upgrade
+ -  remove debug message about renaming of Reader config settings
+ -  remove 'reader_' prefix from the names of all reader config settings
+ -  imrpove upgrade script to allow manual selection of quizzes for books which have unexpected quizid
+ -  add view_users.php to repository
+ -  first attempt to fix 'Adjust scores' functionality
+ -  fix row numbesr when generating Excel downloads of Reader admin reports
+ -  don't use the phrase 'since promotion' in the message to students on RL-0
+ -  add messge to show promotion date in list of attempts
+ -  add promotion date info to attempt list of progress graph on view.php
+ -  BIG cleanup of questions and question categories in Reader quizzes
+ -  improve function and format of view.php page
+ -  use REGEXP if available when matching genre in search
+ -  fix typos: avaiable -> available
+ -  exclude NULL and empty genres when extracting values from database
+ -  add genre to search form on view.php page
+ -  remove 'no data' and 'Message from your teacher' from view.php page if they are not needed
+ -  add 'sametitle' index to reader_books table, and adjust precision of 'percentgrade' field in reader_attempts table to (6,2)
+ -  fix setting of RL search parameter when search for available books/quizzes
+ -  speed up slow SQL queries in utilities/print_cheatsheet.php
+ -  add style.css and improve checking whether a student can access quiz
+ -  tidy up Reader question categories
+ -  improve detection and fixing of duplicate quizzes and books
+ -  improve SQL to detect books with wrong quizids
+ -  fix books pointing to wrong quiz
+ -  don't use deprecated get_all_sections in Moodle >= 2.3
+ -  fix books with blank names
+ -  fix fraction field value on ordering questions as they are downloaded
+ -  fix bug restoring/downloading ordering questions
+ -  fix warning about undefined admin setting reader_keepoldquizzes
+ -  first attempt to reintroduce download data for books with no quizzes
+ -  fix references to quiz field in reader_question_instances
+ -  improve fix for duplicate books and quizzes
+ -  improve fix for duplicate books and quizzes
+ -  fix duplicate books and quizzes and add new admin setting 'reader_keepoldquizzes'
+ -  fix duplicates and duplicate quizzes
+ -  fix error in new attempts: There is no question_attempt number 2 in this attempt
+ -  fix ordering of items in Reader module ordering questions already downlaoded
+ -  improve fix_missingquizzes utility to choose most recent visible quiz as main quiz for a book
+ -  fix a couple of warnings in lib.php
+ -  small improvement to css in print_cheatsheet utility
+ -  add $module->component to version.php so that Moodle checks correct install location
+ -  fix undefined index in Change Students Levels, Promotion Policy and Goals
+ -  fix reporting of results for individual groups in Summary Report by Class Group
+ -  fix undefined quizid error in Suurmary Rerport by class
+ -  fix non-object error on student summary report
+ -  use md5 instead of fraction field as id in ordering questions
+ -  fix SQL to extract logs of suspicious activity
+ -  improve robustness of export/import code
+ -  improve robustness of import/export scripts
+ -  add pix/progress images
+ -  restore reading level block graph
+ -  add phpdoc to new reader_fixcoursesections function
+ -  improve fix_cursesections utility to detect all courses used to store Reader quizzes
+ -  tidy up Reader quizzes courses other than the specified in the site admin settings
+ -  limit number of users in a course to 400
+ -  fix display of book covers on Moodle sites requiring slasharguments OFF
+ -  small fix for  variable in admin.php
+ -  fix 'Array' being displayed in form to change user levels
+ -  fix display of 'array' in username and fullname columns in students reports
+ -  convert percentgrade to floating point field; fix deleting of books/quizzes in admin.lib
+ -  Moodle.2x detect ad fix questions imported with missing parent question id
+ -  Moodle.2x detect ad fix questions imported with missing parent question id
+ -  Moodle.2x detect ad fix questions imported with missing parent question id
+ -  rename ignordate to ignoredate in new Moodle 2.4 installations and increment version
+ -  fix syntax error in lib.php
+ -  fix 'Trying to get property of non-object' in lib.php (2583)
+ -  fix undefined variable 'lastattemptdate' in view.php
+ -  pepare reader_get_stlevel_data() to receive specific
+ -  small improvements to upgrade.php comments and dlquizzes.proecss.php code layout
+ -  force fix_missingquizzes to continue if it finds a book with no quiz
+ -  replace use of deprecated backup_ids table with new reader_backup_ids
+ -  tidy up quizzes in section 0 of Reader Quizzes course with fix_coursesections utility
+ -  fix for error 'Duplicate value 0 found in column timefinish' when viewing a Reader activity
+ -  rename wrongly named variable, , to  to prevent error 'Creating default object from empty value'
+ -  remove trailing ';' on download quizzes page
+ -  fix date part of message displayed when reader activity has already closed
+ -  when downloading quizzes, reuse empty sections in Reader Quizzes course, if possible
+ -  improve detection and reporting of access before timeopen or after time close
+ -  fix error 'Incorrect number of query parameters. Expected 3, got 2' when downloading quizzes
+ -  fix errors 'undefined variable ' and 'Duplicate entry for key 'mdl_coursect_cousec_uix'' when downloading quizzes
+ -  use standard location for Reader images in moodledata, and small fixes to get quiz downloads working
+ -  move script.txt to moodledata
+ -  force upgrade on old Reader mod sites
+ -  refactor code to handle 'setbookinstances' action in admin area
+ -  add new utility fix_bookinstances
+ -  fix a couple of small warnings when adding downloading a new quiz
+ -  redo upgrade to convert persent field to percentgrade
+ -  don't distinguish upper and lower case when sorting activity names in fiax_coursesections utility
+ -  enhance fix_coursesections utility to sort activites by name within each section
+ -  allow several old field names when renaming persent/percent field to percentgrade
+ -  fix Missing argument 2 for reader_fullname_link_viewasstudent()
+ -  fix divide by zero in lib.php line 1960, and select only best attempt in reader_get_student_attempts() function
+ -  allow empty search string to match ALL students when selecting users for a report
+ -  fix view.php error about reader_lastattemptpage
+ -  add new utility to chcek question categories; fix creation of quizzes when starting a new attempt
+ -  tidy up dlquizzes_proccess.php and rename to dlquizzes_process.php
+ -  remove multiline echo statements
+ -  tidy up code to download quizzes, add utility to fix quizids in attempts
+ -  fix typo in update script 'ignoredate' -> 'ignordate'
+ -  fix typo in update script 'ignoredate' -> 'ignordate'
+ -  rename ignordate to ignoredate, and percent to attemptgrade
+ -  redo index.php in standard coding style
+ -  put 'SELECT  ...' into double quotes
+ -  never get reader_books records using id=quizid
+ -  improve fix_missingquizzes utility to detect and fix attempts with bad quiz id
+ -  join 'books' and 'attempts' tables using quizid instead of books.id
+ -  fix reference to undefined ['reader'] when viewing student reports
+ -  use 'echo' statements to produce javascript instead of bare js code
+ -  tidy up code in admin.php
+ -  add phpdocs utility, and add phpdocs to all php files
+ -  re-add admin menu option to change student level
+ -  add utilities index.php
+ -  detect and delete book covers that are empty or not image files
+ -  add new utilities: fix_coursesections and fix_bookcovers
+ -  new utility to fix dulicate books and missing quizzes
+ -  Moodle2.x mod/reader re-add several more strings used in print_string()
+ -  Moodle2.x mod/reader re-add missing string ['needtocheckupdates'] = 'This site has not checked for quiz updates in ({} days). Check now?';
+ -  re-add 5 missing strings
+ -  use standard function to check for previous field when adding 'introformat' field
+ -  reset readerview version number
+ -  check for stale files (files from previous versions of reader module)
+ -  put unsed lang strings in separate files
+ -  standard use of {} around code blocks
+ -  Moodle 2.x mod/reader remove supurfluous white lines
+ -  Moodle 2.x mod/reader remove CVS  marker and final closing php tag
+ -  rename 'reader_publisher' and 'reader_individual_books' tables, and rename 'individualbooks' field in 'reader' table
+ -  move js, pix and utilities files to their respective subfolders
+ -  Moodle 2.x mod/reader add lang string for 'reader:addinstance' capability
+ -  Moodle 2.x mod/reader fix undeclared  array message when download quizzes
+ -  moodle.2x mod/reader fix syntax error on line 391
+ -  fix section name menu when adding new quizzes
+ -  fix a few further warnings related to publishers
+ -  fix a few warnings related to publishers
+ -  force recreation of backup_ids table if it was deleted after upgrading to Moodle 2.3
+ -  moodle.2x mod/reader fix error message related to installing new quizzes
+ -  moodle.2x mod/reader fix error message related to installing new quizzes
+ -  fix cvs/git/svn ignore files
+ -  fix cvs/git/svn ignore files
+ -  add cvs/git/svn ignore files
+ -  fix non-object errors in mod/reader/lib.php (1261, 1283, 1385) and mod/reader/admin.php 2529, 2537, 2573-77
+ -  add reader module for Moodle 2.x
