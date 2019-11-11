@@ -59,7 +59,7 @@ class reader_admin_reports_filtering extends reader_admin_filtering {
      * @return xxx
      */
     public function get_field($fieldname, $advanced)  {
-        global $CFG, $DB, $PAGE, $SESSION;
+        global $CFG, $DB;
 
         $default = $this->get_default_value($fieldname);
         switch ($fieldname) {
@@ -86,7 +86,7 @@ class reader_admin_reports_filtering extends reader_admin_filtering {
                 $template = str_replace('language', '', $template);
                 $template = preg_replace('/[^a-z]+/', ' ', $template);
 
-                // Convert $template to array.
+                // Convert $template to an array.
                 $template = explode(' ', $template);
                 $template = array_filter($template);
                 $template = array_unique($template);
