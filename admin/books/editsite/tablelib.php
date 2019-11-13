@@ -209,9 +209,12 @@ class reader_admin_books_editsite_table extends reader_admin_books_table {
     public function col_genre($row)  {
         if (empty($row->genre)) {
             return '';
-        } else {
-            return mod_reader_renderer::valid_genres($row->genre, html_writer::empty_tag('br'));
         }
+        if ($this->output->require_download()) {
+            return $row->genre;
+        }
+        // Format genres for browser
+        return mod_reader_renderer::valid_genres($row->genre, html_writer::empty_tag('br'));
     }
 
     /**
@@ -223,10 +226,13 @@ class reader_admin_books_editsite_table extends reader_admin_books_table {
     public function col_quiz($row)  {
         if (empty($row->quizid)) {
             return ''; // get_string('no')
-        } else {
-            $url = new moodle_url('/mod/quiz/view.php', array('q' => $row->quizid));
-            return html_writer::link($url, get_string('yes'), array('onclick' => 'this.target="_blank"'));
         }
+        if ($this->output->require_download()) {
+            return get_string('yes');
+        }
+        // Format link for browser
+        $url = new moodle_url('/mod/quiz/view.php', array('q' => $row->quizid));
+        return html_writer::link($url, get_string('yes'), array('onclick' => 'this.target="_blank"'));
     }
 
     /**

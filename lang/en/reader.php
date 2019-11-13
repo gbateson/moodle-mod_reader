@@ -792,6 +792,7 @@ $string['reportbookratings'] = 'Book ratings';
 $string['reportbooksummary'] = 'Books (summary)';
 $string['reportgroupsummary'] = 'Groups';
 $string['reportquiztoreader'] = 'Summary Report by Student';
+$string['reporteditsite'] = 'Books (all book data)';
 $string['reports'] = 'Reports';
 $string['reportsettings'] = 'Report settings';
 $string['reportuserdetailed'] = 'Students (full)';
