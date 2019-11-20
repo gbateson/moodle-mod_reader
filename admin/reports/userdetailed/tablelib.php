@@ -94,7 +94,7 @@ class reader_admin_reports_userdetailed_table extends reader_admin_reports_table
                                     'sortfields'  => array());
 
     /** @var actions */
-    protected $actions = array('deleteattempts', 'restoreattempts', 'updatepassed', 'updatecheated');
+    protected $actions = array('deleteattempts', 'restoreattempts', 'updatepassed', 'updatecheated', 'sendmessage');
 
     /**
      * Constructor
