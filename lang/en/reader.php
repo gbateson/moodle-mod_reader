@@ -710,6 +710,7 @@ $string['quizmanagement'] = 'Quiz management';
 $string['quizname'] = 'Quiz name';
 $string['quiznotavailable'] = 'Sorry, this quiz is not currently available to you';
 $string['quiznotavailableuntil'] = 'The quiz will not be available until {$a}';
+$string['quizonmreaderorg'] = '(Quiz available on mreader.org)';
 $string['quizopenedon'] = 'This quiz opened at {$a}';
 $string['quizsetrate'] = 'Set rate of Reader quizzes';
 $string['quizshowhide'] = 'Show / Hide Reader quizzes';

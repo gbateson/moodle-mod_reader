@@ -2,6 +2,9 @@
 Change log for mod_reader
 ========================================
 
+2019-11-27 (27)
+ - fix setting of quiz id when downloading books without quizzes on sites using the mreader.org API
+
 2019-11-20 (26)
  - add 'Send message' action to 'Students (full)' and 'Books (full)' reports
 

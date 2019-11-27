@@ -984,12 +984,16 @@ class reader_downloader {
                 }
             }
 
+            // set or override quizid, if necessary
+            if ($type==self::BOOKS_WITHOUT_QUIZZES) {
+                $book->quizid = 0; // no quiz (yet)
+            } else if ($remotesite::HAS_QUIZ_API) {
+                $book->quizid = -1; // remote quiz
+            }
+
             // update or add the $book
             $error = 0;
             if (isset($book->id)) {
-                if ($remotesite::HAS_QUIZ_API) {
-                    $book->quizid = -1; // remote quiz
-                }
                 if ($DB->update_record('reader_books', $book)) {
                     $msg = get_string('bookupdated', 'mod_reader', $titletext);
                 } else {
@@ -997,11 +1001,6 @@ class reader_downloader {
                     $error = 1;
                 }
             } else {
-                if ($remotesite::HAS_QUIZ_API) {
-                    $book->quizid = -1; // remote quiz
-                } else {
-                    $book->quizid = 0; // no quiz (yet)
-                }
                 if ($book->id = $DB->insert_record('reader_books', $book)) {
                     $msg = get_string('bookadded', 'mod_reader', $titletext);
                 } else {
@@ -1063,7 +1062,7 @@ class reader_downloader {
             $this->downloaded[$r]->items[$book->publisher]->items[$book->level]->items[$book->name] = new reader_download_item($itemid, $time);
 
             // add quiz if necessary
-            if ($remotesite::HAS_QUIZ_API || $type==self::BOOKS_WITHOUT_QUIZZES || $error) {
+            if ($type==self::BOOKS_WITHOUT_QUIZZES || $remotesite::HAS_QUIZ_API || $error) {
                 // do nothing
             } else if ($quiz = $this->add_quiz($item, $book, $r)) {
                 if ($this->quiz_slots) {
