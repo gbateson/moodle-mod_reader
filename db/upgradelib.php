@@ -4033,3 +4033,34 @@ function xmldb_reader_fix_orphan_bookattempts() {
         }
     }
 }
+
+function xmldb_reader_force_mreader_settings() {
+    $config = get_config($plugin);
+    $names = array('serverurl' => '',
+                   'serverusername' => 'mreaderusername',
+                   'serverpassword' => 'mreaderpassword',
+                   'keepoldquizzes' => '',
+                   'keeplocalbookdifficulty' => '');
+    foreach ($names as $oldname => $newname) {
+        if (isset($config->$oldname)) {
+            if ($newname && empty($config->$newname)) {
+                set_config($newname, $config->$oldname, $plugin);
+                $config->$newname = $config->oldname;
+            }
+            unset_config($oldname, $plugin);
+        }
+    }
+
+    // force use of mreader settings
+    $names = array('mreaderenable' => 1,
+                   'mreaderurl' => 'https://mreader.org',
+                   'mreadersiteid' => '',
+                   'mreadersitekey' => '',
+                   'mreaderusername' => '',
+                   'mreaderpassword' => '');
+    foreach ($names as $name => $value) {
+        if (empty($config->$name)) {
+            set_config($name, $value, $plugin);
+        }
+    }
+}

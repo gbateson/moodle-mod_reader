@@ -1497,5 +1497,9 @@ function xmldb_reader_upgrade($oldversion) {
         upgrade_mod_savepoint(true, "$newversion", 'reader');
     }
 
+    // at some point you will want to do the following
+    // xmldb_reader_force_mreader_settings()
+    // 
+
     return $result;
 }
