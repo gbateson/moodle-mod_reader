@@ -96,6 +96,9 @@ class mod_reader_admin_users_import_renderer extends mod_reader_admin_users_rend
             }
             $countfields = count($fields);
 
+            // initialize cache of users
+            $users = array();
+
             // initialize current user/book id
             $userid = 0;
             $bookid = 0;
@@ -130,7 +133,7 @@ class mod_reader_admin_users_import_renderer extends mod_reader_admin_users_rend
                     continue; // empty image !!
                 }
 
-                if (empty($userdata[$username])) {
+                if (empty($users[$username])) {
                     if ($user = $DB->get_record('user', array('username' => $username))) {
                         $users[$username] = $user;
                     } else {
@@ -258,10 +261,10 @@ class mod_reader_admin_users_import_renderer extends mod_reader_admin_users_rend
                     'ip'            => (empty($values['ip']) ? '' : $values['ip']),
                 );
 
-                $params = array('userid' => $users[$username]->id,
-                                'quizid' => $books[$image]->quizid,
-                                'timefinish' => $values['timefinish'],
-                                'deleted' => 0);
+                $params = array('userid' => $attempt->userid,
+                                'quizid' => $attempt->quizid,
+                                'timefinish' => $attempt->timefinish,
+                                'deleted' => $attempt->deleted);
                 if ($DB->record_exists('reader_attempts', $params)) {
                     echo html_writer::tag('span', $str->skipped, array('class' => 'alert-info'));
                 } else if ($DB->insert_record('reader_attempts', $attempt)) {
