@@ -25,9 +25,6 @@
  * @since      Moodle 2.0
  */
 
-/** Prevent direct access to this script */
-defined('MOODLE_INTERNAL') || die();
-
 $plugin = 'mod_reader';
 $defaults = (object)array(
     // default settings for Reader activities in courses
@@ -95,6 +92,11 @@ $settings->add($setting);
 $name = 'timelimit';
 $text = get_string($name, 'quiz');
 $help = get_string('config'.$name, 'quiz');
+
+/** Prevent direct access to this script */
+defined('MOODLE_INTERNAL') || die();
+
+
 if (class_exists('admin_setting_configduration') && method_exists('admin_setting_configduration', 'set_advanced_flag_options')) {
     // Moodle >= 2.6
     $default = array('v' => $defaults->$name, 'u' => 1, 'adv' => false);

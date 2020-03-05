@@ -33,6 +33,15 @@
  * @return void, but may pause the update if stale files are found
  */
 
+/**
+ * xmldb_reader_add_attempts_bookid
+ *
+ * @uses $DB
+ * @param $dbman
+ * @param $fixquizid
+ * @todo Finish documenting this function
+ */
+
 /** Prevent direct access to this script */
 defined('MOODLE_INTERNAL') || die();
 
@@ -40,8 +49,8 @@ defined('MOODLE_INTERNAL') || die();
  * xmldb_reader_add_attempts_bookid
  *
  * @uses $DB
- * @param $dbman
- * @param $fixquizid
+ * @param xxx $dbman
+ * @param xxx $fixquizid (optional, default=false)
  * @todo Finish documenting this function
  */
 function xmldb_reader_add_attempts_bookid($dbman, $fixquizid=false) {
@@ -1912,6 +1921,7 @@ function reader_xmldb_get_newquiz($targetcourseid, $sectionnum, $quizmodule, $qu
         'course'        => $targetcourseid,
         'section'       => $sectionnum,
         'module'        => $quizmodule->id,
+        'modname'       => 'quiz',
         'modulename'    => 'quiz',
         'add'           => 'quiz',
         'update'        => 0,
@@ -1948,18 +1958,25 @@ function reader_xmldb_get_newquiz($targetcourseid, $sectionnum, $quizmodule, $qu
     }
     set_coursemodule_visible($newquiz->coursemodule, $newquiz->visible);
 
-    // Trigger mod_updated event with information about this module.
-    $event = (object)array(
-        'courseid'   => $newquiz->course,
-        'cmid'       => $newquiz->coursemodule,
-        'modulename' => $newquiz->modulename,
-        'name'       => $newquiz->name,
-        'userid'     => $USER->id
-    );
-    if (function_exists('events_trigger_legacy')) {
-        events_trigger_legacy('mod_updated', $event);
+    // Trigger mod_created event with information about this module.
+    if (class_exists('\\core\\event\\course_module_created')) {
+        // Moodle >= 2.6
+        \core\event\course_module_created::create_from_cm($newquiz)->trigger();
     } else {
-        events_trigger('mod_updated', $event);
+        $event = (object)array(
+            'courseid'   => $newquiz->course,
+            'cmid'       => $newquiz->coursemodule,
+            'modulename' => $newquiz->modulename,
+            'name'       => $newquiz->name,
+            'userid'     => $USER->id
+        );
+        if (function_exists('events_trigger_legacy')) {
+            // Moodle 2.6 - 3.0 ... so not used here anymore
+            events_trigger_legacy('mod_created', $event);
+        } else {
+            // Moodle <= 2.5
+            events_trigger('mod_created', $event);
+        }
     }
 
     // re-enable warnings about rebuild_course_cache
@@ -2520,7 +2537,13 @@ function xmldb_reader_fix_duplicate_questions(&$dbman) {
                 break;
 
             // table does not exist - shouldn't happen !!
-            default: continue;
+            default:
+                $questiontable = '';
+                $questionfield = '';
+        }
+
+        if ($questiontable=='' || $questionfield=='') {
+            continue;
         }
 
         $select  = $questionfield.', COUNT(*) AS countrecords';
@@ -4007,6 +4030,37 @@ function xmldb_reader_fix_orphan_bookattempts() {
         }
         if ($interactive) {
             echo html_writer::end_tag('ul');
+        }
+    }
+}
+
+function xmldb_reader_force_mreader_settings() {
+    $config = get_config($plugin);
+    $names = array('serverurl' => '',
+                   'serverusername' => 'mreaderusername',
+                   'serverpassword' => 'mreaderpassword',
+                   'keepoldquizzes' => '',
+                   'keeplocalbookdifficulty' => '');
+    foreach ($names as $oldname => $newname) {
+        if (isset($config->$oldname)) {
+            if ($newname && empty($config->$newname)) {
+                set_config($newname, $config->$oldname, $plugin);
+                $config->$newname = $config->oldname;
+            }
+            unset_config($oldname, $plugin);
+        }
+    }
+
+    // force use of mreader settings
+    $names = array('mreaderenable' => 1,
+                   'mreaderurl' => 'https://mreader.org',
+                   'mreadersiteid' => '',
+                   'mreadersitekey' => '',
+                   'mreaderusername' => '',
+                   'mreaderpassword' => '');
+    foreach ($names as $name => $value) {
+        if (empty($config->$name)) {
+            set_config($name, $value, $plugin);
         }
     }
 }

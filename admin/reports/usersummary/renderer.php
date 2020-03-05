@@ -45,6 +45,13 @@ require_once($CFG->dirroot.'/mod/reader/admin/reports/usersummary/filtering.php'
 class mod_reader_admin_reports_usersummary_renderer extends mod_reader_admin_reports_renderer {
     public $mode = 'usersummary';
 
+    /**
+     * available_extrapoints
+     *
+     * @uses $DB
+     * @return xxx
+     * @todo Finish documenting this function
+     */
     public function available_extrapoints() {
         global $DB;
         $options = array();

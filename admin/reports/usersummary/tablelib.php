@@ -16,15 +16,29 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
+ * mod/reader/admin/reports/usersummary/tablelib.php
+ *
+ * @package    mod
+ * @subpackage reader
+ * @copyright  2013 Gordon Bateson (gordon.bateson@gmail.com)
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @since      Moodle 2.0
+ */
+
+/**
  * Create a table to display attempts at a Reader activity
  *
  * @package   mod-reader
  * @copyright 2013 Gordon Bateson <gordon.bateson@gmail.com>
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-defined('MOODLE_INTERNAL') || die();
 
 // get parent class
+
+/** Prevent direct access to this script */
+defined('MOODLE_INTERNAL') || die();
+
+/** Include required files */
 require_once($CFG->dirroot.'/mod/reader/admin/reports/tablelib.php');
 
 /**
@@ -605,34 +619,6 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
     }
 
     /**
-     * display_action_settings_sendmessage
-     *
-     * @param string $action
-     * @return xxx
-     */
-    public function display_action_settings_sendmessage($action) {
-        $settings = '';
-
-        $name = $action.'subject';
-        $value = optional_param($name, '', PARAM_TEXT);
-        $settings .= get_string('subject', 'forum').': ';
-        $params = array('name' => $name, 'value' => $value, 'type' => 'text', 'size' => 44);
-        $params += $this->display_action_onclickchange($name, 'onchange');
-        $settings .= html_writer::empty_tag('input', $params);
-
-        $settings .= html_writer::empty_tag('br');
-
-        $name = $action.'message';
-        $value = optional_param($name, '', PARAM_TEXT);
-        $settings .= get_string('message', 'forum').': ';
-        $params = array('name' => $name, 'rows' => 2, 'cols' => 44);
-        $params += $this->display_action_onclickchange($name, 'onchange');
-        $settings .= html_writer::tag('textarea', $value, $params);
-
-        return $this->display_action_settings($action, $settings);
-    }
-
-    /**
      * display_action_settings_awardextrapoints
      *
      * @param string $action
@@ -838,55 +824,6 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
         $field = 'goal';
         $value = optional_param($action, null, PARAM_INT);
         $this->execute_action_setlevelfield($action, $field, $value);
-    }
-
-    /**
-     * execute_action_sendmessage
-     *
-     * @param string $action
-     * @return xxx
-     */
-    public function execute_action_sendmessage($action) {
-        global $DB, $USER;
-
-        // get subject
-        $subject = optional_param($action.'subject', '', PARAM_TEXT);
-        if (trim($subject)=='') {
-            return false; // no subject
-        }
-
-        $message = optional_param($action.'message', '', PARAM_TEXT);
-        if (trim($message)=='') {
-            return false; // no message
-        }
-
-        // get selected userids
-        if ($userids = $this->get_selected('userid')) {
-            list($select, $params) = $this->select_sql_users();
-            $userids = array_intersect($userids, $params);
-        }
-
-        if (empty($userids)) {
-            return false; // no (valid) userids selected
-        }
-
-        // send message to selected users userids
-        $sentmessage = 0;
-        foreach ($userids as $userid) {
-            if ( ! $user = $DB->get_record('user', array('id' => $userid))) {
-                continue; // invalid userid - shouldn't happen !!
-            }
-            if (! email_to_user($user, $USER, $subject, $message)) {
-                continue; // email problems - shouldn't happen !!
-            }
-            $sentmessage++;
-        }
-
-        // send confirmation message to browser
-        if ($sentmessage) {
-            $sentmessage = get_string('sentmessage', 'mod_reader', $sentmessage);
-            echo $this->output->notification($sentmessage, 'notifysuccess');
-        }
     }
 
     /**

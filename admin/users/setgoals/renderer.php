@@ -122,6 +122,21 @@ class mod_reader_admin_users_setgoals_renderer extends mod_reader_admin_users_re
         $form->display();
     }
 
+    /**
+     * add_goal
+     *
+     * @uses $DB
+     * @param xxx $ids (passed by reference)
+     * @param xxx $enabled
+     * @param xxx $requiregoal (optional, default=0)
+     * @param xxx $goal (optional, default=0)
+     * @param xxx $requirelevel (optional, default=0)
+     * @param xxx $level (optional, default=0)
+     * @param xxx $requiregroupid (optional, default=0)
+     * @param xxx $groupid (optional, default=0)
+     * @return xxx
+     * @todo Finish documenting this function
+     */
     function add_goal(&$ids, $enabled, $requiregoal=0, $goal=0, $requirelevel=0, $level=0, $requiregroupid=0, $groupid=0) {
         global $DB;
 

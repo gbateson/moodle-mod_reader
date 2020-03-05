@@ -1,4 +1,5 @@
 <?php
+
 // This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -15,6 +16,16 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
+ * mod/reader/classes/event/course_module_viewed.php
+ *
+ * @package    mod
+ * @subpackage reader
+ * @copyright  2013 Gordon Bateson (gordon.bateson@gmail.com)
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @since      Moodle 2.0
+ */
+
+/**
  * This file contains an event for when a reader activity is viewed.
  *
  * @package    mod_reader
@@ -24,7 +35,7 @@
 
 namespace mod_reader\event;
 
-/** prevent direct access to this script */
+/** Prevent direct access to this script */
 defined('MOODLE_INTERNAL') || die();
 
 /**

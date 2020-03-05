@@ -16,7 +16,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * mod/reader/admin/users/renderer.php
+ * mod/reader/admin/users/export/renderer.php
  *
  * @package    mod
  * @subpackage reader
@@ -98,7 +98,36 @@ class mod_reader_admin_users_export_renderer extends mod_reader_admin_users_rend
                 $quizid = 0;
                 $timefinish = 0;
 
+                $fields = null;
                 foreach ($attempts as $attempt) {
+
+                    // determine $fields to export (first time only)
+                    if ($fields === null) {
+
+                        // These fields are not exported.
+                        $fields = array('id', 'readerid', 'userid', 'bookid', 'quizid', 'layout');
+
+                        // Get names of fields to be exported (i.e. all fields except those above).
+                        $fields = array_diff(array_keys(get_object_vars($attempt)), $fields);
+
+                        // Put "username" first.
+                        $i = array_search('username', $fields);
+                        if (is_numeric($i)) {
+                            unset($fields[$i]);
+                        }
+                        array_unshift($fields, 'username');
+
+                        // $fields now holds something like the following:
+                        // 'username', 'uniqueid', 'attempt',
+                        // 'sumgrades', 'percentgrade', 'passed',
+                        // 'credit', 'cheated', 'deleted',
+                        // 'timestart', 'timefinish', 'timemodified',
+                        // 'currentpage', 'state'
+                        // 'bookrating', 'ip', 'image', 'currentlevel'
+
+                        // Print list of field names (on first line of export file)
+                        echo implode(',', $fields)."\n";
+                    }
 
                     // ignore lower uniqueids with same userid/quizid/timefinish
                     if ($attempt->userid==$userid && $attempt->quizid==$quizid && $attempt->timefinish==$timefinish) {
@@ -112,23 +141,24 @@ class mod_reader_admin_users_export_renderer extends mod_reader_admin_users_rend
                     // remove trailing zeroes and periods from percent grade
                     $attempt->percentgrade = preg_replace('/(\.0)?0$/', '', $attempt->percentgrade);
 
-                    // set "preview" from "credit" field
-                    // and convert "passed" to a string
-                    $attempt->preview = ($attempt->credit ? '1' : '0');
-                    $attempt->passed = ($attempt->cheated ? 'cheated' : ($attempt->passed ? 'true' : 'false'));
+                    // Print $fields from this $attempt
+                    foreach ($fields as $i => $field) {
+                        if ($i) {
+                            echo ',';
+                        }
+                        if (isset($attempt->$field)) {
+                            echo $attempt->$field;
+                        } else {
+                            echo ''; // shouldn't happen !!
+                        }
+                    }
+                    echo "\n";
 
-                    echo $attempt->username.','.
-                         $attempt->uniqueid.','.
-                         $attempt->attempt.','.
-                         $attempt->sumgrades.','.
-                         $attempt->percentgrade.','.
-                         $attempt->bookrating.','.
-                         $attempt->ip.','.
-                         $attempt->image.','.
-                         $attempt->timefinish.','.
-                         $attempt->passed.','.
-                         $attempt->percentgrade.','.
-                         $attempt->currentlevel."\n";
+                    // Legacy field order:
+                    // 'username', 'uniqueid', 'attempt',
+                    // 'sumgrades', 'percentgrade', 'passed',
+                    // 'timefinish', 'percentgrade'
+                    // 'bookrating', 'ip', 'image', 'currentlevel'
                 }
             }
         } else {

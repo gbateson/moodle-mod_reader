@@ -25,6 +25,16 @@
  * @since      Moodle 2.0
  */
 
+/**
+ * reader_remotesite_moodlereadernet
+ *
+ * @copyright  2013 Gordon Bateson (gordon.bateson@gmail.com)
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @since      Moodle 2.0
+ * @package    mod
+ * @subpackage reader
+ */
+
 /** Prevent direct access to this script */
 defined('MOODLE_INTERNAL') || die();
 
@@ -104,6 +114,42 @@ class reader_remotesite_moodlereadernet extends reader_remotesite {
      */
     public function get_publishers_params($type, $itemids) {
         return array('a' => 'publishers', 'login' => $this->username, 'password' => $this->password);
+    }
+
+    /**
+     * download_bookcovers
+     *
+     * @param xxx $itemids
+     * @return xxx
+     * @todo Finish documenting this function
+     */
+    public function download_bookcovers($itemids) {
+        $items = array();
+        $params = array('a' => 'quizzes',
+                        'login' => $this->username,
+                        'password' => $this->password);
+        $xml_file = new moodle_url($this->baseurl.'/index.php', $params);
+
+        $params = array('password' => $this->password,
+                        'quiz' => $itemids,
+                        'upload' => 'true');
+        $xml = reader_file($xml_file, $params);
+
+        $xml = xmlize($xml);
+        if (isset($xml['myxml']['#']['item'])) {
+            $item = &$xml['myxml']['#']['item'];
+            $i = 0;
+            while (isset($item["$i"])) {
+                if (isset($item["$i"]['@']['id']) && isset($item["$i"]['@']['image'])) {
+                    $items[] = (object)array(
+                        'id' => $item["$i"]['@']['id'],
+                        'image' => $item["$i"]['@']['image']
+                    );
+                }
+                $i++;
+            }
+        }
+        return $items;
     }
 
     /**
@@ -218,8 +264,16 @@ class reader_remotesite_moodlereadernet extends reader_remotesite {
                     continue;
                 }
 
-                // transfer "title" field
-                $item['@']['title'] = $item['#'];
+                // convert main value from "path" to "title"
+                if ($pos = strrpos($item['#'], '/')) {
+                    $item['#'] = substr($item['#'], $pos + 1);
+                    $item['#'] = strtr($item['#'], array('_' => ' ', '.xml.gz' => ''));
+                }
+
+                // populate "title" field, if necessary
+                if (empty($item['@']['title'])) {
+                    $item['@']['title'] = $item['#'];
+                }
 
                 // rename deprecated fields
                 $fields = array('length' => 'points');

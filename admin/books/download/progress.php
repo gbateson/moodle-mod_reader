@@ -25,6 +25,16 @@
  * @since      Moodle 2.0
  */
 
+/**
+ * reader_download_progress_task
+ *
+ * @copyright  2013 Gordon Bateson (gordon.bateson@gmail.com)
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @since      Moodle 2.0
+ * @package    mod
+ * @subpackage reader
+ */
+
 /** Prevent direct access to this script */
 defined('MOODLE_INTERNAL') || die();
 

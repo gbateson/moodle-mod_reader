@@ -28,6 +28,8 @@
 /** Prevent direct access to this script */
 defined('MOODLE_INTERNAL') || die();
 
+
+
 define('READER_GRADEHIGHEST', '1');
 define('READER_GRADEAVERAGE', '2');
 define('READER_ATTEMPTFIRST', '3');
@@ -2772,11 +2774,17 @@ function reader_get_student_attempts($userid, $reader, $allreaders = false, $boo
     $select = 'ra.id, ra.uniqueid, ra.readerid, ra.userid, ra.bookid, ra.quizid, ra.attempt, '.
               'ra.sumgrades, ra.percentgrade, ra.passed, ra.credit, ra.cheated, ra.deleted, '.
               'ra.timefinish, ra.state, ra.bookrating, rb.name, rb.publisher, rb.level, '.
-              'rb.points, rb.image, rb.difficulty, rb.words, rb.sametitle';
+              'rb.points, rb.image, rb.difficulty, rb.words, rb.sametitle, '.
+              '(CASE WHEN ra.state = :finished   THEN 4 '.
+                    'WHEN ra.state = :abandoned  THEN 3 '.
+                    'WHEN ra.state = :overdue    THEN 2 '.
+                    'WHEN ra.state = :inprogress THEN 1 ELSE 0 END) AS sortorder';
     $from   = '{reader_attempts} ra LEFT JOIN {reader_books} rb ON ra.bookid = rb.id';
     $where  = 'ra.userid = :userid AND ra.deleted = :deleted AND ra.timefinish > :ignoredate';
-    $order  = 'ra.timefinish';
-    $params = array('userid' => $userid, 'deleted' => 0, 'ignoredate' => $ignoredate);
+    $order  = 'sortorder DESC, ra.timefinish ASC';
+    $params = array('finished' => 'finished', 'abandoned' => 'abandoned',
+                    'overdue' => 'overdue', 'inprogress' => 'inprogress', 
+                    'userid' => $userid, 'deleted' => 0, 'ignoredate' => $ignoredate);
     if (! $allreaders) {
         $where .= ' AND ra.readerid = :readerid';
         $params['readerid'] = $reader->id;
@@ -2792,6 +2800,7 @@ function reader_get_student_attempts($userid, $reader, $allreaders = false, $boo
 
     $returndata = array();
     $bestattemptids = array();
+    $bookpercentmaxgrade = array();
 
     // these are the grand totals for ALL attempts
     $totals = array();
@@ -2849,15 +2858,26 @@ function reader_get_student_attempts($userid, $reader, $allreaders = false, $boo
         if (isset($bookpercentmaxgrade[$attempt->bookid])) {
             list($totals['bookpercent'], $totals['bookmaxgrade']) = $bookpercentmaxgrade[$attempt->bookid];
         } else {
-            $totalgrade = 0;
-            $answersgrade = $DB->get_records ('reader_question_instances', array('quiz' => $attempt->quizid)); // Count Grades (TotalGrade)
-            foreach ($answersgrade as $answersgrade_) {
-                $totalgrade += $answersgrade_->grade;
+            if ($attempt->quizid > 0) {
+                $totalgrade = 0;
+                if ($instances = $DB->get_records ('reader_question_instances', array('quiz' => $attempt->quizid))) {
+                    foreach ($instances as $instance) {
+                        $totalgrade += $instance->grade;
+                    }
+                }
+            } else {
+                $totalgrade = intval($attempt->percentgrade);
             }
-            //$totals['bookpercent']  = round(($attempt->sumgrades/$totalgrade) * 100, 2).'%';
-            $totals['bookpercent']  = round($attempt->percentgrade).'%';
+            if (is_numeric($attempt->percentgrade)) {
+                $totals['bookpercent']  = round($attempt->percentgrade).'%';
+            } else if (is_numeric($attempt->sumgrades) && $totalgrade) {
+                $totals['bookpercent']  = round(($attempt->sumgrades/$totalgrade) * 100, 2).'%';
+            } else {
+                $totals['bookpercent']  = '0%';
+            }
             $totals['bookmaxgrade'] = $totalgrade * $bookpoints;
-            $bookpercentmaxgrade[$attempt->bookid] = array($totals['bookpercent'], $totals['bookmaxgrade']);
+            $bookpercentmaxgrade[$attempt->bookid] = array($totals['bookpercent'],
+                                                           $totals['bookmaxgrade']);
         }
 
         if ($attempt->credit == 1) {

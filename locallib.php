@@ -16,6 +16,16 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
+ * mod/reader/locallib.php
+ *
+ * @package    mod
+ * @subpackage reader
+ * @copyright  2013 Gordon Bateson (gordon.bateson@gmail.com)
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @since      Moodle 2.0
+ */
+
+/**
  * Library of internal classes and functions for module reader
  *
  * All the reader specific functions, needed to implement the module

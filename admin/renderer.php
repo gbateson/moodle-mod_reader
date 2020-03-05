@@ -55,7 +55,7 @@ class mod_reader_admin_renderer extends mod_reader_renderer {
     /**
      * require_download
      */
-    protected function require_download() {
+    public function require_download() {
         if ($this->download_param_name=='') {
             return false;
         } else {

@@ -111,7 +111,18 @@ if ($version = optional_param('version', 0, PARAM_INT)) {
     echo html_writer::start_tag('form', array('action' => $FULLME, 'method' => 'post'));
     echo html_writer::start_tag('div');
 
-    // extract and format versions from Reader upgrade script
+    $versions = array();
+
+    $contents = file_get_contents($CFG->dirroot.'/mod/reader/version.php');
+    if (preg_match('/^\$plugin->version *= *(\d{4})(\d{2})(\d{2})(\d{2});/m', $contents, $matches)) {
+        $yy = $matches[1];
+        $mm = $matches[2];
+        $dd = $matches[3];
+        $vv = intval($matches[4]);
+        $version = "$yy$mm$dd$vv";
+        $versions[$version] = date($dateformat, mktime(0,0,0,$mm,$dd,$yy)).($vv==0 ? '' : " ($vv)");
+    }
+
     $contents = file_get_contents($CFG->dirroot.'/mod/reader/db/upgrade.php');
     preg_match_all('/(?<=\$newversion = )(\d{4})(\d{2})(\d{2})(\d{2})(?=;)/', $contents, $matches);
     $i_max = count($matches[0]);

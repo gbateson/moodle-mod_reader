@@ -98,13 +98,13 @@ if (! $reader_usecourse = get_config('mod_reader', 'usecourse')) {
 }
 
 // get reader course activity contexts
+$modulecontexts = null;
 if ($reader_usecourse) {
-    $coursecontext  = reader_get_context(CONTEXT_COURSE, $reader_usecourse);
-    $select         = '(contextlevel = ? AND path = ?) OR (contextlevel = ? AND '.$DB->sql_like('path', '?').')';
-    $params         = array(CONTEXT_COURSE, $coursecontext->path, CONTEXT_MODULE, $coursecontext->path.'/%');
-    $modulecontexts = $DB->get_records_select('context', $select, $params);
-} else {
-    $modulecontexts = null;
+    if ($coursecontext  = reader_get_context(CONTEXT_COURSE, $reader_usecourse)) {
+        $select         = '(contextlevel = ? AND path = ?) OR (contextlevel = ? AND '.$DB->sql_like('path', '?').')';
+        $params         = array(CONTEXT_COURSE, $coursecontext->path, CONTEXT_MODULE, $coursecontext->path.'/%');
+        $modulecontexts = $DB->get_records_select('context', $select, $params);
+    }
 }
 
 // get question categories for Reader course activities

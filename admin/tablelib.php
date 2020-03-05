@@ -16,6 +16,16 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
+ * mod/reader/admin/tablelib.php
+ *
+ * @package    mod
+ * @subpackage reader
+ * @copyright  2013 Gordon Bateson (gordon.bateson@gmail.com)
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @since      Moodle 2.0
+ */
+
+/**
  * Create a table to display records for a Reader activity
  *
  * @package   mod-reader
@@ -23,9 +33,12 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+// get parent classes (table_sql and flexible_table)
+
+/** Prevent direct access to this script */
 defined('MOODLE_INTERNAL') || die();
 
-// get parent classes (table_sql and flexible_table)
+/** Include required files */
 require_once($CFG->dirroot.'/lib/formslib.php');
 require_once($CFG->dirroot.'/lib//tablelib.php');
 

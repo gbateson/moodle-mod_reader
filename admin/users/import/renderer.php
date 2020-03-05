@@ -16,7 +16,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * mod/reader/admin/users/renderer.php
+ * mod/reader/admin/users/import/renderer.php
  *
  * @package    mod
  * @subpackage reader
@@ -83,13 +83,28 @@ class mod_reader_admin_users_import_renderer extends mod_reader_admin_users_rend
                 'error'   => get_string('error')
             );
 
+            // initialize field names
+            if (preg_match('/^username,[a-z,]+$/', $lines[0])) {
+                $fields = explode(',', array_shift($lines));
+            } else {
+                $fields = array(
+                    // default fields names (until Feb 2020)
+                    'username', 'uniqueid', 'attempt', 'sumgrades',
+                    'percentgrade', 'bookrating', 'ip', 'image',
+                    'timefinish', 'passed', 'percentgrade', 'currentlevel'
+                );
+            }
+            $countfields = count($fields);
+
+            // initialize cache of users
+            $users = array();
+
             // initialize current user/book id
             $userid = 0;
             $bookid = 0;
 
             // process $lines
-            foreach ($lines as $line) {
-
+            foreach ($lines as $i => $line) {
 
                 // skip empty lines
                 $line = trim($line);
@@ -97,26 +112,19 @@ class mod_reader_admin_users_import_renderer extends mod_reader_admin_users_rend
                     continue;
                 }
 
-                // make sure we have exactly 11 commas (=12 columns)
-                if (substr_count($line, ',') != 11) {
-                    echo get_string('skipline', 'mod_reader', $line).html_writer::empty_tag('br');
+                $line = explode(',', $line);
+
+                // make sure we have exact number of fields
+                if (count($line) != $countfields) {
+                    echo get_string('skipline', 'mod_reader', ($i + 1)).html_writer::empty_tag('br');
                     continue; // unexpected format - shouldn't happen !!
                 }
 
                 // extract fields
                 $values = array();
-                list($values['username'],
-                     $values['uniqueid'],
-                     $values['attempt'],
-                     $values['sumgrades'],
-                     $values['percentgrade'],
-                     $values['bookrating'],
-                     $values['ip'],
-                     $values['image'],
-                     $values['timefinish'],
-                     $values['passed'],
-                     $values['percentgrade'],
-                     $values['currentlevel']) = explode(',', $line);
+                foreach ($fields as $i => $field) {
+                    $values[$field] = $line[$i];
+                }
 
                 if (! $username = $values['username']) {
                     continue; // empty username !!
@@ -125,7 +133,7 @@ class mod_reader_admin_users_import_renderer extends mod_reader_admin_users_rend
                     continue; // empty image !!
                 }
 
-                if (empty($userdata[$username])) {
+                if (empty($users[$username])) {
                     if ($user = $DB->get_record('user', array('username' => $username))) {
                         $users[$username] = $user;
                     } else {
@@ -142,11 +150,22 @@ class mod_reader_admin_users_import_renderer extends mod_reader_admin_users_rend
                     $books[$image] = $DB->get_record('reader_books', array('image' => $image));
                 }
                 if (empty($books[$image])) {
-                    $books[$image] = (object)array('id' => 0, 'quizid' => 0); // no such book ?!
-                    echo get_string('booknotfound', 'mod_reader', $image).html_writer::empty_tag('br');
+                    $books[$image] = (object)array(
+                        'id' => -1,
+                        'quizid' => 0,
+                        'name' => get_string('booknotfound', 'mod_reader', $image)
+                    );
+                    if ($bookid) {
+                        echo html_writer::end_tag('ul'); // end attempts
+                        echo html_writer::end_tag('li'); // end book
+                    }
+                    echo html_writer::start_tag('li', array('class' => 'importbook')); // start book
+                    echo html_writer::tag('span', $books[$image]->name, array('class' => 'importbookname'));
+                    echo html_writer::start_tag('ul', array('class' => 'importattempts')); // start attempt list
+                    $bookid = -1;
                 }
 
-                if (empty($books[$image]->id) || empty($books[$image]->quizid)) {
+                if (empty($books[$image]->id) || $books[$image]->id < 0 || empty($books[$image]->quizid)) {
                     continue;
                 }
 
@@ -186,14 +205,37 @@ class mod_reader_admin_users_import_renderer extends mod_reader_admin_users_rend
 
                 echo html_writer::start_tag('li', array('class' => 'importattempt')); // start attempt
 
-                switch ($values['passed']) {
-                    case 'true': $strpassed = get_string('passed', 'mod_reader'); break;
-                    case 'false': $strpassed = get_string('failed', 'mod_reader'); break;
-                    case 'cheated': $strpassed = get_string('credit', 'mod_reader'); break;
-                    default: $strpassed = $values['passed'];
+                // format "timefinish" message
+                switch (true) {
+
+                    case empty($values['passed']):
+                    case $values['passed'] == '0':
+                    case $values['passed'] == 'false':
+                        $values['passed'] = 0;
+                        $strpassed = get_string('failed', 'mod_reader');
+                        break;
+
+                    case '1':
+                    case 'true':
+                        $values['passed'] = 1;
+                        $strpassed = get_string('passed', 'mod_reader');
+                        break;
+
+                    case 'cheated':
+                        $values['passed'] = 0;
+                        $values['cheated'] = 1;
+                        $strpassed = get_string('credit', 'mod_reader');
+                        break;
+
+                    default:
+                        $strpassed = $values['passed'];
                 }
                 $timefinish = userdate($values['timefinish'])." ($strpassed)";
                 echo html_writer::tag('span', $timefinish, array('class' => 'importattempttime')).' ';
+
+                if (empty($values['state'])) {
+                    $values['state'] = (empty($values['timefinish']) ? 'inprogress' : 'finished');
+                }
 
                 $attempt = (object)array(
                     // the "uniqueid" field is in fact an "id" from the "question_usages" table
@@ -202,33 +244,33 @@ class mod_reader_admin_users_import_renderer extends mod_reader_admin_users_rend
                     'userid'        => $users[$username]->id,
                     'bookid'        => $books[$image]->id,
                     'quizid'        => $books[$image]->quizid,
-                    'attempt'       => $values['attempt'],
-                    'layout'        => 0, // $values['layout']
-                    'state'         => ($values['timefinish'] ? 'finished' : 'inprogress'),
-                    'currentpage'   => 0,
-                    'sumgrades'     => $values['sumgrades'],
-                    'percentgrade'  => $values['percentgrade'],
-                    'passed'        => ($values['passed']=='true' ? 1 : 0),
-                    'cheated'       => ($values['passed']=='cheated' ? 1 : 0),
-                    'credit'        => ($values['preview']=='1' ? 1 : 0),
-                    'deleted'       => 0, // because we only export live attempts
-                    'timestart'     => $values['timestart'],
-                    'timefinish'    => $values['timefinish'],
-                    'timemodified'  => $values['timemodified'],
-                    'bookrating'    => $values['bookrating'],
-                    'ip'            => $values['ip'],
+                    'attempt'       => (empty($values['attempt']) ? 0 : $values['attempt']),
+                    'layout'        => (empty($values['layout']) ? '' : $values['layout']),
+                    'state'         => (empty($values['state']) ? '' : $values['state']),
+                    'currentpage'   => (empty($values['currentpage']) ? 0 : $values['currentpage']),
+                    'sumgrades'     => (empty($values['sumgrades']) ? 0 : $values['sumgrades']),
+                    'percentgrade'  => (empty($values['percentgrade']) ? 0 : $values['percentgrade']),
+                    'passed'        => (empty($values['passed']) ? 0 : 1),
+                    'credit'        => (empty($values['credit']) ? 0 : 1),
+                    'cheated'       => (empty($values['cheated']) ? 0 : 1),
+                    'deleted'       => (empty($values['deleted']) ? 0 : 1),
+                    'timestart'     => (empty($values['timestart']) ? 0 : $values['timestart']),
+                    'timefinish'    => (empty($values['timefinish']) ? 0 : $values['timefinish']),
+                    'timemodified'  => (empty($values['timemodified']) ? 0 : $values['timemodified']),
+                    'bookrating'    => (empty($values['bookrating']) ? 0 : $values['bookrating']),
+                    'ip'            => (empty($values['ip']) ? '' : $values['ip']),
                 );
 
-                $params = array('userid' => $users[$username]->id,
-                                'quizid' => $books[$image]->quizid,
-                                'timefinish' => $values['timefinish'],
-                                'deleted' => 0);
+                $params = array('userid' => $attempt->userid,
+                                'quizid' => $attempt->quizid,
+                                'timefinish' => $attempt->timefinish,
+                                'deleted' => $attempt->deleted);
                 if ($DB->record_exists('reader_attempts', $params)) {
-                    echo html_writer::tag('span', $str->skipped, array('class' => 'importskipped'));
+                    echo html_writer::tag('span', $str->skipped, array('class' => 'alert-info'));
                 } else if ($DB->insert_record('reader_attempts', $attempt)) {
-                    echo html_writer::tag('span', $str->success, array('class' => 'importsuccess'));
+                    echo html_writer::tag('span', $str->success, array('class' => 'alert-success'));
                 } else {
-                    echo html_writer::tag('span', $str->failure, array('class' => 'importfailure'));
+                    echo html_writer::tag('span', $str->failure, array('class' => 'alert-danger'));
                     print_object($attempt);
                 }
                 echo html_writer::end_tag('li'); // end attempt

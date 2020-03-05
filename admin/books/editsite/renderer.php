@@ -16,7 +16,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * mod/reader/admin/books/renderer.php
+ * mod/reader/admin/books/editsite/renderer.php
  *
  * @package    mod
  * @subpackage reader
@@ -45,6 +45,9 @@ require_once($CFG->dirroot.'/mod/reader/admin/books/editsite/filtering.php');
 class mod_reader_admin_books_editsite_renderer extends mod_reader_admin_books_renderer {
 
     public $mode = 'editsite';
+
+    /** the name of the form element that, if present, signifies content is to be downloaded */
+    protected $download_param_name = 'download';
 
     /**
      * get_tab

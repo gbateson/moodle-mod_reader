@@ -123,6 +123,10 @@ class mod_reader_admin_books_download_renderer extends mod_reader_admin_books_re
                 $serverpassword = get_config($plugin, 'serverpassword');
 
                 if ($config = reader_remotesite_mreaderorg::get_config($serverusername, $serverpassword)) {
+                    if (isset($config->errortext) && $config->errortext) {
+                        return $this->heading($config->errortext, '3');
+                        // Oops - shouldn't happen !!
+                    }
                     $mreaderurl = $config->url;
                     $mreadersiteid = $config->siteid;
                     $mreadersitekey = $config->sitekey;

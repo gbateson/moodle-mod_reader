@@ -52,6 +52,13 @@ class reader_download_item {
     /** the last modified/updated time */
     public $time = 0;
 
+    /**
+     * __construct
+     *
+     * @param xxx $id
+     * @param xxx $time
+     * @todo Finish documenting this function
+     */
     public function __construct($id, $time) {
         $this->id  = $id;
         $this->time = $time;

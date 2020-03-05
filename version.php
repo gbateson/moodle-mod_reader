@@ -26,7 +26,11 @@
  */
 
 // prevent direct access to this script
+
+/** Prevent direct access to this script */
 defined('MOODLE_INTERNAL') || die();
+
+
 
 if (empty($CFG)) {
     global $CFG;
@@ -38,10 +42,10 @@ if (isset($CFG->yui3version) && version_compare($CFG->yui3version, '3.15.0') < 0
 
 $plugin->cron      = 3600;
 $plugin->component = 'mod_reader';
-$plugin->maturity  = MATURITY_BETA; // ALPHA=50, BETA=100, RC=150, STABLE=200
+$plugin->maturity  = MATURITY_STABLE; // ALPHA=50, BETA=100, RC=150, STABLE=200
 $plugin->requires  = 2010112400;    // Moodle 2.0
-$plugin->version   = 2018120501;
-$plugin->release   = '2018-12-05 (01)';
+$plugin->version   = 2020030129;
+$plugin->release   = '2020-03-01 (29)';
 
 if (defined('ANY_VERSION')) {
     $plugin->dependencies = array('qtype_ordering' => ANY_VERSION);

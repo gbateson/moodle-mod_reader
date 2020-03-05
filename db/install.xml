@@ -10,10 +10,10 @@
         <FIELD NAME="course" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" NEXT="name" PREVIOUS="id"/>
         <FIELD NAME="name" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" NEXT="intro" PREVIOUS="course"/>
         <FIELD NAME="intro" TYPE="text" NOTNULL="false" SEQUENCE="false" NEXT="introformat" PREVIOUS="name"/>
-        <FIELD NAME="introformat" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="0" SEQUENCE="false" NEXT="timeopen" PREVIOUS="intro"/>
-        <FIELD NAME="timeopen" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" NEXT="timeclose" PREVIOUS="introformat"/>
-        <FIELD NAME="timeclose" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" NEXT="readonlyuntil" PREVIOUS="timeopen"/>
-        <FIELD NAME="readonlyuntil" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" NEXT="readonlyfrom" PREVIOUS="timeclose"/>
+        <FIELD NAME="introformat" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="0" SEQUENCE="false" NEXT="availablefrom" PREVIOUS="intro"/>
+        <FIELD NAME="availablefrom" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" NEXT="availableuntil" PREVIOUS="introformat"/>
+        <FIELD NAME="availableuntil" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" NEXT="readonlyuntil" PREVIOUS="availablefrom"/>
+        <FIELD NAME="readonlyuntil" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" NEXT="readonlyfrom" PREVIOUS="availableuntil"/>
         <FIELD NAME="readonlyfrom" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" NEXT="timelimit" PREVIOUS="readonlyuntil"/>
         <FIELD NAME="timelimit" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="900" SEQUENCE="false" NEXT="timecreated" PREVIOUS="readonlyfrom"/>
         <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" NEXT="timemodified" PREVIOUS="timelimit"/>
@@ -123,7 +123,6 @@
         <FIELD NAME="quizid" TYPE="int" LENGTH="11" NOTNULL="true" DEFAULT="0" SEQUENCE="false" NEXT="image" PREVIOUS="fiction"/>
         <FIELD NAME="image" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" NEXT="points" PREVIOUS="quizid"/>
         <FIELD NAME="points" TYPE="number" LENGTH="4" NOTNULL="true" DEFAULT="1" SEQUENCE="false" DECIMALS="2" NEXT="private" PREVIOUS="image"/>
-        <FIELD NAME="private" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="0" SEQUENCE="false" NEXT="sametitle" PREVIOUS="points"/>
         <FIELD NAME="sametitle" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" NEXT="hidden" PREVIOUS="private"/>
         <FIELD NAME="hidden" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="0" SEQUENCE="false" NEXT="maxtime" PREVIOUS="sametitle"/>
         <FIELD NAME="maxtime" TYPE="int" LENGTH="3" NOTNULL="true" DEFAULT="0" SEQUENCE="false" NEXT="time" PREVIOUS="hidden"/>

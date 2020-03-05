@@ -16,6 +16,16 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
+ * mod/reader/admin/reports/filtering.php
+ *
+ * @package    mod
+ * @subpackage reader
+ * @copyright  2013 Gordon Bateson (gordon.bateson@gmail.com)
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @since      Moodle 2.0
+ */
+
+/**
  * Filtering for Reader reports
  *
  * @package   mod-reader
@@ -23,9 +33,12 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+// get parent class
+
+/** Prevent direct access to this script */
 defined('MOODLE_INTERNAL') || die();
 
-// get parent class
+/** Include required files */
 require_once($CFG->dirroot.'/mod/reader/admin/filtering.php');
 
 /**
@@ -46,14 +59,47 @@ class reader_admin_reports_filtering extends reader_admin_filtering {
      * @return xxx
      */
     public function get_field($fieldname, $advanced)  {
-        global $DB;
+        global $CFG, $DB;
 
         $default = $this->get_default_value($fieldname);
         switch ($fieldname) {
 
             case 'realname':
+
+                $template = '';
+                if (! empty($CFG->fullnamedisplay)) {
+                    // The template used to display names to students.
+                    $template .= $CFG->fullnamedisplay.' ';
+                }
+                if (! empty($CFG->alternativefullnameformat)) {
+                    // The template used to display names to managers and teachers.
+                    $template .= $CFG->alternativefullnameformat.' ';
+                }
+
+                $names = get_all_user_name_fields();
+                if (empty($template) || is_numeric(strpos($template, 'language'))) {
+                    // The default template for the current language.
+                    $template .= get_string('fullnamedisplay', null, $names);
+                }
+
+                // Remove non-alphabetic chars from $template.
+                $template = str_replace('language', '', $template);
+                $template = preg_replace('/[^a-z]+/', ' ', $template);
+
+                // Convert $template to an array.
+                $template = explode(' ', $template);
+                $template = array_filter($template);
+                $template = array_unique($template);
+
+                // Filter out names that are not used in the template.
+                $names = array_intersect($template, array_keys($names));
+
+                // Get SQL for concatenating names.
+                $names = explode(',', implode('," ",', $names));
+                $names = call_user_func_array(array($DB, 'sql_concat'), $names);
+
                 $label = get_string('fullname');
-                return new reader_admin_filter_text($fieldname, $label, $advanced, $DB->sql_fullname(), $default, 'where');
+                return new reader_admin_filter_text($fieldname, $label, $advanced, $names, $default, 'where');
                 break;
 
             case 'lastname':

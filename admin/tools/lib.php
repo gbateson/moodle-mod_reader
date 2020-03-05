@@ -270,9 +270,14 @@ function reader_quiz_courseids() {
     $courseids = array();
 
     if ($courseid = get_config('mod_reader', 'reader_usecourse')) { // old config name
-        $courseids[] = $courseid;
-    } else if ($courseid = get_config('mod_reader', 'usecourse')) { // new config name
-        $courseids[] = $courseid;
+        if ($DB->record_exists('course', array('id' => $courseid))) {
+            $courseids[] = $courseid;
+        }
+    }
+    if ($courseid = get_config('mod_reader', 'usecourse')) { // new config name
+        if ($DB->record_exists('course', array('id' => $courseid))) {
+            $courseids[] = $courseid;
+        }
     }
 
     // $select = 'SELECT DISTINCT usecourse FROM {reader} WHERE usecourse IS NOT NULL AND usecourse > ?';

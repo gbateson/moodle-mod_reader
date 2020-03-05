@@ -16,6 +16,16 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
+ * mod/reader/admin/reports/bookdetailed/tablelib.php
+ *
+ * @package    mod
+ * @subpackage reader
+ * @copyright  2013 Gordon Bateson (gordon.bateson@gmail.com)
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @since      Moodle 2.0
+ */
+
+/**
  * Create a table to display attempts at a Reader activity
  *
  * @package   mod-reader
@@ -23,9 +33,12 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+// get parent class
+
+/** Prevent direct access to this script */
 defined('MOODLE_INTERNAL') || die();
 
-// get parent class
+/** Include required files */
 require_once($CFG->dirroot.'/mod/reader/admin/reports/tablelib.php');
 
 /**
@@ -77,7 +90,7 @@ class reader_admin_reports_bookdetailed_table extends reader_admin_reports_table
                                     'sortfields'  => array());
 
     /** @var actions */
-    protected $actions = array('deleteattempts', 'restoreattempts', 'updatepassed', 'updatecheated');
+    protected $actions = array('deleteattempts', 'restoreattempts', 'updatepassed', 'updatecheated', 'sendmessage');
 
     ////////////////////////////////////////////////////////////////////////////////
     // functions to extract data from $DB                                         //
