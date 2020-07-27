@@ -204,33 +204,50 @@ function reader_export_table_columns($columns) {
     }
     foreach ($columns as $column) {
         $output .= "  `$column->name`";
-        switch ($column->meta_type) {
+        if (isset($column->meta_type)) {
+            $metatype = $column->meta_type;
+        } else {
+            $metatype = '';
+        }
+        if (isset($column->max_length)) {
+            $maxlength = $column->max_length;
+        } else {
+            $maxlength = 0;
+        }
+        switch ($metatype) {
             case 'X':
-                $output .= " $column->type";
+                $output .= ' '.$column->type;
                 break;
             case 'N':
-                $output .= (empty($column->max_length) ? ' double' : " $column->type($column->max_length,2)"); break;
+                if (empty($maxlength)) {
+                    $output .= ' double';
+                } else {
+                    $output .= ' '.$column->type."($maxlength,2)";
+                }
                 break;
             case 'R':
             case 'I':
-                $column->max_length = min($column->max_length, 10);
+                if ($maxlength > 10) {
+                    $maxlength = 10;
+                }
+                // Deliberate drop through ...
             default:
-                $output .= " $column->type($column->max_length)";
+                $output .= ' '.$column->type."($maxlength,2)";
         }
-        if ($column->meta_type=='C' || $column->meta_type=='X') {
+        if ($metatype == 'C' || $metatype == 'X') {
             $output .= " COLLATE $collation";
         }
-        if ($column->unsigned) {
+        if (isset($column->unsigned) && $column->unsigned) {
             $output .= ' unsigned';
             $column->not_null = true;
         }
-        if ($column->not_null) {
+        if (isset($column->not_null) && $column->not_null) {
             $output .= ' NOT NULL';
         }
-        if ($column->has_default) {
+        if (isset($column->has_default) && $column->has_default) {
             $output .= " DEFAULT '".$column->default_value."'";
         }
-        if ($column->auto_increment) {
+        if (isset($column->auto_increment) && $column->auto_increment) {
             $output .= ' AUTO_INCREMENT';
         }
         $output .= ",\n";

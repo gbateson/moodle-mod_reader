@@ -2,6 +2,9 @@
 Change log for mod_reader
 ========================================
 
+2020-07-27 (30)
+ - fix tool to export Reader tables
+
 2020-03-01 (29)
  - include current version in tool to redo upgrade
 
