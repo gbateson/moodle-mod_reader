@@ -3580,7 +3580,7 @@ if ($act == 'addquiz' && has_capability('mod/reader:managebooks', $contextmodule
     echo '</select><br />';
 
     echo get_string('showlevel', 'mod_reader').' <select id="booksratinglevel" name="booksratinglevel"><br />';
-    $fromselect = array('0' => "0", '1' => "1", '2' => "2", '3' => "3", '4' => "4", '5' => "5", '6' => "6", '7' => "7", '8' => "8", '9' => "9", '10' => "10", '11' => "11", '12' => "12", '13' => "13", '14' => "14", '15' => "15", '99' => "All");
+    $fromselect = array('0' => '0', '1' => '1', '2' => '2', '3' => '3', '4' => '4', '5' => '5', '6' => '6', '7' => '7', '8' => '8', '9' => '9', '10' => '10', '11' => '11', '12' => '12', '13' => '13', '14' => '14', '15' => '15', '99' => 'All');
     foreach ($fromselect as $key => $value) {
         echo '<option value="'.$key.'"';
         if ($key == $booksratinglevel) {

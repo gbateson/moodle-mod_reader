@@ -2,6 +2,9 @@
 Change log for mod_reader
 ========================================
 
+2021-06-08 (31)
+ - add missing level 11 to Reading Level menu for changereaderlevel action in admin.php
+
 2020-07-27 (30)
  - fix tool to export Reader tables
 
