@@ -1289,7 +1289,7 @@ function reader_ip_menu($userid, $reader) {
 function reader_difficulty_menu($difficulty, $bookid, $reader) {
     global $CFG, $COURSE, $DB, $_SESSION, $id, $act, $gid, $sort, $orderby, $page;
 
-    $values = array(0,1,2,3,4,5,6,7,8,9,10,12,13,14);
+    $values = array(0,1,2,3,4,5,6,7,8,9,10,11,12,13,14);
     $name = 'difficulty_'.$bookid.'_'.$difficulty;
 
     $output = '';

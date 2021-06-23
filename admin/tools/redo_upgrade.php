@@ -82,7 +82,7 @@ if ($version = optional_param('version', 0, PARAM_INT)) {
         $text = ''; // shouldn't happen !!
     }
 
-    // reset the Reader module version
+    // reset the plugin version
     $dbman = $DB->get_manager();
     if ($dbman->field_exists('modules', 'version')) {
         // Moodle <= 2.5
@@ -113,6 +113,7 @@ if ($version = optional_param('version', 0, PARAM_INT)) {
 
     $versions = array();
 
+    // extract and format the current version
     $contents = file_get_contents($CFG->dirroot.'/mod/reader/version.php');
     if (preg_match('/^\$plugin->version *= *(\d{4})(\d{2})(\d{2})(\d{2});/m', $contents, $matches)) {
         $yy = $matches[1];
@@ -123,6 +124,7 @@ if ($version = optional_param('version', 0, PARAM_INT)) {
         $versions[$version] = date($dateformat, mktime(0,0,0,$mm,$dd,$yy)).($vv==0 ? '' : " ($vv)");
     }
 
+    // extract and format versions from upgrade script
     $contents = file_get_contents($CFG->dirroot.'/mod/reader/db/upgrade.php');
     preg_match_all('/(?<=\$newversion = )(\d{4})(\d{2})(\d{2})(\d{2})(?=;)/', $contents, $matches);
     $i_max = count($matches[0]);
