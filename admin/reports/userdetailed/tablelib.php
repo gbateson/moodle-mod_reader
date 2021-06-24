@@ -138,7 +138,7 @@ class reader_admin_reports_userdetailed_table extends reader_admin_reports_table
         }
 
         $score    = '(ra.credit = :credit1 OR ra.passed = :passed1)';
-        $score    = "ra.deleted = :deleted1 AND ra.cheated = :cheated1 && $score";
+        $score    = "ra.deleted = :deleted1 AND ra.cheated = :cheated1 AND $score";
         $score    = "CASE WHEN ($score) THEN rb.$wordsorpoints ELSE 0 END";
         $grade    = 'CASE WHEN (ra.percentgrade IS NULL) THEN 0 ELSE ra.percentgrade END';
         $duration = 'CASE WHEN (ra.timefinish IS NULL OR ra.timefinish = 0) THEN 0 ELSE (ra.timefinish - ra.timestart) END';
