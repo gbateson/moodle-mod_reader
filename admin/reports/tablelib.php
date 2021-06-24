@@ -204,20 +204,20 @@ class reader_admin_reports_table extends reader_admin_table {
 
         // average grade
         $exclude = $this->select_sql_attempts_exclude(1, $termtype);
-        $sum = "SUM(CASE WHEN ($exclude) THEN 0 ELSE (ra.percentgrade) END)";
+        $sum = "SUM(CASE WHEN ($exclude) THEN NULL ELSE (ra.percentgrade) END)";
         $exclude = $this->select_sql_attempts_exclude(2, $termtype);
-        $count = "SUM(CASE WHEN ($exclude) THEN 0 ELSE 1 END)";
+        $count = "SUM(CASE WHEN ($exclude) THEN NULL ELSE 1 END)";
         $averagegrade  = "ROUND($sum / $count, 0)";
 
         // sum duration
         $exclude = $this->select_sql_attempts_exclude(3, $termtype);
         $sum = 'ra.timefinish - ra.timestart';
         $sum = "CASE WHEN (ra.timefinish = ra.timestart) THEN :maxduration ELSE ($sum) END";
-        $sum = "SUM(CASE WHEN ($exclude) THEN 0 ELSE ($sum) END)";
+        $sum = "SUM(CASE WHEN ($exclude) THEN NULL ELSE ($sum) END)";
 
         // count duration
         $exclude = $this->select_sql_attempts_exclude(4, $termtype);
-        $count = "SUM(CASE WHEN ($exclude) THEN 0 ELSE 1 END)";
+        $count = "SUM(CASE WHEN ($exclude) THEN NULL ELSE 1 END)";
 
         // average duration
         $averageduration = "ROUND($sum / $count, 0)";
@@ -294,13 +294,13 @@ class reader_admin_reports_table extends reader_admin_table {
                 $notrated = 'ra.timefinish IS NULL OR ra.timefinish = 0 OR ra.bookrating IS NULL';
 
                 $exclude = "ra.readerid <> :reader7 OR $notrated";
-                $countrating = "SUM(CASE WHEN ($exclude) THEN 0 ELSE 1 END)";
+                $countrating = "SUM(CASE WHEN ($exclude) THEN NULL ELSE 1 END)";
 
                 $exclude = "ra.readerid <> :reader8 OR $notrated";
-                $sum = "SUM(CASE WHEN ($exclude) THEN 0 ELSE ra.bookrating END)";
+                $sum = "SUM(CASE WHEN ($exclude) THEN NULL ELSE ra.bookrating END)";
 
                 $exclude = "ra.readerid <> :reader9 OR $notrated";
-                $count = "SUM(CASE WHEN ($exclude) THEN 0 ELSE 1 END)";
+                $count = "SUM(CASE WHEN ($exclude) THEN NULL ELSE 1 END)";
 
                 $averagerating = "ROUND($sum / $count, 0)";
 
