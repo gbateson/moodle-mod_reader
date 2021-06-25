@@ -95,7 +95,7 @@ class reader_admin_reports_filtering extends reader_admin_filtering {
                 $names = array_intersect($template, array_keys($names));
 
                 // Get SQL for concatenating names.
-                $names = explode(',', implode('," ",', $names));
+                $names = explode(',', implode(",' ',", $names));
                 $names = call_user_func_array(array($DB, 'sql_concat'), $names);
 
                 $label = get_string('fullname');
