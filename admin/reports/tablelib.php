@@ -283,25 +283,6 @@ class reader_admin_reports_table extends reader_admin_table {
             case 'bookid': // booksummary
                 $notrated = 'ra.timefinish IS NULL OR ra.timefinish = 0 OR ra.bookrating IS NULL';
 
-<<<<<<< HEAD
-                $exclude = "ra.readerid <> :reader7 OR $notrated";
-                $countrating = "SUM(CASE WHEN ($exclude) THEN NULL ELSE 1 END)";
-
-                $exclude = "ra.readerid <> :reader8 OR $notrated";
-                $sum = "SUM(CASE WHEN ($exclude) THEN NULL ELSE ra.bookrating END)";
-
-                $exclude = "ra.readerid <> :reader9 OR $notrated";
-                $count = "SUM(CASE WHEN ($exclude) THEN NULL ELSE 1 END)";
-
-                $averagerating = "ROUND($sum / $count, 0)";
-=======
-                $exclude = "ra.readerid <> :reader5 OR $notrated";
-                $countrating = "SUM(CASE WHEN ($exclude) THEN 0 ELSE 1 END)";
-
-                $exclude = "ra.readerid <> :reader6 OR $notrated";
-                $averagerating = "AVG(CASE WHEN ($exclude) THEN NULL ELSE ra.bookrating END)";
-                $averagerating = "ROUND($averagerating, 0)";
->>>>>>> upstream/master
 
                 $select     .= ",$countrating AS countrating".
                                ",$averagerating AS averagerating";
