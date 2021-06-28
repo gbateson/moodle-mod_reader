@@ -37,7 +37,7 @@ $string['configminpassgrade'] = '';
 $string['configmreaderenable'] = 'Enable or disable the settings for mReader.org';
 $string['configmreadersettings'] = 'These settings allow students from this Moodle site to access the quizzes on mReader.org  
 To obtain a Site ID and Key, you need to be enrolled in the following course:
-: https://www.moodlereader.com/moodle4reader/course/view.php?id=2';
+: https://moodlereader.com/course/view.php?id=2';
 $string['configmreadersiteid'] = 'The numeric ID under which this Moodle site is registered on mReader.org';
 $string['configmreadersitekey'] = 'The secret key that allows students from this Moodle site to access the quizzes on mReader.org';
 $string['configmreaderurl'] = 'The URL on which students can access the quizzes on mReader.org';
