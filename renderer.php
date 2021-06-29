@@ -2045,9 +2045,11 @@ class mod_reader_renderer extends plugin_renderer_base {
             case ($npgbarprog < 1):
                 $npgbarprog = ($npgbarprog * 100);
                 $npgbarprog = intval($npgbarprog);
+		$npgextraprog = 0;
                 break;
             default:
                 $npgbarprog = 0;
+		$npgextraprog = 0;
         }
 
        switch (true) {
