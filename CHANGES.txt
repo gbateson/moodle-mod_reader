@@ -2,6 +2,9 @@
 Change log for mod_reader
 ========================================
 
+2022-02-24 (36)
+ - replace used of 'groups' in SQL because it is a reserved word in MySQL 8
+
 2021-09-14 (35)
  - modify markdown syntax for long help messages (for compatability with Moodle 3.11)
 
