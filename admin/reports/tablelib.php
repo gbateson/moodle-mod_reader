@@ -588,7 +588,7 @@ class reader_admin_reports_table extends reader_admin_table {
      * @return xxx
      */
     public function header_percentgrade() {
-        return get_string('grade');
+        return get_string('grade', 'grades');
     }
 
     /**
@@ -597,7 +597,7 @@ class reader_admin_reports_table extends reader_admin_table {
      * @return xxx
      */
     public function header_grade()  {
-        return get_string('grade');
+        return get_string('grade', 'grades');
     }
 
     /**

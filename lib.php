@@ -1338,7 +1338,7 @@ function reader_print_overview($courses, &$htmlarray) {
                 'averagegrade' => get_string('gradeaverage', 'quiz'),
                 'dateformat'   => get_string('strftimedaydatetime'),
                 'goal'         => get_string('goal', 'mod_reader'),
-                'grade'        => get_string('grade'),
+                'grade'        => get_string('grade', 'grades'),
                 'deleted'      => get_string('deleted', 'mod_reader'),
                 'cheated'      => get_string('cheated', 'mod_reader'),
                 'credit'       => get_string('credit', 'mod_reader'),

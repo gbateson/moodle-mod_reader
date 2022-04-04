@@ -2,6 +2,9 @@
 Change log for mod_reader
 ========================================
 
+2022-04-04 (37)
+ - get 'grade' from 'grades' lang pack instead of 'moodle'
+
 2022-02-24 (36)
  - replace used of 'groups' in SQL because it is a reserved word in MySQL 8
 
