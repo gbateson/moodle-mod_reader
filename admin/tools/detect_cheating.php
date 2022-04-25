@@ -605,7 +605,7 @@ function reader_print_info_books($plugin, $id, $tab, $bookid, &$attempts, &$atte
                 echo '<th style="text-align: center; min-width: 50px;">'.get_string('time').'</th>';
                 echo '<th style="min-width: 110px;">'.get_string('duration', $plugin).'</th>';
                 echo '<th style="min-width: 110px;">'.get_string('ipaddress', $plugin).'</th>';
-                echo '<th style="min-width: 110px;">'.get_string('status').' ('.get_string('grade').')</th>';
+                echo '<th style="min-width: 110px;">'.get_string('status').' ('.get_string('grade', 'grades').')</th>';
                 echo "</tr>\n";
             }
 
@@ -823,7 +823,7 @@ function reader_print_info_users($plugin, $id, $tab, $userids1, &$usersprinted) 
                     echo '<th style="text-align: center; min-width: 50px;">'.get_string('time').'</th>';
                     echo '<th style="min-width: 110px;">'.get_string('duration', $plugin).'</th>';
                     echo '<th style="min-width: 110px;">'.get_string('ipaddress', $plugin).'</th>';
-                    echo '<th style="min-width: 110px;">'.get_string('status').' ('.get_string('grade').')</th>';
+                    echo '<th style="min-width: 110px;">'.get_string('status').' ('.get_string('grade', 'grades').')</th>';
                     echo "</tr>\n";
                 }
 

@@ -462,7 +462,7 @@ class reader_admin_options extends moodleform {
                         $label = get_string('group');
                         break;
                     case 'grade':
-                        $label = get_string('grade');
+                        $label = get_string('grade', 'grades');
                         break;
                     case 'name':
                         $label = get_string('booktitle', 'mod_reader');

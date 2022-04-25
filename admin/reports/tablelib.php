@@ -587,7 +587,7 @@ class reader_admin_reports_table extends reader_admin_table {
      * @return xxx
      */
     public function header_percentgrade() {
-        return get_string('grade');
+        return get_string('grade', 'grades');
     }
 
     /**
@@ -596,7 +596,7 @@ class reader_admin_reports_table extends reader_admin_table {
      * @return xxx
      */
     public function header_grade()  {
-        return get_string('grade');
+        return get_string('grade', 'grades');
     }
 
     /**
@@ -662,6 +662,50 @@ class reader_admin_reports_table extends reader_admin_table {
      * @return xxx
      */
     public function col_groups($row)  {
+        global $DB;
+
+        // We delay fetching the groups until the first time this function is called.
+        // By this time we can restrict the userids to only those that are displayed
+        // on the current page, so we can fetch all groups data with a single DB query.
+        if (! isset($row->groups)) {
+
+            // Note: From MySQL 8.x, "groups" is a reserved word and therefore
+            // cannot be used as a fieldname, so we use "groupnames" instead. 
+            $groupnames = '';
+            switch ($DB->get_dbfamily()) {
+                case 'mssql'    : $groupnames = "STUFF(SELECT ', ' + name FROM {groups} FOR XML PATH(''), 1, 1, '')"; break;
+                case 'mysql'    : $groupnames = "GROUP_CONCAT(g.name SEPARATOR ', ')"; break;
+                case 'oracle'   : $groupnames = "LISTAGG(g.name, ', ') WITHIN GROUP (ORDER BY g.name) 'groupnames'"; break;
+                case 'postgres' : $groupnames = "string_agg(g.name, ', ')"; // "array_to_string(array(g.name), ',')"; break;
+            }
+            if ($groupnames) {
+                $select = "u.id, $groupnames AS groupnames";
+                $from   = '{user} u '.
+                          'RIGHT JOIN {groups_members} gm ON u.id = gm.userid '.
+                          'LEFT JOIN {groups} g ON gm.groupid = g.id';
+                $params = $this->get_userids_from_rawdata();
+                list($where, $params) = $DB->get_in_or_equal($params);
+                $where  = "g.courseid = ? AND u.id $where";
+                array_unshift($params, $this->output->reader->course->id);
+                $groupnames = $DB->get_records_sql("SELECT $select FROM $from WHERE $where GROUP BY u.id", $params);
+            }
+            if ($groupnames==='' || $groupnames===false) {
+                $groupnames = array();
+            }
+            foreach (array_keys($this->rawdata) as $id) {
+                $userid = $this->rawdata[$id]->userid;
+                if (empty($groupnames[$userid])) {
+                    $this->rawdata[$id]->groups = '';
+                } else {
+                    $this->rawdata[$id]->groups = $groupnames[$userid]->groupnames;
+                }
+            }
+        }
+
+        return $row->groups;
+    }
+
+    public function col_groups_old($row)  {
         global $DB;
 
         // We delay fetching the groups until the first time this function is called.
