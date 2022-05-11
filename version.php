@@ -26,11 +26,7 @@
  */
 
 // prevent direct access to this script
-
-/** Prevent direct access to this script */
 defined('MOODLE_INTERNAL') || die();
-
-
 
 if (empty($CFG)) {
     global $CFG;
@@ -44,8 +40,8 @@ $plugin->cron      = 3600;
 $plugin->component = 'mod_reader';
 $plugin->maturity  = MATURITY_STABLE; // ALPHA=50, BETA=100, RC=150, STABLE=200
 $plugin->requires  = 2010112400;    // Moodle 2.0
-$plugin->version   = 2022040437;
-$plugin->release   = '2022-04-04 (37)';
+$plugin->version   = 2022051138;
+$plugin->release   = '2022-05-11 (38)';
 
 if (defined('ANY_VERSION')) {
     $plugin->dependencies = array('qtype_ordering' => ANY_VERSION);
