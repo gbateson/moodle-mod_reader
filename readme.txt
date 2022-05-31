@@ -5,16 +5,20 @@ The Reader module for Moodle >= 2.0
 The Reader module for Moodle >= 2.0 tracks the students' reading achievements by maintaining a total of the number words each student reads. After reading one of the books at an appropriate reading level, a student takes a quiz to demonstrate a reasonable understanding of the content of the book. If they pass the quiz, the number of words in the book is added to the total number of words they have read. Students are encouraged to work toward the reading goal, which is the number of words the teacher expects them to read in a term. Various reports are available to the teacher who can adjust the reading goals, student levels, and book difficulty if required.
 
 ===========================================
+ALTERNATIVE PROGRESS BAR VERSION
+===========================================
+
+This version of the Moodlereader plugin incorporates an alternative progress bar. The colours cycle through red, orange, yellow and green before finally settling on blue when the user has met their reading target. After reaching the reading target, a second progress bar appears to encourage further reading. The second progress bar recalibrates itself every time it fills up to double the reading "goal;" communicating that one may always read a bit more...
+
+This is NOT the original reader module. This is just an altered version of a great work. For the original by Gordon Bateson, please see https://github.com/gbateson/moodle-mod_reader 
+
+===========================================
 To INSTALL or UPDATE the Reader module
 ===========================================
 
     1. Get the files for this plugin from any one of the following locations:
 
-        (a) GIT: https://github.com/gbateson/moodle-mod_reader.git
-        (b) zip: the Moodle.org -> Plugins repository (search for Reader)
-        (c) zip: http://bateson.kochi-tech.ac.jp/zip/plugins_mod_reader.zip
-
-       If you are installing from a zip file, unzip the zip file, to create a folder called "reader" and then upload or move this "reader" folder to the "mod" folder on your Moodle >= 2.x site to create a new folder at "mod/reader" - not "mod/reader/reader" :-)
+        (a) GIT: https://github.com/adamjenkins/moodle-mod_reader.git
 
     2. Log in to Moodle as an administrator to initiate the install/upgrade process. If the install/upgrade does not begin automatically, you can initiate it manually by navigating to the following item on your Moodle site:
         (a) Administration -> Site administration -> Notifications
