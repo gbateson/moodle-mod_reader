@@ -2,6 +2,12 @@
 Change log for mod_reader
 ========================================
 
+2022-05-11 (38)
+ - add message to CHANGES.txt
+
+2022-05-11 (38)
+ - compatability with Moodle 3.11: use /core_user/fields to get user name fields; user get_string('grade', 'grades')
+
 2022-04-04 (37)
  - get 'grade' from 'grades' lang pack instead of 'moodle'
 

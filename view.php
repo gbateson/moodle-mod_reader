@@ -133,7 +133,7 @@ $table->head[] = get_string('status');
 $table->align = array('left', 'left', 'left', 'center', 'center');
 
 if ($reader->showpercentgrades) {
-    $table->head[] = get_string('gradenoun');
+    $table->head[] = get_string('grade', 'grades');
     $table->align[] = 'center';
 }
 

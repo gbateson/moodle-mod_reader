@@ -76,7 +76,22 @@ class reader_admin_reports_filtering extends reader_admin_filtering {
                     $template .= $CFG->alternativefullnameformat.' ';
                 }
 
-                $names = get_all_user_name_fields();
+                // Get array of name fields.
+                if (class_exists('\core_user\fields')) {
+                    // Moodle >= 3.11
+                    $names = array();
+                    foreach (\core_user\fields::get_name_fields() as $field) {
+                        $names[$field] = $field;
+                    }
+                } else if (function_exists('get_all_user_name_fields')) {
+                    // Moodle >= 2.6
+                    $names = get_all_user_name_fields();
+                } else {
+                    // Moodle <= 2.5
+                    $names = array('firstname', 'lastname');
+                    $names = array_combine($names, $names);
+                }
+
                 if (empty($template) || is_numeric(strpos($template, 'language'))) {
                     // The default template for the current language.
                     $template .= get_string('fullnamedisplay', null, $names);
