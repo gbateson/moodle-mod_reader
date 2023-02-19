@@ -852,12 +852,16 @@ function reader_print_recent_activity($course, $viewfullnames, $timestart) {
         return false;
     }
 
-    if (class_exists('user_picture')) {
+    if (class_exists('\\core_user\\fields')) {
+        // Moodle >= 3.11
+        $userfields = \core_user\fields::for_userpic();
+        $userfields = $userfields->get_sql('u', false, '', 'useruserid', false)->selects;
+    } else if (class_exists('user_picture')) {
         // Moodle >= 2.6
         $userfields = user_picture::fields('u', null, 'useruserid');
     } else {
         // Moodle <= 2.5
-        $userfields ='u.firstname,u.lastname,u.picture,u.imagealt,u.email';
+        $userfields = 'u.firstname,u.lastname,u.picture,u.imagealt,u.email';
     }
 
     $context = reader_get_context(CONTEXT_COURSE, $course->id);
@@ -1075,12 +1079,16 @@ function reader_get_recent_mod_activity(&$activities, &$index, $timestart, $cour
         return; // no readers
     }
 
-    if (class_exists('user_picture')) {
+    if (class_exists('\\core_user\\fields')) {
+        // Moodle >= 3.11
+        $userfields = \core_user\fields::for_userpic();
+        $userfields = $userfields->get_sql('u', false, '', 'useruserid', false)->selects;
+    } else if (class_exists('user_picture')) {
         // Moodle >= 2.6
         $userfields = user_picture::fields('u', null, 'useruserid');
     } else {
         // Moodle <= 2.5
-        $userfields ='u.firstname,u.lastname,u.picture,u.imagealt,u.email';
+        $userfields = 'u.firstname,u.lastname,u.picture,u.imagealt,u.email';
     }
 
     $select = 'ra.*, (ra.timemodified - ra.timestart) AS duration, '.
