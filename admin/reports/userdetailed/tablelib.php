@@ -108,6 +108,15 @@ class reader_admin_reports_userdetailed_table extends reader_admin_reports_table
         parent::__construct($uniqueid, $output);
     }
 
+    /*
+     * show_selected_column
+     *
+     * @return boolean
+     */
+    public function show_selected_column() {
+        return (parent::show_selected_column() && $this->output->reader->can_manageattempts());
+    }
+
     ////////////////////////////////////////////////////////////////////////////////
     // functions to extract data from $DB                                         //
     ////////////////////////////////////////////////////////////////////////////////

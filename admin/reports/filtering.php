@@ -131,7 +131,7 @@ class reader_admin_reports_filtering extends reader_admin_filtering {
                 break;
 
             case 'grade':
-                $label = get_string($fieldname);
+                $label = get_string($fieldname, 'grades');
                 return new reader_admin_filter_number($fieldname, $label, $advanced, $fieldname, $default, 'having');
 
             case 'passed':

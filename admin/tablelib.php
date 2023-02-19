@@ -301,6 +301,21 @@ class reader_admin_table extends table_sql {
     }
 
     /*
+     * show_selected_checkboxes
+     *
+     * @return boolean
+     */
+    public function show_selected_column() {
+        if ($this->download) {
+            return false;
+        }
+        if (empty($this->actions)) {
+            return false;
+        }
+        return true;
+    }
+
+    /*
      * get_tablecolumns
      *
      * @return array of column names
@@ -311,7 +326,7 @@ class reader_admin_table extends table_sql {
         // certain columns are not needed in certain situations
         $removecolumns = array();
 
-        if (empty($this->actions) || $this->download || ! $this->output->reader->can_manageattempts()) {
+        if (! $this->show_selected_column()) {
             $removecolumns[] = 'selected';
         }
 
@@ -517,7 +532,21 @@ class reader_admin_table extends table_sql {
      * @return string
      */
      function get_userfields($tableprefix = '', array $extrafields = NULL, $idalias = 'id', $fieldprefix = '') {
-        if (class_exists('user_picture')) { // Moodle >= 2.6
+        // handle Moodle >= 3.11
+        if (class_exists('\\core_user\\fields')) {
+            $fields = \core_user\fields::for_userpic();
+            if ($extrafields) {
+                $fields->including(...$extrafields); // splat operator is available from PHP 5.5
+            }
+            $fields = $fields->get_sql($tableprefix, false, $fieldprefix, $idalias, false)->selects;
+            if ($tableprefix === '') {
+                $fields = str_replace('{user}.', '', $fields);
+            }
+            return str_replace(', ', ',', $fields);
+            // id, picture, firstname, lastname, firstnamephonetic, lastnamephonetic, middlename, alternatename, imagealt, email
+        }
+        // handle Moodle >= 2.6
+        if (class_exists('user_picture')) {
             return user_picture::fields($tableprefix, $extrafields, $idalias, $fieldprefix);
         }
         // Moodle <= 2.5

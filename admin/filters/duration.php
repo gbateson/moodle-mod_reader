@@ -68,7 +68,8 @@ class reader_admin_filter_duration extends reader_admin_filter_number {
         $mform->setType($this->_name.'[timeunit]', PARAM_INT);
 
         if (! is_null($this->_default)) {
-            $mform->setDefault($this->_name, $this->_default);
+            // A duration form field requires a number as default, even it is empty.
+            $mform->setDefault($this->_name, (empty($this->_default) ? 0 : $this->_default));
         }
 
         if ($this->_advanced) {
