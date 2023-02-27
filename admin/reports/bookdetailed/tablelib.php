@@ -92,6 +92,15 @@ class reader_admin_reports_bookdetailed_table extends reader_admin_reports_table
     /** @var actions */
     protected $actions = array('deleteattempts', 'restoreattempts', 'updatepassed', 'updatecheated', 'sendmessage');
 
+    /*
+     * show_selected_column
+     *
+     * @return boolean
+     */
+    public function show_selected_column() {
+        return (parent::show_selected_column() && $this->output->reader->can_manageattempts());
+    }
+
     ////////////////////////////////////////////////////////////////////////////////
     // functions to extract data from $DB                                         //
     ////////////////////////////////////////////////////////////////////////////////

@@ -118,6 +118,15 @@ class reader_admin_reports_usersummary_table extends reader_admin_reports_table 
     }
 
     /*
+     * show_selected_column
+     *
+     * @return boolean
+     */
+    public function show_selected_column() {
+        return (parent::show_selected_column() && $this->output->reader->can_manageusers());
+    }
+
+    /*
      * get_tablecolumns
      *
      * @return array of column names
