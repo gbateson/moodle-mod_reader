@@ -36,8 +36,8 @@ if (file_exists($CFG->dirroot.'/mod/quiz/attemptlib.php')) {
     require_once($CFG->dirroot.'/mod/quiz/attemptlib.php');
 }
 
-// load mreader library, if needed
-if ($mreadersiteid = get_config('mod_reader', 'mreadersiteid')) {
+// load mreader library, if needed (it is always needed)
+if ($mreadersiteid = get_config('mod_reader', 'mreadersiteid') || true) {
     require_once($CFG->dirroot.'/mod/reader/quiz/mreaderlib.php');
 }
 

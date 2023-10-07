@@ -493,15 +493,21 @@ class reader_attempt {
 
         $dbman = $DB->get_manager();
         if ($dbman->table_exists('quiz_slots') && $dbman->table_exists('quiz_sections')) {
-            $params = array('quizid' => $this->get_quizid());
-            $this->slots = $DB->get_records('quiz_slots', $params, 'slot', 'slot, requireprevious, questionid');
+            if ($dbman->field_exists('quiz_slots', 'questionid')) {
+                // Moodle 2.7 - 3.11
+                $params = array('quizid' => $this->get_quizid());
+                $this->slots = $DB->get_records('quiz_slots', $params, 'slot', 'slot, requireprevious, questionid');
+            } else {
+                // Moodle >= 4.x
+                // slots have not been created yet!!
+                //$this->slots = $DB->get_records('quiz_attempts', $params, 'slot', 'slot, questionid');
+            }
             $this->sections = $DB->get_records('quiz_sections', $params, 'firstslot');
             $this->sections = array_values($this->sections);
             $this->link_sections_and_slots();
+            $this->determine_layout();
+            $this->number_questions();
         }
-
-        $this->determine_layout();
-        $this->number_questions();
     }
 
     /**
