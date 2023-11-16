@@ -2,6 +2,9 @@
 Change log for mod_reader
 ========================================
 
+2023-03-23 (41)
+ - make certain tools compatible with Moodle 4.x which uses question_versions table
+
 2023-02-19 (40)
  - when showing user profile pictures on Moodle >= 3.11, use 
 
