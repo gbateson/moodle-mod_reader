@@ -2,6 +2,9 @@
 Change log for mod_reader
 ========================================
 
+2024-01-24 (42)
+ - small change to cheatsheet for compatability with Moodle 4.x
+
 2023-03-23 (41)
  - make certain tools compatible with Moodle 4.x which uses question_versions table
 
