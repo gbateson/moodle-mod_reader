@@ -112,7 +112,36 @@ class reader_quiz {
 
         if ($quiz->id > 0) {
             $dbman = $DB->get_manager();
-            if ($dbman->table_exists('quiz_slots')) { // Moodle >= 2.7
+            if ($dbman->table_exists('question_versions')) { // Moodle >= 4.x
+                // SQL to extract max version number for a quizbank entry number
+                $maxversion = 'SELECT MAX(qv2.version) FROM {question_versions} qv2 '.
+                              'WHERE qv2.questionbankentryid = qv.questionbankentryid '.
+                              'GROUP BY qv2.questionbankentryid';
+
+                $select = 'qs.slot, qs.requireprevious, qv.questionid';
+                $from   = '{quiz_slots} qs '.
+                          'JOIN {question_references} qr ON qr.component = ? AND qr.questionarea = ? AND qr.itemid = qs.id '.
+                          //'JOIN {question_set_references} qsr ON qsr.component = ? AND qsr.questionarea = ? AND qsr.itemid = qs.id '.
+                          'JOIN {question_bank_entries} qbe ON qbe.id = qr.questionbankentryid = qbe.id '.
+                          'JOIN {question_versions} qv ON qv.questionbankentryid = qbe.id AND qv.status = ? AND qv.version = ('.$maxversion.')';
+                $where  = 'qs.quizid = ?';
+                $order  = 'qs.page, qs.slot';
+                $params = array('mod_quiz', 'slot', 'ready', $quiz->id);
+$sql = "SELECT $select FROM $from WHERE $where ORDER BY $order";
+$sql = str_replace('{', 'mdl_', str_replace('}', '', $sql));
+foreach ($params as $param) {
+    if (! is_numeric($param)) {
+        $param = '"'.$param.'"';
+    }
+    $sql = preg_replace('/\?/', $param, $sql, 1);
+}
+$sql = preg_replace('/(FROM|WHERE|SELECT|JOIN)/', '<br>$0', $sql);
+print_r($sql);
+die;
+                $this->slots = $DB->get_records_sql("SELECT $select FROM $from WHERE $where ORDER BY $order", $params);
+print_object($this->slots);
+die;
+            } else if ($dbman->table_exists('quiz_slots')) { // Moodle >= 2.7
                 if ($quiz->questions = $DB->get_records_menu('quiz_slots', array('quizid' => $quiz->id), 'page,slot', 'id,questionid')) {
                     $quiz->questions = array_values($quiz->questions);
                     $quiz->questions = array_filter($quiz->questions);
@@ -500,7 +529,23 @@ class reader_attempt {
             } else {
                 // Moodle >= 4.x
                 // slots have not been created yet!!
-                //$this->slots = $DB->get_records('quiz_attempts', $params, 'slot', 'slot, questionid');
+                //$this->slots = $DB->get_records('quiz_attempts', $params, 'slot', 'slot, requireprevious');
+    
+                // SQL to extract max version number for a quizbank entry number
+                $maxversion = 'SELECT MAX(qv2.version) FROM {question_versions} qv2 '.
+                              'WHERE qv2.questionbankentryid = qv.questionbankentryid '.
+                              'GROUP BY qv2.questionbankentryid';
+
+                $select = 'qs.slot, qs.requireprevious, qv.questionid';
+                $from   = '{quiz_slots} qs '.
+                          'JOIN {question_references} qr ON qr.component = ? AND qr.questionarea = ? AND qr.itemid = qs.id '.
+                          //'JOIN {question_set_references} qsr ON qsr.component = ? AND qsr.questionarea = ? AND qsr.itemid = qs.id '.
+                          'JOIN {question_bank_entries} qbe ON qbe.id = qr.questionbankentryid = qbe.id'.
+                          'JOIN {question_versions} qv ON qv.questionbankentryid = qbe.id AND qv.status = ? AND qv.version = '.$maxversion;
+                $where  = 'qs.quizid = ?';
+                $order  = 'qs.slot';
+                $params = array('mod_quiz', 'slot', 'ready', $this->get_quizid());
+                $this->slots = $DB->get_records_sql("SELECT $select FORM $from WHERE $where ORDER BY $order", $params);
             }
             $this->sections = $DB->get_records('quiz_sections', $params, 'firstslot');
             $this->sections = array_values($this->sections);
