@@ -2,6 +2,9 @@
 Change log for mod_reader
 ========================================
 
+2024-03-07 (45)
+ - fix typo in lib.php dirroot => dirroot
+
 2024-03-07 (44)
  - convert legacy cron job to a scheduled_task (Moodle >= 2.7)
 

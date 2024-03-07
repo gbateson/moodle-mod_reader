@@ -1859,12 +1859,12 @@ function reader_cron() {
         $send_usage_stats = true; // first time
     }
 
-    // prevent sending of Reader usage stats from developer/test sites
-    if (preg_match('/^https?:\/\/localhost/', $CFG->dirroot) && debugging('', DEBUG_DEVELOPER)) {
+    // Prevent sending of Reader usage stats from developer/test sites
+    if (preg_match('/^https?:\/\/localhost/', $CFG->wwwroot) && debugging('', DEBUG_DEVELOPER)) {
         $send_usage_stats = false;
     }
 
-    // send usage stats, if necessary
+    // Send usage stats, if necessary
     if ($send_usage_stats) {
         set_config($name, $time, 'mod_reader');
 
