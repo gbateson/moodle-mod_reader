@@ -54,7 +54,7 @@ class message_edited extends base {
      *
      * @return array
      */
-    public static function get_legacy_eventname() {
+    public static function my_get_legacy_eventname() {
         return 'messageedited';
     }
 

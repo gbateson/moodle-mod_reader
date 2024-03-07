@@ -2,6 +2,9 @@
 Change log for mod_reader
 ========================================
 
+2024-03-07 (43)
+ - protect legacy event handlers from the code police in Moodle >= 4.2
+
 2024-01-24 (42)
  - small change to cheatsheet for compatability with Moodle 4.x
 
