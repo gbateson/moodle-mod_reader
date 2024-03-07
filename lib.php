@@ -1838,6 +1838,12 @@ function reader_navigation_add_node(navigation_node $node, $type, $key, $text, $
 function reader_cron() {
     global $CFG, $DB, $PAGE;
 
+    if (floatval($CFG->release) >= 2.7) {
+        $DB->set_field('modules', 'cron', 0, ['name' => 'reader']);
+        mtrace( 'Legacy cron has been disabled for the Reader module');
+        return true;
+    }
+
     // delete expired messages
     $select = 'timefinish > ? AND timefinish < ?';
     $params = array(0, time());

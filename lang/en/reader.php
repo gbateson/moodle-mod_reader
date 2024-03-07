@@ -1118,3 +1118,5 @@ $string['youmustpasssingle'] = 'To be promoted, you must pass ONE more quiz at r
 $string['youmustwait'] = 'You must wait before you may re-attempt this quiz. You will be allowed to start another attempt after {$a}.';
 $string['yourcurrentlevel'] = 'Your reading level is currently set to level {$a}';
 $string['youwerepromoted'] = 'You were promoted to reading level {$a->level} on {$a->date} at {$a->time}';
+
+$string['sendusagetask'] = 'Send usage data';
