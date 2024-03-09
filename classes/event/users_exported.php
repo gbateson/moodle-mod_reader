@@ -54,7 +54,7 @@ class users_exported extends base {
      *
      * @return array
      */
-    public static function get_legacy_eventname() {
+    public static function my_get_legacy_eventname() {
         return 'usersexported';
     }
 

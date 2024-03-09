@@ -50,6 +50,34 @@ defined('MOODLE_INTERNAL') || die();
 abstract class base extends \core\event\base {
 
     /**
+     * Pattern to match names of legacy functions.
+     * This is used to hide legacy functions and so prevent error
+     * messages in Moodle >= 4.2 which complains about the presence of
+     * my_get_legacy_event[data|name] and [get|set]_legacy_logdata.
+     */
+    const LEGACY_FUNCTIONS = '/^(get|set)_legacy_(eventdata|eventname|logdata|records)/';
+
+    /**
+     * Magic call function which hides the legacy functions.
+     */
+    public function __call($name, $args) {
+        if (preg_match(self::LEGACY_FUNCTIONS, $name)) {;
+            $name = 'my_'.$name;
+        }
+        return call_user_func_array([$this, $name], $args);
+    }
+
+    /**
+     * Magic callStatic function to hide legacy functions.
+     */
+    public static function __callStatic($name, $args) {
+        if (preg_match(self::LEGACY_FUNCTIONS, $name)) {;
+            $name = 'my_'.$name;
+        }
+        return call_user_func_array([__CLASS__, $name], $args);
+    }
+
+    /**
      * Returns name of an language string for this event
      *
      * @param string $suffix (optional, default="")
@@ -107,7 +135,7 @@ abstract class base extends \core\event\base {
      */
     public function get_url() {
         $params = array();
-        foreach ($this->get_legacy_records() as $record) {
+        foreach ($this->my_get_legacy_records() as $record) {
             list($name, $table, $id) = $record;
             if ($name=='course' || $name=='reader') {
                 continue; // not required in the URL
@@ -126,21 +154,21 @@ abstract class base extends \core\event\base {
      *
      * @return array
      */
-    protected function get_legacy_logdata() {
-        $name = $this->get_legacy_eventname();
+    protected function my_get_legacy_logdata() {
+        $name = $this->my_get_legacy_eventname();
         $url = preg_replace('/^.*\/mod\/reader\//', '', $this->get_url());
         return array($this->courseid, 'reader', $name, $url, $this->objectid, $this->contextinstanceid);
     }
 
     /**
-     * Legacy event data if get_legacy_eventname() is not empty.
+     * Legacy event data if my_get_legacy_eventname() is not empty.
      *
      * @return mixed
      */
-    protected function get_legacy_eventdata() {
+    protected function my_get_legacy_eventdata() {
         global $USER;
         $eventdata = (object)array('user' => $USER);
-        foreach ($this->get_legacy_records() as $record) {
+        foreach ($this->my_get_legacy_records() as $record) {
             list($name, $table, $id) = $record;
             $eventdata->$name = $this->get_record_snapshot($table, $id);
         }
@@ -148,11 +176,11 @@ abstract class base extends \core\event\base {
     }
 
    /**
-     * Records required by get_legacy_eventdata
+     * Records required by my_get_legacy_eventdata
      *
      * @return array(array($name, $table, $id), ...)
      */
-    protected function get_legacy_records() {
+    protected function my_get_legacy_records() {
         return array(array('course', 'course',         $this->courseid),
                      array('cm',     'course_modules', $this->contextinstanceid),
                      array('reader', 'reader',         $this->objectid));

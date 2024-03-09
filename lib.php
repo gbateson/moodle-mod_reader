@@ -1838,6 +1838,12 @@ function reader_navigation_add_node(navigation_node $node, $type, $key, $text, $
 function reader_cron() {
     global $CFG, $DB, $PAGE;
 
+    if (floatval($CFG->release) >= 2.7) {
+        $DB->set_field('modules', 'cron', 0, ['name' => 'reader']);
+        mtrace( 'Legacy cron has been disabled for the Reader module');
+        return true;
+    }
+
     // delete expired messages
     $select = 'timefinish > ? AND timefinish < ?';
     $params = array(0, time());
@@ -1853,12 +1859,12 @@ function reader_cron() {
         $send_usage_stats = true; // first time
     }
 
-    // prevent sending of Reader usage stats from developer/test sites
-    if (preg_match('/^https?:\/\/localhost/', $CFG->dirroot) && debugging('', DEBUG_DEVELOPER)) {
+    // Prevent sending of Reader usage stats from developer/test sites
+    if (preg_match('/^https?:\/\/localhost/', $CFG->wwwroot) && debugging('', DEBUG_DEVELOPER)) {
         $send_usage_stats = false;
     }
 
-    // send usage stats, if necessary
+    // Send usage stats, if necessary
     if ($send_usage_stats) {
         set_config($name, $time, 'mod_reader');
 

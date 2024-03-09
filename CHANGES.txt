@@ -2,6 +2,15 @@
 Change log for mod_reader
 ========================================
 
+2024-03-07 (45)
+ - fix typo in lib.php dirroot => dirroot
+
+2024-03-07 (44)
+ - convert legacy cron job to a scheduled_task (Moodle >= 2.7)
+
+2024-03-07 (43)
+ - protect legacy event handlers from the code police in Moodle >= 4.2
+
 2024-01-24 (42)
  - small change to cheatsheet for compatability with Moodle 4.x
 
