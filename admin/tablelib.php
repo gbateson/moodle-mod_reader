@@ -1046,7 +1046,14 @@ class reader_admin_table extends table_sql {
      * @return xxx
      */
     public function col_selected($row)  {
-        $key = key($row); // name of first column, e.g. "id"
+        // Get the name of the first column, e.g. "id"
+        if (is_array($row)) {
+            $key = key($row);
+        } else {
+            // The "key" function is not allowed on objects
+            // since PHP 8.x, so we use an iterator instead.
+            $key = (new ArrayIterator($row))->key();
+        }
         if ($selected = $this->get_selected($key)) {
             $checked = in_array($row->$key, $selected);
         } else {

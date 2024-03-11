@@ -1891,9 +1891,6 @@ class mod_reader_renderer extends plugin_renderer_base {
             $progress = 0;
         }
 
-        // For testing, we can set the $progress to a random number.
-        $progress = rand(0, $goal * rand(1,3));
-
         // Calculate reading score as a percent (can be over 100%).
         $percent = intval(100 * ($progress / $goal));
 
@@ -1978,7 +1975,7 @@ class mod_reader_renderer extends plugin_renderer_base {
         $goal100 = $this->number_format(intval($goal));
 
         $nums = '<div>'.get_string('extrawords', 'mod_reader', 0).'</div>'.
-                '<div>'.get_string('extrawords', 'mod_reader', $goal025)).'</div>'.
+                '<div>'.get_string('extrawords', 'mod_reader', $goal025).'</div>'.
                 '<div>'.get_string('extrawords', 'mod_reader', $goal050).'</div>'.
                 '<div>'.get_string('extrawords', 'mod_reader', $goal075).'</div>'.
                 '<div>'.get_string('extrawords', 'mod_reader', $goal100).'</div>';

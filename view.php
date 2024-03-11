@@ -345,7 +345,12 @@ if (count($table->data)) {
 
 // show progress bar, if necessary
 switch ($reader->showprogressbar) {
-    echo $output->progressbar_expanding($totalwords);
+    case mod_reader::PROGRESSBAR_FIXED:
+        echo $output->progressbar_fixed($totalwords);
+        break;
+    case mod_reader::PROGRESSBAR_EXPANDING:
+        echo $output->progressbar_expanding($totalwords);
+        break;
 }
 
 // show promotion criteria and reading restrictions, if necessary

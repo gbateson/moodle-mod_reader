@@ -58,13 +58,13 @@ class mod_reader_admin_reports_usersummary_renderer extends mod_reader_admin_rep
         $params = array('publisher' => get_string('extrapoints', 'mod_reader'), 'level' => 99);
         if ($books = $DB->get_records('reader_books', $params, 'points', 'id,name,words,points')) {
             foreach ($books as $book) {
-                $i = floatval($book->points);
-                $options[$i] = $book->name.' / '.get_string('extrawords', 'mod_reader', number_format($book->words));
+                $i = (float)$book->points;
+                $options["$i"] = $book->name.' / '.get_string('extrawords', 'mod_reader', number_format($book->words));
             }
         } else {
             $i_max = 6;
             for ($i=0; $i<=$i_max; $i++) {
-                $options[$i] = get_string('extrapoints'.$i, 'mod_reader').' / '.get_string('extrawords', 'mod_reader', number_format(1000 * pow(2, $i-1)));
+                $options["$i"] = get_string('extrapoints'.$i, 'mod_reader').' / '.get_string('extrawords', 'mod_reader', number_format(1000 * pow(2, $i-1)));
             }
         }
         return $options;
