@@ -167,6 +167,7 @@ $string['add'] = 'Add';
 $string['add_phpdoc'] = 'Add PHP doc comments';
 $string['add_phpdoc_desc'] = 'Add PHP doc comments to php, js and css files.';
 $string['addbookinstance'] = 'Add more books to this course';
+$string['additionalwordsread'] = 'Additional words read {$a}';
 $string['addmoregoals'] = 'Add {no} more goals';
 $string['addmorerates'] = 'Add {no} more rates';
 $string['addonemorerate'] = 'Add {no} more rate';
@@ -664,6 +665,7 @@ $string['passworderror'] = 'The password entered was incorrect';
 $string['passwords_list'] = 'Passwords list';
 $string['percentactive'] = 'Active percent';
 $string['percentactive_help'] = 'The percentage of students who have taken at least one Reader quiz';
+$string['percentcomplete'] = '{$a} complete';
 $string['percentinactive'] = 'Inactive percent';
 $string['percentinactive_help'] = 'The percentage of students who have not taken any Reader quizzes';
 $string['pleaseaskyourinstructor'] = ' Please ask your instructor to move your level up if it is too easy for you.';
@@ -769,6 +771,8 @@ $string['readerquizsettings'] = 'Reader quiz settings';
 $string['readerreports'] = 'Reader module reports';
 $string['readinglevel'] = 'Reading Level';
 $string['readinglevelshort'] = 'RL {$a}';
+$string['readingprogress'] = 'Reading progress {$a}';
+$string['readingprogressfraction'] = '({$a->words} / {$a->goal} words)';
 $string['readingreportfor'] = 'Reading Report for {$a}';
 $string['readonlyfrom'] = 'Read-only from';
 $string['readonlyfrom_help'] = 'After this date and time, students may view their main Reader page, but they cannot take any more quizes via this Reader activity.';
@@ -845,6 +849,7 @@ $string['selectthisquiz'] = 'Select this quiz';
 $string['sendemailtostudent'] = 'Send email to student';
 $string['sendemailtoteacher'] = 'Send email to teacher';
 $string['sendmessage'] = 'Send message to affected students';
+$string['sendusagetask'] = 'Send usage data';
 $string['sentemailmoodle'] = 'An email has been sent via Moodle to: {$a->email}';
 $string['sentemailphp'] = 'An email has been sent via PHP mail to: {$a->email}';
 $string['sentmessage'] = 'The message was successfully sent to {$a} user(s)';
@@ -901,12 +906,20 @@ $string['showpercentgrades_help'] = '**Yes**
 &nbsp; Do NOT show the grades for individual attempts at Reader quizzes';
 $string['showpoints'] = 'Show points only';
 $string['showpointsandwordcount'] = 'Show both points and word count';
-$string['showprogressbar'] = 'Show progress bar';
-$string['showprogressbar_help'] = '**Yes**  
-&nbsp; Show the word count progress bar on the main page for this Reader activity
 
-**No**  
-&nbsp; Do NOT show the word count progress bar on the main page for this Reader activity';
+$string['progressbarnone'] = 'No progress bar';
+$string['progressbarfixed'] = 'Fixed progress bar';
+$string['progressbarexpanding'] = 'Expanding progress bar';
+
+$string['showprogressbar'] = 'Show progress bar';
+$string['showprogressbar_help'] = '**No progress bar**  
+&nbsp; Do NOT show the word count progress bar on the main page for this Reader activity.
+
+**Fixed progress bar**  
+&nbsp; Show a word count progress bar that extends from zero up to the reading goal. The bar does not expand if the student reads more words than the goal.
+
+**Expanding progress bar**  
+&nbsp; Initially, display the fixed progress bar. If the student continues to read more, show a second progress bar that gives the student a new challenge. This bar keeps expanding forever.';
 $string['showreviewlinks'] = 'Show review links';
 $string['showreviewlinks_help'] = '**Yes**  
 &nbsp; Add links from values on the Reader report pages to quiz review pages showing exactly how each question in an attempt at a Reader quiz was answered.
@@ -1118,5 +1131,3 @@ $string['youmustpasssingle'] = 'To be promoted, you must pass ONE more quiz at r
 $string['youmustwait'] = 'You must wait before you may re-attempt this quiz. You will be allowed to start another attempt after {$a}.';
 $string['yourcurrentlevel'] = 'Your reading level is currently set to level {$a}';
 $string['youwerepromoted'] = 'You were promoted to reading level {$a->level} on {$a->date} at {$a->time}';
-
-$string['sendusagetask'] = 'Send usage data';

@@ -58,6 +58,9 @@ class mod_reader_mod_form extends moodleform_mod {
 
         global $COURSE, $CFG, $DB, $PAGE;
 
+        // Fetch the reader class, because we need the constants.
+        require_once($CFG->dirroot.'/mod/reader/locallib.php');
+
         $plugin = 'mod_reader';
         $config = get_config($plugin);
         $strman = get_string_manager();
@@ -129,7 +132,12 @@ class mod_reader_mod_form extends moodleform_mod {
 
         $name = 'showprogressbar';
         $label = get_string($name, $plugin);
-        $mform->addElement('selectyesno', $name, $label);
+        $options = array(
+            mod_reader::PROGRESSBAR_NONE => get_string('progressbarnone', $plugin),
+            mod_reader::PROGRESSBAR_FIXED => get_string('progressbarfixed', $plugin),
+            mod_reader::PROGRESSBAR_EXPANDING => get_string('progressbarexpanding', $plugin),
+        );
+        $mform->addElement('select', $name, $label, $options);
         $this->set_type_default_advanced($mform, $config, $name, PARAM_INT);
         $mform->addHelpButton($name, $name, $plugin);
 
@@ -466,4 +474,3 @@ class mod_reader_mod_form extends moodleform_mod {
         }
     }
 }
-

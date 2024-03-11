@@ -71,7 +71,7 @@
 }
 #page-mod-reader-view h2.ReadingReportTitle {
     background-color : #FFCC80; /* gentle orange */
-    max-width        : 800px;
+    /*max-width        : 800px;  Commented out for expanding progress bar */
     width            : 100%;
     /* cross-browser rounded corners (Note: Safari and Chrome use Webkit) */
     /* css3    */ border-top-left-radius: 8px; border-top-right-radius: 8px;
@@ -176,7 +176,7 @@
     border-color      : #800000;
 }
 #page-mod-reader-view table.AttemptsTable {
-    max-width : 824px;
+    /*max-width : 824px; Commented out for expanding progress bar */
     width     : 100%;
 }
 #page-mod-reader-view  div#ProgressBar {
@@ -283,6 +283,36 @@
 #page-mod-reader-view div span.delayoff { background-color: #ccff99; padding: 2px 6px; }
 #page-mod-reader-view div span.delayon  { background-color: #ff7373; padding: 2px 6px; }
 #page-mod-reader-view h3 { text-align: left; }
+
+/* Styles for the expanding progress bar */
+#page-mod-reader-view div.progress {
+    border: 1px #c4c4c4 solid;
+    font-size: 0.9em;
+    font-weight: bold;
+    height: 3em;
+    margin-bottom: 0px;
+}
+#page-mod-reader-view div.progress-bar {
+    height: 3em;
+    line-height: 3em;
+    color: #fff;
+    text-align: center;
+}
+#page-mod-reader-view div.progress-bar-dividers,
+#page-mod-reader-view div.progress-bar-text {
+    border: none;
+    font-size: 0.9em;
+    text-align: center;
+    display: flex;
+    flex-flow: row nowrap;
+    justify-content: space-between;
+    width: 100%;
+}
+#page-mod-reader-view div.progress-bar-dividers {
+    margin-top: -0.3em;
+    font-size: 0.5em;
+}
+
 
 #page-mod-reader-quiz-mreader body { padding: 0px; }
 #page-mod-reader-quiz-mreader iframe { border-width: 0px; }

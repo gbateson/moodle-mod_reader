@@ -344,11 +344,11 @@ if (count($table->data)) {
 }
 
 // show progress bar, if necessary
-if ($reader->showprogressbar) {
-    echo $output->progressbar($totalwords);
+switch ($reader->showprogressbar) {
+    echo $output->progressbar_expanding($totalwords);
 }
 
-// show promotion criteria nad reading restrictions, if necessary
+// show promotion criteria and reading restrictions, if necessary
 if ($reader->levelcheck) {
 
     $table = new html_table();

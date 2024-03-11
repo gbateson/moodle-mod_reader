@@ -76,6 +76,16 @@ class mod_reader {
     const ACTION_EMAIL_TEACHER = 0x08;
     /**#@-*/
 
+    /**#@+
+     * constants that represent the type of progress bar to be displayed.
+     *
+     * @var integer
+     */
+    const PROGRESSBAR_NONE = 0;
+    const PROGRESSBAR_FIXED = 1;
+    const PROGRESSBAR_EXPANDING = 2;
+    /**#@-*/
+
     /** @var stdclass course module record */
     public $cm;
 

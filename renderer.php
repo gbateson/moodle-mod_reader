@@ -610,7 +610,7 @@ class mod_reader_renderer extends plugin_renderer_base {
      * @todo Finish documenting this function
      */
     public function format_bookname($book) {
-        return "$book->name (".number_format($book->words)." words)";
+        return "$book->name (".$this->number_format($book->words)." words)";
     }
 
     /**
@@ -1833,12 +1833,273 @@ class mod_reader_renderer extends plugin_renderer_base {
      * @uses $CFG
      * @uses $DB
      * @uses $USER
+     * @param integer $progress the number of words read so far.
+     * @return string $html code to display the progress bar.
+     */
+    function progressbar_expanding($progress) {
+        global $CFG, $DB, $USER;
+
+        $params = array('userid' => $USER->id, 'readerid' => $this->reader->id);
+        if ($record = $DB->get_record('reader_levels', $params)) {
+            $goal = $record->goal;
+            $currentlevel = $record->currentlevel;
+        } else {
+            $goal = 0;
+            $currentlevel = 0;
+            $record = (object)array(
+                'userid'         => $USER->id,
+                'readerid'       => $this->reader->id,
+                'startlevel'     => 0,
+                'currentlevel'   => $currentlevel,
+                'stoplevel'      => $this->reader->stoplevel,
+                'allowpromotion' => 1,
+                'goal'           => $goal,
+                'time'           => time(),
+            );
+            $record->id = $DB->insert_record('reader_levels', $record);
+        }
+
+        if (! $goal) {
+            if ($records = $DB->get_records('reader_goals', array('readerid' => $this->reader->id))) {
+                foreach ($records as $record) {
+                    if ($record->groupid && ! groups_is_member($record->groupid, $USER->id)) {
+                        continue; // wrong group
+                    }
+                    if ($currentlevel != $record->level) {
+                        continue; // wrong level
+                    }
+                    $goal = $record->goal;
+                }
+            }
+        }
+
+        if (! $goal) {
+            $goal = $this->reader->goal;
+        }
+
+        $goal = intval($goal);
+        if ($goal > 1000000) {
+            $goal = 1000000;
+        } else if ($goal < 0) {
+            $goal = 30000;
+        }
+
+        $progress = intval($progress);
+        if ($progress > 1000000) {
+            $progress = 1000000;
+        } else if ($progress < 0) {
+            $progress = 0;
+        }
+
+        // For testing, we can set the $progress to a random number.
+        $progress = rand(0, $goal * rand(1,3));
+
+        // Calculate reading score as a percent (can be over 100%).
+        $percent = intval(100 * ($progress / $goal));
+
+        // Determine a suitable background color for this $percent.
+        switch (true) {
+            case ($percent <= 25):
+                $color = '#d9534f'; // Red.
+                break;
+            case ($percent <= 50):
+                $color = '#fa4f00'; // Orange.
+                break;
+            case ($percent <= 75):
+                $color = '#ed9c2c'; // Yellow.
+                break;
+            case ($percent < 100):
+                $color = '#5cb85c'; // Green.
+                break;
+            default:
+                // Great, $percent is >= 100.
+                $color = '#1177d1'; // Blue.
+        }
+
+        // Format the reading progress as a percent and a fraction of the goal.
+        if ($progress > $goal) {
+            $wordsread = $this->number_format($goal);
+            $wordsread = get_string('extrawords', 'mod_reader', $wordsread);
+        } else {
+            $wordsread = get_string('readingprogressfraction', 'mod_reader', array(
+                'words' => $this->number_format($progress),
+                'goal' => $this->number_format($goal)
+            ));
+        }
+        $wordsread = html_writer::tag('small', $wordsread, array(
+            'class' => 'text-nowrap',
+            'style' => 'font-size: 0.8rem;')
+        );
+        $title = get_string('readingprogress', 'mod_reader', $wordsread);
+        $caption = min(100, $percent).'%';
+        $caption = get_string('percentcomplete', 'mod_reader', $caption);
+
+        $html = $this->progressbar_html($title, $caption, $progress, $goal, $color);
+
+        // If required, add HTML for the the expanding progress bar.
+        if ($progress > $goal) {
+
+            // $multiplier is factor by which the goal should be multiplied
+            // in order to generate the next reading goal for the current user.
+            $multiplier = intval($progress / $goal);
+            $progress = ($progress - $goal);
+            $goal = ($goal * $multiplier);
+
+            $title = get_string('additionalwordsread', 'mod_reader', '');
+            $caption = $this->number_format($progress);
+            $caption = get_string('extrawords', 'mod_reader', $caption);
+
+            $html .= $this->progressbar_html($title, $caption, $progress, $goal, $color);
+        }
+
+        return $html;
+    }
+
+    /**
+     * progressbar_html
+     *
+     * @param string $title name of title string for this progress bar.
+     * @param string $caption name of caption string for this progress bar.
+     * @param integer $progress the number of words read so far.
+     * @param integer $goal the target number of words to read.
+     * @param string $color CSS color of progress bar.
+     * @return string $html code to display the progress bar.
+     */
+    function progressbar_html($title, $caption, $progress, $goal, $color) {
+        $html = '';
+
+        // Restrict the percent width to reasonable values.
+        $percent = max(0, 100 * min(1, $progress / $goal));
+
+        // Calculate the intermediate goals.
+        $goal025 = $this->number_format(intval($goal * 0.25));
+        $goal050 = $this->number_format(intval($goal * 0.5));
+        $goal075 = $this->number_format(intval($goal * 0.75));
+        $goal100 = $this->number_format(intval($goal));
+
+        $nums = '<div>'.get_string('extrawords', 'mod_reader', 0).'</div>'.
+                '<div>'.get_string('extrawords', 'mod_reader', $goal025)).'</div>'.
+                '<div>'.get_string('extrawords', 'mod_reader', $goal050).'</div>'.
+                '<div>'.get_string('extrawords', 'mod_reader', $goal075).'</div>'.
+                '<div>'.get_string('extrawords', 'mod_reader', $goal100).'</div>';
+        $divs = '<div>|</div><div>|</div><div>|</div><div>|</div><div>|</div>';
+
+        // Add title and caption for expanding progress bar.
+        $html .= html_writer::tag('h3', $title, array('class' => 'progtitle'));
+        $params = array(
+            'class' => 'progress-bar',
+            'style' => 'background: '.$color.'; width: '.$percent.'%;',
+        );
+        $bar = html_writer::tag('div', $caption, $params);
+
+        // Embed the coloured bit of the progress bar in its container and add it to $html
+        $html .= html_writer::tag('div', $bar, array('class' => 'progress'));
+
+        // Add dividers to the bottom of the progressbar
+        $html .= html_writer::tag('div', $divs, array('class' => 'progress-bar-dividers'));
+
+        // Add numbers to the bottom of the progressbar
+        $html .= html_writer::tag('div', $nums, array('class' => 'progress-bar-text'));
+
+        // Added to the end to make a space before the rest of the page
+        $html .= html_writer::tag('div', '', array('style' => 'clear: both; height: 1.0em; width: 1.0em;'));
+
+        return $html;
+    }
+
+    /**
+     * Format a nnumber with appropriate separators for thousands and decimal point.
+     *
+     * @param array $color000 of integers representing [$r, $g, $b, $a] of start color
+     * @param array $color050 of integers representing [$r, $g, $b, $a] of middle color
+     * @param array $color100 of integers representing [$r, $g, $b, $a] of end color
+     * @param integer $percent
+     * @return string CSS to create the required gradient.
+     */
+    public function get_color_gradient($color000, $color050, $color100, $percent) {
+
+        /*///////////////////////////////////////
+        // This function is not used, because the
+        // resulting gradients are too colorful.
+        ///////////////////////////////////////*/
+        return '';
+
+        // Get CSS gradient (red - yellow - green).
+        $gradient = $this->get_color_gradient(
+            ['255', '0', '0', '1'],
+            ['255', '255', '0', '1'],
+            ['0', '255', '0', '1'],
+            $percent,
+        );
+
+        // Get CSS gradient (green - blue - pink).
+        $gradient = $this->get_color_gradient(
+            ['0', '255', '0', '1'],
+            ['0', '0', '255', '1'],
+            ['255', '0', '255', '1'],
+            $percent,
+        );
+
+        $gradient = '';
+
+        list($r1, $g1, $b1, $a1) = $color000;
+        list($r2, $g2, $b2, $a2) = $color050;
+        list($r3, $g3, $b3, $a3) = $color100;
+
+        $fraction = ($percent / 100);
+        if ($fraction <= 0.5) {
+            $r2 = intval($r1 + ($fraction * ($r2 - $r1)));
+            $g2 = intval($g1 + ($fraction * ($g2 - $g1)));
+            $b2 = intval($b1 + ($fraction * ($b2 - $b1)));
+            $a2 = intval($a1 + ($fraction * ($a2 - $a1)));
+            $gradient .= 'linear-gradient(';
+            $gradient .= '90deg,';
+            $gradient .= "rgba($r1,$g1,$b1,$a1) 0%,";
+            $gradient .= "rgba($r2,$g2,$b2,$a2) 100%";
+            $gradient .= ')';
+        } else {
+            $r3 = intval($r2 + ($fraction * ($r3 - $r2)));
+            $g3 = intval($g2 + ($fraction * ($g3 - $g2)));
+            $b3 = intval($b2 + ($fraction * ($b3 - $b2)));
+            $a3 = intval($a2 + ($fraction * ($a3 - $a2)));
+
+            $gradient .= 'linear-gradient(';
+            $gradient .= '90deg,';
+            $gradient .= "rgba($r1,$g1,$b1,$a1) 0%,";
+            $gradient .= "rgba($r2,$g2,$b2,$a2) 50%,";
+            $gradient .= "rgba($r3,$g3,$b3,$a3) 100%";
+            $gradient .= ')';
+        }
+
+        return $gradient;
+    }
+
+    /**
+     * Format a number with appropriate separators for thousands and decimal point.
+     *
+     * @param integer $num
+     * @return string the formatted number e.g. 10,234.99
+     */
+    public function number_format($num) {
+        return number_format($num,
+            0, // The number of decimal places.
+            get_string('decsep', 'langconfig'),
+            get_string('thousandssep', 'langconfig')
+        );
+    }
+
+    /**
+     * progressbar_fixed
+     *
+     * @uses $CFG
+     * @uses $DB
+     * @uses $USER
      * @param xxx $progress
      * @param xxx $reader
      * @return xxx
      * @todo Finish documenting this function
      */
-    function progressbar($progress) {
+    function progressbar_fixed($progress) {
         global $CFG, $DB, $USER;
 
         $params = array('userid' => $USER->id, 'readerid' => $this->reader->id);
@@ -1892,6 +2153,8 @@ class mod_reader_renderer extends plugin_renderer_base {
         } else if ($progress < 0) {
             $progress = 0;
         }
+        // For testing, we can set the $progress to a random number.
+        $progress = rand(0, $goal);
 
         $max = max($goal, $progress);
         switch (true) {

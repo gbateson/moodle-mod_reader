@@ -2,6 +2,9 @@
 Change log for mod_reader
 ========================================
 
+2024-03-11 (47)
+ - change progress bar to one that uses Bootstrap. Also, allow teacher to specify 'Expanding progress bar'. Many thanks to Adam Jenkins
+
 2024-03-07 (45)
  - fix typo in lib.php dirroot => dirroot
 
