@@ -2,6 +2,9 @@
 Change log for mod_reader
 ========================================
 
+2024-12-11 (49)
+ - fix incorrect number of parameters in SQL call to select attempts from previous terms in view.php
+
 2024-03-11 (47)
  - change progress bar to one that uses Bootstrap. Also, allow teacher to specify 'Expanding progress bar'. Many thanks to Adam Jenkins
 

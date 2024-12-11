@@ -289,7 +289,7 @@ if ($bookcoversinprevterm) {
     $select = 'ra.id AS attemptid, ra.quizid AS quizid, ra.timefinish, rb.name AS bookname';
     $from   = '{reader_attempts} ra LEFT JOIN {reader_books} rb ON ra.bookid = rb.id';
     $where  = 'ra.userid = ? AND ra.deleted = ? AND cheated = ? AND ra.credit = ? AND ra.passed = ? AND ra.timefinish <= ?';
-    $params = array(0, 0, $USER->id, 0, 0, 0, 0, $reader->ignoredate);
+    $params = array($USER->id, 0, 0, 0, 0, $reader->ignoredate);
     if ($attempts = $DB->get_records_sql("SELECT $select FROM $from WHERE $where ORDER BY timefinish", $params)) {
         $text = get_string('incorrectbooksreadinpreviousterms', $plugin);
         $onclick = "var obj = document.getElementById('readerfailedbooklist');".
