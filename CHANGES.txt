@@ -2,6 +2,9 @@
 Change log for mod_reader
 ========================================
 
+2025-04-03 (51)
+ - fix error trying to set field to NOTNULL when NULL values already exist in some table records.
+
 2025-04-03 (50)
  - fix inconsistencies between database XML schema and actual fields in the DB
 

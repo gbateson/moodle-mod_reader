@@ -4292,20 +4292,27 @@ function xmldb_reader_check_structure($dbman, $tablenames=null, $tableprefix='re
                         if ($dbman->field_exists($table, $field)) {
                             $dbman->drop_field($table, $field);
                             if ($debug) {
-                                echo "Field $name was dropped from table $tablename<br>";
+                                echo "Field $tablename.$name was dropped<br>";
                             }
                         }
                     } else {
                         // E.g. column 'xyz' is missing.
                         if ($dbman->field_exists($table, $field)) {
+                            if (substr($text, 0, 18) == 'should be NOT NULL') {
+                                $default = $field->getDefault();
+                                $DB->set_field_select($tablename, $name, $default, "$name IS NULL");
+                                if ($debug) {
+                                    echo "NULL values in were set to $default ($tablename.$name)<br>";
+                                }
+                            }
                             $dbman->change_field_type($table, $field);
                             if ($debug) {
-                                echo "Field $name was updated<br>";
+                                echo "Field $tablename.$name was updated<br>";
                             }
                         } else {
                             $dbman->add_field($table, $field);
                             if ($debug) {
-                                echo "Field $name was added<br>";
+                                echo "Field $tablename.$name was added<br>";
                             }
                         }
                     }
