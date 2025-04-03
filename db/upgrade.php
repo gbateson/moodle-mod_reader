@@ -1497,9 +1497,14 @@ function xmldb_reader_upgrade($oldversion) {
         upgrade_mod_savepoint(true, "$newversion", 'reader');
     }
 
+    $newversion = 2025040350;
+    if ($result && $oldversion < $newversion) {
+        xmldb_reader_check_structure($dbman);
+        upgrade_mod_savepoint(true, "$newversion", 'reader');
+    }
+
     // at some point you will want to do the following
     // xmldb_reader_force_mreader_settings()
     // 
-
     return $result;
 }

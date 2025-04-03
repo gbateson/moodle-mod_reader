@@ -2,6 +2,9 @@
 Change log for mod_reader
 ========================================
 
+2025-04-03 (50)
+ - fix inconsistencies between database XML schema and actual fields in the DB
+
 2024-12-11 (49)
  - fix incorrect number of parameters in SQL call to select attempts from previous terms in view.php
 
