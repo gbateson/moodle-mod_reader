@@ -338,6 +338,12 @@ function reader_setbookinstances($cmid, $reader) {
 function reader_datetime_selector($name, $value, $disabled) {
     $output = '';
 
+    if (class_exists('\\core_date') && method_exists('\\core_date', 'strftime')) {
+        $strftime = '\\core_date::strftime';
+    } else {
+        $strftime = 'strftime';
+    }
+
     $year  = array_combine(range(1970, 2020), range(1970, 2020));
     $month = array_combine(range(1, 12), range(1, 12));
     $day   = array_combine(range(1, 31), range(1, 31));
@@ -363,7 +369,7 @@ function reader_datetime_selector($name, $value, $disabled) {
     $fields = array('year' => '%Y',  'month' => '%m', 'day' => '%d', 'hour' => '%H', 'min'  => '%M');
     foreach ($fields as $field => $fmt) {
 
-        $selected = intval(gmstrftime($fmt, $defaultvalue));
+        $selected = intval($strftime($fmt, $defaultvalue));
         $output .= html_writer::select($$field,  $name.'_'.$field,  $selected, '', array('disabled' => $disabled));
 
         // add separator, if necessary
